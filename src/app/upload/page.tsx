@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const COURSES = [
@@ -20,11 +20,31 @@ const TEE_COLORS = ["Black", "Blue", "White", "Red", "Gold", "Green"];
 const WIND_OPTIONS = ["Calm", "Into", "Downwind", "Left to Right", "Right to Left", "Moderate", "Strong"];
 const SHOT_TYPES = ["Tee Shot", "Approach", "Layup", "Chip", "Pitch", "Bunker", "Full Hole", "Green Reading"];
 const HANDICAP_RANGES = ["Scratch", "Low (1-9)", "Mid (10-18)", "High (19+)"];
+const CLUBS = [
+  { group: "Woods", options: ["Driver", "3-wood", "5-wood", "7-wood"] },
+  { group: "Hybrids", options: ["2-hybrid", "3-hybrid", "4-hybrid", "5-hybrid"] },
+  { group: "Irons", options: ["2-iron", "3-iron", "4-iron", "5-iron", "6-iron", "7-iron", "8-iron", "9-iron"] },
+  { group: "Wedges", options: ["Pitching Wedge", "Gap Wedge", "Sand Wedge", "Lob Wedge"] },
+  { group: "Other", options: ["Putter", "Chipper"] },
+];
 
 const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "strategy", "landingZone", "hidden", "handicap"];
 
 export default function UploadPage() {
   const [step, setStep] = useState(1);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        window.location.href = "/login?redirect=/upload";
+      } else {
+        setAuthChecked(true);
+      }
+    });
+  }, []);
+
   const [selectedCourse, setSelectedCourse] = useState<typeof COURSES[0] | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -121,6 +141,14 @@ export default function UploadPage() {
     }
     setUploading(false);
   };
+
+  if (!authChecked) {
+    return (
+      <main style={{ minHeight: "100vh", background: "#07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>Loading...</div>
+      </main>
+    );
+  }
 
   if (submitted) {
     return (
@@ -403,11 +431,25 @@ export default function UploadPage() {
                 </div>
               </div>
 
-              {/* Club */}
-              <div className="field">
-                <label className="field-label">Club Used <span className="optional-tag">OPTIONAL</span></label>
-                <input className="field-input" type="text" placeholder="e.g. 9-iron, PW, 3-wood..." value={intel.club} onChange={e => setIntel({ ...intel, club: e.target.value })} />
-              </div>
+{/* Club */}
+<div className="field">
+  <label className="field-label">Club Used <span className="optional-tag">OPTIONAL</span></label>
+  <select
+    className="field-input"
+    value={intel.club}
+    onChange={e => setIntel({ ...intel, club: e.target.value })}
+    style={{ colorScheme: "dark", cursor: "pointer", background: "#0d1f12", color: "rgba(255,255,255,0.8)" }}
+  >
+    <option value="">Select a club...</option>
+    {CLUBS.map(group => (
+      <optgroup key={group.group} label={group.group}>
+        {group.options.map(club => (
+          <option key={club} value={club}>{club}</option>
+        ))}
+      </optgroup>
+    ))}
+  </select>
+</div>
 
               {/* Wind */}
               <div className="field">
