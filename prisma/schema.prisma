@@ -1,0 +1,433 @@
+// ============================================================
+// Tour It — Production Prisma Schema
+// PostgreSQL | Prisma ORM
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum TeeColor {
+  BLACK
+  BLUE
+  WHITE
+  GOLD
+  RED
+  GREEN
+  CUSTOM
+}
+
+enum MediaType {
+  VIDEO
+  PHOTO
+}
+
+enum ShotType {
+  TEE_SHOT
+  APPROACH
+  LAY_UP
+  CHIP
+  PITCH
+  PUTT
+  BUNKER
+  RECOVERY
+  FULL_HOLE
+  FLYOVER
+}
+
+enum LieType {
+  FAIRWAY
+  ROUGH
+  BUNKER
+  HARDPAN
+  PINE_STRAW
+  NATIVE
+  TEE_BOX
+  GREEN
+}
+
+enum WindCondition {
+  CALM
+  LIGHT
+  MODERATE
+  STRONG
+  INTO
+  DOWNWIND
+  LEFT_TO_RIGHT
+  RIGHT_TO_LEFT
+}
+
+enum HandicapRange {
+  SCRATCH
+  LOW
+  MID
+  HIGH
+  BOGEY
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REMOVED
+}
+
+enum ReportReason {
+  INAPPROPRIATE
+  SPAM
+  WRONG_HOLE
+  WRONG_COURSE
+  LOW_QUALITY
+  COPYRIGHT
+  OTHER
+}
+
+enum FollowStatus {
+  ACTIVE
+  BLOCKED
+}
+
+// ============================================================
+// USER
+// ============================================================
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  username         String   @unique
+  displayName      String
+  avatarUrl        String?
+  bio              String?
+  handicapIndex    Float?
+  homeCourseId     String?
+  isVerified       Boolean  @default(false)
+  isAdmin          Boolean  @default(false)
+  uploadCount      Int      @default(0)
+  reputationScore  Float    @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  uploads          Upload[]
+  uploadPhotos     UploadPhoto[]
+  comments         Comment[]
+  likes            Like[]
+  saves            Save[]
+  views            View[]
+  reports          ModerationReport[] @relation("ReportedBy")
+  receivedReports  ModerationReport[] @relation("ReportedUser")
+  followers        Follow[]           @relation("Following")
+  following        Follow[]           @relation("Follower")
+  homeCourse       Course?            @relation("HomeCourse", fields: [homeCourseId], references: [id])
+
+  @@index([username])
+  @@index([email])
+  @@index([reputationScore(sort: Desc)])
+}
+
+// ============================================================
+// COURSE
+// ============================================================
+
+model Course {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  city          String
+  state         String
+  country       String   @default("US")
+  latitude      Float?
+  longitude     Float?
+  websiteUrl    String?
+  phone         String?
+  description   String?
+  holeCount     Int      @default(18)
+  isPublic      Boolean  @default(true)
+  isVerified    Boolean  @default(false)
+  coverImageUrl String?
+  logoUrl       String?
+  searchVector  String?
+  uploadCount   Int      @default(0)
+  saveCount     Int      @default(0)
+  viewCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  holes         Hole[]
+  saves         Save[]
+  views         View[]
+  homeUsers     User[]   @relation("HomeCourse")
+  teeBoxes      TeeBox[]
+
+  @@index([state])
+  @@index([city, state])
+  @@index([slug])
+  @@index([isPublic])
+  @@index([uploadCount(sort: Desc)])
+}
+
+// ============================================================
+// HOLE
+// ============================================================
+
+model Hole {
+  id           String   @id @default(cuid())
+  courseId     String
+  holeNumber   Int
+  par          Int
+  handicapRank Int?
+  description  String?
+  imageUrl     String?
+  uploadCount  Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teeBoxes     TeeBox[]
+  uploads      Upload[]
+
+  @@unique([courseId, holeNumber])
+  @@index([courseId])
+  @@index([holeNumber])
+}
+
+// ============================================================
+// TEE BOX
+// ============================================================
+
+model TeeBox {
+  id          String    @id @default(cuid())
+  courseId    String
+  holeId      String
+  color       TeeColor
+  customLabel String?
+  yardage     Int
+  rating      Float?
+  slope       Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  hole        Hole      @relation(fields: [holeId], references: [id], onDelete: Cascade)
+  uploads     Upload[]
+
+  @@unique([holeId, color])
+  @@index([holeId])
+  @@index([courseId])
+}
+
+// ============================================================
+// UPLOAD
+// ============================================================
+
+model Upload {
+  id                   String           @id @default(cuid())
+  userId               String
+  courseId             String
+  holeId               String
+  teeBoxId             String?
+
+  mediaType            MediaType
+  mediaUrl             String
+  thumbnailUrl         String?
+  durationSeconds      Int?
+  fileSizeBytes        BigInt?
+  resolution           String?
+
+  shotType             ShotType?
+  clubUsed             String?
+  distancePlayed       Int?
+  windCondition        WindCondition?
+  lieType              LieType?
+  handicapRange        HandicapRange?
+  strategyNote         String?
+  landingZoneNote      String?
+  whatCameraDoesntShow String?
+  datePlayedAt         DateTime?
+
+  caption              String?
+
+  likeCount            Int              @default(0)
+  commentCount         Int              @default(0)
+  viewCount            Int              @default(0)
+  saveCount            Int              @default(0)
+  watchCompletionRate  Float?
+  rankScore            Float            @default(0)
+
+  moderationStatus     ModerationStatus @default(PENDING)
+  moderatedAt          DateTime?
+  moderatedBy          String?
+
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  user                 User             @relation(fields: [userId], references: [id])
+  hole                 Hole             @relation(fields: [holeId], references: [id])
+  teeBox               TeeBox?          @relation(fields: [teeBoxId], references: [id])
+  photos               UploadPhoto[]
+  comments             Comment[]
+  likes                Like[]
+  views                View[]
+  reports              ModerationReport[]
+
+  @@index([holeId])
+  @@index([courseId])
+  @@index([userId])
+  @@index([holeId, rankScore(sort: Desc)])
+  @@index([holeId, teeBoxId, rankScore(sort: Desc)])
+  @@index([moderationStatus])
+  @@index([createdAt(sort: Desc)])
+}
+
+// ============================================================
+// UPLOAD PHOTO
+// ============================================================
+
+model UploadPhoto {
+  id        String   @id @default(cuid())
+  uploadId  String
+  userId    String
+  photoUrl  String
+  caption   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  upload    Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([uploadId])
+}
+
+// ============================================================
+// COMMENT
+// ============================================================
+
+model Comment {
+  id        String   @id @default(cuid())
+  uploadId  String
+  userId    String
+  body      String
+  likeCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  upload    Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  likes     Like[]
+
+  @@index([uploadId, createdAt(sort: Desc)])
+  @@index([userId])
+}
+
+// ============================================================
+// LIKE
+// ============================================================
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  uploadId  String?
+  commentId String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  upload    Upload?  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, uploadId])
+  @@unique([userId, commentId])
+  @@index([uploadId])
+  @@index([userId])
+}
+
+// ============================================================
+// SAVE
+// ============================================================
+
+model Save {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String?
+  uploadId  String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@unique([userId, uploadId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+// ============================================================
+// VIEW
+// ============================================================
+
+model View {
+  id        String   @id @default(cuid())
+  userId    String?
+  uploadId  String?
+  courseId  String?
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id])
+  upload    Upload?  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([uploadId, createdAt(sort: Desc)])
+  @@index([courseId, createdAt(sort: Desc)])
+  @@index([userId])
+}
+
+// ============================================================
+// FOLLOW
+// ============================================================
+
+model Follow {
+  id          String       @id @default(cuid())
+  followerId  String
+  followingId String
+  status      FollowStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+
+  follower    User         @relation("Follower", fields: [followerId], references: [id])
+  following   User         @relation("Following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ============================================================
+// MODERATION REPORT
+// ============================================================
+
+model ModerationReport {
+  id             String           @id @default(cuid())
+  reportedById   String
+  reportedUserId String?
+  uploadId       String?
+  reason         ReportReason
+  notes          String?
+  status         ModerationStatus @default(PENDING)
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  createdAt      DateTime         @default(now())
+
+  reportedBy     User             @relation("ReportedBy", fields: [reportedById], references: [id])
+  reportedUser   User?            @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  upload         Upload?          @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([uploadId])
+  @@index([reportedById])
+}
