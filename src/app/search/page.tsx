@@ -13,6 +13,7 @@ type Course = {
   holeCount: number;
   isPublic: boolean;
   uploadCount: number;
+  tag?: string;
 };
 
 const STATES = ["All", "AZ", "CA", "FL", "GA", "NC", "NV", "NY", "OR", "SC", "WA", "WI"];
@@ -321,53 +322,43 @@ function SearchPageInner() {
               <p className="results-label">
                 {query ? `${results.length} result${results.length !== 1 ? "s" : ""} for "${query}"` : "All Courses"}
               </p>
-              {results.map((course, i) => {
-                const ts = TAG_COLORS[course.tag] || { bg: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "rgba(255,255,255,0.1)" };
-                return (
-                  <button key={course.id} className="course-card card-anim" style={{ animationDelay: `${i * 0.03}s` }} onClick={() => router.push(`/courses/${course.id}`)}>
+{results.map((course, i) => {
+  const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+  return (
+    <button key={course.id} className="course-card card-anim" style={{ animationDelay: `${i * 0.03}s` }} onClick={() => router.push(`/courses/${course.id}`)}>
 
-                    {/* Club logo */}
-                    <div
-                      className="club-logo"
-                      style={{ background: `linear-gradient(145deg, ${course.color}, ${course.color}dd)`, border: `1px solid ${course.accent}44` }}
-                    >
-                      <div className="club-logo-shimmer" />
-                      <div className="club-logo-inner" style={{ color: course.accent }}>
-                        {course.abbr}
-                      </div>
-                    </div>
+      <div className="club-logo" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <div className="club-logo-shimmer" />
+        <div className="club-logo-inner" style={{ color: "rgba(255,255,255,0.6)" }}>
+          {abbr}
+        </div>
+      </div>
 
-                    <div className="course-info">
-                      <div className="course-name">{course.name}</div>
-                      <div className="course-meta">
-                        <span>{course.city}, {course.state}</span>
-                        <span className="meta-dot" />
-                        <span>Par {course.par}</span>
-                        <span className="meta-dot" />
-                        <span>{course.holes} holes</span>
-                        {!course.public && (
-                          <>
-                            <span className="meta-dot" />
-                            <span style={{ color: "rgba(180,145,60,0.7)" }}>Private</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="course-right">
-                      <span className="tag-badge" style={{ background: ts.bg, color: ts.color, border: `1px solid ${ts.border}` }}>
-                        {course.tag}
-                      </span>
-                      <span className="clips-count">{course.uploads} clips</span>
-                    </div>
-
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m9 18 6-6-6-6"/>
-                    </svg>
-                  </button>
-                );
-              })}
+      <div className="course-info">
+        <div className="course-name">{course.name}</div>
+        <div className="course-meta">
+          <span>{course.city}, {course.state}</span>
+          <span className="meta-dot" />
+          <span>{course.holeCount || 18} holes</span>
+          {!course.isPublic && (
+            <>
+              <span className="meta-dot" />
+              <span style={{ color: "rgba(180,145,60,0.7)" }}>Private</span>
             </>
+          )}
+        </div>
+      </div>
+
+      <div className="course-right">
+        <span className="clips-count">{course.uploadCount || 0} clips</span>
+      </div>
+
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m9 18 6-6-6-6"/>
+      </svg>
+    </button>
+  );
+})}            </>
           ) : (
             <div className="empty">
               <div className="empty-icon">
