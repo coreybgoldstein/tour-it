@@ -3,24 +3,17 @@ import { Suspense } from "react";
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
-const ALL_COURSES = [
-  { id: "1",  name: "Pebble Beach Golf Links",    abbr: "PB",  color: "#1a4a6e", accent: "#4a9fd4", city: "Pebble Beach",      state: "CA", par: 72, holes: 18, uploads: 142, tag: "Bucket List",    public: true },
-  { id: "2",  name: "Pinehurst No. 2",            abbr: "P2",  color: "#3d2b1a", accent: "#c8a96e", city: "Pinehurst",         state: "NC", par: 70, holes: 18, uploads: 98,  tag: "Classic",        public: true },
-  { id: "3",  name: "Bandon Dunes",               abbr: "BD",  color: "#1a3a2a", accent: "#4da862", city: "Bandon",            state: "OR", par: 72, holes: 18, uploads: 87,  tag: "Links",          public: true },
-  { id: "4",  name: "TPC Scottsdale",             abbr: "TPC", color: "#3a1a10", accent: "#d4724a", city: "Scottsdale",        state: "AZ", par: 71, holes: 18, uploads: 76,  tag: "Trip Favorite",  public: true },
-  { id: "5",  name: "Kiawah Island Ocean Course", abbr: "KI",  color: "#0e2e3a", accent: "#4ab8d4", city: "Kiawah Island",    state: "SC", par: 72, holes: 18, uploads: 64,  tag: "Coastal",        public: true },
-  { id: "6",  name: "Bethpage Black",             abbr: "BPB", color: "#1a1a1a", accent: "#888888", city: "Farmingdale",       state: "NY", par: 71, holes: 18, uploads: 58,  tag: "Challenge",      public: true },
-  { id: "7",  name: "Torrey Pines South",         abbr: "TP",  color: "#1a3020", accent: "#5db86a", city: "La Jolla",          state: "CA", par: 72, holes: 18, uploads: 54,  tag: "Public Classic", public: true },
-  { id: "8",  name: "Augusta National",           abbr: "AN",  color: "#0d2e18", accent: "#2db84a", city: "Augusta",           state: "GA", par: 72, holes: 18, uploads: 41,  tag: "Legendary",      public: false },
-  { id: "9",  name: "Whistling Straits",          abbr: "WS",  color: "#1a2a3a", accent: "#6a9fd4", city: "Kohler",            state: "WI", par: 72, holes: 18, uploads: 39,  tag: "Links",          public: true },
-  { id: "10", name: "Sea Island Seaside",         abbr: "SI",  color: "#0e2a2e", accent: "#4accd4", city: "St. Simons Island", state: "GA", par: 70, holes: 18, uploads: 33,  tag: "Coastal",        public: false },
-  { id: "11", name: "Chambers Bay",               abbr: "CB",  color: "#2a2a1a", accent: "#b8b44a", city: "University Place",  state: "WA", par: 72, holes: 18, uploads: 28,  tag: "Links",          public: true },
-  { id: "12", name: "Shadow Creek",               abbr: "SC",  color: "#1a0e2e", accent: "#9a6ad4", city: "North Las Vegas",   state: "NV", par: 72, holes: 18, uploads: 22,  tag: "Resort",         public: false },
-  { id: "13", name: "Streamsong Red",             abbr: "SR",  color: "#2e1a10", accent: "#d4824a", city: "Bowling Green",     state: "FL", par: 72, holes: 18, uploads: 31,  tag: "Hidden Gem",     public: true },
-  { id: "14", name: "TPC Sawgrass",               abbr: "SAW", color: "#0e2a1a", accent: "#4ab870", city: "Ponte Vedra Beach", state: "FL", par: 72, holes: 18, uploads: 88,  tag: "Iconic",         public: true },
-  { id: "15", name: "Wolf Creek Golf Club",       abbr: "WC",  color: "#2e1a0e", accent: "#d4a44a", city: "Mesquite",          state: "NV", par: 72, holes: 18, uploads: 19,  tag: "Desert",         public: true },
-];
+type Course = {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  holeCount: number;
+  isPublic: boolean;
+  uploadCount: number;
+};
 
 const STATES = ["All", "AZ", "CA", "FL", "GA", "NC", "NV", "NY", "OR", "SC", "WA", "WI"];
 
@@ -43,15 +36,32 @@ function SearchPageInner() {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [selectedState, setSelectedState] = useState("All");
-  const [results, setResults]           = useState(ALL_COURSES);
-  const [focused, setFocused]           = useState(false);
+  const [allCourses, setAllCourses] = useState<Course[]>([]);
+  const [results, setResults] = useState<Course[]>([]);
+  const [focused, setFocused] = useState(false);
+  const [loadingCourses, setLoadingCourses] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("Course")
+      .select("id, name, city, state, holeCount, isPublic, uploadCount")
+      .order("name")
+      .then(({ data }) => {
+        if (data) {
+          setAllCourses(data);
+          setResults(data);
+        }
+        setLoadingCourses(false);
+      });
+  }, []);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   useEffect(() => {
-    let filtered = ALL_COURSES;
+    let filtered = allCourses;
     if (query.trim()) {
       const q = query.toLowerCase();
       filtered = filtered.filter(c =>
