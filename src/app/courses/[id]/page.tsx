@@ -82,7 +82,7 @@ export default function CourseProfilePage() {
         .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .header-title { fontFamily: "'Outfit', sans-serif"; font-size: 15px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .hero { padding: 24px 20px 20px; }
+        .hero { padding: 24px 24px 20px; }
         .course-logo { width: 56px; height: 56px; border-radius: 14px; background: rgba(77,168,98,0.15); border: 1px solid rgba(77,168,98,0.3); display: flex; align-items: center; justify-content: center; font-family: "'Outfit', sans-serif"; font-size: 14px; font-weight: 700; color: #4da862; letter-spacing: 0.5px; margin-bottom: 14px; }
         .course-title { font-family: "'Playfair Display', serif"; font-size: 24px; font-weight: 900; color: #fff; line-height: 1.2; margin-bottom: 6px; }
         .course-location { font-family: "'Outfit', sans-serif"; font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.4); margin-bottom: 16px; }
@@ -95,7 +95,7 @@ export default function CourseProfilePage() {
         .tab.active { color: #4da862; border-bottom-color: #4da862; }
 
         .nine-label { font-family: "'Outfit', sans-serif"; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 1px; text-transform: uppercase; padding: 0 20px; margin-bottom: 10px; }
-        .holes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 20px; margin-bottom: 20px; }
+        .holes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 24px; margin-bottom: 20px; }
         .hole-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.15s; text-align: left; }
         .hole-card:hover { background: rgba(77,168,98,0.08); border-color: rgba(77,168,98,0.2); }
         .hole-number { font-family: "'Playfair Display', serif"; font-size: 20px; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 4px; }
