@@ -50,7 +50,9 @@ export default function HolePage() {
     Promise.all([
       supabase.from("Course").select("id, name, city, state").eq("id", id).single(),
       supabase.from("Hole").select("*").eq("courseId", id).eq("holeNumber", Number(number)).single(),
-      supabase.from("Upload").select("*").eq("courseId", id).eq("holeNumber", Number(number)).order("rankScore", { ascending: false }),
+      supabase.from("Hole").select("id").eq("courseId", id).eq("holeNumber", Number(number)).single().then(({ data: holeRow }) =>
+  supabase.from("Upload").select("*").eq("holeId", holeRow?.id || "").order("rankScore", { ascending: false })
+),
     ]).then(([courseRes, holeRes, uploadsRes]) => {
       if (courseRes.data) setCourse(courseRes.data);
       if (holeRes.data) setHole(holeRes.data);
@@ -142,16 +144,13 @@ export default function HolePage() {
       ) : (
         uploads.map(upload => (
           <div key={upload.id} className="clip-card">
-            <div className="clip-thumb" onClick={() => window.open(upload.mediaUrl, "_blank")}>
-              <div className="play-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" stroke="none">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
-              </div>
-              {upload.mediaType === "PHOTO" && (
-                <img src={upload.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-              )}
-            </div>
+         <div className="clip-thumb">
+  {upload.mediaType === "PHOTO" ? (
+    <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+  ) : (
+    <video src={upload.mediaUrl} controls playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+  )}
+</div>
 
             <div className="clip-meta">
               <div className="clip-tags">
