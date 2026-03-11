@@ -503,27 +503,19 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Search */}
-          <div className="search-outer a3">
-            <div className="search-box">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                className="search-input f-body"
-                type="text"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`); }}
-                placeholder="Find a course — name, city, or state..."
-              />
-              {query && (
-                <button onClick={() => setQuery("")} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', display: 'flex', padding: 0 }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 6 6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              )}
+          <input
+  className="search-input f-body"
+  type="text"
+  value={query}
+  onChange={e => {
+    setQuery(e.target.value);
+    if (e.target.value.trim()) {
+      router.push(`/search?q=${encodeURIComponent(e.target.value.trim())}`);
+    }
+  }}
+  onKeyDown={e => { if (e.key === "Enter" && query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`); }}
+  placeholder="Find a course — name, city, or state..."
+/>
             </div>
             <p className="search-hint f-body">Search 4,200+ courses across the US</p>
           </div>
