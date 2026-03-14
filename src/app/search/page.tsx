@@ -53,7 +53,6 @@ function SearchPageInner() {
       .then(({ data }) => {
         if (data) {
           setAllCourses(data);
-          setResults(data);
         }
         setLoadingCourses(false);
       });
@@ -61,6 +60,7 @@ function SearchPageInner() {
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
+  // KEY FIX: allCourses added to dependency array so filter runs after DB loads
   useEffect(() => {
     let filtered = allCourses;
     if (query.trim()) {
@@ -75,7 +75,7 @@ function SearchPageInner() {
       filtered = filtered.filter(c => c.state === selectedState);
     }
     setResults(filtered);
-  }, [query, selectedState]);
+  }, [query, selectedState, allCourses]);
 
   return (
     <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff" }}>
@@ -170,7 +170,11 @@ function SearchPageInner() {
           color: rgba(255,255,255,0.25); margin-bottom: 12px;
         }
 
-        /* Course card */
+        .loading-text {
+          font-family: 'Outfit', sans-serif; font-size: 13px;
+          color: rgba(255,255,255,0.25); text-align: center; padding: 40px 0;
+        }
+
         .course-card {
           width: 100%; text-align: left; cursor: pointer;
           display: flex; align-items: center; gap: 14px;
@@ -185,7 +189,6 @@ function SearchPageInner() {
           transform: translateX(3px);
         }
 
-        /* Club logo badge */
         .club-logo {
           width: 46px; height: 46px; border-radius: 11px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
@@ -216,13 +219,8 @@ function SearchPageInner() {
         .meta-dot { width: 2px; height: 2px; border-radius: 50%; background: rgba(255,255,255,0.18); flex-shrink: 0; }
 
         .course-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
-        .tag-badge {
-          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 500;
-          letter-spacing: 0.04em; padding: 2px 8px; border-radius: 99px;
-        }
         .clips-count { font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.22); }
 
-        /* Empty */
         .empty { text-align: center; padding: 60px 20px; }
         .empty-icon {
           width: 56px; height: 56px; border-radius: 16px;
@@ -238,7 +236,6 @@ function SearchPageInner() {
           color: rgba(255,255,255,0.25); font-weight: 300; line-height: 1.6;
         }
 
-        /* Bottom nav */
         .bottom-nav {
           position: fixed; bottom: 0; left: 0; right: 0; z-index: 99;
           display: flex; align-items: center; justify-content: space-around;
@@ -274,14 +271,14 @@ function SearchPageInner() {
 
       <div className="rel">
         <nav className="nav">
-          <button className="nav-back">
+          <button className="nav-back" onClick={() => router.push("/")}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6"/>
             </svg>
             Home
           </button>
           <span className="nav-title">Find a Course</span>
-          <span className="nav-count">{results.length} courses</span>
+          <span className="nav-count">{loadingCourses ? "..." : `${results.length} courses`}</span>
         </nav>
 
         <div className="page">
@@ -317,48 +314,47 @@ function SearchPageInner() {
             </div>
           </div>
 
-          {results.length > 0 ? (
+          {loadingCourses ? (
+            <p className="loading-text">Loading courses...</p>
+          ) : results.length > 0 ? (
             <>
               <p className="results-label">
                 {query ? `${results.length} result${results.length !== 1 ? "s" : ""} for "${query}"` : "All Courses"}
               </p>
-{results.map((course, i) => {
-  const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
-  return (
-    <button key={course.id} className="course-card card-anim" style={{ animationDelay: `${i * 0.03}s` }} onClick={() => router.push(`/courses/${course.id}`)}>
-
-      <div className="club-logo" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-        <div className="club-logo-shimmer" />
-        <div className="club-logo-inner" style={{ color: "rgba(255,255,255,0.6)" }}>
-          {abbr}
-        </div>
-      </div>
-
-      <div className="course-info">
-        <div className="course-name">{course.name}</div>
-        <div className="course-meta">
-          <span>{course.city}, {course.state}</span>
-          <span className="meta-dot" />
-          <span>{course.holeCount || 18} holes</span>
-          {!course.isPublic && (
-            <>
-              <span className="meta-dot" />
-              <span style={{ color: "rgba(180,145,60,0.7)" }}>Private</span>
+              {results.map((course, i) => {
+                const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+                return (
+                  <button key={course.id} className="course-card card-anim" style={{ animationDelay: `${i * 0.03}s` }} onClick={() => router.push(`/courses/${course.id}`)}>
+                    <div className="club-logo" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                      <div className="club-logo-shimmer" />
+                      <div className="club-logo-inner" style={{ color: "rgba(255,255,255,0.6)" }}>
+                        {abbr}
+                      </div>
+                    </div>
+                    <div className="course-info">
+                      <div className="course-name">{course.name}</div>
+                      <div className="course-meta">
+                        <span>{course.city}, {course.state}</span>
+                        <span className="meta-dot" />
+                        <span>{course.holeCount || 18} holes</span>
+                        {!course.isPublic && (
+                          <>
+                            <span className="meta-dot" />
+                            <span style={{ color: "rgba(180,145,60,0.7)" }}>Private</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="course-right">
+                      <span className="clips-count">{course.uploadCount || 0} clips</span>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                  </button>
+                );
+              })}
             </>
-          )}
-        </div>
-      </div>
-
-      <div className="course-right">
-        <span className="clips-count">{course.uploadCount || 0} clips</span>
-      </div>
-
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m9 18 6-6-6-6"/>
-      </svg>
-    </button>
-  );
-})}            </>
           ) : (
             <div className="empty">
               <div className="empty-icon">
@@ -374,10 +370,10 @@ function SearchPageInner() {
 
         <nav className="bottom-nav">
           {[
-            { label: "Home",   icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", active: false },
-            { label: "Search", icon: "M21 21l-4.35-4.35M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z", active: true },
+            { label: "Home",   icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", active: false, path: "/" },
+            { label: "Search", icon: "M21 21l-4.35-4.35M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z", active: true, path: "/search" },
           ].map(item => (
-            <button key={item.label} className="nav-btn">
+            <button key={item.label} className="nav-btn" onClick={() => router.push(item.path)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                 stroke={item.active ? "#4da862" : "rgba(255,255,255,0.3)"}
                 strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -387,7 +383,7 @@ function SearchPageInner() {
             </button>
           ))}
 
-          <button className="nav-upload-btn">
+          <button className="nav-upload-btn" onClick={() => router.push("/upload")}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12l7-7 7 7"/>
             </svg>
@@ -395,10 +391,10 @@ function SearchPageInner() {
           </button>
 
           {[
-            { label: "Saved",   icon: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" },
-            { label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11A4 4 0 1 0 12 3a4 4 0 0 0 0 8z" },
+            { label: "Saved",   icon: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z", path: "/" },
+            { label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11A4 4 0 1 0 12 3a4 4 0 0 0 0 8z", path: "/" },
           ].map(item => (
-            <button key={item.label} className="nav-btn">
+            <button key={item.label} className="nav-btn" onClick={() => router.push(item.path)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d={item.icon}/>
               </svg>
@@ -410,6 +406,7 @@ function SearchPageInner() {
     </main>
   );
 }
+
 export default function SearchPage() {
   return (
     <Suspense>
