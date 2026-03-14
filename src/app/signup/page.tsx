@@ -27,8 +27,16 @@ export default function SignUpPage() {
       return;
     }
 
+    if (username.length < 3) {
+      setError("Username must be at least 3 characters.");
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+
+    // Step 1 — Create auth user
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -40,6 +48,25 @@ export default function SignUpPage() {
       setError(signUpError.message);
       setLoading(false);
       return;
+    }
+
+    // Step 2 — Insert User record into DB
+    const userId = authData.user?.id;
+    if (userId) {
+      const now = new Date().toISOString();
+      const { error: dbError } = await supabase.from("User").insert({
+        id: userId,
+        email: email,
+        username: username,
+        displayName: username,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      if (dbError) {
+        // Don't block signup if DB insert fails — log it but continue
+        console.error("User DB insert error:", dbError.message);
+      }
     }
 
     setSuccess(true);
@@ -164,7 +191,7 @@ export default function SignUpPage() {
             <div className="success-title">Check your email</div>
             <p className="success-sub">
               We sent a confirmation link to <strong style={{ color: "rgba(255,255,255,0.7)" }}>{email}</strong>.<br />
-              Click it to activate your account.
+              Click it to activate your account and start uploading.
             </p>
           </div>
         ) : (
