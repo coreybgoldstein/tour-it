@@ -126,14 +126,22 @@ export default function ProfilePage() {
     const supabase = createClient();
     const ext = file.name.split(".").pop();
     const path = `${user.id}/avatar.${ext}`;
+    console.log("Uploading to path:", path);
+    console.log("File size:", file.size, "type:", file.type);
     const { error } = await supabase.storage
       .from("tour-it-photos")
       .upload(path, file, { upsert: true });
+    console.log("Upload error:", JSON.stringify(error));
     if (!error) {
       const { data: { publicUrl } } = supabase.storage
         .from("tour-it-photos")
         .getPublicUrl(path);
-      await supabase.from("User").update({ avatarUrl: publicUrl }).eq("id", user.id);
+      console.log("Public URL:", publicUrl);
+      const { error: dbError } = await supabase
+        .from("User")
+        .update({ avatarUrl: publicUrl })
+        .eq("id", user.id);
+      console.log("DB error:", JSON.stringify(dbError));
       setUser({ ...user, avatarUrl: publicUrl });
     }
     setUploadingAvatar(false);
