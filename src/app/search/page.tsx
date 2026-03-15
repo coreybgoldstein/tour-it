@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BottomNav from "@/components/BottomNav";
 
 type Course = {
   id: string;
@@ -368,40 +369,7 @@ function SearchPageInner() {
           )}
         </div>
 
-        <nav className="bottom-nav">
-          {[
-            { label: "Home",   icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", active: false, path: "/" },
-            { label: "Search", icon: "M21 21l-4.35-4.35M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z", active: true, path: "/search" },
-          ].map(item => (
-            <button key={item.label} className="nav-btn" onClick={() => router.push(item.path)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke={item.active ? "#4da862" : "rgba(255,255,255,0.3)"}
-                strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d={item.icon}/>
-              </svg>
-              <span className="nav-lbl" style={{ color: item.active ? "#4da862" : "rgba(255,255,255,0.25)" }}>{item.label}</span>
-            </button>
-          ))}
-
-          <button className="nav-upload-btn" onClick={() => router.push("/upload")}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12l7-7 7 7"/>
-            </svg>
-            Upload
-          </button>
-
-          {[
-            { label: "Saved",   icon: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z", path: "/" },
-            { label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11A4 4 0 1 0 12 3a4 4 0 0 0 0 8z", path: "/" },
-          ].map(item => (
-            <button key={item.label} className="nav-btn" onClick={() => router.push(item.path)}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d={item.icon}/>
-              </svg>
-              <span className="nav-lbl" style={{ color: "rgba(255,255,255,0.25)" }}>{item.label}</span>
-            </button>
-          ))}
-        </nav>
+                <BottomNav />
       </div>
     </main>
   );

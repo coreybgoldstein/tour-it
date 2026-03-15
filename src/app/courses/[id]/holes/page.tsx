@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BottomNav from "@/components/BottomNav";
 
 type Course = {
   id: string;
@@ -152,6 +153,7 @@ export default function HolesOverviewPage() {
           Upload a clip for this course
         </button>
       </div>
+      <BottomNav />
     </main>
   );
 }
