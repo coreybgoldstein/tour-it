@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Course = {
@@ -34,11 +35,9 @@ const CLUBS = [
 
 const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "strategy", "landingZone", "hidden", "handicap"];
 
-export default function UploadPage() {
-  const searchParams = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search)
-    : null;
-  const preselectedCourseId = searchParams?.get("courseId") || null;
+function UploadPageInner() {
+  const searchParams = useSearchParams();
+  const preselectedCourseId = searchParams.get("courseId");
 
   const [step, setStep] = useState(preselectedCourseId ? 2 : 1);
   const [authChecked, setAuthChecked] = useState(false);
@@ -68,24 +67,24 @@ export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-  const supabase = createClient();
-  supabase.auth.getUser().then(({ data }) => {
-    if (!data.user) {
-      window.location.href = "/login?redirect=/upload";
-    } else {
-      setAuthChecked(true);
-      supabase.from("Course").select("id, name, city, state, holeCount").order("name").then(({ data: courses }) => {
-        if (courses) {
-          setAvailableCourses(courses);
-          if (preselectedCourseId) {
-            const match = courses.find((c: Course) => c.id === preselectedCourseId);
-            if (match) setSelectedCourse(match);
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        window.location.href = "/login?redirect=/upload";
+      } else {
+        setAuthChecked(true);
+        supabase.from("Course").select("id, name, city, state, holeCount").order("name").then(({ data: courses }) => {
+          if (courses) {
+            setAvailableCourses(courses);
+            if (preselectedCourseId) {
+              const match = courses.find((c: Course) => c.id === preselectedCourseId);
+              if (match) setSelectedCourse(match);
+            }
           }
-        }
-      });
-    }
-  });
-}, []);
+        });
+      }
+    });
+  }, []);
 
   const intelScore = INTEL_FIELDS.filter(f => intel[f as keyof typeof intel]?.trim()).length;
   const intelPct = Math.round((intelScore / INTEL_FIELDS.length) * 100);
@@ -132,7 +131,6 @@ export default function UploadPage() {
 
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
-      // Look up real hole ID
       const { data: holeData } = await supabase
         .from("Hole")
         .select("id")
@@ -198,7 +196,7 @@ export default function UploadPage() {
             Your intel for <strong style={{ color: "rgba(255,255,255,0.7)" }}>{selectedCourse?.name} — Hole {selectedHole}</strong> is under review and will go live shortly.
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-            <button onClick={() => { setStep(1); setSelectedCourse(null); setSelectedHole(null); setMediaFile(null); setMediaPreview(null); setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", strategy: "", landingZone: "", hidden: "", handicap: "" }); setSubmitted(false); }}
+            <button onClick={() => { setStep(preselectedCourseId ? 2 : 1); setSelectedHole(null); setMediaFile(null); setMediaPreview(null); setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", strategy: "", landingZone: "", hidden: "", handicap: "" }); setSubmitted(false); }}
               style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "10px 20px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
               Upload another
             </button>
@@ -221,25 +219,19 @@ export default function UploadPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         .upload-wrap { max-width: 480px; margin: 0 auto; padding: 0 20px 40px; }
-        .upload-header { display: flex; align-items: center; gap: 12px; padding: 16px 20px; position: sticky; top: 0; background: #07100a; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; }
+        .upload-header { display: flex; align-items: center; gap: 12px; padding: 52px 20px 12px; position: sticky; top: 0; background: #07100a; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; }
         .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-
         .progress-bar { height: 2px; background: rgba(255,255,255,0.06); margin: 0 20px 28px; border-radius: 99px; }
         .progress-fill { height: 2px; background: #4da862; border-radius: 99px; transition: width 0.3s ease; }
-
         .anim { animation: fadeUp 0.25s ease; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
         .step-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; }
         .step-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 900; color: #fff; line-height: 1.2; margin-bottom: 6px; }
         .step-sub { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 300; color: rgba(255,255,255,0.35); line-height: 1.5; margin-bottom: 24px; }
-
         .search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 16px; font-family: 'Outfit', sans-serif; font-size: 14px; color: #fff; outline: none; margin-bottom: 12px; }
         .search-input::placeholder { color: rgba(255,255,255,0.25); }
         .search-input:focus { border-color: rgba(77,168,98,0.4); }
-
         .course-list { display: flex; flex-direction: column; gap: 8px; }
         .course-item { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; }
         .course-item:hover { background: rgba(77,168,98,0.08); border-color: rgba(77,168,98,0.2); }
@@ -247,21 +239,18 @@ export default function UploadPage() {
         .course-abbr { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.15); border: 1px solid rgba(77,168,98,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; }
         .course-name-text { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.85); }
         .course-location-text { font-family: 'Outfit', sans-serif; font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; }
-
         .holes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
         .hole-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 14px 8px; cursor: pointer; transition: all 0.15s; text-align: center; }
         .hole-btn:hover { background: rgba(77,168,98,0.08); border-color: rgba(77,168,98,0.2); }
         .hole-btn.selected { background: rgba(77,168,98,0.15); border-color: rgba(77,168,98,0.5); }
         .hole-btn-num { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: #fff; line-height: 1; }
         .nine-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
-
         .upload-zone { border: 1.5px dashed rgba(255,255,255,0.12); border-radius: 16px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; }
         .upload-zone:hover { border-color: rgba(77,168,98,0.4); background: rgba(77,168,98,0.04); }
         .upload-zone-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 500; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
         .upload-zone-sub { font-family: 'Outfit', sans-serif; font-size: 12px; color: rgba(255,255,255,0.25); }
         .preview-video { width: 100%; border-radius: 12px; max-height: 260px; object-fit: cover; margin-bottom: 12px; }
         .preview-img { width: 100%; border-radius: 12px; max-height: 260px; object-fit: cover; margin-bottom: 12px; }
-
         .intel-score-bar { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px 16px; margin-bottom: 20px; }
         .intel-score-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .intel-score-label { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; }
@@ -269,7 +258,6 @@ export default function UploadPage() {
         .intel-bar-bg { height: 4px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
         .intel-bar-fill { height: 4px; border-radius: 99px; transition: width 0.3s ease, background 0.3s ease; }
         .intel-hint { font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.2); }
-
         .field { margin-bottom: 20px; }
         .field-label { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
         .optional-tag { font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.2); letter-spacing: 0.5px; background: rgba(255,255,255,0.05); border-radius: 99px; padding: 2px 7px; }
@@ -283,7 +271,6 @@ export default function UploadPage() {
         .pill-option.selected { background: rgba(77,168,98,0.15); border-color: rgba(77,168,98,0.5); color: #4da862; }
         .tee-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
         .divider { height: 1px; background: rgba(255,255,255,0.05); margin: 24px 0; }
-
         .btn-primary { width: 100%; background: #2d7a42; border: none; border-radius: 14px; padding: 15px; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; color: #fff; cursor: pointer; margin-bottom: 10px; transition: opacity 0.15s; }
         .btn-primary:hover { opacity: 0.9; }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -291,9 +278,17 @@ export default function UploadPage() {
         .error-box { background: rgba(220,60,60,0.1); border: 1px solid rgba(220,60,60,0.2); border-radius: 10px; padding: 12px 14px; font-family: 'Outfit', sans-serif; font-size: 13px; color: rgba(220,100,100,0.9); margin-bottom: 16px; }
       `}</style>
 
-      {/* Header */}
       <div className="upload-header">
-        <button className="back-btn" onClick={() => step > 1 ? setStep(step - 1) : window.history.back()}>
+        <button className="back-btn" onClick={() => {
+          // If we came from a course page, go back — don't step back to course select
+          if (step === 2 && preselectedCourseId) {
+            window.history.back();
+          } else if (step > 1) {
+            setStep(step - 1);
+          } else {
+            window.history.back();
+          }
+        }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>
@@ -301,7 +296,6 @@ export default function UploadPage() {
         </span>
       </div>
 
-      {/* Progress */}
       <div className="progress-bar">
         <div className="progress-fill" style={{ width: `${(step / 5) * 100}%` }} />
       </div>
@@ -314,19 +308,10 @@ export default function UploadPage() {
             <p className="step-label">Step 1 of 5</p>
             <h1 className="step-title">Which course?</h1>
             <p className="step-sub">Search by name, city, or state.</p>
-
-            <input
-              className="search-input"
-              placeholder="Search courses..."
-              value={courseSearch}
-              onChange={e => setCourseSearch(e.target.value)}
-              autoFocus
-            />
-
+            <input className="search-input" placeholder="Search courses..." value={courseSearch} onChange={e => setCourseSearch(e.target.value)} autoFocus />
             {availableCourses.length === 0 && (
               <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 20 }}>Loading courses...</p>
             )}
-
             <div className="course-list">
               {filteredCourses.map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
@@ -350,7 +335,6 @@ export default function UploadPage() {
             <p className="step-label">Step 2 of 5</p>
             <h1 className="step-title">Which hole?</h1>
             <p className="step-sub">{selectedCourse.name}</p>
-
             <p className="nine-label">Front Nine</p>
             <div className="holes-grid">
               {frontNine.map(n => (
@@ -376,9 +360,7 @@ export default function UploadPage() {
             <p className="step-label">Step 3 of 5</p>
             <h1 className="step-title">Upload your clip</h1>
             <p className="step-sub">{selectedCourse?.name} — Hole {selectedHole}</p>
-
             <input ref={fileInputRef} type="file" accept="video/*,image/*" style={{ display: "none" }} onChange={handleFileSelect} />
-
             {mediaPreview ? (
               <>
                 {mediaType === "VIDEO" ? (
@@ -389,9 +371,7 @@ export default function UploadPage() {
                 <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); }}>
                   Choose different file
                 </button>
-                <button className="btn-primary" onClick={() => setStep(4)}>
-                  Looks good →
-                </button>
+                <button className="btn-primary" onClick={() => setStep(4)}>Looks good →</button>
               </>
             ) : (
               <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
@@ -412,7 +392,6 @@ export default function UploadPage() {
             <p className="step-label">Step 4 of 5</p>
             <h1 className="step-title">Add your intel</h1>
             <p className="step-sub">All fields optional — but more intel means higher ranking.</p>
-
             <div className="intel-score-bar">
               <div className="intel-score-top">
                 <span className="intel-score-label" style={{ color: intelColor }}>{intelLabel}</span>
@@ -423,14 +402,10 @@ export default function UploadPage() {
               </div>
               <p className="intel-hint">Fill in more fields to boost your clip's discoverability</p>
             </div>
-
-            {/* Date played */}
             <div className="field">
               <label className="field-label">Date Played <span className="optional-tag">OPTIONAL</span></label>
               <input className="field-input" type="date" value={intel.datePlayed} onChange={e => setIntel({ ...intel, datePlayed: e.target.value })} style={{ colorScheme: "dark" }} />
             </div>
-
-            {/* Tee color */}
             <div className="field">
               <label className="field-label">Tee <span className="optional-tag">OPTIONAL</span></label>
               <div className="pill-row">
@@ -445,8 +420,6 @@ export default function UploadPage() {
                 })}
               </div>
             </div>
-
-            {/* Shot type */}
             <div className="field">
               <label className="field-label">Shot Type <span className="optional-tag">OPTIONAL</span></label>
               <div className="pill-row">
@@ -457,16 +430,9 @@ export default function UploadPage() {
                 ))}
               </div>
             </div>
-
-            {/* Club */}
             <div className="field">
               <label className="field-label">Club Used <span className="optional-tag">OPTIONAL</span></label>
-              <select
-                className="field-input"
-                value={intel.club}
-                onChange={e => setIntel({ ...intel, club: e.target.value })}
-                style={{ colorScheme: "dark", cursor: "pointer", background: "#0d1f12", color: "rgba(255,255,255,0.8)" }}
-              >
+              <select className="field-input" value={intel.club} onChange={e => setIntel({ ...intel, club: e.target.value })} style={{ colorScheme: "dark", cursor: "pointer", background: "#0d1f12", color: "rgba(255,255,255,0.8)" }}>
                 <option value="">Select a club...</option>
                 {CLUBS.map(group => (
                   <optgroup key={group.group} label={group.group}>
@@ -477,8 +443,6 @@ export default function UploadPage() {
                 ))}
               </select>
             </div>
-
-            {/* Wind */}
             <div className="field">
               <label className="field-label">Wind <span className="optional-tag">OPTIONAL</span></label>
               <div className="pill-row">
@@ -489,8 +453,6 @@ export default function UploadPage() {
                 ))}
               </div>
             </div>
-
-            {/* Handicap */}
             <div className="field">
               <label className="field-label">Your Handicap Range <span className="optional-tag">OPTIONAL</span></label>
               <div className="pill-row">
@@ -501,30 +463,20 @@ export default function UploadPage() {
                 ))}
               </div>
             </div>
-
             <div className="divider" />
-
-            {/* Strategy */}
             <div className="field">
               <label className="field-label" style={{ color: "#4da862" }}>Strategy Note <span className="optional-tag">OPTIONAL</span></label>
               <textarea className="field-textarea" rows={3} placeholder="What's the play? Where do you aim, what do you avoid..." value={intel.strategy} onChange={e => setIntel({ ...intel, strategy: e.target.value })} />
             </div>
-
-            {/* Landing zone */}
             <div className="field">
               <label className="field-label" style={{ color: "rgba(100,160,220,0.8)" }}>Landing Zone <span className="optional-tag">OPTIONAL</span></label>
               <textarea className="field-textarea" rows={2} placeholder="Where should the ball land?" value={intel.landingZone} onChange={e => setIntel({ ...intel, landingZone: e.target.value })} />
             </div>
-
-            {/* What camera doesn't show */}
             <div className="field">
               <label className="field-label" style={{ color: "rgba(210,175,80,0.7)" }}>What the Camera Doesn't Show <span className="optional-tag">OPTIONAL</span></label>
               <textarea className="field-textarea" rows={2} placeholder="Slopes, blind spots, elevation changes, tricky pin positions..." value={intel.hidden} onChange={e => setIntel({ ...intel, hidden: e.target.value })} />
             </div>
-
-            <button className="btn-primary" onClick={() => setStep(5)}>
-              Review & Submit
-            </button>
+            <button className="btn-primary" onClick={() => setStep(5)}>Review & Submit</button>
           </div>
         )}
 
@@ -534,9 +486,7 @@ export default function UploadPage() {
             <p className="step-label">Step 5 of 5</p>
             <h1 className="step-title">Ready to submit?</h1>
             <p className="step-sub">Review your clip before it goes live.</p>
-
             {error && <div className="error-box">{error}</div>}
-
             <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "16px 18px", marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                 <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>
@@ -547,7 +497,6 @@ export default function UploadPage() {
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Hole {selectedHole} · {mediaType}</div>
                 </div>
               </div>
-
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Intel Score</span>
                 <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: intelColor }}>{intelLabel} · {intelPct}%</span>
@@ -555,7 +504,6 @@ export default function UploadPage() {
               <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 99 }}>
                 <div style={{ height: 3, borderRadius: 99, background: intelColor, width: `${intelPct}%` }} />
               </div>
-
               {(intel.tee || intel.datePlayed || intel.club || intel.wind || intel.shotType || intel.handicap) && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 12 }}>
                   {intel.datePlayed && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.datePlayed}</span>}
@@ -567,17 +515,27 @@ export default function UploadPage() {
                 </div>
               )}
             </div>
-
             <button className="btn-primary" disabled={uploading} onClick={handleSubmit}>
               {uploading ? "Uploading..." : "Submit clip"}
             </button>
-            <button className="btn-secondary" onClick={() => setStep(4)}>
-              Edit intel
-            </button>
+            <button className="btn-secondary" onClick={() => setStep(4)}>Edit intel</button>
           </div>
         )}
 
       </div>
     </main>
+  );
+}
+
+// useSearchParams requires a Suspense boundary
+export default function UploadPage() {
+  return (
+    <Suspense fallback={
+      <main style={{ minHeight: "100vh", background: "#07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>Loading...</div>
+      </main>
+    }>
+      <UploadPageInner />
+    </Suspense>
   );
 }
