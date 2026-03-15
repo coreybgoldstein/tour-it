@@ -75,11 +75,13 @@ function VideoCard({
   clip,
   onTapCourse,
   onTapHole,
+  onSingleTap,
   isActive,
 }: {
   clip: FeedClip;
   onTapCourse: () => void;
   onTapHole: () => void;
+  onSingleTap: () => void;
   isActive: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -103,6 +105,8 @@ function VideoCard({
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
       onTapCourse();
+    } else {
+      onSingleTap();
     }
     lastTapRef.current = now;
   };
@@ -180,6 +184,7 @@ export default function Home() {
   const [userCount, setUserCount] = useState<number | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [immersive, setImmersive] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -250,8 +255,9 @@ export default function Home() {
     scrollTimeout.current = setTimeout(() => {
       const feed = feedRef.current;
       if (!feed) return;
-      const index = Math.round(feed.scrollTop / window.innerHeight);
+            const index = Math.round(feed.scrollTop / window.innerHeight);
       setActiveIndex(index);
+      setImmersive(false);
     }, 50);
   }, []);
 
@@ -301,7 +307,7 @@ export default function Home() {
         ) : (
           clips.map((clip, i) => (
             <div key={clip.id} className="feed-item">
-              <VideoCard clip={clip} isActive={i === activeIndex} onTapCourse={() => router.push(`/courses/${clip.courseId}`)} onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)} />
+              <VideoCard clip={clip} isActive={i === activeIndex} onSingleTap={() => setImmersive(v => !v)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${clip.courseId}`); }} onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)} />
             </div>
           ))
         )}
@@ -311,7 +317,7 @@ export default function Home() {
       {searchOpen && <div className="search-backdrop" onClick={closeSearch} />}
 
       {/* Top overlay */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, transition: "opacity 0.25s ease, transform 0.25s ease", opacity: immersive ? 0 : 1, pointerEvents: immersive ? "none" : "auto", transform: immersive ? "translateY(-6px)" : "translateY(0)", background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
 
         {/* Logo + avatar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
