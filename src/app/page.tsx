@@ -274,7 +274,12 @@ export default function Home() {
         username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
       }));
 
-      setClips(enriched);
+      const sorted = [...enriched].sort((a, b) => {
+  if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1;
+  if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1;
+  return 0;
+});
+setClips(sorted);
       setLoading(false);
     }
 
