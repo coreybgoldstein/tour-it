@@ -262,7 +262,7 @@ export default function Home() {
 
   const openSearch = () => {
     setSearchOpen(true);
-    setTimeout(() => searchInputRef.current?.focus(), 50);
+    searchInputRef.current?.focus();
   };
 
   const closeSearch = () => {
@@ -381,20 +381,17 @@ export default function Home() {
               <path d="M11 11L14 14" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
 
-            {searchOpen ? (
-              <input
-                ref={searchInputRef}
-                className="search-input-field"
-                placeholder="Course name, city, or state..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                autoComplete="off"
-              />
-            ) : (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.38)", flex: 1, cursor: "pointer" }} onClick={openSearch}>
-                Find a course or hole — name, city, state...
-              </span>
-            )}
+            <input
+              ref={searchInputRef}
+              className="search-input-field"
+              placeholder={searchOpen ? "Course name, city, or state..." : "Find a course or hole — name, city, state..."}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={openSearch}
+              autoComplete="off"
+              style={{ flex: 1, opacity: searchOpen ? 1 : 0.38, cursor: searchOpen ? "text" : "pointer" }}
+              readOnly={!searchOpen}
+            />
 
             {searchOpen && (
               <button onClick={closeSearch} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", flexShrink: 0 }}>
