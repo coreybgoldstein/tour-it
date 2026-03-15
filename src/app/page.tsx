@@ -128,7 +128,7 @@ function VideoCard({
       {clip.mediaType === "VIDEO" && (
         <button
           onClick={() => setMuted(m => !m)}
-          style={{ position: "absolute", bottom: 155, left: 16, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}
+          style={{ position: "absolute", bottom: 185, left: 16, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}
         >
           {muted ? (
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -143,7 +143,7 @@ function VideoCard({
       )}
 
       {/* Right actions — always visible, order: Like, Course, Hole, Share */}
-      <div style={{ position: "absolute", right: 14, bottom: 80, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
+      <div style={{ position: "absolute", right: 14, bottom: 110, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
         <button
           onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
@@ -182,7 +182,7 @@ function VideoCard({
       </div>
 
       {/* Bottom clip info — always visible */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 60px", zIndex: 5, pointerEvents: "none" }}>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5, pointerEvents: "none" }}>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "3px" }}>
           @{clip.username}
         </div>
@@ -362,18 +362,7 @@ setClips(sorted);
               <div style={{ fontSize: "7px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.65)", marginTop: "1px" }}>Scout before you play</div>
             </div>
           </div>
-          <button
-            onClick={() => router.push(user ? "/profile" : "/login")}
-            style={{ width: 32, height: 32, borderRadius: "50%", background: userProfile?.avatarUrl ? "transparent" : "rgba(77,168,98,0.18)", border: "1.5px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", padding: 0 }}
-          >
-            {userProfile?.avatarUrl ? (
-              <img src={userProfile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <span style={{ fontSize: "12px", fontWeight: 600, color: "#4da862", fontFamily: "'Outfit', sans-serif" }}>
-                {user ? (userProfile?.displayName?.[0] || user.email?.[0] || "?").toUpperCase() : "?"}
-              </span>
-            )}
-          </button>
+
         </div>
 
         <div style={{ marginBottom: "8px" }}>
