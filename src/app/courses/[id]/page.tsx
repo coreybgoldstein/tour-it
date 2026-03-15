@@ -299,7 +299,7 @@ export default function CourseProfilePage() {
                   <div className="stat-chip"><span>{course.holeCount || 18}</span> holes</div>
                   <div className="stat-chip"><span>{clips.filter(c => !c.isForeign).length}</span> clips</div>
                 </div>
-                <button className="browse-holes-btn" onClick={() => router.push(`/courses/${id}/holes/1`)}>
+                <button className="browse-holes-btn" onClick={() => router.push(`/courses/${id}/holes`)}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                   Browse hole by hole
                 </button>
