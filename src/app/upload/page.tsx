@@ -35,7 +35,12 @@ const CLUBS = [
 const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "strategy", "landingZone", "hidden", "handicap"];
 
 export default function UploadPage() {
-  const [step, setStep] = useState(1);
+  const searchParams = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search)
+    : null;
+  const preselectedCourseId = searchParams?.get("courseId") || null;
+
+  const [step, setStep] = useState(preselectedCourseId ? 2 : 1);
   const [authChecked, setAuthChecked] = useState(false);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -63,18 +68,24 @@ export default function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        window.location.href = "/login?redirect=/upload";
-      } else {
-        setAuthChecked(true);
-        supabase.from("Course").select("id, name, city, state, holeCount").order("name").then(({ data: courses }) => {
-          if (courses) setAvailableCourses(courses);
-        });
-      }
-    });
-  }, []);
+  const supabase = createClient();
+  supabase.auth.getUser().then(({ data }) => {
+    if (!data.user) {
+      window.location.href = "/login?redirect=/upload";
+    } else {
+      setAuthChecked(true);
+      supabase.from("Course").select("id, name, city, state, holeCount").order("name").then(({ data: courses }) => {
+        if (courses) {
+          setAvailableCourses(courses);
+          if (preselectedCourseId) {
+            const match = courses.find((c: Course) => c.id === preselectedCourseId);
+            if (match) setSelectedCourse(match);
+          }
+        }
+      });
+    }
+  });
+}, []);
 
   const intelScore = INTEL_FIELDS.filter(f => intel[f as keyof typeof intel]?.trim()).length;
   const intelPct = Math.round((intelScore / INTEL_FIELDS.length) * 100);
