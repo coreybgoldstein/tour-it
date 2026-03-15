@@ -43,7 +43,6 @@ const SHOT_LABEL: Record<string, string> = {
   BUNKER: "Bunker", FULL_HOLE: "Full Hole",
 };
 
-// Course-specific hero configs — add real photos here as you get them
 const COURSE_HEROES: Record<string, { gradient: string; description: string; designer?: string; year?: number }> = {
   "kiawah": {
     gradient: "linear-gradient(160deg, #1a4a2e 0%, #0d3320 30%, #082818 60%, #041a10 100%)",
@@ -77,7 +76,6 @@ function getCourseHero(name: string) {
   return COURSE_HEROES["default"];
 }
 
-// Full-screen feed card
 function FeedCard({ clip, isActive, onTapHole, onTapCourse }: {
   clip: Clip; isActive: boolean; onTapHole: () => void; onTapCourse: () => void;
 }) {
@@ -119,7 +117,8 @@ function FeedCard({ clip, isActive, onTapHole, onTapCourse }: {
         </button>
       )}
 
-            <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", zIndex: 5 }}>
+      {/* Right panel — smaller, centered icons */}
+      <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", zIndex: 5 }}>
         <button onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -200,7 +199,6 @@ export default function CourseProfilePage() {
 
       setCourseClips(clips);
 
-      // Build feed: course clips + discovery fill
       let feed = [...clips];
       const { data: otherUploads } = await supabase
         .from("Upload").select("*").neq("courseId", id).order("rankScore", { ascending: false }).limit(20);
@@ -273,32 +271,25 @@ export default function CourseProfilePage() {
         .clip-thumb video, .clip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
       `}</style>
 
-      {/* Hero — full-width course image */}
+      {/* Hero */}
       <div style={{ position: "relative", width: "100%", height: 300 }}>
-        {/* Course image — use coverImageUrl if available, else gradient */}
         {course.coverImageUrl ? (
           <img src={course.coverImageUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ position: "absolute", inset: 0, background: hero.gradient }} />
         )}
-
-        {/* Texture overlay */}
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
-
-        {/* Dark gradient for text legibility */}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(7,16,10,1) 0%, rgba(7,16,10,0.5) 45%, rgba(0,0,0,0.15) 100%)" }} />
 
-        {/* Back button */}
         <button onClick={() => router.back()} style={{ position: "absolute", top: 52, left: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
 
-        {/* Course abbr badge */}
+        {/* Course abbr badge — placeholder until real logo */}
         <div style={{ position: "absolute", top: 52, right: 16, width: 42, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", zIndex: 10 }}>
           {abbr}
         </div>
 
-        {/* Course info */}
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 20px 18px", zIndex: 10 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             {course.city}, {course.state} · {course.isPublic ? "Public" : "Private"}
@@ -307,19 +298,16 @@ export default function CourseProfilePage() {
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.1, marginBottom: 8 }}>
             {course.name}
           </div>
-
-          {/* Description — show hero description for known courses */}
           {(course.description || hero.description) && (
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginBottom: 10, maxWidth: 340 }}>
               {course.description || hero.description}
             </div>
           )}
-
+          {/* Stats — holes and year only, NO clip count */}
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "3px 10px" }}>
               {course.holeCount || 18} holes
             </span>
-            
             {hero.year && (
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "3px 10px" }}>
                 Est. {hero.year}
@@ -329,7 +317,7 @@ export default function CourseProfilePage() {
         </div>
       </div>
 
-      {/* Action bar */}
+      {/* Action bar — upload passes courseId */}
       <div style={{ padding: "14px 20px 16px", display: "flex", gap: 8 }}>
         <button
           onClick={() => router.push(`/courses/${id}/holes`)}
@@ -347,13 +335,16 @@ export default function CourseProfilePage() {
         </button>
       </div>
 
-      {/* 3-column vertical clip grid — course clips only */}
+      {/* 3-column vertical clip grid */}
       <div style={{ padding: "0 16px 100px" }}>
         {courseClips.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 24 }}>Be the first to scout {course.name}</div>
-            <button onClick={() => router.push("/upload")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
+            <button
+              onClick={() => router.push(`/upload?courseId=${id}`)}
+              style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}
+            >
               Upload a clip
             </button>
           </div>
@@ -362,7 +353,6 @@ export default function CourseProfilePage() {
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)", marginBottom: 10 }}>
               Scouting clips
             </div>
-            {/* 3-column grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
               {courseClips.map((clip, i) => (
                 <div key={clip.id} className="clip-thumb" onClick={() => { setFeedStartIndex(i); setFeedOpen(true); }}>
@@ -371,18 +361,12 @@ export default function CourseProfilePage() {
                   ) : (
                     <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   )}
-
-                  {/* Dark gradient */}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%)" }} />
-
-                  {/* Play icon for videos */}
                   {clip.mediaType === "VIDEO" && (
                     <div style={{ position: "absolute", top: "38%", left: "50%", transform: "translate(-50%,-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     </div>
                   )}
-
-                  {/* Hole number only */}
                   <div style={{ position: "absolute", bottom: 5, left: 6, right: 6 }}>
                     {clip.holeNumber && (
                       <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#fff", background: "rgba(77,168,98,0.9)", borderRadius: 99, padding: "1px 6px" }}>
