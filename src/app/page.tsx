@@ -178,15 +178,11 @@ export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userCount, setUserCount] = useState<number | null>(null);
-
-  // Search state
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Filtered results
   const searchResults = searchQuery.trim().length > 0
     ? allCourses.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -210,7 +206,6 @@ export default function Home() {
     supabase.from("Course").select("id, name, city, state, uploadCount").order("uploadCount", { ascending: false }).limit(8)
       .then(({ data }) => { if (data) setTrendingCourses(data); });
 
-    // Load all courses for search
     supabase.from("Course").select("id, name, city, state, uploadCount").order("name")
       .then(({ data }) => { if (data) setAllCourses(data); });
 
@@ -260,11 +255,6 @@ export default function Home() {
     }, 50);
   }, []);
 
-  const openSearch = () => {
-    setSearchOpen(true);
-    searchInputRef.current?.focus();
-  };
-
   const closeSearch = () => {
     setSearchOpen(false);
     setSearchQuery("");
@@ -291,11 +281,11 @@ export default function Home() {
         .chip small { font-size: 8px; color: rgba(255,255,255,0.3); font-family: 'Outfit', sans-serif; }
         .chips-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
         .chips-row::-webkit-scrollbar { display: none; }
-        .search-input-field { background: transparent; border: none; outline: none; font-family: 'Outfit', sans-serif; font-size: 13px; color: #fff; flex: 1; }
+        .search-input-field { background: transparent; border: none; outline: none; font-family: 'Outfit', sans-serif; font-size: 13px; color: #fff; flex: 1; min-width: 0; }
         .search-input-field::placeholder { color: rgba(255,255,255,0.38); }
         .search-result-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.1s; }
         .search-result-item:last-child { border-bottom: none; }
-        .search-result-item:hover { background: rgba(77,168,98,0.08); }
+        .search-result-item:active { background: rgba(77,168,98,0.1); }
         .search-backdrop { position: fixed; inset: 0; z-index: 18; }
       `}</style>
 
@@ -341,7 +331,7 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Hero — hidden when search is open */}
+        {/* Hero — hidden when search open */}
         {!searchOpen && (
           <>
             <div style={{ marginBottom: "8px" }}>
@@ -354,7 +344,6 @@ export default function Home() {
                 <strong style={{ color: "rgba(255,255,255,0.72)", fontWeight: 500 }}>Preview any course, one hole at a time.</strong> Real videos and tips from golfers who&apos;ve already played it.
               </div>
             </div>
-
             <div style={{ display: "flex", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden", marginBottom: "10px", backdropFilter: "blur(12px)" }}>
               {[
                 { value: "4,200+", label: "Courses" },
@@ -371,27 +360,39 @@ export default function Home() {
           </>
         )}
 
-        {/* Search bar — inline input when open */}
+        {/* Search — shows placeholder button when closed, real input when open */}
         <div style={{ position: "relative", marginBottom: searchOpen ? 0 : "8px" }}>
-          <div
-            style={{ display: "flex", alignItems: "center", gap: "9px", background: "rgba(0,0,0,0.6)", border: `1.5px solid ${searchOpen ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.18)"}`, borderRadius: searchOpen && searchResults.length > 0 ? "12px 12px 0 0" : "12px", padding: "10px 14px", backdropFilter: "blur(16px)", transition: "border-color 0.15s" }}
-          >
+
+          {/* Always-visible search bar container */}
+          <div style={{ display: "flex", alignItems: "center", gap: "9px", background: "rgba(0,0,0,0.6)", border: `1.5px solid ${searchOpen ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.18)"}`, borderRadius: searchOpen && searchResults.length > 0 ? "12px 12px 0 0" : "12px", padding: "10px 14px", backdropFilter: "blur(16px)", transition: "border-color 0.15s" }}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.45, flexShrink: 0 }}>
               <circle cx="7" cy="7" r="5" stroke="white" strokeWidth="1.5" />
               <path d="M11 11L14 14" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
 
-            <input
-              ref={searchInputRef}
-              className="search-input-field"
-              placeholder={searchOpen ? "Course name, city, or state..." : "Find a course or hole — name, city, state..."}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onFocus={openSearch}
-              autoComplete="off"
-              style={{ flex: 1, opacity: searchOpen ? 1 : 0.38, cursor: searchOpen ? "text" : "pointer" }}
-              readOnly={!searchOpen}
-            />
+            {/* When closed — tappable label that opens search */}
+            {!searchOpen && (
+              <button
+                onClick={() => setSearchOpen(true)}
+                style={{ flex: 1, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}
+              >
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>
+                  Find a course or hole — name, city, state...
+                </span>
+              </button>
+            )}
+
+            {/* When open — real input, autoFocus triggers iOS keyboard */}
+            {searchOpen && (
+              <input
+                className="search-input-field"
+                placeholder="Course name, city, or state..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                autoComplete="off"
+                autoFocus
+              />
+            )}
 
             {searchOpen && (
               <button onClick={closeSearch} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", flexShrink: 0 }}>
@@ -406,22 +407,18 @@ export default function Home() {
               {searchResults.map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (
-                  <div
-                    key={course.id}
-                    className="search-result-item"
-                    onClick={() => { closeSearch(); router.push(`/courses/${course.id}`); }}
-                  >
+                  <div key={course.id} className="search-result-item" onClick={() => { closeSearch(); router.push(`/courses/${course.id}`); }}>
                     <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", flexShrink: 0 }}>
                       {abbr}
                     </div>
-                    <div style={{ minWidth: 0 }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.name}</div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
                         {course.city}, {course.state}
                         {course.uploadCount > 0 && <span style={{ color: "#4da862", marginLeft: 6 }}>{course.uploadCount} clips</span>}
                       </div>
                     </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginLeft: "auto" }}><path d="m9 18 6-6-6-6"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
                   </div>
                 );
               })}
@@ -436,7 +433,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Destination chips — hidden when search open */}
+        {/* Chips — hidden when search open */}
         {!searchOpen && (
           <div className="chips-row">
             {[
