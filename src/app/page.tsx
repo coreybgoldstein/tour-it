@@ -68,20 +68,17 @@ function VideoCard({
   onTapCourse,
   onTapHole,
   isActive,
-  immersive,
-  onToggleImmersive,
 }: {
   clip: FeedClip;
   onTapCourse: () => void;
   onTapHole: () => void;
   isActive: boolean;
-  immersive: boolean;
-  onToggleImmersive: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(clip.likeCount || 0);
+  const lastTapRef = useRef<number>(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -99,6 +96,15 @@ function VideoCard({
     return s.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
   };
 
+  // Double-tap goes to course, single tap does nothing
+  const handleMediaTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      onTapCourse();
+    }
+    lastTapRef.current = now;
+  };
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}>
 
@@ -110,21 +116,21 @@ function VideoCard({
           muted={muted}
           playsInline
           style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
-          onClick={onToggleImmersive}
+          onClick={handleMediaTap}
         />
       ) : (
         <img
           src={clip.mediaUrl}
           alt="clip"
           style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
-          onClick={onToggleImmersive}
+          onClick={handleMediaTap}
         />
       )}
 
-      {/* Bottom gradient — always */}
+      {/* Bottom gradient */}
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
 
-      {/* Mute — always visible */}
+      {/* Mute */}
       {clip.mediaType === "VIDEO" && (
         <button
           onClick={() => setMuted(m => !m)}
@@ -142,12 +148,9 @@ function VideoCard({
         </button>
       )}
 
-      {/* Right actions — always visible, order: Like, Course, Hole, Share */}
+      {/* Right actions: Like, Course, Hole, Share */}
       <div style={{ position: "absolute", right: 14, bottom: 110, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
-        <button
-          onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
-        >
+        <button onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -181,7 +184,7 @@ function VideoCard({
         </button>
       </div>
 
-      {/* Bottom clip info — always visible */}
+      {/* Bottom clip info */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5, pointerEvents: "none" }}>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "3px" }}>
           @{clip.username}
@@ -197,7 +200,7 @@ function VideoCard({
         <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
           {clip.shotType && (
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: "99px", padding: "2px 9px" }}>
-              {formatShotType(clip.shotType)}
+              {clip.shotType.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}
             </span>
           )}
           {clip.clubUsed && (
@@ -220,7 +223,6 @@ export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userCount, setUserCount] = useState<number | null>(null);
-  const [immersive, setImmersive] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -275,18 +277,17 @@ export default function Home() {
       }));
 
       const sorted = [...enriched].sort((a, b) => {
-  if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1;
-  if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1;
-  return 0;
-});
-setClips(sorted);
+        if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1;
+        if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1;
+        return 0;
+      });
+      setClips(sorted);
       setLoading(false);
     }
 
     loadClips();
   }, []);
 
-  // Scroll handler — does NOT exit immersive
   const handleScroll = useCallback(() => {
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     scrollTimeout.current = setTimeout(() => {
@@ -318,8 +319,6 @@ setClips(sorted);
         .chip small { font-size: 8px; color: rgba(255,255,255,0.3); font-family: 'Outfit', sans-serif; }
         .chips-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
         .chips-row::-webkit-scrollbar { display: none; }
-        .top-overlay { transition: opacity 0.25s ease, transform 0.25s ease; }
-        .top-overlay.hidden { opacity: 0; pointer-events: none; transform: translateY(-6px); }
       `}</style>
 
       {/* Video feed */}
@@ -341,8 +340,6 @@ setClips(sorted);
               <VideoCard
                 clip={clip}
                 isActive={i === activeIndex}
-                immersive={immersive}
-                onToggleImmersive={() => setImmersive(v => !v)}
                 onTapCourse={() => router.push(`/courses/${clip.courseId}`)}
                 onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)}
               />
@@ -351,9 +348,10 @@ setClips(sorted);
         )}
       </div>
 
-      {/* Top overlay — hides in immersive */}
-      <div className={`top-overlay${immersive ? " hidden" : ""}`} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
+      {/* Top overlay — always visible, no immersive toggle */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
 
+        {/* Logo row + avatar top right */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <TourItLogo size={26} />
@@ -363,8 +361,22 @@ setClips(sorted);
             </div>
           </div>
 
+          {/* Profile avatar — top right */}
+          <button
+            onClick={() => router.push(user ? "/profile" : "/login")}
+            style={{ width: 34, height: 34, borderRadius: "50%", background: userProfile?.avatarUrl ? "transparent" : "rgba(77,168,98,0.18)", border: "1.5px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", padding: 0, flexShrink: 0 }}
+          >
+            {userProfile?.avatarUrl ? (
+              <img src={userProfile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            )}
+          </button>
         </div>
 
+        {/* Hero headline */}
         <div style={{ marginBottom: "8px" }}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "22px", fontWeight: 900, lineHeight: 1.1, color: "#fff", marginBottom: "5px" }}>
             Know the course<br />
@@ -376,6 +388,7 @@ setClips(sorted);
           </div>
         </div>
 
+        {/* Stats */}
         <div style={{ display: "flex", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden", marginBottom: "10px", backdropFilter: "blur(12px)" }}>
           {[
             { value: "4,200+", label: "Courses" },
@@ -390,6 +403,7 @@ setClips(sorted);
           ))}
         </div>
 
+        {/* Search */}
         <button
           onClick={() => router.push("/search")}
           style={{ width: "100%", display: "flex", alignItems: "center", gap: "9px", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "10px 14px", backdropFilter: "blur(16px)", marginBottom: "8px", cursor: "pointer", textAlign: "left" }}
@@ -403,6 +417,7 @@ setClips(sorted);
           </span>
         </button>
 
+        {/* Destination chips */}
         <div className="chips-row">
           {[
             { name: "Scottsdale", count: 34 },
@@ -427,19 +442,16 @@ setClips(sorted);
         </div>
       </div>
 
-      {/* Bottom nav — always visible, Home / Search / Upload / Saved only */}
+      {/* Bottom nav — Home (left), Upload FAB (middle), Search (right) */}
       <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)" }}>
-        {[
-          { label: "Home", path: "/", active: true, icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
-          { label: "Search", path: "/search", active: false, icon: "M21 21l-4.35-4.35M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z" },
-        ].map(item => (
-          <button key={item.label} onClick={() => router.push(item.path)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={item.active ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d={item.icon} />
-            </svg>
-            <span style={{ fontSize: "9px", color: item.active ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>{item.label}</span>
-          </button>
-        ))}
+
+        {/* Home */}
+        <button onClick={() => router.push("/")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          </svg>
+          <span style={{ fontSize: "9px", color: "#4da862", fontFamily: "'Outfit', sans-serif" }}>Home</span>
+        </button>
 
         {/* Upload FAB */}
         <button onClick={() => router.push("/upload")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer", marginTop: "-18px" }}>
@@ -451,27 +463,14 @@ setClips(sorted);
           <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.04em" }}>UPLOAD</span>
         </button>
 
-        {/* Saved */}
-        <button onClick={() => router.push("/saved")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
+        {/* Search */}
+        <button onClick={() => router.push("/search")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Saved</span>
+          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Search</span>
         </button>
 
-        {/* Profile — tap avatar at top instead, but keep as 4th item for balance */}
-        <button onClick={() => router.push(user ? "/profile" : "/login")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-          {userProfile?.avatarUrl ? (
-            <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(77,168,98,0.4)" }}>
-              <img src={userProfile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </div>
-          ) : (
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </svg>
-          )}
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>
-        </button>
       </nav>
     </main>
   );
