@@ -24,10 +24,9 @@ type FeedClip = {
   shotType: string | null;
   username: string;
   likeCount: number;
-  isFromOtherCourse?: boolean;
 };
 
-function TourItLogo({ size = 28 }: { size?: number }) {
+function TourItLogo({ size = 26 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 80 80" fill="none">
       <circle cx="40" cy="40" r="38" fill="#0d2318" stroke="rgba(77,168,98,0.35)" strokeWidth="1.5" />
@@ -42,7 +41,39 @@ function TourItLogo({ size = 28 }: { size?: number }) {
   );
 }
 
-function VideoCard({ clip, onTap, isActive }: { clip: FeedClip; onTap: () => void; isActive: boolean }) {
+// Golf flag icon for Hole button
+function HoleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="2" x2="12" y2="20" />
+      <path d="M12 2 L20 6 L12 10 Z" fill="white" stroke="none" />
+      <ellipse cx="12" cy="21" rx="4" ry="1.2" fill="none" stroke="white" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+// Course map pin icon
+function CourseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6 C3 4 5 2 8 2 C10 2 11.5 3 12 4 C12.5 3 14 2 16 2 C19 2 21 4 21 6 C21 10 16 14 12 18 C8 14 3 10 3 6Z" />
+      <line x1="12" y1="8" x2="12" y2="14" />
+      <path d="M12 8 L16 10 L12 12 Z" fill="white" stroke="none" />
+    </svg>
+  );
+}
+
+function VideoCard({
+  clip,
+  onTapHole,
+  onTapCourse,
+  isActive,
+}: {
+  clip: FeedClip;
+  onTapHole: () => void;
+  onTapCourse: () => void;
+  isActive: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [liked, setLiked] = useState(false);
@@ -65,7 +96,7 @@ function VideoCard({ clip, onTap, isActive }: { clip: FeedClip; onTap: () => voi
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden", flexShrink: 0 }}>
+    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}>
       {clip.mediaType === "VIDEO" ? (
         <video
           ref={videoRef}
@@ -74,95 +105,108 @@ function VideoCard({ clip, onTap, isActive }: { clip: FeedClip; onTap: () => voi
           muted={muted}
           playsInline
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          onClick={onTap}
+          onClick={onTapHole}
         />
       ) : (
         <img
           src={clip.mediaUrl}
           alt="clip"
           style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
-          onClick={onTap}
+          onClick={onTapHole}
         />
       )}
 
-      {/* Gradients */}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none" }} />
+      {/* Main gradient */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.75) 75%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
 
-      {/* Other course banner */}
-      {clip.isFromOtherCourse && (
-        <div style={{ position: "absolute", top: 80, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
-          <div style={{ background: "rgba(180,145,60,0.85)", borderRadius: "99px", padding: "5px 14px", fontSize: "11px", fontFamily: "'Outfit', sans-serif", fontWeight: 600, color: "#fff" }}>
-            From {clip.courseName}
-          </div>
-        </div>
-      )}
-
-      {/* Mute */}
+      {/* Mute button */}
       {clip.mediaType === "VIDEO" && (
         <button
           onClick={() => setMuted(m => !m)}
-          style={{ position: "absolute", top: 80, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+          style={{ position: "absolute", bottom: 180, left: 16, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}
         >
           {muted ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
             </svg>
           ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
             </svg>
           )}
         </button>
       )}
 
-      {/* Right actions */}
-      <div style={{ position: "absolute", right: 16, bottom: 120, display: "flex", flexDirection: "column", gap: "20px", alignItems: "center" }}>
+      {/* Right action buttons */}
+      <div style={{ position: "absolute", right: 14, bottom: 110, display: "flex", flexDirection: "column", gap: "18px", alignItems: "center", zIndex: 5 }}>
+        {/* Like */}
         <button
           onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
         >
-          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: `1px solid ${liked ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
           </div>
-          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", fontFamily: "'Outfit', sans-serif" }}>{likeCount}</span>
+          <span style={{ fontSize: "10px", color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
         </button>
 
-        <button
-          onClick={onTap}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
-        >
-          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+        {/* Share */}
+        <button style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
             </svg>
           </div>
-          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
+        </button>
+
+        {/* Course */}
+        <button
+          onClick={onTapCourse}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
+        >
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+            <CourseIcon />
+          </div>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Course</span>
+        </button>
+
+        {/* Hole */}
+        <button
+          onClick={onTapHole}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
+        >
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+            <HoleIcon />
+          </div>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
         </button>
       </div>
 
-      {/* Bottom info */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 60, padding: "0 16px 80px", pointerEvents: "none" }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.55)", marginBottom: "4px" }}>
+      {/* Bottom clip info */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 80px", zIndex: 5, pointerEvents: "none" }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "3px" }}>
           @{clip.username}
         </div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "6px", lineHeight: 1.2 }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "5px", lineHeight: 1.2 }}>
           {clip.courseName}
         </div>
         {clip.strategyNote && (
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", color: "rgba(255,255,255,0.75)", marginBottom: "10px", lineHeight: 1.5 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.72)", marginBottom: "9px", lineHeight: 1.5 }}>
             {clip.strategyNote}
           </div>
         )}
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
           {clip.shotType && (
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: "99px", padding: "3px 9px" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: "99px", padding: "2px 9px" }}>
               {formatShotType(clip.shotType)}
             </span>
           )}
           {clip.clubUsed && (
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", fontWeight: 500, color: "rgba(255,255,255,0.55)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "99px", padding: "3px 9px" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "99px", padding: "2px 9px" }}>
               {clip.clubUsed}
             </span>
           )}
@@ -180,6 +224,7 @@ export default function Home() {
   const [clips, setClips] = useState<FeedClip[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [userCount, setUserCount] = useState<number | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -198,6 +243,7 @@ export default function Home() {
       }
     });
 
+    // Trending courses
     supabase
       .from("Course")
       .select("id, name, city, state, uploadCount")
@@ -205,6 +251,13 @@ export default function Home() {
       .limit(8)
       .then(({ data }) => { if (data) setTrendingCourses(data); });
 
+    // User count for community stat
+    supabase
+      .from("User")
+      .select("*", { count: "exact", head: true })
+      .then(({ count }) => { if (count) setUserCount(count); });
+
+    // Feed clips
     async function loadClips() {
       const { data: uploads } = await supabase
         .from("Upload")
@@ -245,80 +298,39 @@ export default function Home() {
     }, 50);
   }, []);
 
+  const formatStat = (n: number | null, fallback: string) => {
+    if (n === null) return fallback;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K+`;
+    return `${n}+`;
+  };
+
   return (
-    <main style={{ height: "100svh", background: "#07100a", overflow: "hidden", position: "relative", fontFamily: "'Outfit', sans-serif" }}>
+    <main style={{ height: "100svh", background: "#07100a", overflow: "hidden", position: "relative" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Outfit:wght@300;400;500;600&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Outfit:wght@300;400;500;600&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; overflow: hidden; }
         .feed { height: 100svh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .feed::-webkit-scrollbar { display: none; }
         .feed-item { scroll-snap-align: start; scroll-snap-stop: always; }
-        .trend-chip { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 99px; padding: 6px 12px; cursor: pointer; white-space: nowrap; transition: all 0.15s; flex-shrink: 0; }
-        .trend-chip:hover { background: rgba(77,168,98,0.15); border-color: rgba(77,168,98,0.4); }
-        .trend-chip span { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.75); }
-        .trend-chip small { font-size: 10px; color: rgba(255,255,255,0.3); }
-        .trends-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-        .trends-row::-webkit-scrollbar { display: none; }
+        .chip { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.14); border-radius: 99px; padding: 5px 11px; cursor: pointer; white-space: nowrap; flex-shrink: 0; backdrop-filter: blur(10px); transition: border-color 0.15s; }
+        .chip:hover { border-color: rgba(77,168,98,0.5); }
+        .chip span { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.78); font-family: 'Outfit', sans-serif; }
+        .chip small { font-size: 8px; color: rgba(255,255,255,0.3); font-family: 'Outfit', sans-serif; }
+        .chips-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+        .chips-row::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {/* Pinned top bar */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: "10px 16px 10px", background: "linear-gradient(to bottom, rgba(7,16,10,0.95) 0%, rgba(7,16,10,0.7) 75%, transparent 100%)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <TourItLogo size={28} />
-            <div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "17px", fontWeight: 700, color: "#fff", lineHeight: 1 }}>Tour It</div>
-              <div style={{ fontSize: "8px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.55)", marginTop: "1px" }}>Scout before you play</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <button
-              onClick={() => router.push("/search")}
-              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-            </button>
-            <button
-              onClick={() => router.push(user ? "/profile" : "/login")}
-              style={{ width: 36, height: 36, borderRadius: "50%", background: userProfile?.avatarUrl ? "transparent" : "rgba(77,168,98,0.2)", border: "2px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", padding: 0 }}
-            >
-              {userProfile?.avatarUrl ? (
-                <img src={userProfile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "#4da862" }}>
-                  {user ? (userProfile?.displayName?.[0] || user.email?.[0] || "?").toUpperCase() : "?"}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div className="trends-row">
-          {trendingCourses.map(c => (
-            <button key={c.id} className="trend-chip" onClick={() => router.push(`/courses/${c.id}`)}>
-              <span>{c.name.split(" ").slice(0, 2).join(" ")}</span>
-              <small>{c.uploadCount || 0} clips</small>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Video feed */}
+      {/* Video feed — fills the whole screen */}
       <div ref={feedRef} className="feed" onScroll={handleScroll}>
         {loading ? (
-          <div style={{ height: "100svh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px" }}>
+          <div style={{ height: "100svh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px", fontFamily: "'Outfit', sans-serif" }}>
             Loading clips...
           </div>
         ) : clips.length === 0 ? (
-          <div style={{ height: "100svh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", padding: "20px" }}>
+          <div style={{ height: "100svh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", padding: "20px", fontFamily: "'Outfit', sans-serif" }}>
             <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.3)", textAlign: "center" }}>No clips yet — be the first to upload</div>
-            <button
-              onClick={() => router.push("/upload")}
-              style={{ background: "#4da862", border: "none", borderRadius: "10px", padding: "12px 28px", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
-            >
+            <button onClick={() => router.push("/upload")} style={{ background: "#4da862", border: "none", borderRadius: "10px", padding: "12px 28px", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
               Upload the first clip
             </button>
           </div>
@@ -328,24 +340,125 @@ export default function Home() {
               <VideoCard
                 clip={clip}
                 isActive={i === activeIndex}
-                onTap={() => router.push(`/courses/${clip.courseId}/holes`)}
+                onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)}
+                onTapCourse={() => router.push(`/courses/${clip.courseId}`)}
               />
             </div>
           ))
         )}
       </div>
 
+      {/* Pinned overlay — top of screen, over the video */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
+
+        {/* Logo row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <TourItLogo size={26} />
+            <div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 900, color: "#fff", lineHeight: 1 }}>Tour It</div>
+              <div style={{ fontSize: "7px", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.65)", marginTop: "1px" }}>Scout before you play</div>
+            </div>
+          </div>
+          <button
+            onClick={() => router.push(user ? "/profile" : "/login")}
+            style={{ width: 32, height: 32, borderRadius: "50%", background: userProfile?.avatarUrl ? "transparent" : "rgba(77,168,98,0.18)", border: "1.5px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", padding: 0 }}
+          >
+            {userProfile?.avatarUrl ? (
+              <img src={userProfile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <span style={{ fontSize: "12px", fontWeight: 600, color: "#4da862", fontFamily: "'Outfit', sans-serif" }}>
+                {user ? (userProfile?.displayName?.[0] || user.email?.[0] || "?").toUpperCase() : "?"}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Hero headline */}
+        <div style={{ marginBottom: "8px" }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "22px", fontWeight: 900, lineHeight: 1.1, color: "#fff", marginBottom: "5px" }}>
+            Know the course<br />
+            <span style={{ fontStyle: "italic", fontWeight: 400, color: "rgba(255,255,255,0.38)" }}>before you </span>
+            <span style={{ color: "#4da862" }}>tee it up.</span>
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+            <strong style={{ color: "rgba(255,255,255,0.72)", fontWeight: 500 }}>Preview any course, one hole at a time.</strong> Real videos and tips from golfers who&apos;ve already played it.
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div style={{ display: "flex", gap: "0", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden", marginBottom: "10px", backdropFilter: "blur(12px)" }}>
+          {[
+            { value: "4,200+", label: "Courses" },
+            { value: "38K+", label: "Holes" },
+            { value: "112K+", label: "Clips" },
+            { value: userCount ? formatStat(userCount, "—") : "—", label: "Golfers" },
+          ].map((s, i, arr) => (
+            <div key={s.label} style={{ flex: 1, padding: "7px 4px", textAlign: "center", borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none" }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "13px", fontWeight: 700, color: "#fff" }}>{s.value}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "7px", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: "1px" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Search bar */}
+        <button
+          onClick={() => router.push("/search")}
+          style={{ width: "100%", display: "flex", alignItems: "center", gap: "9px", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "10px 14px", backdropFilter: "blur(16px)", marginBottom: "8px", cursor: "pointer", textAlign: "left" }}
+        >
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.45, flexShrink: 0 }}>
+            <circle cx="7" cy="7" r="5" stroke="white" strokeWidth="1.5" />
+            <path d="M11 11L14 14" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>
+            Find a course or hole — name, city, state...
+          </span>
+        </button>
+
+        {/* Destination chips */}
+        <div className="chips-row">
+          {[
+            { name: "Scottsdale", count: 34 },
+            { name: "Pinehurst", count: 28 },
+            { name: "Bandon", count: 19 },
+            { name: "Pebble Beach", count: 22 },
+            { name: "Myrtle Beach", count: 41 },
+            { name: "Kiawah", count: 11 },
+            { name: "Sea Island", count: 9 },
+          ].map(d => (
+            <button
+              key={d.name}
+              className="chip"
+              onClick={() => router.push(`/search?q=${encodeURIComponent(d.name)}`)}
+            >
+              <span>{d.name}</span>
+              <small>{d.count}</small>
+            </button>
+          ))}
+          {trendingCourses.filter(c => c.uploadCount > 0).slice(0, 3).map(c => (
+            <button
+              key={c.id}
+              className="chip"
+              onClick={() => router.push(`/courses/${c.id}`)}
+            >
+              <span>{c.name.split(" ").slice(0, 2).join(" ")}</span>
+              <small>{c.uploadCount} clips</small>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Bottom nav */}
-      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.95) 0%, rgba(7,16,10,0.6) 70%, transparent 100%)" }}>
+      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)" }}>
         {[
           { label: "Home", path: "/", active: true, icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
           { label: "Search", path: "/search", active: false, icon: "M21 21l-4.35-4.35M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z" },
         ].map(item => (
           <button key={item.label} onClick={() => router.push(item.path)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={item.active ? "#4da862" : "rgba(255,255,255,0.4)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={item.active ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d={item.icon} />
             </svg>
-            <span style={{ fontSize: "9px", color: item.active ? "#4da862" : "rgba(255,255,255,0.35)", fontFamily: "'Outfit', sans-serif" }}>{item.label}</span>
+            <span style={{ fontSize: "9px", color: item.active ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>{item.label}</span>
           </button>
         ))}
 
@@ -363,10 +476,10 @@ export default function Home() {
           { label: "Profile", path: "/profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11A4 4 0 1 0 12 3a4 4 0 0 0 0 8z" },
         ].map(item => (
           <button key={item.label} onClick={() => router.push(item.path)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d={item.icon} />
             </svg>
-            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", fontFamily: "'Outfit', sans-serif" }}>{item.label}</span>
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>{item.label}</span>
           </button>
         ))}
       </nav>
