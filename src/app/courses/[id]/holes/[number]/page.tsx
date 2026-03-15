@@ -51,8 +51,8 @@ export default function HolePage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
   const [muted, setMuted] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const touchStartY = useRef<number>(0);
 
   useEffect(() => {
     if (!id || !number) return;
@@ -71,13 +71,34 @@ export default function HolePage() {
     });
   }, [id, number]);
 
-  // Reset intel panel when switching clips
+  // Manage video playback
   useEffect(() => {
+    Object.entries(videoRefs.current).forEach(([clipId, videoEl]) => {
+      if (!videoEl) return;
+      const clipIndex = uploads.findIndex(u => u.id === clipId);
+      if (clipIndex === activeIndex) {
+        videoEl.play().catch(() => {});
+      } else {
+        videoEl.pause();
+        videoEl.currentTime = 0;
+      }
+    });
     setIntelOpen(false);
-  }, [activeIndex]);
+  }, [activeIndex, uploads]);
 
-  const activeUpload = uploads[activeIndex];
-  const hasIntel = activeUpload && (activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow);
+  // Swipe handling
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const delta = touchStartY.current - e.changedTouches[0].clientY;
+    if (delta > 50 && activeIndex < uploads.length - 1) {
+      setActiveIndex(prev => prev + 1);
+    } else if (delta < -50 && activeIndex > 0) {
+      setActiveIndex(prev => prev - 1);
+    }
+  };
 
   if (loading) {
     return (
@@ -90,7 +111,6 @@ export default function HolePage() {
   const holeNum = Number(number);
   const par = hole?.par || 4;
 
-  // Empty state
   if (uploads.length === 0) {
     return (
       <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff", display: "flex", flexDirection: "column" }}>
@@ -107,13 +127,14 @@ export default function HolePage() {
           </div>
           <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</p>
           <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>Be the first to upload intel<br/>for {course?.name} — Hole {holeNum}</p>
-          <button onClick={() => router.push("/upload")} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
-            Upload a clip
-          </button>
+          <button onClick={() => router.push("/upload")} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Upload a clip</button>
         </div>
       </main>
     );
   }
+
+  const activeUpload = uploads[activeIndex];
+  const hasIntel = activeUpload && (activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow);
 
   return (
     <main style={{ height: "100dvh", background: "#000", overflow: "hidden", position: "relative" }}>
@@ -121,150 +142,48 @@ export default function HolePage() {
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .video-container {
-          position: relative; width: 100%; height: 100dvh;
-          background: #000; overflow: hidden;
-        }
+        .video-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .photo-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .gradient-top { position: absolute; top: 0; left: 0; right: 0; height: 160px; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%); z-index: 10; pointer-events: none; }
+        .gradient-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 320px; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%); z-index: 10; pointer-events: none; }
 
-        .video-el {
-          position: absolute; inset: 0; width: 100%; height: 100%;
-          object-fit: cover;
-        }
-
-        .photo-el {
-          position: absolute; inset: 0; width: 100%; height: 100%;
-          object-fit: cover;
-        }
-
-        /* Dark gradient overlays */
-        .gradient-top {
-          position: absolute; top: 0; left: 0; right: 0; height: 160px;
-          background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
-          z-index: 10; pointer-events: none;
-        }
-        .gradient-bottom {
-          position: absolute; bottom: 0; left: 0; right: 0; height: 320px;
-          background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
-          z-index: 10; pointer-events: none;
-        }
-
-        /* Top bar */
-        .top-bar {
-          position: absolute; top: 0; left: 0; right: 0;
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 52px 20px 16px; z-index: 20;
-        }
-        .back-btn {
-          width: 36px; height: 36px; border-radius: 50%;
-          background: rgba(0,0,0,0.35); backdrop-filter: blur(8px);
-          border: 1px solid rgba(255,255,255,0.15);
-          display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
-        .hole-badge {
-          background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
-          border: 1px solid rgba(255,255,255,0.12); border-radius: 99px;
-          padding: 6px 14px; text-align: center;
-        }
+        .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 20px 16px; z-index: 20; }
+        .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .hole-badge { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); border-radius: 99px; padding: 6px 14px; text-align: center; }
         .hole-badge-num { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 900; color: #fff; line-height: 1; }
         .hole-badge-par { font-family: 'Outfit', sans-serif; font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 1px; }
-        .mute-btn {
-          width: 36px; height: 36px; border-radius: 50%;
-          background: rgba(0,0,0,0.35); backdrop-filter: blur(8px);
-          border: 1px solid rgba(255,255,255,0.15);
-          display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
+        .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-        /* Clip counter dots */
-        .dots {
-          position: absolute; top: 48px; left: 50%; transform: translateX(-50%);
-          display: flex; gap: 4px; z-index: 20;
-        }
-        .dot {
-          height: 3px; border-radius: 99px;
-          background: rgba(255,255,255,0.3); transition: all 0.3s ease;
-        }
-        .dot.active { background: #fff; }
-
-        /* Right side actions */
-        .right-actions {
-          position: absolute; right: 16px; bottom: 200px;
-          display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 20;
-        }
-        .action-btn {
-          display: flex; flex-direction: column; align-items: center; gap: 4px;
-          background: none; border: none; cursor: pointer;
-        }
-        .action-icon {
-          width: 44px; height: 44px; border-radius: 50%;
-          background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
-          border: 1px solid rgba(255,255,255,0.12);
-          display: flex; align-items: center; justify-content: center;
-        }
+        .right-actions { position: absolute; right: 16px; bottom: 200px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 20; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
+        .action-icon { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; }
         .action-label { font-family: 'Outfit', sans-serif; font-size: 10px; color: rgba(255,255,255,0.6); }
 
-        /* Bottom info */
-        .bottom-info {
-          position: absolute; bottom: 0; left: 0; right: 0;
-          padding: 0 20px 32px; z-index: 20;
-        }
+        .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 20px 36px; z-index: 20; }
         .course-line { font-family: 'Outfit', sans-serif; font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
 
         .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-        .tag {
-          background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
-          border: 1px solid rgba(255,255,255,0.15); border-radius: 99px;
-          padding: 4px 11px; font-family: 'Outfit', sans-serif;
-          font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.8);
-        }
+        .tag { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); border-radius: 99px; padding: 4px 11px; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.8); }
         .tag.green { border-color: rgba(77,168,98,0.4); color: #4da862; background: rgba(77,168,98,0.15); }
 
-        /* Intel panel */
-        .intel-toggle-btn {
-          width: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(12px);
-          border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
-          padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
-          cursor: pointer; margin-bottom: 8px;
-          font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.6);
-        }
-        .intel-panel {
-          background: rgba(0,0,0,0.6); backdrop-filter: blur(16px);
-          border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
-          padding: 14px; margin-bottom: 8px;
-        }
+        .intel-toggle-btn { width: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 8px; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.6); }
+        .intel-panel { background: rgba(0,0,0,0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 14px; margin-bottom: 8px; }
         .intel-row { margin-bottom: 12px; }
         .intel-row:last-child { margin-bottom: 0; }
         .intel-label { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 3px; }
         .intel-value { font-family: 'Outfit', sans-serif; font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5; }
-
-        /* Nav arrows */
-        .prev-btn, .next-btn {
-          position: absolute; top: 50%; transform: translateY(-50%);
-          width: 40px; height: 60px;
-          background: none; border: none; cursor: pointer; z-index: 20;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .prev-btn { left: 0; }
-        .next-btn { right: 0; }
-
-        /* Upload fab */
-        .upload-fab {
-          position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
-          background: #2d7a42; border: none; border-radius: 99px;
-          padding: 11px 22px; display: flex; align-items: center; gap: 8px;
-          font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; color: #fff;
-          cursor: pointer; box-shadow: 0 4px 20px rgba(45,122,66,0.5); z-index: 30;
-          white-space: nowrap;
-        }
       `}</style>
 
-      <div className="video-container" ref={containerRef}>
-
-        {/* Media */}
+      <div
+        style={{ position: "relative", width: "100%", height: "100dvh", background: "#000" }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {activeUpload.mediaType === "PHOTO" ? (
           <img src={activeUpload.mediaUrl} className="photo-el" alt="clip" />
         ) : (
           <video
-            ref={videoRef}
+            ref={el => { videoRefs.current[activeUpload.id] = el; }}
             key={activeUpload.id}
             src={activeUpload.mediaUrl}
             className="video-el"
@@ -275,7 +194,6 @@ export default function HolePage() {
           />
         )}
 
-        {/* Gradients */}
         <div className="gradient-top" />
         <div className="gradient-bottom" />
 
@@ -292,26 +210,18 @@ export default function HolePage() {
             {muted ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
             )}
           </button>
         </div>
 
         {/* Clip counter dots */}
         {uploads.length > 1 && (
-          <div className="dots">
+          <div style={{ position: "absolute", top: 48, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 4, zIndex: 20 }}>
             {uploads.map((_, i) => (
-              <div key={i} className={`dot ${i === activeIndex ? "active" : ""}`} style={{ width: i === activeIndex ? 20 : 6 }} />
+              <div key={i} style={{ height: 3, borderRadius: 99, background: i === activeIndex ? "#fff" : "rgba(255,255,255,0.3)", width: i === activeIndex ? 20 : 6, transition: "all 0.3s" }} />
             ))}
           </div>
-        )}
-
-        {/* Prev / Next tap zones */}
-        {activeIndex > 0 && (
-          <button className="prev-btn" onClick={() => setActiveIndex(activeIndex - 1)} />
-        )}
-        {activeIndex < uploads.length - 1 && (
-          <button className="next-btn" onClick={() => setActiveIndex(activeIndex + 1)} />
         )}
 
         {/* Right actions */}
@@ -329,6 +239,14 @@ export default function HolePage() {
             <span className="action-label">Course</span>
           </button>
         </div>
+
+        {/* Swipe hint on first clip */}
+        {activeIndex === 0 && uploads.length > 1 && (
+          <div style={{ position: "absolute", bottom: 180, left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, opacity: 0.5 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.6)", letterSpacing: 1 }}>SWIPE UP</span>
+          </div>
+        )}
 
         {/* Bottom info */}
         <div className="bottom-info">
@@ -349,7 +267,6 @@ export default function HolePage() {
                   {intelOpen ? <path d="m18 15-6-6-6 6"/> : <path d="m6 9 6 6 6-6"/>}
                 </svg>
               </button>
-
               {intelOpen && (
                 <div className="intel-panel">
                   {activeUpload.strategyNote && (
@@ -375,7 +292,6 @@ export default function HolePage() {
             </>
           )}
         </div>
-
       </div>
     </main>
   );
