@@ -24,6 +24,8 @@ type FeedClip = {
   clubUsed: string | null;
   shotType: string | null;
   username: string;
+  avatarUrl: string | null;
+  userId: string;
   likeCount: number;
 };
 
@@ -77,12 +79,14 @@ function VideoCard({
   onTapCourse,
   onTapHole,
   onSingleTap,
+  onTapUser,
   isActive,
 }: {
   clip: FeedClip;
   onTapCourse: () => void;
   onTapHole: () => void;
   onSingleTap: () => void;
+  onTapUser: () => void;
   isActive: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -158,8 +162,19 @@ function VideoCard({
         </button>
       </div>
 
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5, pointerEvents: "none" }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "3px" }}>@{clip.username}</div>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5 }}>
+        <button
+          onClick={onTapUser}
+          style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer", marginBottom: 5 }}
+        >
+          <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {clip.avatarUrl
+              ? <img src={clip.avatarUrl} alt={clip.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            }
+          </div>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>@{clip.username}</span>
+        </button>
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "5px", lineHeight: 1.2 }}>{clip.courseName}</div>
         {clip.strategyNote && (
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.72)", marginBottom: "9px", lineHeight: 1.5 }}>{clip.strategyNote}</div>
@@ -230,13 +245,14 @@ export default function Home() {
 
       const [{ data: courses }, { data: users }] = await Promise.all([
         supabase.from("Course").select("id, name").in("id", courseIds),
-        supabase.from("User").select("id, username").in("id", userIds),
+        supabase.from("User").select("id, username, avatarUrl").in("id", userIds),
       ]);
 
       const enriched: FeedClip[] = uploads.map((u: any) => ({
         ...u,
         courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
         username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
+avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
       }));
 
       const sorted = [...enriched].sort((a, b) => {
@@ -307,7 +323,7 @@ export default function Home() {
         ) : (
           clips.map((clip, i) => (
             <div key={clip.id} className="feed-item">
-              <VideoCard clip={clip} isActive={i === activeIndex} onSingleTap={() => setImmersive(v => !v)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${clip.courseId}`); }} onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)} />
+              <VideoCard clip={clip} isActive={i === activeIndex} onSingleTap={() => setImmersive(v => !v)} onTapUser={() => router.push(`/profile/${clip.userId}`)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${clip.courseId}`); }} onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)} />
             </div>
           ))
         )}
