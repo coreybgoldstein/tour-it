@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BottomNav from "@/components/BottomNav";
 
 type UserProfile = {
   id: string;
@@ -388,41 +389,7 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Bottom nav */}
-      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 64, background: "rgba(7,16,10,0.97)", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-around", padding: "0 8px 8px", zIndex: 10 }}>
-        {[
-          { label: "Home", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", path: "/" },
-          { label: "Search", icon: "M21 21l-4.35-4.35M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z", path: "/search" },
-        ].map(item => (
-          <button key={item.label} onClick={() => router.push(item.path)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d={item.icon} />
-            </svg>
-            <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)" }}>{item.label}</span>
-          </button>
-        ))}
-
-        <button onClick={() => router.push("/upload")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer", marginTop: "-18px" }}>
-          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(77,168,98,0.4)" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12l7-7 7 7" />
-            </svg>
-          </div>
-          <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.4)", letterSpacing: "0.04em" }}>UPLOAD</span>
-        </button>
-
-        {[
-          { label: "Saved", icon: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z", path: "/saved", active: false },
-          { label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11A4 4 0 1 0 12 3a4 4 0 0 0 0 8z", path: "/profile", active: true },
-        ].map(item => (
-          <button key={item.label} onClick={() => router.push(item.path)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={item.active ? "#4da862" : "rgba(255,255,255,0.3)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d={item.icon} />
-            </svg>
-            <span style={{ fontSize: "8px", color: item.active ? "#4da862" : "rgba(255,255,255,0.3)" }}>{item.label}</span>
-          </button>
-        ))}
-      </nav>
+<BottomNav />
     </main>
   );
 }
