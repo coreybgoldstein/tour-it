@@ -4,20 +4,6 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-const TRENDING_COURSES = [
-  { name: "Pebble Beach Golf Links", location: "Pebble Beach, CA", uploads: 142, par: 72, tag: "Bucket List" },
-  { name: "Pinehurst No. 2", location: "Pinehurst, NC", uploads: 98, par: 70, tag: "Classic" },
-  { name: "Bandon Dunes", location: "Bandon, OR", uploads: 87, par: 72, tag: "Links" },
-  { name: "TPC Scottsdale", location: "Scottsdale, AZ", uploads: 76, par: 71, tag: "Trip Favorite" },
-  { name: "Kiawah Island Ocean", location: "Kiawah Island, SC", uploads: 64, par: 72, tag: "Coastal" },
-];
-
-const RECENT_UPLOADS = [
-  { course: "Pebble Beach", hole: 7, par: 3, type: "VIDEO", user: "jgoldstein", note: "Wind off the ocean kills you here. Aim two clubs left of the pin and let it work back.", club: "8-iron" },
-  { course: "Pinehurst No. 2", hole: 18, par: 4, type: "VIDEO", user: "trevorm", note: "Crowned green sheds everything right. Go at the middle flag every single time.", club: "Driver" },
-  { course: "Bandon Dunes", hole: 4, par: 4, type: "PHOTO", user: "links_scout", note: "Layup to 100 yards is the play. That bunker short right has swallowed a hundred rounds.", club: "3-wood" },
-];
-
 const DESTINATIONS = [
   { name: "Scottsdale", courses: 34 },
   { name: "Pinehurst", courses: 28 },
@@ -34,6 +20,29 @@ const STATS = [
   { value: "38K+", label: "Holes covered" },
   { value: "112K+", label: "Clips uploaded" },
 ];
+
+type TrendingCourse = {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  uploadCount: number;
+  holeCount: number;
+};
+
+type DiscoveryUpload = {
+  id: string;
+  mediaUrl: string;
+  mediaType: string;
+  courseId: string;
+  strategyNote: string | null;
+  clubUsed: string | null;
+  shotType: string | null;
+  createdAt: string;
+  userId: string;
+  courseName?: string;
+  username?: string;
+};
 
 function TourItLogo({ size = 32 }: { size?: number }) {
   return (
@@ -55,12 +64,52 @@ function TourItLogo({ size = 32 }: { size?: number }) {
 export default function Home() {
   const [query, setQuery] = useState("");
   const [user, setUser] = useState<any>(null);
+  const [trendingCourses, setTrendingCourses] = useState<TrendingCourse[]>([]);
+  const [discoveryUploads, setDiscoveryUploads] = useState<DiscoveryUpload[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
+
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
+
+    // Trending courses — real from DB
+    supabase
+      .from("Course")
+      .select("id, name, city, state, uploadCount, holeCount")
+      .order("uploadCount", { ascending: false })
+      .limit(5)
+      .then(({ data }) => {
+        if (data && data.length > 0) setTrendingCourses(data);
+      });
+
+    // Discovery uploads — real from DB
+    supabase
+      .from("Upload")
+      .select("id, mediaUrl, mediaType, courseId, strategyNote, clubUsed, shotType, createdAt, userId")
+      .order("createdAt", { ascending: false })
+      .limit(6)
+      .then(async ({ data: uploads }) => {
+        if (!uploads || uploads.length === 0) return;
+        const courseIds = [...new Set(uploads.map((u: any) => u.courseId))];
+        const userIds = [...new Set(uploads.map((u: any) => u.userId))];
+        const [{ data: courses }, { data: users }] = await Promise.all([
+          supabase.from("Course").select("id, name").in("id", courseIds),
+          supabase.from("User").select("id, username").in("id", userIds),
+        ]);
+        const enriched = uploads.map((u: any) => ({
+          ...u,
+          courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
+          username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
+        }));
+        setDiscoveryUploads(enriched);
+      });
   }, []);
+
+  const formatShotType = (s: string | null) => {
+    if (!s) return null;
+    return s.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   return (
     <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff" }}>
@@ -118,19 +167,19 @@ export default function Home() {
         .c-num { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: rgba(255,255,255,0.08); width: 26px; text-align: center; flex-shrink: 0; }
         .c-name { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.88); margin-bottom: 3px; }
         .c-meta { display: flex; align-items: center; gap: 8px; font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.3); font-weight: 300; }
-        .c-tag { font-size: 10px; font-weight: 500; letter-spacing: 0.04em; color: rgba(180,145,60,0.8); background: rgba(180,145,60,0.1); border: 1px solid rgba(180,145,60,0.18); border-radius: 99px; padding: 1px 7px; }
         .c-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .c-clips { font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); border-radius: 99px; padding: 3px 10px; }
-        .upload-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.055); border-radius: 14px; padding: 16px; margin-bottom: 8px; transition: border-color 0.15s; }
-        .upload-card:hover { border-color: rgba(255,255,255,0.1); }
-        .u-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
-        .u-course { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.85); margin-bottom: 3px; }
-        .u-meta { font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.28); font-weight: 300; }
-        .u-badge { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; padding: 3px 10px; border-radius: 99px; flex-shrink: 0; }
-        .badge-video { background: rgba(77,168,98,0.12); color: #4da862; border: 1px solid rgba(77,168,98,0.22); }
-        .badge-photo { background: rgba(100,160,220,0.1); color: rgba(130,185,240,0.85); border: 1px solid rgba(100,160,220,0.18); }
-        .u-note { font-family: 'Playfair Display', serif; font-size: 13px; font-style: italic; font-weight: 400; color: rgba(255,255,255,0.38); line-height: 1.6; }
-        .u-club { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); border-radius: 99px; padding: 3px 10px; }
+        .discovery-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.055); border-radius: 14px; overflow: hidden; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+        .discovery-card:hover { border-color: rgba(77,168,98,0.28); }
+        .discovery-media { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #0d2318; }
+        .discovery-body { padding: 14px 16px; }
+        .discovery-course { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); margin-bottom: 3px; }
+        .discovery-user { font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.28); margin-bottom: 8px; }
+        .discovery-note { font-family: 'Playfair Display', serif; font-size: 13px; font-style: italic; color: rgba(255,255,255,0.38); line-height: 1.6; margin-bottom: 10px; }
+        .discovery-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+        .d-tag { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 500; color: #4da862; background: rgba(77,168,98,0.1); border: 1px solid rgba(77,168,98,0.2); border-radius: 99px; padding: 2px 8px; }
+        .d-tag-gray { color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
+        .empty-discovery { padding: 32px; text-align: center; color: rgba(255,255,255,0.2); font-family: 'Outfit', sans-serif; font-size: 13px; border: 1px dashed rgba(255,255,255,0.08); border-radius: 14px; }
         .cta-box { border-radius: 18px; padding: 28px 24px; text-align: center; background: linear-gradient(145deg, rgba(45,122,66,0.14) 0%, rgba(45,122,66,0.04) 100%); border: 1px solid rgba(77,168,98,0.2); position: relative; overflow: hidden; }
         .cta-box::before { content: '19TH HOLE'; position: absolute; top: 12px; right: 16px; font-family: 'Outfit', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 0.2em; color: rgba(77,168,98,0.25); }
         .cta-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; margin-bottom: 8px; color: #fff; }
@@ -148,6 +197,7 @@ export default function Home() {
         .a4 { animation: rise 0.55s cubic-bezier(.22,1,.36,1) 0.19s both; }
         .a5 { animation: rise 0.55s cubic-bezier(.22,1,.36,1) 0.25s both; }
         .a6 { animation: rise 0.55s cubic-bezier(.22,1,.36,1) 0.31s both; }
+        .a7 { animation: rise 0.55s cubic-bezier(.22,1,.36,1) 0.37s both; }
       `}</style>
 
       <div className="bg-texture" />
@@ -243,11 +293,11 @@ export default function Home() {
           <div className="section a4">
             <div className="section-head">
               <span className="section-label">Top Trip Destinations</span>
-              <button className="section-link">View all</button>
+              <button className="section-link" onClick={() => router.push("/search")}>View all</button>
             </div>
             <div className="dest-wrap">
               {DESTINATIONS.map(d => (
-                <button key={d.name} className="dest-pill">
+                <button key={d.name} className="dest-pill" onClick={() => router.push(`/search?q=${encodeURIComponent(d.name)}`)}>
                   <span className="dest-name">{d.name}</span>
                   <span className="dest-count">{d.courses} courses</span>
                 </button>
@@ -257,29 +307,27 @@ export default function Home() {
 
           <div className="rule" />
 
-          {/* Trending */}
+          {/* Trending — real from DB */}
           <div className="section a5">
             <div className="section-head">
               <span className="section-label">Trending This Week</span>
-              <button className="section-link">See all</button>
+              <button className="section-link" onClick={() => router.push("/search")}>See all</button>
             </div>
-            {TRENDING_COURSES.map((c, i) => (
-              <button key={c.name} className="course-card">
+            {trendingCourses.map((c, i) => (
+              <button key={c.id} className="course-card" onClick={() => router.push(`/courses/${c.id}`)}>
                 <div className="c-left">
                   <span className="c-num">{i + 1}</span>
                   <div>
                     <div className="c-name">{c.name}</div>
                     <div className="c-meta">
-                      <span>{c.location}</span>
+                      <span>{c.city}, {c.state}</span>
                       <span className="u-dot" />
-                      <span>Par {c.par}</span>
-                      <span className="u-dot" />
-                      <span className="c-tag">{c.tag}</span>
+                      <span>{c.holeCount || 18} holes</span>
                     </div>
                   </div>
                 </div>
                 <div className="c-right">
-                  <span className="c-clips">{c.uploads} clips</span>
+                  <span className="c-clips">{c.uploadCount || 0} clips</span>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="m9 18 6-6-6-6" />
                   </svg>
@@ -290,36 +338,52 @@ export default function Home() {
 
           <div className="rule" />
 
-          {/* Recent uploads */}
+          {/* Discovery feed — real uploads */}
           <div className="section a6">
             <div className="section-head">
               <span className="section-label">Fresh Scouting Intel</span>
-              <button className="section-link">See all</button>
             </div>
-            {RECENT_UPLOADS.map((u, i) => (
-              <div key={i} className="upload-card">
-                <div className="u-top">
-                  <div>
-                    <div className="u-course">{u.course} &mdash; Hole {u.hole} &middot; Par {u.par}</div>
-                    <div className="u-meta">@{u.user}</div>
-                  </div>
-                  <span className={`u-badge ${u.type === "VIDEO" ? "badge-video" : "badge-photo"}`}>
-                    {u.type}
-                  </span>
-                </div>
-                <p className="u-note">&ldquo;{u.note}&rdquo;</p>
-                <div className="u-club">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2L8 18l4-3 4 3L12 2z" />
-                  </svg>
-                  {u.club}
-                </div>
+            {discoveryUploads.length === 0 ? (
+              <div className="empty-discovery">
+                No clips yet — be the first to upload
               </div>
-            ))}
+            ) : (
+              discoveryUploads.map((u) => (
+                <div
+                  key={u.id}
+                  className="discovery-card"
+                  onClick={() => router.push(`/courses/${u.courseId}/holes`)}
+                >
+                  {u.mediaType === "VIDEO" ? (
+                    <video
+                      src={u.mediaUrl}
+                      className="discovery-media"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : (
+                    <img src={u.mediaUrl} alt="clip" className="discovery-media" />
+                  )}
+                  <div className="discovery-body">
+                    <div className="discovery-course">{u.courseName}</div>
+                    <div className="discovery-user">@{u.username}</div>
+                    {u.strategyNote && (
+                      <p className="discovery-note">&ldquo;{u.strategyNote}&rdquo;</p>
+                    )}
+                    <div className="discovery-tags">
+                      {u.shotType && <span className="d-tag">{formatShotType(u.shotType)}</span>}
+                      {u.clubUsed && <span className="d-tag d-tag-gray">{u.clubUsed}</span>}
+                      <span className="d-tag d-tag-gray">{u.mediaType === "VIDEO" ? "Video" : "Photo"}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* CTA */}
-          <div className="cta-box a6">
+          <div className="cta-box a7">
             <p className="cta-title">Just played somewhere great?</p>
             <p className="cta-sub">
               Share what you know hole by hole. Your footage helps every golfer who plays it next.
@@ -357,8 +421,8 @@ export default function Home() {
           </button>
 
           {[
-            { label: "Saved", icon: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z", path: "/" },
-            { label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11A4 4 0 1 0 12 3a4 4 0 0 0 0 8z", path: "/" },
+            { label: "Saved", icon: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z", path: "/saved" },
+            { label: "Profile", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11A4 4 0 1 0 12 3a4 4 0 0 0 0 8z", path: "/profile" },
           ].map(item => (
             <button key={item.label} className="nav-btn" onClick={() => router.push(item.path)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
