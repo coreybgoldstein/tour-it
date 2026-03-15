@@ -41,38 +41,49 @@ function TourItLogo({ size = 26 }: { size?: number }) {
   );
 }
 
-// Golf flag icon for Hole button
+// Golf flag for Hole button
 function HoleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="2" x2="12" y2="20" />
-      <path d="M12 2 L20 6 L12 10 Z" fill="white" stroke="none" />
-      <ellipse cx="12" cy="21" rx="4" ry="1.2" fill="none" stroke="white" strokeWidth="1.5" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <line x1="12" y1="3" x2="12" y2="21" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path d="M12 3 L20 7 L12 11 Z" fill="white" />
+      <ellipse cx="12" cy="21" rx="4" ry="1.2" stroke="white" strokeWidth="1.5" fill="none" />
     </svg>
   );
 }
 
-// Course map pin icon
+// Clubhouse icon — peaked roof, facade, windows, door
 function CourseIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 6 C3 4 5 2 8 2 C10 2 11.5 3 12 4 C12.5 3 14 2 16 2 C19 2 21 4 21 6 C21 10 16 14 12 18 C8 14 3 10 3 6Z" />
-      <line x1="12" y1="8" x2="12" y2="14" />
-      <path d="M12 8 L16 10 L12 12 Z" fill="white" stroke="none" />
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+      {/* Roof */}
+      <path d="M2 10 L12 3 L22 10" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      {/* Building body */}
+      <rect x="4" y="10" width="16" height="11" rx="1" stroke="white" strokeWidth="1.8" fill="none" />
+      {/* Left window */}
+      <rect x="6" y="13" width="3" height="3" rx="0.5" stroke="white" strokeWidth="1.4" fill="none" />
+      {/* Right window */}
+      <rect x="15" y="13" width="3" height="3" rx="0.5" stroke="white" strokeWidth="1.4" fill="none" />
+      {/* Door */}
+      <path d="M10 21 L10 17 Q12 15.5 14 17 L14 21" stroke="white" strokeWidth="1.4" fill="none" strokeLinejoin="round" />
     </svg>
   );
 }
 
 function VideoCard({
   clip,
-  onTapHole,
   onTapCourse,
+  onTapHole,
   isActive,
+  immersive,
+  onToggleImmersive,
 }: {
   clip: FeedClip;
-  onTapHole: () => void;
   onTapCourse: () => void;
+  onTapHole: () => void;
   isActive: boolean;
+  immersive: boolean;
+  onToggleImmersive: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -97,6 +108,8 @@ function VideoCard({
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}>
+
+      {/* Media — tap toggles immersive */}
       {clip.mediaType === "VIDEO" ? (
         <video
           ref={videoRef}
@@ -104,26 +117,26 @@ function VideoCard({
           loop
           muted={muted}
           playsInline
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          onClick={onTapHole}
+          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
+          onClick={onToggleImmersive}
         />
       ) : (
         <img
           src={clip.mediaUrl}
           alt="clip"
           style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
-          onClick={onTapHole}
+          onClick={onToggleImmersive}
         />
       )}
 
-      {/* Main gradient */}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.75) 75%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
+      {/* Bottom gradient — always visible */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
 
-      {/* Mute button */}
+      {/* Mute button — always visible */}
       {clip.mediaType === "VIDEO" && (
         <button
           onClick={() => setMuted(m => !m)}
-          style={{ position: "absolute", bottom: 180, left: 16, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}
+          style={{ position: "absolute", bottom: 185, left: 16, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}
         >
           {muted ? (
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -137,8 +150,9 @@ function VideoCard({
         </button>
       )}
 
-      {/* Right action buttons */}
-      <div style={{ position: "absolute", right: 14, bottom: 110, display: "flex", flexDirection: "column", gap: "18px", alignItems: "center", zIndex: 5 }}>
+      {/* Right actions — always visible, order: Like, Course, Hole, Share */}
+      <div style={{ position: "absolute", right: 14, bottom: 110, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
+
         {/* Like */}
         <button
           onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }}
@@ -150,17 +164,6 @@ function VideoCard({
             </svg>
           </div>
           <span style={{ fontSize: "10px", color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
-        </button>
-
-        {/* Share */}
-        <button style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-            </svg>
-          </div>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
         </button>
 
         {/* Course */}
@@ -184,9 +187,20 @@ function VideoCard({
           </div>
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
         </button>
+
+        {/* Share */}
+        <button style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </div>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
+        </button>
       </div>
 
-      {/* Bottom clip info */}
+      {/* Bottom clip info — always visible */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 80px", zIndex: 5, pointerEvents: "none" }}>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "3px" }}>
           @{clip.username}
@@ -212,6 +226,15 @@ function VideoCard({
           )}
         </div>
       </div>
+
+      {/* Immersive mode — tap anywhere to exit hint */}
+      {immersive && (
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none", opacity: 0.35 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "white", textAlign: "center", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            Tap to show controls
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -225,6 +248,7 @@ export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userCount, setUserCount] = useState<number | null>(null);
+  const [immersive, setImmersive] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -243,7 +267,6 @@ export default function Home() {
       }
     });
 
-    // Trending courses
     supabase
       .from("Course")
       .select("id, name, city, state, uploadCount")
@@ -251,13 +274,11 @@ export default function Home() {
       .limit(8)
       .then(({ data }) => { if (data) setTrendingCourses(data); });
 
-    // User count for community stat
     supabase
       .from("User")
       .select("*", { count: "exact", head: true })
       .then(({ count }) => { if (count) setUserCount(count); });
 
-    // Feed clips
     async function loadClips() {
       const { data: uploads } = await supabase
         .from("Upload")
@@ -288,8 +309,10 @@ export default function Home() {
     loadClips();
   }, []);
 
+  // Exit immersive on scroll
   const handleScroll = useCallback(() => {
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    setImmersive(false);
     scrollTimeout.current = setTimeout(() => {
       const feed = feedRef.current;
       if (!feed) return;
@@ -319,9 +342,13 @@ export default function Home() {
         .chip small { font-size: 8px; color: rgba(255,255,255,0.3); font-family: 'Outfit', sans-serif; }
         .chips-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
         .chips-row::-webkit-scrollbar { display: none; }
+        .top-overlay { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .top-overlay.hidden { opacity: 0; pointer-events: none; transform: translateY(-8px); }
+        .bottom-nav-wrap { transition: opacity 0.3s ease, transform 0.3s ease; }
+        .bottom-nav-wrap.hidden { opacity: 0; pointer-events: none; transform: translateY(8px); }
       `}</style>
 
-      {/* Video feed — fills the whole screen */}
+      {/* Video feed */}
       <div ref={feedRef} className="feed" onScroll={handleScroll}>
         {loading ? (
           <div style={{ height: "100svh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px", fontFamily: "'Outfit', sans-serif" }}>
@@ -340,18 +367,20 @@ export default function Home() {
               <VideoCard
                 clip={clip}
                 isActive={i === activeIndex}
-                onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)}
+                immersive={immersive}
+                onToggleImmersive={() => setImmersive(v => !v)}
                 onTapCourse={() => router.push(`/courses/${clip.courseId}`)}
+                onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)}
               />
             </div>
           ))
         )}
       </div>
 
-      {/* Pinned overlay — top of screen, over the video */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
+      {/* Top overlay — hides in immersive mode */}
+      <div className={`top-overlay${immersive ? " hidden" : ""}`} style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
 
-        {/* Logo row */}
+        {/* Logo + avatar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <TourItLogo size={26} />
@@ -386,8 +415,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Stats row */}
-        <div style={{ display: "flex", gap: "0", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden", marginBottom: "10px", backdropFilter: "blur(12px)" }}>
+        {/* Stats */}
+        <div style={{ display: "flex", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden", marginBottom: "10px", backdropFilter: "blur(12px)" }}>
           {[
             { value: "4,200+", label: "Courses" },
             { value: "38K+", label: "Holes" },
@@ -401,7 +430,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Search bar */}
+        {/* Search */}
         <button
           onClick={() => router.push("/search")}
           style={{ width: "100%", display: "flex", alignItems: "center", gap: "9px", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.18)", borderRadius: "12px", padding: "10px 14px", backdropFilter: "blur(16px)", marginBottom: "8px", cursor: "pointer", textAlign: "left" }}
@@ -426,21 +455,13 @@ export default function Home() {
             { name: "Kiawah", count: 11 },
             { name: "Sea Island", count: 9 },
           ].map(d => (
-            <button
-              key={d.name}
-              className="chip"
-              onClick={() => router.push(`/search?q=${encodeURIComponent(d.name)}`)}
-            >
+            <button key={d.name} className="chip" onClick={() => router.push(`/search?q=${encodeURIComponent(d.name)}`)}>
               <span>{d.name}</span>
               <small>{d.count}</small>
             </button>
           ))}
           {trendingCourses.filter(c => c.uploadCount > 0).slice(0, 3).map(c => (
-            <button
-              key={c.id}
-              className="chip"
-              onClick={() => router.push(`/courses/${c.id}`)}
-            >
+            <button key={c.id} className="chip" onClick={() => router.push(`/courses/${c.id}`)}>
               <span>{c.name.split(" ").slice(0, 2).join(" ")}</span>
               <small>{c.uploadCount} clips</small>
             </button>
@@ -448,8 +469,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Bottom nav */}
-      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)" }}>
+      {/* Bottom nav — hides in immersive mode */}
+      <nav className={`bottom-nav-wrap${immersive ? " hidden" : ""}`} style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)" }}>
         {[
           { label: "Home", path: "/", active: true, icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
           { label: "Search", path: "/search", active: false, icon: "M21 21l-4.35-4.35M11 19A8 8 0 1 0 11 3a8 8 0 0 0 0 16z" },
