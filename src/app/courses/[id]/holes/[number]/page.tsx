@@ -150,7 +150,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
       {activeShot?.yardageOverlay && (
         <div style={{ position: "absolute", top: "50%", left: 16, transform: "translateY(-50%)", zIndex: 10 }}>
           <div style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 14px", backdropFilter: "blur(8px)" }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1 }}>{activeShot.yardageOverlay}</div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1 }}>{activeShot.yardageOverlay} <span style={{ fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.6)" }}>yds</span></div>
           </div>
         </div>
       )}
@@ -419,7 +419,7 @@ export default function HolePage() {
             {activeUpload.yardageOverlay && (
               <div style={{ position: "absolute", top: "45%", left: 16, zIndex: 15 }}>
                 <div style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 14px" }}>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff" }}>{activeUpload.yardageOverlay}</div>
+                                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff" }}>{activeUpload.yardageOverlay} <span style={{ fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.6)" }}>yds</span></div>
                 </div>
               </div>
             )}
