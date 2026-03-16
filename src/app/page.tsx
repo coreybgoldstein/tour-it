@@ -78,14 +78,12 @@ function VideoCard({
   clip,
   onTapCourse,
   onTapHole,
-  onSingleTap,
   onTapUser,
   isActive,
 }: {
   clip: FeedClip;
   onTapCourse: () => void;
   onTapHole: () => void;
-  onSingleTap: () => void;
   onTapUser: () => void;
   isActive: boolean;
 }) {
@@ -111,7 +109,7 @@ function VideoCard({
     if (now - lastTapRef.current < 300) {
       onTapCourse();
     } else {
-      onSingleTap();
+      setMuted(m => !m);
     }
     lastTapRef.current = now;
   };
@@ -211,7 +209,6 @@ export default function Home() {
   const [userCount, setUserCount] = useState<number | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [immersive, setImmersive] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -344,7 +341,7 @@ avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
       {searchOpen && <div className="search-backdrop" onClick={closeSearch} />}
 
       {/* Top overlay */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, transition: "opacity 0.25s ease, transform 0.25s ease", opacity: immersive ? 0 : 1, pointerEvents: immersive ? "none" : "auto", transform: immersive ? "translateY(-6px)" : "translateY(0)", background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
 
         {/* Logo + avatar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
