@@ -139,7 +139,7 @@ function UserInfo({ avatarUrl, username, courseName, holeNumber, onTapUser }: {
         {courseName}
       </div>
       {holeNumber && (
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", fontWeight: 600, color: "#4da862" }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "15px", fontWeight: 600, color: "#4da862" }}>
           Hole {holeNumber}
         </div>
       )}
@@ -263,9 +263,10 @@ function SeriesCard({
       <UserInfo avatarUrl={item.avatarUrl} username={item.username} courseName={item.courseName} holeNumber={item.holeNumber} onTapUser={onTapUser} />
 
       {shotIndex === 0 && item.shots.length > 1 && (
-        <div style={{ position: "absolute", bottom: 84, left: 16, zIndex: 5, display: "flex", alignItems: "center", gap: 4, opacity: 0.55, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: 90, left: 0, right: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 4, opacity: 0.7, pointerEvents: "none", zIndex: 5 }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.6)", letterSpacing: "0.06em" }}>SWIPE FOR NEXT SHOT</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.06em" }}>SWIPE FOR NEXT SHOT</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </div>
       )}
     </div>
