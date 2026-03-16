@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import BottomNav from "@/components/BottomNav";
 
 type TrendingCourse = {
   id: string;
@@ -31,13 +30,11 @@ type FeedClip = {
   seriesId: string | null;
   seriesOrder: number | null;
   yardageOverlay: string | null;
-  // For series cards — all shots pre-loaded
-  seriesShots?: FeedClip[];
 };
 
 type FeedItem =
   | { type: "clip"; clip: FeedClip }
-  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseId: string; holeId: string; username: string; avatarUrl: string | null; userId: string };
+  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseId: string; holeId: string; holeNumber?: number; username: string; avatarUrl: string | null; userId: string };
 
 type CourseResult = {
   id: string;
@@ -84,30 +81,82 @@ function CourseIcon() {
   );
 }
 
-const SHOT_LABEL: Record<string, string> = {
-  TEE_SHOT: "Tee Shot", APPROACH: "Approach", LAY_UP: "Layup",
-  CHIP: "Chip", PITCH: "Pitch", PUTT: "Putt",
-  BUNKER: "Bunker", FULL_HOLE: "Full Hole", RECOVERY: "Recovery",
-};
+// Shared right panel buttons
+function RightPanel({ courseId, courseName, onTapCourse, onTapHole, liked, onLike, likeCount }: {
+  courseId: string; courseName: string;
+  onTapCourse: () => void; onTapHole: () => void;
+  liked: boolean; onLike: () => void; likeCount: number;
+}) {
+  return (
+    <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
+      <button onClick={onLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <span style={{ fontSize: "10px", color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
+      </button>
+      <button onClick={onTapCourse} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><CourseIcon /></div>
+        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Course</span>
+      </button>
+      <button onClick={onTapHole} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><HoleIcon /></div>
+        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
+      </button>
+      <button
+        onClick={() => {
+          const url = `https://tour-it.vercel.app/courses/${courseId}`;
+          if (navigator.share) navigator.share({ title: courseName, text: `Check out ${courseName} on Tour It — scout before you play`, url }).catch(() => {});
+          else navigator.clipboard.writeText(url).then(() => alert("Link copied!")).catch(() => {});
+        }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
+      >
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
+        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
+      </button>
+    </div>
+  );
+}
 
-// Series card — horizontal swipe between shots, vertical swipe still works
+// Shared bottom user info — avatar, @username, course name, hole number
+function UserInfo({ avatarUrl, username, courseName, holeNumber, onTapUser }: {
+  avatarUrl: string | null; username: string; courseName: string; holeNumber?: number; onTapUser: () => void;
+}) {
+  return (
+    <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5 }}>
+      <button onClick={onTapUser} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer", marginBottom: 7 }}>
+        <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {avatarUrl
+            ? <img src={avatarUrl} alt={username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          }
+        </div>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>@{username}</span>
+      </button>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 4 }}>
+        {courseName}
+      </div>
+      {holeNumber && (
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", fontWeight: 600, color: "#4da862" }}>
+          Hole {holeNumber}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Series card — horizontal swipe between shots
 function SeriesCard({
-  item,
-  isActive,
-  onSingleTap,
-  onTapCourse,
-  onTapHole,
-  onTapUser,
+  item, isActive, muted, onUnmute, onSingleTap, onTapCourse, onTapHole, onTapUser,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
-  isActive: boolean;
-  onSingleTap: () => void;
-  onTapCourse: () => void;
-  onTapHole: () => void;
-  onTapUser: () => void;
+  isActive: boolean; muted: boolean;
+  onUnmute: () => void; onSingleTap: () => void;
+  onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
-  const [muted, setMuted] = useState(true);
   const [liked, setLiked] = useState(false);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const touchStartX = useRef(0);
@@ -117,13 +166,10 @@ function SeriesCard({
 
   useEffect(() => {
     if (!isActive) {
-      // Pause all videos when card not active
       Object.values(videoRefs.current).forEach(v => { if (v) { v.pause(); v.currentTime = 0; } });
       setShotIndex(0);
-      setMuted(true);
       return;
     }
-    // Play active shot
     item.shots.forEach((shot, i) => {
       const el = videoRefs.current[shot.id];
       if (!el) return;
@@ -131,6 +177,11 @@ function SeriesCard({
       else { el.pause(); el.currentTime = 0; }
     });
   }, [isActive, shotIndex, item.shots]);
+
+  useEffect(() => {
+    const el = videoRefs.current[activeShot?.id];
+    if (el) el.muted = muted;
+  }, [muted, activeShot]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -140,45 +191,29 @@ function SeriesCard({
   const handleTouchEnd = (e: React.TouchEvent) => {
     const dx = touchStartX.current - e.changedTouches[0].clientX;
     const dy = touchStartY.current - e.changedTouches[0].clientY;
-    // Only handle horizontal if clearly more horizontal than vertical
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
       e.stopPropagation();
       if (dx > 0 && shotIndex < item.shots.length - 1) setShotIndex(i => i + 1);
       else if (dx < 0 && shotIndex > 0) setShotIndex(i => i - 1);
     }
-    // Vertical swipes fall through to parent feed
   };
 
-  const handleTap = (e: React.MouseEvent) => {
+  const handleTap = () => {
     const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      onTapCourse();
-    } else {
-      setMuted(false);
-      onSingleTap();
-    }
+    if (now - lastTapRef.current < 300) { onTapCourse(); }
+    else { onUnmute(); onSingleTap(); }
     lastTapRef.current = now;
   };
 
   return (
-    <div
-      style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}
+    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Render all shots stacked, show only active */}
       {item.shots.map((shot, i) => (
         <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.18s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
           {shot.mediaType === "VIDEO" ? (
-            <video
-              ref={el => { videoRefs.current[shot.id] = el; }}
-              src={shot.mediaUrl}
-              loop
-              muted={muted}
-              playsInline
-              style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
-              onClick={handleTap}
-            />
+            <video ref={el => { videoRefs.current[shot.id] = el; }} src={shot.mediaUrl} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={handleTap} />
           ) : (
             <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={handleTap} />
           )}
@@ -187,14 +222,14 @@ function SeriesCard({
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
 
-      {/* Play a Hole With Me banner */}
+      {/* Banner */}
       <div style={{ position: "absolute", top: 60, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 5 }}>
-        <div style={{ background: "rgba(180,145,60,0.85)", backdropFilter: "blur(8px)", borderRadius: 99, padding: "5px 14px", display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ background: "rgba(180,145,60,0.85)", backdropFilter: "blur(8px)", borderRadius: 99, padding: "5px 14px" }}>
           <span style={{ fontSize: 11, fontFamily: "'Outfit', sans-serif", fontWeight: 600, color: "#fff" }}>🏌️ Play a Hole With Me</span>
         </div>
       </div>
 
-      {/* Shot progress dots */}
+      {/* Shot dots */}
       <div style={{ position: "absolute", top: 100, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5, zIndex: 5, pointerEvents: "none" }}>
         {item.shots.map((_, i) => (
           <div key={i} style={{ height: 3, borderRadius: 99, background: i === shotIndex ? "#c8a96e" : "rgba(255,255,255,0.3)", width: i === shotIndex ? 22 : 7, transition: "all 0.3s" }} />
@@ -211,7 +246,7 @@ function SeriesCard({
         </div>
       )}
 
-      {/* Left/right arrows */}
+      {/* Arrows */}
       {shotIndex > 0 && (
         <button onClick={() => setShotIndex(i => i - 1)} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -223,93 +258,29 @@ function SeriesCard({
         </button>
       )}
 
-      {/* Right panel */}
-      <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
-        <button onClick={() => setLiked(l => !l)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </div>
-        </button>
-        <button onClick={onTapCourse} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><CourseIcon /></div>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Course</span>
-        </button>
-        <button onClick={onTapHole} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><HoleIcon /></div>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
-        </button>
-        <button
-          onClick={() => {
-            const url = `https://tour-it.vercel.app/courses/${item.courseId}`;
-            if (navigator.share) navigator.share({ title: item.courseName, text: `Check out ${item.courseName} on Tour It`, url }).catch(() => {});
-            else navigator.clipboard.writeText(url).then(() => alert("Link copied!")).catch(() => {});
-          }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
-        >
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          </div>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
-        </button>
-      </div>
+      <RightPanel courseId={item.courseId} courseName={item.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={() => setLiked(l => !l)} likeCount={0} />
 
-      {/* Bottom info */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5 }}>
-        <button onClick={onTapUser} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer", marginBottom: 5 }}>
-          <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {item.avatarUrl
-              ? <img src={item.avatarUrl} alt={item.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            }
-          </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>@{item.username}</span>
-        </button>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "4px", lineHeight: 1.2 }}>{item.courseName}</div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 5 }}>
-          {activeShot?.shotType && (
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", fontWeight: 600, color: "#c8a96e", background: "rgba(180,145,60,0.15)", border: "1px solid rgba(180,145,60,0.3)", borderRadius: "99px", padding: "2px 9px" }}>
-              {SHOT_LABEL[activeShot.shotType] || activeShot.shotType}
-            </span>
-          )}
-          {activeShot?.clubUsed && (
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "99px", padding: "2px 9px" }}>{activeShot.clubUsed}</span>
-          )}
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "99px", padding: "2px 9px" }}>
-            Shot {shotIndex + 1} of {item.shots.length}
-          </span>
+      <UserInfo avatarUrl={item.avatarUrl} username={item.username} courseName={item.courseName} holeNumber={item.holeNumber} onTapUser={onTapUser} />
+
+      {shotIndex === 0 && item.shots.length > 1 && (
+        <div style={{ position: "absolute", bottom: 84, left: 16, zIndex: 5, display: "flex", alignItems: "center", gap: 4, opacity: 0.55, pointerEvents: "none" }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.6)", letterSpacing: "0.06em" }}>SWIPE FOR NEXT SHOT</span>
         </div>
-        {activeShot?.strategyNote && (
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>{activeShot.strategyNote}</div>
-        )}
-        {shotIndex === 0 && item.shots.length > 1 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, opacity: 0.55 }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.6)", letterSpacing: "0.06em" }}>SWIPE FOR NEXT SHOT</span>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
 
 // Single clip card
 function VideoCard({
-  clip,
-  onTapCourse,
-  onTapHole,
-  onTapUser,
-  onSingleTap,
-  isActive,
+  clip, isActive, muted, onUnmute, onSingleTap, onTapCourse, onTapHole, onTapUser,
 }: {
-  clip: FeedClip;
-  onTapCourse: () => void;
-  onTapHole: () => void;
-  onTapUser: () => void;
-  onSingleTap: () => void;
-  isActive: boolean;
+  clip: FeedClip; isActive: boolean; muted: boolean;
+  onUnmute: () => void; onSingleTap: () => void;
+  onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(true);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(clip.likeCount || 0);
   const lastTapRef = useRef<number>(0);
@@ -317,23 +288,18 @@ function VideoCard({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (isActive) {
-      video.play().catch(() => {});
-    } else {
-      video.pause();
-      video.currentTime = 0;
-      setMuted(true);
-    }
+    if (isActive) { video.play().catch(() => {}); }
+    else { video.pause(); video.currentTime = 0; }
   }, [isActive]);
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted;
+  }, [muted]);
 
   const handleMediaTap = () => {
     const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      onTapCourse();
-    } else {
-      setMuted(false);
-      onSingleTap();
-    }
+    if (now - lastTapRef.current < 300) { onTapCourse(); }
+    else { onUnmute(); onSingleTap(); }
     lastTapRef.current = now;
   };
 
@@ -344,10 +310,8 @@ function VideoCard({
       ) : (
         <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={handleMediaTap} />
       )}
-
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
 
-      {/* Yardage overlay */}
       {clip.yardageOverlay && (
         <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 5, pointerEvents: "none" }}>
           <div style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 14px" }}>
@@ -357,58 +321,9 @@ function VideoCard({
         </div>
       )}
 
-      {/* Right panel */}
-      <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
-        <button onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </div>
-          <span style={{ fontSize: "10px", color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
-        </button>
-        <button onClick={onTapCourse} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><CourseIcon /></div>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Course</span>
-        </button>
-        <button onClick={onTapHole} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><HoleIcon /></div>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
-        </button>
-        <button
-          onClick={() => {
-            const url = `https://tour-it.vercel.app/courses/${clip.courseId}`;
-            const text = `Check out ${clip.courseName} on Tour It — scout before you play`;
-            if (navigator.share) navigator.share({ title: clip.courseName, text, url }).catch(() => {});
-            else navigator.clipboard.writeText(url).then(() => alert("Link copied!")).catch(() => {});
-          }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
-        >
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          </div>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
-        </button>
-      </div>
+      <RightPanel courseId={clip.courseId} courseName={clip.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }} likeCount={likeCount} />
 
-      {/* Bottom clip info */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5 }}>
-        <button onClick={onTapUser} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer", marginBottom: 5 }}>
-          <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {clip.avatarUrl
-              ? <img src={clip.avatarUrl} alt={clip.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            }
-          </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>@{clip.username}</span>
-        </button>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "5px", lineHeight: 1.2 }}>{clip.courseName}</div>
-        {clip.strategyNote && (
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.72)", marginBottom: "9px", lineHeight: 1.5 }}>{clip.strategyNote}</div>
-        )}
-        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-          {clip.shotType && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: "99px", padding: "2px 9px" }}>{clip.shotType.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>}
-          {clip.clubUsed && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "99px", padding: "2px 9px" }}>{clip.clubUsed}</span>}
-        </div>
-      </div>
+      <UserInfo avatarUrl={clip.avatarUrl} username={clip.username} courseName={clip.courseName} holeNumber={clip.holeNumber} onTapUser={onTapUser} />
     </div>
   );
 }
@@ -429,6 +344,7 @@ export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [immersive, setImmersive] = useState(false);
+  const [muted, setMuted] = useState(true);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -451,10 +367,8 @@ export default function Home() {
       }
     });
 
-    supabase.from("Course").select("id, name, city, state, uploadCount").order("uploadCount", { ascending: false }).limit(8)
-      .then(({ data }) => { if (data) setTrendingCourses(data); });
-    supabase.from("Course").select("id, name, city, state, uploadCount").order("name")
-      .then(({ data }) => { if (data) setAllCourses(data); });
+    supabase.from("Course").select("id, name, city, state, uploadCount").order("uploadCount", { ascending: false }).limit(8).then(({ data }) => { if (data) setTrendingCourses(data); });
+    supabase.from("Course").select("id, name, city, state, uploadCount").order("name").then(({ data }) => { if (data) setAllCourses(data); });
     supabase.from("User").select("*", { count: "exact", head: true }).then(({ count }) => { if (count !== null) setUserCount(count); });
     supabase.from("Course").select("*", { count: "exact", head: true }).then(({ count }) => { if (count !== null) setCourseCount(count); });
     supabase.from("Hole").select("*", { count: "exact", head: true }).then(({ count }) => { if (count !== null) setHoleCount(count); });
@@ -471,10 +385,12 @@ export default function Home() {
 
       const courseIds = [...new Set(uploads.map((u: any) => u.courseId))];
       const userIds = [...new Set(uploads.map((u: any) => u.userId))];
+      const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
 
-      const [{ data: courses }, { data: users }] = await Promise.all([
+      const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
         supabase.from("Course").select("id, name").in("id", courseIds),
         supabase.from("User").select("id, username, avatarUrl").in("id", userIds),
+        supabase.from("Hole").select("id, holeNumber").in("id", holeIds),
       ]);
 
       const enriched: FeedClip[] = uploads.map((u: any) => ({
@@ -482,9 +398,9 @@ export default function Home() {
         courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
         username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
         avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
+        holeNumber: holes?.find((h: any) => h.id === u.holeId)?.holeNumber || undefined,
       }));
 
-      // Group series, deduplicate
       const seriesMap: Record<string, FeedClip[]> = {};
       const singleClips: FeedClip[] = [];
 
@@ -497,29 +413,14 @@ export default function Home() {
         }
       });
 
-      // Build feed items — series first, then singles, videos before photos
       const seriesItems: FeedItem[] = Object.entries(seriesMap).map(([seriesId, shots]) => {
         const sorted = shots.sort((a, b) => (a.seriesOrder || 0) - (b.seriesOrder || 0));
         const first = sorted[0];
-        return {
-          type: "series",
-          seriesId,
-          shots: sorted,
-          courseName: first.courseName,
-          courseId: first.courseId,
-          holeId: first.holeId,
-          username: first.username,
-          avatarUrl: first.avatarUrl,
-          userId: first.userId,
-        };
+        return { type: "series", seriesId, shots: sorted, courseName: first.courseName, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
       });
 
       const singleItems: FeedItem[] = singleClips
-        .sort((a, b) => {
-          if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1;
-          if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1;
-          return 0;
-        })
+        .sort((a, b) => { if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1; if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1; return 0; })
         .map(clip => ({ type: "clip", clip }));
 
       setFeedItems([...seriesItems, ...singleItems]);
@@ -570,7 +471,6 @@ export default function Home() {
         .search-backdrop { position: fixed; inset: 0; z-index: 18; }
       `}</style>
 
-      {/* Feed */}
       <div ref={feedRef} className="feed" onScroll={handleScroll}>
         {loading ? (
           <div style={{ height: "100svh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px", fontFamily: "'Outfit', sans-serif" }}>Loading clips...</div>
@@ -583,23 +483,9 @@ export default function Home() {
           feedItems.map((item, i) => (
             <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
               {item.type === "series" ? (
-                <SeriesCard
-                  item={item}
-                  isActive={i === activeIndex}
-                  onSingleTap={() => setImmersive(true)}
-                  onTapUser={() => router.push(`/profile/${item.userId}`)}
-                  onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.courseId}`); }}
-                  onTapHole={() => router.push(`/courses/${item.courseId}/holes`)}
-                />
+                <SeriesCard item={item} isActive={i === activeIndex} muted={muted} onUnmute={() => setMuted(false)} onSingleTap={() => setImmersive(true)} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.courseId}`); }} onTapHole={() => router.push(`/courses/${item.courseId}/holes`)} />
               ) : (
-                <VideoCard
-                  clip={item.clip}
-                  isActive={i === activeIndex}
-                  onSingleTap={() => setImmersive(true)}
-                  onTapUser={() => router.push(`/profile/${item.clip.userId}`)}
-                  onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.clip.courseId}`); }}
-                  onTapHole={() => router.push(`/courses/${item.clip.courseId}/holes`)}
-                />
+                <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onUnmute={() => setMuted(false)} onSingleTap={() => setImmersive(true)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.clip.courseId}`); }} onTapHole={() => router.push(`/courses/${item.clip.courseId}/holes`)} />
               )}
             </div>
           ))
@@ -608,7 +494,6 @@ export default function Home() {
 
       {searchOpen && <div className="search-backdrop" onClick={closeSearch} />}
 
-      {/* Top overlay */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px", transition: "opacity 0.25s ease, transform 0.25s ease", opacity: immersive ? 0 : 1, pointerEvents: immersive ? "none" : "auto", transform: immersive ? "translateY(-6px)" : "translateY(0)" }}>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
