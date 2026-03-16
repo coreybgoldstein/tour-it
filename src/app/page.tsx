@@ -154,7 +154,18 @@ function VideoCard({
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
         </button>
 
-        <button style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+                <button
+          onClick={() => {
+            const url = `https://tour-it.vercel.app/courses/${clip.courseId}`;
+            const text = `Check out ${clip.courseName} on Tour It — scout before you play`;
+            if (navigator.share) {
+              navigator.share({ title: clip.courseName, text, url }).catch(() => {});
+            } else {
+              navigator.clipboard.writeText(url).then(() => alert("Link copied!")).catch(() => {});
+            }
+          }}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
+        >
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           </div>
