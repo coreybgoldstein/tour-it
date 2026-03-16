@@ -79,12 +79,14 @@ function VideoCard({
   onTapCourse,
   onTapHole,
   onTapUser,
+  onSingleTap,
   isActive,
 }: {
   clip: FeedClip;
   onTapCourse: () => void;
   onTapHole: () => void;
   onTapUser: () => void;
+  onSingleTap: () => void;
   isActive: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -101,16 +103,18 @@ function VideoCard({
     } else {
       video.pause();
       video.currentTime = 0;
+      setMuted(true);
     }
   }, [isActive]);
 
-  // Single tap = mute/unmute, double tap = course page
+  // Single tap = unmute + hide overlay. Double tap = course page.
   const handleMediaTap = () => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
       onTapCourse();
     } else {
-      setMuted(m => !m);
+      setMuted(false);
+      onSingleTap();
     }
     lastTapRef.current = now;
   };
@@ -125,7 +129,7 @@ function VideoCard({
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
 
-      {/* Right panel: Like, Course, Hole, Share, Mute */}
+      {/* Right panel: Like, Course, Hole, Share */}
       <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
 
         {/* Like */}
@@ -166,20 +170,6 @@ function VideoCard({
           </div>
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
         </button>
-
-        {/* Mute — only for videos, below share */}
-        {clip.mediaType === "VIDEO" && (
-          <button onClick={() => setMuted(m => !m)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${muted ? "rgba(255,255,255,0.2)" : "rgba(77,168,98,0.5)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-              {muted ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-              )}
-            </div>
-            <span style={{ fontSize: "10px", color: muted ? "rgba(255,255,255,0.65)" : "#4da862", fontFamily: "'Outfit', sans-serif" }}>{muted ? "Muted" : "Sound"}</span>
-          </button>
-        )}
       </div>
 
       {/* Bottom clip info */}
@@ -218,6 +208,7 @@ export default function Home() {
   const [userCount, setUserCount] = useState<number | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [immersive, setImmersive] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -291,6 +282,7 @@ export default function Home() {
       if (!feed) return;
       const index = Math.round(feed.scrollTop / window.innerHeight);
       setActiveIndex(index);
+      setImmersive(false);
     }, 50);
   }, []);
 
@@ -343,8 +335,9 @@ export default function Home() {
               <VideoCard
                 clip={clip}
                 isActive={i === activeIndex}
+                onSingleTap={() => setImmersive(true)}
                 onTapUser={() => router.push(`/profile/${clip.userId}`)}
-                onTapCourse={() => router.push(`/courses/${clip.courseId}`)}
+                onTapCourse={() => { setImmersive(false); router.push(`/courses/${clip.courseId}`); }}
                 onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)}
               />
             </div>
@@ -355,8 +348,8 @@ export default function Home() {
       {/* Backdrop to close search */}
       {searchOpen && <div className="search-backdrop" onClick={closeSearch} />}
 
-      {/* Top overlay */}
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px" }}>
+      {/* Top overlay — fades out when immersive */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px", transition: "opacity 0.25s ease, transform 0.25s ease", opacity: immersive ? 0 : 1, pointerEvents: immersive ? "none" : "auto", transform: immersive ? "translateY(-6px)" : "translateY(0)" }}>
 
         {/* Logo + avatar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
