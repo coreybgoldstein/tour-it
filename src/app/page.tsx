@@ -282,7 +282,6 @@ export default function Home() {
       if (!feed) return;
       const index = Math.round(feed.scrollTop / window.innerHeight);
       setActiveIndex(index);
-      setImmersive(false);
     }, 50);
   }, []);
 
