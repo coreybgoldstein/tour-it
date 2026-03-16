@@ -104,6 +104,7 @@ function VideoCard({
     }
   }, [isActive]);
 
+  // Single tap = mute/unmute, double tap = course page
   const handleMediaTap = () => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
@@ -124,17 +125,10 @@ function VideoCard({
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
 
-         {clip.mediaType === "VIDEO" && (
-        <button onClick={() => setMuted(m => !m)} style={{ position: "absolute", top: 52, right: 16, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
-          {muted ? (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-          ) : (
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          )}
-        </button>
-      )}
+      {/* Right panel: Like, Course, Hole, Share, Mute */}
+      <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
 
-      <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "20px", alignItems: "center", zIndex: 5 }}>
+        {/* Like */}
         <button onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -142,17 +136,20 @@ function VideoCard({
           <span style={{ fontSize: "10px", color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
         </button>
 
+        {/* Course */}
         <button onClick={onTapCourse} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><CourseIcon /></div>
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Course</span>
         </button>
 
+        {/* Hole */}
         <button onClick={onTapHole} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><HoleIcon /></div>
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
         </button>
 
-                <button
+        {/* Share */}
+        <button
           onClick={() => {
             const url = `https://tour-it.vercel.app/courses/${clip.courseId}`;
             const text = `Check out ${clip.courseName} on Tour It — scout before you play`;
@@ -169,13 +166,25 @@ function VideoCard({
           </div>
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
         </button>
+
+        {/* Mute — only for videos, below share */}
+        {clip.mediaType === "VIDEO" && (
+          <button onClick={() => setMuted(m => !m)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${muted ? "rgba(255,255,255,0.2)" : "rgba(77,168,98,0.5)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+              {muted ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              )}
+            </div>
+            <span style={{ fontSize: "10px", color: muted ? "rgba(255,255,255,0.65)" : "#4da862", fontFamily: "'Outfit', sans-serif" }}>{muted ? "Muted" : "Sound"}</span>
+          </button>
+        )}
       </div>
 
+      {/* Bottom clip info */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5 }}>
-        <button
-          onClick={onTapUser}
-          style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer", marginBottom: 5 }}
-        >
+        <button onClick={onTapUser} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer", marginBottom: 5 }}>
           <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {clip.avatarUrl
               ? <img src={clip.avatarUrl} alt={clip.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -260,7 +269,7 @@ export default function Home() {
         ...u,
         courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
         username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
-avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
+        avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
       }));
 
       const sorted = [...enriched].sort((a, b) => {
@@ -280,7 +289,7 @@ avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
     scrollTimeout.current = setTimeout(() => {
       const feed = feedRef.current;
       if (!feed) return;
-            const index = Math.round(feed.scrollTop / window.innerHeight);
+      const index = Math.round(feed.scrollTop / window.innerHeight);
       setActiveIndex(index);
     }, 50);
   }, []);
@@ -331,7 +340,13 @@ avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
         ) : (
           clips.map((clip, i) => (
             <div key={clip.id} className="feed-item">
-              <VideoCard clip={clip} isActive={i === activeIndex} onSingleTap={() => setImmersive(v => !v)} onTapUser={() => router.push(`/profile/${clip.userId}`)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${clip.courseId}`); }} onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)} />
+              <VideoCard
+                clip={clip}
+                isActive={i === activeIndex}
+                onTapUser={() => router.push(`/profile/${clip.userId}`)}
+                onTapCourse={() => router.push(`/courses/${clip.courseId}`)}
+                onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)}
+              />
             </div>
           ))
         )}
@@ -390,40 +405,21 @@ avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
           </>
         )}
 
-        {/* Search — shows placeholder button when closed, real input when open */}
+        {/* Search */}
         <div style={{ position: "relative", marginBottom: searchOpen ? 0 : "8px" }}>
-
-          {/* Always-visible search bar container */}
           <div style={{ display: "flex", alignItems: "center", gap: "9px", background: "rgba(0,0,0,0.6)", border: `1.5px solid ${searchOpen ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.18)"}`, borderRadius: searchOpen && searchResults.length > 0 ? "12px 12px 0 0" : "12px", padding: "10px 14px", backdropFilter: "blur(16px)", transition: "border-color 0.15s" }}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.45, flexShrink: 0 }}>
               <circle cx="7" cy="7" r="5" stroke="white" strokeWidth="1.5" />
               <path d="M11 11L14 14" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-
-            {/* When closed — tappable label that opens search */}
             {!searchOpen && (
-              <button
-                onClick={() => setSearchOpen(true)}
-                style={{ flex: 1, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}
-              >
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>
-                  Find a course or hole — name, city, state...
-                </span>
+              <button onClick={() => setSearchOpen(true)} style={{ flex: 1, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>Find a course or hole — name, city, state...</span>
               </button>
             )}
-
-            {/* When open — real input, autoFocus triggers iOS keyboard */}
             {searchOpen && (
-              <input
-                className="search-input-field"
-                placeholder="Course name, city, or state..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                autoComplete="off"
-                autoFocus
-              />
+              <input className="search-input-field" placeholder="Course name, city, or state..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} autoComplete="off" autoFocus />
             )}
-
             {searchOpen && (
               <button onClick={closeSearch} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", flexShrink: 0 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -431,16 +427,13 @@ avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
             )}
           </div>
 
-          {/* Dropdown results */}
           {searchOpen && searchResults.length > 0 && (
             <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "rgba(10,22,13,0.97)", border: "1.5px solid rgba(77,168,98,0.3)", borderTop: "none", borderRadius: "0 0 12px 12px", backdropFilter: "blur(20px)", zIndex: 30, overflow: "hidden" }}>
               {searchResults.map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (
                   <div key={course.id} className="search-result-item" onClick={() => { closeSearch(); router.push(`/courses/${course.id}`); }}>
-                    <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", flexShrink: 0 }}>
-                      {abbr}
-                    </div>
+                    <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", flexShrink: 0 }}>{abbr}</div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.name}</div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
@@ -455,7 +448,6 @@ avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
             </div>
           )}
 
-          {/* No results */}
           {searchOpen && searchQuery.trim().length > 0 && searchResults.length === 0 && (
             <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "rgba(10,22,13,0.97)", border: "1.5px solid rgba(255,255,255,0.1)", borderTop: "none", borderRadius: "0 0 12px 12px", backdropFilter: "blur(20px)", zIndex: 30, padding: "14px", textAlign: "center" }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>No courses found for &ldquo;{searchQuery}&rdquo;</div>
@@ -463,7 +455,7 @@ avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
           )}
         </div>
 
-        {/* Chips — hidden when search open */}
+        {/* Chips */}
         {!searchOpen && (
           <div className="chips-row">
             {[
