@@ -20,6 +20,7 @@ type FeedClip = {
   courseId: string;
   courseName: string;
   holeId: string;
+  holeNumber?: number;
   strategyNote: string | null;
   clubUsed: string | null;
   shotType: string | null;
@@ -27,7 +28,16 @@ type FeedClip = {
   avatarUrl: string | null;
   userId: string;
   likeCount: number;
+  seriesId: string | null;
+  seriesOrder: number | null;
+  yardageOverlay: string | null;
+  // For series cards — all shots pre-loaded
+  seriesShots?: FeedClip[];
 };
+
+type FeedItem =
+  | { type: "clip"; clip: FeedClip }
+  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseId: string; holeId: string; username: string; avatarUrl: string | null; userId: string };
 
 type CourseResult = {
   id: string;
@@ -74,6 +84,215 @@ function CourseIcon() {
   );
 }
 
+const SHOT_LABEL: Record<string, string> = {
+  TEE_SHOT: "Tee Shot", APPROACH: "Approach", LAY_UP: "Layup",
+  CHIP: "Chip", PITCH: "Pitch", PUTT: "Putt",
+  BUNKER: "Bunker", FULL_HOLE: "Full Hole", RECOVERY: "Recovery",
+};
+
+// Series card — horizontal swipe between shots, vertical swipe still works
+function SeriesCard({
+  item,
+  isActive,
+  onSingleTap,
+  onTapCourse,
+  onTapHole,
+  onTapUser,
+}: {
+  item: Extract<FeedItem, { type: "series" }>;
+  isActive: boolean;
+  onSingleTap: () => void;
+  onTapCourse: () => void;
+  onTapHole: () => void;
+  onTapUser: () => void;
+}) {
+  const [shotIndex, setShotIndex] = useState(0);
+  const [muted, setMuted] = useState(true);
+  const [liked, setLiked] = useState(false);
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const lastTapRef = useRef<number>(0);
+  const activeShot = item.shots[shotIndex];
+
+  useEffect(() => {
+    if (!isActive) {
+      // Pause all videos when card not active
+      Object.values(videoRefs.current).forEach(v => { if (v) { v.pause(); v.currentTime = 0; } });
+      setShotIndex(0);
+      setMuted(true);
+      return;
+    }
+    // Play active shot
+    item.shots.forEach((shot, i) => {
+      const el = videoRefs.current[shot.id];
+      if (!el) return;
+      if (i === shotIndex) { el.currentTime = 0; el.play().catch(() => {}); }
+      else { el.pause(); el.currentTime = 0; }
+    });
+  }, [isActive, shotIndex, item.shots]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const dx = touchStartX.current - e.changedTouches[0].clientX;
+    const dy = touchStartY.current - e.changedTouches[0].clientY;
+    // Only handle horizontal if clearly more horizontal than vertical
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      e.stopPropagation();
+      if (dx > 0 && shotIndex < item.shots.length - 1) setShotIndex(i => i + 1);
+      else if (dx < 0 && shotIndex > 0) setShotIndex(i => i - 1);
+    }
+    // Vertical swipes fall through to parent feed
+  };
+
+  const handleTap = (e: React.MouseEvent) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      onTapCourse();
+    } else {
+      setMuted(false);
+      onSingleTap();
+    }
+    lastTapRef.current = now;
+  };
+
+  return (
+    <div
+      style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Render all shots stacked, show only active */}
+      {item.shots.map((shot, i) => (
+        <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.18s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
+          {shot.mediaType === "VIDEO" ? (
+            <video
+              ref={el => { videoRefs.current[shot.id] = el; }}
+              src={shot.mediaUrl}
+              loop
+              muted={muted}
+              playsInline
+              style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
+              onClick={handleTap}
+            />
+          ) : (
+            <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={handleTap} />
+          )}
+        </div>
+      ))}
+
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
+
+      {/* Play a Hole With Me banner */}
+      <div style={{ position: "absolute", top: 60, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 5 }}>
+        <div style={{ background: "rgba(180,145,60,0.85)", backdropFilter: "blur(8px)", borderRadius: 99, padding: "5px 14px", display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, fontFamily: "'Outfit', sans-serif", fontWeight: 600, color: "#fff" }}>🏌️ Play a Hole With Me</span>
+        </div>
+      </div>
+
+      {/* Shot progress dots */}
+      <div style={{ position: "absolute", top: 100, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5, zIndex: 5, pointerEvents: "none" }}>
+        {item.shots.map((_, i) => (
+          <div key={i} style={{ height: 3, borderRadius: 99, background: i === shotIndex ? "#c8a96e" : "rgba(255,255,255,0.3)", width: i === shotIndex ? 22 : 7, transition: "all 0.3s" }} />
+        ))}
+      </div>
+
+      {/* Yardage overlay */}
+      {activeShot?.yardageOverlay && (
+        <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 5, pointerEvents: "none" }}>
+          <div style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 14px", backdropFilter: "blur(8px)" }}>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff" }}>{activeShot.yardageOverlay}</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.6)", marginLeft: 5 }}>yds</span>
+          </div>
+        </div>
+      )}
+
+      {/* Left/right arrows */}
+      {shotIndex > 0 && (
+        <button onClick={() => setShotIndex(i => i - 1)} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+      )}
+      {shotIndex < item.shots.length - 1 && (
+        <button onClick={() => setShotIndex(i => i + 1)} style={{ position: "absolute", right: 60, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      )}
+
+      {/* Right panel */}
+      <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
+        <button onClick={() => setLiked(l => !l)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+        </button>
+        <button onClick={onTapCourse} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><CourseIcon /></div>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Course</span>
+        </button>
+        <button onClick={onTapHole} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><HoleIcon /></div>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
+        </button>
+        <button
+          onClick={() => {
+            const url = `https://tour-it.vercel.app/courses/${item.courseId}`;
+            if (navigator.share) navigator.share({ title: item.courseName, text: `Check out ${item.courseName} on Tour It`, url }).catch(() => {});
+            else navigator.clipboard.writeText(url).then(() => alert("Link copied!")).catch(() => {});
+          }}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
+        >
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </div>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
+        </button>
+      </div>
+
+      {/* Bottom info */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5 }}>
+        <button onClick={onTapUser} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer", marginBottom: 5 }}>
+          <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {item.avatarUrl
+              ? <img src={item.avatarUrl} alt={item.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            }
+          </div>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>@{item.username}</span>
+        </button>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "17px", fontWeight: 700, color: "#fff", marginBottom: "4px", lineHeight: 1.2 }}>{item.courseName}</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 5 }}>
+          {activeShot?.shotType && (
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", fontWeight: 600, color: "#c8a96e", background: "rgba(180,145,60,0.15)", border: "1px solid rgba(180,145,60,0.3)", borderRadius: "99px", padding: "2px 9px" }}>
+              {SHOT_LABEL[activeShot.shotType] || activeShot.shotType}
+            </span>
+          )}
+          {activeShot?.clubUsed && (
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "99px", padding: "2px 9px" }}>{activeShot.clubUsed}</span>
+          )}
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "99px", padding: "2px 9px" }}>
+            Shot {shotIndex + 1} of {item.shots.length}
+          </span>
+        </div>
+        {activeShot?.strategyNote && (
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>{activeShot.strategyNote}</div>
+        )}
+        {shotIndex === 0 && item.shots.length > 1 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 6, opacity: 0.55 }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.6)", letterSpacing: "0.06em" }}>SWIPE FOR NEXT SHOT</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Single clip card
 function VideoCard({
   clip,
   onTapCourse,
@@ -107,7 +326,6 @@ function VideoCard({
     }
   }, [isActive]);
 
-  // Single tap = unmute + hide overlay. Double tap = course page.
   const handleMediaTap = () => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
@@ -129,39 +347,38 @@ function VideoCard({
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
 
-      {/* Right panel: Like, Course, Hole, Share */}
-      <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
+      {/* Yardage overlay */}
+      {clip.yardageOverlay && (
+        <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 5, pointerEvents: "none" }}>
+          <div style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 14px" }}>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff" }}>{clip.yardageOverlay}</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.6)", marginLeft: 5 }}>yds</span>
+          </div>
+        </div>
+      )}
 
-        {/* Like */}
+      {/* Right panel */}
+      <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
         <button onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
           <span style={{ fontSize: "10px", color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
         </button>
-
-        {/* Course */}
         <button onClick={onTapCourse} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><CourseIcon /></div>
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Course</span>
         </button>
-
-        {/* Hole */}
         <button onClick={onTapHole} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><HoleIcon /></div>
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
         </button>
-
-        {/* Share */}
         <button
           onClick={() => {
             const url = `https://tour-it.vercel.app/courses/${clip.courseId}`;
             const text = `Check out ${clip.courseName} on Tour It — scout before you play`;
-            if (navigator.share) {
-              navigator.share({ title: clip.courseName, text, url }).catch(() => {});
-            } else {
-              navigator.clipboard.writeText(url).then(() => alert("Link copied!")).catch(() => {});
-            }
+            if (navigator.share) navigator.share({ title: clip.courseName, text, url }).catch(() => {});
+            else navigator.clipboard.writeText(url).then(() => alert("Link copied!")).catch(() => {});
           }}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
         >
@@ -202,10 +419,13 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [trendingCourses, setTrendingCourses] = useState<TrendingCourse[]>([]);
   const [allCourses, setAllCourses] = useState<CourseResult[]>([]);
-  const [clips, setClips] = useState<FeedClip[]>([]);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userCount, setUserCount] = useState<number | null>(null);
+  const [courseCount, setCourseCount] = useState<number | null>(null);
+  const [holeCount, setHoleCount] = useState<number | null>(null);
+  const [clipCount, setClipCount] = useState<number | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [immersive, setImmersive] = useState(false);
@@ -226,25 +446,26 @@ export default function Home() {
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
       if (data.user) {
-        const { data: profile } = await supabase
-          .from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
+        const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
         setUserProfile(profile);
       }
     });
 
     supabase.from("Course").select("id, name, city, state, uploadCount").order("uploadCount", { ascending: false }).limit(8)
       .then(({ data }) => { if (data) setTrendingCourses(data); });
-
     supabase.from("Course").select("id, name, city, state, uploadCount").order("name")
       .then(({ data }) => { if (data) setAllCourses(data); });
+    supabase.from("User").select("*", { count: "exact", head: true }).then(({ count }) => { if (count !== null) setUserCount(count); });
+    supabase.from("Course").select("*", { count: "exact", head: true }).then(({ count }) => { if (count !== null) setCourseCount(count); });
+    supabase.from("Hole").select("*", { count: "exact", head: true }).then(({ count }) => { if (count !== null) setHoleCount(count); });
+    supabase.from("Upload").select("*", { count: "exact", head: true }).then(({ count }) => { if (count !== null) setClipCount(count); });
 
-    supabase.from("User").select("*", { count: "exact", head: true })
-      .then(({ count }) => { if (count) setUserCount(count); });
-
-    async function loadClips() {
+    async function loadFeed() {
       const { data: uploads } = await supabase
-        .from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, userId")
-        .order("createdAt", { ascending: false }).limit(20);
+        .from("Upload")
+        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, userId, seriesId, seriesOrder, yardageOverlay")
+        .order("createdAt", { ascending: false })
+        .limit(40);
 
       if (!uploads || uploads.length === 0) { setLoading(false); return; }
 
@@ -263,16 +484,49 @@ export default function Home() {
         avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
       }));
 
-      const sorted = [...enriched].sort((a, b) => {
-        if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1;
-        if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1;
-        return 0;
+      // Group series, deduplicate
+      const seriesMap: Record<string, FeedClip[]> = {};
+      const singleClips: FeedClip[] = [];
+
+      enriched.forEach(clip => {
+        if (clip.seriesId) {
+          if (!seriesMap[clip.seriesId]) seriesMap[clip.seriesId] = [];
+          seriesMap[clip.seriesId].push(clip);
+        } else {
+          singleClips.push(clip);
+        }
       });
-      setClips(sorted);
+
+      // Build feed items — series first, then singles, videos before photos
+      const seriesItems: FeedItem[] = Object.entries(seriesMap).map(([seriesId, shots]) => {
+        const sorted = shots.sort((a, b) => (a.seriesOrder || 0) - (b.seriesOrder || 0));
+        const first = sorted[0];
+        return {
+          type: "series",
+          seriesId,
+          shots: sorted,
+          courseName: first.courseName,
+          courseId: first.courseId,
+          holeId: first.holeId,
+          username: first.username,
+          avatarUrl: first.avatarUrl,
+          userId: first.userId,
+        };
+      });
+
+      const singleItems: FeedItem[] = singleClips
+        .sort((a, b) => {
+          if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1;
+          if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1;
+          return 0;
+        })
+        .map(clip => ({ type: "clip", clip }));
+
+      setFeedItems([...seriesItems, ...singleItems]);
       setLoading(false);
     }
 
-    loadClips();
+    loadFeed();
   }, []);
 
   const handleScroll = useCallback(() => {
@@ -285,10 +539,7 @@ export default function Home() {
     }, 50);
   }, []);
 
-  const closeSearch = () => {
-    setSearchOpen(false);
-    setSearchQuery("");
-  };
+  const closeSearch = () => { setSearchOpen(false); setSearchQuery(""); };
 
   const formatStat = (n: number | null, fallback: string) => {
     if (n === null) return fallback;
@@ -319,38 +570,47 @@ export default function Home() {
         .search-backdrop { position: fixed; inset: 0; z-index: 18; }
       `}</style>
 
-      {/* Video feed */}
+      {/* Feed */}
       <div ref={feedRef} className="feed" onScroll={handleScroll}>
         {loading ? (
           <div style={{ height: "100svh", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px", fontFamily: "'Outfit', sans-serif" }}>Loading clips...</div>
-        ) : clips.length === 0 ? (
+        ) : feedItems.length === 0 ? (
           <div style={{ height: "100svh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px", padding: "20px", fontFamily: "'Outfit', sans-serif" }}>
             <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.3)", textAlign: "center" }}>No clips yet — be the first to upload</div>
             <button onClick={() => router.push("/upload")} style={{ background: "#4da862", border: "none", borderRadius: "10px", padding: "12px 28px", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Upload the first clip</button>
           </div>
         ) : (
-          clips.map((clip, i) => (
-            <div key={clip.id} className="feed-item">
-              <VideoCard
-                clip={clip}
-                isActive={i === activeIndex}
-                onSingleTap={() => setImmersive(true)}
-                onTapUser={() => router.push(`/profile/${clip.userId}`)}
-                onTapCourse={() => { setImmersive(false); router.push(`/courses/${clip.courseId}`); }}
-                onTapHole={() => router.push(`/courses/${clip.courseId}/holes`)}
-              />
+          feedItems.map((item, i) => (
+            <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
+              {item.type === "series" ? (
+                <SeriesCard
+                  item={item}
+                  isActive={i === activeIndex}
+                  onSingleTap={() => setImmersive(true)}
+                  onTapUser={() => router.push(`/profile/${item.userId}`)}
+                  onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.courseId}`); }}
+                  onTapHole={() => router.push(`/courses/${item.courseId}/holes`)}
+                />
+              ) : (
+                <VideoCard
+                  clip={item.clip}
+                  isActive={i === activeIndex}
+                  onSingleTap={() => setImmersive(true)}
+                  onTapUser={() => router.push(`/profile/${item.clip.userId}`)}
+                  onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.clip.courseId}`); }}
+                  onTapHole={() => router.push(`/courses/${item.clip.courseId}/holes`)}
+                />
+              )}
             </div>
           ))
         )}
       </div>
 
-      {/* Backdrop to close search */}
       {searchOpen && <div className="search-backdrop" onClick={closeSearch} />}
 
-      {/* Top overlay — fades out when immersive */}
+      {/* Top overlay */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 20, background: "linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.65) 60%, transparent 100%)", padding: "10px 16px 20px", transition: "opacity 0.25s ease, transform 0.25s ease", opacity: immersive ? 0 : 1, pointerEvents: immersive ? "none" : "auto", transform: immersive ? "translateY(-6px)" : "translateY(0)" }}>
 
-        {/* Logo + avatar */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <TourItLogo size={26} />
@@ -360,15 +620,10 @@ export default function Home() {
             </div>
           </div>
           <button onClick={() => router.push(user ? "/profile" : "/login")} style={{ width: 34, height: 34, borderRadius: "50%", background: userProfile?.avatarUrl ? "transparent" : "rgba(77,168,98,0.18)", border: "1.5px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", padding: 0, flexShrink: 0 }}>
-            {userProfile?.avatarUrl ? (
-              <img src={userProfile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            )}
+            {userProfile?.avatarUrl ? <img src={userProfile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
           </button>
         </div>
 
-        {/* Hero — hidden when search open */}
         {!searchOpen && (
           <>
             <div style={{ marginBottom: "8px" }}>
@@ -383,10 +638,10 @@ export default function Home() {
             </div>
             <div style={{ display: "flex", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden", marginBottom: "10px", backdropFilter: "blur(12px)" }}>
               {[
-                { value: "4,200+", label: "Courses" },
-                { value: "38K+", label: "Holes" },
-                { value: "112K+", label: "Clips" },
-                { value: userCount ? formatStat(userCount, "—") : "—", label: "Golfers" },
+                { value: courseCount !== null ? formatStat(courseCount, "—") : "—", label: "Courses" },
+                { value: holeCount !== null ? formatStat(holeCount, "—") : "—", label: "Holes" },
+                { value: clipCount !== null ? formatStat(clipCount, "—") : "—", label: "Clips" },
+                { value: userCount !== null ? formatStat(userCount, "—") : "—", label: "Golfers" },
               ].map((s, i, arr) => (
                 <div key={s.label} style={{ flex: 1, padding: "7px 4px", textAlign: "center", borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none" }}>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "13px", fontWeight: 700, color: "#fff" }}>{s.value}</div>
@@ -397,28 +652,13 @@ export default function Home() {
           </>
         )}
 
-        {/* Search */}
         <div style={{ position: "relative", marginBottom: searchOpen ? 0 : "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "9px", background: "rgba(0,0,0,0.6)", border: `1.5px solid ${searchOpen ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.18)"}`, borderRadius: searchOpen && searchResults.length > 0 ? "12px 12px 0 0" : "12px", padding: "10px 14px", backdropFilter: "blur(16px)", transition: "border-color 0.15s" }}>
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.45, flexShrink: 0 }}>
-              <circle cx="7" cy="7" r="5" stroke="white" strokeWidth="1.5" />
-              <path d="M11 11L14 14" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            {!searchOpen && (
-              <button onClick={() => setSearchOpen(true)} style={{ flex: 1, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>Find a course or hole — name, city, state...</span>
-              </button>
-            )}
-            {searchOpen && (
-              <input className="search-input-field" placeholder="Course name, city, or state..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} autoComplete="off" autoFocus />
-            )}
-            {searchOpen && (
-              <button onClick={closeSearch} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", flexShrink: 0 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              </button>
-            )}
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style={{ opacity: 0.45, flexShrink: 0 }}><circle cx="7" cy="7" r="5" stroke="white" strokeWidth="1.5" /><path d="M11 11L14 14" stroke="white" strokeWidth="1.5" strokeLinecap="round" /></svg>
+            {!searchOpen && <button onClick={() => setSearchOpen(true)} style={{ flex: 1, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer" }}><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "12px", color: "rgba(255,255,255,0.38)" }}>Find a course or hole — name, city, state...</span></button>}
+            {searchOpen && <input className="search-input-field" placeholder="Course name, city, or state..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} autoComplete="off" autoFocus />}
+            {searchOpen && <button onClick={closeSearch} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", flexShrink: 0 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>}
           </div>
-
           {searchOpen && searchResults.length > 0 && (
             <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "rgba(10,22,13,0.97)", border: "1.5px solid rgba(77,168,98,0.3)", borderTop: "none", borderRadius: "0 0 12px 12px", backdropFilter: "blur(20px)", zIndex: 30, overflow: "hidden" }}>
               {searchResults.map(course => {
@@ -428,10 +668,7 @@ export default function Home() {
                     <div style={{ width: 34, height: 34, borderRadius: 8, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", flexShrink: 0 }}>{abbr}</div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.name}</div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
-                        {course.city}, {course.state}
-                        {course.uploadCount > 0 && <span style={{ color: "#4da862", marginLeft: 6 }}>{course.uploadCount} clips</span>}
-                      </div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{course.city}, {course.state}{course.uploadCount > 0 && <span style={{ color: "#4da862", marginLeft: 6 }}>{course.uploadCount} clips</span>}</div>
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
                   </div>
@@ -439,7 +676,6 @@ export default function Home() {
               })}
             </div>
           )}
-
           {searchOpen && searchQuery.trim().length > 0 && searchResults.length === 0 && (
             <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "rgba(10,22,13,0.97)", border: "1.5px solid rgba(255,255,255,0.1)", borderTop: "none", borderRadius: "0 0 12px 12px", backdropFilter: "blur(20px)", zIndex: 30, padding: "14px", textAlign: "center" }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>No courses found for &ldquo;{searchQuery}&rdquo;</div>
@@ -447,35 +683,23 @@ export default function Home() {
           )}
         </div>
 
-        {/* Chips */}
         {!searchOpen && (
           <div className="chips-row">
             {[
-              { name: "Scottsdale", count: 34 },
-              { name: "Pinehurst", count: 28 },
-              { name: "Bandon", count: 19 },
-              { name: "Pebble Beach", count: 22 },
-              { name: "Myrtle Beach", count: 41 },
-              { name: "Kiawah", count: 11 },
-              { name: "Sea Island", count: 9 },
+              { name: "Scottsdale", count: 34 }, { name: "Pinehurst", count: 28 }, { name: "Bandon", count: 19 },
+              { name: "Pebble Beach", count: 22 }, { name: "Myrtle Beach", count: 41 }, { name: "Kiawah", count: 11 }, { name: "Sea Island", count: 9 },
             ].map(d => (
-              <button key={d.name} className="chip" onClick={() => router.push(`/search?q=${encodeURIComponent(d.name)}`)}>
-                <span>{d.name}</span>
-                <small>{d.count}</small>
-              </button>
+              <button key={d.name} className="chip" onClick={() => router.push(`/search?q=${encodeURIComponent(d.name)}`)}><span>{d.name}</span><small>{d.count}</small></button>
             ))}
             {trendingCourses.filter(c => c.uploadCount > 0).slice(0, 3).map(c => (
-              <button key={c.id} className="chip" onClick={() => router.push(`/courses/${c.id}`)}>
-                <span>{c.name.split(" ").slice(0, 2).join(" ")}</span>
-                <small>{c.uploadCount} clips</small>
-              </button>
+              <button key={c.id} className="chip" onClick={() => router.push(`/courses/${c.id}`)}><span>{c.name.split(" ").slice(0, 2).join(" ")}</span><small>{c.uploadCount} clips</small></button>
             ))}
           </div>
         )}
       </div>
 
-            <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        <button onClick={() => { setImmersive(false); }} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
+      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <button onClick={() => setImmersive(false)} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
           <span style={{ fontSize: "9px", color: "#4da862", fontFamily: "'Outfit', sans-serif" }}>Home</span>
         </button>
