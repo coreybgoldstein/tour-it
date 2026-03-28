@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useLike } from "@/hooks/useLike";
 import { useSave } from "@/hooks/useSave";
-import UserAvatarButton from "@/components/UserAvatarButton";
 
 type Course = {
   id: string;
@@ -299,8 +298,6 @@ export default function CourseProfilePage() {
           </div>
         </div>
 
-        {/* Top right: avatar */}
-        <UserAvatarButton style={{ position: "absolute", top: 52, right: 16, zIndex: 10 }} />
 
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 20px 18px", zIndex: 10 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.08em" }}>

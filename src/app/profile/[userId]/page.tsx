@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import UserAvatarButton from "@/components/UserAvatarButton";
 
 type UserProfile = {
   id: string;
@@ -263,7 +262,7 @@ export default function PublicProfilePage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <div style={{ fontSize: "15px", fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>@{profile.username}</div>
-        <UserAvatarButton />
+        <div style={{ width: 36 }} />
       </div>
 
       {/* Avatar + name */}

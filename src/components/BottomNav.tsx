@@ -7,12 +7,14 @@ import { createClient } from "@/lib/supabase/client";
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const [userId, setUserId] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id ?? null);
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data } = await supabase.from("User").select("avatarUrl").eq("id", user.id).single();
+      if (data?.avatarUrl) setAvatarUrl(data.avatarUrl);
     });
   }, []);
 
@@ -80,9 +82,17 @@ export default function BottomNav() {
         onClick={() => router.push("/profile")}
         style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}
       >
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isProfile ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
+        <div style={{
+          width: 24, height: 24, borderRadius: "50%", overflow: "hidden",
+          border: `1.5px solid ${isProfile ? "#4da862" : "rgba(255,255,255,0.25)"}`,
+          background: "rgba(77,168,98,0.15)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          {avatarUrl
+            ? <img src={avatarUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={isProfile ? "#4da862" : "rgba(255,255,255,0.5)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          }
+        </div>
         <span style={{ fontSize: "9px", color: isProfile ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>
       </button>
 

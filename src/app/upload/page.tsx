@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import UserAvatarButton from "@/components/UserAvatarButton";
 
 type Course = {
   id: string;
@@ -461,10 +460,9 @@ function UploadPageInner() {
         }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", flex: 1 }}>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>
           {step === 1 ? "Select Course" : step === 2 ? "Select Hole" : step === 3 ? (isSeriesMode ? "Play a Hole With Me" : "Upload Clip") : step === 4 ? "Add Intel" : "Review"}
         </span>
-        <UserAvatarButton />
       </div>
 
       <div className="progress-bar">
