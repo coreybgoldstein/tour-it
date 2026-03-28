@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { useLike } from "@/hooks/useLike";
 
 type TrendingCourse = {
   id: string;
@@ -157,7 +158,6 @@ function SeriesCard({
   onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
-  const [liked, setLiked] = useState(false);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -258,7 +258,7 @@ function SeriesCard({
         </button>
       )}
 
-      <RightPanel courseId={item.courseId} courseName={item.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={() => setLiked(l => !l)} likeCount={0} />
+      <RightPanel courseId={item.courseId} courseName={item.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={false} onLike={() => {}} likeCount={0} />
 
       <UserInfo avatarUrl={item.avatarUrl} username={item.username} courseName={item.courseName} holeNumber={item.holeNumber} onTapUser={onTapUser} />
 
@@ -282,8 +282,10 @@ function VideoCard({
   onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(clip.likeCount || 0);
+const { liked, likeCount, toggleLike } = useLike({
+  uploadId: clip.id,
+  initialLikeCount: clip.likeCount || 0,
+});
   const lastTapRef = useRef<number>(0);
 
   useEffect(() => {
@@ -322,7 +324,7 @@ function VideoCard({
         </div>
       )}
 
-      <RightPanel courseId={clip.courseId} courseName={clip.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }} likeCount={likeCount} />
+      <RightPanel courseId={clip.courseId} courseName={clip.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={toggleLike} likeCount={likeCount} />
 
       <UserInfo avatarUrl={clip.avatarUrl} username={clip.username} courseName={clip.courseName} holeNumber={clip.holeNumber} onTapUser={onTapUser} />
     </div>
