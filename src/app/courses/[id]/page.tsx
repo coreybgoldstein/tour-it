@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useLike } from "@/hooks/useLike";
 import { useSave } from "@/hooks/useSave";
+import UserAvatarButton from "@/components/UserAvatarButton";
 
 type Course = {
   id: string;
@@ -290,9 +291,7 @@ export default function CourseProfilePage() {
         <button onClick={() => router.back()} style={{ position: "absolute", top: 52, left: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <button onClick={() => router.push("/profile")} style={{ position: "absolute", top: 52, right: 66, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-</button>
+        <UserAvatarButton style={{ position: "absolute", top: 52, right: 66, zIndex: 10 }} />
 
         {/* Course abbr badge — placeholder until real logo */}
         <div style={{ position: "absolute", top: 52, right: 16, width: 42, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", zIndex: 10 }}>

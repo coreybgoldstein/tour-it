@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import UserAvatarButton from "@/components/UserAvatarButton";
 
 type Course = {
   id: string;
@@ -279,7 +280,7 @@ function SearchPageInner() {
             Home
           </button>
           <span className="nav-title">Find a Course</span>
-          <span className="nav-count">{loadingCourses ? "..." : `${results.length} courses`}</span>
+          <UserAvatarButton />
         </nav>
 
         <div className="page">
