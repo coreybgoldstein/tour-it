@@ -100,12 +100,14 @@ export default function ProfilePage() {
         setCoursesPlayed(courses || []);
       }
 
-      // Fetch saved courses
-      const { data: saves } = await supabase
-        .from("Save")
-        .select("id, courseId, saveType")
-        .eq("userId", authUser.id)
-        .not("courseId", "is", null);
+// Fetch saved courses
+const { data: saves, error: savesError } = await supabase
+  .from("Save")
+  .select("id, courseId, saveType")
+  .eq("userId", authUser.id)
+  .not("courseId", "is", null);
+
+console.log("Saves query result:", saves, savesError);
 
       if (saves && saves.length > 0) {
         const savedCourseIds = saves.map((s: any) => s.courseId);
