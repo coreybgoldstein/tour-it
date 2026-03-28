@@ -1,13 +1,24 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id ?? null);
+    });
+  }, []);
 
   const isHome = pathname === "/";
   const isSearch = pathname === "/search";
+  const isProfile = pathname === "/profile";
 
   return (
     <nav style={{
@@ -29,6 +40,17 @@ export default function BottomNav() {
         <span style={{ fontSize: "9px", color: isHome ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Home</span>
       </button>
 
+      {/* Search */}
+      <button
+        onClick={() => router.push("/search")}
+        style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}
+      >
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isSearch ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <span style={{ fontSize: "9px", color: isSearch ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Search</span>
+      </button>
+
       {/* Upload FAB */}
       <button
         onClick={() => router.push("/upload")}
@@ -42,15 +64,26 @@ export default function BottomNav() {
         <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.04em" }}>UPLOAD</span>
       </button>
 
-      {/* Search */}
+      {/* Notifications (placeholder) */}
       <button
-        onClick={() => router.push("/search")}
+        style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer", opacity: 0.4 }}
+        disabled
+      >
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif" }}>Alerts</span>
+      </button>
+
+      {/* Profile */}
+      <button
+        onClick={() => router.push("/profile")}
         style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}
       >
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isSearch ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isProfile ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
         </svg>
-        <span style={{ fontSize: "9px", color: isSearch ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Search</span>
+        <span style={{ fontSize: "9px", color: isProfile ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>
       </button>
 
     </nav>

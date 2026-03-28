@@ -150,8 +150,8 @@ const [{ data: userUploads }, { count: followers }, { count: following }] = awai
 let uploadsWithHoleNumber: Upload[] = [];
 if (userUploads && userUploads.length > 0) {
   const holeIds = [...new Set(userUploads.map((u: any) => u.holeId).filter(Boolean))];
-  const { data: holes } = await supabase.from("Hole").select("id, number").in("id", holeIds);
-  const holeMap = new Map(holes?.map((h: any) => [h.id, h.number]) || []);
+  const { data: holes } = await supabase.from("Hole").select("id, holeNumber").in("id", holeIds);
+  const holeMap = new Map(holes?.map((h: any) => [h.id, h.holeNumber]) || []);
   
   uploadsWithHoleNumber = userUploads.map((u: any) => ({
     ...u,
