@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -84,7 +84,9 @@ function UploadPageInner() {
 
   const [step, setStep] = useState(preselectedCourseId ? 2 : 1);
   const [authChecked, setAuthChecked] = useState(false);
-  const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
+  const [courseResults, setCourseResults] = useState<Course[]>([]);
+  const [courseLoading, setCourseLoading] = useState(false);
+  const courseDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -115,34 +117,53 @@ function UploadPageInner() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) {
         window.location.href = "/login?redirect=/upload";
       } else {
         setAuthChecked(true);
-        supabase.from("Course").select("id, name, city, state, holeCount").order("name").then(({ data: courses }) => {
-          if (courses) {
-            setAvailableCourses(courses);
-            if (preselectedCourseId) {
-              const match = courses.find((c: Course) => c.id === preselectedCourseId);
-              if (match) setSelectedCourse(match);
-            }
-          }
-        });
+        // If coming from a course page, fetch just that one course
+        if (preselectedCourseId) {
+          const { data: course } = await supabase
+            .from("Course")
+            .select("id, name, city, state, holeCount")
+            .eq("id", preselectedCourseId)
+            .single();
+          if (course) setSelectedCourse(course);
+        }
       }
     });
   }, []);
+
+  const searchCourses = useCallback((q: string) => {
+    if (courseDebounceRef.current) clearTimeout(courseDebounceRef.current);
+    if (!q.trim() || q.trim().length < 2) {
+      setCourseResults([]);
+      setCourseLoading(false);
+      return;
+    }
+    setCourseLoading(true);
+    courseDebounceRef.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("Course")
+        .select("id, name, city, state, holeCount")
+        .or(`name.ilike.%${q}%,city.ilike.%${q}%,state.ilike.%${q}%`)
+        .order("uploadCount", { ascending: false })
+        .limit(20);
+      setCourseResults(data || []);
+      setCourseLoading(false);
+    }, 280);
+  }, []);
+
+  useEffect(() => {
+    searchCourses(courseSearch);
+  }, [courseSearch, searchCourses]);
 
   const intelScore = INTEL_FIELDS.filter(f => intel[f as keyof typeof intel]?.trim()).length;
   const intelPct = Math.round((intelScore / INTEL_FIELDS.length) * 100);
   const intelLabel = intelPct >= 80 ? "Elite Intel" : intelPct >= 50 ? "Good Intel" : intelPct >= 25 ? "Basic Intel" : "Minimal Intel";
   const intelColor = intelPct >= 80 ? "#4da862" : intelPct >= 50 ? "#c8a96e" : intelPct >= 25 ? "#6a9fd4" : "rgba(255,255,255,0.25)";
-
-  const filteredCourses = availableCourses.filter(c =>
-    c.name.toLowerCase().includes(courseSearch.toLowerCase()) ||
-    c.city?.toLowerCase().includes(courseSearch.toLowerCase()) ||
-    c.state?.toLowerCase().includes(courseSearch.toLowerCase())
-  );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -478,11 +499,22 @@ function UploadPageInner() {
             <h1 className="step-title">Which course?</h1>
             <p className="step-sub">Search by name, city, or state.</p>
             <input className="search-input" placeholder="Search courses..." value={courseSearch} onChange={e => setCourseSearch(e.target.value)} autoFocus />
-            {availableCourses.length === 0 && (
-              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 20 }}>Loading courses...</p>
+            {courseLoading && (
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 20 }}>Searching...</p>
+            )}
+            {!courseLoading && courseSearch.trim().length < 2 && (
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 28, lineHeight: 1.6 }}>
+                Type at least 2 characters<br/>
+                <span style={{ fontSize: 12 }}>Search by name, city, or state</span>
+              </p>
+            )}
+            {!courseLoading && courseSearch.trim().length >= 2 && courseResults.length === 0 && (
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 28 }}>
+                No courses found — try a different spelling
+              </p>
             )}
             <div className="course-list">
-              {filteredCourses.map(course => {
+              {courseResults.map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (
                   <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(2); }}>
