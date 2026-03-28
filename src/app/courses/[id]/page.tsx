@@ -288,15 +288,19 @@ export default function CourseProfilePage() {
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(7,16,10,1) 0%, rgba(7,16,10,0.5) 45%, rgba(0,0,0,0.15) 100%)" }} />
 
-        <button onClick={() => router.back()} style={{ position: "absolute", top: 52, left: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        </button>
-        <UserAvatarButton style={{ position: "absolute", top: 52, right: 66, zIndex: 10 }} />
-
-        {/* Course abbr badge — placeholder until real logo */}
-        <div style={{ position: "absolute", top: 52, right: 16, width: 42, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", zIndex: 10 }}>
-          {abbr}
+        {/* Top left: back button + course logo badge */}
+        <div style={{ position: "absolute", top: 52, left: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 10 }}>
+          <button onClick={() => router.back()} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          {/* Course logo placeholder — swap src for real logo when available */}
+          <div style={{ width: 42, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>
+            {abbr}
+          </div>
         </div>
+
+        {/* Top right: avatar */}
+        <UserAvatarButton style={{ position: "absolute", top: 52, right: 16, zIndex: 10 }} />
 
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 20px 18px", zIndex: 10 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.08em" }}>
