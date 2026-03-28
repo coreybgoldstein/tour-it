@@ -178,7 +178,7 @@ export default function CourseProfilePage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { saved, toggleSave } = useSave({ courseId: id as string });
+  const { saved, saveType, toggleSave, showPicker, setShowPicker } = useSave({ courseId: id as string });
 
   useEffect(() => {
     if (!id) return;
@@ -324,7 +324,7 @@ export default function CourseProfilePage() {
       </div>
 
 {/* Action bar */}
-<div style={{ padding: "14px 20px 16px", display: "flex", gap: 8 }}>
+<div style={{ padding: "14px 20px 16px", display: "flex", gap: 8, position: "relative" }}>
   <button
     onClick={() => router.push(`/courses/${id}/holes`)}
     style={{ flex: 1, background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}
@@ -333,8 +333,8 @@ export default function CourseProfilePage() {
     Browse by hole
   </button>
   <button
-    onClick={toggleSave}
-    style={{ background: saved ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.06)", border: `1px solid ${saved ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 12, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+    onClick={() => setShowPicker(!showPicker)}
+    style={{ background: saved ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.06)", border: `1px solid ${saved ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 12, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}
   >
     <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? "#4da862" : "none"} stroke={saved ? "#4da862" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
   </button>
@@ -344,6 +344,32 @@ export default function CourseProfilePage() {
   >
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
   </button>
+
+  {/* Save picker dropdown */}
+  {showPicker && (
+    <div style={{ position: "absolute", top: "100%", right: 60, marginTop: 4, background: "rgba(13,35,24,0.98)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 12, padding: 6, zIndex: 50, minWidth: 160, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+      <button
+        onClick={() => toggleSave("PLAYED")}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "PLAYED" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}
+      >
+        <span style={{ fontSize: 16 }}>✓</span>
+        <div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "PLAYED" ? "#4da862" : "#fff" }}>Played</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I've played this course</div>
+        </div>
+      </button>
+      <button
+        onClick={() => toggleSave("BUCKET_LIST")}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "BUCKET_LIST" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left", marginTop: 2 }}
+      >
+        <span style={{ fontSize: 16 }}>⛳</span>
+        <div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#4da862" : "#fff" }}>Bucket List</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
+        </div>
+      </button>
+    </div>
+  )}
 </div>
 
       {/* 3-column vertical clip grid */}
