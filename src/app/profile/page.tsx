@@ -22,6 +22,8 @@ type Upload = {
   mediaType: string;
   courseId: string;
   holeId: string;
+  holeNumber?: number;
+  seriesId?: string | null;
   createdAt: string;
 };
 
@@ -48,6 +50,60 @@ type SavedCourse = {
     state: string;
   };
 };
+
+// Golf ball badge component
+function GolfBallBadge({ holeNumber, isGold = false, id }: { holeNumber: number; isGold?: boolean; id: string }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 40 40">
+      <defs>
+        <radialGradient id={`bg-${id}`} cx="30%" cy="25%" r="70%">
+          {isGold ? (
+            <>
+              <stop offset="0%" stopColor="#fef3c7"/>
+              <stop offset="50%" stopColor="#fcd34d"/>
+              <stop offset="85%" stopColor="#f59e0b"/>
+              <stop offset="100%" stopColor="#d97706"/>
+            </>
+          ) : (
+            <>
+              <stop offset="0%" stopColor="#ffffff"/>
+              <stop offset="50%" stopColor="#f8f8f8"/>
+              <stop offset="85%" stopColor="#e8e8e8"/>
+              <stop offset="100%" stopColor="#d8d8d8"/>
+            </>
+          )}
+        </radialGradient>
+        <radialGradient id={`dm-${id}`} cx="40%" cy="35%" r="60%">
+          <stop offset="0%" stopColor={isGold ? "rgba(120,53,15,0.05)" : "rgba(0,0,0,0.02)"}/>
+          <stop offset="100%" stopColor={isGold ? "rgba(120,53,15,0.15)" : "rgba(0,0,0,0.08)"}/>
+        </radialGradient>
+      </defs>
+      <circle cx="20" cy="20" r="18" fill={`url(#bg-${id})`}/>
+      <circle cx="20" cy="20" r="17.5" fill="none" stroke={isGold ? "rgba(180,83,9,0.3)" : "rgba(0,0,0,0.08)"} strokeWidth="0.5"/>
+      {/* Outer ring dimples */}
+      <circle cx="20" cy="4" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="30" cy="7" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="36" cy="15" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="36" cy="25" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="30" cy="33" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="20" cy="36" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="10" cy="33" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="4" cy="25" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="4" cy="15" r="2" fill={`url(#dm-${id})`}/>
+      <circle cx="10" cy="7" r="2" fill={`url(#dm-${id})`}/>
+      {/* Inner ring dimples */}
+      <circle cx="20" cy="9" r="1.5" fill={`url(#dm-${id})`}/>
+      <circle cx="28" cy="13" r="1.5" fill={`url(#dm-${id})`}/>
+      <circle cx="30" cy="22" r="1.5" fill={`url(#dm-${id})`}/>
+      <circle cx="25" cy="30" r="1.5" fill={`url(#dm-${id})`}/>
+      <circle cx="15" cy="30" r="1.5" fill={`url(#dm-${id})`}/>
+      <circle cx="10" cy="22" r="1.5" fill={`url(#dm-${id})`}/>
+      <circle cx="12" cy="13" r="1.5" fill={`url(#dm-${id})`}/>
+      {/* Hole number */}
+      <text x="20" y="24" fill={isGold ? "#78350f" : "#1a4d22"} fontSize="13" fontWeight="700" textAnchor="middle" style={{ fontFamily: "sans-serif" }}>{holeNumber}</text>
+    </svg>
+  );
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -85,29 +141,32 @@ export default function ProfilePage() {
       setEditHandicap(profile.handicapIndex?.toString() || "");
 
       const [{ data: userUploads }, { count: followers }, { count: following }] = await Promise.all([
-        supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, createdAt").eq("userId", authUser.id).order("createdAt", { ascending: false }),
+        supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt, hole:Hole(number)").eq("userId", authUser.id).order("createdAt", { ascending: false }),
         supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", authUser.id).eq("status", "ACTIVE"),
         supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", authUser.id).eq("status", "ACTIVE"),
       ]);
 
-      setUploads(userUploads || []);
+      // Map hole number from joined data
+      const uploadsWithHoleNumber = (userUploads || []).map((u: any) => ({
+        ...u,
+        holeNumber: u.hole?.number || null,
+      }));
+      setUploads(uploadsWithHoleNumber);
       setFollowerCount(followers || 0);
       setFollowingCount(following || 0);
 
       if (userUploads && userUploads.length > 0) {
-        const uniqueCourseIds = [...new Set(userUploads.map((u: Upload) => u.courseId))];
+        const uniqueCourseIds = [...new Set(userUploads.map((u: any) => u.courseId))];
         const { data: courses } = await supabase.from("Course").select("id, name, city, state").in("id", uniqueCourseIds);
         setCoursesPlayed(courses || []);
       }
 
-// Fetch saved courses
-const { data: saves, error: savesError } = await supabase
-  .from("Save")
-  .select("id, courseId, saveType")
-  .eq("userId", authUser.id)
-  .not("courseId", "is", null);
-
-console.log("Saves query result:", saves, savesError);
+      // Fetch saved courses
+      const { data: saves } = await supabase
+        .from("Save")
+        .select("id, courseId, saveType")
+        .eq("userId", authUser.id)
+        .not("courseId", "is", null);
 
       if (saves && saves.length > 0) {
         const savedCourseIds = saves.map((s: any) => s.courseId);
@@ -447,11 +506,23 @@ console.log("Saves query result:", saves, savesError);
                 ) : (
                   <video src={upload.mediaUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline />
                 )}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)" }} />
-                <div style={{ position: "absolute", bottom: "5px", left: "5px", fontSize: "8px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
-                  {coursesPlayed.find(c => c.id === upload.courseId)?.name?.split(" ").slice(0, 2).join(" ") || ""}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
+                
+                {/* Bottom bar: course name + golf ball badge */}
+                <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>
+                    {coursesPlayed.find(c => c.id === upload.courseId)?.name?.split(" ").slice(0, 2).join(" ") || ""}
+                  </div>
+                  {upload.holeNumber && (
+                    <GolfBallBadge 
+                      holeNumber={upload.holeNumber} 
+                      isGold={!!upload.seriesId} 
+                      id={upload.id} 
+                    />
+                  )}
                 </div>
-                {/* Delete indicator */}
+
+                {/* Menu indicator (top right) */}
                 <div style={{ position: "absolute", top: 5, right: 5, width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
                 </div>
