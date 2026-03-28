@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { useLike } from "@/hooks/useLike";
 
 type Course = {
   id: string;
@@ -82,8 +83,10 @@ function FeedCard({ clip, isActive, onTapHole, onTapCourse }: {
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(clip.likeCount || 0);
+const { liked, likeCount, toggleLike } = useLike({
+  uploadId: clip.id,
+  initialLikeCount: clip.likeCount || 0,
+});
 
   useEffect(() => {
     const v = videoRef.current;
@@ -120,7 +123,7 @@ function FeedCard({ clip, isActive, onTapHole, onTapCourse }: {
 
       {/* Right panel — smaller, centered icons */}
       <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", gap: 14, alignItems: "center", zIndex: 5 }}>
-        <button onClick={() => { setLiked(l => !l); setLikeCount(c => liked ? c - 1 : c + 1); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer" }}>
+        <button onClick={toggleLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
