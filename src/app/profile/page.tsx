@@ -61,7 +61,7 @@ export default function ProfilePage() {
   const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [savedCourses, setSavedCourses] = useState<SavedCourse[]>([]);
-  const [savedTab, setSavedTab] = useState<"PLAYED" | "BUCKET_LIST">("BUCKET_LIST");
+  const [coursesTab, setCoursesTab] = useState<"BUCKET_LIST" | "PLAYED" | "UPLOADED">("BUCKET_LIST");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editHandicap, setEditHandicap] = useState("");
@@ -101,25 +101,26 @@ export default function ProfilePage() {
       }
 
       // Fetch saved courses
-const { data: saves } = await supabase
-  .from("Save")
-  .select("id, courseId, saveType")
-  .eq("userId", authUser.id)
-  .not("courseId", "is", null);
+      const { data: saves } = await supabase
+        .from("Save")
+        .select("id, courseId, saveType")
+        .eq("userId", authUser.id)
+        .not("courseId", "is", null);
 
-if (saves && saves.length > 0) {
-  const savedCourseIds = saves.map((s: any) => s.courseId);
-  const { data: savedCoursesData } = await supabase
-    .from("Course")
-    .select("id, name, city, state")
-    .in("id", savedCourseIds);
+      if (saves && saves.length > 0) {
+        const savedCourseIds = saves.map((s: any) => s.courseId);
+        const { data: savedCoursesData } = await supabase
+          .from("Course")
+          .select("id, name, city, state")
+          .in("id", savedCourseIds);
 
-  const enrichedSaves: SavedCourse[] = saves.map((s: any) => ({
-    ...s,
-    course: savedCoursesData?.find((c: any) => c.id === s.courseId) || { id: s.courseId, name: "Unknown", city: "", state: "" },
-  }));
-  setSavedCourses(enrichedSaves);
-}
+        const enrichedSaves: SavedCourse[] = saves.map((s: any) => ({
+          ...s,
+          course: savedCoursesData?.find((c: any) => c.id === s.courseId) || { id: s.courseId, name: "Unknown", city: "", state: "" },
+        }));
+        setSavedCourses(enrichedSaves);
+      }
+
       if (profile.homeCourseId) {
         const { data: hc } = await supabase.from("Course").select("id, name").eq("id", profile.homeCourseId).single();
         setHomeCourse(hc);
@@ -344,58 +345,76 @@ if (saves && saves.length > 0) {
         )}
       </div>
 
-{/* Saved courses */}
-{savedCourses.length > 0 && (
-  <div style={{ marginBottom: "20px" }}>
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: "10px" }}>
-      <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Saved courses</div>
-      <div style={{ display: "flex", gap: "4px" }}>
-        <button
-          onClick={() => setSavedTab("BUCKET_LIST")}
-          style={{ padding: "4px 10px", borderRadius: "99px", border: "none", fontSize: "10px", fontWeight: 600, cursor: "pointer", background: savedTab === "BUCKET_LIST" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: savedTab === "BUCKET_LIST" ? "#4da862" : "rgba(255,255,255,0.4)" }}
-        >
-          ⛳ Bucket List
-        </button>
-        <button
-          onClick={() => setSavedTab("PLAYED")}
-          style={{ padding: "4px 10px", borderRadius: "99px", border: "none", fontSize: "10px", fontWeight: 600, cursor: "pointer", background: savedTab === "PLAYED" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: savedTab === "PLAYED" ? "#4da862" : "rgba(255,255,255,0.4)" }}
-        >
-          ✓ Played
-        </button>
-      </div>
-    </div>
-    <div style={{ display: "flex", gap: "8px", padding: "0 20px", overflowX: "auto" }}>
-      {savedCourses.filter(s => s.saveType === savedTab).length === 0 ? (
-        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", padding: "12px 0" }}>
-          {savedTab === "BUCKET_LIST" ? "No bucket list courses yet" : "No played courses marked yet"}
-        </div>
-      ) : (
-        savedCourses.filter(s => s.saveType === savedTab).map((s, i) => (
-          <div key={s.id} className="course-chip" onClick={() => router.push(`/courses/${s.course.id}`)} style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", transition: "border-color 0.15s" }}>
-            <div style={{ height: 55, background: savedTab === "BUCKET_LIST" ? "linear-gradient(135deg,#1a3d4d,#2d5a7a)" : "linear-gradient(135deg,#1a4d22,#2d7a42)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontSize: "20px" }}>{savedTab === "BUCKET_LIST" ? "⛳" : "✓"}</span>
-            </div>
-            <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.course.name}</div>
-            <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{s.course.city}, {s.course.state}</div>
-          </div>
-        ))
-      )}
-    </div>
-  </div>
-)}
-
-      {/* Courses played */}
-      {coursesPlayed.length > 0 && (
+      {/* My Courses — unified section */}
+      {(savedCourses.length > 0 || coursesPlayed.length > 0) && (
         <div style={{ marginBottom: "20px" }}>
-          <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", padding: "0 20px", marginBottom: "10px" }}>Courses played</div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: "10px" }}>
+            <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>My courses</div>
+            <div style={{ display: "flex", gap: "4px" }}>
+              <button
+                onClick={() => setCoursesTab("BUCKET_LIST")}
+                style={{ padding: "4px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === "BUCKET_LIST" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === "BUCKET_LIST" ? "#4da862" : "rgba(255,255,255,0.4)" }}
+              >
+                ⛳ Bucket List
+              </button>
+              <button
+                onClick={() => setCoursesTab("PLAYED")}
+                style={{ padding: "4px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === "PLAYED" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === "PLAYED" ? "#4da862" : "rgba(255,255,255,0.4)" }}
+              >
+                ✓ Played
+              </button>
+              <button
+                onClick={() => setCoursesTab("UPLOADED")}
+                style={{ padding: "4px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === "UPLOADED" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === "UPLOADED" ? "#4da862" : "rgba(255,255,255,0.4)" }}
+              >
+                📹 Uploaded
+              </button>
+            </div>
+          </div>
           <div style={{ display: "flex", gap: "8px", padding: "0 20px", overflowX: "auto" }}>
-            {coursesPlayed.map((c, i) => (
-              <div key={c.id} className="course-chip" onClick={() => router.push(`/courses/${c.id}`)} style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", transition: "border-color 0.15s" }}>
-                <div style={{ height: 55, background: i % 2 === 0 ? "linear-gradient(135deg,#1a4d22,#2d7a42)" : "linear-gradient(135deg,#1e3a10,#4a7a25)" }} />
-                <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
-                <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{c.city}, {c.state}</div>
-              </div>
-            ))}
+            {coursesTab === "BUCKET_LIST" && (
+              savedCourses.filter(s => s.saveType === "BUCKET_LIST").length === 0 ? (
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", padding: "12px 0" }}>No bucket list courses yet</div>
+              ) : (
+                savedCourses.filter(s => s.saveType === "BUCKET_LIST").map(s => (
+                  <div key={s.id} className="course-chip" onClick={() => router.push(`/courses/${s.course.id}`)} style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
+                    <div style={{ height: 55, background: "linear-gradient(135deg,#1a3d4d,#2d5a7a)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: "20px" }}>⛳</span>
+                    </div>
+                    <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.course.name}</div>
+                    <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{s.course.city}, {s.course.state}</div>
+                  </div>
+                ))
+              )
+            )}
+            {coursesTab === "PLAYED" && (
+              savedCourses.filter(s => s.saveType === "PLAYED").length === 0 ? (
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", padding: "12px 0" }}>No played courses marked yet</div>
+              ) : (
+                savedCourses.filter(s => s.saveType === "PLAYED").map(s => (
+                  <div key={s.id} className="course-chip" onClick={() => router.push(`/courses/${s.course.id}`)} style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
+                    <div style={{ height: 55, background: "linear-gradient(135deg,#1a4d22,#2d7a42)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: "20px" }}>✓</span>
+                    </div>
+                    <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.course.name}</div>
+                    <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{s.course.city}, {s.course.state}</div>
+                  </div>
+                ))
+              )
+            )}
+            {coursesTab === "UPLOADED" && (
+              coursesPlayed.length === 0 ? (
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", padding: "12px 0" }}>No uploads yet</div>
+              ) : (
+                coursesPlayed.map((c, i) => (
+                  <div key={c.id} className="course-chip" onClick={() => router.push(`/courses/${c.id}`)} style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
+                    <div style={{ height: 55, background: i % 2 === 0 ? "linear-gradient(135deg,#1a4d22,#2d7a42)" : "linear-gradient(135deg,#1e3a10,#4a7a25)" }} />
+                    <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
+                    <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{c.city}, {c.state}</div>
+                  </div>
+                ))
+              )
+            )}
           </div>
         </div>
       )}
