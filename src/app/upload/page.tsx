@@ -857,6 +857,7 @@ function UploadPageInner() {
         )}
 
       </div>
+      <BottomNav />
     </main>
   );
 }
