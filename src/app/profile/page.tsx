@@ -140,26 +140,33 @@ export default function ProfilePage() {
       setUser(profile);
       setEditHandicap(profile.handicapIndex?.toString() || "");
 
-      const [{ data: userUploads }, { count: followers }, { count: following }] = await Promise.all([
-        supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt, hole:Hole(number)").eq("userId", authUser.id).order("createdAt", { ascending: false }),
-        supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", authUser.id).eq("status", "ACTIVE"),
-        supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", authUser.id).eq("status", "ACTIVE"),
-      ]);
+const [{ data: userUploads }, { count: followers }, { count: following }] = await Promise.all([
+  supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt").eq("userId", authUser.id).order("createdAt", { ascending: false }),
+  supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", authUser.id).eq("status", "ACTIVE"),
+  supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", authUser.id).eq("status", "ACTIVE"),
+]);
 
-      // Map hole number from joined data
-      const uploadsWithHoleNumber = (userUploads || []).map((u: any) => ({
-        ...u,
-        holeNumber: u.hole?.number || null,
-      }));
-      setUploads(uploadsWithHoleNumber);
-      setFollowerCount(followers || 0);
-      setFollowingCount(following || 0);
+// Fetch hole numbers separately
+let uploadsWithHoleNumber: Upload[] = [];
+if (userUploads && userUploads.length > 0) {
+  const holeIds = [...new Set(userUploads.map((u: any) => u.holeId).filter(Boolean))];
+  const { data: holes } = await supabase.from("Hole").select("id, number").in("id", holeIds);
+  const holeMap = new Map(holes?.map((h: any) => [h.id, h.number]) || []);
+  
+  uploadsWithHoleNumber = userUploads.map((u: any) => ({
+    ...u,
+    holeNumber: holeMap.get(u.holeId) || null,
+  }));
+}
+setUploads(uploadsWithHoleNumber.length > 0 ? uploadsWithHoleNumber : (userUploads || []));
+setFollowerCount(followers || 0);
+setFollowingCount(following || 0);
 
-      if (userUploads && userUploads.length > 0) {
-        const uniqueCourseIds = [...new Set(userUploads.map((u: any) => u.courseId))];
-        const { data: courses } = await supabase.from("Course").select("id, name, city, state").in("id", uniqueCourseIds);
-        setCoursesPlayed(courses || []);
-      }
+if (userUploads && userUploads.length > 0) {
+  const uniqueCourseIds = [...new Set(userUploads.map((u: any) => u.courseId))];
+  const { data: courses } = await supabase.from("Course").select("id, name, city, state").in("id", uniqueCourseIds);
+  setCoursesPlayed(courses || []);
+}
 
       // Fetch saved courses
       const { data: saves } = await supabase
