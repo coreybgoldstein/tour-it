@@ -337,6 +337,13 @@ function UploadPageInner() {
         setSeriesShots(done);
       }
 
+      // Increment upload counters (by number of shots uploaded)
+      const shotCount = seriesShots.length;
+      const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
+      await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + shotCount }).eq("id", selectedCourse.id);
+      const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeData.id).single();
+      await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + shotCount }).eq("id", holeData.id);
+
       setSubmitted(true);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -393,6 +400,13 @@ function UploadPageInner() {
       });
 
       if (dbError) { setError(`Failed to save: ${dbError.message}`); setUploading(false); return; }
+
+      // Increment upload counters
+      const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
+      await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
+      const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeData.id).single();
+      await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeData.id);
+
       setSubmitted(true);
     } catch {
       setError("Something went wrong. Please try again.");
