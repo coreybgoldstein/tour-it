@@ -149,8 +149,8 @@ function RightPanel({ courseId, courseName, onTapCourse, onTapHole, liked, onLik
 }
 
 // Shared bottom user info — avatar, @username, course name, hole number
-function UserInfo({ avatarUrl, username, courseName, holeNumber, onTapUser }: {
-  avatarUrl: string | null; username: string; courseName: string; holeNumber?: number; onTapUser: () => void;
+function UserInfo({ avatarUrl, username, courseName, holeNumber, onTapUser, onTapCourse }: {
+  avatarUrl: string | null; username: string; courseName: string; holeNumber?: number; onTapUser: () => void; onTapCourse: () => void;
 }) {
   return (
     <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5 }}>
@@ -163,9 +163,11 @@ function UserInfo({ avatarUrl, username, courseName, holeNumber, onTapUser }: {
         </div>
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>@{username}</span>
       </button>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 4 }}>
-        {courseName}
-      </div>
+      <button onClick={onTapCourse} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", display: "block", marginBottom: 4 }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>
+          {courseName}
+        </div>
+      </button>
       {holeNumber && (
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "15px", fontWeight: 600, color: "#4da862" }}>
           Hole {holeNumber}
@@ -287,7 +289,7 @@ function SeriesCard({
 
       <RightPanel courseId={item.courseId} courseName={item.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={false} onLike={() => {}} likeCount={0} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} />
 
-      <UserInfo avatarUrl={item.avatarUrl} username={item.username} courseName={item.courseName} holeNumber={item.holeNumber} onTapUser={onTapUser} />
+      <UserInfo avatarUrl={item.avatarUrl} username={item.username} courseName={item.courseName} holeNumber={item.holeNumber} onTapUser={onTapUser} onTapCourse={onTapCourse} />
 
       {shotIndex === 0 && item.shots.length > 1 && (
         <div style={{ position: "absolute", top: 90, left: 0, right: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 4, opacity: 0.7, pointerEvents: "none", zIndex: 5 }}>
@@ -353,7 +355,7 @@ const { liked, likeCount, toggleLike } = useLike({
 
       <RightPanel courseId={clip.courseId} courseName={clip.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} />
 
-      <UserInfo avatarUrl={clip.avatarUrl} username={clip.username} courseName={clip.courseName} holeNumber={clip.holeNumber} onTapUser={onTapUser} />
+      <UserInfo avatarUrl={clip.avatarUrl} username={clip.username} courseName={clip.courseName} holeNumber={clip.holeNumber} onTapUser={onTapUser} onTapCourse={onTapCourse} />
     </div>
   );
 }

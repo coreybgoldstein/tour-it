@@ -79,7 +79,7 @@ export default function PublicProfilePage() {
       // Fetch the profile being viewed
       const { data: profileData, error: profileError } = await supabase
         .from("User")
-        .select("id, username, displayName, avatarUrl, handicapIndex, homeCourseId, uploadCount, bio")
+        .select("id, username, displayName, avatarUrl, bannerUrl, handicapIndex, homeCourseId, uploadCount, bio")
         .eq("id", userId)
         .single();
 
