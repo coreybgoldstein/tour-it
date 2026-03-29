@@ -62,14 +62,11 @@ function formatTimeAgo(dateStr: string) {
 function TourItLogo({ size = 26 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 80 80" fill="none">
-      <circle cx="40" cy="40" r="38" fill="#0d2318" stroke="rgba(77,168,98,0.35)" strokeWidth="1.5" />
-      <line x1="40" y1="18" x2="40" y2="54" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M40 18 Q54 22 52 30 Q54 36 40 34 Z" fill="#4da862" />
-      <circle cx="40" cy="57" r="5" fill="#fff" />
-      <circle cx="38.5" cy="55.5" r="0.9" fill="rgba(0,0,0,0.12)" />
-      <circle cx="41.5" cy="55.5" r="0.9" fill="rgba(0,0,0,0.12)" />
-      <circle cx="40" cy="57.8" r="0.9" fill="rgba(0,0,0,0.12)" />
-      <ellipse cx="40" cy="54" rx="6" ry="1.5" fill="#0a1a10" />
+      <circle cx="40" cy="40" r="38" fill="#091a0d" />
+      <circle cx="40" cy="40" r="38" fill="none" stroke="rgba(77,168,98,0.55)" strokeWidth="1.5" />
+      <line x1="30" y1="14" x2="30" y2="64" stroke="#4da862" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M30 14 L64 25 L30 36 Z" fill="#4da862" />
+      <ellipse cx="30" cy="64" rx="7" ry="2.2" fill="rgba(77,168,98,0.25)" />
     </svg>
   );
 }
@@ -694,11 +691,11 @@ export default function Home() {
 
           {/* Hero text */}
           <div style={{ padding: "4px 20px 22px", flexShrink: 0 }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>
-              Scout your<br />next round.
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 25, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>
+              Scout your next round.
             </div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.38)", lineHeight: 1.5 }}>
-              Real clips from golfers who&apos;ve already played.
+              Watch the course before your round.
             </div>
           </div>
 

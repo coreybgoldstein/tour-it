@@ -370,7 +370,7 @@ if (userUploads && userUploads.length > 0) {
       {/* Banner + Avatar + Name */}
       <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 16 }}>
         {/* Banner */}
-        <div style={{ position: "relative", height: 110, overflow: "hidden", background: user.bannerUrl ? "none" : "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)", cursor: "pointer" }} onClick={() => bannerInputRef.current?.click()}>
+        <div style={{ position: "relative", height: 120, overflow: "hidden", background: user.bannerUrl ? "none" : "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)", cursor: "pointer" }} onClick={() => bannerInputRef.current?.click()}>
           {user.bannerUrl && <img src={user.bannerUrl} alt="banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
           <div style={{ position: "absolute", bottom: 8, right: 10, width: 26, height: 26, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {uploadingBanner
@@ -392,8 +392,8 @@ if (userUploads && userUploads.length > 0) {
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
           </div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "20px", fontWeight: 700, color: "#fff", textAlign: "center" }}>{user.displayName}</div>
-          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "-4px" }}>@{user.username}</div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 700, color: "#fff", textAlign: "center" }}>{user.displayName}</div>
+          <div style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", marginTop: "-4px" }}>@{user.username}</div>
         </div>
       </div>
 
@@ -406,8 +406,8 @@ if (userUploads && userUploads.length > 0) {
           { num: followingCount, label: "Following" },
         ].map(s => (
           <div key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-            <div style={{ fontSize: "18px", fontWeight: 700, color: "#fff" }}>{s.num}</div>
-            <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
+            <div style={{ fontSize: "22px", fontWeight: 700, color: "#fff" }}>{s.num}</div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -451,7 +451,7 @@ if (userUploads && userUploads.length > 0) {
       {(savedCourses.length > 0 || coursesPlayed.length > 0) && (
         <div style={{ marginBottom: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: "8px" }}>
-            <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>My courses</div>
+            <div style={{ fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>My courses</div>
             <div style={{ display: "flex", gap: "4px" }}>
               {(["BUCKET_LIST", "PLAYED", "UPLOADED"] as const).map(tab => (
                 <button key={tab} onClick={() => setCoursesTab(tab)} style={{ padding: "3px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === tab ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === tab ? "#4da862" : "rgba(255,255,255,0.35)" }}>
@@ -465,9 +465,9 @@ if (userUploads && userUploads.length > 0) {
               savedCourses.filter(s => s.saveType === "BUCKET_LIST").length === 0
                 ? <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No bucket list courses yet</div>
                 : savedCourses.filter(s => s.saveType === "BUCKET_LIST").map(s => (
-                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
                     <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0, display: "block" }} />
-                    <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
                   </button>
                 ))
             )}
@@ -475,9 +475,9 @@ if (userUploads && userUploads.length > 0) {
               savedCourses.filter(s => s.saveType === "PLAYED").length === 0
                 ? <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No played courses marked yet</div>
                 : savedCourses.filter(s => s.saveType === "PLAYED").map(s => (
-                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
                     <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0, display: "block" }} />
-                    <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
                   </button>
                 ))
             )}
@@ -485,9 +485,9 @@ if (userUploads && userUploads.length > 0) {
               coursesPlayed.length === 0
                 ? <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No uploads yet</div>
                 : coursesPlayed.map(c => (
-                  <button key={c.id} onClick={() => router.push(`/courses/${c.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                  <button key={c.id} onClick={() => router.push(`/courses/${c.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
                     <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0, display: "block" }} />
-                    <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.65)" }}>{c.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.65)" }}>{c.name}</span>
                   </button>
                 ))
             )}
@@ -498,8 +498,8 @@ if (userUploads && userUploads.length > 0) {
       {/* Clips grid */}
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: "10px" }}>
-          <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Your clips</div>
-          {uploads.length > 0 && <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif" }}>Tap to view or delete</div>}
+          <div style={{ fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>Your clips</div>
+          {uploads.length > 0 && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif" }}>Tap to view or delete</div>}
         </div>
         {uploads.length === 0 ? (
           <div style={{ padding: "32px 20px", textAlign: "center" }}>
