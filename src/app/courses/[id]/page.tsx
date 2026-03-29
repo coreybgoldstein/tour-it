@@ -182,8 +182,10 @@ export default function CourseProfilePage() {
   const [contributeOpen, setContributeOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [editDescription, setEditDescription] = useState("");
-  const [editLogoUrl, setEditLogoUrl] = useState("");
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
@@ -249,9 +251,10 @@ export default function CourseProfilePage() {
   const openContribute = useCallback(() => {
     if (!course) return;
     setEditDescription(course.description || "");
-    setEditLogoUrl(course.logoUrl || "");
     setCoverFile(null);
     setCoverPreview(null);
+    setLogoFile(null);
+    setLogoPreview(null);
     setContributeSuccess(false);
     setContributeOpen(true);
   }, [course]);
@@ -261,6 +264,13 @@ export default function CourseProfilePage() {
     if (!file) return;
     setCoverFile(file);
     setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const handleLogoPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
   };
 
   const handleContributeSubmit = async () => {
@@ -277,8 +287,16 @@ export default function CourseProfilePage() {
         updates.coverImageUrl = publicUrl;
       }
     }
+    if (logoFile) {
+      const ext = logoFile.name.split(".").pop();
+      const path = `logos/${id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, logoFile, { upsert: true });
+      if (!upErr) {
+        const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+        updates.logoUrl = publicUrl;
+      }
+    }
     if (editDescription.trim()) updates.description = editDescription.trim();
-    if (editLogoUrl.trim()) updates.logoUrl = editLogoUrl.trim();
 
     if (Object.keys(updates).length > 0) {
       await supabase.from("Course").update(updates).eq("id", id as string);
@@ -352,36 +370,43 @@ export default function CourseProfilePage() {
           {/* Course logo */}
           <div style={{ width: 42, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
             {course.logoUrl ? (
-              <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }} />
-            ) : (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{abbr}</span>
-            )}
+              <img
+                src={course.logoUrl}
+                alt={course.name}
+                style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+                onError={e => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }}
+              />
+            ) : null}
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", display: course.logoUrl ? "none" : "inline" }}>{abbr}</span>
           </div>
         </div>
 
 
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 20px 18px", zIndex: 10 }}>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            {course.city}, {course.state} · {course.isPublic ? "Public" : "Private"}
-            {hero.designer ? ` · ${hero.designer}` : ""}
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.45)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            {[course.city, course.state].filter(s => s?.trim()).join(", ")}
+            {course.city || course.state ? " · " : ""}{course.isPublic ? "Public" : "Private"}
           </div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.1, marginBottom: 8 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: 12, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
             {course.name}
           </div>
-          {(course.description || hero.description) && (
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginBottom: 10, maxWidth: 340 }}>
-              {course.description || hero.description}
-            </div>
-          )}
-          {/* Stats — holes and year only, NO clip count */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "3px 10px" }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "4px 12px" }}>
               {course.holeCount || 18} holes
             </span>
             {hero.year && (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "3px 10px" }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "4px 12px" }}>
                 Est. {hero.year}
               </span>
+            )}
+            {(course.description || hero.description) && (
+              <button
+                onClick={() => setAboutOpen(true)}
+                style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "4px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                About
+              </button>
             )}
           </div>
         </div>
@@ -497,6 +522,25 @@ export default function CourseProfilePage() {
         </button>
       </div>
 
+{/* About modal */}
+      {aboutOpen && (
+        <div onClick={() => setAboutOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 24px 44px" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>{course.name}</div>
+            {(hero.designer || hero.year) && (
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 16 }}>
+                {hero.designer ? `Designed by ${hero.designer}` : ""}{hero.designer && hero.year ? " · " : ""}{hero.year ? `Est. ${hero.year}` : ""}
+              </div>
+            )}
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
+              {course.description || hero.description}
+            </p>
+            <button onClick={() => setAboutOpen(false)} style={{ marginTop: 24, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
+          </div>
+        </div>
+      )}
+
 {/* Scorecard modal */}
       {scorecardOpen && (
         <div onClick={() => setScorecardOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -597,16 +641,22 @@ export default function CourseProfilePage() {
                   />
                 </div>
 
-                {/* Logo URL */}
+                {/* Course Logo upload */}
                 <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Logo URL</div>
-                  <input
-                    type="url"
-                    value={editLogoUrl}
-                    onChange={e => setEditLogoUrl(e.target.value)}
-                    placeholder="https://..."
-                    style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
-                  />
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Course Logo</div>
+                  <label style={{ display: "block", cursor: "pointer" }}>
+                    <div style={{ width: 80, height: 80, borderRadius: 16, border: "1.5px dashed rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      {logoPreview ? (
+                        <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8 }} />
+                      ) : course.logoUrl ? (
+                        <img src={course.logoUrl} alt="current logo" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8, opacity: 0.5 }} />
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleLogoPick} style={{ display: "none" }} />
+                  </label>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 6 }}>Tap the square to upload a logo image</div>
                 </div>
 
                 <button onClick={handleContributeSubmit} disabled={contributing} style={{ width: "100%", background: contributing ? "rgba(45,122,66,0.5)" : "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: contributing ? "default" : "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}>
