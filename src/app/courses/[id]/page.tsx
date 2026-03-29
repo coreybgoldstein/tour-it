@@ -177,6 +177,15 @@ export default function CourseProfilePage() {
   const [feedOpen, setFeedOpen] = useState(false);
   const [feedStartIndex, setFeedStartIndex] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [scorecardOpen, setScorecardOpen] = useState(false);
+  const [holes, setHoles] = useState<{ holeNumber: number; par: number; handicapRank: number }[]>([]);
+  const [contributeOpen, setContributeOpen] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [editDescription, setEditDescription] = useState("");
+  const [editLogoUrl, setEditLogoUrl] = useState("");
+  const [contributing, setContributing] = useState(false);
+  const [contributeSuccess, setContributeSuccess] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { saved, saveType, toggleSave, showPicker, setShowPicker } = useSave({ courseId: id as string });
@@ -189,9 +198,10 @@ export default function CourseProfilePage() {
       const { data: courseData } = await supabase.from("Course").select("*").eq("id", id).single();
       if (courseData) setCourse(courseData);
 
-      const { data: holesData } = await supabase.from("Hole").select("id, holeNumber").eq("courseId", id);
+      const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank").eq("courseId", id).order("holeNumber", { ascending: true });
       const holeMap: Record<string, number> = {};
       holesData?.forEach((h: any) => { holeMap[h.id] = h.holeNumber; });
+      if (holesData) setHoles(holesData.map((h: any) => ({ holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber })));
 
       const { data: uploads } = await supabase
         .from("Upload").select("*").eq("courseId", id).order("rankScore", { ascending: false });
@@ -235,6 +245,50 @@ export default function CourseProfilePage() {
       setActiveIndex(feedStartIndex);
     }
   }, [feedOpen, feedStartIndex]);
+
+  const openContribute = useCallback(() => {
+    if (!course) return;
+    setEditDescription(course.description || "");
+    setEditLogoUrl(course.logoUrl || "");
+    setCoverFile(null);
+    setCoverPreview(null);
+    setContributeSuccess(false);
+    setContributeOpen(true);
+  }, [course]);
+
+  const handleCoverPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const handleContributeSubmit = async () => {
+    setContributing(true);
+    const supabase = createClient();
+    const updates: Record<string, string> = {};
+
+    if (coverFile) {
+      const ext = coverFile.name.split(".").pop();
+      const path = `covers/${id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, coverFile, { upsert: true });
+      if (!upErr) {
+        const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+        updates.coverImageUrl = publicUrl;
+      }
+    }
+    if (editDescription.trim()) updates.description = editDescription.trim();
+    if (editLogoUrl.trim()) updates.logoUrl = editLogoUrl.trim();
+
+    if (Object.keys(updates).length > 0) {
+      await supabase.from("Course").update(updates).eq("id", id as string);
+      setCourse(prev => prev ? { ...prev, ...updates } : prev);
+      if (updates.coverImageUrl) setCoverPreview(null);
+    }
+
+    setContributing(false);
+    setContributeSuccess(true);
+  };
 
   const handleFeedScroll = useCallback(() => {
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
@@ -282,12 +336,8 @@ export default function CourseProfilePage() {
       <div style={{ position: "relative", width: "100%", height: 300 }}>
         {course.coverImageUrl ? (
           <img src={course.coverImageUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-        ) : courseClips[0] ? (
-          courseClips[0].mediaType === "VIDEO" ? (
-            <video src={courseClips[0].mediaUrl} autoPlay muted loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <img src={courseClips[0].mediaUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          )
+        ) : courseClips.find(c => c.mediaType === "PHOTO") ? (
+          <img src={courseClips.find(c => c.mediaType === "PHOTO")!.mediaUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ position: "absolute", inset: 0, background: hero.gradient }} />
         )}
@@ -341,10 +391,17 @@ export default function CourseProfilePage() {
 <div style={{ padding: "14px 20px 16px", display: "flex", gap: 8, position: "relative" }}>
   <button
     onClick={() => router.push(`/courses/${id}/holes`)}
-    style={{ flex: 1, background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}
+    style={{ flex: 1, background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}
   >
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="12" y1="2" x2="12" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/><path d="M12 2 L19 6 L12 10 Z" fill="white"/><ellipse cx="12" cy="21" rx="3.5" ry="1" stroke="white" strokeWidth="1.5" fill="none"/></svg>
-    Browse by hole
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="2" x2="12" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/><path d="M12 2 L19 6 L12 10 Z" fill="white"/><ellipse cx="12" cy="21" rx="3.5" ry="1" stroke="white" strokeWidth="1.5" fill="none"/></svg>
+    Holes
+  </button>
+  <button
+    onClick={() => setScorecardOpen(true)}
+    style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "12px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+  >
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg>
+    Scorecard
   </button>
   <button
     onClick={() => setShowPicker(!showPicker)}
@@ -431,6 +488,135 @@ export default function CourseProfilePage() {
           </>
         )}
       </div>
+
+{/* Contribute link */}
+      <div style={{ padding: "0 20px 24px", textAlign: "center" }}>
+        <button onClick={openContribute} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Suggest a cover photo or edit course info
+        </button>
+      </div>
+
+{/* Scorecard modal */}
+      {scorecardOpen && (
+        <div onClick={() => setScorecardOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "85vh", overflowY: "auto" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Scorecard</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 20 }}>{course.name}</div>
+
+            {[{ label: "Front 9", start: 0, end: 9 }, { label: "Back 9", start: 9, end: 18 }].map(({ label, start, end }) => {
+              const nine = holes.slice(start, end);
+              if (nine.length === 0) return null;
+              const total = nine.reduce((s, h) => s + h.par, 0);
+              return (
+                <div key={label} style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>{label}</div>
+                  <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
+                    {/* Hole row */}
+                    <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                      <div style={{ width: 44, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Hole</div>
+                      {nine.map(h => (
+                        <div key={h.holeNumber} style={{ flex: 1, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{h.holeNumber}</div>
+                      ))}
+                      <div style={{ width: 36, padding: "8px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Out</div>
+                    </div>
+                    {/* Par row */}
+                    <div style={{ display: "flex" }}>
+                      <div style={{ width: 44, padding: "9px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Par</div>
+                      {nine.map(h => (
+                        <div key={h.holeNumber} style={{ flex: 1, padding: "9px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: h.par === 3 ? "#6bcf7f" : h.par === 5 ? "#f0c55a" : "#fff" }}>{h.par}</div>
+                      ))}
+                      <div style={{ width: 36, padding: "9px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862", flexShrink: 0 }}>{total}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Total */}
+            {holes.length > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "rgba(77,168,98,0.1)", borderRadius: 12, border: "1px solid rgba(77,168,98,0.2)", marginTop: 4 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Total Par</span>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#4da862" }}>{holes.reduce((s, h) => s + h.par, 0)}</span>
+              </div>
+            )}
+
+            <button onClick={() => setScorecardOpen(false)} style={{ marginTop: 20, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
+          </div>
+        </div>
+      )}
+
+{/* Contribute modal */}
+      {contributeOpen && (
+        <div onClick={() => setContributeOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "85vh", overflowY: "auto" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Contribute</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>Help keep {course.name} accurate and beautiful</div>
+
+            {contributeSuccess ? (
+              <div style={{ textAlign: "center", padding: "24px 0" }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>✓</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 600, color: "#4da862", marginBottom: 6 }}>Thanks for contributing!</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Your updates are live.</div>
+                <button onClick={() => setContributeOpen(false)} style={{ marginTop: 20, background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px 32px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Done</button>
+              </div>
+            ) : (
+              <>
+                {/* Cover photo */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Cover Photo</div>
+                  <label style={{ display: "block", cursor: "pointer" }}>
+                    <div style={{ width: "100%", height: 140, borderRadius: 12, border: "1.5px dashed rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", position: "relative" }}>
+                      {coverPreview ? (
+                        <img src={coverPreview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : course.coverImageUrl ? (
+                        <img src={course.coverImageUrl} alt="current" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5 }} />
+                      ) : (
+                        <div style={{ textAlign: "center" }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 6 }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(77,168,98,0.7)" }}>Tap to upload a beauty shot</div>
+                        </div>
+                      )}
+                      {coverPreview && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", background: "rgba(0,0,0,0.5)", padding: "4px 10px", borderRadius: 99 }}>Change</span></div>}
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleCoverPick} style={{ display: "none" }} />
+                  </label>
+                </div>
+
+                {/* Description */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Course Description</div>
+                  <textarea
+                    value={editDescription}
+                    onChange={e => setEditDescription(e.target.value)}
+                    placeholder="Add a short description of what makes this course special..."
+                    rows={3}
+                    style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", resize: "none", outline: "none" }}
+                  />
+                </div>
+
+                {/* Logo URL */}
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Logo URL</div>
+                  <input
+                    type="url"
+                    value={editLogoUrl}
+                    onChange={e => setEditLogoUrl(e.target.value)}
+                    placeholder="https://..."
+                    style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                  />
+                </div>
+
+                <button onClick={handleContributeSubmit} disabled={contributing} style={{ width: "100%", background: contributing ? "rgba(45,122,66,0.5)" : "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: contributing ? "default" : "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}>
+                  {contributing ? "Saving..." : "Submit Updates"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
 {/* Full-screen feed modal */}
       {feedOpen && (
