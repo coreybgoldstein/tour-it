@@ -819,10 +819,10 @@ export default function Home() {
 
           {/* Bridge to feed */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 86 }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 14, color: "rgba(255,255,255,0.22)", textAlign: "center", lineHeight: 1.75, marginBottom: 10 }}>
-              Or scroll to find your next<br />bucket list course?
+            <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 14, color: "rgba(255,255,255,0.55)", textAlign: "center", lineHeight: 1, marginBottom: 10, whiteSpace: "nowrap" }}>
+              Scroll to find your next bucket list course
             </div>
-            <div className="bounce-arrow" style={{ color: "rgba(77,168,98,0.45)", fontSize: 20, lineHeight: 1 }}>↓</div>
+            <div className="bounce-arrow" style={{ color: "rgba(77,168,98,0.7)", fontSize: 22, lineHeight: 1 }}>↓</div>
           </div>
         </div>
 
