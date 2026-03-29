@@ -391,21 +391,11 @@ export default function HolePage() {
           .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(77,168,98,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; }
-          .right-actions { position: absolute; right: 16px; bottom: 155px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 20; }
-          .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
-          .action-icon { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; }
+          .right-actions { position: absolute; right: 16px; bottom: 220px; display: flex; flex-direction: column; align-items: center; gap: 22px; z-index: 30; }
+          .action-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; }
+          .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
           .action-label { font-family: 'Outfit', sans-serif; font-size: 10px; color: rgba(255,255,255,0.6); }
-          .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 16px 84px; z-index: 20; }
-          .course-line { font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 8px; }
-          .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-          .tag { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); border-radius: 99px; padding: 4px 11px; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.8); }
-          .tag.green { border-color: rgba(77,168,98,0.4); color: #4da862; background: rgba(77,168,98,0.15); }
-          .intel-toggle-btn { width: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-bottom: 8px; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.6); }
-          .intel-panel { background: rgba(0,0,0,0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 14px; margin-bottom: 8px; }
-          .intel-row { margin-bottom: 12px; }
-          .intel-row:last-child { margin-bottom: 0; }
-          .intel-label { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 3px; }
-          .intel-value { font-family: 'Outfit', sans-serif; font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+          .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 16px 88px; z-index: 20; }
           .series-card { background: linear-gradient(135deg, rgba(180,145,60,0.15), rgba(180,145,60,0.05)); border: 1px solid rgba(180,145,60,0.35); border-radius: 14px; padding: 14px; cursor: pointer; transition: all 0.15s; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
           .series-card:active { opacity: 0.8; }
         `}</style>
@@ -453,8 +443,11 @@ export default function HolePage() {
                 </button>
                 <div className="course-top-badge">{courseAbbr}</div>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.7)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>Hole {holeNum} · Par {par}</div>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 2px 8px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", letterSpacing: "0.02em" }}>Hole {holeNum}</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>· Par {par}</span>
+                  </div>
                 </div>
               </div>
               {/* Right: mute */}
@@ -487,8 +480,8 @@ export default function HolePage() {
                 <span className="action-label" style={copied ? { color: "#4da862" } : {}}>{copied ? "Copied!" : "Share"}</span>
               </button>
               <button className="action-btn" onClick={() => router.push(`/courses/${id}`)}>
-                <div className="action-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <div className="action-icon" style={{ borderRadius: 14, borderColor: "rgba(77,168,98,0.45)", background: "rgba(77,168,98,0.18)" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{courseAbbr}</span>
                 </div>
                 <span className="action-label">Course</span>
               </button>
@@ -502,56 +495,24 @@ export default function HolePage() {
             )}
 
             {/* Tour It watermark */}
-            <div style={{ position: "absolute", bottom: 90, right: 16, zIndex: 20, display: "flex", alignItems: "center", gap: 5, opacity: 0.65 }}>
+            <div style={{ position: "absolute", bottom: 96, left: 16, zIndex: 20, display: "flex", alignItems: "center", gap: 5, opacity: 0.6 }}>
               <div style={{ width: 18, height: 18, borderRadius: 5, background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>T</span>
               </div>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)", letterSpacing: "0.05em" }}>Tour It</span>
             </div>
 
-            {/* Bottom info */}
+            {/* Bottom info — series cards only */}
             <div className="bottom-info">
-              <div className="course-line">{uploads.length} clip{uploads.length !== 1 ? "s" : ""}</div>
-
-              {/* Series cards inline above clip info */}
-              {series.length > 0 && (
-                <div style={{ marginBottom: 10 }}>
-                  {series.map(s => (
-                    <div key={s.seriesId} className="series-card" onClick={() => setActiveSeries(s)}>
-                      <div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#c8a96e", marginBottom: 2 }}>🏌️ Play a Hole With Me</div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{s.username} · {s.shots.length} shots</div>
-                      </div>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(180,145,60,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                    </div>
-                  ))}
+              {series.length > 0 && series.map(s => (
+                <div key={s.seriesId} className="series-card" onClick={() => setActiveSeries(s)}>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#c8a96e", marginBottom: 2 }}>🏌️ Play a Hole With Me</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{s.username} · {s.shots.length} shots</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(180,145,60,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </div>
-              )}
-
-              <div className="tags-row">
-                {activeUpload.shotType && <span className="tag green">{SHOT_LABEL[activeUpload.shotType] || activeUpload.shotType}</span>}
-                {activeUpload.clubUsed && <span className="tag">{activeUpload.clubUsed}</span>}
-                {activeUpload.windCondition && <span className="tag">{activeUpload.windCondition}</span>}
-                {activeUpload.datePlayedAt && <span className="tag">{new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>}
-              </div>
-
-              {hasIntel && (
-                <>
-                  <button className="intel-toggle-btn" onClick={() => setIntelOpen(!intelOpen)}>
-                    <span>{intelOpen ? "Hide intel" : "View intel"}</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      {intelOpen ? <path d="m18 15-6-6-6 6"/> : <path d="m6 9 6 6 6-6"/>}
-                    </svg>
-                  </button>
-                  {intelOpen && (
-                    <div className="intel-panel">
-                      {activeUpload.strategyNote && <div className="intel-row"><div className="intel-label">Strategy</div><div className="intel-value">{activeUpload.strategyNote}</div></div>}
-                      {activeUpload.landingZoneNote && <div className="intel-row"><div className="intel-label">Landing Zone</div><div className="intel-value">{activeUpload.landingZoneNote}</div></div>}
-                      {activeUpload.whatCameraDoesntShow && <div className="intel-row"><div className="intel-label">What Camera Doesn't Show</div><div className="intel-value">{activeUpload.whatCameraDoesntShow}</div></div>}
-                    </div>
-                  )}
-                </>
-              )}
+              ))}
             </div>
           </div>
         ) : (
