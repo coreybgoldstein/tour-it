@@ -949,7 +949,20 @@ function UploadPageInner() {
               <label className="field-label" style={{ color: "rgba(210,175,80,0.7)" }}>What the Camera Doesn't Show <span className="optional-tag">OPTIONAL</span></label>
               <textarea className="field-textarea" rows={2} placeholder="Slopes, blind spots, elevation changes, tricky pin positions..." value={intel.hidden} onChange={e => setIntel({ ...intel, hidden: e.target.value })} />
             </div>
-            <button className="btn-primary" onClick={() => setStep(5)}>Review & Submit</button>
+            <div style={{ height: 90 }} />
+          </div>
+        )}
+
+        {/* Floating submit button — stays on screen while scrolling Intel step */}
+        {step === 4 && !isSeriesMode && (
+          <div style={{ position: "fixed", bottom: 80, left: 0, right: 0, padding: "0 20px", zIndex: 50 }}>
+            <button
+              className="btn-primary"
+              onClick={() => setStep(5)}
+              style={{ margin: 0, background: "linear-gradient(135deg, #2d7a42, #1d5a30)", boxShadow: "0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(77,168,98,0.2)" }}
+            >
+              Review &amp; Submit →
+            </button>
           </div>
         )}
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
+import BottomNav from "@/components/BottomNav";
 
 type Course = {
   id: string;
@@ -227,6 +228,7 @@ export default function HolePage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [copied, setCopied] = useState(false);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const touchStartY = useRef<number>(0);
 
@@ -325,9 +327,25 @@ export default function HolePage() {
     );
   }
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = `${course?.name} — Hole ${Number(number)} | Tour It`;
+    const text = `Check out this shot from ${course?.name} on Tour It`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {}
+  };
+
   const holeNum = Number(number);
   const par = hole?.par || 4;
   const hasContent = uploads.length > 0 || series.length > 0;
+  const courseAbbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
 
   if (!hasContent) {
     return (
@@ -369,18 +387,16 @@ export default function HolePage() {
           .photo-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
           .gradient-top { position: absolute; top: 0; left: 0; right: 0; height: 160px; background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%); z-index: 10; pointer-events: none; }
           .gradient-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 320px; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 50%, transparent 100%); z-index: 10; pointer-events: none; }
-          .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 20px 16px; z-index: 20; }
-          .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-          .hole-badge { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); border-radius: 99px; padding: 6px 14px; text-align: center; }
-          .hole-badge-num { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 900; color: #fff; line-height: 1; }
-          .hole-badge-par { font-family: 'Outfit', sans-serif; font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 1px; }
-          .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-          .right-actions { position: absolute; right: 16px; bottom: 200px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 20; }
+          .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: flex-start; justify-content: space-between; padding: 52px 16px 16px; z-index: 20; }
+          .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+          .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+          .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(77,168,98,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; }
+          .right-actions { position: absolute; right: 16px; bottom: 155px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 20; }
           .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
           .action-icon { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; }
           .action-label { font-family: 'Outfit', sans-serif; font-size: 10px; color: rgba(255,255,255,0.6); }
-          .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 20px 36px; z-index: 20; }
-          .course-line { font-family: 'Outfit', sans-serif; font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+          .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 16px 84px; z-index: 20; }
+          .course-line { font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 8px; }
           .tags-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
           .tag { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); border-radius: 99px; padding: 4px 11px; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.8); }
           .tag.green { border-color: rgba(77,168,98,0.4); color: #4da862; background: rgba(77,168,98,0.15); }
@@ -430,13 +446,18 @@ export default function HolePage() {
 
             {/* Top bar */}
             <div className="top-bar">
-              <button className="back-btn" onClick={() => router.back()}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-              </button>
-              <div className="hole-badge">
-                <div className="hole-badge-num">{holeNum}</div>
-                <div className="hole-badge-par">Par {par}</div>
+              {/* Left: back + course identity */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: 1, marginRight: 10 }}>
+                <button className="back-btn" onClick={() => router.back()}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <div className="course-top-badge">{courseAbbr}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.7)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>Hole {holeNum} · Par {par}</div>
+                </div>
               </div>
+              {/* Right: mute */}
               <button className="mute-btn" onClick={() => setMuted(!muted)}>
                 {muted
                   ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
@@ -456,11 +477,14 @@ export default function HolePage() {
 
             {/* Right actions */}
             <div className="right-actions">
-              <button className="action-btn" onClick={() => router.push(`/upload?courseId=${id}`)}>
-                <div className="action-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <button className="action-btn" onClick={handleShare}>
+                <div className="action-icon" style={copied ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
+                  {copied
+                    ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  }
                 </div>
-                <span className="action-label">Upload</span>
+                <span className="action-label" style={copied ? { color: "#4da862" } : {}}>{copied ? "Copied!" : "Share"}</span>
               </button>
               <button className="action-btn" onClick={() => router.push(`/courses/${id}`)}>
                 <div className="action-icon">
@@ -477,9 +501,17 @@ export default function HolePage() {
               </div>
             )}
 
+            {/* Tour It watermark */}
+            <div style={{ position: "absolute", bottom: 90, right: 16, zIndex: 20, display: "flex", alignItems: "center", gap: 5, opacity: 0.65 }}>
+              <div style={{ width: 18, height: 18, borderRadius: 5, background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>T</span>
+              </div>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)", letterSpacing: "0.05em" }}>Tour It</span>
+            </div>
+
             {/* Bottom info */}
             <div className="bottom-info">
-              <div className="course-line">{course?.name} · Hole {holeNum} · {uploads.length} clip{uploads.length !== 1 ? "s" : ""}</div>
+              <div className="course-line">{uploads.length} clip{uploads.length !== 1 ? "s" : ""}</div>
 
               {/* Series cards inline above clip info */}
               {series.length > 0 && (
@@ -546,6 +578,7 @@ export default function HolePage() {
           </div>
         )}
       </main>
+      <BottomNav />
     </>
   );
 }
