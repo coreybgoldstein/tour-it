@@ -28,9 +28,11 @@ type FeedClip = {
   avatarUrl: string | null;
   userId: string;
   likeCount: number;
+  commentCount: number;
   seriesId: string | null;
   seriesOrder: number | null;
   yardageOverlay: string | null;
+  createdAt: string;
 };
 
 type FeedItem =
@@ -44,6 +46,24 @@ type CourseResult = {
   state: string;
   uploadCount: number;
 };
+
+type CommentItem = {
+  id: string;
+  body: string;
+  createdAt: string;
+  username: string;
+  avatarUrl: string | null;
+};
+
+function formatTimeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
 function TourItLogo({ size = 26 }: { size?: number }) {
   return (
@@ -83,10 +103,11 @@ function CourseIcon() {
 }
 
 // Shared right panel buttons
-function RightPanel({ courseId, courseName, onTapCourse, onTapHole, liked, onLike, likeCount }: {
+function RightPanel({ courseId, courseName, onTapCourse, onTapHole, liked, onLike, likeCount, onComment, commentCount }: {
   courseId: string; courseName: string;
   onTapCourse: () => void; onTapHole: () => void;
   liked: boolean; onLike: () => void; likeCount: number;
+  onComment: () => void; commentCount: number;
 }) {
   return (
     <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
@@ -95,6 +116,12 @@ function RightPanel({ courseId, courseName, onTapCourse, onTapHole, liked, onLik
           <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </div>
         <span style={{ fontSize: "10px", color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
+      </button>
+      <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{commentCount}</span>
       </button>
       <button onClick={onTapCourse} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
         <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><CourseIcon /></div>
@@ -150,12 +177,12 @@ function UserInfo({ avatarUrl, username, courseName, holeNumber, onTapUser }: {
 
 // Series card — horizontal swipe between shots
 function SeriesCard({
-  item, isActive, muted, onUnmute, onSingleTap, onTapCourse, onTapHole, onTapUser,
+  item, isActive, muted, onUnmute, onSingleTap, onTapCourse, onTapHole, onTapUser, onComment,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
   isActive: boolean; muted: boolean;
   onUnmute: () => void; onSingleTap: () => void;
-  onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void;
+  onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void; onComment: () => void;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
@@ -258,7 +285,7 @@ function SeriesCard({
         </button>
       )}
 
-      <RightPanel courseId={item.courseId} courseName={item.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={false} onLike={() => {}} likeCount={0} />
+      <RightPanel courseId={item.courseId} courseName={item.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={false} onLike={() => {}} likeCount={0} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} />
 
       <UserInfo avatarUrl={item.avatarUrl} username={item.username} courseName={item.courseName} holeNumber={item.holeNumber} onTapUser={onTapUser} />
 
@@ -275,11 +302,11 @@ function SeriesCard({
 
 // Single clip card
 function VideoCard({
-  clip, isActive, muted, onUnmute, onSingleTap, onTapCourse, onTapHole, onTapUser,
+  clip, isActive, muted, onUnmute, onSingleTap, onTapCourse, onTapHole, onTapUser, onComment,
 }: {
   clip: FeedClip; isActive: boolean; muted: boolean;
   onUnmute: () => void; onSingleTap: () => void;
-  onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void;
+  onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void; onComment: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 const { liked, likeCount, toggleLike } = useLike({
@@ -324,7 +351,7 @@ const { liked, likeCount, toggleLike } = useLike({
         </div>
       )}
 
-      <RightPanel courseId={clip.courseId} courseName={clip.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={toggleLike} likeCount={likeCount} />
+      <RightPanel courseId={clip.courseId} courseName={clip.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} />
 
       <UserInfo avatarUrl={clip.avatarUrl} username={clip.username} courseName={clip.courseName} holeNumber={clip.holeNumber} onTapUser={onTapUser} />
     </div>
@@ -348,8 +375,19 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [immersive, setImmersive] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
+  const [commentItems, setCommentItems] = useState<CommentItem[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedCursorRef = useRef<string | null>(null);
+  const hasMoreRef = useRef(true);
+  const loadingMoreRef = useRef(false);
 
   const searchResults = searchQuery.trim().length > 0
     ? allCourses.filter(c =>
@@ -380,9 +418,9 @@ export default function Home() {
     async function loadFeed() {
       const { data: uploads } = await supabase
         .from("Upload")
-        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, userId, seriesId, seriesOrder, yardageOverlay")
+        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, createdAt")
         .order("createdAt", { ascending: false })
-        .limit(40);
+        .limit(15);
 
       if (!uploads || uploads.length === 0) { setLoading(false); return; }
 
@@ -398,6 +436,7 @@ export default function Home() {
 
       const enriched: FeedClip[] = uploads.map((u: any) => ({
         ...u,
+        commentCount: u.commentCount || 0,
         courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
         username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
         avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
@@ -427,6 +466,9 @@ export default function Home() {
         .map(clip => ({ type: "clip", clip }));
 
       setFeedItems([...seriesItems, ...singleItems]);
+      feedCursorRef.current = uploads[uploads.length - 1].createdAt;
+      hasMoreRef.current = uploads.length === 15;
+      setHasMore(uploads.length === 15);
       setLoading(false);
     }
 
@@ -443,7 +485,151 @@ export default function Home() {
     }, 50);
   }, []);
 
+  const loadMoreFeed = useCallback(async () => {
+    if (!feedCursorRef.current || loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const supabase = createClient();
+    const { data: uploads } = await supabase
+      .from("Upload")
+      .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, createdAt")
+      .order("createdAt", { ascending: false })
+      .lt("createdAt", feedCursorRef.current)
+      .limit(15);
+
+    if (!uploads || uploads.length === 0) {
+      hasMoreRef.current = false;
+      setHasMore(false);
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+      return;
+    }
+
+    const courseIds = [...new Set(uploads.map((u: any) => u.courseId))];
+    const userIds = [...new Set(uploads.map((u: any) => u.userId))];
+    const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
+
+    const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
+      supabase.from("Course").select("id, name").in("id", courseIds),
+      supabase.from("User").select("id, username, avatarUrl").in("id", userIds),
+      supabase.from("Hole").select("id, holeNumber").in("id", holeIds),
+    ]);
+
+    const enriched: FeedClip[] = uploads.map((u: any) => ({
+      ...u,
+      commentCount: u.commentCount || 0,
+      courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
+      username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
+      avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
+      holeNumber: holes?.find((h: any) => h.id === u.holeId)?.holeNumber || undefined,
+    }));
+
+    const seriesMap: Record<string, FeedClip[]> = {};
+    const singleClips: FeedClip[] = [];
+    enriched.forEach(clip => {
+      if (clip.seriesId) {
+        if (!seriesMap[clip.seriesId]) seriesMap[clip.seriesId] = [];
+        seriesMap[clip.seriesId].push(clip);
+      } else {
+        singleClips.push(clip);
+      }
+    });
+
+    const newItems: FeedItem[] = [
+      ...Object.entries(seriesMap).map(([seriesId, shots]) => {
+        const sorted = shots.sort((a, b) => (a.seriesOrder || 0) - (b.seriesOrder || 0));
+        const first = sorted[0];
+        return { type: "series" as const, seriesId, shots: sorted, courseName: first.courseName, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
+      }),
+      ...singleClips.map(clip => ({ type: "clip" as const, clip })),
+    ];
+
+    setFeedItems(prev => [...prev, ...newItems]);
+    feedCursorRef.current = uploads[uploads.length - 1].createdAt;
+    hasMoreRef.current = uploads.length === 15;
+    setHasMore(uploads.length === 15);
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+  }, []);
+
+  // Infinite scroll — load more when near end
+  useEffect(() => {
+    if (feedItems.length === 0) return;
+    if (activeIndex >= feedItems.length - 3) loadMoreFeed();
+  }, [activeIndex, feedItems.length, loadMoreFeed]);
+
+  // Onboarding — show once
+  useEffect(() => {
+    if (!localStorage.getItem("tour-it-onboarded")) setShowOnboarding(true);
+  }, []);
+
+  // Load comments when sheet opens
+  useEffect(() => {
+    if (!commentUploadId) { setCommentItems([]); return; }
+    setLoadingComments(true);
+    const supabase = createClient();
+    supabase
+      .from("Comment")
+      .select("id, body, createdAt, userId, user:User(username, avatarUrl)")
+      .eq("uploadId", commentUploadId)
+      .order("createdAt", { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          setCommentItems(data.map((c: any) => ({
+            id: c.id,
+            body: c.body,
+            createdAt: c.createdAt,
+            username: c.user?.username || "golfer",
+            avatarUrl: c.user?.avatarUrl || null,
+          })));
+        }
+        setLoadingComments(false);
+      });
+  }, [commentUploadId]);
+
   const closeSearch = () => { setSearchOpen(false); setSearchQuery(""); };
+
+  function dismissOnboarding() {
+    localStorage.setItem("tour-it-onboarded", "1");
+    setShowOnboarding(false);
+  }
+
+  async function submitComment() {
+    if (!commentText.trim() || !user || !commentUploadId || submittingComment) return;
+    setSubmittingComment(true);
+    const supabase = createClient();
+    const id = crypto.randomUUID();
+    const { error } = await supabase.from("Comment").insert({
+      id,
+      uploadId: commentUploadId,
+      userId: user.id,
+      body: commentText.trim(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    if (!error) {
+      await supabase.rpc("increment_comment_count", { upload_id: commentUploadId }).catch(() =>
+        supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single().then(({ data }) =>
+          supabase.from("Upload").update({ commentCount: (data?.commentCount || 0) + 1 }).eq("id", commentUploadId)
+        )
+      );
+      setCommentItems(prev => [...prev, {
+        id,
+        body: commentText.trim(),
+        createdAt: new Date().toISOString(),
+        username: userProfile?.username || "golfer",
+        avatarUrl: userProfile?.avatarUrl || null,
+      }]);
+      setFeedItems(prev => prev.map(item => {
+        if (item.type === "clip" && item.clip.id === commentUploadId) {
+          return { ...item, clip: { ...item.clip, commentCount: item.clip.commentCount + 1 } };
+        }
+        return item;
+      }));
+      setCommentText("");
+    }
+    setSubmittingComment(false);
+  }
 
   const formatStat = (n: number | null, fallback: string) => {
     if (n === null) return fallback;
@@ -486,9 +672,9 @@ export default function Home() {
           feedItems.map((item, i) => (
             <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
               {item.type === "series" ? (
-                <SeriesCard item={item} isActive={i === activeIndex} muted={muted} onUnmute={() => setMuted(false)} onSingleTap={() => setImmersive(true)} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.courseId}`); }} onTapHole={() => router.push(`/courses/${item.courseId}/holes`)} />
+                <SeriesCard item={item} isActive={i === activeIndex} muted={muted} onUnmute={() => setMuted(false)} onSingleTap={() => setImmersive(true)} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.courseId}`); }} onTapHole={() => router.push(`/courses/${item.courseId}/holes`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} />
               ) : (
-                <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onUnmute={() => setMuted(false)} onSingleTap={() => setImmersive(true)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.clip.courseId}`); }} onTapHole={() => router.push(`/courses/${item.clip.courseId}/holes`)} />
+                <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onUnmute={() => setMuted(false)} onSingleTap={() => setImmersive(true)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => { setImmersive(false); router.push(`/courses/${item.clip.courseId}`); }} onTapHole={() => router.push(`/courses/${item.clip.courseId}/holes`)} onComment={() => setCommentUploadId(item.clip.id)} />
               )}
             </div>
           ))
@@ -585,6 +771,101 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Infinite scroll loading indicator */}
+      {loadingMore && (
+        <div style={{ position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)", zIndex: 30, background: "rgba(0,0,0,0.6)", borderRadius: 99, padding: "6px 16px", backdropFilter: "blur(8px)" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>Loading more...</span>
+        </div>
+      )}
+
+      {/* Comment sheet */}
+      {commentUploadId && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 60 }} onClick={() => { setCommentUploadId(null); setCommentText(""); }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", maxHeight: "72vh", display: "flex", flexDirection: "column" }}
+          >
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "12px auto 8px" }} />
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              Comments
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
+              {loadingComments ? (
+                <div style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12, padding: "24px 0" }}>Loading...</div>
+              ) : commentItems.length === 0 ? (
+                <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
+              ) : (
+                commentItems.map(c => (
+                  <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {c.avatarUrl
+                        ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      }
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>@{c.username} </span>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)" }}>{c.body}</span>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{formatTimeAgo(c.createdAt)}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div style={{ padding: "10px 16px 36px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
+              <input
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder={user ? "Add a comment..." : "Log in to comment"}
+                disabled={!user}
+                style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }}
+              />
+              <button
+                onClick={submitComment}
+                disabled={!commentText.trim() || submittingComment || !user}
+                style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: (!commentText.trim() || !user) ? 0.4 : 1 }}
+              >
+                {submittingComment ? "..." : "Post"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding */}
+      {showOnboarding && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "24px 24px 0 0", padding: "28px 24px 48px" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <TourItLogo size={48} />
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginTop: 14, marginBottom: 8 }}>Welcome to Tour It</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>Scout any golf course before you play — real clips from golfers who&apos;ve already been there.</div>
+            </div>
+            {[
+              { icon: "🎥", title: "Watch hole-by-hole clips", desc: "See tee shots, approaches, and putts from real rounds" },
+              { icon: "📌", title: "Save courses to your list", desc: "Build your bucket list and track rounds you've played" },
+              { icon: "⛳", title: "Upload your own footage", desc: "Help other golfers by sharing your course knowledge" },
+            ].map(f => (
+              <div key={f.title} style={{ display: "flex", gap: 14, marginBottom: 18, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 22, flexShrink: 0, lineHeight: 1.2 }}>{f.icon}</span>
+                <div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 2 }}>{f.title}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{f.desc}</div>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={dismissOnboarding}
+              style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "16px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginTop: 8, boxShadow: "0 2px 16px rgba(45,122,66,0.4)" }}
+            >
+              Start Scouting
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         {/* Home */}

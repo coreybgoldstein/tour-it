@@ -10,6 +10,7 @@ type UserProfile = {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  bannerUrl: string | null;
   handicapIndex: number | null;
   homeCourseId: string | null;
   uploadCount: number;
@@ -265,8 +266,13 @@ export default function PublicProfilePage() {
         <div style={{ width: 36 }} />
       </div>
 
+      {/* Banner */}
+      <div style={{ height: 100, background: profile.bannerUrl ? "none" : "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)", overflow: "hidden" }}>
+        {profile.bannerUrl && <img src={profile.bannerUrl} alt="banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+      </div>
+
       {/* Avatar + name */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: "24px 20px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: "16px 20px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <div style={{ width: 80, height: 80, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "2px solid rgba(77,168,98,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden" }}>
           {profile.avatarUrl ? (
             <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -358,22 +364,16 @@ export default function PublicProfilePage() {
         )}
       </div>
 
-      {/* Courses played */}
+      {/* Courses played — compact pills */}
       {coursesPlayed.length > 0 && (
-        <div style={{ marginBottom: "20px", marginTop: "16px" }}>
-          <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", padding: "0 20px", marginBottom: "10px" }}>Courses played</div>
-          <div style={{ display: "flex", gap: "8px", padding: "0 20px", overflowX: "auto" }}>
-            {coursesPlayed.map((c, i) => (
-              <div
-                key={c.id}
-                className="course-chip"
-                onClick={() => router.push(`/courses/${c.id}`)}
-                style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", transition: "border-color 0.15s" }}
-              >
-                <div style={{ height: 55, background: i % 2 === 0 ? "linear-gradient(135deg,#1a4d22,#2d7a42)" : "linear-gradient(135deg,#1e3a10,#4a7a25)" }} />
-                <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
-                <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{c.city}, {c.state}</div>
-              </div>
+        <div style={{ marginBottom: "16px", marginTop: "12px" }}>
+          <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", padding: "0 20px", marginBottom: "8px" }}>Courses played</div>
+          <div style={{ display: "flex", gap: "6px", padding: "0 20px", overflowX: "auto", paddingBottom: 2 }}>
+            {coursesPlayed.map(c => (
+              <button key={c.id} onClick={() => router.push(`/courses/${c.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0, display: "block" }} />
+                <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>{c.name}</span>
+              </button>
             ))}
           </div>
         </div>
@@ -409,7 +409,7 @@ export default function PublicProfilePage() {
                 {upload.mediaType === "PHOTO" ? (
                   <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <video src={upload.mediaUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline />
+                  <video src={upload.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.1; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)" }} />
                 <div style={{ position: "absolute", bottom: "5px", left: "5px", fontSize: "8px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
