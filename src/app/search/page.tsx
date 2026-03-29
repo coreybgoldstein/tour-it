@@ -13,6 +13,7 @@ type Course = {
   holeCount: number;
   isPublic: boolean;
   uploadCount: number;
+  logoUrl: string | null;
 };
 
 function SearchPageInner() {
@@ -32,7 +33,7 @@ function SearchPageInner() {
     const supabase = createClient();
     supabase
       .from("Course")
-      .select("id, name, city, state, holeCount, isPublic, uploadCount")
+      .select("id, name, city, state, holeCount, isPublic, uploadCount, logoUrl")
       .gt("uploadCount", 0)
       .order("uploadCount", { ascending: false })
       .limit(12)
@@ -57,7 +58,7 @@ function SearchPageInner() {
       const supabase = createClient();
       const { data } = await supabase
         .from("Course")
-        .select("id, name, city, state, holeCount, isPublic, uploadCount")
+        .select("id, name, city, state, holeCount, isPublic, uploadCount, logoUrl")
         .or(`name.ilike.%${q}%,city.ilike.%${q}%,state.ilike.%${q}%`)
         .order("uploadCount", { ascending: false })
         .limit(30);
@@ -207,7 +208,9 @@ function SearchPageInner() {
               const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
               return (
                 <div key={course.id} className="course-row" onClick={() => router.push(`/courses/${course.id}`)}>
-                  <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`}>{abbr}</div>
+                  <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
+                    {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }} /> : abbr}
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="course-name">{course.name}</div>
                     <div className="course-meta">
@@ -232,7 +235,9 @@ function SearchPageInner() {
               const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
               return (
                 <div key={course.id} className="course-row" onClick={() => router.push(`/courses/${course.id}`)}>
-                  <div className="course-badge has-clips">{abbr}</div>
+                  <div className="course-badge has-clips" style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
+                    {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }} /> : abbr}
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="course-name">{course.name}</div>
                     <div className="course-meta">

@@ -18,6 +18,7 @@ type Course = {
   uploadCount: number;
   description: string | null;
   coverImageUrl: string | null;
+  logoUrl: string | null;
 };
 
 type Clip = {
@@ -298,9 +299,13 @@ export default function CourseProfilePage() {
           <button onClick={() => router.back()} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          {/* Course logo placeholder — swap src for real logo when available */}
-          <div style={{ width: 42, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>
-            {abbr}
+          {/* Course logo */}
+          <div style={{ width: 42, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+            {course.logoUrl ? (
+              <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }} />
+            ) : (
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{abbr}</span>
+            )}
           </div>
         </div>
 
