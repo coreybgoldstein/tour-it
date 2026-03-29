@@ -752,17 +752,17 @@ export default function Home() {
 
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
-          {/* Top bar — logo + slogan */}
-          <div style={{ padding: "48px 20px 0", display: "flex", flexDirection: "column", alignItems: "flex-start", flexShrink: 0, gap: 5 }}>
-            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 90, width: "auto", maxWidth: "90%" }} />
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.38)", letterSpacing: "0.03em", paddingLeft: 2 }}>
+          {/* Top bar — logo + slogan centered */}
+          <div style={{ padding: "52px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, gap: 6 }}>
+            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 72, width: "auto", maxWidth: "88%" }} />
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: "0.04em" }}>
               See the shots before you play them.
             </div>
           </div>
 
           {/* Hero text */}
-          <div style={{ padding: "18px 20px 14px", flexShrink: 0 }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 25, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
+          <div style={{ padding: "14px 20px 12px", flexShrink: 0 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
               Scout your next round.
             </div>
           </div>
@@ -964,27 +964,14 @@ export default function Home() {
           position: "fixed", inset: 0, zIndex: 200,
           background: "#07100a",
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-          gap: 24,
+          gap: 10,
         }}>
-          {/* Pulsing ring behind logo */}
-          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{
-              position: "absolute", width: 160, height: 160, borderRadius: "50%",
-              border: "1.5px solid rgba(77,168,98,0.18)",
-              animation: "pulse-ring 2s ease-in-out infinite",
-            }} />
-            <div style={{
-              position: "absolute", width: 120, height: 120, borderRadius: "50%",
-              border: "1px solid rgba(77,168,98,0.12)",
-              animation: "pulse-ring 2s ease-in-out infinite 0.3s",
-            }} />
-            <div className="splash-logo">
-              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 110, width: "auto", maxWidth: "80vw" }} />
-            </div>
+          <div className="splash-logo">
+            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 90, width: "auto", maxWidth: "82vw" }} />
           </div>
           <div className="splash-tagline" style={{
             fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400,
-            color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em",
+            color: "rgba(255,255,255,0.45)", letterSpacing: "0.05em",
           }}>
             See the shots before you play them.
           </div>
