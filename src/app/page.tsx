@@ -754,7 +754,7 @@ export default function Home() {
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar — logo + slogan */}
           <div style={{ padding: "48px 20px 0", display: "flex", flexDirection: "column", alignItems: "flex-start", flexShrink: 0, gap: 5 }}>
-            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 64, width: "auto" }} />
+            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 90, width: "auto", maxWidth: "90%" }} />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.38)", letterSpacing: "0.03em", paddingLeft: 2 }}>
               See the shots before you play them.
             </div>
@@ -979,7 +979,7 @@ export default function Home() {
               animation: "pulse-ring 2s ease-in-out infinite 0.3s",
             }} />
             <div className="splash-logo">
-              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 80, width: "auto" }} />
+              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 110, width: "auto", maxWidth: "80vw" }} />
             </div>
           </div>
           <div className="splash-tagline" style={{
