@@ -368,7 +368,7 @@ export default function CourseProfilePage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
           {/* Course logo */}
-          <div style={{ width: 42, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+          <div style={{ width: 68, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
             {course.logoUrl ? (
               <img
                 src={course.logoUrl}
@@ -646,7 +646,7 @@ export default function CourseProfilePage() {
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Course Logo</div>
                   <label style={{ display: "block", cursor: "pointer" }}>
-                    <div style={{ width: 80, height: 80, borderRadius: 16, border: "1.5px dashed rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                    <div style={{ width: 120, height: 72, borderRadius: 12, border: "1.5px dashed rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                       {logoPreview ? (
                         <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8 }} />
                       ) : course.logoUrl ? (

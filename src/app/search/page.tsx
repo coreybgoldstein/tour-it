@@ -122,7 +122,7 @@ function SearchPageInner() {
         .course-row:active { opacity: 0.7; }
 
         .course-badge {
-          width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+          width: 68px; height: 42px; border-radius: 10px; flex-shrink: 0;
           background: rgba(77,168,98,0.1); border: 1px solid rgba(77,168,98,0.2);
           display: flex; align-items: center; justify-content: center;
           font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700;
