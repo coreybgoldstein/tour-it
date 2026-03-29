@@ -188,9 +188,16 @@ export default function CourseProfilePage() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
+  const [contributeError, setContributeError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { saved, saveType, toggleSave, showPicker, setShowPicker } = useSave({ courseId: id as string });
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -274,6 +281,23 @@ export default function CourseProfilePage() {
   };
 
   const handleContributeSubmit = async () => {
+    setContributeError(null);
+
+    if (!user) {
+      setContributeError("You need to be logged in to submit updates. Sign in and try again.");
+      return;
+    }
+
+    const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+    if (coverFile && coverFile.size > MAX_BYTES) {
+      setContributeError(`Cover photo is too large (${(coverFile.size / 1024 / 1024).toFixed(1)} MB). Please resize it to under 8 MB and try again.`);
+      return;
+    }
+    if (logoFile && logoFile.size > MAX_BYTES) {
+      setContributeError(`Logo file is too large (${(logoFile.size / 1024 / 1024).toFixed(1)} MB). Please resize it to under 8 MB and try again.`);
+      return;
+    }
+
     setContributing(true);
     const supabase = createClient();
     const updates: Record<string, string> = {};
@@ -282,24 +306,37 @@ export default function CourseProfilePage() {
       const ext = coverFile.name.split(".").pop();
       const path = `covers/${id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, coverFile, { upsert: true });
-      if (!upErr) {
-        const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
-        updates.coverImageUrl = publicUrl;
+      if (upErr) {
+        setContributing(false);
+        setContributeError(`Cover photo upload failed: ${upErr.message}`);
+        return;
       }
+      const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+      updates.coverImageUrl = publicUrl;
     }
+
     if (logoFile) {
       const ext = logoFile.name.split(".").pop();
       const path = `logos/${id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, logoFile, { upsert: true });
-      if (!upErr) {
-        const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
-        updates.logoUrl = publicUrl;
+      if (upErr) {
+        setContributing(false);
+        setContributeError(`Logo upload failed: ${upErr.message}`);
+        return;
       }
+      const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+      updates.logoUrl = publicUrl;
     }
+
     if (editDescription.trim()) updates.description = editDescription.trim();
 
     if (Object.keys(updates).length > 0) {
-      await supabase.from("Course").update(updates).eq("id", id as string);
+      const { error: dbErr } = await supabase.from("Course").update(updates).eq("id", id as string);
+      if (dbErr) {
+        setContributing(false);
+        setContributeError(`Failed to save: ${dbErr.message}`);
+        return;
+      }
       setCourse(prev => prev ? { ...prev, ...updates } : prev);
       if (updates.coverImageUrl) setCoverPreview(null);
     }
@@ -660,6 +697,11 @@ export default function CourseProfilePage() {
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 6 }}>Tap the square to upload a logo image</div>
                 </div>
 
+                {contributeError && (
+                  <div style={{ background: "rgba(200,60,60,0.12)", border: "1px solid rgba(200,60,60,0.3)", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,120,120,0.9)", lineHeight: 1.5 }}>
+                    {contributeError}
+                  </div>
+                )}
                 <button onClick={handleContributeSubmit} disabled={contributing} style={{ width: "100%", background: contributing ? "rgba(45,122,66,0.5)" : "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: contributing ? "default" : "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}>
                   {contributing ? "Saving..." : "Submit Updates"}
                 </button>
