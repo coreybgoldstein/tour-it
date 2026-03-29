@@ -95,11 +95,13 @@ function UploadPageInner() {
   const searchParams = useSearchParams();
   const preselectedCourseId = searchParams.get("courseId");
 
-  const [step, setStep] = useState(preselectedCourseId ? 2 : 1);
+  const [step, setStep] = useState(1);
   const [authChecked, setAuthChecked] = useState(false);
   const [courseResults, setCourseResults] = useState<Course[]>([]);
   const [courseLoading, setCourseLoading] = useState(false);
   const courseDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [gpsSuggestions, setGpsSuggestions] = useState<Course[]>([]);
+  const [gpsLoading, setGpsLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -188,7 +190,51 @@ function UploadPageInner() {
     setMediaType(isVideo ? "VIDEO" : "PHOTO");
     setMediaPreview(URL.createObjectURL(file));
     setError("");
+
+    // Auto-fill date from file metadata (works for phone videos/photos)
+    const dateFromFile = new Date(file.lastModified).toISOString().split("T")[0];
+    setIntel(prev => ({ ...prev, datePlayed: prev.datePlayed || dateFromFile }));
+
+    // Try GPS extraction for video files (iPhone MP4/MOV stores ©xyz atom)
+    if (isVideo) {
+      setGpsLoading(true);
+      extractGPSFromVideo(file).then(async coords => {
+        if (!coords) { setGpsLoading(false); return; }
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("Course")
+          .select("id, name, city, state, holeCount")
+          .gte("latitude", coords.lat - 0.05)
+          .lte("latitude", coords.lat + 0.05)
+          .gte("longitude", coords.lng - 0.05)
+          .lte("longitude", coords.lng + 0.05)
+          .order("uploadCount", { ascending: false })
+          .limit(5);
+        setGpsSuggestions(data || []);
+        setGpsLoading(false);
+      });
+    }
   };
+
+  // Scan video binary for iPhone ©xyz GPS atom (no library needed)
+  async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const buffer = await file.slice(0, 524288).arrayBuffer(); // first 512KB
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.length - 20; i++) {
+        // Look for ©xyz (0xA9 0x78 0x79 0x7A)
+        if (bytes[i] === 0xA9 && bytes[i+1] === 0x78 && bytes[i+2] === 0x79 && bytes[i+3] === 0x7A) {
+          const strLen = (bytes[i + 4] << 8) | bytes[i + 5];
+          if (strLen > 0 && strLen < 60) {
+            const gpsStr = new TextDecoder().decode(bytes.slice(i + 8, i + 8 + strLen));
+            const match = gpsStr.match(/([+-]\d+\.\d+)([+-]\d+\.\d+)/);
+            if (match) return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+          }
+        }
+      }
+    } catch {}
+    return null;
+  }
 
   const handleSeriesFileSelect = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
@@ -382,7 +428,7 @@ function UploadPageInner() {
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
             <button
               onClick={() => {
-                setStep(preselectedCourseId ? 2 : 1);
+                setStep(1);
                 setSelectedHole(null);
                 setMediaFile(null);
                 setMediaPreview(null);
@@ -484,9 +530,7 @@ function UploadPageInner() {
 
       <div className="upload-header">
         <button className="back-btn" onClick={() => {
-          if (step === 2 && preselectedCourseId) {
-            window.history.back();
-          } else if (step > 1) {
+          if (step > 1) {
             setStep(step - 1);
           } else {
             window.history.back();
@@ -495,27 +539,130 @@ function UploadPageInner() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>
-          {step === 1 ? "Select Course" : step === 2 ? "Select Hole" : step === 3 ? (isSeriesMode ? "Play a Hole With Me" : "Upload Clip") : step === 4 ? "Add Intel" : "Review"}
+          {step === 1 ? (isSeriesMode ? "Play a Hole With Me" : "Upload Clip") : step === 2 ? "Select Course" : step === 3 ? "Select Hole" : step === 4 ? "Add Intel" : "Review"}
         </span>
       </div>
 
       <div className="progress-bar">
-        <div className="progress-fill" style={{ width: `${(step / (isSeriesMode ? 3 : 5)) * 100}%` }} />
+        <div className="progress-fill" style={{ width: `${(step / (isSeriesMode ? 4 : 5)) * 100}%` }} />
       </div>
 
       <div className="upload-wrap">
 
-        {/* Step 1 — Course */}
-        {step === 1 && (
+        {/* Step 1 — Upload clip (single) or series start */}
+        {step === 1 && !isSeriesMode && (
           <div className="anim">
-            <p className="step-label">Step 1 of {isSeriesMode ? 3 : 5}</p>
+            <p className="step-label">Step 1 of 5</p>
+            <h1 className="step-title">Upload your clip</h1>
+            <p className="step-sub">Video or photo — we&apos;ll help fill in the rest.</p>
+            <input ref={fileInputRef} type="file" accept="video/*,image/*" style={{ display: "none" }} onChange={handleFileSelect} />
+            {mediaPreview ? (
+              <>
+                {mediaType === "VIDEO" ? (
+                  <video src={mediaPreview} className="preview-video" controls playsInline />
+                ) : (
+                  <img src={mediaPreview} className="preview-img" alt="preview" />
+                )}
+                <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); setGpsSuggestions([]); }}>
+                  Choose different file
+                </button>
+                {gpsLoading && (
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(77,168,98,0.6)", textAlign: "center", marginBottom: 12 }}>
+                    📍 Reading location from video...
+                  </p>
+                )}
+                <button className="btn-primary" onClick={() => setStep(2)}>Next: Select Course →</button>
+              </>
+            ) : (
+              <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto 12px", display: "block" }}>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <div className="upload-zone-title">Tap to upload video or photo</div>
+                <div className="upload-zone-sub">MP4, MOV, JPG, PNG supported</div>
+              </div>
+            )}
+            {error && <div className="error-box">{error}</div>}
+            <div style={{ marginTop: 20, textAlign: "center" }}>
+              <button style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(180,145,60,0.8)", cursor: "pointer", textDecoration: "underline" }} onClick={() => setIsSeriesMode(true)}>
+                Uploading a full hole? Switch to Play a Hole With Me →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 1 — Series mode start */}
+        {step === 1 && isSeriesMode && (
+          <div className="anim">
+            <p className="step-label">Step 1 of 4</p>
+            <h1 className="step-title">Play a Hole With Me</h1>
+            <p className="step-sub">Upload each shot in order — viewers follow your round.</p>
+            <div className="series-banner">
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#c8a96e", marginBottom: 4 }}>📹 Shot by Shot Series</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                You&apos;ll add videos for each shot after selecting your course and hole.
+              </div>
+            </div>
+            <button className="btn-primary" onClick={() => setStep(2)}>Select Course →</button>
+            <button className="btn-secondary" onClick={() => setIsSeriesMode(false)}>← Back to Single Clip</button>
+          </div>
+        )}
+
+        {/* Step 2 — Course */}
+        {step === 2 && (
+          <div className="anim">
+            <p className="step-label">Step 2 of {isSeriesMode ? 4 : 5}</p>
             <h1 className="step-title">Which course?</h1>
             <p className="step-sub">Search by name, city, or state.</p>
-            <input className="search-input" placeholder="Search courses..." value={courseSearch} onChange={e => setCourseSearch(e.target.value)} autoFocus />
+
+            {/* GPS suggestions */}
+            {(gpsSuggestions.length > 0 || gpsLoading) && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.6)", marginBottom: 8 }}>
+                  📍 Suggested from your video
+                </p>
+                {gpsLoading && <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)" }}>Reading location...</p>}
+                {gpsSuggestions.map(course => {
+                  const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+                  return (
+                    <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
+                      <div className="course-abbr has-clips">{abbr}</div>
+                      <div>
+                        <div className="course-name-text">{course.name}</div>
+                        <div className="course-location-text">{course.city}, {course.state}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+                {gpsSuggestions.length > 0 && <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />}
+              </div>
+            )}
+
+            {/* Pre-selected course from course page */}
+            {selectedCourse && !gpsSuggestions.find(c => c.id === selectedCourse.id) && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Pre-selected</p>
+                {(() => {
+                  const abbr = selectedCourse.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+                  return (
+                    <button className="course-item selected" onClick={() => setStep(3)}>
+                      <div className="course-abbr">{abbr}</div>
+                      <div>
+                        <div className="course-name-text">{selectedCourse.name}</div>
+                        <div className="course-location-text">{selectedCourse.city}, {selectedCourse.state}</div>
+                      </div>
+                    </button>
+                  );
+                })()}
+                <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />
+              </div>
+            )}
+
+            <input className="search-input" placeholder="Search courses..." value={courseSearch} onChange={e => setCourseSearch(e.target.value)} />
             {courseLoading && (
               <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 20 }}>Searching...</p>
             )}
-            {!courseLoading && courseSearch.trim().length < 2 && (
+            {!courseLoading && courseSearch.trim().length < 2 && gpsSuggestions.length === 0 && !selectedCourse && (
               <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 28, lineHeight: 1.6 }}>
                 Type at least 2 characters<br/>
                 <span style={{ fontSize: 12 }}>Search by name, city, or state</span>
@@ -530,7 +677,7 @@ function UploadPageInner() {
               {courseResults.map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (
-                  <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(2); }}>
+                  <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
                     <div className="course-abbr">{abbr}</div>
                     <div>
                       <div className="course-name-text">{course.name}</div>
@@ -543,38 +690,17 @@ function UploadPageInner() {
           </div>
         )}
 
-        {/* Step 2 — Hole */}
-        {step === 2 && selectedCourse && (
+        {/* Step 3 — Hole */}
+        {step === 3 && selectedCourse && (
           <div className="anim">
-            <p className="step-label">Step 2 of {isSeriesMode ? 3 : 5}</p>
+            <p className="step-label">Step 3 of {isSeriesMode ? 4 : 5}</p>
             <h1 className="step-title">Which hole?</h1>
             <p className="step-sub">{selectedCourse.name}</p>
-
-            {/* Upload type picker */}
-            <div style={{ marginBottom: 20 }}>
-              <p className="nine-label" style={{ marginBottom: 10 }}>Upload type</p>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  onClick={() => setIsSeriesMode(false)}
-                  style={{ flex: 1, padding: "12px 10px", borderRadius: 12, border: `1px solid ${!isSeriesMode ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`, background: !isSeriesMode ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.04)", cursor: "pointer" }}
-                >
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: !isSeriesMode ? "#4da862" : "rgba(255,255,255,0.5)", marginBottom: 3 }}>Single Clip</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>One shot or photo</div>
-                </button>
-                <button
-                  onClick={() => setIsSeriesMode(true)}
-                  style={{ flex: 1, padding: "12px 10px", borderRadius: 12, border: `1px solid ${isSeriesMode ? "rgba(180,145,60,0.5)" : "rgba(255,255,255,0.1)"}`, background: isSeriesMode ? "rgba(180,145,60,0.12)" : "rgba(255,255,255,0.04)", cursor: "pointer" }}
-                >
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: isSeriesMode ? "#c8a96e" : "rgba(255,255,255,0.5)", marginBottom: 3 }}>Play a Hole With Me</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Shot by shot series</div>
-                </button>
-              </div>
-            </div>
 
             <p className="nine-label">Front Nine</p>
             <div className="holes-grid">
               {frontNine.map(n => (
-                <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(3); }}>
+                <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }}>
                   <div className="hole-btn-num">{n}</div>
                 </button>
               ))}
@@ -582,7 +708,7 @@ function UploadPageInner() {
             <p className="nine-label">Back Nine</p>
             <div className="holes-grid">
               {backNine.map(n => (
-                <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(3); }}>
+                <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }}>
                   <div className="hole-btn-num">{n}</div>
                 </button>
               ))}
@@ -590,42 +716,10 @@ function UploadPageInner() {
           </div>
         )}
 
-        {/* Step 3 — Single clip upload */}
-        {step === 3 && !isSeriesMode && (
+        {/* Step 4 — Play a Hole With Me series */}
+        {step === 4 && isSeriesMode && (
           <div className="anim">
-            <p className="step-label">Step 3 of 5</p>
-            <h1 className="step-title">Upload your clip</h1>
-            <p className="step-sub">{selectedCourse?.name} — Hole {selectedHole}</p>
-            <input ref={fileInputRef} type="file" accept="video/*,image/*" style={{ display: "none" }} onChange={handleFileSelect} />
-            {mediaPreview ? (
-              <>
-                {mediaType === "VIDEO" ? (
-                  <video src={mediaPreview} className="preview-video" controls playsInline />
-                ) : (
-                  <img src={mediaPreview} className="preview-img" alt="preview" />
-                )}
-                <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); }}>
-                  Choose different file
-                </button>
-                <button className="btn-primary" onClick={() => setStep(4)}>Looks good →</button>
-              </>
-            ) : (
-              <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto 12px", display: "block" }}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                <div className="upload-zone-title">Tap to upload video or photo</div>
-                <div className="upload-zone-sub">MP4, MOV, JPG, PNG supported</div>
-              </div>
-            )}
-            {error && <div className="error-box">{error}</div>}
-          </div>
-        )}
-
-        {/* Step 3 — Play a Hole With Me series */}
-        {step === 3 && isSeriesMode && (
-          <div className="anim">
-            <p className="step-label">Step 3 of 3</p>
+            <p className="step-label">Step 4 of 4</p>
             <h1 className="step-title">Play a Hole With Me</h1>
             <p className="step-sub">{selectedCourse?.name} — Hole {selectedHole}</p>
 
