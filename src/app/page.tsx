@@ -403,6 +403,8 @@ export default function Home() {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedCursorRef = useRef<string | null>(null);
@@ -633,6 +635,30 @@ export default function Home() {
     setSubmittingComment(false);
   }
 
+  function fetchNearMe() {
+    if (!navigator.geolocation) return;
+    setLocationStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        const RANGE = 0.5; // ~35 miles
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("Course")
+          .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
+          .gte("latitude", lat - RANGE)
+          .lte("latitude", lat + RANGE)
+          .gte("longitude", lng - RANGE)
+          .lte("longitude", lng + RANGE)
+          .order("uploadCount", { ascending: false })
+          .limit(10);
+        setNearMeCourses(data || []);
+        setLocationStatus("granted");
+      },
+      () => setLocationStatus("denied")
+    );
+  }
+
   return (
     <main style={{ height: "100svh", background: "#07100a", overflow: "hidden", position: "relative" }}>
       <style>{`
@@ -651,7 +677,7 @@ export default function Home() {
       <div ref={feedRef} className="feed" onScroll={handleScroll}>
 
         {/* ── Discovery section ── */}
-        <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar */}
           <div style={{ padding: "52px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -700,6 +726,47 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          {/* Courses Near Me */}
+          {locationStatus !== "denied" && (
+            <div style={{ flexShrink: 0, marginTop: 24 }}>
+              <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.22)" }}>
+                  Courses Near Me
+                </div>
+                {locationStatus === "idle" && (
+                  <button onClick={fetchNearMe} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 99, padding: "4px 12px", cursor: "pointer" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Enable</span>
+                  </button>
+                )}
+              </div>
+              {locationStatus === "idle" && (
+                <div style={{ padding: "0 20px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)", lineHeight: 1.5 }}>
+                  Tap Enable to find courses within ~35 miles of you.
+                </div>
+              )}
+              {locationStatus === "loading" && (
+                <div className="courses-row">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} style={{ width: 148, height: 188, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                  ))}
+                </div>
+              )}
+              {locationStatus === "granted" && nearMeCourses.length > 0 && (
+                <div className="courses-row">
+                  {nearMeCourses.map(course => (
+                    <CourseCard key={course.id} course={course} onClick={() => router.push(`/courses/${course.id}`)} />
+                  ))}
+                </div>
+              )}
+              {locationStatus === "granted" && nearMeCourses.length === 0 && (
+                <div style={{ padding: "0 20px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
+                  No courses found within 35 miles.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Bridge to feed */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 86 }}>
