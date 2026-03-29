@@ -737,8 +737,8 @@ export default function Home() {
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar */}
-          <div style={{ padding: "52px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 44, width: "auto" }} />
+          <div style={{ padding: "44px 20px 8px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 60, width: "auto", maxWidth: "80%" }} />
           </div>
 
           {/* Hero text */}
