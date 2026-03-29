@@ -281,6 +281,12 @@ export default function CourseProfilePage() {
       <div style={{ position: "relative", width: "100%", height: 300 }}>
         {course.coverImageUrl ? (
           <img src={course.coverImageUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : courseClips[0] ? (
+          courseClips[0].mediaType === "VIDEO" ? (
+            <video src={courseClips[0].mediaUrl} autoPlay muted loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <img src={courseClips[0].mediaUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          )
         ) : (
           <div style={{ position: "absolute", inset: 0, background: hero.gradient }} />
         )}
