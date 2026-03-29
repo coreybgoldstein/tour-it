@@ -737,13 +737,12 @@ export default function Home() {
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar */}
-          <div style={{ padding: "52px 20px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <TourItLogo size={28} />
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 900, color: "#fff", lineHeight: 1 }}>Tour It</div>
+          <div style={{ padding: "48px 20px 10px", display: "flex", alignItems: "center", flexShrink: 0 }}>
+            <img src="/tour-it-logo.png" alt="Tour It" style={{ height: 34, width: "auto", mixBlendMode: "lighten" }} />
           </div>
 
           {/* Hero text */}
-          <div style={{ padding: "4px 20px 22px", flexShrink: 0 }}>
+          <div style={{ padding: "2px 20px 14px", flexShrink: 0 }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 25, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>
               Scout your next round.
             </div>
@@ -753,7 +752,7 @@ export default function Home() {
           </div>
 
           {/* Search CTA */}
-          <div style={{ padding: "0 20px 26px", flexShrink: 0 }}>
+          <div style={{ padding: "0 20px 18px", flexShrink: 0 }}>
             <button
               onClick={() => router.push("/search")}
               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.07)", border: "1.5px solid rgba(77,168,98,0.55)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", boxShadow: "0 0 18px rgba(77,168,98,0.2), inset 0 0 10px rgba(77,168,98,0.04)" }}
