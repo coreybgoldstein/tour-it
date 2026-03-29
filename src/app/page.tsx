@@ -608,11 +608,8 @@ export default function Home() {
       updatedAt: new Date().toISOString(),
     });
     if (!error) {
-      await supabase.rpc("increment_comment_count", { upload_id: commentUploadId }).catch(() =>
-        supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single().then(({ data }) =>
-          supabase.from("Upload").update({ commentCount: (data?.commentCount || 0) + 1 }).eq("id", commentUploadId)
-        )
-      );
+      const { data: uploadData } = await supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single();
+      await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
       setCommentItems(prev => [...prev, {
         id,
         body: commentText.trim(),
