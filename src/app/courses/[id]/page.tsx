@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useLike } from "@/hooks/useLike";
 import { useSave } from "@/hooks/useSave";
+import { GolfBallBadge } from "@/components/GolfBallBadge";
 
 type Course = {
   id: string;
@@ -37,6 +38,7 @@ type Clip = {
   courseId: string;
   likeCount: number;
   holeNumber?: number;
+  seriesId?: string | null;
   courseName?: string;
   isForeign?: boolean;
 };
@@ -544,13 +546,15 @@ export default function CourseProfilePage() {
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     </div>
                   )}
-                  <div style={{ position: "absolute", bottom: 5, left: 6, right: 6 }}>
-                    {clip.holeNumber && (
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#fff", background: "rgba(77,168,98,0.9)", borderRadius: 99, padding: "1px 6px" }}>
-                        Hole {clip.holeNumber}
-                      </span>
-                    )}
-                  </div>
+                  {(clip.holeNumber || clip.seriesId) && (
+                    <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                      <GolfBallBadge
+                        label={(!clip.holeNumber || clip.seriesId) ? "+" : clip.holeNumber}
+                        isGold={!clip.holeNumber || !!clip.seriesId}
+                        id={clip.id}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
