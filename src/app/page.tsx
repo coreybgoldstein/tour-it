@@ -737,8 +737,10 @@ export default function Home() {
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar */}
-          <div style={{ padding: "48px 20px 10px", display: "flex", alignItems: "center", flexShrink: 0 }}>
-            <img src="/tour-it-logo.png" alt="Tour It" style={{ height: 34, width: "auto" }} />
+          <div style={{ padding: "52px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: "0.04em", color: "#fff", lineHeight: 1 }}>
+              TOUR <span style={{ color: "#4da862" }}>IT</span>
+            </span>
           </div>
 
           {/* Hero text */}
