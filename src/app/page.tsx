@@ -738,7 +738,7 @@ export default function Home() {
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar */}
           <div style={{ padding: "48px 20px 10px", display: "flex", alignItems: "center", flexShrink: 0 }}>
-            <img src="/tour-it-logo.png" alt="Tour It" style={{ height: 34, width: "auto", mixBlendMode: "lighten" }} />
+            <img src="/tour-it-logo.png" alt="Tour It" style={{ height: 34, width: "auto" }} />
           </div>
 
           {/* Hero text */}
