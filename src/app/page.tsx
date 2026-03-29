@@ -432,6 +432,8 @@ export default function Home() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [splashVisible, setSplashVisible] = useState(true);
+  const [splashFading, setSplashFading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
@@ -600,6 +602,13 @@ export default function Home() {
   }, [activeIndex, feedItems.length, loadMoreFeed]);
 
   useEffect(() => {
+    // Splash screen: fade out after 2s
+    const fadeTimer = setTimeout(() => setSplashFading(true), 2000);
+    const hideTimer = setTimeout(() => setSplashVisible(false), 2600);
+    return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+  }, []);
+
+  useEffect(() => {
     if (!localStorage.getItem("tour-it-onboarded")) setShowOnboarding(true);
 
     // Auto-load near me if previously granted
@@ -723,6 +732,7 @@ export default function Home() {
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; overflow: hidden; }
+        @keyframes pulse-ring { 0%,100% { transform: scale(1); opacity: 0.18; } 50% { transform: scale(1.18); opacity: 0.07; } }
         .feed { height: 100svh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .feed::-webkit-scrollbar { display: none; }
         .feed-item { scroll-snap-align: start; scroll-snap-stop: always; }
@@ -730,6 +740,12 @@ export default function Home() {
         .courses-row::-webkit-scrollbar { display: none; }
         @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
         .bounce-arrow { animation: bounce-down 1.6s ease-in-out infinite; display: inline-block; }
+        @keyframes splash-logo-in { 0% { opacity: 0; transform: scale(0.82); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes splash-tagline-in { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes splash-fade-out { 0% { opacity: 1; } 100% { opacity: 0; } }
+        .splash-logo { animation: splash-logo-in 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .splash-tagline { animation: splash-tagline-in 0.5s ease forwards 0.5s; opacity: 0; }
+        .splash-fade-out { animation: splash-fade-out 0.6s ease forwards; }
       `}</style>
 
       <div ref={feedRef} className="feed" onScroll={handleScroll}>
@@ -941,6 +957,39 @@ export default function Home() {
           <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>
         </button>
       </nav>
+
+      {/* ── Splash screen ── */}
+      {splashVisible && (
+        <div className={splashFading ? "splash-fade-out" : ""} style={{
+          position: "fixed", inset: 0, zIndex: 200,
+          background: "#07100a",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          gap: 24,
+        }}>
+          {/* Pulsing ring behind logo */}
+          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{
+              position: "absolute", width: 160, height: 160, borderRadius: "50%",
+              border: "1.5px solid rgba(77,168,98,0.18)",
+              animation: "pulse-ring 2s ease-in-out infinite",
+            }} />
+            <div style={{
+              position: "absolute", width: 120, height: 120, borderRadius: "50%",
+              border: "1px solid rgba(77,168,98,0.12)",
+              animation: "pulse-ring 2s ease-in-out infinite 0.3s",
+            }} />
+            <div className="splash-logo">
+              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 80, width: "auto" }} />
+            </div>
+          </div>
+          <div className="splash-tagline" style={{
+            fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400,
+            color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em",
+          }}>
+            Watch the course before your round.
+          </div>
+        </div>
+      )}
     </main>
   );
 }
