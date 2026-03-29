@@ -752,18 +752,18 @@ export default function Home() {
 
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
-          {/* Top bar */}
-          <div style={{ padding: "44px 20px 8px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 60, width: "auto", maxWidth: "80%" }} />
+          {/* Top bar — logo + slogan stacked */}
+          <div style={{ padding: "48px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, gap: 6 }}>
+            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 56, width: "auto", maxWidth: "80%" }} />
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: "0.04em", textAlign: "center" }}>
+              See the shots before you play them.
+            </div>
           </div>
 
           {/* Hero text */}
-          <div style={{ padding: "2px 20px 14px", flexShrink: 0 }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 25, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 8 }}>
+          <div style={{ padding: "18px 20px 14px", flexShrink: 0 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 25, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
               Scout your next round.
-            </div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.38)", lineHeight: 1.5 }}>
-              See the shots before you play them.
             </div>
           </div>
 
