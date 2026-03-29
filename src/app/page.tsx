@@ -60,13 +60,30 @@ function formatTimeAgo(dateStr: string) {
 }
 
 function TourItLogo({ size = 26 }: { size?: number }) {
+  const w = Math.round(size * 0.8);
   return (
-    <svg width={size} height={size} viewBox="0 0 80 80" fill="none">
-      <circle cx="40" cy="40" r="38" fill="#091a0d" />
-      <circle cx="40" cy="40" r="38" fill="none" stroke="rgba(77,168,98,0.55)" strokeWidth="1.5" />
-      <line x1="30" y1="14" x2="30" y2="64" stroke="#4da862" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M30 14 L64 25 L30 36 Z" fill="#4da862" />
-      <ellipse cx="30" cy="64" rx="7" ry="2.2" fill="rgba(77,168,98,0.25)" />
+    <svg width={w} height={size} viewBox="0 0 40 50" fill="none">
+      <defs>
+        <clipPath id="ti-clip">
+          <path d="M20 45 C10 35 5 29 5 20 A15 15 0 0 1 35 20 C35 29 30 35 20 45Z" />
+        </clipPath>
+      </defs>
+      {/* White pin border */}
+      <path d="M20 48 C8 37 2 30 2 20 A18 18 0 0 1 38 20 C38 30 32 37 20 48Z" fill="white" />
+      {/* Dark interior */}
+      <path d="M20 45 C10 35 5 29 5 20 A15 15 0 0 1 35 20 C35 29 30 35 20 45Z" fill="#0d1f12" />
+      {/* Back grass */}
+      <ellipse cx="20" cy="22" rx="13" ry="11" fill="#1d5c20" clipPath="url(#ti-clip)" />
+      {/* Fairway */}
+      <path d="M8 32 Q12 24 20 22 Q26 20 28 15 Q22 11 16 13 Q10 16 8 24Z" fill="#3d8c40" clipPath="url(#ti-clip)" />
+      {/* Water hazard */}
+      <path d="M24 18 Q30 16 32 20 Q32 24 28 24 Q26 24 24 22Z" fill="#5aaddd" clipPath="url(#ti-clip)" />
+      {/* Putting green */}
+      <ellipse cx="16" cy="27" rx="7" ry="5" fill="#4da862" clipPath="url(#ti-clip)" />
+      {/* Flag pole */}
+      <line x1="15" y1="27" x2="15" y2="13" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
+      {/* Red flag */}
+      <path d="M15 13 L22 15.5 L15 18Z" fill="#e53e3e" />
     </svg>
   );
 }
@@ -568,6 +585,19 @@ export default function Home() {
 
   useEffect(() => {
     if (!localStorage.getItem("tour-it-onboarded")) setShowOnboarding(true);
+
+    // Auto-load near me if previously granted
+    if (localStorage.getItem("tour-it-location-denied")) {
+      setLocationStatus("denied");
+      return;
+    }
+    try {
+      const raw = localStorage.getItem("tour-it-location");
+      if (raw) {
+        const { ts } = JSON.parse(raw);
+        if (Date.now() - ts < 86400000) fetchNearMe();
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -635,24 +665,39 @@ export default function Home() {
   function fetchNearMe() {
     if (!navigator.geolocation) return;
     setLocationStatus("loading");
+
+    async function doFetch(lat: number, lng: number) {
+      const RANGE = 0.5;
+      const { data } = await createClient()
+        .from("Course")
+        .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
+        .gte("latitude", lat - RANGE).lte("latitude", lat + RANGE)
+        .gte("longitude", lng - RANGE).lte("longitude", lng + RANGE)
+        .order("uploadCount", { ascending: false }).limit(10);
+      setNearMeCourses(data || []);
+      setLocationStatus("granted");
+    }
+
+    // Use cached coords if fresh (< 24h)
+    try {
+      const raw = localStorage.getItem("tour-it-location");
+      if (raw) {
+        const { lat, lng, ts } = JSON.parse(raw);
+        if (Date.now() - ts < 86400000) { doFetch(lat, lng); return; }
+      }
+    } catch {}
+
+    // Request fresh permission
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+      (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
-        const RANGE = 0.5; // ~35 miles
-        const supabase = createClient();
-        const { data } = await supabase
-          .from("Course")
-          .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
-          .gte("latitude", lat - RANGE)
-          .lte("latitude", lat + RANGE)
-          .gte("longitude", lng - RANGE)
-          .lte("longitude", lng + RANGE)
-          .order("uploadCount", { ascending: false })
-          .limit(10);
-        setNearMeCourses(data || []);
-        setLocationStatus("granted");
+        localStorage.setItem("tour-it-location", JSON.stringify({ lat, lng, ts: Date.now() }));
+        doFetch(lat, lng);
       },
-      () => setLocationStatus("denied")
+      () => {
+        localStorage.setItem("tour-it-location-denied", "1");
+        setLocationStatus("denied");
+      }
     );
   }
 
@@ -676,17 +721,12 @@ export default function Home() {
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar */}
-          <div style={{ padding: "52px 20px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <TourItLogo size={26} />
-              <div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1 }}>Tour It</div>
-                <div style={{ fontSize: 7, fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.65)", marginTop: 1 }}>Scout before you play</div>
-              </div>
+          <div style={{ padding: "52px 20px 16px", display: "flex", alignItems: "center", flexShrink: 0 }}>
+            <TourItLogo size={26} />
+            <div style={{ marginLeft: 8 }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1 }}>Tour It</div>
+              <div style={{ fontSize: 7, fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.65)", marginTop: 1 }}>Scout before you play</div>
             </div>
-            <button onClick={() => router.push(user ? "/profile" : "/login")} style={{ width: 34, height: 34, borderRadius: "50%", background: userProfile?.avatarUrl ? "transparent" : "rgba(77,168,98,0.18)", border: "1.5px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", padding: 0, flexShrink: 0 }}>
-              {userProfile?.avatarUrl ? <img src={userProfile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-            </button>
           </div>
 
           {/* Hero text */}
