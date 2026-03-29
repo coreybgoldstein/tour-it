@@ -28,10 +28,10 @@ export default function BottomNav() {
       position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
       display: "flex", alignItems: "center", justifyContent: "space-around",
       padding: "10px 8px 18px",
-      background: "rgba(8,20,12,0.96)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-      borderTop: "1px solid rgba(77,168,98,0.18)",
+      background: "rgba(4,12,6,0.98)",
+      backdropFilter: "blur(16px)",
+      WebkitBackdropFilter: "blur(16px)",
+      borderTop: "1px solid rgba(77,168,98,0.25)",
     }}>
 
       {/* Home */}

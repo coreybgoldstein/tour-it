@@ -62,28 +62,44 @@ function formatTimeAgo(dateStr: string) {
 function TourItLogo({ size = 26 }: { size?: number }) {
   const w = Math.round(size * 0.8);
   return (
-    <svg width={w} height={size} viewBox="0 0 40 50" fill="none">
+    <svg width={w} height={size} viewBox="0 0 60 75" fill="none">
       <defs>
         <clipPath id="ti-clip">
-          <path d="M20 45 C10 35 5 29 5 20 A15 15 0 0 1 35 20 C35 29 30 35 20 45Z" />
+          <path d="M30 68 C16 53 7 44 7 30 A23 23 0 0 1 53 30 C53 44 44 53 30 68Z" />
         </clipPath>
+        <linearGradient id="ti-g1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2d7d35"/>
+          <stop offset="100%" stopColor="#1a5520"/>
+        </linearGradient>
+        <linearGradient id="ti-g2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#5ec46a"/>
+          <stop offset="100%" stopColor="#3d9046"/>
+        </linearGradient>
       </defs>
       {/* White pin border */}
-      <path d="M20 48 C8 37 2 30 2 20 A18 18 0 0 1 38 20 C38 30 32 37 20 48Z" fill="white" />
+      <path d="M30 72 C14 56 3 46 3 30 A27 27 0 0 1 57 30 C57 46 46 56 30 72Z" fill="white" />
       {/* Dark interior */}
-      <path d="M20 45 C10 35 5 29 5 20 A15 15 0 0 1 35 20 C35 29 30 35 20 45Z" fill="#0d1f12" />
-      {/* Back grass */}
-      <ellipse cx="20" cy="22" rx="13" ry="11" fill="#1d5c20" clipPath="url(#ti-clip)" />
-      {/* Fairway */}
-      <path d="M8 32 Q12 24 20 22 Q26 20 28 15 Q22 11 16 13 Q10 16 8 24Z" fill="#3d8c40" clipPath="url(#ti-clip)" />
+      <path d="M30 68 C16 53 7 44 7 30 A23 23 0 0 1 53 30 C53 44 44 53 30 68Z" fill="#0c1e11" />
+      {/* Back rough */}
+      <ellipse cx="30" cy="30" rx="22" ry="20" fill="#163d1a" clipPath="url(#ti-clip)" />
+      {/* Mid grass */}
+      <path d="M12 44 Q14 32 24 28 Q32 24 36 18 Q30 12 22 14 Q14 17 11 26Z" fill="url(#ti-g1)" clipPath="url(#ti-clip)" />
+      {/* Fairway S-curve */}
+      <path d="M24 52 Q22 40 26 34 Q30 28 32 22 Q28 15 22 17 Q17 20 18 30 Q19 39 22 46Z" fill="#3d8c40" clipPath="url(#ti-clip)" />
       {/* Water hazard */}
-      <path d="M24 18 Q30 16 32 20 Q32 24 28 24 Q26 24 24 22Z" fill="#5aaddd" clipPath="url(#ti-clip)" />
+      <path d="M35 50 Q43 44 47 36 Q51 27 47 19 Q43 14 39 17 Q37 21 39 28 Q41 35 39 42 Q37 46 35 50Z" fill="#3d9fd4" clipPath="url(#ti-clip)" />
+      {/* Water shimmer */}
+      <path d="M37 45 Q44 40 47 32 Q49 25 45 19" stroke="rgba(120,210,255,0.35)" strokeWidth="2" fill="none" strokeLinecap="round" clipPath="url(#ti-clip)" />
       {/* Putting green */}
-      <ellipse cx="16" cy="27" rx="7" ry="5" fill="#4da862" clipPath="url(#ti-clip)" />
+      <ellipse cx="20" cy="40" rx="9" ry="7" fill="url(#ti-g2)" clipPath="url(#ti-clip)" />
+      {/* Green highlight */}
+      <ellipse cx="18" cy="38" rx="4" ry="2.5" fill="rgba(140,240,150,0.25)" clipPath="url(#ti-clip)" />
+      {/* Sand trap */}
+      <ellipse cx="25" cy="43" rx="3" ry="1.8" fill="#e8d060" clipPath="url(#ti-clip)" />
       {/* Flag pole */}
-      <line x1="15" y1="27" x2="15" y2="13" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
+      <line x1="19" y1="40" x2="19" y2="13" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
       {/* Red flag */}
-      <path d="M15 13 L22 15.5 L15 18Z" fill="#e53e3e" />
+      <path d="M19 13 L31 17 L19 21Z" fill="#e53e3e" />
     </svg>
   );
 }
@@ -721,12 +737,9 @@ export default function Home() {
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar */}
-          <div style={{ padding: "52px 20px 16px", display: "flex", alignItems: "center", flexShrink: 0 }}>
-            <TourItLogo size={26} />
-            <div style={{ marginLeft: 8 }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1 }}>Tour It</div>
-              <div style={{ fontSize: 7, fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.65)", marginTop: 1 }}>Scout before you play</div>
-            </div>
+          <div style={{ padding: "52px 20px 16px", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <TourItLogo size={28} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 900, color: "#fff", lineHeight: 1 }}>Tour It</div>
           </div>
 
           {/* Hero text */}
@@ -743,10 +756,10 @@ export default function Home() {
           <div style={{ padding: "0 20px 26px", flexShrink: 0 }}>
             <button
               onClick={() => router.push("/search")}
-              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.09)", borderRadius: 14, padding: "14px 16px", cursor: "pointer" }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.07)", border: "1.5px solid rgba(77,168,98,0.55)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", boxShadow: "0 0 18px rgba(77,168,98,0.2), inset 0 0 10px rgba(77,168,98,0.04)" }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.28)" }}>Find a course — name, city, or state...</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(77,168,98,0.85)" }}>Find a course — name, city, or state...</span>
             </button>
           </div>
 
