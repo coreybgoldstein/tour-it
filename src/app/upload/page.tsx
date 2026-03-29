@@ -28,7 +28,15 @@ type SeriesShot = {
 };
 
 const TEE_COLORS = ["Black", "Blue", "White", "Red", "Gold", "Green"];
-const WIND_OPTIONS = ["Calm", "Into", "Downwind", "Left to Right", "Right to Left", "Moderate", "Strong"];
+const WIND_OPTIONS = [
+  { label: "Calm", value: "CALM" },
+  { label: "Into", value: "INTO" },
+  { label: "Downwind", value: "DOWNWIND" },
+  { label: "Left to Right", value: "LEFT_TO_RIGHT" },
+  { label: "Right to Left", value: "RIGHT_TO_LEFT" },
+  { label: "Moderate", value: "MODERATE" },
+  { label: "Strong", value: "STRONG" },
+];
 const SHOT_TYPES = [
   { label: "Tee Shot", value: "TEE_SHOT" },
   { label: "Approach", value: "APPROACH" },
@@ -40,7 +48,12 @@ const SHOT_TYPES = [
   { label: "Full Hole", value: "FULL_HOLE" },
   { label: "Play a Hole With Me", value: "PLAY_A_HOLE" },
 ];
-const HANDICAP_RANGES = ["Scratch", "Low (1-9)", "Mid (10-18)", "High (19+)"];
+const HANDICAP_RANGES = [
+  { label: "Scratch", value: "SCRATCH" },
+  { label: "Low (1-9)", value: "LOW" },
+  { label: "Mid (10-18)", value: "MID" },
+  { label: "High (19+)", value: "HIGH" },
+];
 const CLUBS = [
   { group: "Woods", options: ["Driver", "3-wood", "5-wood", "7-wood"] },
   { group: "Hybrids", options: ["2-hybrid", "3-hybrid", "4-hybrid", "5-hybrid"] },
@@ -333,7 +346,7 @@ function UploadPageInner() {
         updatedAt: new Date().toISOString(),
       });
 
-      if (dbError) { setError("Failed to save upload. Please try again."); setUploading(false); return; }
+      if (dbError) { setError(`Failed to save: ${dbError.message}`); setUploading(false); return; }
       setSubmitted(true);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -813,8 +826,8 @@ function UploadPageInner() {
               <label className="field-label">Wind <span className="optional-tag">OPTIONAL</span></label>
               <div className="pill-row">
                 {WIND_OPTIONS.map(w => (
-                  <button key={w} className={`pill-option ${intel.wind === w ? "selected" : ""}`} onClick={() => setIntel({ ...intel, wind: intel.wind === w ? "" : w })}>
-                    {w}
+                  <button key={w.value} className={`pill-option ${intel.wind === w.value ? "selected" : ""}`} onClick={() => setIntel({ ...intel, wind: intel.wind === w.value ? "" : w.value })}>
+                    {w.label}
                   </button>
                 ))}
               </div>
@@ -823,8 +836,8 @@ function UploadPageInner() {
               <label className="field-label">Your Handicap Range <span className="optional-tag">OPTIONAL</span></label>
               <div className="pill-row">
                 {HANDICAP_RANGES.map(h => (
-                  <button key={h} className={`pill-option ${intel.handicap === h ? "selected" : ""}`} onClick={() => setIntel({ ...intel, handicap: intel.handicap === h ? "" : h })}>
-                    {h}
+                  <button key={h.value} className={`pill-option ${intel.handicap === h.value ? "selected" : ""}`} onClick={() => setIntel({ ...intel, handicap: intel.handicap === h.value ? "" : h.value })}>
+                    {h.label}
                   </button>
                 ))}
               </div>
@@ -875,9 +888,9 @@ function UploadPageInner() {
                   {intel.datePlayed && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.datePlayed}</span>}
                   {intel.tee && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.tee} tees</span>}
                   {intel.club && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.club}</span>}
-                  {intel.wind && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.wind} wind</span>}
+                  {intel.wind && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{WIND_OPTIONS.find(w => w.value === intel.wind)?.label} wind</span>}
                   {intel.shotType && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{SHOT_TYPES.find(s => s.value === intel.shotType)?.label}</span>}
-                  {intel.handicap && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.handicap}</span>}
+                  {intel.handicap && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{HANDICAP_RANGES.find(h => h.value === intel.handicap)?.label}</span>}
                 </div>
               )}
             </div>
