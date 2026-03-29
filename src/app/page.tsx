@@ -763,7 +763,7 @@ export default function Home() {
               Scout your next round.
             </div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.38)", lineHeight: 1.5 }}>
-              Watch the course before your round.
+              See the shots before you play them.
             </div>
           </div>
 
@@ -986,7 +986,7 @@ export default function Home() {
             fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400,
             color: "rgba(255,255,255,0.35)", letterSpacing: "0.06em",
           }}>
-            Watch the course before your round.
+            See the shots before you play them.
           </div>
         </div>
       )}
