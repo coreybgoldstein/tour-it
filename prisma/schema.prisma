@@ -109,6 +109,7 @@ model User {
   username         String   @unique
   displayName      String
   avatarUrl        String?
+  bannerUrl        String?
   bio              String?
   handicapIndex    Float?
   homeCourseId     String?

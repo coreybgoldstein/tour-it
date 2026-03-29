@@ -11,6 +11,7 @@ type UserProfile = {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  bannerUrl: string | null;
   handicapIndex: number | null;
   homeCourseId: string | null;
   uploadCount: number;
@@ -108,6 +109,7 @@ function GolfBallBadge({ holeNumber, isGold = false, id }: { holeNumber: number;
 export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -119,6 +121,7 @@ export default function ProfilePage() {
   const [savedCourses, setSavedCourses] = useState<SavedCourse[]>([]);
   const [coursesTab, setCoursesTab] = useState<"BUCKET_LIST" | "PLAYED" | "UPLOADED">("BUCKET_LIST");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editHandicap, setEditHandicap] = useState("");
   const [saving, setSaving] = useState(false);
@@ -214,6 +217,22 @@ if (userUploads && userUploads.length > 0) {
       setUser({ ...user, avatarUrl: publicUrl });
     }
     setUploadingAvatar(false);
+  }
+
+  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files?.[0] || !user) return;
+    const file = e.target.files[0];
+    setUploadingBanner(true);
+    const supabase = createClient();
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/banner.${ext}`;
+    const { error } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: true });
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+      await supabase.from("User").update({ bannerUrl: publicUrl }).eq("id", user.id);
+      setUser({ ...user, bannerUrl: publicUrl });
+    }
+    setUploadingBanner(false);
   }
 
   async function handleSaveProfile() {
@@ -348,19 +367,34 @@ if (userUploads && userUploads.length > 0) {
         </button>
       </div>
 
-      {/* Avatar + name */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", padding: "24px 20px 18px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ position: "relative" }}>
-          <div onClick={() => fileInputRef.current?.click()} style={{ width: 80, height: 80, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "2px solid rgba(77,168,98,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}>
-            {user.avatarUrl ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : uploadingAvatar ? <span style={{ fontSize: "12px" }}>...</span> : initials}
+      {/* Banner + Avatar + Name */}
+      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 16 }}>
+        {/* Banner */}
+        <div style={{ position: "relative", height: 110, overflow: "hidden", background: user.bannerUrl ? "none" : "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)", cursor: "pointer" }} onClick={() => bannerInputRef.current?.click()}>
+          {user.bannerUrl && <img src={user.bannerUrl} alt="banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+          <div style={{ position: "absolute", bottom: 8, right: 10, width: 26, height: 26, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {uploadingBanner
+              ? <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>...</span>
+              : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            }
           </div>
-          <div onClick={() => fileInputRef.current?.click()} style={{ position: "absolute", bottom: 0, right: 0, width: 24, height: 24, borderRadius: "50%", background: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </div>
-          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
+          <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerUpload} />
         </div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "20px", fontWeight: 700, color: "#fff", textAlign: "center" }}>{user.displayName}</div>
-        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "-6px" }}>@{user.username}</div>
+
+        {/* Avatar + name row */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", marginTop: 14 }}>
+          <div style={{ position: "relative" }}>
+            <div onClick={() => fileInputRef.current?.click()} style={{ width: 72, height: 72, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "2px solid rgba(77,168,98,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "26px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}>
+              {user.avatarUrl ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : uploadingAvatar ? <span style={{ fontSize: "12px" }}>...</span> : initials}
+            </div>
+            <div onClick={() => fileInputRef.current?.click()} style={{ position: "absolute", bottom: 0, right: 0, width: 22, height: 22, borderRadius: "50%", background: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "20px", fontWeight: 700, color: "#fff", textAlign: "center" }}>{user.displayName}</div>
+          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginTop: "-4px" }}>@{user.username}</div>
+        </div>
       </div>
 
       {/* Stats */}
@@ -413,75 +447,49 @@ if (userUploads && userUploads.length > 0) {
         )}
       </div>
 
-      {/* My Courses — unified section */}
+      {/* My Courses — compact pill list */}
       {(savedCourses.length > 0 || coursesPlayed.length > 0) && (
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: "10px" }}>
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: "8px" }}>
             <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>My courses</div>
             <div style={{ display: "flex", gap: "4px" }}>
-              <button
-                onClick={() => setCoursesTab("BUCKET_LIST")}
-                style={{ padding: "4px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === "BUCKET_LIST" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === "BUCKET_LIST" ? "#4da862" : "rgba(255,255,255,0.4)" }}
-              >
-                ⛳ Bucket List
-              </button>
-              <button
-                onClick={() => setCoursesTab("PLAYED")}
-                style={{ padding: "4px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === "PLAYED" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === "PLAYED" ? "#4da862" : "rgba(255,255,255,0.4)" }}
-              >
-                ✓ Played
-              </button>
-              <button
-                onClick={() => setCoursesTab("UPLOADED")}
-                style={{ padding: "4px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === "UPLOADED" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === "UPLOADED" ? "#4da862" : "rgba(255,255,255,0.4)" }}
-              >
-                📹 Uploaded
-              </button>
+              {(["BUCKET_LIST", "PLAYED", "UPLOADED"] as const).map(tab => (
+                <button key={tab} onClick={() => setCoursesTab(tab)} style={{ padding: "3px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === tab ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === tab ? "#4da862" : "rgba(255,255,255,0.35)" }}>
+                  {tab === "BUCKET_LIST" ? "Bucket List" : tab === "PLAYED" ? "Played" : "Uploaded"}
+                </button>
+              ))}
             </div>
           </div>
-          <div style={{ display: "flex", gap: "8px", padding: "0 20px", overflowX: "auto" }}>
+          <div style={{ display: "flex", gap: "6px", padding: "0 20px", overflowX: "auto", paddingBottom: 2 }}>
             {coursesTab === "BUCKET_LIST" && (
-              savedCourses.filter(s => s.saveType === "BUCKET_LIST").length === 0 ? (
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", padding: "12px 0" }}>No bucket list courses yet</div>
-              ) : (
-                savedCourses.filter(s => s.saveType === "BUCKET_LIST").map(s => (
-                  <div key={s.id} className="course-chip" onClick={() => router.push(`/courses/${s.course.id}`)} style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
-                    <div style={{ height: 55, background: "linear-gradient(135deg,#1a3d4d,#2d5a7a)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: "20px" }}>⛳</span>
-                    </div>
-                    <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.course.name}</div>
-                    <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{s.course.city}, {s.course.state}</div>
-                  </div>
+              savedCourses.filter(s => s.saveType === "BUCKET_LIST").length === 0
+                ? <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No bucket list courses yet</div>
+                : savedCourses.filter(s => s.saveType === "BUCKET_LIST").map(s => (
+                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0, display: "block" }} />
+                    <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
+                  </button>
                 ))
-              )
             )}
             {coursesTab === "PLAYED" && (
-              savedCourses.filter(s => s.saveType === "PLAYED").length === 0 ? (
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", padding: "12px 0" }}>No played courses marked yet</div>
-              ) : (
-                savedCourses.filter(s => s.saveType === "PLAYED").map(s => (
-                  <div key={s.id} className="course-chip" onClick={() => router.push(`/courses/${s.course.id}`)} style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
-                    <div style={{ height: 55, background: "linear-gradient(135deg,#1a4d22,#2d7a42)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: "20px" }}>✓</span>
-                    </div>
-                    <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.course.name}</div>
-                    <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{s.course.city}, {s.course.state}</div>
-                  </div>
+              savedCourses.filter(s => s.saveType === "PLAYED").length === 0
+                ? <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No played courses marked yet</div>
+                : savedCourses.filter(s => s.saveType === "PLAYED").map(s => (
+                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0, display: "block" }} />
+                    <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
+                  </button>
                 ))
-              )
             )}
             {coursesTab === "UPLOADED" && (
-              coursesPlayed.length === 0 ? (
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", padding: "12px 0" }}>No uploads yet</div>
-              ) : (
-                coursesPlayed.map((c, i) => (
-                  <div key={c.id} className="course-chip" onClick={() => router.push(`/courses/${c.id}`)} style={{ minWidth: "110px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
-                    <div style={{ height: 55, background: i % 2 === 0 ? "linear-gradient(135deg,#1a4d22,#2d7a42)" : "linear-gradient(135deg,#1e3a10,#4a7a25)" }} />
-                    <div style={{ padding: "6px 8px", fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
-                    <div style={{ padding: "0 8px 6px", fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>{c.city}, {c.state}</div>
-                  </div>
+              coursesPlayed.length === 0
+                ? <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No uploads yet</div>
+                : coursesPlayed.map(c => (
+                  <button key={c.id} onClick={() => router.push(`/courses/${c.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0, display: "block" }} />
+                    <span style={{ fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.65)" }}>{c.name}</span>
+                  </button>
                 ))
-              )
             )}
           </div>
         </div>
@@ -511,7 +519,7 @@ if (userUploads && userUploads.length > 0) {
                 {upload.mediaType === "PHOTO" ? (
                   <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <video src={upload.mediaUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline />
+                  <video src={upload.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.1; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
                 
