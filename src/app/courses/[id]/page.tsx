@@ -37,6 +37,7 @@ type Clip = {
   holeId: string | null;
   courseId: string;
   likeCount: number;
+  commentCount: number;
   holeNumber?: number;
   seriesId?: string | null;
   courseName?: string;
@@ -82,8 +83,8 @@ function getCourseHero(name: string) {
   return COURSE_HEROES["default"];
 }
 
-function FeedCard({ clip, isActive, onTapHole, onTapCourse }: {
-  clip: Clip; isActive: boolean; onTapHole: () => void; onTapCourse: () => void;
+function FeedCard({ clip, isActive, onTapHole, onTapCourse, onComment }: {
+  clip: Clip; isActive: boolean; onTapHole: () => void; onTapCourse: () => void; onComment: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
@@ -132,6 +133,13 @@ const { liked, likeCount, toggleLike } = useLike({
             <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
           <span style={{ fontSize: 9, color: liked ? "#4da862" : "rgba(255,255,255,0.55)", fontFamily: "'Outfit', sans-serif" }}>{likeCount}</span>
+        </button>
+
+        <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <span style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", fontFamily: "'Outfit', sans-serif" }}>{clip.commentCount || 0}</span>
         </button>
 
         {clip.isForeign ? (
@@ -192,6 +200,11 @@ export default function CourseProfilePage() {
   const [contributeSuccess, setContributeSuccess] = useState(false);
   const [contributeError, setContributeError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
+  const [commentItems, setCommentItems] = useState<{ id: string; body: string; username: string; avatarUrl: string | null; createdAt: string }[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { saved, saveType, toggleSave, showPicker, setShowPicker } = useSave({ courseId: id as string });
@@ -200,6 +213,44 @@ export default function CourseProfilePage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
+
+  useEffect(() => {
+    if (!commentUploadId) { setCommentItems([]); return; }
+    setLoadingComments(true);
+    createClient()
+      .from("Comment")
+      .select("id, body, createdAt, userId, User:userId(username, avatarUrl)")
+      .eq("uploadId", commentUploadId)
+      .order("createdAt", { ascending: true })
+      .then(({ data }) => {
+        if (data) setCommentItems(data.map((c: any) => ({
+          id: c.id, body: c.body, createdAt: c.createdAt,
+          username: c.User?.username || "golfer",
+          avatarUrl: c.User?.avatarUrl || null,
+        })));
+        setLoadingComments(false);
+      });
+  }, [commentUploadId]);
+
+  async function submitComment() {
+    if (!commentText.trim() || !user || !commentUploadId || submittingComment) return;
+    setSubmittingComment(true);
+    const supabase = createClient();
+    const { error } = await supabase.from("Comment").insert({
+      userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
+    });
+    if (!error) {
+      const { data: uploadData } = await supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single();
+      await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
+      setCommentItems(prev => [...prev, {
+        id: Date.now().toString(), body: commentText.trim(), createdAt: new Date().toISOString(),
+        username: user.user_metadata?.username || "you", avatarUrl: null,
+      }]);
+      setFeedClips(prev => prev.map(c => c.id === commentUploadId ? { ...c, commentCount: (c.commentCount || 0) + 1 } : c));
+      setCommentText("");
+    }
+    setSubmittingComment(false);
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -728,11 +779,60 @@ export default function CourseProfilePage() {
                 isActive={i === activeIndex}
                 onTapHole={() => { setFeedOpen(false); if (clip.holeNumber) router.push(`/courses/${id}/holes/${clip.holeNumber}`); else router.push(`/courses/${id}/holes`); }}
                 onTapCourse={() => { setFeedOpen(false); router.push(`/courses/${clip.courseId}`); }}
+                onComment={() => setCommentUploadId(clip.id)}
               />
             </div>
           ))}
         </div>
-            )}
+      )}
+
+      {/* Comment sheet */}
+      {commentUploadId && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 150 }} onClick={() => { setCommentUploadId(null); setCommentText(""); }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 16px 32px", maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 16px" }} />
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+              {loadingComments ? (
+                <div style={{ textAlign: "center", padding: "24px 0", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>Loading...</div>
+              ) : commentItems.length === 0 ? (
+                <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
+              ) : commentItems.map(c => (
+                <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {c.avatarUrl
+                      ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                      : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    }
+                  </div>
+                  <div>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>@{c.username} </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{c.body}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <input
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder={user ? "Add a comment..." : "Log in to comment"}
+                disabled={!user}
+                style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }}
+              />
+              <button
+                onClick={submitComment}
+                disabled={!commentText.trim() || submittingComment || !user}
+                style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: (!commentText.trim() || !user) ? 0.4 : 1 }}
+              >
+                {submittingComment ? "..." : "Post"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </main>
   );
