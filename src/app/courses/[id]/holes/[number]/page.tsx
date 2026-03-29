@@ -232,9 +232,38 @@ export default function HolePage() {
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const touchStartY = useRef<number>(0);
 
+  // Decode multi-hole keys like "front-9", "back-9", "full-18", "3-hole-1-3"
+  const MULTI_SHOT_MAP: Record<string, { label: string; shotType: string; group?: string }> = {
+    "front-9":  { label: "Front 9",   shotType: "FRONT_NINE" },
+    "back-9":   { label: "Back 9",    shotType: "BACK_NINE" },
+    "full-18":  { label: "Full 18",   shotType: "FULL_ROUND" },
+    ...["1-3","4-6","7-9","10-12","13-15","16-18"].reduce((acc, g) => ({
+      ...acc,
+      [`3-hole-${g}`]: { label: `Holes ${g.replace("-","–")}`, shotType: "THREE_HOLE", group: g.replace("-","–") },
+    }), {} as Record<string, { label: string; shotType: string; group?: string }>),
+  };
+  const multiHoleKey = MULTI_SHOT_MAP[number as string];
+
   useEffect(() => {
     if (!id || !number) return;
     const supabase = createClient();
+
+    if (multiHoleKey) {
+      // Multi-hole content — no hole lookup needed
+      supabase.from("Course").select("id, name, city, state").eq("id", id).single()
+        .then(({ data }) => { if (data) setCourse(data); });
+
+      let query = supabase.from("Upload").select("*")
+        .eq("courseId", id)
+        .eq("shotType", multiHoleKey.shotType)
+        .order("rankScore", { ascending: false });
+      if (multiHoleKey.group) query = query.eq("yardageOverlay", multiHoleKey.group);
+      query.then(({ data: uploadsData }) => {
+        if (uploadsData) setUploads(uploadsData.filter((u: Upload) => !u.seriesId));
+        setLoading(false);
+      });
+      return;
+    }
 
     Promise.all([
       supabase.from("Course").select("id, name, city, state").eq("id", id).single(),
@@ -342,8 +371,9 @@ export default function HolePage() {
     } catch {}
   };
 
-  const holeNum = Number(number);
+  const holeNum = multiHoleKey ? null : Number(number);
   const par = hole?.par || 4;
+  const pageTitle = multiHoleKey ? multiHoleKey.label : holeNum ? `Hole ${holeNum}` : "";
   const hasContent = uploads.length > 0 || series.length > 0;
   const courseAbbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
 
@@ -355,14 +385,14 @@ export default function HolePage() {
           <button onClick={() => router.back()} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>{course?.name} — Hole {holeNum}</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>{course?.name} — {pageTitle}</span>
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
           <div style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
           </div>
           <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</p>
-          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>Be the first to upload intel<br/>for {course?.name} — Hole {holeNum}</p>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>Be the first to upload intel<br/>for {course?.name} — {pageTitle}</p>
           <button onClick={() => router.push(`/upload?courseId=${id}`)} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Upload a clip</button>
         </div>
       </main>
@@ -445,8 +475,8 @@ export default function HolePage() {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 2px 8px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", letterSpacing: "0.02em" }}>Hole {holeNum}</span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>· Par {par}</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", letterSpacing: "0.02em" }}>{pageTitle}</span>
+                    {!multiHoleKey && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>· Par {par}</span>}
                   </div>
                 </div>
               </div>
@@ -524,7 +554,7 @@ export default function HolePage() {
               </button>
               <div>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>{course?.name}</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Hole {holeNum} · Par {par}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{pageTitle}{!multiHoleKey ? ` · Par ${par}` : ""}</div>
               </div>
             </div>
             {series.map(s => (

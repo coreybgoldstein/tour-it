@@ -41,6 +41,10 @@ enum ShotType {
   RECOVERY
   FULL_HOLE
   FLYOVER
+  FRONT_NINE
+  BACK_NINE
+  FULL_ROUND
+  THREE_HOLE
 }
 
 enum LieType {

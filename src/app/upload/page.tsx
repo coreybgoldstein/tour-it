@@ -37,6 +37,18 @@ const WIND_OPTIONS = [
   { label: "Moderate", value: "MODERATE" },
   { label: "Strong", value: "STRONG" },
 ];
+// Content formats — determines hole picker + what shot type means
+const CONTENT_FORMATS = [
+  { label: "Single Shot", value: "SHOT", desc: "One specific shot on a hole", needsHole: true, needsShotType: true },
+  { label: "Full Hole", value: "FULL_HOLE", desc: "Start-to-finish on one hole", needsHole: true, needsShotType: false },
+  { label: "3 Holes", value: "THREE_HOLE", desc: "Three consecutive holes", needsHole: false, needsShotType: false },
+  { label: "Front 9", value: "FRONT_NINE", desc: "Holes 1–9", needsHole: false, needsShotType: false },
+  { label: "Back 9", value: "BACK_NINE", desc: "Holes 10–18", needsHole: false, needsShotType: false },
+  { label: "Full 18", value: "FULL_ROUND", desc: "The entire round", needsHole: false, needsShotType: false },
+];
+
+const THREE_HOLE_GROUPS = ["1–3", "4–6", "7–9", "10–12", "13–15", "16–18"];
+
 const SHOT_TYPES = [
   { label: "Tee Shot", value: "TEE_SHOT" },
   { label: "Approach", value: "APPROACH" },
@@ -45,8 +57,6 @@ const SHOT_TYPES = [
   { label: "Pitch", value: "PITCH" },
   { label: "Putt", value: "PUTT" },
   { label: "Bunker", value: "BUNKER" },
-  { label: "Full Hole", value: "FULL_HOLE" },
-  { label: "Play a Hole With Me", value: "PLAY_A_HOLE" },
 ];
 const HANDICAP_RANGES = [
   { label: "Scratch", value: "SCRATCH" },
@@ -104,6 +114,8 @@ function UploadPageInner() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
+  const [contentFormat, setContentFormat] = useState<string>("");
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"VIDEO" | "PHOTO" | null>(null);
@@ -352,7 +364,8 @@ function UploadPageInner() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedCourse || !selectedHole || !mediaFile) return;
+    const isMultiHole = contentFormat && contentFormat !== "SHOT" && contentFormat !== "FULL_HOLE";
+    if (!selectedCourse || (!selectedHole && !isMultiHole) || !mediaFile) return;
     setUploading(true);
     setError("");
 
@@ -363,25 +376,36 @@ function UploadPageInner() {
 
       const ext = mediaFile.name.split(".").pop();
       const bucket = mediaType === "VIDEO" ? "tour-it-videos" : "tour-it-photos";
-      const filePath = `${user.id}/${selectedCourse.id}/${selectedHole}/${Date.now()}.${ext}`;
+      const folderKey = selectedHole || contentFormat || "misc";
+      const filePath = `${user.id}/${selectedCourse.id}/${folderKey}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, mediaFile, { cacheControl: "3600", upsert: false });
       if (uploadError) { setError("Upload failed. Please try again."); setUploading(false); return; }
 
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
-      const { data: holeData } = await supabase.from("Hole").select("id").eq("courseId", selectedCourse.id).eq("holeNumber", selectedHole).single();
-      if (!holeData?.id) { setError("Hole not found. Please try again."); setUploading(false); return; }
+      // Only look up holeId for single-hole content
+      let holeId: string | null = null;
+      if (selectedHole) {
+        const { data: holeData } = await supabase.from("Hole").select("id").eq("courseId", selectedCourse.id).eq("holeNumber", selectedHole).single();
+        holeId = holeData?.id || null;
+      }
+
+      // Determine shotType: for single shots use intel.shotType, for formats use the format itself
+      const resolvedShotType = contentFormat === "SHOT" ? (intel.shotType || null)
+        : contentFormat === "FULL_HOLE" ? "FULL_HOLE"
+        : contentFormat || null;
 
       const { error: dbError } = await supabase.from("Upload").insert({
         id: crypto.randomUUID(),
         userId: user.id,
         courseId: selectedCourse.id,
-        holeId: holeData.id,
+        holeId,
         mediaType: mediaType,
         mediaUrl: publicUrl,
         teeBoxId: null,
-        shotType: intel.shotType || null,
+        shotType: resolvedShotType,
+        yardageOverlay: contentFormat === "THREE_HOLE" ? selectedGroup : null,
         clubUsed: intel.club || null,
         windCondition: intel.wind || null,
         strategyNote: intel.strategy || null,
@@ -404,8 +428,10 @@ function UploadPageInner() {
       // Increment upload counters
       const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
       await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
-      const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeData.id).single();
-      await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeData.id);
+      if (holeId) {
+        const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
+        await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);
+      }
 
       setSubmitted(true);
     } catch {
@@ -553,7 +579,7 @@ function UploadPageInner() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>
-          {step === 1 ? (isSeriesMode ? "Play a Hole With Me" : "Upload Clip") : step === 2 ? "Select Course" : step === 3 ? "Select Hole" : step === 4 ? "Add Intel" : "Review"}
+          {step === 1 ? "Upload Clip" : step === 2 ? "Select Course" : step === 3 ? "Content Type" : step === 4 ? "Add Intel" : "Review"}
         </span>
       </div>
 
@@ -704,29 +730,73 @@ function UploadPageInner() {
           </div>
         )}
 
-        {/* Step 3 — Hole */}
+        {/* Step 3 — Format + Hole */}
         {step === 3 && selectedCourse && (
           <div className="anim">
             <p className="step-label">Step 3 of {isSeriesMode ? 4 : 5}</p>
-            <h1 className="step-title">Which hole?</h1>
+            <h1 className="step-title">What are you posting?</h1>
             <p className="step-sub">{selectedCourse.name}</p>
 
-            <p className="nine-label">Front Nine</p>
-            <div className="holes-grid">
-              {frontNine.map(n => (
-                <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }}>
-                  <div className="hole-btn-num">{n}</div>
-                </button>
-              ))}
-            </div>
-            <p className="nine-label">Back Nine</p>
-            <div className="holes-grid">
-              {backNine.map(n => (
-                <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }}>
-                  <div className="hole-btn-num">{n}</div>
-                </button>
-              ))}
-            </div>
+            {/* Format grid */}
+            {!contentFormat && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 8 }}>
+                {CONTENT_FORMATS.map(fmt => (
+                  <button
+                    key={fmt.value}
+                    onClick={() => {
+                      setContentFormat(fmt.value);
+                      if (!fmt.needsHole) {
+                        setSelectedHole(null);
+                        setIntel(prev => ({ ...prev, shotType: fmt.value === "FULL_HOLE" ? "FULL_HOLE" : fmt.value }));
+                        setStep(4);
+                      }
+                    }}
+                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 14, padding: "16px 12px", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}
+                  >
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{fmt.label}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{fmt.desc}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* 3-hole group picker */}
+            {contentFormat === "THREE_HOLE" && !selectedGroup && (
+              <div>
+                <p className="nine-label" style={{ marginTop: 0 }}>Select a group</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                  {THREE_HOLE_GROUPS.map(g => (
+                    <button key={g} className="hole-btn" onClick={() => { setSelectedGroup(g); setSelectedHole(null); setStep(4); }}>
+                      <div className="hole-btn-num" style={{ fontSize: 15 }}>{g}</div>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setContentFormat("")} style={{ marginTop: 14, background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", cursor: "pointer" }}>← Back</button>
+              </div>
+            )}
+
+            {/* Hole picker for Single Shot or Full Hole */}
+            {(contentFormat === "SHOT" || contentFormat === "FULL_HOLE") && (
+              <div>
+                <p className="nine-label" style={{ marginTop: 0 }}>Front Nine</p>
+                <div className="holes-grid">
+                  {frontNine.map(n => (
+                    <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }}>
+                      <div className="hole-btn-num">{n}</div>
+                    </button>
+                  ))}
+                </div>
+                <p className="nine-label">Back Nine</p>
+                <div className="holes-grid">
+                  {backNine.map(n => (
+                    <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }}>
+                      <div className="hole-btn-num">{n}</div>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => { setContentFormat(""); setSelectedHole(null); }} style={{ marginTop: 4, background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", cursor: "pointer" }}>← Back</button>
+              </div>
+            )}
           </div>
         )}
 
@@ -907,16 +977,18 @@ function UploadPageInner() {
                 })}
               </div>
             </div>
+            {contentFormat === "SHOT" && (
             <div className="field">
               <label className="field-label">Shot Type <span className="optional-tag">OPTIONAL</span></label>
               <div className="pill-row">
-                {SHOT_TYPES.filter(s => s.value !== "PLAY_A_HOLE").map(s => (
+                {SHOT_TYPES.map(s => (
                   <button key={s.value} className={`pill-option ${intel.shotType === s.value ? "selected" : ""}`} onClick={() => setIntel({ ...intel, shotType: intel.shotType === s.value ? "" : s.value })}>
                     {s.label}
                   </button>
                 ))}
               </div>
             </div>
+            )}
             <div className="field">
               <label className="field-label">Club Used <span className="optional-tag">OPTIONAL</span></label>
               <select className="field-input" value={intel.club} onChange={e => setIntel({ ...intel, club: e.target.value })} style={{ colorScheme: "dark", cursor: "pointer", background: "#0d1f12", color: "rgba(255,255,255,0.8)" }}>

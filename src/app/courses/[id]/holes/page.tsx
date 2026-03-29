@@ -21,11 +21,14 @@ type Hole = {
   uploadCount: number;
 };
 
+type MultiCount = { shotType: string; count: number; group?: string };
+
 export default function HolesOverviewPage() {
   const { id } = useParams();
   const router = useRouter();
   const [course, setCourse] = useState<Course | null>(null);
   const [holes, setHoles] = useState<Hole[]>([]);
+  const [multiCounts, setMultiCounts] = useState<MultiCount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,9 +37,30 @@ export default function HolesOverviewPage() {
     Promise.all([
       supabase.from("Course").select("id, name, city, state, holeCount").eq("id", id).single(),
       supabase.from("Hole").select("*").eq("courseId", id).order("holeNumber"),
-    ]).then(([courseRes, holesRes]) => {
+      supabase.from("Upload").select("shotType, yardageOverlay")
+        .eq("courseId", id)
+        .in("shotType", ["FRONT_NINE", "BACK_NINE", "FULL_ROUND", "THREE_HOLE"]),
+    ]).then(([courseRes, holesRes, multiRes]) => {
       if (courseRes.data) setCourse(courseRes.data);
       if (holesRes.data) setHoles(holesRes.data);
+      if (multiRes.data) {
+        const counts: Record<string, number> = {};
+        const groupCounts: Record<string, number> = {};
+        multiRes.data.forEach((u: any) => {
+          if (u.shotType === "THREE_HOLE" && u.yardageOverlay) {
+            groupCounts[u.yardageOverlay] = (groupCounts[u.yardageOverlay] || 0) + 1;
+          } else if (u.shotType) {
+            counts[u.shotType] = (counts[u.shotType] || 0) + 1;
+          }
+        });
+        const result: MultiCount[] = [
+          { shotType: "FRONT_NINE", count: counts["FRONT_NINE"] || 0 },
+          { shotType: "BACK_NINE", count: counts["BACK_NINE"] || 0 },
+          { shotType: "FULL_ROUND", count: counts["FULL_ROUND"] || 0 },
+          ...["1–3","4–6","7–9","10–12","13–15","16–18"].map(g => ({ shotType: "THREE_HOLE", group: g, count: groupCounts[g] || 0 })),
+        ];
+        setMultiCounts(result);
+      }
       setLoading(false);
     });
   }, [id]);
@@ -140,6 +164,44 @@ export default function HolesOverviewPage() {
               </div>
             </button>
           ))}
+        </div>
+
+        {/* Multi-hole content */}
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", textTransform: "uppercase", marginBottom: 10, marginTop: 4 }}>
+          Multi-Hole Content
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
+          {[
+            { label: "Front 9", sub: "Holes 1–9", key: "front-9", shotType: "FRONT_NINE" },
+            { label: "Back 9", sub: "Holes 10–18", key: "back-9", shotType: "BACK_NINE" },
+            { label: "Full 18", sub: "Full round", key: "full-18", shotType: "FULL_ROUND" },
+          ].map(({ label, sub, key, shotType }) => {
+            const count = multiCounts.find(m => m.shotType === shotType)?.count || 0;
+            return (
+              <button key={key} className={`hole-card ${count > 0 ? "has-clips" : ""}`} onClick={() => router.push(`/courses/${id}/holes/${key}`)}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 4 }}>{label}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>{sub}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: count > 0 ? "#4da862" : "rgba(255,255,255,0.2)" }}>
+                  {count > 0 ? `${count} clip${count !== 1 ? "s" : ""}` : "No clips"}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
+          {["1–3","4–6","7–9","10–12","13–15","16–18"].map(g => {
+            const count = multiCounts.find(m => m.shotType === "THREE_HOLE" && m.group === g)?.count || 0;
+            const key = `3-hole-${g.replace("–", "-")}`;
+            return (
+              <button key={g} className={`hole-card ${count > 0 ? "has-clips" : ""}`} onClick={() => router.push(`/courses/${id}/holes/${key}`)}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 4 }}>Holes {g}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>3-hole</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: count > 0 ? "#4da862" : "rgba(255,255,255,0.2)" }}>
+                  {count > 0 ? `${count} clip${count !== 1 ? "s" : ""}` : "No clips"}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Upload CTA — passes courseId */}
