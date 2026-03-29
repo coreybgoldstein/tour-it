@@ -53,31 +53,14 @@ const COURSE_DOMAINS = [
   { slug: "erin-hills",                      domain: "erinhills.com" },
 ];
 
-async function logoExists(domain) {
-  try {
-    const res = await fetch(`https://logo.clearbit.com/${domain}`, { method: "HEAD" });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 async function main() {
   console.log("🏌️  Tour It — Logo Population Script");
   console.log("======================================\n");
 
-  let updated = 0, skipped = 0, notFound = 0;
+  let updated = 0, skipped = 0;
 
   for (const { slug, domain } of COURSE_DOMAINS) {
-    process.stdout.write(`  ${slug} → logo.clearbit.com/${domain} ... `);
-
-    // Check if the logo URL resolves
-    const exists = await logoExists(domain);
-    if (!exists) {
-      console.log("✗ no logo found");
-      notFound++;
-      continue;
-    }
+    process.stdout.write(`  ${slug} ... `);
 
     const logoUrl = `https://logo.clearbit.com/${domain}`;
 
@@ -90,17 +73,15 @@ async function main() {
       console.log(`✗ DB error: ${error.message}`);
       skipped++;
     } else {
-      console.log(`✓`);
+      console.log(`✓  ${logoUrl}`);
       updated++;
     }
-
-    // Small delay to be polite to Clearbit
-    await new Promise(r => setTimeout(r, 200));
   }
 
   console.log(`\n======================================`);
-  console.log(`✓ ${updated} logos set, ${notFound} not found, ${skipped} errors`);
-  console.log(`\nRun again any time to add more courses.`);
+  console.log(`✓ ${updated} logos set, ${skipped} errors`);
+  console.log(`\nBrowser will load logos directly from Clearbit CDN.`);
+  console.log(`If a logo doesn't appear, update the domain in COURSE_DOMAINS.`);
 }
 
 main();
