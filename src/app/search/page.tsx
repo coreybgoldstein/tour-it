@@ -211,7 +211,7 @@ function SearchPageInner() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="course-name">{course.name}</div>
                     <div className="course-meta">
-                      {course.city}{course.city && course.state ? ", " : ""}{course.state}
+                      {[course.city, course.state].filter(s => s?.trim()).join(", ")}
                       {course.uploadCount > 0 && <span className="clip-count">{course.uploadCount} clips</span>}
                     </div>
                   </div>
@@ -236,7 +236,7 @@ function SearchPageInner() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="course-name">{course.name}</div>
                     <div className="course-meta">
-                      {course.city}{course.city && course.state ? ", " : ""}{course.state}
+                      {[course.city, course.state].filter(s => s?.trim()).join(", ")}
                       <span className="clip-count">{course.uploadCount} clips</span>
                     </div>
                   </div>

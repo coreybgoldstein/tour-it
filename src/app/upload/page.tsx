@@ -629,7 +629,7 @@ function UploadPageInner() {
                       <div className="course-abbr has-clips">{abbr}</div>
                       <div>
                         <div className="course-name-text">{course.name}</div>
-                        <div className="course-location-text">{course.city}, {course.state}</div>
+                        <div className="course-location-text">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
                       </div>
                     </button>
                   );
@@ -649,7 +649,7 @@ function UploadPageInner() {
                       <div className="course-abbr">{abbr}</div>
                       <div>
                         <div className="course-name-text">{selectedCourse.name}</div>
-                        <div className="course-location-text">{selectedCourse.city}, {selectedCourse.state}</div>
+                        <div className="course-location-text">{[selectedCourse.city, selectedCourse.state].filter(s => s?.trim()).join(", ")}</div>
                       </div>
                     </button>
                   );
@@ -681,7 +681,7 @@ function UploadPageInner() {
                     <div className="course-abbr">{abbr}</div>
                     <div>
                       <div className="course-name-text">{course.name}</div>
-                      <div className="course-location-text">{course.city}, {course.state}</div>
+                      <div className="course-location-text">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
                     </div>
                   </button>
                 );
