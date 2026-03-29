@@ -373,7 +373,7 @@ export default function CourseProfilePage() {
               <img
                 src={course.logoUrl}
                 alt={course.name}
-                style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }}
                 onError={e => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }}
               />
             ) : null}
@@ -648,9 +648,9 @@ export default function CourseProfilePage() {
                   <label style={{ display: "block", cursor: "pointer" }}>
                     <div style={{ width: 120, height: 72, borderRadius: 12, border: "1.5px dashed rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                       {logoPreview ? (
-                        <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8 }} />
+                        <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} />
                       ) : course.logoUrl ? (
-                        <img src={course.logoUrl} alt="current logo" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8, opacity: 0.5 }} />
+                        <img src={course.logoUrl} alt="current logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, opacity: 0.5 }} />
                       ) : (
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                       )}
