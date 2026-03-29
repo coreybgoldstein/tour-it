@@ -737,7 +737,8 @@ export default function Home() {
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar */}
-          <div style={{ padding: "52px 20px 10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ padding: "52px 20px 10px", display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <img src="/tour-it-pin.png" alt="" style={{ height: 36, width: "auto" }} />
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: "0.04em", color: "#fff", lineHeight: 1 }}>
               TOUR <span style={{ color: "#4da862" }}>IT</span>
             </span>
