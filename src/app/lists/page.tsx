@@ -24,6 +24,7 @@ type Trip = {
   startDate: string | null;
   endDate: string | null;
   createdBy: string;
+  imageUrl: string | null;
   courseCount: number;
   memberCount: number;
   role: string;
@@ -73,7 +74,7 @@ export default function ListsPage() {
         const tripIds = memberData.map((m: any) => m.tripId);
         const { data: tripsData } = await supabase
           .from("GolfTrip")
-          .select("id, name, startDate, endDate, createdBy")
+          .select("id, name, startDate, endDate, createdBy, imageUrl")
           .in("id", tripIds)
           .order("createdAt", { ascending: false });
 
@@ -178,9 +179,12 @@ export default function ListsPage() {
             {trips.map(trip => (
               <div key={trip.id} className="trip-card" onClick={() => router.push(`/trips/${trip.id}`)}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                  {/* Trip icon */}
-                  <div style={{ width: 48, height: 48, borderRadius: 12, flexShrink: 0, background: "linear-gradient(135deg, rgba(77,168,98,0.25), rgba(45,122,66,0.15))", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.69h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.1A16 16 0 0 0 13.9 16.1l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  {/* Trip avatar */}
+                  <div style={{ width: 48, height: 48, borderRadius: 12, flexShrink: 0, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.25), rgba(45,122,66,0.15))", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {trip.imageUrl
+                      ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#4da862" }}>{trip.name.split(" ").filter((w: string) => w.length > 0).map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}</span>
+                    }
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
