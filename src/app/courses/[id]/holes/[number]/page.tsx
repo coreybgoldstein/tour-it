@@ -270,6 +270,7 @@ export default function HolePage() {
   const [submittingComment, setSubmittingComment] = useState(false);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const touchStartY = useRef<number>(0);
+  const touchStartX = useRef<number>(0);
 
   // Decode multi-hole keys like "front-9", "back-9", "full-18", "3-hole-1-3"
   const MULTI_SHOT_MAP: Record<string, { label: string; shotType: string; group?: string }> = {
@@ -418,13 +419,28 @@ export default function HolePage() {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    const delta = touchStartY.current - e.changedTouches[0].clientY;
-    if (delta > 50 && activeIndex < uploads.length - 1) {
+    const deltaY = touchStartY.current - e.changedTouches[0].clientY;
+    const deltaX = touchStartX.current - e.changedTouches[0].clientX;
+
+    // Horizontal swipe (left/right) — navigate between holes
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && !multiHoleKey) {
+      const holeNum = Number(number);
+      if (deltaX > 0 && holeNum < 18) {
+        router.push(`/courses/${id}/holes/${holeNum + 1}`);
+      } else if (deltaX < 0 && holeNum > 1) {
+        router.push(`/courses/${id}/holes/${holeNum - 1}`);
+      }
+      return;
+    }
+
+    // Vertical swipe — scroll through clips for this hole
+    if (deltaY > 50 && activeIndex < uploads.length - 1) {
       setActiveIndex(prev => prev + 1);
-    } else if (delta < -50 && activeIndex > 0) {
+    } else if (deltaY < -50 && activeIndex > 0) {
       setActiveIndex(prev => prev - 1);
     }
   };
@@ -577,6 +593,26 @@ export default function HolePage() {
                   <div key={i} style={{ height: 3, borderRadius: 99, background: i === activeIndex ? "#fff" : "rgba(255,255,255,0.3)", width: i === activeIndex ? 20 : 6, transition: "all 0.3s" }} />
                 ))}
               </div>
+            )}
+
+            {/* Hole navigation hints (prev/next) */}
+            {!multiHoleKey && Number(number) > 1 && (
+              <button
+                onClick={() => router.push(`/courses/${id}/holes/${Number(number) - 1}`)}
+                style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", zIndex: 20, background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "6px 10px 6px 8px", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>H{Number(number) - 1}</span>
+              </button>
+            )}
+            {!multiHoleKey && Number(number) < 18 && (
+              <button
+                onClick={() => router.push(`/courses/${id}/holes/${Number(number) + 1}`)}
+                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", zIndex: 20, background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "6px 8px 6px 10px", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+              >
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>H{Number(number) + 1}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
             )}
 
             {/* Right actions */}

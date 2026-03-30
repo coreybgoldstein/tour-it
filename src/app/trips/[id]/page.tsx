@@ -466,18 +466,18 @@ export default function TripPage() {
             {/* Trip avatar */}
             <div
               onClick={() => isOwner && imageInputRef.current?.click()}
-              style={{ width: 52, height: 52, borderRadius: 14, flexShrink: 0, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: isOwner ? "pointer" : "default", position: "relative" }}
+              style={{ width: 80, height: 80, borderRadius: 20, flexShrink: 0, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: isOwner ? "pointer" : "default", position: "relative" }}
             >
               {uploadingImage ? (
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>...</div>
               ) : trip.imageUrl ? (
                 <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
               )}
-              {isOwner && !trip.imageUrl && !uploadingImage && (
-                <div style={{ position: "absolute", bottom: 2, right: 2, width: 14, height: 14, borderRadius: "50%", background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              {isOwner && !uploadingImage && (
+                <div style={{ position: "absolute", bottom: 4, right: 4, width: 18, height: 18, borderRadius: "50%", background: "#2d7a42", border: "1.5px solid rgba(7,16,10,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </div>
               )}
             </div>
