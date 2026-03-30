@@ -131,6 +131,8 @@ model User {
   followers        Follow[]           @relation("Following")
   following        Follow[]           @relation("Follower")
   homeCourse       Course?            @relation("HomeCourse", fields: [homeCourseId], references: [id])
+  createdTrips     GolfTrip[]         @relation("CreatedTrips")
+  tripMemberships  GolfTripMember[]   @relation("TripMemberships")
 
   @@index([username])
   @@index([email])
@@ -261,6 +263,8 @@ model Upload {
   seriesId             String?
   seriesOrder          Int?
   yardageOverlay       String?
+  tripId               String?
+  tripPublic           Boolean          @default(true)
 
   likeCount            Int              @default(0)
   commentCount         Int              @default(0)
@@ -365,6 +369,7 @@ model Save {
   userId    String
   courseId  String?
   uploadId  String?
+  saveType  String?
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
@@ -439,4 +444,54 @@ model ModerationReport {
   @@index([status])
   @@index([uploadId])
   @@index([reportedById])
+}
+// ============================================================
+// GOLF TRIPS
+// ============================================================
+
+model GolfTrip {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  startDate   String?
+  endDate     String?
+  createdBy   String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  creator     User             @relation("CreatedTrips", fields: [createdBy], references: [id])
+  courses     GolfTripCourse[]
+  members     GolfTripMember[]
+
+  @@index([createdBy])
+}
+
+model GolfTripCourse {
+  id            String   @id @default(cuid())
+  tripId        String
+  courseId      String
+  playDate      String?
+  teeTime       String?
+  accommodation String?
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  trip          GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+}
+
+model GolfTripMember {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+
+  trip      GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user      User     @relation("TripMemberships", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId])
+  @@index([tripId])
+  @@index([userId])
 }

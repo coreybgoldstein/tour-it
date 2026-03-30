@@ -104,6 +104,9 @@ function newShot(order: number): SeriesShot {
 function UploadPageInner() {
   const searchParams = useSearchParams();
   const preselectedCourseId = searchParams.get("courseId");
+  const preselectedTripId = searchParams.get("tripId");
+  const [tripName, setTripName] = useState<string | null>(null);
+  const [tripPublic, setTripPublic] = useState(true);
 
   const [step, setStep] = useState(1);
   const [authChecked, setAuthChecked] = useState(false);
@@ -157,6 +160,10 @@ function UploadPageInner() {
             .eq("id", preselectedCourseId)
             .single();
           if (course) setSelectedCourse(course);
+        }
+        if (preselectedTripId) {
+          const { data: trip } = await supabase.from("GolfTrip").select("name").eq("id", preselectedTripId).single();
+          if (trip) setTripName(trip.name);
         }
       }
     });
@@ -332,6 +339,8 @@ function UploadPageInner() {
           yardageOverlay: shot.yardage || null,
           seriesId,
           seriesOrder: i + 1,
+          tripId: preselectedTripId || null,
+          tripPublic: preselectedTripId ? tripPublic : true,
           rankScore: 50,
           moderationStatus: "PENDING",
           likeCount: 0,
@@ -414,6 +423,8 @@ function UploadPageInner() {
         handicapRange: intel.handicap || null,
         datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
         rankScore: intelPct,
+        tripId: preselectedTripId || null,
+        tripPublic: preselectedTripId ? tripPublic : true,
         moderationStatus: "PENDING",
         likeCount: 0,
         commentCount: 0,
@@ -595,6 +606,24 @@ function UploadPageInner() {
             <p className="step-label">Step 1 of 5</p>
             <h1 className="step-title">Upload your clip</h1>
             <p className="step-sub">Video or photo — we&apos;ll help fill in the rest.</p>
+            {tripName && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
+                <span style={{ fontSize: 16 }}>✈️</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 1 }}>Part of trip</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862" }}>{tripName}</div>
+                </div>
+                <button
+                  onClick={() => setTripPublic(p => !p)}
+                  style={{ display: "flex", alignItems: "center", gap: 5, background: tripPublic ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.06)", border: `1px solid ${tripPublic ? "rgba(77,168,98,0.35)" : "rgba(255,255,255,0.12)"}`, borderRadius: 8, padding: "5px 10px", cursor: "pointer", flexShrink: 0 }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={tripPublic ? "#4da862" : "rgba(255,255,255,0.4)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    {tripPublic ? <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></> : <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>}
+                  </svg>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: tripPublic ? "#4da862" : "rgba(255,255,255,0.4)" }}>{tripPublic ? "Public" : "Trip only"}</span>
+                </button>
+              </div>
+            )}
             <input ref={fileInputRef} type="file" accept="video/*,image/*" style={{ display: "none" }} onChange={handleFileSelect} />
             {mediaPreview ? (
               <>

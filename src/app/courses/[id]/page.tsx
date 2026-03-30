@@ -222,6 +222,18 @@ export default function CourseProfilePage() {
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { saved, saveType, toggleSave, showPicker, setShowPicker } = useSave({ courseId: id as string });
+  const [tripPickerOpen, setTripPickerOpen] = useState(false);
+  const [tripStep, setTripStep] = useState<"select" | "create" | "details">("select");
+  const [userTrips, setUserTrips] = useState<{ id: string; name: string; startDate: string | null; endDate: string | null }[]>([]);
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+  const [selectedTripName, setSelectedTripName] = useState("");
+  const [newTripName, setNewTripName] = useState("");
+  const [newTripStart, setNewTripStart] = useState("");
+  const [newTripEnd, setNewTripEnd] = useState("");
+  const [tripPlayDate, setTripPlayDate] = useState("");
+  const [tripTeeTime, setTripTeeTime] = useState("");
+  const [tripAccommodation, setTripAccommodation] = useState("");
+  const [savingTrip, setSavingTrip] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -575,6 +587,35 @@ export default function CourseProfilePage() {
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
         </div>
       </button>
+      <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" }} />
+      <button
+        onClick={async () => {
+          setShowPicker(false);
+          setTripStep("select");
+          setNewTripName(""); setNewTripStart(""); setNewTripEnd("");
+          setTripPlayDate(""); setTripTeeTime(""); setTripAccommodation("");
+          setSelectedTripId(null); setSelectedTripName("");
+          if (user) {
+            const supabase = createClient();
+            const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id);
+            if (memberData && memberData.length > 0) {
+              const tripIds = memberData.map((m: any) => m.tripId);
+              const { data: tripsData } = await supabase.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).order("createdAt", { ascending: false });
+              setUserTrips(tripsData || []);
+            } else {
+              setUserTrips([]);
+            }
+          }
+          setTripPickerOpen(true);
+        }}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left", marginTop: 2 }}
+      >
+        <span style={{ fontSize: 16 }}>✈️</span>
+        <div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Golf Trip</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Add to a trip itinerary</div>
+        </div>
+      </button>
     </div>
   )}
 </div>
@@ -843,6 +884,122 @@ export default function CourseProfilePage() {
                 {submittingComment ? "..." : "Post"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Golf Trip picker modal */}
+      {tripPickerOpen && (
+        <div onClick={() => setTripPickerOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px", maxHeight: "85vh", overflowY: "auto" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+
+            {tripStep === "select" && (
+              <>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Add to Golf Trip</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 20 }}>Select a trip or create a new one</div>
+                {userTrips.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    {userTrips.map(trip => (
+                      <button key={trip.id} onClick={() => { setSelectedTripId(trip.id); setSelectedTripName(trip.name); setTripStep("details"); }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, cursor: "pointer", marginBottom: 8, textAlign: "left" }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: "linear-gradient(135deg, rgba(77,168,98,0.25), rgba(45,122,66,0.15))", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <span style={{ fontSize: 18 }}>✈️</span>
+                        </div>
+                        <div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{trip.name}</div>
+                          {(trip.startDate || trip.endDate) && (
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>
+                              {trip.startDate || ""}{trip.startDate && trip.endDate ? " → " : ""}{trip.endDate || ""}
+                            </div>
+                          )}
+                        </div>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: "auto", flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button onClick={() => setTripStep("create")} style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  New Trip
+                </button>
+              </>
+            )}
+
+            {tripStep === "create" && (
+              <>
+                <button onClick={() => setTripStep("select")} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "'Outfit', sans-serif", display: "flex", alignItems: "center", gap: 4, marginBottom: 16, padding: 0 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  Back
+                </button>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 20 }}>New Golf Trip</div>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Trip Name *</div>
+                  <input value={newTripName} onChange={e => setNewTripName(e.target.value)} placeholder="e.g. Myrtle Beach 2025" style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                </div>
+                <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Start Date</div>
+                    <input type="date" value={newTripStart} onChange={e => setNewTripStart(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: newTripStart ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>End Date</div>
+                    <input type="date" value={newTripEnd} onChange={e => setNewTripEnd(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: newTripEnd ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!newTripName.trim() || !user) return;
+                    setSavingTrip(true);
+                    const supabase = createClient();
+                    const tripId = crypto.randomUUID();
+                    await supabase.from("GolfTrip").insert({ id: tripId, name: newTripName.trim(), startDate: newTripStart || null, endDate: newTripEnd || null, createdBy: user.id });
+                    await supabase.from("GolfTripMember").insert({ id: crypto.randomUUID(), tripId, userId: user.id, role: "owner" });
+                    setSelectedTripId(tripId);
+                    setSelectedTripName(newTripName.trim());
+                    setSavingTrip(false);
+                    setTripStep("details");
+                  }}
+                  disabled={!newTripName.trim() || savingTrip}
+                  style={{ width: "100%", background: !newTripName.trim() ? "rgba(45,122,66,0.4)" : "#2d7a42", border: "none", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: !newTripName.trim() ? "default" : "pointer" }}
+                >
+                  {savingTrip ? "Creating..." : "Create Trip"}
+                </button>
+              </>
+            )}
+
+            {tripStep === "details" && (
+              <>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Course Details</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862", marginBottom: 20 }}>Adding {course?.name} to {selectedTripName}</div>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Play Date <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400 }}>(optional)</span></div>
+                  <input type="date" value={tripPlayDate} onChange={e => setTripPlayDate(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: tripPlayDate ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Tee Time <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400 }}>(optional)</span></div>
+                  <input type="time" value={tripTeeTime} onChange={e => setTripTeeTime(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: tripTeeTime ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
+                </div>
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Where you're staying <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400 }}>(optional)</span></div>
+                  <input value={tripAccommodation} onChange={e => setTripAccommodation(e.target.value)} placeholder="e.g. Marriott Myrtle Beach" style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} />
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!selectedTripId || !id) return;
+                    setSavingTrip(true);
+                    const supabase = createClient();
+                    await supabase.from("GolfTripCourse").insert({ id: crypto.randomUUID(), tripId: selectedTripId, courseId: id as string, playDate: tripPlayDate || null, teeTime: tripTeeTime || null, accommodation: tripAccommodation.trim() || null, sortOrder: 0 });
+                    setSavingTrip(false);
+                    setTripPickerOpen(false);
+                  }}
+                  disabled={savingTrip}
+                  style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: savingTrip ? "default" : "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}
+                >
+                  {savingTrip ? "Adding..." : "Add to Trip ✓"}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
