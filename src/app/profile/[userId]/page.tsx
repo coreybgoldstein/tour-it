@@ -409,7 +409,7 @@ export default function PublicProfilePage() {
                 {upload.mediaType === "PHOTO" ? (
                   <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <video src={upload.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.1; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <video src={upload.mediaUrl} muted playsInline preload="none" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)" }} />
                 <div style={{ position: "absolute", bottom: "5px", left: "5px", fontSize: "8px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>

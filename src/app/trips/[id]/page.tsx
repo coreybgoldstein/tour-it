@@ -594,7 +594,7 @@ export default function TripPage() {
               {clips.map((clip, i) => (
                 <div key={clip.id} className="clip-thumb" onClick={() => { setFeedIndex(i); setFeedOpen(true); }}>
                   {clip.mediaType === "VIDEO"
-                    ? <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.1; }} />
+                    ? <video src={clip.mediaUrl} muted playsInline preload="none" />
                     : <img src={clip.mediaUrl} alt="clip" />
                   }
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />

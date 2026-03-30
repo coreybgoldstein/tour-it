@@ -644,7 +644,7 @@ export default function CourseProfilePage() {
               {courseClips.map((clip, i) => (
                 <div key={clip.id} className="clip-thumb" onClick={() => { setFeedStartIndex(i); setFeedOpen(true); }}>
                   {clip.mediaType === "VIDEO" ? (
-                    <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.1; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <video src={clip.mediaUrl} muted playsInline preload="none" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   )}
