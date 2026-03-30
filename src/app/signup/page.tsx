@@ -69,6 +69,12 @@ export default function SignUpPage() {
       }
     }
 
+    // If session is immediately available (email confirmation disabled), go straight to onboarding
+    if (authData.session) {
+      window.location.href = "/onboarding";
+      return;
+    }
+
     setSuccess(true);
     setLoading(false);
   };
@@ -188,11 +194,15 @@ export default function SignUpPage() {
 
         {success ? (
           <div className="success-box">
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⛳</div>
             <div className="success-title">Check your email</div>
             <p className="success-sub">
               We sent a confirmation link to <strong style={{ color: "rgba(255,255,255,0.7)" }}>{email}</strong>.<br />
-              Click it to activate your account and start uploading.
+              Click it to confirm your account, then come back here and log in.
             </p>
+            <a href="/login" style={{ display: "block", marginTop: 20, background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", textDecoration: "none", textAlign: "center" }}>
+              Go to Login →
+            </a>
           </div>
         ) : (
           <>

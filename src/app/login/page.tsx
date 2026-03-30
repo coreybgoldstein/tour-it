@@ -20,12 +20,26 @@ export default function LoginPage() {
     }
 
     const supabase = createClient();
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (loginError) {
       setError("Invalid email or password. Please try again.");
       setLoading(false);
       return;
+    }
+
+    // Check if user needs onboarding (displayName still equals username = never customized)
+    const userId = loginData.user?.id;
+    if (userId) {
+      const { data: profile } = await supabase
+        .from("User")
+        .select("username, displayName")
+        .eq("id", userId)
+        .single();
+      if (profile && profile.displayName === profile.username) {
+        window.location.href = "/onboarding";
+        return;
+      }
     }
 
     window.location.href = "/";
