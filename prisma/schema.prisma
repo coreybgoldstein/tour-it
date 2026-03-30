@@ -455,6 +455,7 @@ model GolfTrip {
   description String?
   startDate   String?
   endDate     String?
+  imageUrl    String?
   createdBy   String
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt

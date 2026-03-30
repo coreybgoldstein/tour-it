@@ -223,7 +223,7 @@ export default function CourseProfilePage() {
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { saved, saveType, toggleSave, showPicker, setShowPicker } = useSave({ courseId: id as string });
   const [tripPickerOpen, setTripPickerOpen] = useState(false);
-  const [tripStep, setTripStep] = useState<"select" | "create" | "details">("select");
+  const [tripStep, setTripStep] = useState<"select" | "create" | "details" | "success">("select");
   const [userTrips, setUserTrips] = useState<{ id: string; name: string; startDate: string | null; endDate: string | null }[]>([]);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [selectedTripName, setSelectedTripName] = useState("");
@@ -234,6 +234,8 @@ export default function CourseProfilePage() {
   const [tripTeeTime, setTripTeeTime] = useState("");
   const [tripAccommodation, setTripAccommodation] = useState("");
   const [savingTrip, setSavingTrip] = useState(false);
+  const [tripAddedName, setTripAddedName] = useState("");
+  const [tripAddedId, setTripAddedId] = useState("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -991,13 +993,39 @@ export default function CourseProfilePage() {
                     const supabase = createClient();
                     await supabase.from("GolfTripCourse").insert({ id: crypto.randomUUID(), tripId: selectedTripId, courseId: id as string, playDate: tripPlayDate || null, teeTime: tripTeeTime || null, accommodation: tripAccommodation.trim() || null, sortOrder: 0 });
                     setSavingTrip(false);
-                    setTripPickerOpen(false);
+                    setTripAddedName(selectedTripName);
+                    setTripAddedId(selectedTripId || "");
+                    setTripStep("success");
                   }}
                   disabled={savingTrip}
                   style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: savingTrip ? "default" : "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}
                 >
                   {savingTrip ? "Adding..." : "Add to Trip ✓"}
                 </button>
+              </>
+            )}
+
+            {tripStep === "success" && (
+              <>
+                <div style={{ textAlign: "center", padding: "8px 0 20px" }}>
+                  <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 6 }}>Course Added!</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 28 }}>{course?.name} is on <span style={{ color: "#4da862" }}>{tripAddedName}</span></div>
+                  <button
+                    onClick={() => { setTripPickerOpen(false); router.push(`/trips/${tripAddedId}`); }}
+                    style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", marginBottom: 10, boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}
+                  >
+                    View Trip →
+                  </button>
+                  <button
+                    onClick={() => { setTripPickerOpen(false); router.push(`/search?tripId=${tripAddedId}`); }}
+                    style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
+                  >
+                    + Add Another Course
+                  </button>
+                </div>
               </>
             )}
           </div>
