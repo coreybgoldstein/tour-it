@@ -23,11 +23,13 @@ export const metadata: Metadata = {
     url: "https://tour-it.vercel.app",
     siteName: "Tour It",
     type: "website",
+    images: [{ url: "https://tour-it.vercel.app/tour-it-logo-new.png", width: 600, height: 300, alt: "Tour It" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Tour It — Scout Before You Play",
     description: "Preview any golf course, one hole at a time. Real videos and tips from golfers who've already played it.",
+    images: ["https://tour-it.vercel.app/tour-it-logo-new.png"],
   },
 };
 
