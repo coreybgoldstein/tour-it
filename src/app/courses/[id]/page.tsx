@@ -92,21 +92,9 @@ function getCourseHero(name: string) {
 }
 
 function FlagBadge({ label, large }: { label: string | number; large?: boolean }) {
-  const w = large ? 38 : 28;
-  const h = large ? 26 : 19;
-  const notchX = large ? 31 : 23;
-  const midY = large ? 13 : 9.5;
-  const fontSize = large ? 13 : 10;
   return (
-    <div style={{ position: "relative", display: "inline-flex", width: w, height: h, flexShrink: 0 }}>
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" style={{ display: "block" }}>
-        <path d={`M 2 0 L ${notchX} 0 L ${w} ${midY} L ${notchX} ${h} L 2 ${h} Q 0 ${h} 0 ${h - 2} L 0 2 Q 0 0 2 0 Z`} fill="#4da862"/>
-      </svg>
-      <span style={{
-        position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-        paddingRight: large ? 5 : 4,
-        fontFamily: "'Playfair Display', serif", fontSize, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none",
-      }}>{label}</span>
+    <div style={{ background: "#4da862", borderRadius: large ? 7 : 4, padding: large ? "5px 11px" : "3px 6px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: large ? 14 : 10, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none" }}>{label}</span>
     </div>
   );
 }
@@ -725,8 +713,11 @@ export default function CourseProfilePage() {
                     <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   )}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)" }} />
-                  <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                  <div style={{ position: "absolute", bottom: 5, right: 5, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
                     <FlagBadge label={clip.holeNumber ?? "·"} />
+                    {clip.shotType && SHOT_LABEL[clip.shotType] && (
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.75)", lineHeight: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{SHOT_LABEL[clip.shotType]}</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -891,14 +882,47 @@ export default function CourseProfilePage() {
       {/* Full-screen feed modal */}
       {feedOpen && (
         <div className="feed-modal" ref={feedRef} onScroll={handleFeedScroll}>
-          <button onClick={() => setFeedOpen(false)} style={{ position: "fixed", top: 52, left: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 110 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          </button>
           {courseClips.map((clip, i) => (
             <div key={clip.id} className="feed-snap">
               <FeedCard clip={clip} isActive={i === activeIndex} onClose={() => setFeedOpen(false)} onComment={() => setCommentUploadId(clip.id)} course={course} uploaderMap={uploaders} />
             </div>
           ))}
+          {/* End card — suggested courses */}
+          {suggestedCourses.length > 0 && (
+            <div className="feed-snap">
+              <div style={{ width: "100%", height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", position: "relative" }}>
+                <button onClick={() => setFeedOpen(false)} style={{ position: "absolute", top: 52, left: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 20 }}>More to scout</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, width: "100%", maxWidth: 360 }}>
+                  {suggestedCourses.map(c => (
+                    <button key={c.id} onClick={() => { setFeedOpen(false); router.push(`/courses/${c.id}`); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, overflow: "hidden", cursor: "pointer", textAlign: "left", padding: 0 }}>
+                      <div style={{ width: "100%", height: 90, background: "#0d2318", position: "relative", overflow: "hidden" }}>
+                        {c.coverImageUrl
+                          ? <img src={c.coverImageUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <div style={{ width: "100%", height: "100%", background: "linear-gradient(160deg, #1a4d22 0%, #0d2e14 100%)" }} />
+                        }
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)" }} />
+                        {c.logoUrl && (
+                          <div style={{ position: "absolute", top: 7, right: 7, width: 28, height: 18, borderRadius: 5, overflow: "hidden" }}>
+                            <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ padding: "10px 12px 12px" }}>
+                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 2 }}>{c.name}</div>
+                        {(c.city || c.state) && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{[c.city, c.state].filter(Boolean).join(", ")}</div>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setFeedOpen(false)} style={{ marginTop: 20, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 24px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer" }}>
+                  Back to {course?.name}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

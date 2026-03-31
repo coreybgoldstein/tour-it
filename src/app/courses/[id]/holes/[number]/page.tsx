@@ -6,13 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
 function FlagBadge({ label }: { label: string | number }) {
-  const w = 38; const h = 26; const notchX = 31; const midY = 13;
   return (
-    <div style={{ position: "relative", display: "inline-flex", width: w, height: h, flexShrink: 0 }}>
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" style={{ display: "block" }}>
-        <path d={`M 2 0 L ${notchX} 0 L ${w} ${midY} L ${notchX} ${h} L 2 ${h} Q 0 ${h} 0 ${h - 2} L 0 2 Q 0 0 2 0 Z`} fill="#4da862"/>
-      </svg>
-      <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", paddingRight: 5, fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none" }}>{label}</span>
+    <div style={{ background: "#4da862", borderRadius: 7, padding: "5px 11px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none" }}>{label}</span>
     </div>
   );
 }
