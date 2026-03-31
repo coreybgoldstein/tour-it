@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
@@ -250,11 +250,9 @@ function ClipActions({ upload, onComment }: { upload: Upload; onComment: () => v
   );
 }
 
-function HolePageInner() {
+export default function HolePage() {
   const { id, number } = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const navDir = searchParams.get("dir") as "next" | "prev" | null;
   const [course, setCourse] = useState<Course | null>(null);
   const [hole, setHole] = useState<Hole | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -271,6 +269,10 @@ function HolePageInner() {
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  // All holes with upload counts — used to skip empty holes on swipe
+  const [holeList, setHoleList] = useState<{holeNumber: number; uploadCount: number}[]>([]);
+  const [endOfContent, setEndOfContent] = useState<"prev" | "next" | null>(null);
+  const endOfContentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const touchStartY = useRef<number>(0);
   const touchStartX = useRef<number>(0);
@@ -291,20 +293,16 @@ function HolePageInner() {
     createClient().auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
 
-  // Auto-skip holes with no content when navigating via swipe
+  // Load hole list (uploadCounts) for smart navigation — skip empty holes
   useEffect(() => {
-    if (loading || multiHoleKey) return;
-    const hasAny = uploads.length > 0 || series.length > 0;
-    if (!hasAny && navDir) {
-      const holeNum = Number(number);
-      if (navDir === "next" && holeNum < 18) {
-        router.replace(`/courses/${id}/holes/${holeNum + 1}?dir=next`);
-      } else if (navDir === "prev" && holeNum > 1) {
-        router.replace(`/courses/${id}/holes/${holeNum - 1}?dir=prev`);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, uploads.length, series.length]);
+    if (!id || multiHoleKey) return;
+    createClient()
+      .from("Hole")
+      .select("holeNumber, uploadCount")
+      .eq("courseId", id)
+      .order("holeNumber")
+      .then(({ data }) => { if (data) setHoleList(data); });
+  }, [id]);
 
   useEffect(() => {
     if (!commentUploadId) { setCommentItems([]); return; }
@@ -447,10 +445,18 @@ function HolePageInner() {
     // Horizontal swipe (left/right) — navigate between holes
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && !multiHoleKey) {
       const holeNum = Number(number);
-      if (deltaX > 0 && holeNum < 18) {
-        router.push(`/courses/${id}/holes/${holeNum + 1}?dir=next`);
-      } else if (deltaX < 0 && holeNum > 1) {
-        router.push(`/courses/${id}/holes/${holeNum - 1}?dir=prev`);
+      const dir = deltaX > 0 ? "next" : "prev";
+      const candidates = dir === "next"
+        ? holeList.filter(h => h.holeNumber > holeNum).sort((a, b) => a.holeNumber - b.holeNumber)
+        : holeList.filter(h => h.holeNumber < holeNum).sort((a, b) => b.holeNumber - a.holeNumber);
+      const next = candidates.find(h => h.uploadCount > 0);
+      if (next) {
+        router.push(`/courses/${id}/holes/${next.holeNumber}`);
+      } else {
+        // No more holes with content — show end-of-content indicator briefly
+        if (endOfContentTimer.current) clearTimeout(endOfContentTimer.current);
+        setEndOfContent(dir);
+        endOfContentTimer.current = setTimeout(() => setEndOfContent(null), 2000);
       }
       return;
     }
@@ -630,12 +636,6 @@ function HolePageInner() {
                 </div>
                 <span className="action-label" style={copied ? { color: "#4da862" } : {}}>{copied ? "Copied!" : "Share"}</span>
               </button>
-              <button className="action-btn" onClick={() => router.push(`/courses/${id}/holes`)}>
-                <div className="action-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                </div>
-                <span className="action-label">Holes</span>
-              </button>
             </div>
 
             {activeIndex === 0 && uploads.length > 1 && (
@@ -646,26 +646,40 @@ function HolePageInner() {
             )}
 
             {/* Hole prev/next — anchored just above bottom info, left + right */}
-            {!multiHoleKey && (
-              <div style={{ position: "absolute", bottom: 220, left: 0, right: 0, display: "flex", justifyContent: "space-between", padding: "0 14px", zIndex: 25, pointerEvents: "none" }}>
-                {Number(number) > 1 ? (
-                  <button
-                    onClick={() => router.push(`/courses/${id}/holes/${Number(number) - 1}?dir=prev`)}
-                    style={{ pointerEvents: "auto", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99, padding: "7px 12px 7px 10px", display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}
-                  >
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Hole {Number(number) - 1}</span>
-                  </button>
-                ) : <div />}
-                {Number(number) < 18 ? (
-                  <button
-                    onClick={() => router.push(`/courses/${id}/holes/${Number(number) + 1}?dir=next`)}
-                    style={{ pointerEvents: "auto", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99, padding: "7px 10px 7px 12px", display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}
-                  >
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Hole {Number(number) + 1}</span>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                  </button>
-                ) : <div />}
+            {!multiHoleKey && (() => {
+              const holeNum = Number(number);
+              const prevHole = holeList.filter(h => h.holeNumber < holeNum && h.uploadCount > 0).sort((a,b) => b.holeNumber - a.holeNumber)[0];
+              const nextHole = holeList.filter(h => h.holeNumber > holeNum && h.uploadCount > 0).sort((a,b) => a.holeNumber - b.holeNumber)[0];
+              return (
+                <div style={{ position: "absolute", bottom: 220, left: 0, right: 0, display: "flex", justifyContent: "space-between", padding: "0 14px", zIndex: 25, pointerEvents: "none" }}>
+                  {prevHole ? (
+                    <button
+                      onClick={() => router.push(`/courses/${id}/holes/${prevHole.holeNumber}`)}
+                      style={{ pointerEvents: "auto", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99, padding: "7px 12px 7px 10px", display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Hole {prevHole.holeNumber}</span>
+                    </button>
+                  ) : <div />}
+                  {nextHole ? (
+                    <button
+                      onClick={() => router.push(`/courses/${id}/holes/${nextHole.holeNumber}`)}
+                      style={{ pointerEvents: "auto", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99, padding: "7px 10px 7px 12px", display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}
+                    >
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Hole {nextHole.holeNumber}</span>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                  ) : <div />}
+                </div>
+              );
+            })()}
+
+            {/* End-of-content toast */}
+            {endOfContent && (
+              <div style={{ position: "absolute", bottom: 270, left: "50%", transform: "translateX(-50%)", zIndex: 30, background: "rgba(0,0,0,0.72)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "8px 16px", whiteSpace: "nowrap" }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.65)" }}>
+                  {endOfContent === "next" ? "No more holes with clips" : "That's the first hole with clips"}
+                </span>
               </div>
             )}
 
@@ -769,10 +783,3 @@ function HolePageInner() {
   );
 }
 
-export default function HolePage() {
-  return (
-    <Suspense fallback={<main style={{ minHeight: "100vh", background: "#07100a", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>Loading...</div></main>}>
-      <HolePageInner />
-    </Suspense>
-  );
-}

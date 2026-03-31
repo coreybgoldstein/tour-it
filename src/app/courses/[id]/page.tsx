@@ -641,10 +641,17 @@ export default function CourseProfilePage() {
               Scouting clips
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
-              {courseClips.map((clip, i) => (
-                <div key={clip.id} className="clip-thumb" onClick={() => { setFeedStartIndex(i); setFeedOpen(true); }}>
+              {courseClips.map((clip, i) => {
+                const SHOT_ROUTE: Record<string, string> = { FRONT_NINE: "front-9", BACK_NINE: "back-9", FULL_ROUND: "full-18" };
+                const clipRoute = clip.holeNumber
+                  ? `/courses/${id}/holes/${clip.holeNumber}`
+                  : clip.shotType && SHOT_ROUTE[clip.shotType]
+                  ? `/courses/${id}/holes/${SHOT_ROUTE[clip.shotType]}`
+                  : null;
+                return (
+                <div key={clip.id} className="clip-thumb" onClick={() => clipRoute ? router.push(clipRoute) : (setFeedStartIndex(i), setFeedOpen(true))}>
                   {clip.mediaType === "VIDEO" ? (
-                    <video src={clip.mediaUrl} muted playsInline preload="none" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <video src={clip.mediaUrl} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   )}
@@ -664,7 +671,8 @@ export default function CourseProfilePage() {
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
