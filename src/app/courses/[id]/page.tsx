@@ -92,9 +92,20 @@ function getCourseHero(name: string) {
 }
 
 function FlagBadge({ label, large }: { label: string | number; large?: boolean }) {
+  if (large) {
+    return (
+      <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 10, height: 1, background: "rgba(255,255,255,0.5)" }} />
+          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none" }}>{label}</span>
+          <div style={{ width: 10, height: 1, background: "rgba(255,255,255,0.5)" }} />
+        </div>
+      </div>
+    );
+  }
   return (
-    <div style={{ background: "#4da862", borderRadius: large ? 7 : 4, padding: large ? "5px 11px" : "3px 6px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: large ? 14 : 10, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none" }}>{label}</span>
+    <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1)" }}>
+      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none" }}>{label}</span>
     </div>
   );
 }
@@ -713,11 +724,8 @@ export default function CourseProfilePage() {
                     <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   )}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)" }} />
-                  <div style={{ position: "absolute", bottom: 5, right: 5, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                  <div style={{ position: "absolute", bottom: 5, right: 5 }}>
                     <FlagBadge label={clip.holeNumber ?? "·"} />
-                    {clip.shotType && SHOT_LABEL[clip.shotType] && (
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.75)", lineHeight: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{SHOT_LABEL[clip.shotType]}</span>
-                    )}
                   </div>
                 </div>
               ))}
