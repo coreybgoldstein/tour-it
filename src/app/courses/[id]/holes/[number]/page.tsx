@@ -559,7 +559,7 @@ export default function HolePage() {
           .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 14px 12px; z-index: 20; gap: 10px; }
           .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-          .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(77,168,98,0.35); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; overflow: hidden; }
+          .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; overflow: hidden; }
           .right-actions { position: absolute; right: 14px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 30; }
           .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
           .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
@@ -638,8 +638,8 @@ export default function HolePage() {
                 <div style={{ minWidth: 0, textAlign: "left" }}>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{pageTitle}</span>
-                    {!multiHoleKey && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>· Par {par}</span>}
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>{pageTitle}</span>
+                    {!multiHoleKey && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· Par {par}</span>}
                   </div>
                 </div>
               </button>
@@ -694,7 +694,7 @@ export default function HolePage() {
                 <div className="action-icon" style={copied ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
                   {copied
                     ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                   }
                 </div>
               </button>
