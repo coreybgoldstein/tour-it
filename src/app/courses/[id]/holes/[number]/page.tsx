@@ -497,11 +497,10 @@ export default function HolePage() {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const title = `${course?.name} — Hole ${Number(number)} | Tour It`;
-    const text = `Check out this shot from ${course?.name} on Tour It`;
+    const shareText = `Tour It — ${course?.name} — ${pageTitle}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title, text, url });
+        await navigator.share({ title: shareText, text: shareText, url });
       } else {
         await navigator.clipboard.writeText(url);
         setCopied(true);
