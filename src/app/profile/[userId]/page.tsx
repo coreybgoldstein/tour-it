@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import GolfBallBadge from "@/components/GolfBallBadge";
+import { GolfBallBadge } from "@/components/GolfBallBadge";
 
 type UserProfile = {
   id: string;
