@@ -389,7 +389,7 @@ function UploadPageInner() {
       const filePath = `${user.id}/${selectedCourse.id}/${folderKey}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, mediaFile, { cacheControl: "3600", upsert: false });
-      if (uploadError) { setError("Upload failed. Please try again."); setUploading(false); return; }
+      if (uploadError) { setError(`Upload failed: ${uploadError.message}`); setUploading(false); return; }
 
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
