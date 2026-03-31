@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
@@ -11,6 +11,7 @@ type Course = {
   name: string;
   city: string;
   state: string;
+  logoUrl: string | null;
 };
 
 type Hole = {
@@ -249,9 +250,11 @@ function ClipActions({ upload, onComment }: { upload: Upload; onComment: () => v
   );
 }
 
-export default function HolePage() {
+function HolePageInner() {
   const { id, number } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const navDir = searchParams.get("dir") as "next" | "prev" | null;
   const [course, setCourse] = useState<Course | null>(null);
   const [hole, setHole] = useState<Hole | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -287,6 +290,21 @@ export default function HolePage() {
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setUser(data.user));
   }, []);
+
+  // Auto-skip holes with no content when navigating via swipe
+  useEffect(() => {
+    if (loading || multiHoleKey) return;
+    const hasAny = uploads.length > 0 || series.length > 0;
+    if (!hasAny && navDir) {
+      const holeNum = Number(number);
+      if (navDir === "next" && holeNum < 18) {
+        router.replace(`/courses/${id}/holes/${holeNum + 1}?dir=next`);
+      } else if (navDir === "prev" && holeNum > 1) {
+        router.replace(`/courses/${id}/holes/${holeNum - 1}?dir=prev`);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, uploads.length, series.length]);
 
   useEffect(() => {
     if (!commentUploadId) { setCommentItems([]); return; }
@@ -332,7 +350,7 @@ export default function HolePage() {
 
     if (multiHoleKey) {
       // Multi-hole content — no hole lookup needed
-      supabase.from("Course").select("id, name, city, state").eq("id", id).single()
+      supabase.from("Course").select("id, name, city, state, logoUrl").eq("id", id).single()
         .then(({ data }) => { if (data) setCourse(data); });
 
       let query = supabase.from("Upload").select("*")
@@ -348,7 +366,7 @@ export default function HolePage() {
     }
 
     Promise.all([
-      supabase.from("Course").select("id, name, city, state").eq("id", id).single(),
+      supabase.from("Course").select("id, name, city, state, logoUrl").eq("id", id).single(),
       supabase.from("Hole").select("*").eq("courseId", id).eq("holeNumber", Number(number)).single(),
     ]).then(async ([courseRes, holeRes]) => {
       if (courseRes.data) setCourse(courseRes.data);
@@ -430,9 +448,9 @@ export default function HolePage() {
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && !multiHoleKey) {
       const holeNum = Number(number);
       if (deltaX > 0 && holeNum < 18) {
-        router.push(`/courses/${id}/holes/${holeNum + 1}`);
+        router.push(`/courses/${id}/holes/${holeNum + 1}?dir=next`);
       } else if (deltaX < 0 && holeNum > 1) {
-        router.push(`/courses/${id}/holes/${holeNum - 1}`);
+        router.push(`/courses/${id}/holes/${holeNum - 1}?dir=prev`);
       }
       return;
     }
@@ -517,7 +535,7 @@ export default function HolePage() {
           .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: flex-start; justify-content: space-between; padding: 52px 16px 16px; z-index: 20; }
           .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-          .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(77,168,98,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; }
+          .course-top-badge { width: 44px; height: 44px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(77,168,98,0.4); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; color: #4da862; flex-shrink: 0; overflow: hidden; }
           .right-actions { position: absolute; right: 16px; bottom: 220px; display: flex; flex-direction: column; align-items: center; gap: 22px; z-index: 30; }
           .action-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; }
           .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
@@ -568,7 +586,12 @@ export default function HolePage() {
                 <button className="back-btn" onClick={() => router.back()}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
-                <div className="course-top-badge">{courseAbbr}</div>
+                <div className="course-top-badge">
+                  {course?.logoUrl
+                    ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : courseAbbr
+                  }
+                </div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 2px 8px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
@@ -595,26 +618,6 @@ export default function HolePage() {
               </div>
             )}
 
-            {/* Hole navigation hints (prev/next) */}
-            {!multiHoleKey && Number(number) > 1 && (
-              <button
-                onClick={() => router.push(`/courses/${id}/holes/${Number(number) - 1}`)}
-                style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", zIndex: 20, background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "6px 10px 6px 8px", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>H{Number(number) - 1}</span>
-              </button>
-            )}
-            {!multiHoleKey && Number(number) < 18 && (
-              <button
-                onClick={() => router.push(`/courses/${id}/holes/${Number(number) + 1}`)}
-                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", zIndex: 20, background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "6px 8px 6px 10px", display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}
-              >
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>H{Number(number) + 1}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-              </button>
-            )}
-
             {/* Right actions */}
             <div className="right-actions">
               <ClipActions key={activeUpload.id} upload={activeUpload} onComment={() => setCommentUploadId(activeUpload.id)} />
@@ -627,27 +630,53 @@ export default function HolePage() {
                 </div>
                 <span className="action-label" style={copied ? { color: "#4da862" } : {}}>{copied ? "Copied!" : "Share"}</span>
               </button>
-              <button className="action-btn" onClick={() => router.push(`/courses/${id}`)}>
-                <div className="action-icon" style={{ borderRadius: 14, borderColor: "rgba(77,168,98,0.45)", background: "rgba(77,168,98,0.18)" }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{courseAbbr}</span>
+              <button className="action-btn" onClick={() => router.push(`/courses/${id}/holes`)}>
+                <div className="action-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
-                <span className="action-label">Course</span>
+                <span className="action-label">Holes</span>
               </button>
             </div>
 
             {activeIndex === 0 && uploads.length > 1 && (
-              <div style={{ position: "absolute", bottom: 180, left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, opacity: 0.5 }}>
+              <div style={{ position: "absolute", bottom: 195, left: "50%", transform: "translateX(-50%)", zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, opacity: 0.45 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.6)", letterSpacing: 1 }}>SWIPE UP</span>
               </div>
             )}
 
-            {/* Tour It watermark */}
-            <div style={{ position: "absolute", bottom: 96, left: 16, zIndex: 20, display: "flex", alignItems: "center", gap: 5, opacity: 0.6 }}>
-              <div style={{ width: 18, height: 18, borderRadius: 5, background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>T</span>
+            {/* Hole prev/next — anchored just above bottom info, left + right */}
+            {!multiHoleKey && (
+              <div style={{ position: "absolute", bottom: 220, left: 0, right: 0, display: "flex", justifyContent: "space-between", padding: "0 14px", zIndex: 25, pointerEvents: "none" }}>
+                {Number(number) > 1 ? (
+                  <button
+                    onClick={() => router.push(`/courses/${id}/holes/${Number(number) - 1}?dir=prev`)}
+                    style={{ pointerEvents: "auto", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99, padding: "7px 12px 7px 10px", display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Hole {Number(number) - 1}</span>
+                  </button>
+                ) : <div />}
+                {Number(number) < 18 ? (
+                  <button
+                    onClick={() => router.push(`/courses/${id}/holes/${Number(number) + 1}?dir=next`)}
+                    style={{ pointerEvents: "auto", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99, padding: "7px 10px 7px 12px", display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}
+                  >
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Hole {Number(number) + 1}</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
+                ) : <div />}
               </div>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)", letterSpacing: "0.05em" }}>Tour It</span>
+            )}
+
+            {/* Tour It watermark */}
+            <div style={{ position: "absolute", bottom: 100, left: 16, zIndex: 20, display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "5px 10px 5px 6px" }}>
+              <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="19" r="2"/><line x1="12" y1="17" x2="12" y2="7"/><path d="M12 7 L18 10 L12 13 Z" fill="#fff" stroke="none"/>
+                </svg>
+              </div>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)", letterSpacing: "0.04em" }}>Tour It</span>
             </div>
 
             {/* Bottom info — series cards only */}
@@ -737,5 +766,13 @@ export default function HolePage() {
 
       <BottomNav />
     </>
+  );
+}
+
+export default function HolePage() {
+  return (
+    <Suspense fallback={<main style={{ minHeight: "100vh", background: "#07100a", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>Loading...</div></main>}>
+      <HolePageInner />
+    </Suspense>
   );
 }
