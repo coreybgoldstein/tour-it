@@ -42,7 +42,7 @@ type Clip = {
   shotType: string | null;
 };
 
-type CourseResult = { id: string; name: string; city: string; state: string; holeCount: number };
+type CourseResult = { id: string; name: string; city: string; state: string; holeCount: number; logoUrl?: string | null };
 
 // ── Inline date-range calendar ──────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -286,7 +286,7 @@ export default function TripPage() {
     setCourseSearchLoading(true);
     courseSearchDebounce.current = setTimeout(async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("Course").select("id, name, city, state, holeCount").or(`name.ilike.%${courseSearch}%,city.ilike.%${courseSearch}%`).order("uploadCount", { ascending: false }).limit(15);
+      const { data } = await supabase.from("Course").select("id, name, city, state, holeCount, logoUrl").or(`name.ilike.%${courseSearch}%,city.ilike.%${courseSearch}%`).order("uploadCount", { ascending: false }).limit(15);
       // Filter out courses already on the trip
       const existing = new Set(tripCourses.map(tc => tc.courseId));
       setCourseResults((data || []).filter((c: any) => !existing.has(c.id)));
@@ -770,8 +770,11 @@ export default function TripPage() {
                   )}
                   {courseResults.map(c => (
                     <div key={c.id} className="course-result-row" onClick={() => { setSelectedAddCourse(c); setAddCourseStep("details"); }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>{abbr(c.name)}</span>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                        {c.logoUrl
+                          ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>{abbr(c.name)}</span>
+                        }
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
