@@ -656,11 +656,6 @@ export default function CourseProfilePage() {
                     <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   )}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%)" }} />
-                  {clip.mediaType === "VIDEO" && (
-                    <div style={{ position: "absolute", top: "38%", left: "50%", transform: "translate(-50%,-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    </div>
-                  )}
                   <div style={{ position: "absolute", bottom: 5, right: 5 }}>
                     <GolfBallBadge
                       label={clip.seriesId ? "+" : (clip.holeNumber ?? "·")}
