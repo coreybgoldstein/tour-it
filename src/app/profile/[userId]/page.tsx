@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import GolfBallBadge from "@/components/GolfBallBadge";
 
 type UserProfile = {
   id: string;
@@ -23,6 +24,8 @@ type Upload = {
   mediaType: string;
   courseId: string;
   holeId: string;
+  holeNumber?: number;
+  seriesId?: string | null;
   createdAt: string;
 };
 
@@ -99,7 +102,7 @@ export default function PublicProfilePage() {
       ] = await Promise.all([
         supabase
           .from("Upload")
-          .select("id, mediaUrl, mediaType, courseId, holeId, createdAt")
+          .select("id, mediaUrl, mediaType, courseId, holeId, holeNumber, seriesId, createdAt")
           .eq("userId", userId)
           .order("createdAt", { ascending: false }),
         supabase
@@ -409,17 +412,19 @@ export default function PublicProfilePage() {
                 {upload.mediaType === "PHOTO" ? (
                   <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <video src={upload.mediaUrl} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <video src={upload.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)" }} />
-                <div style={{ position: "absolute", bottom: "5px", left: "5px", fontSize: "8px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
-                  {coursesPlayed.find(c => c.id === upload.courseId)?.name?.split(" ").slice(0, 2).join(" ") || ""}
-                </div>
-                {upload.mediaType === "VIDEO" && (
-                  <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 24, height: 24, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
+                    {coursesPlayed.find(c => c.id === upload.courseId)?.name?.split(" ").slice(0, 2).join(" ") || ""}
                   </div>
-                )}
+                  <GolfBallBadge
+                    label={upload.seriesId ? "+" : (upload.holeNumber ?? "·")}
+                    isGold={!!upload.seriesId}
+                    id={upload.id}
+                  />
+                </div>
               </div>
             ))}
           </div>

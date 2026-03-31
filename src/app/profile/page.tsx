@@ -92,7 +92,7 @@ export default function ProfilePage() {
       setEditHandicap(profile.handicapIndex?.toString() || "");
 
 const [{ data: userUploads }, { count: followers }, { count: following }] = await Promise.all([
-  supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt").eq("userId", authUser.id).order("createdAt", { ascending: false }),
+  supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, holeNumber, seriesId, createdAt").eq("userId", authUser.id).order("createdAt", { ascending: false }),
   supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", authUser.id).eq("status", "ACTIVE"),
   supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", authUser.id).eq("status", "ACTIVE"),
 ]);
@@ -467,7 +467,7 @@ if (userUploads && userUploads.length > 0) {
                 {upload.mediaType === "PHOTO" ? (
                   <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <video src={upload.mediaUrl} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <video src={upload.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
                 
@@ -476,13 +476,11 @@ if (userUploads && userUploads.length > 0) {
                   <div style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>
                     {coursesPlayed.find(c => c.id === upload.courseId)?.name?.split(" ").slice(0, 2).join(" ") || ""}
                   </div>
-                  {(upload.holeNumber || upload.seriesId) && (
-                    <GolfBallBadge
-                      label={upload.seriesId ? "+" : (upload.holeNumber ?? "+")}
-                      isGold={!!upload.seriesId}
-                      id={upload.id}
-                    />
-                  )}
+                  <GolfBallBadge
+                    label={upload.seriesId ? "+" : (upload.holeNumber ?? "·")}
+                    isGold={!!upload.seriesId}
+                    id={upload.id}
+                  />
                 </div>
 
                 {/* Menu indicator (top right) */}

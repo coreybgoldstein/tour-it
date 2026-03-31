@@ -651,7 +651,7 @@ export default function CourseProfilePage() {
                 return (
                 <div key={clip.id} className="clip-thumb" onClick={() => clipRoute ? router.push(clipRoute) : (setFeedStartIndex(i), setFeedOpen(true))}>
                   {clip.mediaType === "VIDEO" ? (
-                    <video src={clip.mediaUrl} muted playsInline preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   )}
@@ -661,15 +661,13 @@ export default function CourseProfilePage() {
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     </div>
                   )}
-                  {(clip.holeNumber || clip.seriesId) && (
-                    <div style={{ position: "absolute", bottom: 5, right: 5 }}>
-                      <GolfBallBadge
-                        label={(!clip.holeNumber || clip.seriesId) ? "+" : clip.holeNumber}
-                        isGold={!clip.holeNumber || !!clip.seriesId}
-                        id={clip.id}
-                      />
-                    </div>
-                  )}
+                  <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                    <GolfBallBadge
+                      label={clip.seriesId ? "+" : (clip.holeNumber ?? "·")}
+                      isGold={!!clip.seriesId}
+                      id={clip.id}
+                    />
+                  </div>
                 </div>
                 );
               })}

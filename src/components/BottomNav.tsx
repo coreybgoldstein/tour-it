@@ -63,7 +63,9 @@ export default function BottomNav() {
       >
         <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(45,122,66,0.5)" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12l7-7 7 7"/>
+            <polyline points="8 7 12 2 16 7"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+            <path d="M5 15v5h14v-5"/>
           </svg>
         </div>
         <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.04em" }}>UPLOAD</span>
