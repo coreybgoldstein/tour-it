@@ -375,6 +375,10 @@ function UploadPageInner() {
   const handleSubmit = async () => {
     const isMultiHole = contentFormat && contentFormat !== "SHOT" && contentFormat !== "FULL_HOLE";
     if (!selectedCourse || (!selectedHole && !isMultiHole) || !mediaFile) return;
+    if (mediaType === "VIDEO" && mediaFile.size > 500 * 1024 * 1024) {
+      setError("Video is too large (max 500 MB). Try trimming it to under 2 minutes.");
+      return;
+    }
     setUploading(true);
     setError("");
 
