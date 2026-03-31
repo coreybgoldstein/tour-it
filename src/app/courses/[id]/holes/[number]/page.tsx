@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
+import { GolfBallBadge } from "@/components/GolfBallBadge";
 
 type Course = {
   id: string;
@@ -555,7 +556,7 @@ export default function HolePage() {
           .video-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
           .photo-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
           .gradient-top { position: absolute; top: 0; left: 0; right: 0; height: 140px; background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%); z-index: 10; pointer-events: none; }
-          .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 14px 16px; z-index: 20; gap: 10px; }
+          .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 14px 12px; z-index: 20; gap: 10px; }
           .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(77,168,98,0.35); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; overflow: hidden; }
@@ -688,7 +689,7 @@ export default function HolePage() {
                 <span className="action-label">{activeUpload.commentCount || 0}</span>
               </button>
 
-              {/* Share */}
+              {/* Share — no label */}
               <button className="action-btn" onClick={handleShare}>
                 <div className="action-icon" style={copied ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
                   {copied
@@ -696,20 +697,19 @@ export default function HolePage() {
                     : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
                   }
                 </div>
-                <span className="action-label" style={copied ? { color: "#4da862" } : {}}>{copied ? "Copied!" : "Share"}</span>
               </button>
 
-              {/* Hole badge — navigates to holes overview */}
-              {!multiHoleKey && (
-                <button className="action-btn" onClick={() => router.push(`/courses/${id}/holes`)}>
-                  <div className="action-icon" style={{ borderColor: "rgba(77,168,98,0.45)", background: "rgba(77,168,98,0.1)" }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="19" r="2"/><line x1="12" y1="17" x2="12" y2="7"/><path d="M12 7 L18 10 L12 13 Z" fill="#4da862" stroke="none"/>
-                    </svg>
+              {/* Golf ball badge — hole number or + for multi-hole, navigates to holes overview */}
+              <button className="action-btn" onClick={() => router.push(`/courses/${id}/holes`)}>
+                <div style={{ width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ transform: "scale(2.05)", transformOrigin: "center", display: "flex" }}>
+                    <GolfBallBadge
+                      label={multiHoleKey ? "+" : (holeNum ?? "·")}
+                      id="hole-sidebar-badge"
+                    />
                   </div>
-                  <span className="action-label" style={{ color: "#4da862", fontWeight: 700 }}>H{holeNum}</span>
-                </button>
-              )}
+                </div>
+              </button>
             </div>
 
             {/* End-of-content toast */}
