@@ -40,6 +40,7 @@ type Clip = {
   seriesId?: string | null;
   courseName?: string;
   isForeign?: boolean;
+  userId: string;
 };
 
 type SuggestedCourse = {
@@ -90,95 +91,164 @@ function getCourseHero(name: string) {
   return COURSE_HEROES["default"];
 }
 
-function FlagBadge({ label }: { label: string | number }) {
+function FlagBadge({ label, large }: { label: string | number; large?: boolean }) {
+  const w = large ? 38 : 28;
+  const h = large ? 26 : 19;
+  const notchX = large ? 31 : 23;
+  const midY = large ? 13 : 9.5;
+  const fontSize = large ? 13 : 10;
   return (
-    <div style={{ background: "#4da862", borderRadius: "3px 6px 6px 3px", padding: "3px 8px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 700, color: "#fff", lineHeight: 1 }}>{label}</span>
+    <div style={{ position: "relative", display: "inline-flex", width: w, height: h, flexShrink: 0 }}>
+      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" style={{ display: "block" }}>
+        <path d={`M 2 0 L ${notchX} 0 L ${w} ${midY} L ${notchX} ${h} L 2 ${h} Q 0 ${h} 0 ${h - 2} L 0 2 Q 0 0 2 0 Z`} fill="#4da862"/>
+      </svg>
+      <span style={{
+        position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+        paddingRight: large ? 5 : 4,
+        fontFamily: "'Playfair Display', serif", fontSize, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none",
+      }}>{label}</span>
     </div>
   );
 }
 
-function FeedCard({ clip, isActive, onComment }: {
-  clip: Clip; isActive: boolean; onComment: () => void;
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
+  clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
+  course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null }>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [videoPaused, setVideoPaused] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
+  const uploader = uploaderMap[clip.userId];
+  const abbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (isActive) v.play().catch(() => {});
+    if (isActive) { v.play().catch(() => {}); setVideoPaused(false); }
     else { v.pause(); v.currentTime = 0; }
   }, [isActive]);
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
+    const text = `Tour It — ${course?.name || ""}${clip.holeNumber ? ` — Hole ${clip.holeNumber}` : ""}`;
+    try {
+      if (navigator.share) await navigator.share({ title: text, text, url });
+      else { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    } catch {}
+  };
+
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", flexShrink: 0 }}>
+    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000" }}>
       {clip.mediaType === "VIDEO" ? (
-        <video ref={videoRef} src={clip.mediaUrl} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      ) : (
-        <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      )}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
-
-      {clip.mediaType === "VIDEO" && (
-        <button onClick={() => setMuted(m => !m)} style={{ position: "absolute", bottom: 170, left: 16, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
-          {muted
-            ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          }
-        </button>
-      )}
-
-      {/* Right sidebar */}
-      <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", gap: 16, alignItems: "center", zIndex: 5 }}>
-        <button onClick={toggleLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </div>
-          <span style={{ fontSize: 10, color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
-        </button>
-        <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <span style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{clip.commentCount || 0}</span>
-        </button>
-        {clip.holeNumber && (
-          <button onClick={() => router.push(`/courses/${clip.courseId}/holes/${clip.holeNumber}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><line x1="12" y1="3" x2="12" y2="21" stroke="white" strokeWidth="2" strokeLinecap="round"/><path d="M12 3 L20 7 L12 11 Z" fill="white"/><ellipse cx="12" cy="21" rx="4" ry="1.2" stroke="white" strokeWidth="1.5" fill="none"/></svg>
-            </div>
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
-          </button>
-        )}
-        <button
+        <video
+          ref={videoRef} src={clip.mediaUrl} loop muted={muted} playsInline
           onClick={() => {
-            const url = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
-            const text = `Tour It — ${clip.courseName || ""}${clip.holeNumber ? ` — Hole ${clip.holeNumber}` : ""}`;
-            if (navigator.share) navigator.share({ title: "Tour It", text, url }).catch(() => {});
-            else navigator.clipboard.writeText(url).catch(() => {});
+            const v = videoRef.current; if (!v) return;
+            if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); }
+            else { v.pause(); setVideoPaused(true); }
           }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}
-        >
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
+        />
+      ) : (
+        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      )}
+
+      {/* Gradients */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none", zIndex: 5 }} />
+
+      {/* Pause indicator */}
+      {videoPaused && (
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 15, pointerEvents: "none", opacity: 0.7 }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
           </div>
+        </div>
+      )}
+
+      {/* Top bar — matches hole page exactly */}
+      <div className="top-bar">
+        <button className="back-btn" onClick={onClose}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <button
+          onClick={() => router.push(`/courses/${clip.courseId}`)}
+          style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+        >
+          <div className="course-top-badge">
+            {course?.logoUrl
+              ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : abbr
+            }
+          </div>
+          <div style={{ minWidth: 0, textAlign: "left" }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
+            {clip.holeNumber && (
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>Hole {clip.holeNumber}</span>
+            )}
+          </div>
+        </button>
+        <button className="mute-btn" onClick={() => setMuted(m => !m)}>
+          {muted
+            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          }
         </button>
       </div>
 
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 70px", zIndex: 5, pointerEvents: "none" }}>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4, lineHeight: 1.2 }}>
-          {clip.holeNumber ? `Hole ${clip.holeNumber}` : "Course clip"}
-        </div>
-        {clip.strategyNote && (
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.7)", marginBottom: 8, lineHeight: 1.5 }}>
-            {clip.strategyNote}
+      {/* Right sidebar — uploader → like → comment → share → flag badge */}
+      <div className="right-actions">
+        <button className="action-btn" onClick={() => router.push(`/profile/${clip.userId}`)}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {uploader?.avatarUrl
+              ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            }
           </div>
+          {uploader && <span className="action-label" style={{ maxWidth: 52, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{uploader.username}</span>}
+        </button>
+
+        <button className="action-btn" onClick={toggleLike}>
+          <div className="action-icon" style={liked ? { borderColor: "rgba(77,168,98,0.7)", background: "rgba(77,168,98,0.15)" } : {}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <span className="action-label" style={liked ? { color: "#4da862" } : {}}>{likeCount}</span>
+        </button>
+
+        <button className="action-btn" onClick={onComment}>
+          <div className="action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <span className="action-label">{clip.commentCount || 0}</span>
+        </button>
+
+        <button className="action-btn" onClick={handleShare}>
+          <div className="action-icon" style={copied ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
+            {copied
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            }
+          </div>
+        </button>
+
+        {clip.holeNumber && (
+          <button className="action-btn" onClick={() => router.push(`/courses/${clip.courseId}/holes/${clip.holeNumber}`)}>
+            <div style={{ width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <FlagBadge label={clip.holeNumber} large />
+            </div>
+          </button>
+        )}
+      </div>
+
+      {/* Bottom info */}
+      <div className="bottom-info" style={{ pointerEvents: "none" }}>
+        {clip.strategyNote && (
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.5, marginBottom: 8 }}>{clip.strategyNote}</div>
         )}
         {clip.shotType && (
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "2px 9px" }}>{SHOT_LABEL[clip.shotType] || clip.shotType}</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 10px" }}>{SHOT_LABEL[clip.shotType] || clip.shotType}</span>
         )}
       </div>
     </div>
@@ -191,6 +261,7 @@ export default function CourseProfilePage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
   const [suggestedCourses, setSuggestedCourses] = useState<SuggestedCourse[]>([]);
+  const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [feedOpen, setFeedOpen] = useState(false);
   const [feedStartIndex, setFeedStartIndex] = useState(0);
@@ -301,6 +372,17 @@ export default function CourseProfilePage() {
       // Sort by hole number ascending (clips without hole go last)
       clips.sort((a, b) => (a.holeNumber ?? 999) - (b.holeNumber ?? 999));
       setCourseClips(clips);
+
+      // Fetch uploader info
+      if (clips.length > 0) {
+        const userIds = [...new Set(clips.map((c: any) => c.userId).filter(Boolean))];
+        const { data: users } = await supabase.from("User").select("id, username, avatarUrl").in("id", userIds);
+        if (users) {
+          const map: Record<string, { username: string; avatarUrl: string | null }> = {};
+          users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl }; });
+          setUploaders(map);
+        }
+      }
 
       // Fetch 2 suggested courses
       const { data: suggested } = await supabase
@@ -454,6 +536,15 @@ export default function CourseProfilePage() {
         .clip-thumb { position: relative; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; background: #0d2318; cursor: pointer; transition: opacity 0.15s; }
         .clip-thumb:hover { opacity: 0.85; }
         .clip-thumb video, .clip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 14px 12px; z-index: 20; gap: 10px; }
+        .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; overflow: hidden; }
+        .right-actions { position: absolute; right: 14px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 30; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
+        .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
+        .action-label { font-family: 'Outfit', sans-serif; font-size: 10px; color: rgba(255,255,255,0.6); }
+        .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 16px 88px; z-index: 20; }
       `}</style>
 
       {/* Hero */}
@@ -805,7 +896,7 @@ export default function CourseProfilePage() {
           </button>
           {courseClips.map((clip, i) => (
             <div key={clip.id} className="feed-snap">
-              <FeedCard clip={clip} isActive={i === activeIndex} onComment={() => setCommentUploadId(clip.id)} />
+              <FeedCard clip={clip} isActive={i === activeIndex} onClose={() => setFeedOpen(false)} onComment={() => setCommentUploadId(clip.id)} course={course} uploaderMap={uploaders} />
             </div>
           ))}
         </div>
