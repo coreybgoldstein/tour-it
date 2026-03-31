@@ -308,58 +308,55 @@ function UploadPageInner() {
 
       const seriesId = crypto.randomUUID();
 
-      // Mark all as uploading
-      setSeriesShots(prev => prev.map(s => ({ ...s, uploading: !!s.file })));
+      for (let i = 0; i < seriesShots.length; i++) {
+        const shot = seriesShots[i];
+        if (!shot.file) continue;
 
-      // Upload all files in parallel
-      const uploadResults = await Promise.all(
-        seriesShots.map(async (shot, i) => {
-          if (!shot.file) return null;
-          const ext = shot.file.name.split(".").pop();
-          const bucket = shot.mediaType === "VIDEO" ? "tour-it-videos" : "tour-it-photos";
-          const filePath = `${user.id}/${selectedCourse.id}/${selectedHole}/series-${seriesId}-${i}.${ext}`;
-          const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, shot.file, { cacheControl: "3600", upsert: false });
-          if (uploadError) throw new Error(`Shot ${i + 1} failed to upload.`);
-          const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
-          return { i, shot, publicUrl };
-        })
-      );
+        const updated = [...seriesShots];
+        updated[i] = { ...updated[i], uploading: true };
+        setSeriesShots(updated);
 
-      // Insert DB records in parallel
-      await Promise.all(
-        uploadResults.map(async result => {
-          if (!result) return;
-          const { i, shot, publicUrl } = result;
-          const { error: dbError } = await supabase.from("Upload").insert({
-            id: crypto.randomUUID(),
-            userId: user.id,
-            courseId: selectedCourse.id,
-            holeId: holeData.id,
-            mediaType: shot.mediaType,
-            mediaUrl: publicUrl,
-            teeBoxId: null,
-            shotType: shot.shotType || null,
-            clubUsed: shot.club || null,
-            strategyNote: shot.strategy || null,
-            yardageOverlay: shot.yardage || null,
-            seriesId,
-            seriesOrder: i + 1,
-            tripId: preselectedTripId || null,
-            tripPublic: preselectedTripId ? tripPublic : true,
-            rankScore: 50,
-            moderationStatus: "PENDING",
-            likeCount: 0,
-            commentCount: 0,
-            viewCount: 0,
-            saveCount: 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
-          if (dbError) throw new Error(`Shot ${i + 1} failed to save: ${dbError.message}`);
-        })
-      );
+        const ext = shot.file.name.split(".").pop();
+        const bucket = shot.mediaType === "VIDEO" ? "tour-it-videos" : "tour-it-photos";
+        const filePath = `${user.id}/${selectedCourse.id}/${selectedHole}/series-${seriesId}-${i}.${ext}`;
 
-      setSeriesShots(prev => prev.map(s => ({ ...s, uploading: false, uploaded: true })));
+        const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, shot.file, { cacheControl: "3600", upsert: false });
+        if (uploadError) { setError(`Upload failed: ${uploadError.message}`); setUploading(false); return; }
+
+        const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+
+        const { error: dbError } = await supabase.from("Upload").insert({
+          id: crypto.randomUUID(),
+          userId: user.id,
+          courseId: selectedCourse.id,
+          holeId: holeData.id,
+          mediaType: shot.mediaType,
+          mediaUrl: publicUrl,
+          teeBoxId: null,
+          shotType: shot.shotType || null,
+          clubUsed: shot.club || null,
+          strategyNote: shot.strategy || null,
+          yardageOverlay: shot.yardage || null,
+          seriesId,
+          seriesOrder: i + 1,
+          tripId: preselectedTripId || null,
+          tripPublic: preselectedTripId ? tripPublic : true,
+          rankScore: 50,
+          moderationStatus: "PENDING",
+          likeCount: 0,
+          commentCount: 0,
+          viewCount: 0,
+          saveCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        if (dbError) { setError(`Save failed: ${dbError.message}`); setUploading(false); return; }
+
+        const done = [...seriesShots];
+        done[i] = { ...done[i], uploading: false, uploaded: true };
+        setSeriesShots(done);
+      }
 
       // Increment upload counters (by number of shots uploaded)
       const shotCount = seriesShots.length;
@@ -369,8 +366,8 @@ function UploadPageInner() {
       await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + shotCount }).eq("id", holeData.id);
 
       setSubmitted(true);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "Something went wrong. Please try again.");
     }
     setUploading(false);
   };
@@ -448,8 +445,8 @@ function UploadPageInner() {
       }
 
       setSubmitted(true);
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "Something went wrong. Please try again.");
     }
     setUploading(false);
   };
