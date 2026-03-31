@@ -15,6 +15,7 @@ type SavedCourse = {
     city: string;
     state: string;
     uploadCount: number;
+    logoUrl: string | null;
   };
 };
 
@@ -55,12 +56,12 @@ export default function ListsPage() {
         const courseIds = savesData.map((s: any) => s.courseId);
         const { data: coursesData } = await supabase
           .from("Course")
-          .select("id, name, city, state, uploadCount")
+          .select("id, name, city, state, uploadCount, logoUrl")
           .in("id", courseIds);
 
         setSaves(savesData.map((s: any) => ({
           ...s,
-          course: coursesData?.find((c: any) => c.id === s.courseId) || { id: s.courseId, name: "Unknown", city: "", state: "", uploadCount: 0 },
+          course: coursesData?.find((c: any) => c.id === s.courseId) || { id: s.courseId, name: "Unknown", city: "", state: "", uploadCount: 0, logoUrl: null },
         })));
       }
 
@@ -225,8 +226,11 @@ export default function ListsPage() {
             <div style={{ padding: "4px 0" }}>
               {current.map(s => (
                 <div key={s.id} className="list-card" onClick={() => router.push(`/courses/${s.course.id}`)}>
-                  <div style={{ width: 48, height: 48, borderRadius: 10, flexShrink: 0, background: tab === "BUCKET_LIST" ? "linear-gradient(135deg,#1a3d4d,#2d5a7a)" : "linear-gradient(135deg,#1a4d22,#2d7a42)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>
-                    {s.course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}
+                  <div style={{ width: 48, height: 48, borderRadius: 10, flexShrink: 0, overflow: "hidden", background: tab === "BUCKET_LIST" ? "linear-gradient(135deg,#1a3d4d,#2d5a7a)" : "linear-gradient(135deg,#1a4d22,#2d7a42)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>
+                    {s.course.logoUrl
+                      ? <img src={s.course.logoUrl} alt={s.course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : s.course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()
+                    }
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.course.name}</div>
