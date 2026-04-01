@@ -306,14 +306,6 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
         </>
       )}
 
-      {/* Bottom info — hidden when notes open */}
-      {!notesOpen && (
-        <div className="bottom-info" style={{ pointerEvents: "none" }}>
-          {clip.strategyNote && (
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.5 }}>{clip.strategyNote}</div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

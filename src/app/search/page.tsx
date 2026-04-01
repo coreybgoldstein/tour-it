@@ -27,6 +27,14 @@ function SearchPageInner() {
   const [popular, setPopular] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newCity, setNewCity] = useState("");
+  const [newState, setNewState] = useState("");
+  const [newHoles, setNewHoles] = useState("18");
+  const [newPublic, setNewPublic] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   // Load popular courses once on mount (courses with most clips)
   useEffect(() => {
@@ -74,6 +82,25 @@ function SearchPageInner() {
 
   const showResults = query.trim().length >= 2;
   const displayList = showResults ? results : [];
+
+  const handleCreate = async () => {
+    if (!newName.trim() || !newCity.trim() || !newState.trim()) {
+      setCreateError("Name, city, and state are required."); return;
+    }
+    setCreating(true); setCreateError("");
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setCreateError("You must be logged in."); setCreating(false); return; }
+    const slug = `${newName}-${newCity}-${newState}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
+    const { data, error } = await supabase.from("Course").insert({
+      name: newName.trim(), city: newCity.trim(), state: newState.trim().toUpperCase(),
+      country: "US", holeCount: parseInt(newHoles) || 18, isPublic: newPublic,
+      slug, uploadCount: 0, saveCount: 0, viewCount: 0,
+    }).select("id").single();
+    setCreating(false);
+    if (error) { setCreateError(error.message); return; }
+    router.push(`/courses/${data.id}`);
+  };
 
   return (
     <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff" }}>
@@ -260,7 +287,73 @@ function SearchPageInner() {
             <span style={{ fontSize: 12 }}>Type at least 2 characters to search</span>
           </div>
         )}
+
+        {/* Add course prompt — always visible once user has typed something */}
+        {showResults && !loading && (
+          <div style={{ marginTop: 28, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Don&apos;t see your course?</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>Add it so others can scout it</div>
+            </div>
+            <button
+              onClick={() => { setNewName(query); setAddOpen(true); }}
+              style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, padding: "9px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              + Add Course
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Create course bottom sheet */}
+      {addOpen && (
+        <>
+          <div onClick={() => setAddOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.5)" }} />
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 48px" }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Add a Course</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 20 }}>Help the community scout it</div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                { label: "Course Name", value: newName, set: setNewName, placeholder: "e.g. Pebble Beach Golf Links" },
+                { label: "City", value: newCity, set: setNewCity, placeholder: "e.g. Pebble Beach" },
+                { label: "State", value: newState, set: setNewState, placeholder: "e.g. CA" },
+              ].map(({ label, value, set, placeholder }) => (
+                <div key={label}>
+                  <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 5 }}>{label}</label>
+                  <input value={value} onChange={e => set(e.target.value)} placeholder={placeholder}
+                    style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                </div>
+              ))}
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 5 }}>Holes</label>
+                  <select value={newHoles} onChange={e => setNewHoles(e.target.value)}
+                    style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}>
+                    {["9","18","27","36"].map(n => <option key={n} value={n} style={{ background: "#0d2318" }}>{n} holes</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 5 }}>Access</label>
+                  <button onClick={() => setNewPublic(p => !p)}
+                    style={{ width: "100%", background: newPublic ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.06)", border: `1px solid ${newPublic ? "rgba(77,168,98,0.35)" : "rgba(255,255,255,0.1)"}`, borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: newPublic ? "#4da862" : "rgba(255,255,255,0.5)", cursor: "pointer" }}>
+                    {newPublic ? "Public" : "Private"}
+                  </button>
+                </div>
+              </div>
+
+              {createError && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#ef4444" }}>{createError}</div>}
+
+              <button onClick={handleCreate} disabled={creating}
+                style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: creating ? "default" : "pointer", opacity: creating ? 0.6 : 1, marginTop: 4 }}>
+                {creating ? "Creating…" : "Add Course"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       <BottomNav />
     </main>
