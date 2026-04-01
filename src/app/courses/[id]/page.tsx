@@ -169,11 +169,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
 
       {/* Top bar — matches hole page exactly */}
       <div className="top-bar">
-        <button className="back-btn" onClick={onClose}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
         <button
-          onClick={() => router.push(`/courses/${clip.courseId}`)}
+          onClick={onClose}
           style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}
         >
           <div className="course-top-badge">
