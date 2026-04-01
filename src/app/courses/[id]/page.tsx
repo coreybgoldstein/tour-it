@@ -120,6 +120,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
   const [videoPaused, setVideoPaused] = useState(false);
   const [copied, setCopied] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef<number | null>(null);
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
   const uploader = uploaderMap[clip.userId];
   const abbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
@@ -130,6 +132,26 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
     if (isActive) { v.play().catch(() => {}); setVideoPaused(false); }
     else { v.pause(); v.currentTime = 0; }
   }, [isActive]);
+
+  // Pause video when notes open, resume when closed
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (notesOpen) { v.pause(); setVideoPaused(true); }
+    else if (isActive) { v.play().catch(() => {}); setVideoPaused(false); }
+  }, [notesOpen, isActive]);
+
+  const openNotes = () => setNotesOpen(true);
+  const closeNotes = () => setNotesOpen(false);
+
+  // Swipe-down to dismiss
+  const onTouchStart = (e: React.TouchEvent) => { dragStartY.current = e.touches[0].clientY; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (dragStartY.current === null) return;
+    const delta = e.changedTouches[0].clientY - dragStartY.current;
+    if (delta > 60) closeNotes();
+    dragStartY.current = null;
+  };
 
   const handleShare = async () => {
     const url = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
@@ -234,7 +256,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
 
         {/* Notes button — only show if clip has any intel */}
         {(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt) && (
-          <button className="action-btn" onClick={() => setNotesOpen(true)}>
+          <button className="action-btn" onClick={openNotes}>
             <div className="action-icon" style={notesOpen ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
@@ -249,9 +271,14 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
       {/* Notes bottom sheet */}
       {notesOpen && (
         <>
-          <div onClick={() => setNotesOpen(false)} style={{ position: "absolute", inset: 0, zIndex: 40 }} />
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px", backdropFilter: "blur(20px)" }}>
-            {/* Handle */}
+          <div onClick={closeNotes} style={{ position: "absolute", inset: 0, zIndex: 40 }} />
+          <div
+            ref={sheetRef}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px", backdropFilter: "blur(20px)" }}
+          >
+            {/* Drag handle */}
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
 
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>
