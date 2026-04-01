@@ -25,13 +25,16 @@ export default function BottomNav() {
 
   return (
     <nav style={{
-      position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
+      position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
       display: "flex", alignItems: "center", justifyContent: "space-around",
       padding: "10px 8px 18px",
       background: "rgba(4,12,6,0.98)",
       backdropFilter: "blur(16px)",
       WebkitBackdropFilter: "blur(16px)",
       borderTop: "1px solid rgba(77,168,98,0.25)",
+      transform: "translateZ(0)",
+      WebkitTransform: "translateZ(0)",
+      willChange: "transform",
     }}>
 
       {/* Home */}
