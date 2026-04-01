@@ -654,6 +654,35 @@ export default function CourseProfilePage() {
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
                   </div>
                 </button>
+                <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" }} />
+                <button
+                  onClick={async () => {
+                    setShowPicker(false);
+                    setTripStep("select");
+                    setNewTripName(""); setNewTripStart(""); setNewTripEnd("");
+                    setTripPlayDate(""); setTripTeeTime(""); setTripAccommodation("");
+                    setSelectedTripId(null); setSelectedTripName("");
+                    if (user) {
+                      const supabase = createClient();
+                      const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id);
+                      if (memberData && memberData.length > 0) {
+                        const tripIds = memberData.map((m: any) => m.tripId);
+                        const { data: tripsData } = await supabase.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).order("createdAt", { ascending: false });
+                        setUserTrips(tripsData || []);
+                      } else {
+                        setUserTrips([]);
+                      }
+                    }
+                    setTripPickerOpen(true);
+                  }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left", marginTop: 2 }}
+                >
+                  <span style={{ fontSize: 16 }}>✈️</span>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Golf Trip</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Add to a trip itinerary</div>
+                  </div>
+                </button>
               </div>
             )}
           </div>
