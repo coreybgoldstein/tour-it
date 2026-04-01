@@ -205,21 +205,21 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
               : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             }
           </div>
-          {uploader && <span className="action-label" style={{ maxWidth: 52, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{uploader.username}</span>}
+          {uploader && <span className="action-label" style={{ maxWidth: 56, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>@{uploader.username}</span>}
         </button>
 
         <button className="action-btn" onClick={toggleLike}>
           <div className="action-icon" style={liked ? { borderColor: "rgba(77,168,98,0.7)", background: "rgba(77,168,98,0.15)" } : {}}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
-          <span className="action-label" style={liked ? { color: "#4da862" } : {}}>{likeCount}</span>
+          <span className="action-label" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
         </button>
 
         <button className="action-btn" onClick={onComment}>
           <div className="action-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
-          <span className="action-label">{clip.commentCount || 0}</span>
+          <span className="action-label" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{clip.commentCount || 0}</span>
         </button>
 
         <button className="action-btn" onClick={handleShare}>
@@ -573,7 +573,7 @@ export default function CourseProfilePage() {
         .right-actions { position: absolute; right: 14px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 30; }
         .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
         .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
-        .action-label { font-family: 'Outfit', sans-serif; font-size: 10px; color: rgba(255,255,255,0.6); }
+        .action-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; }
         .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 16px 88px; z-index: 20; }
       `}</style>
 
@@ -709,8 +709,8 @@ export default function CourseProfilePage() {
                       <div
                         key={holeNum}
                         className={hasClips ? "clip-thumb" : "hole-empty"}
-                        onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); } }}
-                        style={{ cursor: hasClips ? "pointer" : "default" }}
+                        onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
+                        style={{ cursor: "pointer" }}
                       >
                         {hasClips && topClip ? (
                           <>

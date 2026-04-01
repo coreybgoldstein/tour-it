@@ -63,6 +63,7 @@ const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "strategy", "landingZ
 function UploadPageInner() {
   const searchParams = useSearchParams();
   const preselectedCourseId = searchParams.get("courseId");
+  const preselectedHoleNumber = searchParams.get("holeNumber") ? Number(searchParams.get("holeNumber")) : null;
   const preselectedTripId = searchParams.get("tripId");
   const [tripName, setTripName] = useState<string | null>(null);
   const [tripPublic, setTripPublic] = useState(true);
@@ -115,6 +116,7 @@ function UploadPageInner() {
             .single();
           if (course) setSelectedCourse(course);
         }
+        if (preselectedHoleNumber) setSelectedHole(preselectedHoleNumber);
         if (preselectedTripId) {
           const { data: trip } = await supabase.from("GolfTrip").select("name").eq("id", preselectedTripId).single();
           if (trip) setTripName(trip.name);
