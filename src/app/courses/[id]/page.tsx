@@ -647,7 +647,8 @@ export default function CourseProfilePage() {
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I&apos;ve played this course</div>
                   </div>
                 </button>
-                <button onClick={() => toggleSave("BUCKET_LIST")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "BUCKET_LIST" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left", marginTop: 2 }}>
+                <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" }} />
+                <button onClick={() => toggleSave("BUCKET_LIST")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "BUCKET_LIST" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
                   <span style={{ fontSize: 16 }}>⛳</span>
                   <div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#4da862" : "#fff" }}>Bucket List</div>
