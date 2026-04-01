@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { GolfBallBadge } from "@/components/GolfBallBadge";
+function FlagBadge({ label }: { label: string | number }) {
+  return (
+    <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, color: "#fff" }}>{label}</span>
+    </div>
+  );
+}
 
 type UserProfile = {
   id: string;
@@ -419,11 +425,7 @@ export default function PublicProfilePage() {
                   <div style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
                     {coursesPlayed.find(c => c.id === upload.courseId)?.name?.split(" ").slice(0, 2).join(" ") || ""}
                   </div>
-                  <GolfBallBadge
-                    label={upload.seriesId ? "+" : (upload.holeNumber ?? "·")}
-                    isGold={!!upload.seriesId}
-                    id={upload.id}
-                  />
+                  <FlagBadge label={upload.holeNumber ?? "·"} />
                 </div>
               </div>
             ))}

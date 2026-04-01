@@ -4,7 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { GolfBallBadge } from "@/components/GolfBallBadge";
+function FlagBadge({ label }: { label: string | number }) {
+  return (
+    <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, color: "#fff" }}>{label}</span>
+    </div>
+  );
+}
 
 type UserProfile = {
   id: string;
@@ -92,7 +98,7 @@ export default function ProfilePage() {
       setEditHandicap(profile.handicapIndex?.toString() || "");
 
 const [{ data: userUploads }, { count: followers }, { count: following }] = await Promise.all([
-  supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, holeNumber, seriesId, createdAt").eq("userId", authUser.id).order("createdAt", { ascending: false }),
+  supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt").eq("userId", authUser.id).order("createdAt", { ascending: false }),
   supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", authUser.id).eq("status", "ACTIVE"),
   supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", authUser.id).eq("status", "ACTIVE"),
 ]);
@@ -174,10 +180,17 @@ if (userUploads && userUploads.length > 0) {
     const supabase = createClient();
     const ext = file.name.split(".").pop();
     const path = `${user.id}/banner.${ext}`;
-    const { error } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: true });
-    if (!error) {
-      const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
-      await supabase.from("User").update({ bannerUrl: publicUrl }).eq("id", user.id);
+    const { error: storageError } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: true });
+    if (storageError) {
+      console.error("Banner upload error:", storageError);
+      setUploadingBanner(false);
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+    const { error: dbError } = await supabase.from("User").update({ bannerUrl: publicUrl }).eq("id", user.id);
+    if (dbError) {
+      console.error("Banner DB update error:", dbError);
+    } else {
       setUser({ ...user, bannerUrl: publicUrl });
     }
     setUploadingBanner(false);
@@ -476,11 +489,7 @@ if (userUploads && userUploads.length > 0) {
                   <div style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>
                     {coursesPlayed.find(c => c.id === upload.courseId)?.name?.split(" ").slice(0, 2).join(" ") || ""}
                   </div>
-                  <GolfBallBadge
-                    label={upload.seriesId ? "+" : (upload.holeNumber ?? "·")}
-                    isGold={!!upload.seriesId}
-                    id={upload.id}
-                  />
+                  <FlagBadge label={upload.holeNumber ?? "·"} />
                 </div>
 
                 {/* Menu indicator (top right) */}
