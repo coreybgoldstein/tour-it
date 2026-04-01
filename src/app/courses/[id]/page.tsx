@@ -269,6 +269,7 @@ export default function CourseProfilePage() {
   const [holeClipsMap, setHoleClipsMap] = useState<Record<number, Clip[]>>({});
   const [extendedClips, setExtendedClips] = useState<Clip[]>([]);
   const [holesWithClips, setHolesWithClips] = useState<number[]>([]);
+  const [extendedClip, setExtendedClip] = useState<Clip | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const holeScrollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const holesWithClipsRef = useRef<number[]>([]);
@@ -734,8 +735,8 @@ export default function CourseProfilePage() {
   )}
 </div>
 
-      {/* 18-hole grid — Front 9 / Back 9 */}
-      <div style={{ padding: "0 14px" }}>
+      {/* 18-hole grid — Front 9 left | Back 9 right, all visible at once */}
+      <div style={{ padding: "14px 14px 0" }}>
         {courseClips.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</div>
@@ -745,16 +746,12 @@ export default function CourseProfilePage() {
             </button>
           </div>
         ) : (
-          <>
+          <div style={{ display: "flex", gap: 8 }}>
             {[{ label: "Front 9", holes: [1,2,3,4,5,6,7,8,9] }, { label: "Back 9", holes: [10,11,12,13,14,15,16,17,18] }].map(({ label, holes: nineHoles }) => (
-              <div key={label} style={{ marginBottom: 20 }}>
-                {/* Scorecard-style header */}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>{label}</div>
-                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
+              <div key={label} style={{ flex: 1, minWidth: 0 }}>
+                {/* Section label */}
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.07em", textAlign: "center", marginBottom: 6 }}>{label}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
                   {nineHoles.map(holeNum => {
                     const clips = holeClipsMap[holeNum];
                     const topClip = clips?.[0];
@@ -763,9 +760,7 @@ export default function CourseProfilePage() {
                       <div
                         key={holeNum}
                         className={hasClips ? "clip-thumb" : "hole-empty"}
-                        onClick={() => {
-                          if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); }
-                        }}
+                        onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); } }}
                         style={{ cursor: hasClips ? "pointer" : "default" }}
                       >
                         {hasClips && topClip ? (
@@ -775,8 +770,8 @@ export default function CourseProfilePage() {
                             ) : (
                               <img src={topClip.mediaUrl} alt={`Hole ${holeNum}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             )}
-                            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)" }} />
-                            <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 55%)" }} />
+                            <div style={{ position: "absolute", bottom: 4, right: 4 }}>
                               <FlagBadge label={holeNum} />
                             </div>
                             {clips.length > 1 && (
@@ -789,10 +784,9 @@ export default function CourseProfilePage() {
                           </>
                         ) : (
                           <>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>No clips</div>
-                            <div style={{ position: "absolute", bottom: 5, right: 5 }}>
-                              <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 3, padding: "2px 6px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.25)" }}>{holeNum}</span>
+                            <div style={{ position: "absolute", bottom: 4, right: 4 }}>
+                              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 3, padding: "2px 5px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.2)" }}>{holeNum}</span>
                               </div>
                             </div>
                           </>
@@ -803,42 +797,44 @@ export default function CourseProfilePage() {
                 </div>
               </div>
             ))}
-
-            {/* Extended Play */}
-            {extendedClips.length > 0 && (
-              <div style={{ marginTop: 4, marginBottom: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>Extended Play</div>
-                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
-                  {extendedClips.map((clip, i) => (
-                    <div key={clip.id} className="clip-thumb" onClick={() => { setFeedStartHole(extendedClips.map(c => c.holeNumber ?? 0)[i] || -1); setFeedOpen(false); /* TODO: extended play feed */ }}>
-                      {clip.mediaType === "VIDEO" ? (
-                        <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      )}
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)" }} />
-                      <div style={{ position: "absolute", bottom: 5, right: 5 }}>
-                        <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>{
-                            clip.shotType === "FULL_ROUND" ? "18" :
-                            clip.shotType === "FRONT_NINE" ? "F9" :
-                            clip.shotType === "BACK_NINE" ? "B9" :
-                            clip.shotType === "THREE_HOLE" ? "3H" : "+"
-                          }</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </div>
+
+      {/* Extended Play — horizontal scroll row */}
+      {extendedClips.length > 0 && (
+        <div style={{ marginTop: 20, paddingBottom: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "0 14px", marginBottom: 10 }}>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: "0.06em" }}>Extended Play</div>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+          </div>
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "0 14px 2px", scrollbarWidth: "none" }}>
+            {extendedClips.map(clip => (
+              <div
+                key={clip.id}
+                onClick={() => setExtendedClip(clip)}
+                style={{ position: "relative", width: 110, flexShrink: 0, aspectRatio: "9/16", borderRadius: 8, overflow: "hidden", background: "#0d2318", cursor: "pointer" }}
+              >
+                {clip.mediaType === "VIDEO" ? (
+                  <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                )}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%)" }} />
+                <div style={{ position: "absolute", bottom: 6, right: 6 }}>
+                  <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", display: "inline-flex", alignItems: "center" }}>
+                    <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
+                      {clip.shotType === "FULL_ROUND" ? "Full 18" : clip.shotType === "FRONT_NINE" ? "Front 9" : clip.shotType === "BACK_NINE" ? "Back 9" : clip.shotType === "THREE_HOLE" ? "3 Holes" : "Extended"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div style={{ height: 100 }} />
 
 {/* Contribute link */}
@@ -1062,6 +1058,33 @@ export default function CourseProfilePage() {
                   Back to {course?.name}
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Extended Play full-screen viewer */}
+      {extendedClip && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 110, background: "#000", display: "flex", flexDirection: "column" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "52px 14px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)", zIndex: 10 }}>
+            <button onClick={() => setExtendedClip(null)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
+              {extendedClip.shotType === "FULL_ROUND" ? "Full Round" : extendedClip.shotType === "FRONT_NINE" ? "Front 9" : extendedClip.shotType === "BACK_NINE" ? "Back 9" : extendedClip.shotType === "THREE_HOLE" ? "3 Holes" : "Extended Play"}
+            </div>
+            <div style={{ width: 36 }} />
+          </div>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {extendedClip.mediaType === "VIDEO" ? (
+              <video src={extendedClip.mediaUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} controls playsInline autoPlay muted />
+            ) : (
+              <img src={extendedClip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            )}
+          </div>
+          {extendedClip.strategyNote && (
+            <div style={{ position: "absolute", bottom: 80, left: 16, right: 80, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.5, textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+              {extendedClip.strategyNote}
             </div>
           )}
         </div>
