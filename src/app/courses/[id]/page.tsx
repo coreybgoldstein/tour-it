@@ -592,24 +592,18 @@ export default function CourseProfilePage() {
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(7,16,10,1) 0%, rgba(7,16,10,0.5) 45%, rgba(0,0,0,0.15) 100%)" }} />
 
-        {/* Top left: back button + course logo badge */}
-        <div style={{ position: "absolute", top: 52, left: 16, display: "flex", alignItems: "center", gap: 8, zIndex: 10 }}>
-          <button onClick={() => router.back()} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
-          {/* Course logo */}
-          <div style={{ width: 68, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
-            {course.logoUrl ? (
-              <img
-                src={course.logoUrl}
-                alt={course.name}
-                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }}
-                onError={e => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }}
-              />
-            ) : null}
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", display: course.logoUrl ? "none" : "inline" }}>{abbr}</span>
-          </div>
-        </div>
+        {/* Top left: course logo badge (tap to go back) */}
+        <button onClick={() => router.back()} style={{ position: "absolute", top: 52, left: 16, zIndex: 10, width: 68, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}>
+          {course.logoUrl ? (
+            <img
+              src={course.logoUrl}
+              alt={course.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }}
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }}
+            />
+          ) : null}
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", display: course.logoUrl ? "none" : "inline" }}>{abbr}</span>
+        </button>
 
 
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 20px 18px", zIndex: 10 }}>
@@ -620,7 +614,7 @@ export default function CourseProfilePage() {
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: 12, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
             {course.name}
           </div>
-          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "4px 12px" }}>
               {course.holeCount || 18} holes
             </span>
@@ -637,6 +631,33 @@ export default function CourseProfilePage() {
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 About
               </button>
+            )}
+            {/* Save button — bottom right of hero */}
+            <button
+              onClick={() => setShowPicker(!showPicker)}
+              style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, background: saved ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.06)", border: `1px solid ${saved ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, marginLeft: "auto" }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill={saved ? "#4da862" : "none"} stroke={saved ? "#4da862" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <span style={{ color: saved ? "#4da862" : "rgba(255,255,255,0.5)" }}>{saved ? "Saved" : "Save"}</span>
+            </button>
+            {/* Save picker dropdown */}
+            {showPicker && (
+              <div style={{ position: "absolute", bottom: "calc(100% + 8px)", right: 0, background: "rgba(13,35,24,0.98)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 12, padding: 6, zIndex: 50, minWidth: 160, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+                <button onClick={() => toggleSave("PLAYED")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "PLAYED" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
+                  <span style={{ fontSize: 16 }}>✓</span>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "PLAYED" ? "#4da862" : "#fff" }}>Played</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I&apos;ve played this course</div>
+                  </div>
+                </button>
+                <button onClick={() => toggleSave("BUCKET_LIST")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "BUCKET_LIST" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left", marginTop: 2 }}>
+                  <span style={{ fontSize: 16 }}>⛳</span>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#4da862" : "#fff" }}>Bucket List</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
+                  </div>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -664,68 +685,6 @@ export default function CourseProfilePage() {
   >
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
   </button>
-  <div style={{ flex: 1 }} />
-  <button
-    onClick={() => setShowPicker(!showPicker)}
-    style={{ background: saved ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.06)", border: `1px solid ${saved ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 12, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}
-  >
-    <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? "#4da862" : "none"} stroke={saved ? "#4da862" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-  </button>
-
-  {/* Save picker dropdown */}
-  {showPicker && (
-    <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "rgba(13,35,24,0.98)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 12, padding: 6, zIndex: 50, minWidth: 160, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
-      <button
-        onClick={() => toggleSave("PLAYED")}
-        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "PLAYED" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}
-      >
-        <span style={{ fontSize: 16 }}>✓</span>
-        <div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "PLAYED" ? "#4da862" : "#fff" }}>Played</div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I've played this course</div>
-        </div>
-      </button>
-      <button
-        onClick={() => toggleSave("BUCKET_LIST")}
-        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "BUCKET_LIST" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left", marginTop: 2 }}
-      >
-        <span style={{ fontSize: 16 }}>⛳</span>
-        <div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#4da862" : "#fff" }}>Bucket List</div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
-        </div>
-      </button>
-      <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" }} />
-      <button
-        onClick={async () => {
-          setShowPicker(false);
-          setTripStep("select");
-          setNewTripName(""); setNewTripStart(""); setNewTripEnd("");
-          setTripPlayDate(""); setTripTeeTime(""); setTripAccommodation("");
-          setSelectedTripId(null); setSelectedTripName("");
-          if (user) {
-            const supabase = createClient();
-            const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id);
-            if (memberData && memberData.length > 0) {
-              const tripIds = memberData.map((m: any) => m.tripId);
-              const { data: tripsData } = await supabase.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).order("createdAt", { ascending: false });
-              setUserTrips(tripsData || []);
-            } else {
-              setUserTrips([]);
-            }
-          }
-          setTripPickerOpen(true);
-        }}
-        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left", marginTop: 2 }}
-      >
-        <span style={{ fontSize: 16 }}>✈️</span>
-        <div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Golf Trip</div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Add to a trip itinerary</div>
-        </div>
-      </button>
-    </div>
-  )}
 </div>
 
       {/* 18-hole grid — Front 9 left | Back 9 right, all visible at once */}
