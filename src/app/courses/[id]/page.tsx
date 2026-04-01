@@ -185,7 +185,9 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
           <div style={{ minWidth: 0, textAlign: "left" }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
             {clip.holeNumber && (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>Hole {clip.holeNumber}</span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>
+                Hole {clip.holeNumber}{clip.shotType && SHOT_LABEL[clip.shotType] ? ` · ${SHOT_LABEL[clip.shotType]}` : ""}
+              </span>
             )}
           </div>
         </button>
@@ -232,22 +234,12 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
           </div>
         </button>
 
-        {clip.holeNumber && (
-          <button className="action-btn" onClick={() => router.push(`/courses/${clip.courseId}/holes/${clip.holeNumber}`)}>
-            <div style={{ width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <FlagBadge label={clip.holeNumber} large />
-            </div>
-          </button>
-        )}
       </div>
 
       {/* Bottom info */}
       <div className="bottom-info" style={{ pointerEvents: "none" }}>
         {clip.strategyNote && (
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.5, marginBottom: 8 }}>{clip.strategyNote}</div>
-        )}
-        {clip.shotType && (
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 10px" }}>{SHOT_LABEL[clip.shotType] || clip.shotType}</span>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.5 }}>{clip.strategyNote}</div>
         )}
       </div>
     </div>
@@ -651,19 +643,13 @@ export default function CourseProfilePage() {
       </div>
 
 {/* Action bar */}
-<div style={{ padding: "14px 20px 16px", display: "flex", gap: 8, position: "relative" }}>
+<div style={{ padding: "14px 20px 16px", display: "flex", gap: 8, alignItems: "center", position: "relative" }}>
   <button
     onClick={() => setScorecardOpen(true)}
-    style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "12px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, whiteSpace: "nowrap" }}
   >
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg>
     Scorecard
-  </button>
-  <button
-    onClick={() => setShowPicker(!showPicker)}
-    style={{ background: saved ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.06)", border: `1px solid ${saved ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 12, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}
-  >
-    <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? "#4da862" : "none"} stroke={saved ? "#4da862" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
   </button>
   <button
     onClick={() => router.push(`/upload?courseId=${id}`)}
@@ -678,10 +664,17 @@ export default function CourseProfilePage() {
   >
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
   </button>
+  <div style={{ flex: 1 }} />
+  <button
+    onClick={() => setShowPicker(!showPicker)}
+    style={{ background: saved ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.06)", border: `1px solid ${saved ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 12, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}
+  >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? "#4da862" : "none"} stroke={saved ? "#4da862" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+  </button>
 
   {/* Save picker dropdown */}
   {showPicker && (
-    <div style={{ position: "absolute", top: "100%", right: 60, marginTop: 4, background: "rgba(13,35,24,0.98)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 12, padding: 6, zIndex: 50, minWidth: 160, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+    <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "rgba(13,35,24,0.98)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 12, padding: 6, zIndex: 50, minWidth: 160, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
       <button
         onClick={() => toggleSave("PLAYED")}
         style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "PLAYED" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}
