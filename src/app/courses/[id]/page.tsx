@@ -263,9 +263,15 @@ export default function CourseProfilePage() {
   const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [feedOpen, setFeedOpen] = useState(false);
-  const [feedStartIndex, setFeedStartIndex] = useState(0);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [feedStartHole, setFeedStartHole] = useState(1);
+  const [activeHoleNum, setActiveHoleNum] = useState<number | null>(null);
+  const [activeClipByHole, setActiveClipByHole] = useState<Record<number, number>>({});
+  const [holeClipsMap, setHoleClipsMap] = useState<Record<number, Clip[]>>({});
+  const [extendedClips, setExtendedClips] = useState<Clip[]>([]);
+  const [holesWithClips, setHolesWithClips] = useState<number[]>([]);
   const feedRef = useRef<HTMLDivElement>(null);
+  const holeScrollRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const holesWithClipsRef = useRef<number[]>([]);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scorecardOpen, setScorecardOpen] = useState(false);
   const [holes, setHoles] = useState<{ holeNumber: number; par: number; handicapRank: number }[]>([]);
@@ -371,6 +377,23 @@ export default function CourseProfilePage() {
       // Sort by hole number ascending (clips without hole go last)
       clips.sort((a, b) => (a.holeNumber ?? 999) - (b.holeNumber ?? 999));
       setCourseClips(clips);
+
+      // Group by hole for new grid/feed
+      const map: Record<number, Clip[]> = {};
+      const extended: Clip[] = [];
+      for (const clip of clips) {
+        if (clip.holeNumber) {
+          if (!map[clip.holeNumber]) map[clip.holeNumber] = [];
+          map[clip.holeNumber].push(clip);
+        } else {
+          extended.push(clip);
+        }
+      }
+      setHoleClipsMap(map);
+      setExtendedClips(extended);
+      const hw = Object.keys(map).map(Number).sort((a, b) => a - b);
+      setHolesWithClips(hw);
+      holesWithClipsRef.current = hw;
 
       // Fetch uploader info
       if (clips.length > 0) {
@@ -490,17 +513,28 @@ export default function CourseProfilePage() {
 
   useEffect(() => {
     if (feedOpen && feedRef.current) {
-      feedRef.current.scrollTop = feedStartIndex * window.innerHeight;
-      setActiveIndex(feedStartIndex);
+      const idx = holesWithClipsRef.current.indexOf(feedStartHole);
+      feedRef.current.scrollTop = Math.max(0, idx) * window.innerHeight;
+      setActiveHoleNum(feedStartHole);
+      setActiveClipByHole({});
     }
-  }, [feedOpen, feedStartIndex]);
+  }, [feedOpen, feedStartHole]);
 
   const handleFeedScroll = useCallback(() => {
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     scrollTimeout.current = setTimeout(() => {
       const el = feedRef.current;
       if (!el) return;
-      setActiveIndex(Math.round(el.scrollTop / window.innerHeight));
+      const holeIdx = Math.round(el.scrollTop / window.innerHeight);
+      const holeNum = holesWithClipsRef.current[holeIdx];
+      if (holeNum !== undefined) {
+        setActiveHoleNum(holeNum);
+        const inner = holeScrollRefs.current[holeNum];
+        if (inner) {
+          const clipIdx = Math.round(inner.scrollLeft / window.innerWidth);
+          setActiveClipByHole(prev => ({ ...prev, [holeNum]: clipIdx }));
+        }
+      }
     }, 50);
   }, []);
 
@@ -531,10 +565,17 @@ export default function CourseProfilePage() {
         body { background: #07100a; }
         .feed-modal { position: fixed; inset: 0; z-index: 100; background: #000; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
         .feed-modal::-webkit-scrollbar { display: none; }
-        .feed-snap { scroll-snap-align: start; scroll-snap-stop: always; }
+        .feed-hole-page { scroll-snap-align: start; scroll-snap-stop: always; height: 100svh; width: 100vw; display: flex; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior: contain; }
+        .feed-hole-page::-webkit-scrollbar { display: none; }
+        .feed-clip-page { width: 100vw; height: 100svh; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+        .feed-end-snap { scroll-snap-align: start; scroll-snap-stop: always; }
         .clip-thumb { position: relative; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; background: #0d2318; cursor: pointer; transition: opacity 0.15s; }
         .clip-thumb:hover { opacity: 0.85; }
         .clip-thumb video, .clip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .hole-empty { position: relative; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        .hole-cell-indicator { display: flex; gap: 3px; position: absolute; bottom: 6px; right: 6px; }
+        .hole-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+        .hole-dot.active { background: #4da862; }
         .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 14px 12px; z-index: 20; gap: 10px; }
         .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
@@ -610,13 +651,6 @@ export default function CourseProfilePage() {
 
 {/* Action bar */}
 <div style={{ padding: "14px 20px 16px", display: "flex", gap: 8, position: "relative" }}>
-  <button
-    onClick={() => router.push(`/courses/${id}/holes`)}
-    style={{ flex: 1, background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}
-  >
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="2" x2="12" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/><path d="M12 2 L19 6 L12 10 Z" fill="white"/><ellipse cx="12" cy="21" rx="3.5" ry="1" stroke="white" strokeWidth="1.5" fill="none"/></svg>
-    Holes
-  </button>
   <button
     onClick={() => setScorecardOpen(true)}
     style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "12px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
@@ -700,8 +734,8 @@ export default function CourseProfilePage() {
   )}
 </div>
 
-      {/* 3-column clip grid sorted hole 1–18 */}
-      <div style={{ padding: "0 14px 100px" }}>
+      {/* 18-hole grid — Front 9 / Back 9 */}
+      <div style={{ padding: "0 14px" }}>
         {courseClips.length === 0 ? (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</div>
@@ -712,27 +746,100 @@ export default function CourseProfilePage() {
           </div>
         ) : (
           <>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)", marginBottom: 10 }}>
-              Scouting clips
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
-              {courseClips.map((clip, i) => (
-                <div key={clip.id} className="clip-thumb" onClick={() => { setFeedStartIndex(i); setFeedOpen(true); }}>
-                  {clip.mediaType === "VIDEO" ? (
-                    <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  )}
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)" }} />
-                  <div style={{ position: "absolute", bottom: 5, right: 5 }}>
-                    <FlagBadge label={clip.holeNumber ?? "·"} />
-                  </div>
+            {[{ label: "Front 9", holes: [1,2,3,4,5,6,7,8,9] }, { label: "Back 9", holes: [10,11,12,13,14,15,16,17,18] }].map(({ label, holes: nineHoles }) => (
+              <div key={label} style={{ marginBottom: 20 }}>
+                {/* Scorecard-style header */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>{label}</div>
+                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
                 </div>
-              ))}
-            </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
+                  {nineHoles.map(holeNum => {
+                    const clips = holeClipsMap[holeNum];
+                    const topClip = clips?.[0];
+                    const hasClips = clips && clips.length > 0;
+                    return (
+                      <div
+                        key={holeNum}
+                        className={hasClips ? "clip-thumb" : "hole-empty"}
+                        onClick={() => {
+                          if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); }
+                        }}
+                        style={{ cursor: hasClips ? "pointer" : "default" }}
+                      >
+                        {hasClips && topClip ? (
+                          <>
+                            {topClip.mediaType === "VIDEO" ? (
+                              <video src={topClip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                              <img src={topClip.mediaUrl} alt={`Hole ${holeNum}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            )}
+                            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)" }} />
+                            <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                              <FlagBadge label={holeNum} />
+                            </div>
+                            {clips.length > 1 && (
+                              <div className="hole-cell-indicator">
+                                {clips.slice(0, 3).map((_, di) => (
+                                  <div key={di} className={`hole-dot${di === 0 ? " active" : ""}`} />
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>No clips</div>
+                            <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                              <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 3, padding: "2px 6px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.25)" }}>{holeNum}</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* Extended Play */}
+            {extendedClips.length > 0 && (
+              <div style={{ marginTop: 4, marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>Extended Play</div>
+                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
+                  {extendedClips.map((clip, i) => (
+                    <div key={clip.id} className="clip-thumb" onClick={() => { setFeedStartHole(extendedClips.map(c => c.holeNumber ?? 0)[i] || -1); setFeedOpen(false); /* TODO: extended play feed */ }}>
+                      {clip.mediaType === "VIDEO" ? (
+                        <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      )}
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)" }} />
+                      <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                        <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>{
+                            clip.shotType === "FULL_ROUND" ? "18" :
+                            clip.shotType === "FRONT_NINE" ? "F9" :
+                            clip.shotType === "BACK_NINE" ? "B9" :
+                            clip.shotType === "THREE_HOLE" ? "3H" : "+"
+                          }</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
+      <div style={{ height: 100 }} />
 
 {/* Contribute link */}
 
@@ -887,17 +994,43 @@ export default function CourseProfilePage() {
         </div>
       )}
 
-      {/* Full-screen feed modal */}
+      {/* Full-screen feed modal — vertical = next hole, horizontal = other clips from same hole */}
       {feedOpen && (
         <div className="feed-modal" ref={feedRef} onScroll={handleFeedScroll}>
-          {courseClips.map((clip, i) => (
-            <div key={clip.id} className="feed-snap">
-              <FeedCard clip={clip} isActive={i === activeIndex} onClose={() => setFeedOpen(false)} onComment={() => setCommentUploadId(clip.id)} course={course} uploaderMap={uploaders} />
-            </div>
-          ))}
+          {holesWithClips.map(holeNum => {
+            const clips = holeClipsMap[holeNum] || [];
+            const isHoleActive = holeNum === activeHoleNum;
+            const activeClipIdx = activeClipByHole[holeNum] || 0;
+            return (
+              <div
+                key={holeNum}
+                className="feed-hole-page"
+                ref={el => { holeScrollRefs.current[holeNum] = el; }}
+                onScroll={() => {
+                  const inner = holeScrollRefs.current[holeNum];
+                  if (!inner) return;
+                  const clipIdx = Math.round(inner.scrollLeft / window.innerWidth);
+                  setActiveClipByHole(prev => ({ ...prev, [holeNum]: clipIdx }));
+                }}
+              >
+                {clips.map((clip, clipIdx) => (
+                  <div key={clip.id} className="feed-clip-page">
+                    <FeedCard
+                      clip={clip}
+                      isActive={isHoleActive && clipIdx === activeClipIdx}
+                      onClose={() => setFeedOpen(false)}
+                      onComment={() => setCommentUploadId(clip.id)}
+                      course={course}
+                      uploaderMap={uploaders}
+                    />
+                  </div>
+                ))}
+              </div>
+            );
+          })}
           {/* End card — suggested courses */}
           {suggestedCourses.length > 0 && (
-            <div className="feed-snap">
+            <div className="feed-end-snap">
               <div style={{ width: "100%", height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", position: "relative" }}>
                 <button onClick={() => setFeedOpen(false)} style={{ position: "absolute", top: 52, left: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
