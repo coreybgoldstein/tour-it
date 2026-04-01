@@ -432,7 +432,7 @@ export default function Home() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [splashVisible, setSplashVisible] = useState(true);
+  const [splashVisible, setSplashVisible] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
@@ -602,7 +602,11 @@ export default function Home() {
   }, [activeIndex, feedItems.length, loadMoreFeed]);
 
   useEffect(() => {
-    // Splash screen: fade out after 2s
+    const today = new Date().toDateString();
+    const lastSplash = localStorage.getItem("tour-it-splash-date");
+    if (lastSplash === today) return;
+    localStorage.setItem("tour-it-splash-date", today);
+    setSplashVisible(true);
     const fadeTimer = setTimeout(() => setSplashFading(true), 2000);
     const hideTimer = setTimeout(() => setSplashVisible(false), 2600);
     return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
