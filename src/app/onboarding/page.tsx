@@ -183,10 +183,21 @@ export default function OnboardingPage() {
 
       {/* Top bar */}
       <div style={{ width: "100%", maxWidth: 480, paddingTop: 52, paddingBottom: 24 }}>
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4da862" }} />
-          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Tour It</span>
+        {/* Logo + back */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4da862" }} />
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Tour It</span>
+          </div>
+          {step > 1 && (
+            <button
+              onClick={() => setStep(step - 1)}
+              style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: 4 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Back
+            </button>
+          )}
         </div>
 
         {/* Progress bar */}
