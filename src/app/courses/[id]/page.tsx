@@ -418,14 +418,15 @@ export default function CourseProfilePage() {
     if (!commentText.trim() || !user || !commentUploadId || submittingComment) return;
     setSubmittingComment(true);
     const supabase = createClient();
+    const newId = crypto.randomUUID();
     const { error } = await supabase.from("Comment").insert({
-      userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
+      id: newId, userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
     });
     if (!error) {
       const { data: uploadData } = await supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single();
       await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
       setCommentItems(prev => [...prev, {
-        id: Date.now().toString(), body: commentText.trim(), createdAt: new Date().toISOString(),
+        id: newId, body: commentText.trim(), createdAt: new Date().toISOString(),
         username: user.user_metadata?.username || "you", avatarUrl: null,
       }]);
       setCourseClips(prev => prev.map((c: Clip) => c.id === commentUploadId ? { ...c, commentCount: (c.commentCount || 0) + 1 } : c));
