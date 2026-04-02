@@ -486,7 +486,22 @@ function UploadPageInner() {
 
       <div className="upload-header">
         <button className="back-btn" onClick={() => {
-          if (step > 1) {
+          if (step === 4) {
+            // Reset step 3 sub-state so user lands on the format picker cleanly
+            setContentFormat("");
+            setSelectedHole(null);
+            setSelectedGroup("");
+            setStep(3);
+          } else if (step === 3) {
+            // If mid-step-3 (format chosen but hole not yet picked), clear format first
+            if (contentFormat) {
+              setContentFormat("");
+              setSelectedHole(null);
+              setSelectedGroup("");
+            } else {
+              setStep(2);
+            }
+          } else if (step > 1) {
             setStep(step - 1);
           } else {
             window.history.back();
@@ -683,7 +698,6 @@ function UploadPageInner() {
                     </button>
                   ))}
                 </div>
-                <button onClick={() => setContentFormat("")} style={{ marginTop: 14, background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", cursor: "pointer" }}>← Back</button>
               </div>
             )}
 
@@ -706,7 +720,6 @@ function UploadPageInner() {
                     </button>
                   ))}
                 </div>
-                <button onClick={() => { setContentFormat(""); setSelectedHole(null); }} style={{ marginTop: 4, background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", cursor: "pointer" }}>← Back</button>
               </div>
             )}
           </div>
