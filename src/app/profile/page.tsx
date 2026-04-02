@@ -81,6 +81,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [taggedUploads, setTaggedUploads] = useState<Upload[]>([]);
 
+  // Followers / Following sheet
+  type FollowUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
+  const [followSheet, setFollowSheet] = useState<"followers" | "following" | null>(null);
+  const [followList, setFollowList] = useState<FollowUser[]>([]);
+  const [followListLoading, setFollowListLoading] = useState(false);
+
   // Delete / view state
   const [selectedClip, setSelectedClip] = useState<Upload | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -229,6 +235,27 @@ if (userUploads && userUploads.length > 0) {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/");
+  }
+
+  async function openFollowSheet(type: "followers" | "following") {
+    if (!user) return;
+    setFollowSheet(type);
+    setFollowList([]);
+    setFollowListLoading(true);
+    const supabase = createClient();
+    // followers = people who follow me (followingId = me), following = people I follow (followerId = me)
+    const col = type === "followers" ? "followerId" : "followingId";
+    const { data } = await supabase
+      .from("Follow")
+      .select(col)
+      .eq(type === "followers" ? "followingId" : "followerId", user.id)
+      .eq("status", "ACTIVE");
+    const ids = (data || []).map((r: any) => r[col]);
+    if (ids.length > 0) {
+      const { data: users } = await supabase.from("User").select("id, username, displayName, avatarUrl").in("id", ids);
+      setFollowList(users || []);
+    }
+    setFollowListLoading(false);
   }
 
   async function handleDeleteClip() {
@@ -389,14 +416,18 @@ if (userUploads && userUploads.length > 0) {
       {/* Stats */}
       <div style={{ display: "flex", justifyContent: "center", gap: "32px", padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         {[
-          { num: uploads.length, label: "Clips" },
-          { num: coursesPlayed.length, label: "Courses" },
-          { num: followerCount, label: "Followers" },
-          { num: followingCount, label: "Following" },
+          { num: uploads.length, label: "Clips", onClick: undefined },
+          { num: coursesPlayed.length, label: "Courses", onClick: undefined },
+          { num: followerCount, label: "Followers", onClick: () => openFollowSheet("followers") },
+          { num: followingCount, label: "Following", onClick: () => openFollowSheet("following") },
         ].map(s => (
-          <div key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+          <div
+            key={s.label}
+            onClick={s.onClick}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: s.onClick ? "pointer" : "default" }}
+          >
             <div style={{ fontSize: "22px", fontWeight: 700, color: "#fff" }}>{s.num}</div>
-            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
+            <div style={{ fontSize: "11px", color: s.onClick ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: s.onClick ? "underline" : "none", textDecorationColor: "rgba(255,255,255,0.2)" }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -542,6 +573,68 @@ if (userUploads && userUploads.length > 0) {
       })()}
 
       <BottomNav />
+
+      {/* Followers / Following sheet */}
+      {followSheet && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}
+          onClick={() => setFollowSheet(null)}
+        >
+          {/* Backdrop */}
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }} />
+
+          {/* Sheet */}
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ position: "relative", background: "#0d1f12", borderRadius: "20px 20px 0 0", maxHeight: "70vh", display: "flex", flexDirection: "column" }}
+          >
+            {/* Handle + title */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px 12px" }}>
+              <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.15)", position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)" }} />
+              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#fff", margin: 0 }}>
+                {followSheet === "followers" ? "Followers" : "Following"}
+              </h2>
+              <button onClick={() => setFollowSheet(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            {/* List */}
+            <div style={{ overflowY: "auto", paddingBottom: 40 }}>
+              {followListLoading ? (
+                <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+                  <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              ) : followList.length === 0 ? (
+                <div style={{ padding: "40px 20px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>
+                  {followSheet === "followers" ? "No followers yet" : "Not following anyone yet"}
+                </div>
+              ) : (
+                followList.map(u => (
+                  <button
+                    key={u.id}
+                    onClick={() => { setFollowSheet(null); router.push(`/profile/${u.id}`); }}
+                    style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {u.avatarUrl
+                        ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#4da862" }}>{(u.displayName || u.username)[0].toUpperCase()}</span>
+                      }
+                    </div>
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{u.displayName}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
+                    </div>
+                    <svg style={{ marginLeft: "auto" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
