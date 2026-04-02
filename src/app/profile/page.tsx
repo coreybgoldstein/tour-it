@@ -79,6 +79,8 @@ export default function ProfilePage() {
   const [showEdit, setShowEdit] = useState(false);
   const [editHandicap, setEditHandicap] = useState("");
   const [saving, setSaving] = useState(false);
+  const [clipsTab, setClipsTab] = useState<"mine" | "tagged">("mine");
+  const [taggedUploads, setTaggedUploads] = useState<Upload[]>([]);
 
   // Delete / view state
   const [selectedClip, setSelectedClip] = useState<Upload | null>(null);
@@ -149,6 +151,23 @@ if (userUploads && userUploads.length > 0) {
       if (profile.homeCourseId) {
         const { data: hc } = await supabase.from("Course").select("id, name").eq("id", profile.homeCourseId).single();
         setHomeCourse(hc);
+      }
+
+      // Fetch clips where user is tagged
+      const { data: tagRows } = await supabase.from("UploadTag").select("uploadId").eq("userId", authUser.id);
+      if (tagRows && tagRows.length > 0) {
+        const taggedUploadIds = tagRows.map((t: any) => t.uploadId);
+        const { data: taggedUploadsData } = await supabase
+          .from("Upload")
+          .select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt")
+          .in("id", taggedUploadIds)
+          .order("createdAt", { ascending: false });
+        if (taggedUploadsData && taggedUploadsData.length > 0) {
+          const taggedHoleIds = [...new Set(taggedUploadsData.map((u: any) => u.holeId).filter(Boolean))];
+          const { data: taggedHoles } = await supabase.from("Hole").select("id, holeNumber").in("id", taggedHoleIds);
+          const taggedHoleMap = new Map(taggedHoles?.map((h: any) => [h.id, h.holeNumber]) || []);
+          setTaggedUploads(taggedUploadsData.map((u: any) => ({ ...u, holeNumber: taggedHoleMap.get(u.holeId) || null })));
+        }
       }
 
       setLoading(false);
@@ -469,10 +488,16 @@ if (userUploads && userUploads.length > 0) {
       {/* Clips grid */}
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: "10px" }}>
-          <div style={{ fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>Your clips</div>
-          {uploads.length > 0 && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif" }}>Tap to view or delete</div>}
+          <div style={{ display: "flex", gap: 6 }}>
+            {(["mine", "tagged"] as const).map(tab => (
+              <button key={tab} onClick={() => setClipsTab(tab)} style={{ padding: "4px 12px", borderRadius: 99, border: "none", fontSize: 10, fontWeight: 600, cursor: "pointer", background: clipsTab === tab ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: clipsTab === tab ? "#4da862" : "rgba(255,255,255,0.35)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                {tab === "mine" ? "My Clips" : `Tagged${taggedUploads.length > 0 ? ` (${taggedUploads.length})` : ""}`}
+              </button>
+            ))}
+          </div>
+          {clipsTab === "mine" && uploads.length > 0 && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif" }}>Tap to view or delete</div>}
         </div>
-        {uploads.length === 0 ? (
+        {clipsTab === "mine" && uploads.length === 0 ? (
           <div style={{ padding: "32px 20px", textAlign: "center" }}>
             <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)", marginBottom: "8px" }}>No clips yet</div>
             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", marginBottom: "16px" }}>Upload your first hole to get started</div>
@@ -509,6 +534,43 @@ if (userUploads && userUploads.length > 0) {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Tagged clips grid */}
+        {clipsTab === "tagged" && (
+          taggedUploads.length === 0 ? (
+            <div style={{ padding: "32px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>No tagged clips yet</div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
+              {taggedUploads.map((upload, i) => (
+                <div
+                  key={upload.id}
+                  className="clip-thumb"
+                  onClick={() => router.push(`/courses/${upload.courseId}`)}
+                  style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}
+                >
+                  {upload.mediaType === "PHOTO" ? (
+                    <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <video src={upload.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  )}
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
+                  <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>
+                      {coursesPlayed.find(c => c.id === upload.courseId)?.name?.split(" ").slice(0, 2).join(" ") || ""}
+                    </div>
+                    <FlagBadge label={upload.holeNumber ?? "·"} />
+                  </div>
+                  {/* Tag indicator */}
+                  <div style={{ position: "absolute", top: 5, right: 5, width: 20, height: 20, borderRadius: "50%", background: "rgba(77,168,98,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         )}
       </div>
 

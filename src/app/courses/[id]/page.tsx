@@ -375,6 +375,9 @@ export default function CourseProfilePage() {
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [mentionResults, setMentionResults] = useState<{ id: string; username: string; displayName: string; avatarUrl: string | null }[]>([]);
+  const commentInputRef = useRef<HTMLInputElement>(null);
+  const mentionDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { saved, saveType, toggleSave, showPicker, setShowPicker } = useSave({ courseId: id as string });
   const [tripPickerOpen, setTripPickerOpen] = useState(false);
   const [tripStep, setTripStep] = useState<"select" | "create" | "details" | "success">("select");
@@ -413,6 +416,36 @@ export default function CourseProfilePage() {
         setLoadingComments(false);
       });
   }, [commentUploadId]);
+
+  function handleCommentChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    setCommentText(val);
+    const cursor = e.target.selectionStart ?? val.length;
+    const match = val.slice(0, cursor).match(/@(\w*)$/);
+    if (match) {
+      const q = match[1];
+      if (mentionDebounce.current) clearTimeout(mentionDebounce.current);
+      if (q.length < 1) { setMentionResults([]); return; }
+      mentionDebounce.current = setTimeout(async () => {
+        const { data } = await createClient().from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${q}%`).limit(5);
+        setMentionResults(data || []);
+      }, 220);
+    } else {
+      setMentionResults([]);
+    }
+  }
+
+  function selectMention(username: string) {
+    const input = commentInputRef.current;
+    if (!input) return;
+    const cursor = input.selectionStart ?? commentText.length;
+    const before = commentText.slice(0, cursor).replace(/@(\w*)$/, `@${username} `);
+    const after = commentText.slice(cursor);
+    const next = before + after;
+    setCommentText(next);
+    setMentionResults([]);
+    setTimeout(() => { input.focus(); input.setSelectionRange(before.length, before.length); }, 0);
+  }
 
   async function submitComment() {
     if (!commentText.trim() || !user || !commentUploadId || submittingComment) return;
@@ -1222,22 +1255,42 @@ export default function CourseProfilePage() {
                 </div>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              <input
-                value={commentText}
-                onChange={e => setCommentText(e.target.value)}
-                placeholder={user ? "Add a comment..." : "Log in to comment"}
-                disabled={!user}
-                style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
-                onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }}
-              />
-              <button
-                onClick={submitComment}
-                disabled={!commentText.trim() || submittingComment || !user}
-                style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: (!commentText.trim() || !user) ? 0.4 : 1 }}
-              >
-                {submittingComment ? "..." : "Post"}
-              </button>
+            <div style={{ paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)", position: "relative" }}>
+              {/* @mention dropdown */}
+              {mentionResults.length > 0 && (
+                <div style={{ position: "absolute", bottom: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 20 }}>
+                  {mentionResults.map(u => (
+                    <button key={u.id} onMouseDown={e => { e.preventDefault(); selectMention(u.username); }}
+                      style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "9px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.15)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                      </div>
+                      <div style={{ textAlign: "left" }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>{u.displayName}</div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  ref={commentInputRef}
+                  value={commentText}
+                  onChange={handleCommentChange}
+                  placeholder={user ? "Add a comment... use @ to tag" : "Log in to comment"}
+                  disabled={!user}
+                  style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                  onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }}
+                />
+                <button
+                  onClick={submitComment}
+                  disabled={!commentText.trim() || submittingComment || !user}
+                  style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: (!commentText.trim() || !user) ? 0.4 : 1 }}
+                >
+                  {submittingComment ? "..." : "Post"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

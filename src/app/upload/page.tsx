@@ -323,24 +323,34 @@ function UploadPageInner() {
         await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);
       }
 
-      // Tag notifications
+      // Tag notifications + UploadTag rows
       if (taggedUsers.length > 0) {
         const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
         const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
         const notifNow = new Date().toISOString();
-        await supabase.from("Notification").insert(
-          taggedUsers.map(u => ({
-            id: crypto.randomUUID(),
-            userId: u.id,
-            type: "clip_tag",
-            title: "You were tagged in a clip",
-            body: `${taggerName} tagged you in a clip at ${selectedCourse.name} — Hole ${selectedHole}`,
-            linkUrl: `/courses/${selectedCourse.id}`,
-            read: false,
-            createdAt: notifNow,
-            updatedAt: notifNow,
-          }))
-        );
+        await Promise.all([
+          supabase.from("UploadTag").insert(
+            taggedUsers.map(u => ({
+              id: crypto.randomUUID(),
+              uploadId,
+              userId: u.id,
+              createdAt: notifNow,
+            }))
+          ),
+          supabase.from("Notification").insert(
+            taggedUsers.map(u => ({
+              id: crypto.randomUUID(),
+              userId: u.id,
+              type: "clip_tag",
+              title: "You were tagged in a clip",
+              body: `${taggerName} tagged you in a clip at ${selectedCourse.name} — Hole ${selectedHole}`,
+              linkUrl: `/courses/${selectedCourse.id}`,
+              read: false,
+              createdAt: notifNow,
+              updatedAt: notifNow,
+            }))
+          ),
+        ]);
       }
 
       setSubmitted(true);
