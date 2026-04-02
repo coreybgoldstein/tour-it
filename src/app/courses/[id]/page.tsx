@@ -419,8 +419,10 @@ export default function CourseProfilePage() {
     setSubmittingComment(true);
     const supabase = createClient();
     const newId = crypto.randomUUID();
+    const now = new Date().toISOString();
     const { error } = await supabase.from("Comment").insert({
       id: newId, userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
+      createdAt: now, updatedAt: now,
     });
     if (!error) {
       const { data: uploadData } = await supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single();
