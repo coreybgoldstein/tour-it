@@ -102,13 +102,13 @@ export default function PublicProfilePage() {
 
       // Fetch uploads, followers, following in parallel
       const [
-        { data: userUploads },
+        { data: rawUploads },
         { count: followers },
         { count: following },
       ] = await Promise.all([
         supabase
           .from("Upload")
-          .select("id, mediaUrl, mediaType, courseId, holeId, holeNumber, seriesId, createdAt")
+          .select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt")
           .eq("userId", userId)
           .order("createdAt", { ascending: false }),
         supabase
@@ -123,7 +123,18 @@ export default function PublicProfilePage() {
           .eq("status", "ACTIVE"),
       ]);
 
-      setUploads(userUploads || []);
+      // Resolve hole numbers
+      let userUploads = rawUploads || [];
+      if (userUploads.length > 0) {
+        const holeIds = [...new Set(userUploads.map((u: any) => u.holeId).filter(Boolean))];
+        if (holeIds.length > 0) {
+          const { data: holes } = await supabase.from("Hole").select("id, holeNumber").in("id", holeIds);
+          const holeMap = new Map(holes?.map((h: any) => [h.id, h.holeNumber]) || []);
+          userUploads = userUploads.map((u: any) => ({ ...u, holeNumber: holeMap.get(u.holeId) || null }));
+        }
+      }
+
+      setUploads(userUploads);
       setFollowerCount(followers || 0);
       setFollowingCount(following || 0);
 
