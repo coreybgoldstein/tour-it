@@ -240,20 +240,22 @@ function UploadPageInner() {
       // Only look up holeId for single-hole content; create the Hole row if it doesn't exist yet
       let holeId: string | null = null;
       if (selectedHole) {
-        const { data: holeData } = await supabase.from("Hole").select("id").eq("courseId", selectedCourse.id).eq("holeNumber", selectedHole).single();
+        const { data: holeData } = await supabase.from("Hole").select("id").eq("courseId", selectedCourse.id).eq("holeNumber", selectedHole).maybeSingle();
         if (holeData?.id) {
           holeId = holeData.id;
         } else {
           const newHoleId = crypto.randomUUID();
           const holeNow = new Date().toISOString();
-          await supabase.from("Hole").insert({
+          const { error: holeInsertError } = await supabase.from("Hole").insert({
             id: newHoleId,
             courseId: selectedCourse.id,
             holeNumber: selectedHole,
+            par: 0,
             uploadCount: 0,
             createdAt: holeNow,
             updatedAt: holeNow,
           });
+          if (holeInsertError) { setError(`Failed to save: ${holeInsertError.message}`); setUploading(false); return; }
           holeId = newHoleId;
         }
       }
