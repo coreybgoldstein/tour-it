@@ -798,7 +798,7 @@ export default function Home() {
 
           {/* Courses Near Me */}
           {locationStatus !== "denied" && (
-            <div style={{ flexShrink: 0, marginTop: 24 }}>
+            <div style={{ flexShrink: 0, marginTop: 10 }}>
               <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.22)" }}>
                   Courses Near Me
