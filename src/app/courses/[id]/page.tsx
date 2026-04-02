@@ -432,6 +432,36 @@ export default function CourseProfilePage() {
         username: user.user_metadata?.username || "you", avatarUrl: null,
       }]);
       setCourseClips(prev => prev.map((c: Clip) => c.id === commentUploadId ? { ...c, commentCount: (c.commentCount || 0) + 1 } : c));
+
+      // Notify @mentioned users
+      const mentions = [...new Set((commentText.match(/@(\w+)/g) || []).map(m => m.slice(1).toLowerCase()))];
+      if (mentions.length > 0) {
+        const { data: mentionedUsers } = await supabase
+          .from("User")
+          .select("id, username")
+          .in("username", mentions);
+        const tagged = (mentionedUsers || []).filter(u => u.id !== user.id);
+        if (tagged.length > 0) {
+          const commenterName = user.user_metadata?.username || user.user_metadata?.display_name || "Someone";
+          const { data: commenterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
+          const senderName = commenterProfile?.displayName || commenterProfile?.username || commenterName;
+          const notifNow = new Date().toISOString();
+          await supabase.from("Notification").insert(
+            tagged.map(u => ({
+              id: crypto.randomUUID(),
+              userId: u.id,
+              type: "comment_mention",
+              title: "You were mentioned",
+              body: `${senderName} tagged you in a comment: "${commentText.trim().slice(0, 80)}${commentText.trim().length > 80 ? "…" : ""}"`,
+              linkUrl: `/courses/${id}`,
+              read: false,
+              createdAt: notifNow,
+              updatedAt: notifNow,
+            }))
+          );
+        }
+      }
+
       setCommentText("");
     }
     setSubmittingComment(false);
