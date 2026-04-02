@@ -237,11 +237,25 @@ function UploadPageInner() {
 
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
-      // Only look up holeId for single-hole content
+      // Only look up holeId for single-hole content; create the Hole row if it doesn't exist yet
       let holeId: string | null = null;
       if (selectedHole) {
         const { data: holeData } = await supabase.from("Hole").select("id").eq("courseId", selectedCourse.id).eq("holeNumber", selectedHole).single();
-        holeId = holeData?.id || null;
+        if (holeData?.id) {
+          holeId = holeData.id;
+        } else {
+          const newHoleId = crypto.randomUUID();
+          const holeNow = new Date().toISOString();
+          await supabase.from("Hole").insert({
+            id: newHoleId,
+            courseId: selectedCourse.id,
+            holeNumber: selectedHole,
+            uploadCount: 0,
+            createdAt: holeNow,
+            updatedAt: holeNow,
+          });
+          holeId = newHoleId;
+        }
       }
 
       // Determine shotType: for single shots use intel.shotType, for formats use the format itself
