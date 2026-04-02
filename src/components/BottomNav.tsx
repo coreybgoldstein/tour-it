@@ -8,6 +8,7 @@ export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -18,10 +19,22 @@ export default function BottomNav() {
     });
   }, []);
 
+  // Hide nav when software keyboard is open (visual viewport shrinks)
+  useEffect(() => {
+    const vv = (window as any).visualViewport;
+    if (!vv) return;
+    const threshold = window.innerHeight * 0.75;
+    const handler = () => setKeyboardOpen(vv.height < threshold);
+    vv.addEventListener("resize", handler);
+    return () => vv.removeEventListener("resize", handler);
+  }, []);
+
   const isHome = pathname === "/";
   const isSearch = pathname === "/search";
   const isLists = pathname === "/lists";
   const isProfile = pathname === "/profile";
+
+  if (keyboardOpen) return null;
 
   return (
     <nav style={{

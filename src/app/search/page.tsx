@@ -92,10 +92,13 @@ function SearchPageInner() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setCreateError("You must be logged in."); setCreating(false); return; }
     const slug = `${newName}-${newCity}-${newState}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
+    const now = new Date().toISOString();
     const { data, error } = await supabase.from("Course").insert({
+      id: crypto.randomUUID(),
       name: newName.trim(), city: newCity.trim(), state: newState.trim().toUpperCase(),
       country: "US", holeCount: parseInt(newHoles) || 18, isPublic: newPublic,
       slug, uploadCount: 0, saveCount: 0, viewCount: 0,
+      createdAt: now, updatedAt: now,
     }).select("id").single();
     setCreating(false);
     if (error) { setCreateError(error.message); return; }
