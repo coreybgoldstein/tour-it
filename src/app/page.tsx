@@ -757,7 +757,7 @@ export default function Home() {
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Top bar — logo + slogan centered */}
-          <div style={{ padding: "52px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, gap: 6 }}>
+          <div style={{ padding: "16px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, gap: 6 }}>
             <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 56, width: "auto", maxWidth: "88%" }} />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: "0.04em" }}>
               See the shots before you play them.
