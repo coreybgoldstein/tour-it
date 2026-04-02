@@ -320,54 +320,52 @@ if (userUploads && userUploads.length > 0) {
         </div>
       )}
 
-      {/* Top bar */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 14px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ fontSize: "15px", fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>Profile</div>
-        <button onClick={handleLogout} style={{ background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", padding: "5px 12px", color: "rgba(255,255,255,0.45)", fontSize: "11px", cursor: "pointer" }}>
+      {/* Banner — overflow:hidden clips the image only */}
+      <div
+        style={{ position: "relative", height: 170, overflow: "hidden", background: user.bannerUrl ? "none" : "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)", cursor: "pointer" }}
+        onClick={() => bannerInputRef.current?.click()}
+      >
+        {user.bannerUrl && <img src={user.bannerUrl} alt="banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+        {/* Logout — top left, inside banner so it sits over the photo */}
+        <button
+          onClick={e => { e.stopPropagation(); handleLogout(); }}
+          style={{ position: "absolute", top: 48, left: 14, background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "4px 11px", color: "rgba(255,255,255,0.6)", fontSize: 11, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}
+        >
           Log out
         </button>
+        {/* Banner camera icon */}
+        <div style={{ position: "absolute", bottom: 10, right: 12, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {uploadingBanner
+            ? <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>...</span>
+            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          }
+        </div>
+        <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerUpload} />
       </div>
 
-      {/* Banner + Avatar + Name */}
-      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: 20 }}>
-        {/* Banner */}
-        <div
-          style={{ position: "relative", height: 200, overflow: "hidden", background: user.bannerUrl ? "none" : "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)", cursor: "pointer" }}
-          onClick={() => bannerInputRef.current?.click()}
-        >
-          {user.bannerUrl && <img src={user.bannerUrl} alt="banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-          {/* Camera edit icon */}
-          <div style={{ position: "absolute", bottom: 10, right: 12, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {uploadingBanner
-              ? <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>...</span>
-              : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            }
+      {/* Avatar — outside overflow:hidden, negative margin pulls it up over the banner */}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: -44, position: "relative", zIndex: 2, marginBottom: 12 }}>
+        <div style={{ position: "relative" }}>
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            style={{ width: 84, height: 84, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}
+          >
+            {user.avatarUrl ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : uploadingAvatar ? <span style={{ fontSize: 12 }}>...</span> : initials}
           </div>
-          <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerUpload} />
-
-          {/* Avatar overlapping banner bottom */}
-          <div style={{ position: "absolute", bottom: -40, left: "50%", transform: "translateX(-50%)" }}>
-            <div
-              onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
-              style={{ width: 84, height: 84, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}
-            >
-              {user.avatarUrl ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : uploadingAvatar ? <span style={{ fontSize: "12px" }}>...</span> : initials}
-            </div>
-            <div
-              onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
-              style={{ position: "absolute", bottom: 2, right: 2, width: 24, height: 24, borderRadius: "50%", background: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #07100a" }}
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </div>
-            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            style={{ position: "absolute", bottom: 2, right: 2, width: 22, height: 22, borderRadius: "50%", background: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #07100a" }}
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </div>
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
         </div>
+      </div>
 
-        {/* Name + username — padded to clear avatar */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 52 }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 700, color: "#fff", textAlign: "center" }}>{user.displayName}</div>
-          <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)" }}>@{user.username}</div>
-        </div>
+      {/* Name + username */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, paddingBottom: 16, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff" }}>{user.displayName}</div>
+        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>@{user.username}</div>
       </div>
 
       {/* Stats */}
