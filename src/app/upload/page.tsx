@@ -100,6 +100,12 @@ function UploadPageInner() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  type TagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
+  const [tagInput, setTagInput] = useState("");
+  const [tagResults, setTagResults] = useState<TagUser[]>([]);
+  const [taggedUsers, setTaggedUsers] = useState<TagUser[]>([]);
+  const tagDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
@@ -124,6 +130,18 @@ function UploadPageInner() {
       }
     });
   }, []);
+
+  // Tag user search
+  useEffect(() => {
+    if (tagDebounce.current) clearTimeout(tagDebounce.current);
+    if (!tagInput.trim() || tagInput.trim().length < 2) { setTagResults([]); return; }
+    tagDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${tagInput.trim()}%`).limit(6);
+      const taggedIds = new Set(taggedUsers.map(u => u.id));
+      setTagResults((data || []).filter((u: TagUser) => !taggedIds.has(u.id)));
+    }, 280);
+  }, [tagInput, taggedUsers]);
 
   const searchCourses = useCallback((q: string) => {
     if (courseDebounceRef.current) clearTimeout(courseDebounceRef.current);
@@ -265,8 +283,9 @@ function UploadPageInner() {
         : contentFormat === "FULL_HOLE" ? "FULL_HOLE"
         : contentFormat || null;
 
+      const uploadId = crypto.randomUUID();
       const { error: dbError } = await supabase.from("Upload").insert({
-        id: crypto.randomUUID(),
+        id: uploadId,
         userId: user.id,
         courseId: selectedCourse.id,
         holeId,
@@ -302,6 +321,26 @@ function UploadPageInner() {
       if (holeId) {
         const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
         await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);
+      }
+
+      // Tag notifications
+      if (taggedUsers.length > 0) {
+        const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
+        const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
+        const notifNow = new Date().toISOString();
+        await supabase.from("Notification").insert(
+          taggedUsers.map(u => ({
+            id: crypto.randomUUID(),
+            userId: u.id,
+            type: "clip_tag",
+            title: "You were tagged in a clip",
+            body: `${taggerName} tagged you in a clip at ${selectedCourse.name} — Hole ${selectedHole}`,
+            linkUrl: `/courses/${selectedCourse.id}`,
+            read: false,
+            createdAt: notifNow,
+            updatedAt: notifNow,
+          }))
+        );
       }
 
       setSubmitted(true);
@@ -806,6 +845,54 @@ function UploadPageInner() {
                 </div>
               )}
             </div>
+            {/* Tag players */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>
+                Tag Players <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,0.2)" }}>— optional</span>
+              </div>
+
+              {/* Tagged pills */}
+              {taggedUsers.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                  {taggedUsers.map(u => (
+                    <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "4px 10px 4px 8px" }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>@{u.username}</span>
+                      <button onClick={() => setTaggedUsers(prev => prev.filter(t => t.id !== u.id))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", lineHeight: 1 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Search input */}
+              <div style={{ position: "relative" }}>
+                <input
+                  type="text"
+                  placeholder="Search by username..."
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                />
+                {tagResults.length > 0 && (
+                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
+                    {tagResults.map(u => (
+                      <button key={u.id} onClick={() => { setTaggedUsers(prev => [...prev, u]); setTagInput(""); setTagResults([]); }}
+                        style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
+                        <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                        </div>
+                        <div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff" }}>{u.displayName}</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <button className="btn-primary" disabled={uploading} onClick={handleSubmit}>
               {uploading ? "Uploading..." : "Submit clip"}
             </button>
