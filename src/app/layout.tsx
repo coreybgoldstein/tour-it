@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Outfit } from "next/font/google";
 import "./globals.css";
+import NotificationBell from "@/components/NotificationBell";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -41,6 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${playfair.variable} ${outfit.variable} antialiased`}>
+        <NotificationBell />
         {children}
       </body>
     </html>

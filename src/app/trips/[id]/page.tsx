@@ -305,6 +305,23 @@ export default function TripPage() {
         setMembers(prev => [...prev, { id: crypto.randomUUID(), userId: inviteeId, role: "member", user: { username: invited.username, displayName: invited.displayName, avatarUrl: invited.avatarUrl } }]);
         setInviteResults(prev => prev.filter(u => u.id !== inviteeId));
       }
+
+      // Write notification to invitee
+      const { data: inviterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
+      const inviterName = inviterProfile?.displayName || inviterProfile?.username || "Someone";
+      const tripName = trip?.name || "a golf trip";
+      const now = new Date().toISOString();
+      await supabase.from("Notification").insert({
+        id: crypto.randomUUID(),
+        userId: inviteeId,
+        type: "trip_invite",
+        title: "You've been invited!",
+        body: `${inviterName} added you to "${tripName}"`,
+        linkUrl: `/trips/${id}`,
+        read: false,
+        createdAt: now,
+        updatedAt: now,
+      });
     }
     setInviting(null);
   };
