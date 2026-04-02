@@ -131,7 +131,7 @@ function SearchPageInner() {
       await supabase.from("Follow").delete().eq("followerId", currentUserId).eq("followingId", targetId);
       setFollowingIds(prev => { const s = new Set(prev); s.delete(targetId); return s; });
     } else {
-      await supabase.from("Follow").insert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: targetId, status: "ACTIVE", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      await supabase.from("Follow").insert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: targetId, createdAt: new Date().toISOString() });
       setFollowingIds(prev => new Set(prev).add(targetId));
     }
     setFollowingInProgress(prev => { const s = new Set(prev); s.delete(targetId); return s; });
