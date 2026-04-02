@@ -36,6 +36,16 @@ function SearchPageInner() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
+  // People tab
+  const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
+  type Person = { id: string; username: string; displayName: string; avatarUrl: string | null; uploadCount: number };
+  const [peopleResults, setPeopleResults] = useState<Person[]>([]);
+  const [peopleLoading, setPeopleLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
+  const peopleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Load popular courses once on mount (courses with most clips)
   useEffect(() => {
     const supabase = createClient();
@@ -50,6 +60,35 @@ function SearchPageInner() {
 
   // Autofocus on mount
   useEffect(() => { inputRef.current?.focus(); }, []);
+
+  // Load current user + who they already follow
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      setCurrentUserId(user.id);
+      const { data } = await supabase.from("Follow").select("followingId").eq("followerId", user.id).eq("status", "ACTIVE");
+      setFollowingIds(new Set((data || []).map((r: any) => r.followingId)));
+    });
+  }, []);
+
+  // People search
+  useEffect(() => {
+    if (searchTab !== "people") return;
+    if (peopleDebounceRef.current) clearTimeout(peopleDebounceRef.current);
+    if (!query.trim() || query.trim().length < 2) { setPeopleResults([]); return; }
+    setPeopleLoading(true);
+    peopleDebounceRef.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("User")
+        .select("id, username, displayName, avatarUrl, uploadCount")
+        .or(`username.ilike.%${query.replace(/^@/, "")}%,displayName.ilike.%${query}%`)
+        .limit(20);
+      setPeopleResults((data || []).filter((u: Person) => u.id !== currentUserId));
+      setPeopleLoading(false);
+    }, 280);
+  }, [query, searchTab, currentUserId]);
 
   // Search-as-you-type — debounced Supabase query
   const search = useCallback((q: string) => {
@@ -82,6 +121,21 @@ function SearchPageInner() {
 
   const showResults = query.trim().length >= 2;
   const displayList = showResults ? results : [];
+
+  async function toggleFollow(targetId: string) {
+    if (!currentUserId || followingInProgress.has(targetId)) return;
+    setFollowingInProgress(prev => new Set(prev).add(targetId));
+    const supabase = createClient();
+    const isFollowing = followingIds.has(targetId);
+    if (isFollowing) {
+      await supabase.from("Follow").delete().eq("followerId", currentUserId).eq("followingId", targetId);
+      setFollowingIds(prev => { const s = new Set(prev); s.delete(targetId); return s; });
+    } else {
+      await supabase.from("Follow").insert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: targetId, status: "ACTIVE", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      setFollowingIds(prev => new Set(prev).add(targetId));
+    }
+    setFollowingInProgress(prev => { const s = new Set(prev); s.delete(targetId); return s; });
+  }
 
   const handleCreate = async () => {
     if (!newName.trim() || !newCity.trim() || !newState.trim()) {
@@ -188,9 +242,9 @@ function SearchPageInner() {
 
       <div className="search-wrap">
         {/* Header */}
-        <div style={{ padding: "56px 0 20px" }}>
+        <div style={{ padding: "56px 0 16px" }}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginBottom: 16 }}>
-            Find a Course
+            Search
           </div>
           <div className={`search-box ${focused ? "focused" : ""}`}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -204,7 +258,7 @@ function SearchPageInner() {
               onChange={e => setQuery(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              placeholder="Course name, city, or state..."
+              placeholder={searchTab === "courses" ? "Course name, city, or state..." : "Name or @username..."}
               autoComplete="off"
             />
             {query && (
@@ -215,7 +269,69 @@ function SearchPageInner() {
               </button>
             )}
           </div>
+
+          {/* Tab toggle */}
+          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+            {(["courses", "people"] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => { setSearchTab(tab); setQuery(""); }}
+                style={{ padding: "7px 18px", borderRadius: 99, border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", background: searchTab === tab ? "#2d7a42" : "rgba(255,255,255,0.07)", color: searchTab === tab ? "#fff" : "rgba(255,255,255,0.45)", transition: "all 0.15s" }}
+              >
+                {tab === "courses" ? "Courses" : "People"}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {/* ── People tab ── */}
+        {searchTab === "people" && (
+          <>
+            {peopleLoading && (
+              <div className="spinner">
+                <svg className="spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="2" strokeLinecap="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+              </div>
+            )}
+
+            {!peopleLoading && query.trim().length >= 2 && peopleResults.length === 0 && (
+              <div className="empty-hint">No golfers found for &ldquo;{query}&rdquo;</div>
+            )}
+
+            {!peopleLoading && query.trim().length < 2 && (
+              <div className="empty-hint">Search by name or @username</div>
+            )}
+
+            {!peopleLoading && peopleResults.map(person => (
+              <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <div
+                  onClick={() => router.push(`/profile/${person.id}`)}
+                  style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                >
+                  {person.avatarUrl
+                    ? <img src={person.avatarUrl} alt={person.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>{(person.displayName || person.username)[0].toUpperCase()}</span>
+                  }
+                </div>
+                <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => router.push(`/profile/${person.id}`)}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{person.displayName}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>@{person.username}{person.uploadCount > 0 ? ` · ${person.uploadCount} clips` : ""}</div>
+                </div>
+                {currentUserId && (
+                  <button
+                    onClick={() => toggleFollow(person.id)}
+                    disabled={followingInProgress.has(person.id)}
+                    style={{ flexShrink: 0, padding: "7px 16px", borderRadius: 99, border: followingIds.has(person.id) ? "1px solid rgba(255,255,255,0.15)" : "none", background: followingIds.has(person.id) ? "transparent" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: followingIds.has(person.id) ? "rgba(255,255,255,0.5)" : "#fff", cursor: "pointer", opacity: followingInProgress.has(person.id) ? 0.5 : 1 }}
+                  >
+                    {followingIds.has(person.id) ? "Following" : "Follow"}
+                  </button>
+                )}
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* ── Courses tab ── */}
+        {searchTab === "courses" && <>
 
         {/* Results */}
         {loading && (
@@ -306,6 +422,9 @@ function SearchPageInner() {
             </button>
           </div>
         )}
+
+        {/* close courses tab wrapper */}
+        </>}
       </div>
 
       {/* Create course bottom sheet */}
