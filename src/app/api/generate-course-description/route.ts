@@ -20,11 +20,13 @@ export async function POST(req: NextRequest) {
         role: "user",
         content: `Write a 2-sentence description of the golf course "${name}"${location ? ` in ${location}` : ""}.
 
-Write it the way a golfer who's played there would describe it to a friend — honest, specific, a little personality. No marketing fluff. No "nestled", no "breathtaking views", no "world-class". Sound like you've actually walked the fairways. Keep it under 60 words.`,
+Write it the way a golfer who's played there would describe it to a friend — honest, specific, a little personality. No markdown, no headers, no bullet points. No marketing fluff. No "nestled", no "breathtaking views", no "world-class". Sound like you've actually walked the fairways. Keep it under 60 words. Start directly with the description.`,
       },
     ],
   });
 
-  const text = (message.content[0] as { type: string; text: string }).text;
+  const raw = (message.content[0] as { type: string; text: string }).text;
+  // Strip any leading markdown heading Claude might add
+  const text = raw.replace(/^#+\s+.+\n+/, "").trim();
   return NextResponse.json({ description: text });
 }
