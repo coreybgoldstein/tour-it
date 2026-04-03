@@ -369,6 +369,7 @@ export default function CourseProfilePage() {
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
   const [contributeError, setContributeError] = useState<string | null>(null);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
   const [commentItems, setCommentItems] = useState<{ id: string; body: string; username: string; avatarUrl: string | null; createdAt: string }[]>([]);
@@ -566,6 +567,24 @@ export default function CourseProfilePage() {
       setSuggestedCourses(suggested || []);
 
       setLoading(false);
+
+      // Auto-generate description if course has none
+      if (courseData && !courseData.description) {
+        try {
+          const res = await fetch("/api/generate-course-description", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: courseData.name, city: courseData.city, state: courseData.state }),
+          });
+          const { description } = await res.json();
+          if (description) {
+            await supabase.from("Course").update({ description }).eq("id", id as string);
+            setCourse(prev => prev ? { ...prev, description } : prev);
+          }
+        } catch {
+          // non-critical — page still works without it
+        }
+      }
     }
 
     loadData();
@@ -581,6 +600,23 @@ export default function CourseProfilePage() {
     setContributeSuccess(false);
     setContributeOpen(true);
   }, [course]);
+
+  const generateDescription = async () => {
+    if (!course || generatingDesc) return;
+    setGeneratingDesc(true);
+    try {
+      const res = await fetch("/api/generate-course-description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: course.name, city: course.city, state: course.state }),
+      });
+      const { description } = await res.json();
+      if (description) setEditDescription(description);
+    } catch {
+      // silently fail — user can type manually
+    }
+    setGeneratingDesc(false);
+  };
 
   const handleCoverPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1087,14 +1123,36 @@ export default function CourseProfilePage() {
 
                 {/* Description */}
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Course Description</div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Description</div>
+                    <button
+                      onClick={generateDescription}
+                      disabled={generatingDesc}
+                      style={{ background: "none", border: "none", cursor: generatingDesc ? "default" : "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: generatingDesc ? "rgba(77,168,98,0.4)" : "#4da862", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
+                    >
+                      {generatingDesc ? (
+                        <>
+                          <div style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.6s linear infinite" }} />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/></svg>
+                          Generate a draft
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     value={editDescription}
                     onChange={e => setEditDescription(e.target.value)}
-                    placeholder="Add a short description of what makes this course special..."
-                    rows={3}
+                    placeholder="What makes this course worth playing? Be honest..."
+                    rows={4}
                     style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", resize: "none", outline: "none" }}
                   />
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>
+                    Generate a draft then edit it — you know this course better than any AI.
+                  </div>
                 </div>
 
                 {/* Course Logo upload */}
