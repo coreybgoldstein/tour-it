@@ -567,24 +567,6 @@ export default function CourseProfilePage() {
       setSuggestedCourses(suggested || []);
 
       setLoading(false);
-
-      // Auto-generate description if course has none
-      if (courseData && !courseData.description) {
-        try {
-          const res = await fetch("/api/generate-course-description", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: courseData.name, city: courseData.city, state: courseData.state }),
-          });
-          const { description } = await res.json();
-          if (description) {
-            await supabase.from("Course").update({ description }).eq("id", id as string);
-            setCourse(prev => prev ? { ...prev, description } : prev);
-          }
-        } catch {
-          // non-critical — page still works without it
-        }
-      }
     }
 
     loadData();
