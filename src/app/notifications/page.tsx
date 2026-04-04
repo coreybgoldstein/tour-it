@@ -16,6 +16,40 @@ interface Notification {
   tagStatus?: "pending" | "approved" | "denied"; // resolved client-side for clip_tag
 }
 
+function NotifIcon({ type }: { type: string }) {
+  const icons: Record<string, { bg: string; svg: React.ReactNode }> = {
+    clip_tag: {
+      bg: "rgba(77,168,98,0.15)",
+      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
+    },
+    trip_invite: {
+      bg: "rgba(100,160,255,0.15)",
+      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64a0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.9 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.81 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+    },
+    comment: {
+      bg: "rgba(255,200,80,0.15)",
+      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffc850" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+    },
+    mention: {
+      bg: "rgba(255,200,80,0.15)",
+      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffc850" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>,
+    },
+    follow: {
+      bg: "rgba(180,120,255,0.15)",
+      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b478ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>,
+    },
+  };
+  const { bg, svg } = icons[type] ?? {
+    bg: "rgba(255,255,255,0.08)",
+    svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+  };
+  return (
+    <div style={{ width: 32, height: 32, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      {svg}
+    </div>
+  );
+}
+
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -126,8 +160,11 @@ export default function NotificationsPage() {
                 onClick={() => n.type !== "clip_tag" && n.linkUrl && router.push(n.linkUrl)}
                 style={{ display: "flex", alignItems: "flex-start", gap: 14, cursor: n.type !== "clip_tag" && n.linkUrl ? "pointer" : "default" }}
               >
-                {/* Dot */}
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.read ? "rgba(255,255,255,0.15)" : "#4da862", marginTop: 6, flexShrink: 0 }} />
+                {/* Type icon */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <NotifIcon type={n.type} />
+                  {!n.read && <div style={{ position: "absolute", top: 0, right: 0, width: 8, height: 8, borderRadius: "50%", background: "#4da862", border: "1.5px solid #07100a" }} />}
+                </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
