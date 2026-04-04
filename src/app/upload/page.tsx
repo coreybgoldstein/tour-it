@@ -105,6 +105,7 @@ function UploadPageInner() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const compressionPromiseRef = useRef<Promise<File> | null>(null);
 
   type TagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
   const [tagInput, setTagInput] = useState("");
@@ -216,26 +217,27 @@ function UploadPageInner() {
         setGpsLoading(false);
       });
 
-      // Compress video (skipped automatically if file is already small)
+      // Start compression in the background — user can proceed through steps while it runs
       const SKIP_MB = 30;
       if (file.size >= SKIP_MB * 1024 * 1024) {
         setOriginalSize(file.size);
         setCompressing(true);
         setCompressPct(0);
-        try {
-          const compressed = await compressVideo(file, (stage, pct) => {
-            setCompressStage(stage);
-            setCompressPct(pct);
-          });
+        const promise = compressVideo(file, (stage, pct) => {
+          setCompressStage(stage);
+          setCompressPct(pct);
+        }).then(compressed => {
           setMediaFile(compressed);
           setCompressedSize(compressed.size);
-        } catch {
-          setMediaFile(file);
-        } finally {
           setCompressing(false);
-        }
+          return compressed;
+        }).catch(() => {
+          setCompressing(false);
+          return file;
+        });
+        compressionPromiseRef.current = promise;
       } else {
-        setMediaFile(file);
+        compressionPromiseRef.current = null;
       }
     } else {
       setMediaFile(file);
@@ -266,24 +268,33 @@ function UploadPageInner() {
   const handleSubmit = async () => {
     const isMultiHole = contentFormat && contentFormat !== "SHOT" && contentFormat !== "FULL_HOLE";
     if (!selectedCourse || (!selectedHole && !isMultiHole) || !mediaFile) return;
-    if (mediaType === "VIDEO" && mediaFile.size > 500 * 1024 * 1024) {
-      setError("Video is too large (max 500 MB). Try trimming it to under 2 minutes.");
-      return;
-    }
     setUploading(true);
     setError("");
+
+    // If compression is still running, wait for it before uploading
+    let fileToUpload = mediaFile;
+    if (compressionPromiseRef.current) {
+      fileToUpload = await compressionPromiseRef.current;
+      compressionPromiseRef.current = null;
+    }
+
+    if (mediaType === "VIDEO" && fileToUpload.size > 500 * 1024 * 1024) {
+      setError("Video is too large (max 500 MB). Try trimming it to under 2 minutes.");
+      setUploading(false);
+      return;
+    }
 
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError("You must be logged in to upload."); setUploading(false); return; }
 
-      const ext = mediaFile.name.split(".").pop();
+      const ext = fileToUpload.name.split(".").pop();
       const bucket = mediaType === "VIDEO" ? "tour-it-videos" : "tour-it-photos";
       const folderKey = selectedHole || contentFormat || "misc";
       const filePath = `${user.id}/${selectedCourse.id}/${folderKey}/${Date.now()}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, mediaFile, { cacheControl: "3600", upsert: false });
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, fileToUpload, { cacheControl: "3600", upsert: false });
       if (uploadError) { setError(`Upload failed: ${uploadError.message}`); setUploading(false); return; }
 
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
@@ -621,8 +632,8 @@ function UploadPageInner() {
                     📍 Reading location from video...
                   </p>
                 )}
-                <button className="btn-primary" disabled={compressing} style={{ opacity: compressing ? 0.4 : 1 }} onClick={() => setStep(2)}>
-                  {compressing ? "Compressing…" : "Next: Select Course →"}
+                <button className="btn-primary" onClick={() => setStep(2)}>
+                  Next: Select Course →
                 </button>
               </>
             ) : (
@@ -981,7 +992,7 @@ function UploadPageInner() {
             </div>
 
             <button className="btn-primary" disabled={uploading} onClick={handleSubmit}>
-              {uploading ? "Uploading..." : "Submit clip"}
+              {uploading && compressing ? "Finishing compression…" : uploading ? "Uploading..." : "Submit clip"}
             </button>
             <button className="btn-secondary" onClick={() => setStep(4)}>Edit intel</button>
           </div>
