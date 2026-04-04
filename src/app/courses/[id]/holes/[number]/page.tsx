@@ -541,7 +541,7 @@ export default function HolePage() {
           </div>
           <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</p>
           <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>Be the first to upload intel<br/>for {course?.name} — {pageTitle}</p>
-          <button onClick={() => router.push(`/upload?courseId=${id}`)} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Upload a clip</button>
+          <button onClick={() => router.push(`/upload?courseId=${id}${holeNum ? `&holeNumber=${holeNum}` : ""}`)} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Upload a clip</button>
         </div>
       </main>
     );
@@ -707,6 +707,18 @@ export default function HolePage() {
                   }
                 </div>
               </button>
+
+              {/* Upload CTA */}
+              {!multiHoleKey && holeNum && (
+                <button className="action-btn" onClick={() => router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`)}>
+                  <div className="action-icon" style={{ background: "rgba(45,122,66,0.25)", borderColor: "rgba(77,168,98,0.4)" }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="8 7 12 2 16 7"/><line x1="12" y1="2" x2="12" y2="15"/><path d="M5 15v5h14v-5"/>
+                    </svg>
+                  </div>
+                  <span className="action-label" style={{ color: "#4da862" }}>Post</span>
+                </button>
+              )}
 
               {/* Flag badge — hole number, navigates to holes overview */}
               <button className="action-btn" onClick={() => router.push(`/courses/${id}/holes`)}>
