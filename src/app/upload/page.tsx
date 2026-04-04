@@ -216,22 +216,26 @@ function UploadPageInner() {
         setGpsLoading(false);
       });
 
-      // Compress video
-      setOriginalSize(file.size);
-      setCompressing(true);
-      setCompressPct(0);
-      try {
-        const compressed = await compressVideo(file, (stage, pct) => {
-          setCompressStage(stage);
-          setCompressPct(pct);
-        });
-        setMediaFile(compressed);
-        setCompressedSize(compressed.size);
-      } catch {
-        // Compression failed — use original
+      // Compress video (skipped automatically if file is already small)
+      const SKIP_MB = 30;
+      if (file.size >= SKIP_MB * 1024 * 1024) {
+        setOriginalSize(file.size);
+        setCompressing(true);
+        setCompressPct(0);
+        try {
+          const compressed = await compressVideo(file, (stage, pct) => {
+            setCompressStage(stage);
+            setCompressPct(pct);
+          });
+          setMediaFile(compressed);
+          setCompressedSize(compressed.size);
+        } catch {
+          setMediaFile(file);
+        } finally {
+          setCompressing(false);
+        }
+      } else {
         setMediaFile(file);
-      } finally {
-        setCompressing(false);
       }
     } else {
       setMediaFile(file);

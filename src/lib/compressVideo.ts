@@ -29,10 +29,18 @@ async function getFFmpeg(onStatus: (msg: string) => void): Promise<FFmpeg> {
   return ffmpegInstance!;
 }
 
+const SKIP_THRESHOLD_MB = 30;
+
 export async function compressVideo(
   file: File,
   onProgress: (stage: string, pct: number) => void
 ): Promise<File> {
+  // Skip compression for small files — faster to just upload directly
+  if (file.size < SKIP_THRESHOLD_MB * 1024 * 1024) {
+    onProgress("Done", 100);
+    return file;
+  }
+
   let ff: FFmpeg;
   try {
     ff = await getFFmpeg((msg) => onProgress(msg, 0));
@@ -51,12 +59,13 @@ export async function compressVideo(
   onProgress("Compressing", 0);
   await ff.exec([
     "-i", "input.mp4",
+    "-vf", "scale=-2:480",  // 480p — 4x less pixels, ~4x faster encode
     "-c:v", "libx264",
-    "-crf", "28",           // quality — 23 = high, 28 = good, 32 = acceptable
-    "-preset", "ultrafast", // fastest encode, slightly larger than slow
+    "-crf", "28",
+    "-preset", "ultrafast",
     "-c:a", "aac",
     "-b:a", "96k",
-    "-movflags", "+faststart", // optimise for streaming
+    "-movflags", "+faststart",
     "output.mp4",
   ]);
 
