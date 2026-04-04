@@ -37,6 +37,14 @@ export default function ListsPage() {
   const [saves, setSaves] = useState<SavedCourse[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Create trip sheet
+  const [createOpen, setCreateOpen] = useState(false);
+  const [tripName, setTripName] = useState("");
+  const [tripStart, setTripStart] = useState("");
+  const [tripEnd, setTripEnd] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -44,6 +52,7 @@ export default function ListsPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
+      setUserId(user.id);
 
       // Load saves
       const { data: savesData } = await supabase
@@ -110,6 +119,39 @@ export default function ListsPage() {
   const bucketList = saves.filter(s => s.saveType === "BUCKET_LIST");
   const played = saves.filter(s => s.saveType === "PLAYED");
 
+  async function createTrip() {
+    if (!tripName.trim() || !userId || creating) return;
+    setCreating(true);
+    const supabase = createClient();
+    const tripId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await supabase.from("GolfTrip").insert({
+      id: tripId,
+      name: tripName.trim(),
+      createdBy: userId,
+      startDate: tripStart || null,
+      endDate: tripEnd || null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await supabase.from("GolfTripMember").insert({
+      id: crypto.randomUUID(),
+      tripId,
+      userId,
+      role: "owner",
+      createdAt: now,
+    });
+
+    setCreating(false);
+    setCreateOpen(false);
+    setTripName("");
+    setTripStart("");
+    setTripEnd("");
+    router.push(`/trips/${tripId}`);
+  }
+
   const formatDate = (d: string | null) => {
     if (!d) return "";
     const dt = new Date(d + "T00:00:00");
@@ -131,11 +173,22 @@ export default function ListsPage() {
       `}</style>
 
       {/* Header */}
-      <div style={{ padding: "56px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginBottom: 4 }}>My Lists</div>
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
-          {bucketList.length} bucket list · {played.length} played · {trips.length} {trips.length === 1 ? "trip" : "trips"}
+      <div style={{ padding: "56px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginBottom: 4 }}>My Lists</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+            {bucketList.length} bucket list · {played.length} played · {trips.length} {trips.length === 1 ? "trip" : "trips"}
+          </div>
         </div>
+        {tab === "TRIPS" && (
+          <button
+            onClick={() => setCreateOpen(true)}
+            style={{ display: "flex", alignItems: "center", gap: 6, background: "#2d7a42", border: "none", borderRadius: 10, padding: "9px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Trip
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -169,10 +222,13 @@ export default function ListsPage() {
             <div style={{ fontSize: 40, marginBottom: 16 }}>✈️</div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No golf trips yet</div>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", lineHeight: 1.6, marginBottom: 28 }}>
-              Find a course you want to play and add it to a Golf Trip.
+              Plan a trip, track the courses you play, and keep all your clips in one place.
             </div>
-            <button onClick={() => router.push("/search")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 28px", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
-              Browse courses
+            <button onClick={() => setCreateOpen(true)} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 28px", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", marginBottom: 12, display: "block", width: "100%", maxWidth: 240, margin: "0 auto 12px" }}>
+              + Create a trip
+            </button>
+            <button onClick={() => router.push("/search")} style={{ background: "none", border: "none", fontSize: 13, color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: "8px" }}>
+              Browse courses instead
             </button>
           </div>
         ) : (
@@ -245,6 +301,58 @@ export default function ListsPage() {
             </div>
           );
         })()
+      )}
+
+      {/* Create Trip Sheet */}
+      {createOpen && (
+        <div onClick={() => setCreateOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 48px" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 20 }}>New Trip</div>
+
+            {/* Trip name */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Trip Name *</div>
+              <input
+                value={tripName}
+                onChange={e => setTripName(e.target.value)}
+                placeholder="e.g. Pinehurst Trip 2026"
+                autoFocus
+                style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
+              />
+            </div>
+
+            {/* Dates */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Start Date</div>
+                <input
+                  type="date"
+                  value={tripStart}
+                  onChange={e => setTripStart(e.target.value)}
+                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: tripStart ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>End Date</div>
+                <input
+                  type="date"
+                  value={tripEnd}
+                  onChange={e => setTripEnd(e.target.value)}
+                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: tripEnd ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }}
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={createTrip}
+              disabled={!tripName.trim() || creating}
+              style={{ width: "100%", background: tripName.trim() ? "#2d7a42" : "rgba(255,255,255,0.06)", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: tripName.trim() ? "#fff" : "rgba(255,255,255,0.25)", cursor: tripName.trim() ? "pointer" : "default", transition: "all 0.15s" }}
+            >
+              {creating ? "Creating..." : "Create Trip"}
+            </button>
+          </div>
+        </div>
       )}
 
       <BottomNav />
