@@ -801,7 +801,7 @@ export default function Home() {
               >
                 <div style={{ textAlign: "left" }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Save courses. Upload clips. Scout smarter.</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>Free account — takes 30 seconds</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>Takes 30 seconds</div>
                 </div>
                 <div style={{ background: "#2d7a42", borderRadius: 8, padding: "7px 14px", flexShrink: 0, marginLeft: 12 }}>
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>Join</span>
@@ -997,7 +997,7 @@ export default function Home() {
             {!user ? (
               <>
                 <button onClick={() => router.push("/signup")} style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "16px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginTop: 8, boxShadow: "0 2px 16px rgba(45,122,66,0.4)" }}>
-                  Create free account
+                  Create an account
                 </button>
                 <button onClick={dismissOnboarding} style={{ width: "100%", background: "none", border: "none", padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", marginTop: 4 }}>
                   Browse without an account
