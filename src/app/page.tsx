@@ -839,13 +839,20 @@ export default function Home() {
 
           {/* Bridge to feed */}
           <div style={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 104 }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 14, color: "rgba(255,255,255,0.55)", textAlign: "center", lineHeight: 1, marginBottom: 10, whiteSpace: "nowrap" }}>
-              Scroll to find your next bucket list course
-            </div>
-            <div className="bounce-arrow" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
-              </svg>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="bounce-arrow" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+                </svg>
+              </div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1, whiteSpace: "nowrap" }}>
+                Scroll to find your next bucket list course
+              </div>
+              <div className="bounce-arrow" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+                </svg>
+              </div>
             </div>
           </div>
         </div>
