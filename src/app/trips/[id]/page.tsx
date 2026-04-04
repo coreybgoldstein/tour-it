@@ -214,6 +214,13 @@ export default function TripPage() {
   const [savingCourse, setSavingCourse] = useState(false);
   const [deletingCourse, setDeletingCourse] = useState(false);
 
+  // Swipe-to-delete
+  const [swipedId, setSwipedId] = useState<string | null>(null);
+  const swipeTouchStartX = useRef<number>(0);
+  const swipeTouchStartY = useRef<number>(0);
+  const swipeCurrentX = useRef<number>(0);
+  const swipeCardRef = useRef<Record<string, HTMLDivElement | null>>({});
+
   // Add course sheet
   const [addCourseOpen, setAddCourseOpen] = useState(false);
   const [addCourseStep, setAddCourseStep] = useState<"search" | "details">("search");
@@ -579,28 +586,65 @@ export default function TripPage() {
           ) : (
             <div>
               {tripCourses.map(tc => (
-                <div key={tc.id} className="course-card">
-                  <div onClick={() => router.push(`/courses/${tc.course.id}`)} style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", cursor: "pointer" }}>
-                    {tc.course.logoUrl
-                      ? <img src={tc.course.logoUrl} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{abbr(tc.course.name)}</span>
-                    }
+                <div key={tc.id} style={{ position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  {/* Delete zone revealed on swipe */}
+                  <div
+                    onClick={async () => { await createClient().from("GolfTripCourse").delete().eq("id", tc.id); setTripCourses(prev => prev.filter(c => c.id !== tc.id)); setSwipedId(null); }}
+                    style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, background: "#c0392b", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                  >
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff" }}>Delete</span>
                   </div>
-                  <div onClick={() => router.push(`/courses/${tc.course.id}`)} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tc.course.name}</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", marginTop: 3 }}>
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{[tc.course.city, tc.course.state].filter(Boolean).join(", ")}</span>
-                      {tc.playDate && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.8)" }}>📅 {formatDate(tc.playDate)}</span>}
-                      {tc.teeTime && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>⏰ {formatTeeTime(tc.teeTime)}</span>}
-                      {tc.accommodation && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>🏨 {tc.accommodation}</span>}
+
+                  {/* Swipeable row */}
+                  <div
+                    ref={el => { swipeCardRef.current[tc.id] = el; }}
+                    className="course-card"
+                    style={{ borderBottom: "none", background: "#07100a", position: "relative", transform: swipedId === tc.id ? "translateX(-80px)" : "translateX(0)", transition: "transform 0.2s ease" }}
+                    onTouchStart={e => {
+                      swipeTouchStartX.current = e.touches[0].clientX;
+                      swipeTouchStartY.current = e.touches[0].clientY;
+                      swipeCurrentX.current = swipedId === tc.id ? -80 : 0;
+                    }}
+                    onTouchMove={e => {
+                      const dx = e.touches[0].clientX - swipeTouchStartX.current;
+                      const dy = e.touches[0].clientY - swipeTouchStartY.current;
+                      if (Math.abs(dy) > Math.abs(dx)) return; // vertical scroll
+                      const base = swipedId === tc.id ? -80 : 0;
+                      const next = Math.max(-80, Math.min(0, base + dx));
+                      const el = swipeCardRef.current[tc.id];
+                      if (el) { el.style.transition = "none"; el.style.transform = `translateX(${next}px)`; }
+                      swipeCurrentX.current = next;
+                    }}
+                    onTouchEnd={() => {
+                      const el = swipeCardRef.current[tc.id];
+                      if (el) el.style.transition = "transform 0.2s ease";
+                      if (swipeCurrentX.current < -40) {
+                        setSwipedId(tc.id);
+                        if (el) el.style.transform = "translateX(-80px)";
+                      } else {
+                        setSwipedId(null);
+                        if (el) el.style.transform = "translateX(0)";
+                      }
+                    }}
+                    onClick={() => { if (swipedId === tc.id) { setSwipedId(null); } }}
+                  >
+                    <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", cursor: "pointer" }}>
+                      {tc.course.logoUrl
+                        ? <img src={tc.course.logoUrl} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{abbr(tc.course.name)}</span>
+                      }
                     </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                    <button onClick={() => openEditCourse(tc)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                    <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tc.course.name}</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", marginTop: 3 }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{[tc.course.city, tc.course.state].filter(Boolean).join(", ")}</span>
+                        {tc.playDate && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.8)" }}>📅 {formatDate(tc.playDate)}</span>}
+                        {tc.teeTime && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>⏰ {formatTeeTime(tc.teeTime)}</span>}
+                        {tc.accommodation && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>🏨 {tc.accommodation}</span>}
+                      </div>
+                    </div>
+                    <button onClick={e => { e.stopPropagation(); openEditCourse(tc); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                    <button onClick={async () => { await createClient().from("GolfTripCourse").delete().eq("id", tc.id); setTripCourses(prev => prev.filter(c => c.id !== tc.id)); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(200,60,60,0.08)", border: "1px solid rgba(200,60,60,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                     </button>
                   </div>
                 </div>
