@@ -419,7 +419,7 @@ function VideoCard({
 
 export default function Home() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(undefined); // undefined = auth not yet checked, null = confirmed logged out
   const [userProfile, setUserProfile] = useState<any>(null);
   const [trendingCourses, setTrendingCourses] = useState<TrendingCourse[]>([]);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
@@ -437,6 +437,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
+  const [showWelcome, setShowWelcome] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedCursorRef = useRef<string | null>(null);
@@ -447,7 +448,7 @@ export default function Home() {
     const supabase = createClient();
 
     supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data.user);
+      setUser(data.user ?? null);
       if (data.user) {
         const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
         setUserProfile(profile);
@@ -614,6 +615,15 @@ export default function Home() {
 
   useEffect(() => {
     if (!localStorage.getItem("tour-it-onboarded")) setShowOnboarding(true);
+
+    // Check for ?welcome=1 from post-signup onboarding redirect
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("welcome") === "1") {
+        setShowWelcome(true);
+        window.history.replaceState({}, "", "/");
+      }
+    }
 
     // Auto-load near me if previously granted
     if (localStorage.getItem("tour-it-location-denied")) {
@@ -782,6 +792,24 @@ export default function Home() {
             </button>
           </div>
 
+          {/* Logged-out sign-up nudge */}
+          {user === null && (
+            <div style={{ padding: "0 20px 18px", flexShrink: 0 }}>
+              <button
+                onClick={() => router.push("/signup")}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.22)", borderRadius: 12, padding: "12px 16px", cursor: "pointer" }}
+              >
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Save courses. Upload clips. Scout smarter.</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>Free account — takes 30 seconds</div>
+                </div>
+                <div style={{ background: "#2d7a42", borderRadius: 8, padding: "7px 14px", flexShrink: 0, marginLeft: 12 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>Join</span>
+                </div>
+              </button>
+            </div>
+          )}
+
           {/* Popular courses */}
           <div style={{ flexShrink: 0 }}>
             <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.22)" }}>
@@ -917,6 +945,33 @@ export default function Home() {
         </div>
       )}
 
+      {/* Welcome moment — shown after signup/onboarding */}
+      {showWelcome && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setShowWelcome(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "24px 24px 0 0", padding: "28px 24px 52px" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 24px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", marginBottom: 10 }}>
+              You&apos;re in. Welcome to Tour It.
+            </div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: 28 }}>
+              Every course on here gets better when golfers who&apos;ve played it contribute. Start by finding your home course — add a clip, drop some intel, and make it useful for whoever&apos;s playing next.
+            </div>
+            <button
+              onClick={() => { setShowWelcome(false); router.push("/search"); }}
+              style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "16px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", boxShadow: "0 2px 16px rgba(45,122,66,0.4)", marginBottom: 12 }}
+            >
+              Find my home course
+            </button>
+            <button
+              onClick={() => setShowWelcome(false)}
+              style={{ width: "100%", background: "none", border: "none", padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", cursor: "pointer" }}
+            >
+              Explore first
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Onboarding */}
       {showOnboarding && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -939,9 +994,25 @@ export default function Home() {
                 </div>
               </div>
             ))}
-            <button onClick={dismissOnboarding} style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "16px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginTop: 8, boxShadow: "0 2px 16px rgba(45,122,66,0.4)" }}>
-              Start Scouting
-            </button>
+            {!user ? (
+              <>
+                <button onClick={() => router.push("/signup")} style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "16px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginTop: 8, boxShadow: "0 2px 16px rgba(45,122,66,0.4)" }}>
+                  Create free account
+                </button>
+                <button onClick={dismissOnboarding} style={{ width: "100%", background: "none", border: "none", padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer", marginTop: 4 }}>
+                  Browse without an account
+                </button>
+                <div style={{ textAlign: "center", marginTop: 2 }}>
+                  <button onClick={() => router.push("/login")} style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(77,168,98,0.7)", cursor: "pointer", textDecoration: "underline" }}>
+                    Already have an account? Sign in
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button onClick={dismissOnboarding} style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "16px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginTop: 8, boxShadow: "0 2px 16px rgba(45,122,66,0.4)" }}>
+                Start Scouting
+              </button>
+            )}
           </div>
         </div>
       )}
