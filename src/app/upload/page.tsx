@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { compressVideo } from "@/lib/compressVideo";
 
 type Course = {
   id: string;
@@ -86,6 +87,11 @@ function UploadPageInner() {
   const [uploading, setUploading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [compressing, setCompressing] = useState(false);
+  const [compressStage, setCompressStage] = useState("");
+  const [compressPct, setCompressPct] = useState(0);
+  const [originalSize, setOriginalSize] = useState<number | null>(null);
+  const [compressedSize, setCompressedSize] = useState<number | null>(null);
   const [intel, setIntel] = useState({
     tee: "",
     datePlayed: "",
@@ -173,23 +179,26 @@ function UploadPageInner() {
   const intelLabel = intelPct >= 80 ? "Elite Intel" : intelPct >= 50 ? "Good Intel" : intelPct >= 25 ? "Basic Intel" : "Minimal Intel";
   const intelColor = intelPct >= 80 ? "#4da862" : intelPct >= 50 ? "#c8a96e" : intelPct >= 25 ? "#6a9fd4" : "rgba(255,255,255,0.25)";
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const isVideo = file.type.startsWith("video/");
     const isPhoto = file.type.startsWith("image/");
     if (!isVideo && !isPhoto) { setError("Please upload a video or photo file."); return; }
-    setMediaFile(file);
+    setError("");
+    setCompressedSize(null);
+    setOriginalSize(null);
+
+    // Show preview immediately with original file
     setMediaType(isVideo ? "VIDEO" : "PHOTO");
     setMediaPreview(URL.createObjectURL(file));
-    setError("");
 
-    // Auto-fill date from file metadata (works for phone videos/photos)
+    // Auto-fill date from file metadata
     const dateFromFile = new Date(file.lastModified).toISOString().split("T")[0];
     setIntel(prev => ({ ...prev, datePlayed: prev.datePlayed || dateFromFile }));
 
-    // Try GPS extraction for video files (iPhone MP4/MOV stores ©xyz atom)
     if (isVideo) {
+      // Start GPS extraction in parallel with compression
       setGpsLoading(true);
       extractGPSFromVideo(file).then(async coords => {
         if (!coords) { setGpsLoading(false); return; }
@@ -206,6 +215,26 @@ function UploadPageInner() {
         setGpsSuggestions(data || []);
         setGpsLoading(false);
       });
+
+      // Compress video
+      setOriginalSize(file.size);
+      setCompressing(true);
+      setCompressPct(0);
+      try {
+        const compressed = await compressVideo(file, (stage, pct) => {
+          setCompressStage(stage);
+          setCompressPct(pct);
+        });
+        setMediaFile(compressed);
+        setCompressedSize(compressed.size);
+      } catch {
+        // Compression failed — use original
+        setMediaFile(file);
+      } finally {
+        setCompressing(false);
+      }
+    } else {
+      setMediaFile(file);
     }
   };
 
@@ -552,15 +581,45 @@ function UploadPageInner() {
                 ) : (
                   <img src={mediaPreview} className="preview-img" alt="preview" />
                 )}
-                <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); setGpsSuggestions([]); }}>
+                <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); setGpsSuggestions([]); setCompressing(false); setOriginalSize(null); setCompressedSize(null); }}>
                   Choose different file
                 </button>
+
+                {/* Compression progress */}
+                {compressing && (
+                  <div style={{ marginBottom: 16, background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, padding: "14px 16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{compressStage || "Preparing…"}</span>
+                      {compressPct > 0 && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>{compressPct}%</span>}
+                    </div>
+                    <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${compressPct || 10}%`, background: "#4da862", borderRadius: 99, transition: "width 0.3s ease" }} />
+                    </div>
+                    <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8, marginBottom: 0 }}>
+                      Compressing before upload — this saves time on slow connections
+                    </p>
+                  </div>
+                )}
+
+                {/* Compression result */}
+                {!compressing && originalSize && compressedSize && (
+                  <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)" }}>
+                      Compressed {(originalSize / 1048576).toFixed(0)} MB → {(compressedSize / 1048576).toFixed(0)} MB
+                      {" "}<span style={{ color: "#4da862" }}>({Math.round((1 - compressedSize / originalSize) * 100)}% smaller)</span>
+                    </span>
+                  </div>
+                )}
+
                 {gpsLoading && (
                   <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(77,168,98,0.6)", textAlign: "center", marginBottom: 12 }}>
                     📍 Reading location from video...
                   </p>
                 )}
-                <button className="btn-primary" onClick={() => setStep(2)}>Next: Select Course →</button>
+                <button className="btn-primary" disabled={compressing} style={{ opacity: compressing ? 0.4 : 1 }} onClick={() => setStep(2)}>
+                  {compressing ? "Compressing…" : "Next: Select Course →"}
+                </button>
               </>
             ) : (
               <div className="upload-zone" onClick={() => fileInputRef.current?.click()}>
