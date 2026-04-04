@@ -59,7 +59,6 @@ export async function compressVideo(
   onProgress("Compressing", 0);
   await ff.exec([
     "-i", "input.mp4",
-    "-vf", "scale=-2:480",  // 480p — 4x less pixels, ~4x faster encode
     "-c:v", "libx264",
     "-crf", "28",
     "-preset", "ultrafast",
