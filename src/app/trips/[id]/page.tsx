@@ -239,14 +239,22 @@ export default function TripPage() {
       setTrip(tripData);
       setIsOwner(authUser?.id === tripData.createdBy);
 
-      const { data: tcData } = await supabase.from("GolfTripCourse").select("id, courseId, playDate, teeTime, accommodation, sortOrder").eq("tripId", id).order("sortOrder", { ascending: true });
+      const { data: tcData } = await supabase.from("GolfTripCourse").select("id, courseId, playDate, teeTime, accommodation, sortOrder").eq("tripId", id);
       if (tcData && tcData.length > 0) {
         const courseIds = tcData.map((tc: any) => tc.courseId);
         const { data: coursesData } = await supabase.from("Course").select("id, name, city, state, uploadCount, logoUrl").in("id", courseIds);
-        setTripCourses(tcData.map((tc: any) => ({
+        const mapped = tcData.map((tc: any) => ({
           ...tc,
           course: coursesData?.find((c: any) => c.id === tc.courseId) || { id: tc.courseId, name: "Unknown", city: "", state: "", uploadCount: 0, logoUrl: null },
-        })));
+        }));
+        // Sort chronologically by playDate; undated entries go to the end
+        mapped.sort((a: any, b: any) => {
+          if (!a.playDate && !b.playDate) return a.sortOrder - b.sortOrder;
+          if (!a.playDate) return 1;
+          if (!b.playDate) return -1;
+          return a.playDate.localeCompare(b.playDate);
+        });
+        setTripCourses(mapped);
       }
 
       const { data: memberData } = await supabase.from("GolfTripMember").select("id, userId, role").eq("tripId", id);
@@ -287,9 +295,7 @@ export default function TripPage() {
     courseSearchDebounce.current = setTimeout(async () => {
       const supabase = createClient();
       const { data } = await supabase.from("Course").select("id, name, city, state, holeCount, logoUrl").or(`name.ilike.%${courseSearch}%,city.ilike.%${courseSearch}%`).order("uploadCount", { ascending: false }).limit(15);
-      // Filter out courses already on the trip
-      const existing = new Set(tripCourses.map(tc => tc.courseId));
-      setCourseResults((data || []).filter((c: any) => !existing.has(c.id)));
+      setCourseResults(data || []);
       setCourseSearchLoading(false);
     }, 280);
   }, [courseSearch, tripCourses]);
@@ -388,7 +394,15 @@ export default function TripPage() {
     if (!editCourseItem || savingCourse) return;
     setSavingCourse(true);
     await createClient().from("GolfTripCourse").update({ playDate: editCPlayDate || null, teeTime: editCTeeTime || null, accommodation: editCAccom.trim() || null }).eq("id", editCourseItem.id);
-    setTripCourses(prev => prev.map(tc => tc.id === editCourseItem.id ? { ...tc, playDate: editCPlayDate || null, teeTime: editCTeeTime || null, accommodation: editCAccom.trim() || null } : tc));
+    setTripCourses(prev => {
+      const updated = prev.map(tc => tc.id === editCourseItem.id ? { ...tc, playDate: editCPlayDate || null, teeTime: editCTeeTime || null, accommodation: editCAccom.trim() || null } : tc);
+      return [...updated].sort((a, b) => {
+        if (!a.playDate && !b.playDate) return a.sortOrder - b.sortOrder;
+        if (!a.playDate) return 1;
+        if (!b.playDate) return -1;
+        return a.playDate.localeCompare(b.playDate);
+      });
+    });
     setSavingCourse(false);
     setEditCourseOpen(false);
   };
@@ -425,6 +439,14 @@ export default function TripPage() {
     if (!d) return "";
     const dt = new Date(d + "T00:00:00");
     return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  const formatTeeTime = (t: string | null) => {
+    if (!t) return "";
+    const [h, m] = t.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
   };
 
   const abbr = (name: string) => name.split(" ").filter(w => w.length > 2).map(w => w[0]).join("").slice(0, 3).toUpperCase() || "?";
@@ -569,13 +591,18 @@ export default function TripPage() {
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", marginTop: 3 }}>
                       <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{[tc.course.city, tc.course.state].filter(Boolean).join(", ")}</span>
                       {tc.playDate && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.8)" }}>📅 {formatDate(tc.playDate)}</span>}
-                      {tc.teeTime && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>⏱ {tc.teeTime}</span>}
+                      {tc.teeTime && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>⏰ {formatTeeTime(tc.teeTime)}</span>}
                       {tc.accommodation && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>🏨 {tc.accommodation}</span>}
                     </div>
                   </div>
-                  <button onClick={() => openEditCourse(tc)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <button onClick={() => openEditCourse(tc)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button onClick={async () => { await createClient().from("GolfTripCourse").delete().eq("id", tc.id); setTripCourses(prev => prev.filter(c => c.id !== tc.id)); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(200,60,60,0.08)", border: "1px solid rgba(200,60,60,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
