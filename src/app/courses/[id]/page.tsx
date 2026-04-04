@@ -931,13 +931,6 @@ export default function CourseProfilePage() {
                             <div style={{ position: "absolute", bottom: 4, right: 4 }}>
                               <FlagBadge label={holeNum} />
                             </div>
-                            {clips.length > 1 && (
-                              <div className="hole-cell-indicator">
-                                {clips.slice(0, 3).map((_, di) => (
-                                  <div key={di} className={`hole-dot${di === 0 ? " active" : ""}`} />
-                                ))}
-                              </div>
-                            )}
                           </>
                         ) : (
                           <>
