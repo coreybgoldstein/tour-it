@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import ClipViewer from "@/components/ClipViewer";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
@@ -30,9 +31,19 @@ type Upload = {
   mediaType: string;
   courseId: string;
   holeId: string;
-  holeNumber?: number;
+  holeNumber?: number | null;
   seriesId?: string | null;
   createdAt: string;
+  userId: string;
+  likeCount?: number;
+  commentCount?: number;
+  shotType?: string | null;
+  clubUsed?: string | null;
+  windCondition?: string | null;
+  strategyNote?: string | null;
+  landingZoneNote?: string | null;
+  whatCameraDoesntShow?: string | null;
+  datePlayedAt?: string | null;
 };
 
 type CoursePlayed = {
@@ -136,7 +147,7 @@ export default function ProfilePage() {
       setEditHandicap(profile.handicapIndex?.toString() || "");
 
 const [{ data: userUploads }, { count: followers }, { count: following }] = await Promise.all([
-  supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt").eq("userId", authUser.id).order("createdAt", { ascending: false }),
+  supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", authUser.id).order("createdAt", { ascending: false }),
   supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", authUser.id).eq("status", "ACTIVE"),
   supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", authUser.id).eq("status", "ACTIVE"),
 ]);
@@ -195,7 +206,7 @@ if (userUploads && userUploads.length > 0) {
         const taggedUploadIds = tagRows.map((t: any) => t.uploadId);
         const { data: taggedUploadsData } = await supabase
           .from("Upload")
-          .select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt")
+          .select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt")
           .in("id", taggedUploadIds)
           .order("createdAt", { ascending: false });
         if (taggedUploadsData && taggedUploadsData.length > 0) {
@@ -438,45 +449,23 @@ if (userUploads && userUploads.length > 0) {
         .course-chip:hover { border-color: rgba(77,168,98,0.4); }
       `}</style>
 
-      {/* Clip viewer modal */}
-      {selectedClip && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "#000", display: "flex", flexDirection: "column" }}>
-          {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 16px 12px", position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)" }}>
-            <button onClick={() => { setSelectedClip(null); setConfirmDelete(false); setShowEditSheet(false); }} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-            {selectedCourseName && (
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.8)" }}>{selectedCourseName}</div>
-            )}
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={openEdit}
-                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-              <button
-                onClick={() => setConfirmDelete(true)}
-                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(220,60,60,0.15)", border: "1px solid rgba(220,60,60,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-              </button>
-            </div>
-          </div>
+      {/* Clip viewer */}
+      {selectedClip && !showEditSheet && !confirmDelete && (
+        <ClipViewer
+          clip={selectedClip}
+          onClose={() => { setSelectedClip(null); setConfirmDelete(false); setShowEditSheet(false); }}
+          courseName={selectedCourseName}
+          uploader={{ id: user.id, username: user.username, avatarUrl: user.avatarUrl }}
+          currentUserId={user.id}
+          currentUserMeta={{ username: user.username, avatarUrl: user.avatarUrl }}
+          onEdit={openEdit}
+          onDelete={() => setConfirmDelete(true)}
+        />
+      )}
 
-          {/* Media */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
-            {selectedClip.mediaType === "VIDEO" ? (
-              <video src={selectedClip.mediaUrl} style={{ width: "100%", height: "100%", objectFit: "contain" }} controls playsInline autoPlay muted />
-            ) : (
-              <img src={selectedClip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            )}
-          </div>
-
-          {/* Edit sheet */}
-          {showEditSheet && (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 20 }} onClick={() => setShowEditSheet(false)}>
+      {/* Edit sheet — overlays clip viewer */}
+      {selectedClip && showEditSheet && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }} onClick={() => setShowEditSheet(false)}>
               <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "82vh", overflowY: "auto" }}>
                 <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 20px" }} />
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 20 }}>Edit clip</div>
@@ -603,33 +592,31 @@ if (userUploads && userUploads.length > 0) {
                   </>
                 )}
               </div>
-            </div>
-          )}
+        </div>
+      )}
 
-          {/* Confirm delete sheet */}
-          {confirmDelete && (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 20 }}>
-              <div style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "28px 20px 40px" }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 8, textAlign: "center" }}>Delete this clip?</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: 24, lineHeight: 1.5 }}>
-                  This can't be undone. The clip will be permanently removed.
-                </div>
-                <button
-                  onClick={handleDeleteClip}
-                  disabled={deleting}
-                  style={{ width: "100%", background: "rgba(220,60,60,0.85)", border: "none", borderRadius: 14, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginBottom: 10, opacity: deleting ? 0.6 : 1 }}
-                >
-                  {deleting ? "Deleting..." : "Yes, delete it"}
-                </button>
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}
-                >
-                  Cancel
-                </button>
-              </div>
+      {/* Confirm delete — overlays clip viewer */}
+      {selectedClip && confirmDelete && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
+          <div style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "28px 20px 40px" }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 8, textAlign: "center" }}>Delete this clip?</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: 24, lineHeight: 1.5 }}>
+              This can&apos;t be undone. The clip will be permanently removed.
             </div>
-          )}
+            <button
+              onClick={handleDeleteClip}
+              disabled={deleting}
+              style={{ width: "100%", background: "rgba(220,60,60,0.85)", border: "none", borderRadius: 14, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginBottom: 10, opacity: deleting ? 0.6 : 1 }}
+            >
+              {deleting ? "Deleting..." : "Yes, delete it"}
+            </button>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 

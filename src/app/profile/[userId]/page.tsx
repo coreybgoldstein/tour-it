@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import ClipViewer from "@/components/ClipViewer";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
@@ -30,9 +31,19 @@ type Upload = {
   mediaType: string;
   courseId: string;
   holeId: string;
-  holeNumber?: number;
+  holeNumber?: number | null;
   seriesId?: string | null;
   createdAt: string;
+  userId: string;
+  likeCount?: number;
+  commentCount?: number;
+  shotType?: string | null;
+  clubUsed?: string | null;
+  windCondition?: string | null;
+  strategyNote?: string | null;
+  landingZoneNote?: string | null;
+  whatCameraDoesntShow?: string | null;
+  datePlayedAt?: string | null;
 };
 
 type CoursePlayed = {
@@ -108,7 +119,7 @@ export default function PublicProfilePage() {
       ] = await Promise.all([
         supabase
           .from("Upload")
-          .select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt")
+          .select("id, mediaUrl, mediaType, courseId, holeId, seriesId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt")
           .eq("userId", userId)
           .order("createdAt", { ascending: false }),
         supabase
@@ -252,26 +263,15 @@ export default function PublicProfilePage() {
         .course-chip:hover { border-color: rgba(77,168,98,0.4); }
       `}</style>
 
-      {/* Clip viewer modal */}
+      {/* Clip viewer */}
       {selectedClip && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "#000", display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 16px 12px", position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)" }}>
-            <button onClick={() => setSelectedClip(null)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-            {selectedCourseName && (
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.8)" }}>{selectedCourseName}</div>
-            )}
-            <div style={{ width: 36 }} />
-          </div>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#000" }}>
-            {selectedClip.mediaType === "VIDEO" ? (
-              <video src={selectedClip.mediaUrl} style={{ width: "100%", height: "100%", objectFit: "contain" }} controls playsInline autoPlay muted />
-            ) : (
-              <img src={selectedClip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            )}
-          </div>
-        </div>
+        <ClipViewer
+          clip={selectedClip}
+          onClose={() => setSelectedClip(null)}
+          courseName={selectedCourseName}
+          uploader={profile ? { id: profile.id, username: profile.username, avatarUrl: profile.avatarUrl } : null}
+          currentUserId={currentUserId}
+        />
       )}
 
       {/* Top bar */}
