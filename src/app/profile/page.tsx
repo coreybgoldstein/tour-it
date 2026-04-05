@@ -936,46 +936,38 @@ if (userUploads && userUploads.length > 0) {
         </div>
       )}
 
-      {/* Top bar — logout anchored, notification bell handled globally */}
-      <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center" }}>
-        <button
-          onClick={handleLogout}
-          style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-        >
+      {/* Top bar */}
+      <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={handleLogout} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+        <button onClick={() => setShowEdit(true)} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
           </svg>
         </button>
       </div>
 
       {/* Avatar + identity */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 16 }}>
-        <div style={{ position: "relative", marginBottom: 10 }}>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            style={{ width: 88, height: 88, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: "2.5px solid rgba(26,158,66,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}
-          >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 10, paddingBottom: 14 }}>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ width: 88, height: 88, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: "2.5px solid rgba(26,158,66,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden" }}>
             {user.avatarUrl
               ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials
             }
           </div>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            style={{ position: "absolute", bottom: 2, right: 2, width: 24, height: 24, borderRadius: "50%", background: "#1a9e42", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: "2.5px solid #07100a" }}
-          >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          </div>
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
         </div>
 
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 3 }}>{user.displayName}</div>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: user.handicapIndex !== null || homeCourse ? 12 : 0 }}>@{user.username}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: "#1a9e42", lineHeight: 1.2, marginBottom: user.handicapIndex !== null || homeCourse ? 10 : 0 }}>@{user.username}</div>
 
         {(user.handicapIndex !== null || homeCourse) && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
             {user.handicapIndex !== null && (
-              <div style={{ display: "flex", alignItems: "center", background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "#1a9e42" }}>
+              <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
                 {user.handicapIndex} hcp
               </div>
             )}
@@ -1003,51 +995,60 @@ if (userUploads && userUploads.length > 0) {
         ))}
       </div>
 
-      {/* Edit profile */}
-      <div style={{ padding: "0 20px 16px" }}>
-        <button onClick={() => setShowEdit(!showEdit)} style={{ width: "100%", padding: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", fontSize: "12px", fontWeight: 500, color: "rgba(255,255,255,0.7)", cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
-          {showEdit ? "Cancel" : "Edit profile"}
-        </button>
-        {showEdit && (
-          <div style={{ marginTop: "12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div>
-              <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "6px", fontFamily: "'Outfit', sans-serif" }}>Handicap index</label>
-              <input type="number" step="0.1" min="-10" max="54" placeholder="e.g. 8.4" value={editHandicap} onChange={e => setEditHandicap(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "9px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "'Outfit', sans-serif" }} />
+      {/* Edit profile bottom sheet */}
+      {showEdit && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 150 }} onClick={() => setShowEdit(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px", maxHeight: "56vh", overflowY: "auto" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 18px" }} />
+
+            {/* Avatar row */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "#1a3320", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>
+                {user.avatarUrl ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#1a9e42" }}>@{user.username}</div>
+                {user.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{user.displayName}</div>}
+              </div>
+              <button onClick={() => fileInputRef.current?.click()} style={{ padding: "7px 14px", background: "rgba(26,158,66,0.15)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42", cursor: "pointer", whiteSpace: "nowrap" }}>
+                {uploadingAvatar ? "Uploading…" : "Change photo"}
+              </button>
             </div>
-            <div style={{ position: "relative" }}>
+
+            {/* Handicap */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "6px", fontFamily: "'Outfit', sans-serif" }}>Handicap index</label>
+              <input type="number" step="0.1" min="-10" max="54" placeholder="e.g. 8.4" value={editHandicap} onChange={e => setEditHandicap(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "'Outfit', sans-serif" }} />
+            </div>
+
+            {/* Home course */}
+            <div style={{ position: "relative", marginBottom: 20 }}>
               <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "6px", fontFamily: "'Outfit', sans-serif" }}>Home course</label>
               {homeCourse && !editHomeCourseSearch && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(26,158,66,0.08)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: "8px", padding: "8px 12px", marginBottom: 6 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#1a9e42" }}>{homeCourse.name}</span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(26,158,66,0.08)", border: "1px solid rgba(26,158,66,0.2)", borderRadius: "10px", padding: "8px 12px", marginBottom: 6 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)" }}>{homeCourse.name}</span>
                   <button onClick={() => setHomeCourse(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 </div>
               )}
-              <input
-                placeholder={homeCourse ? "Search to change..." : "Search courses..."}
-                value={editHomeCourseSearch}
-                onChange={e => setEditHomeCourseSearch(e.target.value)}
-                style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "9px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "'Outfit', sans-serif" }}
-              />
+              <input placeholder={homeCourse ? "Search to change..." : "Search courses..."} value={editHomeCourseSearch} onChange={e => setEditHomeCourseSearch(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "10px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "'Outfit', sans-serif" }} />
               {editHomeCourseLoading && <div style={{ position: "absolute", right: 10, top: 38, width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.6s linear infinite" }} />}
               {editHomeCourseResults.length > 0 && (
-                <div style={{ position: "absolute", left: 0, right: 0, top: "100%", background: "#0d1f12", border: "1px solid rgba(26,158,66,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 50, marginTop: 4 }}>
+                <div style={{ position: "absolute", left: 0, right: 0, top: "100%", background: "#0d1f12", border: "1px solid rgba(26,158,66,0.15)", borderRadius: 10, overflow: "hidden", zIndex: 50, marginTop: 4 }}>
                   {editHomeCourseResults.map(c => (
-                    <button key={c.id} onClick={() => { setHomeCourse(c); setEditHomeCourseSearch(""); setEditHomeCourseResults([]); }}
-                      style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", cursor: "pointer", textAlign: "left" }}>
-                      {c.name}
-                    </button>
+                    <button key={c.id} onClick={() => { setHomeCourse(c); setEditHomeCourseSearch(""); setEditHomeCourseResults([]); }} style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", cursor: "pointer", textAlign: "left" }}>{c.name}</button>
                   ))}
                 </div>
               )}
             </div>
-            <button onClick={handleSaveProfile} style={{ padding: "10px", background: "#1a9e42", border: "none", borderRadius: "10px", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
-              {saving ? "Saving..." : "Save changes"}
+
+            <button onClick={handleSaveProfile} style={{ width: "100%", padding: "12px", background: "#1a9e42", border: "none", borderRadius: "12px", color: "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
+              {saving ? "Saving…" : "Save changes"}
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* My Courses — compact pill list */}
       {(savedCourses.length > 0 || coursesPlayed.length > 0) && (
