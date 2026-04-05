@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { compressVideo } from "@/lib/compressVideo";
 
 type Course = { id: string; name: string; city: string; state: string; holeCount: number };
+type TagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 
 const SHOT_TYPES = [
   { label: "Tee", value: "TEE_SHOT" },
@@ -18,12 +19,12 @@ const SHOT_TYPES = [
   { label: "Full Hole", value: "FULL_HOLE" },
 ];
 
-type ClipStatus = "pending" | "compressing" | "queued" | "uploading" | "done" | "error";
+type ClipStatus = "pending" | "compressing" | "uploading" | "done" | "error";
 
 type BatchClip = {
   id: string;
   file: File;
-  preview: string;
+  thumbnail: string; // canvas-generated static image
   holeNumber: number | null;
   shotType: string;
   compressPct: number;
@@ -31,9 +32,45 @@ type BatchClip = {
   compressedFile: File | null;
   status: ClipStatus;
   errorMsg: string | null;
+  taggedUsers: TagUser[];
 };
 
 const SKIP_MB = 30;
+
+// Draw first frame of a video file to a canvas → return data URL
+async function generateThumbnail(file: File): Promise<string> {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    video.src = url;
+
+    const cleanup = () => URL.revokeObjectURL(url);
+
+    video.addEventListener("loadedmetadata", () => {
+      video.currentTime = Math.min(0.5, video.duration * 0.1);
+    });
+
+    video.addEventListener("seeked", () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 120;
+        canvas.height = 180;
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.drawImage(video, 0, 0, 120, 180);
+        cleanup();
+        resolve(canvas.toDataURL("image/jpeg", 0.75));
+      } catch {
+        cleanup();
+        resolve("");
+      }
+    });
+
+    video.addEventListener("error", () => { cleanup(); resolve(""); });
+  });
+}
 
 export default function BatchUpload({ initialFiles, onBack }: { initialFiles: File[]; onBack: () => void }) {
   const router = useRouter();
@@ -45,26 +82,44 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
   const [uploading, setUploading] = useState(false);
   const [doneCount, setDoneCount] = useState(0);
   const [allDone, setAllDone] = useState(false);
+
+  // Tag search state — one active clip at a time
+  const [tagClipId, setTagClipId] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState("");
+  const [tagResults, setTagResults] = useState<TagUser[]>([]);
+  const tagDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const courseDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialize clips and kick off compression in background
+  // Initialize clips, generate thumbnails, kick off compression
   useEffect(() => {
     const initial: BatchClip[] = initialFiles.map(file => ({
       id: crypto.randomUUID(),
       file,
-      preview: URL.createObjectURL(file),
+      thumbnail: "",
       holeNumber: null,
       shotType: "TEE_SHOT",
       compressPct: 0,
       compressStage: "",
       compressedFile: null,
-      status: file.type.startsWith("video/") && file.size >= SKIP_MB * 1024 * 1024 ? "compressing" : "pending",
+      status: (file.type.startsWith("video/") && file.size >= SKIP_MB * 1024 * 1024) ? "compressing" : "pending",
       errorMsg: null,
+      taggedUsers: [],
     }));
     setClips(initial);
 
-    // Start compression for large video files immediately
     initial.forEach(clip => {
+      // Generate static thumbnail for videos
+      if (clip.file.type.startsWith("video/")) {
+        generateThumbnail(clip.file).then(thumb => {
+          setClips(prev => prev.map(c => c.id === clip.id ? { ...c, thumbnail: thumb } : c));
+        });
+      } else {
+        // Photo: use object URL directly
+        setClips(prev => prev.map(c => c.id === clip.id ? { ...c, thumbnail: URL.createObjectURL(clip.file) } : c));
+      }
+
+      // Start compression for large videos
       if (clip.file.type.startsWith("video/") && clip.file.size >= SKIP_MB * 1024 * 1024) {
         compressVideo(clip.file, (stage, pct) => {
           setClips(prev => prev.map(c => c.id === clip.id ? { ...c, compressStage: stage, compressPct: pct } : c));
@@ -97,8 +152,39 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
 
   useEffect(() => { searchCourses(courseSearch); }, [courseSearch, searchCourses]);
 
+  // Tag user search
+  useEffect(() => {
+    if (tagDebounce.current) clearTimeout(tagDebounce.current);
+    if (!tagInput.trim() || tagInput.trim().length < 2) { setTagResults([]); return; }
+    tagDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const activeClip = clips.find(c => c.id === tagClipId);
+      const taggedIds = new Set(activeClip?.taggedUsers.map(u => u.id) || []);
+      const { data } = await supabase
+        .from("User")
+        .select("id, username, displayName, avatarUrl")
+        .ilike("username", `%${tagInput.trim()}%`)
+        .limit(6);
+      setTagResults((data || []).filter((u: TagUser) => !taggedIds.has(u.id)));
+    }, 280);
+  }, [tagInput, tagClipId, clips]);
+
   function updateClip(id: string, patch: Partial<BatchClip>) {
     setClips(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
+  }
+
+  function addTag(clipId: string, user: TagUser) {
+    setClips(prev => prev.map(c =>
+      c.id === clipId ? { ...c, taggedUsers: [...c.taggedUsers, user] } : c
+    ));
+    setTagInput("");
+    setTagResults([]);
+  }
+
+  function removeTag(clipId: string, userId: string) {
+    setClips(prev => prev.map(c =>
+      c.id === clipId ? { ...c, taggedUsers: c.taggedUsers.filter(u => u.id !== userId) } : c
+    ));
   }
 
   async function uploadAll() {
@@ -111,13 +197,15 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setUploading(false); return; }
 
+    const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
+    const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
+
     let done = 0;
 
     for (const clip of assignedClips) {
       setClips(prev => prev.map(c => c.id === clip.id ? { ...c, status: "uploading" } : c));
 
       try {
-        // Use compressed file if available, otherwise original
         const fileToUpload = clip.compressedFile || clip.file;
         const isVideo = clip.file.type.startsWith("video/");
         const ext = fileToUpload.name.split(".").pop();
@@ -145,48 +233,25 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           const newHoleId = crypto.randomUUID();
           const now = new Date().toISOString();
           await supabase.from("Hole").insert({
-            id: newHoleId,
-            courseId: selectedCourse.id,
-            holeNumber: clip.holeNumber,
-            par: 0,
-            uploadCount: 0,
-            createdAt: now,
-            updatedAt: now,
+            id: newHoleId, courseId: selectedCourse.id, holeNumber: clip.holeNumber,
+            par: 0, uploadCount: 0, createdAt: now, updatedAt: now,
           });
           holeId = newHoleId;
         }
 
         const uploadId = crypto.randomUUID();
         const now = new Date().toISOString();
-        const dateFromFile = new Date(clip.file.lastModified).toISOString();
 
         await supabase.from("Upload").insert({
-          id: uploadId,
-          userId: user.id,
-          courseId: selectedCourse.id,
-          holeId,
-          mediaType: isVideo ? "VIDEO" : "PHOTO",
-          mediaUrl: publicUrl,
-          teeBoxId: null,
-          shotType: clip.shotType,
-          yardageOverlay: null,
-          clubUsed: null,
-          windCondition: null,
-          strategyNote: null,
-          landingZoneNote: null,
-          whatCameraDoesntShow: null,
-          handicapRange: null,
-          datePlayedAt: dateFromFile,
-          rankScore: 0,
-          tripId: null,
-          tripPublic: true,
-          moderationStatus: "PENDING",
-          likeCount: 0,
-          commentCount: 0,
-          viewCount: 0,
-          saveCount: 0,
-          createdAt: now,
-          updatedAt: now,
+          id: uploadId, userId: user.id, courseId: selectedCourse.id, holeId,
+          mediaType: isVideo ? "VIDEO" : "PHOTO", mediaUrl: publicUrl,
+          teeBoxId: null, shotType: clip.shotType, yardageOverlay: null,
+          clubUsed: null, windCondition: null, strategyNote: null,
+          landingZoneNote: null, whatCameraDoesntShow: null, handicapRange: null,
+          datePlayedAt: new Date(clip.file.lastModified).toISOString(),
+          rankScore: 0, tripId: null, tripPublic: true,
+          moderationStatus: "PENDING", likeCount: 0, commentCount: 0,
+          viewCount: 0, saveCount: 0, createdAt: now, updatedAt: now,
         });
 
         // Increment counters
@@ -195,6 +260,32 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         if (holeId) {
           const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
           await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);
+        }
+
+        // Tags + notifications
+        if (clip.taggedUsers.length > 0) {
+          const notifNow = new Date().toISOString();
+          await Promise.all([
+            supabase.from("UploadTag").insert(
+              clip.taggedUsers.map(u => ({
+                id: crypto.randomUUID(), uploadId, userId: u.id, createdAt: notifNow,
+              }))
+            ),
+            supabase.from("Notification").insert(
+              clip.taggedUsers.map(u => ({
+                id: crypto.randomUUID(),
+                userId: u.id,
+                type: "clip_tag",
+                title: `${taggerName} tagged you in a clip`,
+                body: `${selectedCourse.name} · Hole ${clip.holeNumber}`,
+                linkUrl: publicUrl,
+                referenceId: uploadId,
+                read: false,
+                createdAt: notifNow,
+                updatedAt: notifNow,
+              }))
+            ),
+          ]);
         }
 
         done++;
@@ -243,13 +334,16 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
   return (
     <div style={{ minHeight: "100svh", background: "#07100a", paddingBottom: 120 }}>
       <style>{`
-        .batch-hole-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); cursor: pointer; flex-shrink: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@400;500;600&display=swap');
+        .batch-hole-btn { width: 30px; height: 30px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); cursor: pointer; flex-shrink: 0; }
         .batch-hole-btn.active { background: rgba(77,168,98,0.2); border-color: rgba(77,168,98,0.6); color: #4da862; }
-        .batch-shot-btn { padding: 6px 12px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+        .batch-hole-btn:disabled { opacity: 0.35; cursor: default; }
+        .batch-shot-btn { padding: 5px 11px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
         .batch-shot-btn.active { background: rgba(77,168,98,0.2); border-color: rgba(77,168,98,0.6); color: #4da862; }
-        .holes-row { display: flex; flex-wrap: wrap; gap: 5px; }
+        .batch-shot-btn:disabled { opacity: 0.35; cursor: default; }
         .shot-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
         .shot-row::-webkit-scrollbar { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       {/* Header */}
@@ -291,15 +385,10 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
               placeholder="Search by name, city, or state…"
               style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(77,168,98,0.3)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
             />
-            {courseLoading && (
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", padding: "8px 0" }}>Searching…</div>
-            )}
+            {courseLoading && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", padding: "8px 0" }}>Searching…</div>}
             {courseResults.map(c => (
-              <button
-                key={c.id}
-                onClick={() => { setSelectedCourse(c); setCourseSearch(""); setCourseResults([]); }}
-                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "12px 14px", marginTop: 6, cursor: "pointer", textAlign: "left" }}
-              >
+              <button key={c.id} onClick={() => { setSelectedCourse(c); setCourseSearch(""); setCourseResults([]); }}
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "12px 14px", marginTop: 6, cursor: "pointer", textAlign: "left" }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{c.name}</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{[c.city, c.state].filter(Boolean).join(", ")}</div>
               </button>
@@ -311,49 +400,57 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
       {/* Clip cards */}
       <div style={{ padding: "12px 20px" }}>
         {clips.map((clip, idx) => (
-          <div
-            key={clip.id}
-            style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, marginBottom: 12, overflow: "hidden" }}
-          >
-            <div style={{ display: "flex", gap: 12, padding: "12px 14px" }}>
+          <div key={clip.id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, marginBottom: 12, overflow: "hidden" }}>
+            <div style={{ display: "flex", gap: 12, padding: "14px 14px 12px" }}>
+
               {/* Thumbnail */}
-              <div style={{ width: 56, height: 80, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "#0a1e10", position: "relative" }}>
-                {clip.file.type.startsWith("video/") ? (
-                  <video src={clip.preview} style={{ width: "100%", height: "100%", objectFit: "cover" }} preload="metadata" muted playsInline />
+              <div style={{ width: 72, height: 108, borderRadius: 10, overflow: "hidden", flexShrink: 0, background: "#0a1e10", position: "relative" }}>
+                {clip.thumbnail ? (
+                  <img src={clip.thumbnail} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={`Clip ${idx + 1}`} />
                 ) : (
-                  <img src={clip.preview} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="preview" />
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.1)", borderTopColor: "rgba(255,255,255,0.3)", animation: "spin 0.8s linear infinite" }} />
+                  </div>
                 )}
+                {/* Status overlay */}
                 {clip.status === "done" && (
-                  <div style={{ position: "absolute", inset: 0, background: "rgba(45,122,66,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(45,122,66,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
                 )}
                 {clip.status === "uploading" && (
-                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
+                  </div>
+                )}
+                {/* Clip number badge */}
+                {clip.status !== "done" && clip.status !== "uploading" && (
+                  <div style={{ position: "absolute", top: 5, left: 5, background: "rgba(0,0,0,0.6)", borderRadius: 5, padding: "2px 6px" }}>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{idx + 1}</span>
                   </div>
                 )}
               </div>
 
-              {/* Clip info */}
+              {/* Controls */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "70%" }}>
-                    Clip {idx + 1} · {(clip.file.size / 1048576).toFixed(0)} MB
+                {/* File size + compression status */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
+                    {(clip.file.size / 1048576).toFixed(0)} MB
                   </span>
                   {clip.status === "compressing" && (
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(77,168,98,0.7)", flexShrink: 0 }}>
-                      {clip.compressPct > 0 ? `${clip.compressPct}%` : "Compressing…"}
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(77,168,98,0.8)" }}>
+                      {clip.compressPct > 0 ? `Compressing ${clip.compressPct}%` : "Compressing…"}
                     </span>
                   )}
                   {clip.status === "error" && (
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#e05c5c", flexShrink: 0 }}>Failed</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#e05c5c" }}>Failed</span>
                   )}
                 </div>
 
                 {/* Hole picker */}
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: 5 }}>Hole</div>
-                <div className="holes-row" style={{ marginBottom: 10 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
                   {Array.from({ length: 18 }, (_, i) => i + 1).map(n => (
                     <button
                       key={n}
@@ -366,7 +463,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
                   ))}
                 </div>
 
-                {/* Shot type picker */}
+                {/* Shot type */}
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.25)", marginBottom: 5 }}>Shot type</div>
                 <div className="shot-row">
                   {SHOT_TYPES.map(s => (
@@ -385,10 +482,81 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
 
             {/* Compression progress bar */}
             {clip.status === "compressing" && (
-              <div style={{ padding: "0 14px 12px" }}>
+              <div style={{ padding: "0 14px 4px" }}>
                 <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${clip.compressPct || 8}%`, background: "#4da862", borderRadius: 99, transition: "width 0.3s ease" }} />
+                  <div style={{ height: "100%", width: `${clip.compressPct || 6}%`, background: "#4da862", borderRadius: 99, transition: "width 0.3s ease" }} />
                 </div>
+              </div>
+            )}
+
+            {/* Tagging section */}
+            {clip.status !== "done" && (
+              <div style={{ padding: "8px 14px 14px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                {/* Tagged users */}
+                {clip.taggedUsers.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    {clip.taggedUsers.map(u => (
+                      <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 8px 3px 5px" }}>
+                        <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {u.avatarUrl
+                            ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          }
+                        </div>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>@{u.username}</span>
+                        <button onClick={() => removeTag(clip.id, u.id)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", marginLeft: 1 }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tag input (expanded) */}
+                {tagClipId === clip.id ? (
+                  <div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <input
+                        autoFocus
+                        value={tagInput}
+                        onChange={e => setTagInput(e.target.value)}
+                        placeholder="Search username…"
+                        style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", outline: "none" }}
+                      />
+                      <button onClick={() => { setTagClipId(null); setTagInput(""); setTagResults([]); }}
+                        style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: "0 4px" }}>
+                        Done
+                      </button>
+                    </div>
+                    {tagResults.length > 0 && (
+                      <div style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 8, overflow: "hidden" }}>
+                        {tagResults.map(u => (
+                          <button key={u.id} onClick={() => addTag(clip.id, u)}
+                            style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                            <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              {u.avatarUrl
+                                ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                              }
+                            </div>
+                            <div>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
+                              {u.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{u.displayName}</div>}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setTagClipId(clip.id); setTagInput(""); setTagResults([]); }}
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.6)" }}>Tag a player</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -412,14 +580,10 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           disabled={!selectedCourse || assignedCount === 0 || uploading}
           style={{
             width: "100%",
-            background: !selectedCourse || assignedCount === 0 ? "rgba(77,168,98,0.2)" : "#2d7a42",
-            border: "none",
-            borderRadius: 14,
-            padding: "16px",
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: 15,
-            fontWeight: 600,
-            color: !selectedCourse || assignedCount === 0 ? "rgba(255,255,255,0.3)" : "#fff",
+            background: !selectedCourse || assignedCount === 0 ? "rgba(77,168,98,0.15)" : "#2d7a42",
+            border: "none", borderRadius: 14, padding: "16px",
+            fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600,
+            color: !selectedCourse || assignedCount === 0 ? "rgba(255,255,255,0.25)" : "#fff",
             cursor: !selectedCourse || assignedCount === 0 || uploading ? "not-allowed" : "pointer",
             boxShadow: selectedCourse && assignedCount > 0 ? "0 2px 16px rgba(45,122,66,0.4)" : "none",
           }}
@@ -431,8 +595,6 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
             : `Upload ${assignedCount} clip${assignedCount !== 1 ? "s" : ""}`}
         </button>
       </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
