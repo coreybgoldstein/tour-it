@@ -59,7 +59,7 @@ function ProfileFeedCard({
     } catch {}
   };
 
-  const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt);
+  const hasNotes = !!(clip.strategyNote || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000" }}>
@@ -213,22 +213,12 @@ function ProfileFeedCard({
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{new Date(clip.datePlayedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
                 </div>
               )}
-              {clip.strategyNote && (
+              {(clip.strategyNote || clip.landingZoneNote || clip.whatCameraDoesntShow) && (
                 <div style={{ paddingTop: clip.shotType || clip.clubUsed || clip.windCondition || clip.datePlayedAt ? 6 : 0, borderTop: clip.shotType || clip.clubUsed || clip.windCondition || clip.datePlayedAt ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Strategy</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>{clip.strategyNote}</div>
-                </div>
-              )}
-              {clip.landingZoneNote && (
-                <div style={{ paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Landing Zone</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>{clip.landingZoneNote}</div>
-                </div>
-              )}
-              {clip.whatCameraDoesntShow && (
-                <div style={{ paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>What the Camera Doesn&apos;t Show</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>{clip.whatCameraDoesntShow}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Notes</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>
+                    {[clip.strategyNote, clip.landingZoneNote, clip.whatCameraDoesntShow].filter(Boolean).join("\n\n")}
+                  </div>
                 </div>
               )}
             </div>
@@ -823,10 +813,10 @@ if (userUploads && userUploads.length > 0) {
                       </div>
                     </div>
 
-                    {/* Strategy note */}
+                    {/* Notes */}
                     <div style={{ marginBottom: 18 }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Strategy note</div>
-                      <textarea value={editData.strategyNote} onChange={e => setEditData(d => d ? { ...d, strategyNote: e.target.value } : d)} placeholder="What should golfers know about this shot?" rows={3}
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Notes</div>
+                      <textarea value={editData.strategyNote} onChange={e => setEditData(d => d ? { ...d, strategyNote: e.target.value } : d)} placeholder="Share anything golfers should know — strategy, landing zones, blind spots, elevation changes, tricky pins..." rows={4}
                         style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", resize: "none", boxSizing: "border-box" }} />
                     </div>
 

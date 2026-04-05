@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos";
@@ -13,6 +14,7 @@ const DEFAULT_AVATARS = [
 const randomAvatar = () => DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)];
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -81,7 +83,7 @@ export default function SignUpPage() {
 
     // If session is immediately available (email confirmation disabled), go straight to onboarding
     if (authData.session) {
-      window.location.href = "/onboarding";
+      router.push("/onboarding");
       return;
     }
 

@@ -219,10 +219,10 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
           )}
         </div>
 
-        {/* Strategy note */}
-        {activeShot?.strategyNote && (
+        {/* Notes */}
+        {(activeShot?.strategyNote || activeShot?.landingZoneNote || activeShot?.whatCameraDoesntShow) && (
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>
-            {activeShot.strategyNote}
+            {[activeShot.strategyNote, activeShot.landingZoneNote, activeShot.whatCameraDoesntShow].filter(Boolean).join(" · ")}
           </div>
         )}
 

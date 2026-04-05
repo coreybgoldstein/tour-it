@@ -202,6 +202,18 @@ export default function TripPage() {
   const [editStart, setEditStart] = useState("");
   const [editEnd, setEditEnd] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Delete trip
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingTrip, setDeletingTrip] = useState(false);
+
+  async function handleDeleteTrip() {
+    if (!trip || deletingTrip) return;
+    setDeletingTrip(true);
+    const supabase = createClient();
+    await supabase.from("GolfTrip").delete().eq("id", trip.id);
+    router.push("/lists");
+  }
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -526,12 +538,33 @@ export default function TripPage() {
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: trip.name.length > 22 ? 16 : trip.name.length > 14 ? 18 : 22, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{trip.name}</div>
             </div>
             {isOwner && (
-              <button
-                onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
-                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, marginTop: 2 }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
+              <div style={{ display: "flex", gap: 6, flexShrink: 0, marginTop: 2 }}>
+                {confirmDelete ? (
+                  <>
+                    <button onClick={() => setConfirmDelete(false)}
+                      style={{ height: 32, borderRadius: 99, padding: "0 12px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>
+                      Cancel
+                    </button>
+                    <button onClick={handleDeleteTrip} disabled={deletingTrip}
+                      style={{ height: 32, borderRadius: 99, padding: "0 12px", background: "rgba(200,60,60,0.15)", border: "1px solid rgba(200,60,60,0.35)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(220,100,100,0.9)", cursor: "pointer" }}>
+                      {deletingTrip ? "Deleting…" : "Delete"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
+                      style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button onClick={() => setConfirmDelete(true)}
+                      style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(200,60,60,0.08)", border: "1px solid rgba(200,60,60,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(200,80,80,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </>
+                )}
+              </div>
             )}
           </div>
 

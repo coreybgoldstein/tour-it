@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
@@ -37,12 +39,12 @@ export default function LoginPage() {
         .eq("id", userId)
         .single();
       if (profile && profile.displayName === profile.username) {
-        window.location.href = "/onboarding";
+        router.push("/onboarding");
         return;
       }
     }
 
-    window.location.href = "/";
+    router.push("/");
   };
 
   return (

@@ -310,22 +310,12 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{new Date(clip.datePlayedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
                 </div>
               )}
-              {clip.strategyNote && (
+              {(clip.strategyNote || clip.landingZoneNote || clip.whatCameraDoesntShow) && (
                 <div style={{ paddingTop: clip.shotType || clip.clubUsed || clip.windCondition || clip.datePlayedAt ? 6 : 0, borderTop: clip.shotType || clip.clubUsed || clip.windCondition || clip.datePlayedAt ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Strategy</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>{clip.strategyNote}</div>
-                </div>
-              )}
-              {clip.landingZoneNote && (
-                <div style={{ paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Landing Zone</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>{clip.landingZoneNote}</div>
-                </div>
-              )}
-              {clip.whatCameraDoesntShow && (
-                <div style={{ paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>What the Camera Doesn&apos;t Show</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>{clip.whatCameraDoesntShow}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Notes</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>
+                    {[clip.strategyNote, clip.landingZoneNote, clip.whatCameraDoesntShow].filter(Boolean).join("\n\n")}
+                  </div>
                 </div>
               )}
             </div>
@@ -1266,9 +1256,9 @@ export default function CourseProfilePage() {
               <img src={extendedClip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             )}
           </div>
-          {extendedClip.strategyNote && (
+          {(extendedClip.strategyNote || extendedClip.landingZoneNote || extendedClip.whatCameraDoesntShow) && (
             <div style={{ position: "absolute", bottom: 80, left: 16, right: 80, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.5, textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-              {extendedClip.strategyNote}
+              {[extendedClip.strategyNote, extendedClip.landingZoneNote, extendedClip.whatCameraDoesntShow].filter(Boolean).join(" · ")}
             </div>
           )}
         </div>

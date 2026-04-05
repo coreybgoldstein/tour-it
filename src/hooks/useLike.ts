@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type UseLikeOptions = {
@@ -16,6 +17,7 @@ type UseLikeReturn = {
 };
 
 export function useLike({ uploadId, initialLikeCount }: UseLikeOptions): UseLikeReturn {
+  const router = useRouter();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [loading, setLoading] = useState(false);
@@ -55,7 +57,7 @@ export function useLike({ uploadId, initialLikeCount }: UseLikeOptions): UseLike
 
     // If not logged in, redirect to login
     if (!userId) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
 

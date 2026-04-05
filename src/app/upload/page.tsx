@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { compressVideo } from "@/lib/compressVideo";
@@ -60,9 +60,10 @@ const CLUBS = [
   { group: "Other", options: ["Putter", "Chipper"] },
 ];
 
-const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "strategy", "landingZone", "hidden", "handicap"];
+const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "notes", "handicap"];
 
 function UploadPageInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedCourseId = searchParams.get("courseId");
   const preselectedHoleNumber = searchParams.get("holeNumber") ? Number(searchParams.get("holeNumber")) : null;
@@ -99,9 +100,7 @@ function UploadPageInner() {
     shotType: "",
     club: "",
     wind: "",
-    strategy: "",
-    landingZone: "",
-    hidden: "",
+    notes: "",
     handicap: "",
   });
 
@@ -119,7 +118,7 @@ function UploadPageInner() {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) {
-        window.location.href = "/login?redirect=/upload";
+        router.push("/login?redirect=/upload");
       } else {
         setAuthChecked(true);
         // If coming from a course page, fetch just that one course
@@ -350,9 +349,7 @@ function UploadPageInner() {
         yardageOverlay: contentFormat === "THREE_HOLE" ? selectedGroup : null,
         clubUsed: intel.club || null,
         windCondition: intel.wind || null,
-        strategyNote: intel.strategy || null,
-        landingZoneNote: intel.landingZone || null,
-        whatCameraDoesntShow: intel.hidden || null,
+        strategyNote: intel.notes || null,
         handicapRange: intel.handicap || null,
         datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
         rankScore: intelPct,
@@ -448,14 +445,14 @@ function UploadPageInner() {
                 setSelectedHole(null);
                 setMediaFile(null);
                 setMediaPreview(null);
-                setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", strategy: "", landingZone: "", hidden: "", handicap: "" });
+                setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", notes: "", handicap: "" });
                 setSubmitted(false);
               }}
               style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "10px 20px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
               Upload another
             </button>
             <button
-              onClick={() => window.location.href = `/courses/${selectedCourse?.id}/holes/${selectedHole}`}
+              onClick={() => router.push(`/courses/${selectedCourse?.id}/holes/${selectedHole}`)}
               style={{ background: "#2d7a42", border: "none", borderRadius: 99, padding: "10px 20px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
               View hole
             </button>
@@ -656,8 +653,18 @@ function UploadPageInner() {
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
                 <div className="upload-zone-title">Tap to upload video or photo</div>
-                <div className="upload-zone-sub">Select multiple files to batch upload</div>
+                <div className="upload-zone-sub">Single clip</div>
               </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                style={{ marginTop: 10, width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer" }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="8" height="8" rx="1"/>
+                </svg>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>Batch Upload</span>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)" }}>— select multiple clips at once</span>
+              </button>
             )}
             {error && <div className="error-box">{error}</div>}
           </div>
@@ -894,16 +901,8 @@ function UploadPageInner() {
             </div>
             <div className="divider" />
             <div className="field">
-              <label className="field-label" style={{ color: "#4da862" }}>Strategy Note <span className="optional-tag">OPTIONAL</span></label>
-              <textarea className="field-textarea" rows={3} placeholder="What's the play? Where do you aim, what do you avoid..." value={intel.strategy} onChange={e => setIntel({ ...intel, strategy: e.target.value })} />
-            </div>
-            <div className="field">
-              <label className="field-label" style={{ color: "rgba(100,160,220,0.8)" }}>Landing Zone <span className="optional-tag">OPTIONAL</span></label>
-              <textarea className="field-textarea" rows={2} placeholder="Where should the ball land?" value={intel.landingZone} onChange={e => setIntel({ ...intel, landingZone: e.target.value })} />
-            </div>
-            <div className="field">
-              <label className="field-label" style={{ color: "rgba(210,175,80,0.7)" }}>What the Camera Doesn't Show <span className="optional-tag">OPTIONAL</span></label>
-              <textarea className="field-textarea" rows={2} placeholder="Slopes, blind spots, elevation changes, tricky pin positions..." value={intel.hidden} onChange={e => setIntel({ ...intel, hidden: e.target.value })} />
+              <label className="field-label" style={{ color: "#4da862" }}>Notes <span className="optional-tag">OPTIONAL</span></label>
+              <textarea className="field-textarea" rows={4} placeholder="Share anything golfers should know — strategy, landing zones, blind spots, elevation changes, tricky pins..." value={intel.notes} onChange={e => setIntel({ ...intel, notes: e.target.value })} />
             </div>
             <div style={{ height: 90 }} />
           </div>

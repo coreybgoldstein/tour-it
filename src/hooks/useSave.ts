@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type SaveType = "PLAYED" | "BUCKET_LIST";
@@ -20,6 +21,7 @@ type UseSaveReturn = {
 };
 
 export function useSave({ courseId }: UseSaveOptions): UseSaveReturn {
+  const router = useRouter();
   const [saved, setSaved] = useState(false);
   const [saveType, setSaveType] = useState<SaveType | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,7 @@ export function useSave({ courseId }: UseSaveOptions): UseSaveReturn {
 
     // If not logged in, redirect to login
     if (!userId) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
 
