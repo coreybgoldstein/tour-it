@@ -135,7 +135,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
   // Course search
   const searchCourses = useCallback((q: string) => {
     if (courseDebounce.current) clearTimeout(courseDebounce.current);
-    if (!q.trim() || q.trim().length < 2) { setCourseResults([]); setCourseLoading(false); return; }
+    if (!q.trim()) { setCourseResults([]); setCourseLoading(false); return; }
     setCourseLoading(true);
     courseDebounce.current = setTimeout(async () => {
       const supabase = createClient();
@@ -155,7 +155,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
   // Tag user search
   useEffect(() => {
     if (tagDebounce.current) clearTimeout(tagDebounce.current);
-    if (!tagInput.trim() || tagInput.trim().length < 2) { setTagResults([]); return; }
+    if (!tagInput.trim()) { setTagResults([]); return; }
     tagDebounce.current = setTimeout(async () => {
       const supabase = createClient();
       const activeClip = clips.find(c => c.id === tagClipId);

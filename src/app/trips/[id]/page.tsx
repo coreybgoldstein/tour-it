@@ -284,7 +284,7 @@ export default function TripPage() {
 
   // Invite search
   useEffect(() => {
-    if (!inviteQuery.trim() || inviteQuery.length < 2) { setInviteResults([]); return; }
+    if (!inviteQuery.trim()) { setInviteResults([]); return; }
     if (inviteDebounce.current) clearTimeout(inviteDebounce.current);
     inviteDebounce.current = setTimeout(async () => {
       const supabase = createClient();
@@ -296,7 +296,7 @@ export default function TripPage() {
 
   // Course search for add-course sheet
   useEffect(() => {
-    if (!courseSearch.trim() || courseSearch.trim().length < 2) { setCourseResults([]); return; }
+    if (!courseSearch.trim()) { setCourseResults([]); return; }
     if (courseSearchDebounce.current) clearTimeout(courseSearchDebounce.current);
     setCourseSearchLoading(true);
     courseSearchDebounce.current = setTimeout(async () => {

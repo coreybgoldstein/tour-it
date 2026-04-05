@@ -75,7 +75,7 @@ export default function OnboardingPage() {
 
   // Course search debounce
   useEffect(() => {
-    if (!courseSearch.trim() || courseSearch.length < 2) { setCourseResults([]); return; }
+    if (!courseSearch.trim()) { setCourseResults([]); return; }
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
     setCourseLoading(true);
     searchDebounce.current = setTimeout(async () => {

@@ -143,7 +143,7 @@ function UploadPageInner() {
   // Tag user search
   useEffect(() => {
     if (tagDebounce.current) clearTimeout(tagDebounce.current);
-    if (!tagInput.trim() || tagInput.trim().length < 2) { setTagResults([]); return; }
+    if (!tagInput.trim()) { setTagResults([]); return; }
     tagDebounce.current = setTimeout(async () => {
       const supabase = createClient();
       const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${tagInput.trim()}%`).limit(6);
@@ -154,7 +154,7 @@ function UploadPageInner() {
 
   const searchCourses = useCallback((q: string) => {
     if (courseDebounceRef.current) clearTimeout(courseDebounceRef.current);
-    if (!q.trim() || q.trim().length < 2) {
+    if (!q.trim()) {
       setCourseResults([]);
       setCourseLoading(false);
       return;
@@ -717,9 +717,9 @@ function UploadPageInner() {
             {courseLoading && (
               <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 20 }}>Searching...</p>
             )}
-            {!courseLoading && courseSearch.trim().length < 2 && gpsSuggestions.length === 0 && !selectedCourse && (
+            {!courseLoading && !courseSearch.trim() && gpsSuggestions.length === 0 && !selectedCourse && (
               <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.2)", textAlign: "center", marginTop: 28, lineHeight: 1.6 }}>
-                Type at least 2 characters<br/>
+                Start typing to search<br/>
                 <span style={{ fontSize: 12 }}>Search by name, city, or state</span>
               </p>
             )}

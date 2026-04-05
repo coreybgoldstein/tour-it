@@ -165,6 +165,10 @@ export default function ProfilePage() {
 
   const [showEdit, setShowEdit] = useState(false);
   const [editHandicap, setEditHandicap] = useState("");
+  const [editHomeCourseSearch, setEditHomeCourseSearch] = useState("");
+  const [editHomeCourseResults, setEditHomeCourseResults] = useState<HomeCourse[]>([]);
+  const [editHomeCourseLoading, setEditHomeCourseLoading] = useState(false);
+  const editHomeCourseDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saving, setSaving] = useState(false);
   const [taggedUploads, setTaggedUploads] = useState<Upload[]>([]);
 
@@ -206,8 +210,20 @@ export default function ProfilePage() {
   const editTagDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (editHomeCourseDebounce.current) clearTimeout(editHomeCourseDebounce.current);
+    if (!editHomeCourseSearch.trim()) { setEditHomeCourseResults([]); return; }
+    setEditHomeCourseLoading(true);
+    editHomeCourseDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("Course").select("id, name").ilike("name", `%${editHomeCourseSearch.trim()}%`).limit(6);
+      setEditHomeCourseResults(data || []);
+      setEditHomeCourseLoading(false);
+    }, 200);
+  }, [editHomeCourseSearch]);
+
+  useEffect(() => {
     if (editTagDebounce.current) clearTimeout(editTagDebounce.current);
-    if (!editTagInput.trim() || editTagInput.trim().length < 2) { setEditTagResults([]); return; }
+    if (!editTagInput.trim()) { setEditTagResults([]); return; }
     editTagDebounce.current = setTimeout(async () => {
       const supabase = createClient();
       const taggedIds = new Set(editData?.taggedUsers.map(u => u.id) || []);
@@ -341,10 +357,12 @@ if (userUploads && userUploads.length > 0) {
     setSaving(true);
     const supabase = createClient();
     const hcp = editHandicap ? parseFloat(editHandicap) : null;
-    await supabase.from("User").update({ handicapIndex: hcp, updatedAt: new Date().toISOString() }).eq("id", user.id);
+    await supabase.from("User").update({ handicapIndex: hcp, homeCourseId: homeCourse?.id ?? null, updatedAt: new Date().toISOString() }).eq("id", user.id);
     setUser({ ...user, handicapIndex: hcp });
     setSaving(false);
     setShowEdit(false);
+    setEditHomeCourseSearch("");
+    setEditHomeCourseResults([]);
   }
 
   async function handleLogout() {
@@ -771,6 +789,34 @@ if (userUploads && userUploads.length > 0) {
             <div>
               <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "6px", fontFamily: "'Outfit', sans-serif" }}>Handicap index</label>
               <input type="number" step="0.1" min="-10" max="54" placeholder="e.g. 8.4" value={editHandicap} onChange={e => setEditHandicap(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "9px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "'Outfit', sans-serif" }} />
+            </div>
+            <div style={{ position: "relative" }}>
+              <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "6px", fontFamily: "'Outfit', sans-serif" }}>Home course</label>
+              {homeCourse && !editHomeCourseSearch && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: "8px", padding: "8px 12px", marginBottom: 6 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862" }}>{homeCourse.name}</span>
+                  <button onClick={() => setHomeCourse(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              )}
+              <input
+                placeholder={homeCourse ? "Search to change..." : "Search courses..."}
+                value={editHomeCourseSearch}
+                onChange={e => setEditHomeCourseSearch(e.target.value)}
+                style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "9px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "'Outfit', sans-serif" }}
+              />
+              {editHomeCourseLoading && <div style={{ position: "absolute", right: 10, top: 38, width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.6s linear infinite" }} />}
+              {editHomeCourseResults.length > 0 && (
+                <div style={{ position: "absolute", left: 0, right: 0, top: "100%", background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 50, marginTop: 4 }}>
+                  {editHomeCourseResults.map(c => (
+                    <button key={c.id} onClick={() => { setHomeCourse(c); setEditHomeCourseSearch(""); setEditHomeCourseResults([]); }}
+                      style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", cursor: "pointer", textAlign: "left" }}>
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button onClick={handleSaveProfile} style={{ padding: "10px", background: "#4da862", border: "none", borderRadius: "10px", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
               {saving ? "Saving..." : "Save changes"}

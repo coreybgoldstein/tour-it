@@ -76,7 +76,7 @@ function SearchPageInner() {
   useEffect(() => {
     if (searchTab !== "people") return;
     if (peopleDebounceRef.current) clearTimeout(peopleDebounceRef.current);
-    if (!query.trim() || query.trim().length < 2) { setPeopleResults([]); return; }
+    if (!query.trim()) { setPeopleResults([]); return; }
     setPeopleLoading(true);
     peopleDebounceRef.current = setTimeout(async () => {
       const supabase = createClient();
@@ -94,7 +94,7 @@ function SearchPageInner() {
   const search = useCallback((q: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (!q.trim() || q.trim().length < 2) {
+    if (!q.trim()) {
       setResults([]);
       setLoading(false);
       return;
@@ -293,11 +293,11 @@ function SearchPageInner() {
               </div>
             )}
 
-            {!peopleLoading && query.trim().length >= 2 && peopleResults.length === 0 && (
+            {!peopleLoading && query.trim() && peopleResults.length === 0 && (
               <div className="empty-hint">No golfers found for &ldquo;{query}&rdquo;</div>
             )}
 
-            {!peopleLoading && query.trim().length < 2 && (
+            {!peopleLoading && !query.trim() && (
               <div className="empty-hint">Search by name or @username</div>
             )}
 
