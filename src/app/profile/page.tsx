@@ -19,7 +19,6 @@ type UserProfile = {
   username: string;
   displayName: string;
   avatarUrl: string | null;
-  bannerUrl: string | null;
   handicapIndex: number | null;
   homeCourseId: string | null;
   uploadCount: number;
@@ -74,7 +73,7 @@ type SavedCourse = {
 export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const bannerInputRef = useRef<HTMLInputElement>(null);
+
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -86,7 +85,7 @@ export default function ProfilePage() {
   const [savedCourses, setSavedCourses] = useState<SavedCourse[]>([]);
   const [coursesTab, setCoursesTab] = useState<"BUCKET_LIST" | "PLAYED" | "UPLOADED">("BUCKET_LIST");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState(false);
+
   const [showEdit, setShowEdit] = useState(false);
   const [editHandicap, setEditHandicap] = useState("");
   const [saving, setSaving] = useState(false);
@@ -239,28 +238,6 @@ if (userUploads && userUploads.length > 0) {
     setUploadingAvatar(false);
   }
 
-  async function handleBannerUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files?.[0] || !user) return;
-    const file = e.target.files[0];
-    setUploadingBanner(true);
-    const supabase = createClient();
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/banner.${ext}`;
-    const { error: storageError } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: true });
-    if (storageError) {
-      console.error("Banner upload error:", storageError);
-      setUploadingBanner(false);
-      return;
-    }
-    const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
-    const { error: dbError } = await supabase.from("User").update({ bannerUrl: publicUrl }).eq("id", user.id);
-    if (dbError) {
-      console.error("Banner DB update error:", dbError);
-    } else {
-      setUser({ ...user, bannerUrl: publicUrl });
-    }
-    setUploadingBanner(false);
-  }
 
   async function handleSaveProfile() {
     if (!user) return;
@@ -620,48 +597,28 @@ if (userUploads && userUploads.length > 0) {
         </div>
       )}
 
-      {/* Banner + top bar in one block */}
-      <div
-        style={{ position: "relative", height: 175, overflow: "hidden", cursor: "pointer" }}
-        onClick={() => bannerInputRef.current?.click()}
-      >
-        {user.bannerUrl
-          ? <img src={user.bannerUrl} alt="banner" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          : <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)" }} />
-        }
-
-        {/* Top bar — logout left, notifications right */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 16px 0", pointerEvents: "none" }}>
-          <button
-            onClick={e => { e.stopPropagation(); handleLogout(); }}
-            style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "all" }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
-          <button
-            onClick={e => { e.stopPropagation(); router.push("/notifications"); }}
-            style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "all" }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Camera edit hint */}
-        <div style={{ position: "absolute", bottom: 14, right: 14, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-          {uploadingBanner
-            ? <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>…</span>
-            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          }
-        </div>
-        <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerUpload} />
+      {/* Top bar — logout left, notifications right */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 16px 0" }}>
+        <button
+          onClick={handleLogout}
+          style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+        <button
+          onClick={() => router.push("/notifications")}
+          style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </button>
       </div>
 
-      {/* Avatar + identity — tight block, avatar overlaps banner gradient */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -46, position: "relative", zIndex: 2, paddingBottom: 16 }}>
+      {/* Avatar + identity */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20, paddingBottom: 16 }}>
         <div style={{ position: "relative", marginBottom: 10 }}>
           <div
             onClick={() => fileInputRef.current?.click()}

@@ -18,7 +18,6 @@ type UserProfile = {
   username: string;
   displayName: string;
   avatarUrl: string | null;
-  bannerUrl: string | null;
   handicapIndex: number | null;
   homeCourseId: string | null;
   uploadCount: number;
@@ -99,7 +98,7 @@ export default function PublicProfilePage() {
       // Fetch the profile being viewed
       const { data: profileData, error: profileError } = await supabase
         .from("User")
-        .select("id, username, displayName, avatarUrl, bannerUrl, handicapIndex, homeCourseId, uploadCount, bio")
+        .select("id, username, displayName, avatarUrl, handicapIndex, homeCourseId, uploadCount, bio")
         .eq("id", userId)
         .single();
 
@@ -284,11 +283,6 @@ export default function PublicProfilePage() {
         </button>
         <div style={{ fontSize: "15px", fontWeight: 600, color: "rgba(255,255,255,0.9)" }}>@{profile.username}</div>
         <div style={{ width: 36 }} />
-      </div>
-
-      {/* Banner */}
-      <div style={{ height: 100, background: profile.bannerUrl ? "none" : "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)", overflow: "hidden" }}>
-        {profile.bannerUrl && <img src={profile.bannerUrl} alt="banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
       </div>
 
       {/* Avatar + name */}
