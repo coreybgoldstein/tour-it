@@ -118,7 +118,7 @@ function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlaye
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 14px 12px", zIndex: 20, gap: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)" }}>
       <button onClick={onTapCourse} style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1.5px solid rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", flexShrink: 0, overflow: "hidden" }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(26,158,66,0.2)", border: "1.5px solid rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a9e42", flexShrink: 0, overflow: "hidden" }}>
           {courseLogoUrl
             ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : abbr
@@ -127,7 +127,7 @@ function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlaye
         <div style={{ minWidth: 0, textAlign: "left" }}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{courseName}</div>
           {holeNumber && (
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
               Hole {holeNumber}{shotType && SHOT_LABEL[shotType] ? ` · ${SHOT_LABEL[shotType]}` : ""}{dateLabel ? ` · ${dateLabel}` : ""}
             </span>
           )}
@@ -151,7 +151,7 @@ function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () =
       style={{
         width: 148, height: 188, borderRadius: 14, flexShrink: 0, overflow: "hidden",
         cursor: "pointer", position: "relative", background: "rgba(10,28,18,0.95)",
-        border: "1px solid rgba(77,168,98,0.12)",
+        border: "1px solid rgba(26,158,66,0.12)",
       }}
     >
       {course.coverImageUrl && (
@@ -164,7 +164,7 @@ function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () =
           {course.logoUrl ? (
             <img src={course.logoUrl} alt={course.name} style={{ width: 68, height: 42, objectFit: "cover", objectPosition: "center", borderRadius: 8 }} />
           ) : (
-            <div style={{ width: 46, height: 46, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(77,168,98,0.6)" }}>{abbr}</div>
+            <div style={{ width: 46, height: 46, borderRadius: 10, background: "rgba(26,158,66,0.12)", border: "1px solid rgba(26,158,66,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(26,158,66,0.6)" }}>{abbr}</div>
           )}
         </div>
       )}
@@ -177,8 +177,8 @@ function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () =
           {[course.city, course.state].filter(s => s?.trim()).join(", ")}
         </div>
         {course.uploadCount > 0 && (
-          <div style={{ marginTop: 5, display: "inline-flex", alignItems: "center", background: "rgba(77,168,98,0.18)", borderRadius: 99, padding: "2px 8px" }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "#4da862" }}>{course.uploadCount} clips</span>
+          <div style={{ marginTop: 5, display: "inline-flex", alignItems: "center", background: "rgba(26,158,66,0.18)", borderRadius: 99, padding: "2px 8px" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "#1a9e42" }}>{course.uploadCount} clips</span>
           </div>
         )}
       </div>
@@ -210,27 +210,27 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
             : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           }
         </div>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", maxWidth: 56, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>@{username}</span>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a9e42", maxWidth: 56, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>@{username}</span>
       </button>
       {/* Like */}
       <button onClick={onLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", ...(liked ? { background: "rgba(77,168,98,0.15)" } : {}) }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "rgba(26,158,66,0.7)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", ...(liked ? { background: "rgba(26,158,66,0.15)" } : {}) }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#1a9e42" : "none"} stroke={liked ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </div>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
       </button>
       {/* Comment */}
       <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{commentCount}</span>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{commentCount}</span>
       </button>
       {/* Share */}
       <button onClick={handleShare} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 46, height: 46, borderRadius: "50%", background: copied ? "rgba(77,168,98,0.15)" : "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: `1px solid ${copied ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 46, height: 46, borderRadius: "50%", background: copied ? "rgba(26,158,66,0.15)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${copied ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {copied
-            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           }
         </div>
@@ -238,12 +238,12 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
       {/* Notes */}
       {onNotes && (
         <button onClick={onNotes} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 46, height: 46, borderRadius: "50%", background: notesOpen ? "rgba(77,168,98,0.15)" : "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: `1px solid ${notesOpen ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div style={{ width: 46, height: 46, borderRadius: "50%", background: notesOpen ? "rgba(26,158,66,0.15)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${notesOpen ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
             </svg>
           </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>Notes</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>Notes</span>
         </button>
       )}
     </div>
@@ -340,7 +340,7 @@ function SeriesCard({
       {item.shots.length > 1 && (
         <div style={{ position: "absolute", top: 116, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5, zIndex: 20, pointerEvents: "none" }}>
           {item.shots.map((_, i) => (
-            <div key={i} style={{ height: 3, borderRadius: 99, background: i === shotIndex ? "#4da862" : "rgba(255,255,255,0.3)", width: i === shotIndex ? 22 : 7, transition: "all 0.3s" }} />
+            <div key={i} style={{ height: 3, borderRadius: 99, background: i === shotIndex ? "#1a9e42" : "rgba(255,255,255,0.3)", width: i === shotIndex ? 22 : 7, transition: "all 0.3s" }} />
           ))}
         </div>
       )}
@@ -355,12 +355,12 @@ function SeriesCard({
       )}
 
       {shotIndex > 0 && (
-        <button onClick={() => setShotIndex(i => i - 1)} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
+        <button onClick={() => setShotIndex(i => i - 1)} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
       )}
       {shotIndex < item.shots.length - 1 && (
-        <button onClick={() => setShotIndex(i => i + 1)} style={{ position: "absolute", right: 76, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
+        <button onClick={() => setShotIndex(i => i + 1)} style={{ position: "absolute", right: 76, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       )}
@@ -370,14 +370,14 @@ function SeriesCard({
       {notesOpen && (
         <>
           <div onClick={() => setNotesOpen(false)} style={{ position: "absolute", inset: 0, zIndex: 40 }} />
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(26,158,66,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>{item.holeNumber ? `Hole ${item.holeNumber} · ` : ""}Scout Notes</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {activeShot?.shotType && SHOT_LABEL[activeShot.shotType] && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shot Type</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#4da862" }}>{SHOT_LABEL[activeShot.shotType]}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#1a9e42" }}>{SHOT_LABEL[activeShot.shotType]}</span>
                 </div>
               )}
               {activeShot?.clubUsed && (
@@ -485,14 +485,14 @@ function VideoCard({
       {notesOpen && (
         <>
           <div onClick={() => setNotesOpen(false)} style={{ position: "absolute", inset: 0, zIndex: 40 }} />
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(26,158,66,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>{clip.holeNumber ? `Hole ${clip.holeNumber} · ` : ""}Scout Notes</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {clip.shotType && SHOT_LABEL[clip.shotType] && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shot Type</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#4da862" }}>{SHOT_LABEL[clip.shotType]}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#1a9e42" }}>{SHOT_LABEL[clip.shotType]}</span>
                 </div>
               )}
               {clip.clubUsed && (
@@ -897,10 +897,10 @@ export default function Home() {
           <div style={{ padding: "0 20px 18px", flexShrink: 0 }}>
             <button
               onClick={() => router.push("/search")}
-              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.07)", border: "1.5px solid rgba(77,168,98,0.55)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", boxShadow: "0 0 18px rgba(77,168,98,0.2), inset 0 0 10px rgba(77,168,98,0.04)" }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "rgba(26,158,66,0.07)", border: "1.5px solid rgba(26,158,66,0.55)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", boxShadow: "0 0 18px rgba(26,158,66,0.2), inset 0 0 10px rgba(26,158,66,0.04)" }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(77,168,98,0.85)" }}>Find a course — name, city, or state...</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(26,158,66,0.85)" }}>Find a course — name, city, or state...</span>
             </button>
           </div>
 
@@ -909,7 +909,7 @@ export default function Home() {
             <div style={{ padding: "0 20px 18px", flexShrink: 0 }}>
               <button
                 onClick={() => router.push("/signup")}
-                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.22)", borderRadius: 12, padding: "12px 16px", cursor: "pointer" }}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(26,158,66,0.07)", border: "1px solid rgba(26,158,66,0.22)", borderRadius: 12, padding: "12px 16px", cursor: "pointer" }}
               >
                 <div style={{ textAlign: "left" }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Save courses. Upload clips. Scout smarter.</div>
@@ -944,9 +944,9 @@ export default function Home() {
                   Courses Near Me
                 </div>
                 {locationStatus === "idle" && (
-                  <button onClick={fetchNearMe} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 99, padding: "4px 12px", cursor: "pointer" }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Enable</span>
+                  <button onClick={fetchNearMe} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: 99, padding: "4px 12px", cursor: "pointer" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#1a9e42" }}>Enable</span>
                   </button>
                 )}
               </div>
@@ -981,7 +981,7 @@ export default function Home() {
           <div style={{ flex: 1, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 104 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div className="bounce-arrow" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
                 </svg>
               </div>
@@ -989,7 +989,7 @@ export default function Home() {
                 Scroll to find your next bucket list course
               </div>
               <div className="bounce-arrow" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
                 </svg>
               </div>
@@ -1011,7 +1011,7 @@ export default function Home() {
         {!loading && feedItems.length === 0 && (
           <div className="feed-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 20 }}>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.3)", textAlign: "center", fontFamily: "'Outfit', sans-serif" }}>No clips yet — be the first to upload</div>
-            <button onClick={() => router.push("/upload")} style={{ background: "#4da862", border: "none", borderRadius: 10, padding: "12px 28px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>Upload the first clip</button>
+            <button onClick={() => router.push("/upload")} style={{ background: "#1a9e42", border: "none", borderRadius: 10, padding: "12px 28px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>Upload the first clip</button>
           </div>
         )}
       </div>
@@ -1036,11 +1036,11 @@ export default function Home() {
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
                 <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {c.avatarUrl ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {c.avatarUrl ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>@{c.username} </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42" }}>@{c.username} </span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)" }}>{c.body}</span>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{formatTimeAgo(c.createdAt)}</div>
                   </div>
@@ -1115,7 +1115,7 @@ export default function Home() {
                   Browse without an account
                 </button>
                 <div style={{ textAlign: "center", marginTop: 2 }}>
-                  <button onClick={() => router.push("/login")} style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(77,168,98,0.7)", cursor: "pointer", textDecoration: "underline" }}>
+                  <button onClick={() => router.push("/login")} style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(26,158,66,0.7)", cursor: "pointer", textDecoration: "underline" }}>
                     Already have an account? Sign in
                   </button>
                 </div>
@@ -1131,8 +1131,8 @@ export default function Home() {
 
       <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <button onClick={() => feedRef.current?.scrollTo({ top: 0, behavior: "smooth" })} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-          <span style={{ fontSize: "9px", color: "#4da862", fontFamily: "'Outfit', sans-serif" }}>Home</span>
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <span style={{ fontSize: "9px", color: "#1a9e42", fontFamily: "'Outfit', sans-serif" }}>Home</span>
         </button>
         <button onClick={() => router.push("/search")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -1149,7 +1149,7 @@ export default function Home() {
           <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Lists</span>
         </button>
         <button onClick={() => router.push(user ? "/profile" : "/login")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-          <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(77,168,98,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(26,158,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {userProfile?.avatarUrl ? <img src={userProfile.avatarUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
           </div>
           <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>

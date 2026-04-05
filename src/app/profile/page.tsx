@@ -67,11 +67,11 @@ function ProfileFeedCard({
       <style>{`
         .pf-top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 14px 12px; z-index: 20; gap: 10px; }
         .pf-ctrl-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-        .pf-course-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; overflow: hidden; }
+        .pf-course-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(26,158,66,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #1a9e42; flex-shrink: 0; overflow: hidden; }
         .pf-right-actions { position: absolute; right: 14px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 30; }
         .pf-action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
-        .pf-action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
-        .pf-action-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; }
+        .pf-action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
+        .pf-action-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #1a9e42; }
       `}</style>
 
       {clip.mediaType === "VIDEO" ? (
@@ -105,13 +105,13 @@ function ProfileFeedCard({
           <div className="pf-course-badge">
             {courseLogoUrl
               ? <img src={courseLogoUrl} alt={courseName || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{(courseName || "?").split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?"}</span>
+              : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a9e42" }}>{(courseName || "?").split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?"}</span>
             }
           </div>
           <div style={{ minWidth: 0, textAlign: "left" }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{courseName}</div>
             {clip.holeNumber && (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
                 Hole {clip.holeNumber}{clip.shotType && SHOT_LABEL[clip.shotType] ? ` · ${SHOT_LABEL[clip.shotType]}` : ""}{clip.datePlayedAt ? ` · ${new Date(clip.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
               </span>
             )}
@@ -148,8 +148,8 @@ function ProfileFeedCard({
         </button>
 
         <button className="pf-action-btn" onClick={toggleLike}>
-          <div className="pf-action-icon" style={liked ? { borderColor: "rgba(77,168,98,0.7)", background: "rgba(77,168,98,0.15)" } : {}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <div className="pf-action-icon" style={liked ? { borderColor: "rgba(26,158,66,0.7)", background: "rgba(26,158,66,0.15)" } : {}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#1a9e42" : "none"} stroke={liked ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
           <span className="pf-action-label" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
         </button>
@@ -162,9 +162,9 @@ function ProfileFeedCard({
         </button>
 
         <button className="pf-action-btn" onClick={handleShare}>
-          <div className="pf-action-icon" style={copied ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
+          <div className="pf-action-icon" style={copied ? { borderColor: "rgba(26,158,66,0.5)", background: "rgba(26,158,66,0.15)" } : {}}>
             {copied
-              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             }
           </div>
@@ -172,8 +172,8 @@ function ProfileFeedCard({
 
         {hasNotes && (
           <button className="pf-action-btn" onClick={() => setNotesOpen(true)}>
-            <div className="pf-action-icon" style={notesOpen ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="pf-action-icon" style={notesOpen ? { borderColor: "rgba(26,158,66,0.5)", background: "rgba(26,158,66,0.15)" } : {}}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
               </svg>
             </div>
@@ -187,7 +187,7 @@ function ProfileFeedCard({
         <>
           <div onClick={() => setNotesOpen(false)} style={{ position: "absolute", inset: 0, zIndex: 40 }} />
           <div ref={sheetRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
-            style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
+            style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(26,158,66,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>
               {clip.holeNumber ? `Hole ${clip.holeNumber} · ` : ""}Scout Notes
@@ -196,7 +196,7 @@ function ProfileFeedCard({
               {clip.shotType && SHOT_LABEL[clip.shotType] && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shot Type</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#4da862" }}>{SHOT_LABEL[clip.shotType]}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#1a9e42" }}>{SHOT_LABEL[clip.shotType]}</span>
                 </div>
               )}
               {clip.clubUsed && (
@@ -762,7 +762,7 @@ if (userUploads && userUploads.length > 0) {
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Outfit:wght@300;400;500;600&display=swap');
         * { box-sizing: border-box; }
         .clip-thumb:active { opacity: 0.75; }
-        .course-chip:hover { border-color: rgba(77,168,98,0.4); }
+        .course-chip:hover { border-color: rgba(26,158,66,0.4); }
       `}</style>
 
       {/* Clip viewer */}
@@ -788,7 +788,7 @@ if (userUploads && userUploads.length > 0) {
 
                 {editLoading || !editData ? (
                   <div style={{ display: "flex", justifyContent: "center", padding: "24px 0" }}>
-                    <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.8s linear infinite" }} />
                   </div>
                 ) : (
                   <>
@@ -798,7 +798,7 @@ if (userUploads && userUploads.length > 0) {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                         {Array.from({ length: 18 }, (_, i) => i + 1).map(n => (
                           <button key={n} onClick={() => setEditData(d => d ? { ...d, holeNumber: n } : d)}
-                            style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${editData.holeNumber === n ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.holeNumber === n ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.holeNumber === n ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer" }}>
+                            style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${editData.holeNumber === n ? "rgba(26,158,66,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.holeNumber === n ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.holeNumber === n ? "#1a9e42" : "rgba(255,255,255,0.45)", cursor: "pointer" }}>
                             {n}
                           </button>
                         ))}
@@ -811,7 +811,7 @@ if (userUploads && userUploads.length > 0) {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {[{ label: "Tee Shot", value: "TEE_SHOT" }, { label: "Approach", value: "APPROACH" }, { label: "Chip", value: "CHIP" }, { label: "Pitch", value: "PITCH" }, { label: "Putt", value: "PUTT" }, { label: "Bunker", value: "BUNKER" }, { label: "Layup", value: "LAY_UP" }, { label: "Full Hole", value: "FULL_HOLE" }].map(s => (
                           <button key={s.value} onClick={() => setEditData(d => d ? { ...d, shotType: s.value } : d)}
-                            style={{ padding: "6px 12px", borderRadius: 99, border: `1px solid ${editData.shotType === s.value ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.shotType === s.value ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.shotType === s.value ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer", whiteSpace: "nowrap" }}>
+                            style={{ padding: "6px 12px", borderRadius: 99, border: `1px solid ${editData.shotType === s.value ? "rgba(26,158,66,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.shotType === s.value ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.shotType === s.value ? "#1a9e42" : "rgba(255,255,255,0.45)", cursor: "pointer", whiteSpace: "nowrap" }}>
                             {s.label}
                           </button>
                         ))}
@@ -838,7 +838,7 @@ if (userUploads && userUploads.length > 0) {
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                         {[{ label: "Calm", value: "CALM" }, { label: "Into", value: "INTO" }, { label: "Downwind", value: "DOWNWIND" }, { label: "Left→Right", value: "LEFT_TO_RIGHT" }, { label: "Right→Left", value: "RIGHT_TO_LEFT" }].map(w => (
                           <button key={w.value} onClick={() => setEditData(d => d ? { ...d, windCondition: d.windCondition === w.value ? "" : w.value } : d)}
-                            style={{ padding: "6px 12px", borderRadius: 99, border: `1px solid ${editData.windCondition === w.value ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.windCondition === w.value ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.windCondition === w.value ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer", whiteSpace: "nowrap" }}>
+                            style={{ padding: "6px 12px", borderRadius: 99, border: `1px solid ${editData.windCondition === w.value ? "rgba(26,158,66,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.windCondition === w.value ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.windCondition === w.value ? "#1a9e42" : "rgba(255,255,255,0.45)", cursor: "pointer", whiteSpace: "nowrap" }}>
                             {w.label}
                           </button>
                         ))}
@@ -853,16 +853,16 @@ if (userUploads && userUploads.length > 0) {
                       {editData.taggedUsers.length > 0 && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
                           {editData.taggedUsers.map(u => (
-                            <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 8px 3px 5px" }}>
-                              <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.12)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 99, padding: "3px 8px 3px 5px" }}>
+                              <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", background: "rgba(26,158,66,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 {u.avatarUrl
                                   ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                  : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                                  : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                               </div>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>@{u.username}</span>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#1a9e42" }}>@{u.username}</span>
                               <button onClick={() => setEditData(d => d ? { ...d, taggedUsers: d.taggedUsers.filter(t => t.id !== u.id) } : d)}
                                 style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", marginLeft: 1 }}>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                               </button>
                             </div>
                           ))}
@@ -886,10 +886,10 @@ if (userUploads && userUploads.length > 0) {
                                 setEditTagResults([]);
                               }}
                               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                              <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(26,158,66,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 {u.avatarUrl
                                   ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                               </div>
                               <div>
                                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
@@ -953,7 +953,7 @@ if (userUploads && userUploads.length > 0) {
         <div style={{ position: "relative", marginBottom: 10 }}>
           <div
             onClick={() => fileInputRef.current?.click()}
-            style={{ width: 88, height: 88, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: "2.5px solid rgba(77,168,98,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}
+            style={{ width: 88, height: 88, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: "2.5px solid rgba(26,158,66,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}
           >
             {user.avatarUrl
               ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -962,7 +962,7 @@ if (userUploads && userUploads.length > 0) {
           </div>
           <div
             onClick={() => fileInputRef.current?.click()}
-            style={{ position: "absolute", bottom: 2, right: 2, width: 24, height: 24, borderRadius: "50%", background: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: "2.5px solid #07100a" }}
+            style={{ position: "absolute", bottom: 2, right: 2, width: 24, height: 24, borderRadius: "50%", background: "#1a9e42", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: "2.5px solid #07100a" }}
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
@@ -975,7 +975,7 @@ if (userUploads && userUploads.length > 0) {
         {(user.handicapIndex !== null || homeCourse) && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
             {user.handicapIndex !== null && (
-              <div style={{ display: "flex", alignItems: "center", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "#4da862" }}>
+              <div style={{ display: "flex", alignItems: "center", background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "#1a9e42" }}>
                 {user.handicapIndex} hcp
               </div>
             )}
@@ -1017,8 +1017,8 @@ if (userUploads && userUploads.length > 0) {
             <div style={{ position: "relative" }}>
               <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "6px", fontFamily: "'Outfit', sans-serif" }}>Home course</label>
               {homeCourse && !editHomeCourseSearch && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: "8px", padding: "8px 12px", marginBottom: 6 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862" }}>{homeCourse.name}</span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(26,158,66,0.08)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: "8px", padding: "8px 12px", marginBottom: 6 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#1a9e42" }}>{homeCourse.name}</span>
                   <button onClick={() => setHomeCourse(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
@@ -1030,9 +1030,9 @@ if (userUploads && userUploads.length > 0) {
                 onChange={e => setEditHomeCourseSearch(e.target.value)}
                 style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "9px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "'Outfit', sans-serif" }}
               />
-              {editHomeCourseLoading && <div style={{ position: "absolute", right: 10, top: 38, width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.6s linear infinite" }} />}
+              {editHomeCourseLoading && <div style={{ position: "absolute", right: 10, top: 38, width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.6s linear infinite" }} />}
               {editHomeCourseResults.length > 0 && (
-                <div style={{ position: "absolute", left: 0, right: 0, top: "100%", background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 50, marginTop: 4 }}>
+                <div style={{ position: "absolute", left: 0, right: 0, top: "100%", background: "#0d1f12", border: "1px solid rgba(26,158,66,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 50, marginTop: 4 }}>
                   {editHomeCourseResults.map(c => (
                     <button key={c.id} onClick={() => { setHomeCourse(c); setEditHomeCourseSearch(""); setEditHomeCourseResults([]); }}
                       style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", cursor: "pointer", textAlign: "left" }}>
@@ -1042,7 +1042,7 @@ if (userUploads && userUploads.length > 0) {
                 </div>
               )}
             </div>
-            <button onClick={handleSaveProfile} style={{ padding: "10px", background: "#4da862", border: "none", borderRadius: "10px", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
+            <button onClick={handleSaveProfile} style={{ padding: "10px", background: "#1a9e42", border: "none", borderRadius: "10px", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
               {saving ? "Saving..." : "Save changes"}
             </button>
           </div>
@@ -1056,7 +1056,7 @@ if (userUploads && userUploads.length > 0) {
             <div style={{ fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>My courses</div>
             <div style={{ display: "flex", gap: "4px" }}>
               {(["BUCKET_LIST", "PLAYED", "UPLOADED"] as const).map(tab => (
-                <button key={tab} onClick={() => setCoursesTab(tab)} style={{ padding: "3px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === tab ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === tab ? "#4da862" : "rgba(255,255,255,0.35)" }}>
+                <button key={tab} onClick={() => setCoursesTab(tab)} style={{ padding: "3px 8px", borderRadius: "99px", border: "none", fontSize: "9px", fontWeight: 600, cursor: "pointer", background: coursesTab === tab ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === tab ? "#1a9e42" : "rgba(255,255,255,0.35)" }}>
                   {tab === "BUCKET_LIST" ? "Bucket List" : tab === "PLAYED" ? "Played" : "Uploaded"}
                 </button>
               ))}
@@ -1067,8 +1067,8 @@ if (userUploads && userUploads.length > 0) {
               savedCourses.filter(s => s.saveType === "BUCKET_LIST").length === 0
                 ? <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No bucket list courses yet</div>
                 : savedCourses.filter(s => s.saveType === "BUCKET_LIST").map(s => (
-                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0, display: "block" }} />
+                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(26,158,66,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#1a9e42", flexShrink: 0, display: "block" }} />
                     <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
                   </button>
                 ))
@@ -1077,8 +1077,8 @@ if (userUploads && userUploads.length > 0) {
               savedCourses.filter(s => s.saveType === "PLAYED").length === 0
                 ? <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No played courses marked yet</div>
                 : savedCourses.filter(s => s.saveType === "PLAYED").map(s => (
-                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0, display: "block" }} />
+                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(26,158,66,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#1a9e42", flexShrink: 0, display: "block" }} />
                     <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
                   </button>
                 ))
@@ -1152,7 +1152,7 @@ if (userUploads && userUploads.length > 0) {
           <div style={{ padding: "32px 20px", textAlign: "center" }}>
             <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)", marginBottom: "8px" }}>No clips yet</div>
             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", marginBottom: "16px" }}>Upload your first hole to get started</div>
-            <button onClick={() => router.push("/upload")} style={{ background: "#4da862", border: "none", borderRadius: "10px", padding: "10px 24px", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Upload a clip</button>
+            <button onClick={() => router.push("/upload")} style={{ background: "#1a9e42", border: "none", borderRadius: "10px", padding: "10px 24px", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>Upload a clip</button>
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
@@ -1177,7 +1177,7 @@ if (userUploads && userUploads.length > 0) {
                 </div>
                 {/* Tag indicator for approved tagged clips */}
                 {upload.isTagged ? (
-                  <div style={{ position: "absolute", top: 5, right: 5, width: 20, height: 20, borderRadius: "50%", background: "rgba(77,168,98,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ position: "absolute", top: 5, right: 5, width: 20, height: 20, borderRadius: "50%", background: "rgba(26,158,66,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                   </div>
                 ) : (
@@ -1209,14 +1209,14 @@ if (userUploads && userUploads.length > 0) {
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
                 <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {c.avatarUrl
                       ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-                      : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     }
                   </div>
                   <div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>@{c.username} </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42" }}>@{c.username} </span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{c.body}</span>
                   </div>
                 </div>
@@ -1224,12 +1224,12 @@ if (userUploads && userUploads.length > 0) {
             </div>
             <div style={{ paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)", position: "relative" }}>
               {mentionResults.length > 0 && (
-                <div style={{ position: "absolute", bottom: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 20 }}>
+                <div style={{ position: "absolute", bottom: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(26,158,66,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 20 }}>
                   {mentionResults.map(u => (
                     <button key={u.id} onMouseDown={e => { e.preventDefault(); selectMention(u.username); }}
                       style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "9px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.15)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.15)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
                       </div>
                       <div style={{ textAlign: "left" }}>
                         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>{u.displayName}</div>
@@ -1288,7 +1288,7 @@ if (userUploads && userUploads.length > 0) {
             <div style={{ overflowY: "auto", paddingBottom: 40 }}>
               {followListLoading ? (
                 <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
-                  <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
+                  <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.8s linear infinite" }} />
                   <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
               ) : followList.length === 0 ? (
@@ -1302,10 +1302,10 @@ if (userUploads && userUploads.length > 0) {
                     onClick={() => { setFollowSheet(null); router.push(`/profile/${u.id}`); }}
                     style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}
                   >
-                    <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(26,158,66,0.15)", border: "1px solid rgba(26,158,66,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {u.avatarUrl
                         ? <img src={u.avatarUrl} alt={u.username || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#4da862" }}>{(u.displayName || u.username || "?")[0].toUpperCase()}</span>
+                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#1a9e42" }}>{(u.displayName || u.username || "?")[0].toUpperCase()}</span>
                       }
                     </div>
                     <div>

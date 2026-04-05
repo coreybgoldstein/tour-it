@@ -205,7 +205,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
           <div style={{ minWidth: 0, textAlign: "left" }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
             {clip.holeNumber && (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>
                 Hole {clip.holeNumber}{clip.shotType && SHOT_LABEL[clip.shotType] ? ` · ${SHOT_LABEL[clip.shotType]}` : ""}{clip.datePlayedAt ? ` · ${new Date(clip.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
               </span>
             )}
@@ -232,8 +232,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
         </button>
 
         <button className="action-btn" onClick={toggleLike}>
-          <div className="action-icon" style={liked ? { borderColor: "rgba(77,168,98,0.7)", background: "rgba(77,168,98,0.15)" } : {}}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <div className="action-icon" style={liked ? { borderColor: "rgba(26,158,66,0.7)", background: "rgba(26,158,66,0.15)" } : {}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#1a9e42" : "none"} stroke={liked ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
           <span className="action-label" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
         </button>
@@ -246,9 +246,9 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
         </button>
 
         <button className="action-btn" onClick={handleShare}>
-          <div className="action-icon" style={copied ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
+          <div className="action-icon" style={copied ? { borderColor: "rgba(26,158,66,0.5)", background: "rgba(26,158,66,0.15)" } : {}}>
             {copied
-              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             }
           </div>
@@ -257,8 +257,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
         {/* Notes button — only show if clip has any intel */}
         {(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt) && (
           <button className="action-btn" onClick={openNotes}>
-            <div className="action-icon" style={notesOpen ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="action-icon" style={notesOpen ? { borderColor: "rgba(26,158,66,0.5)", background: "rgba(26,158,66,0.15)" } : {}}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
               </svg>
             </div>
@@ -276,7 +276,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
             ref={sheetRef}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}
+            style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(26,158,66,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}
           >
             {/* Drag handle */}
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
@@ -289,7 +289,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
               {clip.shotType && SHOT_LABEL[clip.shotType] && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shot Type</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#4da862" }}>{SHOT_LABEL[clip.shotType]}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#1a9e42" }}>{SHOT_LABEL[clip.shotType]}</span>
                 </div>
               )}
               {clip.clubUsed && (
@@ -733,15 +733,15 @@ export default function CourseProfilePage() {
         .hole-empty { position: relative; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
         .hole-cell-indicator { display: flex; gap: 3px; position: absolute; bottom: 6px; right: 6px; }
         .hole-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.4); }
-        .hole-dot.active { background: #4da862; }
+        .hole-dot.active { background: #1a9e42; }
         .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 14px 12px; z-index: 20; gap: 10px; }
         .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-        .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; overflow: hidden; }
+        .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(26,158,66,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #1a9e42; flex-shrink: 0; overflow: hidden; }
         .right-actions { position: absolute; right: 14px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 30; }
         .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
-        .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.45); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
-        .action-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; }
+        .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
+        .action-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #1a9e42; }
         .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 16px 88px; z-index: 20; }
       `}</style>
 
@@ -761,7 +761,7 @@ export default function CourseProfilePage() {
         {!course.coverImageUrl && (
           <button
             onClick={openContribute}
-            style={{ position: "absolute", top: 52, right: 16, zIndex: 10, display: "flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "7px 12px", cursor: "pointer" }}
+            style={{ position: "absolute", top: 52, right: 16, zIndex: 10, display: "flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "7px 12px", cursor: "pointer" }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Add cover photo</span>
@@ -769,7 +769,7 @@ export default function CourseProfilePage() {
         )}
 
         {/* Top left: course logo badge (tap to go back) */}
-        <button onClick={() => router.back()} style={{ position: "absolute", top: 52, left: 16, zIndex: 10, width: 68, height: 42, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}>
+        <button onClick={() => router.back()} style={{ position: "absolute", top: 52, left: 16, zIndex: 10, width: 68, height: 42, borderRadius: 10, background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}>
           {course.logoUrl ? (
             <img
               src={course.logoUrl}
@@ -778,7 +778,7 @@ export default function CourseProfilePage() {
               onError={e => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }}
             />
           ) : null}
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", display: course.logoUrl ? "none" : "inline" }}>{abbr}</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", display: course.logoUrl ? "none" : "inline" }}>{abbr}</span>
         </button>
 
 
@@ -811,26 +811,26 @@ export default function CourseProfilePage() {
             {/* Save button — bottom right of hero */}
             <button
               onClick={() => setShowPicker(!showPicker)}
-              style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, background: saved ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.06)", border: `1px solid ${saved ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, marginLeft: "auto" }}
+              style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, background: saved ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.06)", border: `1px solid ${saved ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, marginLeft: "auto" }}
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill={saved ? "#4da862" : "none"} stroke={saved ? "#4da862" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-              <span style={{ color: saved ? "#4da862" : "rgba(255,255,255,0.5)" }}>{saved ? "Saved" : "Save"}</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill={saved ? "#1a9e42" : "none"} stroke={saved ? "#1a9e42" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <span style={{ color: saved ? "#1a9e42" : "rgba(255,255,255,0.5)" }}>{saved ? "Saved" : "Save"}</span>
             </button>
             {/* Save picker dropdown */}
             {showPicker && (
-              <div style={{ position: "absolute", bottom: "calc(100% + 8px)", right: 0, background: "rgba(13,35,24,0.98)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 12, padding: 6, zIndex: 50, minWidth: 160, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
-                <button onClick={() => toggleSave("PLAYED")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "PLAYED" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
+              <div style={{ position: "absolute", bottom: "calc(100% + 8px)", right: 0, background: "rgba(13,35,24,0.98)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 12, padding: 6, zIndex: 50, minWidth: 160, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+                <button onClick={() => toggleSave("PLAYED")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "PLAYED" ? "rgba(26,158,66,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
                   <span style={{ fontSize: 16 }}>✓</span>
                   <div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "PLAYED" ? "#4da862" : "#fff" }}>Played</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "PLAYED" ? "#1a9e42" : "#fff" }}>Played</div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I&apos;ve played this course</div>
                   </div>
                 </button>
                 <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" }} />
-                <button onClick={() => toggleSave("BUCKET_LIST")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "BUCKET_LIST" ? "rgba(77,168,98,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
+                <button onClick={() => toggleSave("BUCKET_LIST")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "BUCKET_LIST" ? "rgba(26,158,66,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
                   <span style={{ fontSize: 16 }}>⛳</span>
                   <div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#4da862" : "#fff" }}>Bucket List</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#1a9e42" : "#fff" }}>Bucket List</div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
                   </div>
                 </button>
@@ -1040,7 +1040,7 @@ export default function CourseProfilePage() {
                       {nine.map(h => (
                         <div key={h.holeNumber} style={{ flex: 1, padding: "9px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: h.par === 3 ? "#6bcf7f" : h.par === 5 ? "#f0c55a" : "#fff" }}>{h.par}</div>
                       ))}
-                      <div style={{ width: 36, padding: "9px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862", flexShrink: 0 }}>{total}</div>
+                      <div style={{ width: 36, padding: "9px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#1a9e42", flexShrink: 0 }}>{total}</div>
                     </div>
                   </div>
                 </div>
@@ -1049,9 +1049,9 @@ export default function CourseProfilePage() {
 
             {/* Total */}
             {holes.length > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "rgba(77,168,98,0.1)", borderRadius: 12, border: "1px solid rgba(77,168,98,0.2)", marginTop: 4 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "rgba(26,158,66,0.1)", borderRadius: 12, border: "1px solid rgba(26,158,66,0.2)", marginTop: 4 }}>
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Total Par</span>
-                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#4da862" }}>{holes.reduce((s, h) => s + h.par, 0)}</span>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#1a9e42" }}>{holes.reduce((s, h) => s + h.par, 0)}</span>
               </div>
             )}
 
@@ -1071,7 +1071,7 @@ export default function CourseProfilePage() {
             {contributeSuccess ? (
               <div style={{ textAlign: "center", padding: "24px 0" }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>✓</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 600, color: "#4da862", marginBottom: 6 }}>Thanks for contributing!</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 600, color: "#1a9e42", marginBottom: 6 }}>Thanks for contributing!</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Your updates are live.</div>
                 <button onClick={() => setContributeOpen(false)} style={{ marginTop: 20, background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px 32px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Done</button>
               </div>
@@ -1081,15 +1081,15 @@ export default function CourseProfilePage() {
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Cover Photo</div>
                   <label style={{ display: "block", cursor: "pointer" }}>
-                    <div style={{ width: "100%", height: 140, borderRadius: 12, border: "1.5px dashed rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", position: "relative" }}>
+                    <div style={{ width: "100%", height: 140, borderRadius: 12, border: "1.5px dashed rgba(26,158,66,0.4)", background: "rgba(26,158,66,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", position: "relative" }}>
                       {coverPreview ? (
                         <img src={coverPreview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : course.coverImageUrl ? (
                         <img src={course.coverImageUrl} alt="current" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5 }} />
                       ) : (
                         <div style={{ textAlign: "center" }}>
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 6 }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(77,168,98,0.7)" }}>Tap to upload a beauty shot</div>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 6 }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(26,158,66,0.7)" }}>Tap to upload a beauty shot</div>
                         </div>
                       )}
                       {coverPreview && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", background: "rgba(0,0,0,0.5)", padding: "4px 10px", borderRadius: 99 }}>Change</span></div>}
@@ -1105,11 +1105,11 @@ export default function CourseProfilePage() {
                     <button
                       onClick={generateDescription}
                       disabled={generatingDesc}
-                      style={{ background: "none", border: "none", cursor: generatingDesc ? "default" : "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: generatingDesc ? "rgba(77,168,98,0.4)" : "#4da862", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
+                      style={{ background: "none", border: "none", cursor: generatingDesc ? "default" : "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: generatingDesc ? "rgba(26,158,66,0.4)" : "#1a9e42", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
                     >
                       {generatingDesc ? (
                         <>
-                          <div style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.6s linear infinite" }} />
+                          <div style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.6s linear infinite" }} />
                           Generating...
                         </>
                       ) : (
@@ -1136,13 +1136,13 @@ export default function CourseProfilePage() {
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Course Logo</div>
                   <label style={{ display: "block", cursor: "pointer" }}>
-                    <div style={{ width: 120, height: 72, borderRadius: 12, border: "1.5px dashed rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                    <div style={{ width: 120, height: 72, borderRadius: 12, border: "1.5px dashed rgba(26,158,66,0.4)", background: "rgba(26,158,66,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                       {logoPreview ? (
                         <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} />
                       ) : course.logoUrl ? (
                         <img src={course.logoUrl} alt="current logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, opacity: 0.5 }} />
                       ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                       )}
                     </div>
                     <input type="file" accept="image/*" onChange={handleLogoPick} style={{ display: "none" }} />
@@ -1277,14 +1277,14 @@ export default function CourseProfilePage() {
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
                 <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {c.avatarUrl
                       ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-                      : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     }
                   </div>
                   <div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>@{c.username} </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42" }}>@{c.username} </span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{c.body}</span>
                   </div>
                 </div>
@@ -1293,12 +1293,12 @@ export default function CourseProfilePage() {
             <div style={{ paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)", position: "relative" }}>
               {/* @mention dropdown */}
               {mentionResults.length > 0 && (
-                <div style={{ position: "absolute", bottom: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 20 }}>
+                <div style={{ position: "absolute", bottom: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(26,158,66,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 20 }}>
                   {mentionResults.map(u => (
                     <button key={u.id} onMouseDown={e => { e.preventDefault(); selectMention(u.username); }}
                       style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "9px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
-                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.15)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.15)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
                       </div>
                       <div style={{ textAlign: "left" }}>
                         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>{u.displayName}</div>
@@ -1346,7 +1346,7 @@ export default function CourseProfilePage() {
                     {userTrips.map(trip => (
                       <button key={trip.id} onClick={() => { setSelectedTripId(trip.id); setSelectedTripName(trip.name); setTripStep("details"); }}
                         style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, cursor: "pointer", marginBottom: 8, textAlign: "left" }}>
-                        <div style={{ width: 38, height: 38, borderRadius: 10, background: "linear-gradient(135deg, rgba(77,168,98,0.25), rgba(45,122,66,0.15))", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: "linear-gradient(135deg, rgba(26,158,66,0.25), rgba(45,122,66,0.15))", border: "1px solid rgba(26,158,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                           <span style={{ fontSize: 18 }}>✈️</span>
                         </div>
                         <div>
@@ -1414,7 +1414,7 @@ export default function CourseProfilePage() {
             {tripStep === "details" && (
               <>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Course Details</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862", marginBottom: 20 }}>Adding {course?.name} to {selectedTripName}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#1a9e42", marginBottom: 20 }}>Adding {course?.name} to {selectedTripName}</div>
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Play Date <span style={{ color: "rgba(255,255,255,0.2)", fontWeight: 400 }}>(optional)</span></div>
                   <input type="date" value={tripPlayDate} onChange={e => setTripPlayDate(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: tripPlayDate ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
@@ -1449,11 +1449,11 @@ export default function CourseProfilePage() {
             {tripStep === "success" && (
               <>
                 <div style={{ textAlign: "center", padding: "8px 0 20px" }}>
-                  <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(26,158,66,0.15)", border: "1.5px solid rgba(26,158,66,0.4)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 6 }}>Course Added!</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 28 }}>{course?.name} is on <span style={{ color: "#4da862" }}>{tripAddedName}</span></div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 28 }}>{course?.name} is on <span style={{ color: "#1a9e42" }}>{tripAddedName}</span></div>
                   <button
                     onClick={() => { setTripPickerOpen(false); router.push(`/trips/${tripAddedId}`); }}
                     style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", marginBottom: 10, boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}
