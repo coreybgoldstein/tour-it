@@ -206,7 +206,7 @@ function SearchPageInner() {
         .course-row:active { opacity: 0.7; }
 
         .course-badge {
-          width: 68px; height: 42px; border-radius: 10px; flex-shrink: 0;
+          width: 46px; height: 46px; border-radius: 10px; flex-shrink: 0;
           background: rgba(77,168,98,0.1); border: 1px solid rgba(77,168,98,0.2);
           display: flex; align-items: center; justify-content: center;
           font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700;
@@ -355,7 +355,7 @@ function SearchPageInner() {
               return (
                 <div key={course.id} className="course-row" onClick={() => router.push(`/courses/${course.id}`)}>
                   <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                    {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 9 }} /> : abbr}
+                    {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="course-name">{course.name}</div>
@@ -382,7 +382,7 @@ function SearchPageInner() {
               return (
                 <div key={course.id} className="course-row" onClick={() => router.push(`/courses/${course.id}`)}>
                   <div className="course-badge has-clips" style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                    {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 9 }} /> : abbr}
+                    {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="course-name">{course.name}</div>
