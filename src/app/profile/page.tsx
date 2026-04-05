@@ -620,102 +620,115 @@ if (userUploads && userUploads.length > 0) {
         </div>
       )}
 
-      {/* Banner — overflow:hidden clips the image only */}
+      {/* Banner + top bar in one block */}
       <div
-        style={{ position: "relative", height: 170, overflow: "hidden", background: user.bannerUrl ? "none" : "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)", cursor: "pointer" }}
+        style={{ position: "relative", height: 175, overflow: "hidden", cursor: "pointer" }}
         onClick={() => bannerInputRef.current?.click()}
       >
-        {user.bannerUrl && <img src={user.bannerUrl} alt="banner" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-        {/* Logout — top left, inside banner so it sits over the photo */}
-        <button
-          onClick={e => { e.stopPropagation(); handleLogout(); }}
-          style={{ position: "absolute", top: 48, left: 14, background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "4px 11px", color: "rgba(255,255,255,0.6)", fontSize: 11, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}
-        >
-          Log out
-        </button>
-        {/* Banner camera icon */}
-        <div style={{ position: "absolute", bottom: 10, right: 12, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {user.bannerUrl
+          ? <img src={user.bannerUrl} alt="banner" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          : <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)" }} />
+        }
+        {/* Fade into page background at the bottom */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 70, background: "linear-gradient(to bottom, transparent, #07100a)", pointerEvents: "none" }} />
+
+        {/* Top bar — logout left, notifications right */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 16px 0", pointerEvents: "none" }}>
+          <button
+            onClick={e => { e.stopPropagation(); handleLogout(); }}
+            style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "all" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); router.push("/notifications"); }}
+            style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "all" }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Camera edit hint */}
+        <div style={{ position: "absolute", bottom: 14, right: 14, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
           {uploadingBanner
-            ? <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>...</span>
+            ? <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>…</span>
             : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           }
         </div>
         <input ref={bannerInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleBannerUpload} />
       </div>
 
-      {/* Avatar — outside overflow:hidden, negative margin pulls it up over the banner */}
-      <div style={{ display: "flex", justifyContent: "center", marginTop: -44, position: "relative", zIndex: 2, marginBottom: 12 }}>
-        <div style={{ position: "relative" }}>
+      {/* Avatar + identity — tight block, avatar overlaps banner gradient */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: -46, position: "relative", zIndex: 2, paddingBottom: 16 }}>
+        <div style={{ position: "relative", marginBottom: 10 }}>
           <div
             onClick={() => fileInputRef.current?.click()}
-            style={{ width: 84, height: 84, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}
+            style={{ width: 88, height: 88, borderRadius: "50%", background: user.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: "2.5px solid rgba(77,168,98,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer", overflow: "hidden" }}
           >
-            {user.avatarUrl ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : uploadingAvatar ? <span style={{ fontSize: 12 }}>...</span> : initials}
+            {user.avatarUrl
+              ? <img src={user.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials
+            }
           </div>
           <div
             onClick={() => fileInputRef.current?.click()}
-            style={{ position: "absolute", bottom: 2, right: 2, width: 22, height: 22, borderRadius: "50%", background: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #07100a" }}
+            style={{ position: "absolute", bottom: 2, right: 2, width: 24, height: 24, borderRadius: "50%", background: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", border: "2.5px solid #07100a" }}
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
         </div>
+
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 21, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 3 }}>{user.displayName}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: user.handicapIndex !== null || homeCourse ? 12 : 0 }}>@{user.username}</div>
+
+        {(user.handicapIndex !== null || homeCourse) && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+            {user.handicapIndex !== null && (
+              <div style={{ display: "flex", alignItems: "center", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "#4da862" }}>
+                {user.handicapIndex} hcp
+              </div>
+            )}
+            {homeCourse && (
+              <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
+                {homeCourse.name}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Name + username */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, paddingBottom: 16, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff" }}>{user.displayName}</div>
-        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>@{user.username}</div>
-      </div>
-
-      {/* Stats */}
-      <div style={{ display: "flex", justifyContent: "center", gap: "32px", padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      {/* Stats bar */}
+      <div style={{ display: "flex", justifyContent: "space-around", padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 12 }}>
         {[
-          { num: uploads.length, label: "Clips", onClick: undefined },
-          { num: coursesPlayed.length, label: "Courses", onClick: undefined },
+          { num: uploads.length, label: "Clips", onClick: undefined as (() => void) | undefined },
+          { num: coursesPlayed.length, label: "Courses", onClick: undefined as (() => void) | undefined },
           { num: followerCount, label: "Followers", onClick: () => openFollowSheet("followers") },
           { num: followingCount, label: "Following", onClick: () => openFollowSheet("following") },
         ].map(s => (
-          <div
-            key={s.label}
-            onClick={s.onClick}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: s.onClick ? "pointer" : "default" }}
-          >
-            <div style={{ fontSize: "22px", fontWeight: 700, color: "#fff" }}>{s.num}</div>
-            <div style={{ fontSize: "11px", color: s.onClick ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.06em", textDecoration: s.onClick ? "underline" : "none", textDecorationColor: "rgba(255,255,255,0.2)" }}>{s.label}</div>
+          <div key={s.label} onClick={s.onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: s.onClick ? "pointer" : "default" }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff" }}>{s.num}</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: s.onClick ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.07em", textDecoration: s.onClick ? "underline" : "none", textDecorationColor: "rgba(255,255,255,0.15)" }}>{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Info pills */}
-      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        {user.handicapIndex !== null && (
-          <div style={{ display: "flex", alignItems: "center", gap: "5px", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: "20px", padding: "4px 10px", fontSize: "11px", color: "#4da862" }}>
-            {user.handicapIndex} hcp
-          </div>
-        )}
-        {homeCourse && (
-          <div style={{ display: "flex", alignItems: "center", gap: "5px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "4px 10px", fontSize: "11px", color: "rgba(255,255,255,0.6)" }}>
-            {homeCourse.name}
-          </div>
-        )}
-        {!user.handicapIndex && !homeCourse && (
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)" }}>Add your handicap and home course below</div>
-        )}
-      </div>
-
       {/* Edit profile */}
-      <div style={{ padding: "12px 20px" }}>
-        <button onClick={() => setShowEdit(!showEdit)} style={{ width: "100%", padding: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", fontSize: "12px", fontWeight: 500, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}>
+      <div style={{ padding: "0 20px 16px" }}>
+        <button onClick={() => setShowEdit(!showEdit)} style={{ width: "100%", padding: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", fontSize: "12px", fontWeight: 500, color: "rgba(255,255,255,0.7)", cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
           {showEdit ? "Cancel" : "Edit profile"}
         </button>
         {showEdit && (
           <div style={{ marginTop: "12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
             <div>
-              <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "6px" }}>Handicap index</label>
-              <input type="number" step="0.1" min="-10" max="54" placeholder="e.g. 8.4" value={editHandicap} onChange={e => setEditHandicap(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "9px 12px", color: "#fff", fontSize: "13px", outline: "none" }} />
+              <label style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: "6px", fontFamily: "'Outfit', sans-serif" }}>Handicap index</label>
+              <input type="number" step="0.1" min="-10" max="54" placeholder="e.g. 8.4" value={editHandicap} onChange={e => setEditHandicap(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "9px 12px", color: "#fff", fontSize: "13px", outline: "none", fontFamily: "'Outfit', sans-serif" }} />
             </div>
-            <button onClick={handleSaveProfile} style={{ padding: "10px", background: "#4da862", border: "none", borderRadius: "10px", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+            <button onClick={handleSaveProfile} style={{ padding: "10px", background: "#4da862", border: "none", borderRadius: "10px", color: "#fff", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
               {saving ? "Saving..." : "Save changes"}
             </button>
           </div>
