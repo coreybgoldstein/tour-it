@@ -695,7 +695,7 @@ if (userUploads && userUploads.length > 0) {
       )}
 
       {/* Top bar — logout anchored, notification bell handled globally */}
-      <div style={{ padding: "52px 16px 0", display: "flex", alignItems: "center" }}>
+      <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center" }}>
         <button
           onClick={handleLogout}
           style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
