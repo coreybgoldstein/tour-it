@@ -254,9 +254,10 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.05em" }}>SENT</span>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.6)", letterSpacing: "0.22em" }}>SEND</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 900, color: "#fff", letterSpacing: "0.04em", lineHeight: 1 }}>IT</span>
+              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em" }}>SEND</span>
+                  <div style={{ width: 22, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} />
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", paddingLeft: "0.22em" }}>IT</span>
                 </div>
             }
           </div>

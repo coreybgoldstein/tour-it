@@ -47,14 +47,12 @@ export default function NotificationBell() {
 
   if (hidden || !userId) return null;
 
-  const isProfile = pathname === "/profile";
-
   return (
     <button
       onClick={() => router.push("/notifications")}
       style={{
         position: "fixed",
-        top: isProfile ? 60 : 16,
+        top: 16,
         right: 16,
         zIndex: 90,
         background: "none",

@@ -170,9 +170,10 @@ function ProfileFeedCard({
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.05em" }}>SENT</span>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 7, fontWeight: 700, color: "rgba(255,255,255,0.6)", letterSpacing: "0.22em" }}>SEND</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 900, color: "#fff", letterSpacing: "0.04em", lineHeight: 1 }}>IT</span>
+              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em" }}>SEND</span>
+                  <div style={{ width: 22, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} />
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", paddingLeft: "0.22em" }}>IT</span>
                 </div>
             }
           </div>
@@ -945,20 +946,18 @@ if (userUploads && userUploads.length > 0) {
       )}
 
       {/* Top bar */}
-      <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center" }}>
+      <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", gap: 8 }}>
         <button onClick={handleLogout} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
         </button>
+        <button onClick={() => setShowEdit(true)} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
       </div>
-
-      {/* Edit profile — fixed top-right, above notification bell */}
-      <button onClick={() => setShowEdit(true)} style={{ position: "fixed", top: 16, right: 16, zIndex: 91, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(8px)" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      </button>
 
       {/* Avatar + identity */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 10, paddingBottom: 14 }}>
