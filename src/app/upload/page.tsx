@@ -656,7 +656,7 @@ function UploadPageInner() {
                 <div className="upload-zone-sub">Single clip</div>
               </div>
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}
                 style={{ marginTop: 10, width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer" }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
