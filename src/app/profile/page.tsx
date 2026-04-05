@@ -694,18 +694,20 @@ if (userUploads && userUploads.length > 0) {
         </div>
       )}
 
-      {/* Fixed logout button — aligned with NotificationBell at top: 16 */}
-      <button
-        onClick={handleLogout}
-        style={{ position: "fixed", top: 16, left: 16, zIndex: 90, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-      </button>
+      {/* Top bar — logout anchored, notification bell handled globally */}
+      <div style={{ padding: "52px 16px 0", display: "flex", alignItems: "center" }}>
+        <button
+          onClick={handleLogout}
+          style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
 
       {/* Avatar + identity */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 72, paddingBottom: 16 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 16 }}>
         <div style={{ position: "relative", marginBottom: 10 }}>
           <div
             onClick={() => fileInputRef.current?.click()}
