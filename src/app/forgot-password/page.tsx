@@ -47,10 +47,7 @@ export default function ForgotPasswordPage() {
 
       <div className="card">
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
-          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4da862" }} />
-          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Tour It</span>
-        </div>
+        <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 48, width: "auto", maxWidth: "100%", marginBottom: 20 }} />
 
         {sent ? (
           <div style={{ textAlign: "center" }}>

@@ -144,10 +144,7 @@ export default function LoginPage() {
       <div className="bg-glow" />
 
       <div className="card">
-        <div className="logo">
-          <div className="logo-dot" />
-          Tour It
-        </div>
+        <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 48, width: "auto", maxWidth: "100%", marginBottom: 4 }} />
         <p className="tagline">Scout every hole before you play it.</p>
 
         <h1 className="title">Welcome back</h1>
