@@ -264,6 +264,7 @@ export default function HolePage() {
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [muted, setMuted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -550,7 +551,6 @@ export default function HolePage() {
   const activeUpload = uploads[activeIndex];
   const uploader = activeUpload ? uploaders[activeUpload.userId] : null;
   const hasIntel = activeUpload && (activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow || activeUpload.clubUsed || activeUpload.windCondition || activeUpload.datePlayedAt);
-  const [notesOpen, setNotesOpen] = useState(false);
 
   return (
     <>
