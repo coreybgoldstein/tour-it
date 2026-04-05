@@ -1308,8 +1308,8 @@ if (userUploads && userUploads.length > 0) {
                   >
                     <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {u.avatarUrl
-                        ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#4da862" }}>{(u.displayName || u.username)[0].toUpperCase()}</span>
+                        ? <img src={u.avatarUrl} alt={u.username || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#4da862" }}>{(u.displayName || u.username || "?")[0].toUpperCase()}</span>
                       }
                     </div>
                     <div>

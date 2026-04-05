@@ -306,7 +306,7 @@ function SeriesCard({
         </div>
       ))}
 
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none", zIndex: 5 }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
 
       <FeedTopBar
         courseLogoUrl={item.courseLogoUrl}
@@ -388,7 +388,7 @@ function VideoCard({
         <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none", zIndex: 5 }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
 
       {videoPaused && (
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 15, pointerEvents: "none", opacity: 0.7 }}>
