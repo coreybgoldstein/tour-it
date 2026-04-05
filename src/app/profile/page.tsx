@@ -92,6 +92,20 @@ export default function ProfilePage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Edit state
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [editData, setEditData] = useState<{
+    holeNumber: number | null;
+    shotType: string;
+    strategyNote: string;
+    clubUsed: string;
+    windCondition: string;
+    landingZoneNote: string;
+    whatCameraDoesntShow: string;
+  } | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+
   useEffect(() => {
     const supabase = createClient();
 
@@ -288,6 +302,76 @@ if (userUploads && userUploads.length > 0) {
     setDeleting(false);
   }
 
+  async function openEdit() {
+    if (!selectedClip) return;
+    setEditLoading(true);
+    setShowEditSheet(true);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("Upload")
+      .select("shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, holeId")
+      .eq("id", selectedClip.id)
+      .single();
+    setEditData({
+      holeNumber: selectedClip.holeNumber ?? null,
+      shotType: data?.shotType || "",
+      strategyNote: data?.strategyNote || "",
+      clubUsed: data?.clubUsed || "",
+      windCondition: data?.windCondition || "",
+      landingZoneNote: data?.landingZoneNote || "",
+      whatCameraDoesntShow: data?.whatCameraDoesntShow || "",
+    });
+    setEditLoading(false);
+  }
+
+  async function saveEdit() {
+    if (!selectedClip || !editData || editSaving) return;
+    setEditSaving(true);
+    const supabase = createClient();
+
+    // Resolve holeId if hole number changed
+    let holeId = selectedClip.holeId;
+    if (editData.holeNumber && editData.holeNumber !== selectedClip.holeNumber) {
+      const { data: existing } = await supabase
+        .from("Hole").select("id")
+        .eq("courseId", selectedClip.courseId)
+        .eq("holeNumber", editData.holeNumber)
+        .maybeSingle();
+      if (existing?.id) {
+        holeId = existing.id;
+      } else {
+        const newId = crypto.randomUUID();
+        const now = new Date().toISOString();
+        await supabase.from("Hole").insert({
+          id: newId, courseId: selectedClip.courseId,
+          holeNumber: editData.holeNumber, par: 0, uploadCount: 0,
+          createdAt: now, updatedAt: now,
+        });
+        holeId = newId;
+      }
+    }
+
+    await supabase.from("Upload").update({
+      holeId,
+      shotType: editData.shotType || null,
+      clubUsed: editData.clubUsed || null,
+      windCondition: editData.windCondition || null,
+      strategyNote: editData.strategyNote || null,
+      landingZoneNote: editData.landingZoneNote || null,
+      whatCameraDoesntShow: editData.whatCameraDoesntShow || null,
+      updatedAt: new Date().toISOString(),
+    }).eq("id", selectedClip.id);
+
+    // Update local state so hole number reflects immediately
+    setUploads(prev => prev.map(u =>
+      u.id === selectedClip.id ? { ...u, holeNumber: editData.holeNumber ?? u.holeNumber, holeId } : u
+    ));
+    setSelectedClip(prev => prev ? { ...prev, holeNumber: editData.holeNumber ?? prev.holeNumber, holeId } : prev);
+
+    setEditSaving(false);
+    setShowEditSheet(false);
+  }
+
   if (loading) {
     return (
       <main style={{ background: "#07100a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -315,18 +399,26 @@ if (userUploads && userUploads.length > 0) {
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "#000", display: "flex", flexDirection: "column" }}>
           {/* Header */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 16px 12px", position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)" }}>
-            <button onClick={() => { setSelectedClip(null); setConfirmDelete(false); }} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <button onClick={() => { setSelectedClip(null); setConfirmDelete(false); setShowEditSheet(false); }} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
             {selectedCourseName && (
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.8)" }}>{selectedCourseName}</div>
             )}
-            <button
-              onClick={() => setConfirmDelete(true)}
-              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(220,60,60,0.15)", border: "1px solid rgba(220,60,60,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={openEdit}
+                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(220,60,60,0.15)", border: "1px solid rgba(220,60,60,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(220,100,100,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+            </div>
           </div>
 
           {/* Media */}
@@ -337,6 +429,82 @@ if (userUploads && userUploads.length > 0) {
               <img src={selectedClip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             )}
           </div>
+
+          {/* Edit sheet */}
+          {showEditSheet && (
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 20 }} onClick={() => setShowEditSheet(false)}>
+              <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "82vh", overflowY: "auto" }}>
+                <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 20px" }} />
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 20 }}>Edit clip</div>
+
+                {editLoading || !editData ? (
+                  <div style={{ display: "flex", justifyContent: "center", padding: "24px 0" }}>
+                    <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
+                  </div>
+                ) : (
+                  <>
+                    {/* Hole */}
+                    <div style={{ marginBottom: 18 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Hole</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                        {Array.from({ length: 18 }, (_, i) => i + 1).map(n => (
+                          <button key={n} onClick={() => setEditData(d => d ? { ...d, holeNumber: n } : d)}
+                            style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${editData.holeNumber === n ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.holeNumber === n ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.holeNumber === n ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer" }}>
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Shot type */}
+                    <div style={{ marginBottom: 18 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Shot type</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {[{ label: "Tee Shot", value: "TEE_SHOT" }, { label: "Approach", value: "APPROACH" }, { label: "Chip", value: "CHIP" }, { label: "Pitch", value: "PITCH" }, { label: "Putt", value: "PUTT" }, { label: "Bunker", value: "BUNKER" }, { label: "Layup", value: "LAY_UP" }, { label: "Full Hole", value: "FULL_HOLE" }].map(s => (
+                          <button key={s.value} onClick={() => setEditData(d => d ? { ...d, shotType: s.value } : d)}
+                            style={{ padding: "6px 12px", borderRadius: 99, border: `1px solid ${editData.shotType === s.value ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.shotType === s.value ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.shotType === s.value ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer", whiteSpace: "nowrap" }}>
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Strategy note */}
+                    <div style={{ marginBottom: 18 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Strategy note</div>
+                      <textarea value={editData.strategyNote} onChange={e => setEditData(d => d ? { ...d, strategyNote: e.target.value } : d)} placeholder="What should golfers know about this shot?" rows={3}
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", resize: "none", boxSizing: "border-box" }} />
+                    </div>
+
+                    {/* Club used */}
+                    <div style={{ marginBottom: 18 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Club used</div>
+                      <input value={editData.clubUsed} onChange={e => setEditData(d => d ? { ...d, clubUsed: e.target.value } : d)} placeholder="e.g. 7-iron, Driver…"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }} />
+                    </div>
+
+                    {/* Wind */}
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Wind</div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {[{ label: "Calm", value: "CALM" }, { label: "Into", value: "INTO" }, { label: "Downwind", value: "DOWNWIND" }, { label: "Left→Right", value: "LEFT_TO_RIGHT" }, { label: "Right→Left", value: "RIGHT_TO_LEFT" }].map(w => (
+                          <button key={w.value} onClick={() => setEditData(d => d ? { ...d, windCondition: d.windCondition === w.value ? "" : w.value } : d)}
+                            style={{ padding: "6px 12px", borderRadius: 99, border: `1px solid ${editData.windCondition === w.value ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.windCondition === w.value ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.windCondition === w.value ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer", whiteSpace: "nowrap" }}>
+                            {w.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button onClick={saveEdit} disabled={editSaving}
+                      style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "15px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: editSaving ? 0.6 : 1, boxShadow: "0 2px 14px rgba(45,122,66,0.35)" }}>
+                      {editSaving ? "Saving…" : "Save changes"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Confirm delete sheet */}
           {confirmDelete && (
