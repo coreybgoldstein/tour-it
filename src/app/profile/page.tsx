@@ -5,6 +5,83 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import ClipViewer from "@/components/ClipViewer";
+function ProfileFeedCard({
+  clip, isActive, courseName, onClose, onOptions,
+}: {
+  clip: { id: string; mediaUrl: string; mediaType: string; courseId: string; holeNumber?: number | null; shotType?: string | null; isTagged: boolean };
+  isActive: boolean;
+  courseName: string | null;
+  onClose: () => void;
+  onOptions: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (isActive) { v.currentTime = 0; v.play().catch(() => {}); setPaused(false); }
+    else { v.pause(); }
+  }, [isActive]);
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) { v.play().catch(() => {}); setPaused(false); }
+    else { v.pause(); setPaused(true); }
+  };
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000" }}>
+      {clip.mediaType === "VIDEO" ? (
+        <video ref={videoRef} src={clip.mediaUrl} loop muted={muted} playsInline onClick={togglePlay}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
+      ) : (
+        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      )}
+
+      {/* Gradient overlays */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 30%, transparent 60%, rgba(0,0,0,0.7) 100%)", pointerEvents: "none" }} />
+
+      {/* Pause indicator */}
+      {paused && (
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none", opacity: 0.8 }}>
+          <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </div>
+        </div>
+      )}
+
+      {/* Top bar */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "52px 16px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 10 }}>
+        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setMuted(m => !m)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            {muted
+              ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+              : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            }
+          </button>
+          {!clip.isTagged && (
+            <button onClick={onOptions} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom info */}
+      <div style={{ position: "absolute", bottom: 90, left: 16, right: 16, zIndex: 10 }}>
+        {courseName && <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#fff", textShadow: "0 1px 6px rgba(0,0,0,0.9)", marginBottom: 4 }}>{courseName}</div>}
+        {clip.holeNumber && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>Hole {clip.holeNumber}{clip.shotType ? ` · ${clip.shotType.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}` : ""}</div>}
+      </div>
+    </div>
+  );
+}
+
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
@@ -96,6 +173,12 @@ export default function ProfilePage() {
   const [followSheet, setFollowSheet] = useState<"followers" | "following" | null>(null);
   const [followList, setFollowList] = useState<FollowUser[]>([]);
   const [followListLoading, setFollowListLoading] = useState(false);
+
+  // Full-screen feed
+  const [feedOpen, setFeedOpen] = useState(false);
+  const [feedStartIdx, setFeedStartIdx] = useState(0);
+  const [feedActiveIdx, setFeedActiveIdx] = useState(0);
+  const feedScrollRef = useRef<HTMLDivElement>(null);
 
   // Delete / view state
   const [selectedClip, setSelectedClip] = useState<Upload | null>(null);
@@ -611,28 +694,18 @@ if (userUploads && userUploads.length > 0) {
         </div>
       )}
 
-      {/* Top bar — logout left, notifications right */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 16px 0" }}>
-        <button
-          onClick={handleLogout}
-          style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </button>
-        <button
-          onClick={() => router.push("/notifications")}
-          style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-        </button>
-      </div>
+      {/* Fixed logout button — aligned with NotificationBell at top: 16 */}
+      <button
+        onClick={handleLogout}
+        style={{ position: "fixed", top: 16, left: 16, zIndex: 90, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
 
       {/* Avatar + identity */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 20, paddingBottom: 16 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 72, paddingBottom: 16 }}>
         <div style={{ position: "relative", marginBottom: 10 }}>
           <div
             onClick={() => fileInputRef.current?.click()}
@@ -758,7 +831,43 @@ if (userUploads && userUploads.length > 0) {
           ...uploads.map(u => ({ ...u, isTagged: false })),
           ...taggedUploads.map(u => ({ ...u, isTagged: true })),
         ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        const openFeed = (idx: number) => {
+          setFeedStartIdx(idx);
+          setFeedActiveIdx(idx);
+          setFeedOpen(true);
+          setTimeout(() => {
+            feedScrollRef.current?.scrollTo({ top: idx * window.innerHeight, behavior: "instant" });
+          }, 0);
+        };
+
         return (
+          <>
+          {/* Full-screen scroll feed */}
+          {feedOpen && (
+            <div
+              ref={feedScrollRef}
+              onScroll={e => {
+                const idx = Math.round((e.target as HTMLElement).scrollTop / window.innerHeight);
+                setFeedActiveIdx(idx);
+              }}
+              style={{ position: "fixed", inset: 0, zIndex: 150, background: "#000", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none" }}
+            >
+              <style>{`.profile-feed::-webkit-scrollbar { display: none; }`}</style>
+              {allClips.map((clip, idx) => (
+                <div key={clip.id + (clip.isTagged ? "-t" : "")} style={{ scrollSnapAlign: "start", scrollSnapStop: "always", height: "100svh", width: "100vw", flexShrink: 0 }}>
+                  <ProfileFeedCard
+                    clip={clip}
+                    isActive={idx === feedActiveIdx}
+                    courseName={coursesPlayed.find(c => c.id === clip.courseId)?.name ?? null}
+                    onClose={() => setFeedOpen(false)}
+                    onOptions={() => { setFeedOpen(false); setSelectedClip(clip); }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: "10px" }}>
           <div style={{ fontSize: "12px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>Clips</div>
@@ -776,7 +885,7 @@ if (userUploads && userUploads.length > 0) {
               <div
                 key={upload.id + (upload.isTagged ? "-t" : "")}
                 className="clip-thumb"
-                onClick={() => upload.isTagged ? router.push(`/courses/${upload.courseId}`) : setSelectedClip(upload)}
+                onClick={() => openFeed(i)}
                 style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}
               >
                 {upload.mediaType === "PHOTO" ? (
@@ -806,6 +915,7 @@ if (userUploads && userUploads.length > 0) {
           </div>
         )}
       </div>
+          </>
         );
       })()}
 
