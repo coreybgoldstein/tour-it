@@ -565,11 +565,11 @@ export default function HolePage() {
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
           .video-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
           .photo-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-          .gradient-top { position: absolute; top: 0; left: 0; right: 0; height: 140px; background: linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%); z-index: 10; pointer-events: none; }
+          .gradient-top { position: absolute; top: 0; left: 0; right: 0; height: 140px; background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 100%); z-index: 10; pointer-events: none; }
           .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 52px 14px 12px; z-index: 20; gap: 10px; }
           .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-          .course-top-badge { width: 40px; height: 40px; border-radius: 10px; background: rgba(26,158,66,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #1a9e42; flex-shrink: 0; overflow: hidden; }
+          .course-top-badge { width: 46px; height: 46px; border-radius: 12px; background: rgba(26,158,66,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; color: #1a9e42; flex-shrink: 0; overflow: hidden; }
           .right-actions { position: absolute; right: 14px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 30; }
           .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
           .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
@@ -646,11 +646,11 @@ export default function HolePage() {
                   }
                 </div>
                 <div style={{ minWidth: 0, textAlign: "left" }}>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>{pageTitle}</span>
-                    {!multiHoleKey && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· Par {par}</span>}
-                    {activeUpload?.datePlayedAt && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· {new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>}
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{pageTitle}</span>
+                    {!multiHoleKey && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>· Par {par}</span>}
+                    {activeUpload?.datePlayedAt && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· {new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>}
                   </div>
                 </div>
               </button>
@@ -723,24 +723,6 @@ export default function HolePage() {
                 </button>
               )}
 
-              {/* Upload CTA */}
-              {!multiHoleKey && holeNum && (
-                <button className="action-btn" onClick={() => router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`)}>
-                  <div className="action-icon" style={{ background: "rgba(45,122,66,0.25)", borderColor: "rgba(26,158,66,0.4)" }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="8 7 12 2 16 7"/><line x1="12" y1="2" x2="12" y2="15"/><path d="M5 15v5h14v-5"/>
-                    </svg>
-                  </div>
-                  <span className="action-label" style={{ color: "#1a9e42" }}>Post</span>
-                </button>
-              )}
-
-              {/* Flag badge — hole number, navigates to holes overview */}
-              <button className="action-btn" onClick={() => router.push(`/courses/${id}/holes`)}>
-                <div style={{ width: 46, height: 46, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <FlagBadge label={multiHoleKey ? "+" : (holeNum ?? "·")} />
-                </div>
-              </button>
             </div>
 
             {/* End-of-content toast */}

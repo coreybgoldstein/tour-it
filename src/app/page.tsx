@@ -116,18 +116,18 @@ function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlaye
   const abbr = courseName.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
   const dateLabel = datePlayedAt ? new Date(datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
   return (
-    <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 14px 12px", zIndex: 20, gap: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)" }}>
+    <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 14px 12px", zIndex: 20, gap: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 100%)" }}>
       <button onClick={onTapCourse} style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(26,158,66,0.2)", border: "1.5px solid rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a9e42", flexShrink: 0, overflow: "hidden" }}>
+        <div style={{ width: 46, height: 46, borderRadius: 12, background: "rgba(26,158,66,0.2)", border: "1.5px solid rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", flexShrink: 0, overflow: "hidden" }}>
           {courseLogoUrl
             ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : abbr
           }
         </div>
         <div style={{ minWidth: 0, textAlign: "left" }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{courseName}</div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{courseName}</div>
           {holeNumber && (
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
               Hole {holeNumber}{shotType && SHOT_LABEL[shotType] ? ` · ${SHOT_LABEL[shotType]}` : ""}{dateLabel ? ` · ${dateLabel}` : ""}
             </span>
           )}
@@ -323,7 +323,7 @@ function SeriesCard({
         </div>
       ))}
 
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
 
       <FeedTopBar
         courseLogoUrl={item.courseLogoUrl}
@@ -450,7 +450,7 @@ function VideoCard({
         <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
 
       {videoPaused && (
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 15, pointerEvents: "none", opacity: 0.7 }}>
