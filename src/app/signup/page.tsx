@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 
 const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos";
 const DEFAULT_AVATARS = [
-  "01-coffee", "02-burger-happy", "03-golf-glove", "04-sunscreen", "05-rangefinder",
-  "06-hotdog", "07-snack-bag", "08-golf-club", "09-burger-chill", "10-water-bottle",
-  "11-burger-orange", "12-water-bottle-yellow", "13-bloody-mary", "14-grape-soda", "15-beer-can",
+  "01-coffee", "02-burger-messy", "03-golf-glove", "04-sunscreen", "05-rangefinder",
+  "06-hotdog", "07-protein-bar", "08-driver", "09-cheeseburger",
+  "11-hamburger", "12-water-jug", "13-bloody-mary", "14-cocktail", "15-beer-can",
 ].map(n => `${SUPABASE_STORAGE}/default-avatars/${n}.png`);
 
 const randomAvatar = () => DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)];
