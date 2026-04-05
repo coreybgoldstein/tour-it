@@ -629,8 +629,6 @@ if (userUploads && userUploads.length > 0) {
           ? <img src={user.bannerUrl} alt="banner" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
           : <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #1a4d22 0%, #0d2e14 60%, #071a0a 100%)" }} />
         }
-        {/* Fade into page background at the bottom */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 70, background: "linear-gradient(to bottom, transparent, #07100a)", pointerEvents: "none" }} />
 
         {/* Top bar — logout left, notifications right */}
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 16px 0", pointerEvents: "none" }}>
