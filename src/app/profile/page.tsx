@@ -9,11 +9,12 @@ import { useLike } from "@/hooks/useLike";
 const SHOT_LABEL: Record<string, string> = { DRIVE: "Drive", APPROACH: "Approach Shot", CHIP: "Chip", PUTT: "Putt", LAYUP: "Layup", FULL_SWING: "Full Swing" };
 
 function ProfileFeedCard({
-  clip, isActive, courseName, onClose, onOptions, uploaderInfo, onComment,
+  clip, isActive, courseName, courseLogoUrl, onClose, onOptions, uploaderInfo, onComment,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; courseId: string; holeNumber?: number | null; shotType?: string | null; isTagged: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null };
   isActive: boolean;
   courseName: string | null;
+  courseLogoUrl: string | null;
   onClose: () => void;
   onOptions: () => void;
   uploaderInfo: { id: string; username: string; avatarUrl: string | null };
@@ -102,7 +103,10 @@ function ProfileFeedCard({
         <button onClick={() => router.push(`/courses/${clip.courseId}`)}
           style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
           <div className="pf-course-badge">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            {courseLogoUrl
+              ? <img src={courseLogoUrl} alt={courseName || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{(courseName || "?").split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?"}</span>
+            }
           </div>
           <div style={{ minWidth: 0, textAlign: "left" }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{courseName}</div>
@@ -274,6 +278,7 @@ type CoursePlayed = {
   name: string;
   city: string;
   state: string;
+  logoUrl: string | null;
 };
 
 type HomeCourse = {
@@ -439,7 +444,7 @@ setFollowingCount(following || 0);
 
 if (userUploads && userUploads.length > 0) {
   const uniqueCourseIds = [...new Set(userUploads.map((u: any) => u.courseId))];
-  const { data: courses } = await supabase.from("Course").select("id, name, city, state").in("id", uniqueCourseIds);
+  const { data: courses } = await supabase.from("Course").select("id, name, city, state, logoUrl").in("id", uniqueCourseIds);
   setCoursesPlayed(courses || []);
 }
 
@@ -1127,6 +1132,7 @@ if (userUploads && userUploads.length > 0) {
                     clip={clip}
                     isActive={idx === feedActiveIdx}
                     courseName={coursesPlayed.find(c => c.id === clip.courseId)?.name ?? null}
+                    courseLogoUrl={coursesPlayed.find(c => c.id === clip.courseId)?.logoUrl ?? null}
                     onClose={() => setFeedOpen(false)}
                     onOptions={() => { setFeedOpen(false); setSelectedClip(clip); }}
                     uploaderInfo={{ id: user!.id, username: user!.username, avatarUrl: user!.avatarUrl }}
