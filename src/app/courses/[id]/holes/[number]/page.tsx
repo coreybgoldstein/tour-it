@@ -549,7 +549,8 @@ export default function HolePage() {
 
   const activeUpload = uploads[activeIndex];
   const uploader = activeUpload ? uploaders[activeUpload.userId] : null;
-  const hasIntel = activeUpload && (activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow);
+  const hasIntel = activeUpload && (activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow || activeUpload.clubUsed || activeUpload.windCondition || activeUpload.datePlayedAt);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   return (
     <>
@@ -649,7 +650,7 @@ export default function HolePage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>{pageTitle}</span>
                     {!multiHoleKey && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· Par {par}</span>}
-                    {activeUpload?.datePlayedAt && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· {new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
+                    {activeUpload?.datePlayedAt && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· {new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>}
                   </div>
                 </div>
               </button>
@@ -708,6 +709,18 @@ export default function HolePage() {
                   }
                 </div>
               </button>
+
+              {/* Notes */}
+              {hasIntel && (
+                <button className="action-btn" onClick={() => setNotesOpen(o => !o)}>
+                  <div className="action-icon" style={notesOpen ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.15)" } : {}}>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                  </div>
+                  <span className="action-label" style={{ color: notesOpen ? "#4da862" : undefined }}>Notes</span>
+                </button>
+              )}
 
               {/* Upload CTA */}
               {!multiHoleKey && holeNum && (
@@ -820,6 +833,50 @@ export default function HolePage() {
               >
                 {submittingComment ? "..." : "Post"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notes sheet */}
+      {notesOpen && activeUpload && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 60 }} onClick={() => setNotesOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>{holeNum ? `Hole ${holeNum} · ` : ""}Scout Notes</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {activeUpload.shotType && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shot Type</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#4da862" }}>{activeUpload.shotType.replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase())}</span>
+                </div>
+              )}
+              {activeUpload.clubUsed && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Club</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{activeUpload.clubUsed}</span>
+                </div>
+              )}
+              {activeUpload.windCondition && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Wind</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{activeUpload.windCondition.replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase())}</span>
+                </div>
+              )}
+              {activeUpload.datePlayedAt && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Played</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                </div>
+              )}
+              {(activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow) && (
+                <div style={{ paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Notes</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>
+                    {[activeUpload.strategyNote, activeUpload.landingZoneNote, activeUpload.whatCameraDoesntShow].filter(Boolean).join("\n\n")}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

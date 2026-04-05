@@ -28,6 +28,7 @@ type FeedClip = {
   holeNumber?: number;
   strategyNote: string | null;
   clubUsed: string | null;
+  windCondition: string | null;
   shotType: string | null;
   username: string;
   avatarUrl: string | null;
@@ -113,7 +114,7 @@ function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlaye
   datePlayedAt?: string | null; muted: boolean; onMuteToggle: () => void; onTapCourse: () => void;
 }) {
   const abbr = courseName.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
-  const dateLabel = datePlayedAt ? new Date(datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
+  const dateLabel = datePlayedAt ? new Date(datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 14px 12px", zIndex: 20, gap: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)" }}>
       <button onClick={onTapCourse} style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
@@ -185,12 +186,13 @@ function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () =
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser }: {
+function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onNotes, notesOpen }: {
   userId: string; avatarUrl: string | null; username: string;
   courseId: string; courseName: string;
   liked: boolean; onLike: () => void; likeCount: number;
   onComment: () => void; commentCount: number;
   onTapUser: () => void;
+  onNotes: (() => void) | null; notesOpen: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
@@ -233,6 +235,17 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
           }
         </div>
       </button>
+      {/* Notes */}
+      {onNotes && (
+        <button onClick={onNotes} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 46, height: 46, borderRadius: "50%", background: notesOpen ? "rgba(77,168,98,0.15)" : "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: `1px solid ${notesOpen ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>Notes</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -246,11 +259,13 @@ function SeriesCard({
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
+  const [notesOpen, setNotesOpen] = useState(false);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const lastTapRef = useRef<number>(0);
   const activeShot = item.shots[shotIndex];
+  const hasNotes = !!(activeShot?.strategyNote || activeShot?.clubUsed || activeShot?.windCondition || activeShot?.datePlayedAt);
 
   useEffect(() => {
     if (!isActive) {
@@ -350,7 +365,49 @@ function SeriesCard({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} courseId={item.courseId} courseName={item.courseName} liked={false} onLike={() => {}} likeCount={item.shots[0]?.likeCount || 0} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} courseId={item.courseId} courseName={item.courseName} liked={false} onLike={() => {}} likeCount={item.shots[0]?.likeCount || 0} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onNotes={hasNotes ? () => setNotesOpen(o => !o) : null} notesOpen={notesOpen} />
+
+      {notesOpen && (
+        <>
+          <div onClick={() => setNotesOpen(false)} style={{ position: "absolute", inset: 0, zIndex: 40 }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>{item.holeNumber ? `Hole ${item.holeNumber} · ` : ""}Scout Notes</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {activeShot?.shotType && SHOT_LABEL[activeShot.shotType] && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shot Type</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#4da862" }}>{SHOT_LABEL[activeShot.shotType]}</span>
+                </div>
+              )}
+              {activeShot?.clubUsed && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Club</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{activeShot.clubUsed}</span>
+                </div>
+              )}
+              {activeShot?.windCondition && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Wind</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{activeShot.windCondition.replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase())}</span>
+                </div>
+              )}
+              {activeShot?.datePlayedAt && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Played</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{new Date(activeShot.datePlayedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                </div>
+              )}
+              {activeShot?.strategyNote && (
+                <div style={{ paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Notes</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>{activeShot.strategyNote}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -365,6 +422,8 @@ function VideoCard({
   const videoRef = useRef<HTMLVideoElement>(null);
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
   const [videoPaused, setVideoPaused] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -421,7 +480,49 @@ function VideoCard({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onNotes={hasNotes ? () => setNotesOpen(o => !o) : null} notesOpen={notesOpen} />
+
+      {notesOpen && (
+        <>
+          <div onClick={() => setNotesOpen(false)} style={{ position: "absolute", inset: 0, zIndex: 40 }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>{clip.holeNumber ? `Hole ${clip.holeNumber} · ` : ""}Scout Notes</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {clip.shotType && SHOT_LABEL[clip.shotType] && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shot Type</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#4da862" }}>{SHOT_LABEL[clip.shotType]}</span>
+                </div>
+              )}
+              {clip.clubUsed && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Club</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{clip.clubUsed}</span>
+                </div>
+              )}
+              {clip.windCondition && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Wind</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{clip.windCondition.replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase())}</span>
+                </div>
+              )}
+              {clip.datePlayedAt && (
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Played</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{new Date(clip.datePlayedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                </div>
+              )}
+              {clip.strategyNote && (
+                <div style={{ paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Notes</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>{clip.strategyNote}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -475,7 +576,7 @@ export default function Home() {
     async function loadFeed() {
       const { data: uploads } = await supabase
         .from("Upload")
-        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
+        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
         .order("createdAt", { ascending: false })
         .limit(15);
 
@@ -549,7 +650,7 @@ export default function Home() {
     const supabase = createClient();
     const { data: uploads } = await supabase
       .from("Upload")
-      .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
+      .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
       .order("createdAt", { ascending: false })
       .lt("createdAt", feedCursorRef.current)
       .limit(15);

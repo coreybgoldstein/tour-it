@@ -206,7 +206,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
             {clip.holeNumber && (
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>
-                Hole {clip.holeNumber}{clip.shotType && SHOT_LABEL[clip.shotType] ? ` · ${SHOT_LABEL[clip.shotType]}` : ""}{clip.datePlayedAt ? ` · ${new Date(clip.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}
+                Hole {clip.holeNumber}{clip.shotType && SHOT_LABEL[clip.shotType] ? ` · ${SHOT_LABEL[clip.shotType]}` : ""}{clip.datePlayedAt ? ` · ${new Date(clip.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
               </span>
             )}
           </div>
