@@ -15,12 +15,15 @@ type TrendingCourse = {
   logoUrl: string | null;
 };
 
+const SHOT_LABEL: Record<string, string> = { DRIVE: "Drive", APPROACH: "Approach Shot", CHIP: "Chip", PUTT: "Putt", LAYUP: "Layup", FULL_SWING: "Full Swing" };
+
 type FeedClip = {
   id: string;
   mediaUrl: string;
   mediaType: string;
   courseId: string;
   courseName: string;
+  courseLogoUrl: string | null;
   holeId: string;
   holeNumber?: number;
   strategyNote: string | null;
@@ -39,7 +42,7 @@ type FeedClip = {
 
 type FeedItem =
   | { type: "clip"; clip: FeedClip }
-  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseId: string; holeId: string; holeNumber?: number; username: string; avatarUrl: string | null; userId: string };
+  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseLogoUrl: string | null; courseId: string; holeId: string; holeNumber?: number; username: string; avatarUrl: string | null; userId: string };
 
 type CommentItem = {
   id: string;
@@ -104,25 +107,36 @@ function TourItLogo({ size = 26 }: { size?: number }) {
   );
 }
 
-function HoleIcon() {
+function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, muted, onMuteToggle, onTapCourse }: {
+  courseLogoUrl: string | null; courseName: string; holeNumber?: number; shotType?: string | null;
+  muted: boolean; onMuteToggle: () => void; onTapCourse: () => void;
+}) {
+  const abbr = courseName.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <line x1="12" y1="3" x2="12" y2="21" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <path d="M12 3 L20 7 L12 11 Z" fill="white" />
-      <ellipse cx="12" cy="21" rx="4" ry="1.2" stroke="white" strokeWidth="1.5" fill="none" />
-    </svg>
-  );
-}
-
-function CourseIcon() {
-  return (
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
-      <path d="M2 10 L12 3 L22 10" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="4" y="10" width="16" height="11" rx="1" stroke="white" strokeWidth="1.8" fill="none" />
-      <rect x="6" y="13" width="3" height="3" rx="0.5" stroke="white" strokeWidth="1.4" fill="none" />
-      <rect x="15" y="13" width="3" height="3" rx="0.5" stroke="white" strokeWidth="1.4" fill="none" />
-      <path d="M10 21 L10 17 Q12 15.5 14 17 L14 21" stroke="white" strokeWidth="1.4" fill="none" strokeLinejoin="round" />
-    </svg>
+    <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 14px 12px", zIndex: 20, gap: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)" }}>
+      <button onClick={onTapCourse} style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1.5px solid rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", flexShrink: 0, overflow: "hidden" }}>
+          {courseLogoUrl
+            ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : abbr
+          }
+        </div>
+        <div style={{ minWidth: 0, textAlign: "left" }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{courseName}</div>
+          {holeNumber && (
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
+              Hole {holeNumber}{shotType && SHOT_LABEL[shotType] ? ` · ${SHOT_LABEL[shotType]}` : ""}
+            </span>
+          )}
+        </div>
+      </button>
+      <button onClick={onMuteToggle} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+        {muted
+          ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        }
+      </button>
+    </div>
   );
 }
 
@@ -169,86 +183,65 @@ function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () =
   );
 }
 
-function RightPanel({ courseId, courseName, onTapCourse, onTapHole, liked, onLike, likeCount, onComment, commentCount }: {
+function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser }: {
+  userId: string; avatarUrl: string | null; username: string;
   courseId: string; courseName: string;
-  onTapCourse: () => void; onTapHole: () => void;
   liked: boolean; onLike: () => void; likeCount: number;
   onComment: () => void; commentCount: number;
+  onTapUser: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
+  const handleShare = () => {
+    const url = `${window.location.origin}/courses/${courseId}`;
+    if (navigator.share) navigator.share({ title: courseName, text: `Check out ${courseName} on Tour It`, url }).catch(() => {});
+    else { navigator.clipboard.writeText(url).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+  };
   return (
-    <div style={{ position: "absolute", right: 12, bottom: 120, display: "flex", flexDirection: "column", gap: "16px", alignItems: "center", zIndex: 5 }}>
-      <button onClick={onLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: `1.5px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.2)"}`, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </div>
-        <span style={{ fontSize: "10px", color: liked ? "#4da862" : "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{likeCount}</span>
-      </button>
-      <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </div>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", fontWeight: 500 }}>{commentCount}</span>
-      </button>
-      <button onClick={onTapCourse} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><CourseIcon /></div>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Course</span>
-      </button>
-      <button onClick={onTapHole} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}><HoleIcon /></div>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Hole</span>
-      </button>
-      <button
-        onClick={() => {
-          const url = `https://tour-it.vercel.app/courses/${courseId}`;
-          if (navigator.share) navigator.share({ title: courseName, text: `Check out ${courseName} on Tour It — scout before you play`, url }).catch(() => {});
-          else navigator.clipboard.writeText(url).then(() => alert("Link copied!")).catch(() => {});
-        }}
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", background: "none", border: "none", cursor: "pointer" }}
-      >
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        </div>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>Share</span>
-      </button>
-    </div>
-  );
-}
-
-function UserInfo({ avatarUrl, username, courseName, holeNumber, onTapUser, onTapCourse }: {
-  avatarUrl: string | null; username: string; courseName: string; holeNumber?: number; onTapUser: () => void; onTapCourse: () => void;
-}) {
-  return (
-    <div style={{ position: "absolute", bottom: 0, left: 0, right: 64, padding: "0 16px 90px", zIndex: 5 }}>
-      <button onClick={onTapUser} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer", marginBottom: 7 }}>
-        <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "absolute", right: 14, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, zIndex: 10 }}>
+      {/* Uploader */}
+      <button onClick={onTapUser} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {avatarUrl
             ? <img src={avatarUrl} alt={username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           }
         </div>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "11px", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>@{username}</span>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", maxWidth: 56, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>@{username}</span>
       </button>
-      <button onClick={onTapCourse} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", textAlign: "left", display: "block", marginBottom: 4 }}>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "18px", fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>
-          {courseName}
+      {/* Like */}
+      <button onClick={onLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center", ...(liked ? { background: "rgba(77,168,98,0.15)" } : {}) }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#4da862" : "none"} stroke={liked ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
+      </button>
+      {/* Comment */}
+      <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{commentCount}</span>
+      </button>
+      {/* Share */}
+      <button onClick={handleShare} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 46, height: 46, borderRadius: "50%", background: copied ? "rgba(77,168,98,0.15)" : "rgba(0,0,0,0.45)", backdropFilter: "blur(10px)", border: `1px solid ${copied ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {copied
+            ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          }
         </div>
       </button>
-      {holeNumber && (
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: "15px", fontWeight: 600, color: "#4da862" }}>
-          Hole {holeNumber}
-        </div>
-      )}
     </div>
   );
 }
 
 function SeriesCard({
-  item, isActive, muted, onUnmute, onTapCourse, onTapHole, onTapUser, onComment,
+  item, isActive, muted, onMuteToggle, onTapCourse, onTapUser, onComment,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
   isActive: boolean; muted: boolean;
-  onUnmute: () => void;
-  onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void; onComment: () => void;
+  onMuteToggle: () => void;
+  onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
@@ -294,7 +287,7 @@ function SeriesCard({
   const handleTap = () => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) { onTapCourse(); }
-    else { onUnmute(); }
+    else { onMuteToggle(); }
     lastTapRef.current = now;
   };
 
@@ -313,22 +306,29 @@ function SeriesCard({
         </div>
       ))}
 
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none", zIndex: 5 }} />
 
-      <div style={{ position: "absolute", top: 60, left: 0, right: 0, display: "flex", justifyContent: "center", pointerEvents: "none", zIndex: 5 }}>
-        <div style={{ background: "rgba(180,145,60,0.85)", backdropFilter: "blur(8px)", borderRadius: 99, padding: "5px 14px" }}>
-          <span style={{ fontSize: 11, fontFamily: "'Outfit', sans-serif", fontWeight: 600, color: "#fff" }}>🏌️ Play a Hole With Me</span>
+      <FeedTopBar
+        courseLogoUrl={item.courseLogoUrl}
+        courseName={item.courseName}
+        holeNumber={item.holeNumber}
+        shotType={item.shots[shotIndex]?.shotType}
+        muted={muted}
+        onMuteToggle={onMuteToggle}
+        onTapCourse={onTapCourse}
+      />
+
+      {/* Shot progress dots */}
+      {item.shots.length > 1 && (
+        <div style={{ position: "absolute", top: 116, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5, zIndex: 20, pointerEvents: "none" }}>
+          {item.shots.map((_, i) => (
+            <div key={i} style={{ height: 3, borderRadius: 99, background: i === shotIndex ? "#4da862" : "rgba(255,255,255,0.3)", width: i === shotIndex ? 22 : 7, transition: "all 0.3s" }} />
+          ))}
         </div>
-      </div>
-
-      <div style={{ position: "absolute", top: 100, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5, zIndex: 5, pointerEvents: "none" }}>
-        {item.shots.map((_, i) => (
-          <div key={i} style={{ height: 3, borderRadius: 99, background: i === shotIndex ? "#c8a96e" : "rgba(255,255,255,0.3)", width: i === shotIndex ? 22 : 7, transition: "all 0.3s" }} />
-        ))}
-      </div>
+      )}
 
       {activeShot?.yardageOverlay && (
-        <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 5, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 10, pointerEvents: "none" }}>
           <div style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 14px", backdropFilter: "blur(8px)" }}>
             <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff" }}>{activeShot.yardageOverlay}</span>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.6)", marginLeft: 5 }}>yds</span>
@@ -337,48 +337,36 @@ function SeriesCard({
       )}
 
       {shotIndex > 0 && (
-        <button onClick={() => setShotIndex(i => i - 1)} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+        <button onClick={() => setShotIndex(i => i - 1)} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
       )}
       {shotIndex < item.shots.length - 1 && (
-        <button onClick={() => setShotIndex(i => i + 1)} style={{ position: "absolute", right: 60, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}>
+        <button onClick={() => setShotIndex(i => i + 1)} style={{ position: "absolute", right: 76, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       )}
 
-      <RightPanel courseId={item.courseId} courseName={item.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={false} onLike={() => {}} likeCount={0} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} />
-      <UserInfo avatarUrl={item.avatarUrl} username={item.username} courseName={item.courseName} holeNumber={item.holeNumber} onTapUser={onTapUser} onTapCourse={onTapCourse} />
-
-      {shotIndex === 0 && item.shots.length > 1 && (
-        <div style={{ position: "absolute", top: 90, left: 0, right: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 4, opacity: 0.7, pointerEvents: "none", zIndex: 5 }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: "10px", color: "rgba(255,255,255,0.7)", letterSpacing: "0.06em" }}>SWIPE FOR NEXT SHOT</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-      )}
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} courseId={item.courseId} courseName={item.courseName} liked={false} onLike={() => {}} likeCount={item.shots[0]?.likeCount || 0} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} />
     </div>
   );
 }
 
 function VideoCard({
-  clip, isActive, muted, onUnmute, onTapCourse, onTapHole, onTapUser, onComment,
+  clip, isActive, muted, onMuteToggle, onTapCourse, onTapUser, onComment,
 }: {
   clip: FeedClip; isActive: boolean; muted: boolean;
-  onUnmute: () => void;
-  onTapCourse: () => void; onTapHole: () => void; onTapUser: () => void; onComment: () => void;
+  onMuteToggle: () => void;
+  onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { liked, likeCount, toggleLike } = useLike({
-    uploadId: clip.id,
-    initialLikeCount: clip.likeCount || 0,
-  });
-  const lastTapRef = useRef<number>(0);
+  const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
+  const [videoPaused, setVideoPaused] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (isActive) { video.play().catch(() => {}); }
+    if (isActive) { video.play().catch(() => {}); setVideoPaused(false); }
     else { video.pause(); video.currentTime = 0; }
   }, [isActive]);
 
@@ -386,33 +374,50 @@ function VideoCard({
     if (videoRef.current) videoRef.current.muted = muted;
   }, [muted]);
 
-  const handleMediaTap = () => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) { onTapCourse(); }
-    else { onUnmute(); }
-    lastTapRef.current = now;
-  };
-
   return (
     <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}>
       {clip.mediaType === "VIDEO" ? (
-        <video ref={videoRef} src={clip.mediaUrl} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={handleMediaTap} />
+        <video ref={videoRef} src={clip.mediaUrl} loop muted={muted} playsInline
+          onClick={() => {
+            const v = videoRef.current; if (!v) return;
+            if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); }
+            else { v.pause(); setVideoPaused(true); }
+          }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
-        <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={handleMediaTap} />
+        <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       )}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.0) 35%, rgba(0,0,0,0.72) 72%, rgba(0,0,0,0.92) 100%)", pointerEvents: "none" }} />
+
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none", zIndex: 5 }} />
+
+      {videoPaused && (
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 15, pointerEvents: "none", opacity: 0.7 }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </div>
+        </div>
+      )}
+
+      <FeedTopBar
+        courseLogoUrl={clip.courseLogoUrl}
+        courseName={clip.courseName}
+        holeNumber={clip.holeNumber}
+        shotType={clip.shotType}
+        muted={muted}
+        onMuteToggle={onMuteToggle}
+        onTapCourse={onTapCourse}
+      />
 
       {clip.yardageOverlay && (
-        <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 5, pointerEvents: "none" }}>
-          <div style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 14px" }}>
+        <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 10, pointerEvents: "none" }}>
+          <div style={{ background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "8px 14px", backdropFilter: "blur(8px)" }}>
             <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff" }}>{clip.yardageOverlay}</span>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.6)", marginLeft: 5 }}>yds</span>
           </div>
         </div>
       )}
 
-      <RightPanel courseId={clip.courseId} courseName={clip.courseName} onTapCourse={onTapCourse} onTapHole={onTapHole} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} />
-      <UserInfo avatarUrl={clip.avatarUrl} username={clip.username} courseName={clip.courseName} holeNumber={clip.holeNumber} onTapUser={onTapUser} onTapCourse={onTapCourse} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} />
     </div>
   );
 }
@@ -477,7 +482,7 @@ export default function Home() {
       const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
 
       const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
-        supabase.from("Course").select("id, name").in("id", courseIds),
+        supabase.from("Course").select("id, name, logoUrl").in("id", courseIds),
         supabase.from("User").select("id, username, avatarUrl").in("id", userIds),
         supabase.from("Hole").select("id, holeNumber").in("id", holeIds),
       ]);
@@ -486,6 +491,7 @@ export default function Home() {
         ...u,
         commentCount: u.commentCount || 0,
         courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
+        courseLogoUrl: courses?.find((c: any) => c.id === u.courseId)?.logoUrl || null,
         username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
         avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
         holeNumber: holes?.find((h: any) => h.id === u.holeId)?.holeNumber || undefined,
@@ -505,7 +511,7 @@ export default function Home() {
       const seriesItems: FeedItem[] = Object.entries(seriesMap).map(([seriesId, shots]) => {
         const sorted = shots.sort((a, b) => (a.seriesOrder || 0) - (b.seriesOrder || 0));
         const first = sorted[0];
-        return { type: "series", seriesId, shots: sorted, courseName: first.courseName, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
+        return { type: "series", seriesId, shots: sorted, courseName: first.courseName, courseLogoUrl: first.courseLogoUrl, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
       });
 
       const singleItems: FeedItem[] = singleClips
@@ -556,7 +562,7 @@ export default function Home() {
     const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
 
     const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
-      supabase.from("Course").select("id, name").in("id", courseIds),
+      supabase.from("Course").select("id, name, logoUrl").in("id", courseIds),
       supabase.from("User").select("id, username, avatarUrl").in("id", userIds),
       supabase.from("Hole").select("id, holeNumber").in("id", holeIds),
     ]);
@@ -565,6 +571,7 @@ export default function Home() {
       ...u,
       commentCount: u.commentCount || 0,
       courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
+      courseLogoUrl: courses?.find((c: any) => c.id === u.courseId)?.logoUrl || null,
       username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
       avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
       holeNumber: holes?.find((h: any) => h.id === u.holeId)?.holeNumber || undefined,
@@ -585,7 +592,7 @@ export default function Home() {
       ...Object.entries(seriesMap).map(([seriesId, shots]) => {
         const sorted = shots.sort((a, b) => (a.seriesOrder || 0) - (b.seriesOrder || 0));
         const first = sorted[0];
-        return { type: "series" as const, seriesId, shots: sorted, courseName: first.courseName, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
+        return { type: "series" as const, seriesId, shots: sorted, courseName: first.courseName, courseLogoUrl: first.courseLogoUrl, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
       }),
       ...singleClips.map(clip => ({ type: "clip" as const, clip })),
     ];
@@ -889,9 +896,9 @@ export default function Home() {
         {!loading && feedItems.map((item, i) => (
           <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
             {item.type === "series" ? (
-              <SeriesCard item={item} isActive={i === activeIndex} muted={muted} onUnmute={() => setMuted(false)} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onTapHole={() => router.push(`/courses/${item.courseId}/holes`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} />
+              <SeriesCard item={item} isActive={i === activeIndex} muted={muted} onMuteToggle={() => setMuted(m => !m)} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onUnmute={() => setMuted(false)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onTapHole={() => router.push(`/courses/${item.clip.courseId}/holes`)} onComment={() => setCommentUploadId(item.clip.id)} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onMuteToggle={() => setMuted(m => !m)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} />
             )}
           </div>
         ))}
