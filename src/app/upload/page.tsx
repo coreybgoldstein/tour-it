@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { compressVideo } from "@/lib/compressVideo";
+import BatchUpload from "./BatchUpload";
 
 type Course = {
   id: string;
@@ -104,6 +105,7 @@ function UploadPageInner() {
     handicap: "",
   });
 
+  const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const compressionPromiseRef = useRef<Promise<File> | null>(null);
 
@@ -181,8 +183,16 @@ function UploadPageInner() {
   const intelColor = intelPct >= 80 ? "#4da862" : intelPct >= 50 ? "#c8a96e" : intelPct >= 25 ? "#6a9fd4" : "rgba(255,255,255,0.25)";
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Multiple files → batch mode
+    if (files.length > 1) {
+      setBatchFiles(Array.from(files));
+      return;
+    }
+
+    const file = files[0];
     const isVideo = file.type.startsWith("video/");
     const isPhoto = file.type.startsWith("image/");
     if (!isVideo && !isPhoto) { setError("Please upload a video or photo file."); return; }
@@ -413,6 +423,10 @@ function UploadPageInner() {
     );
   }
 
+  if (batchFiles) {
+    return <BatchUpload initialFiles={batchFiles} onBack={() => { setBatchFiles(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} />;
+  }
+
   if (submitted) {
     return (
             <main style={{ minHeight: "100vh", background: "#07100a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px", position: "relative" }}>
@@ -588,7 +602,7 @@ function UploadPageInner() {
                 </button>
               </div>
             )}
-            <input ref={fileInputRef} type="file" accept="video/*,image/*" style={{ display: "none" }} onChange={handleFileSelect} />
+            <input ref={fileInputRef} type="file" accept="video/*,image/*" multiple style={{ display: "none" }} onChange={handleFileSelect} />
             {mediaPreview ? (
               <>
                 {mediaType === "VIDEO" ? (
@@ -642,7 +656,7 @@ function UploadPageInner() {
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
                 <div className="upload-zone-title">Tap to upload video or photo</div>
-                <div className="upload-zone-sub">MP4, MOV, JPG, PNG supported</div>
+                <div className="upload-zone-sub">Select multiple files to batch upload</div>
               </div>
             )}
             {error && <div className="error-box">{error}</div>}
