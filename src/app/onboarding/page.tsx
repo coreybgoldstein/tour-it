@@ -286,16 +286,6 @@ export default function OnboardingPage() {
                   This is what other golfers see — can be your real name or a nickname.
                 </div>
               </div>
-              <div>
-                <label className="ob-label">Bio <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
-                <textarea
-                  className="ob-textarea"
-                  rows={3}
-                  placeholder="e.g. 14 handicap. Augusta National is on my bucket list."
-                  value={bio}
-                  onChange={e => setBio(e.target.value)}
-                />
-              </div>
             </div>
 
             {error && <div style={{ background: "rgba(200,60,60,0.1)", border: "1px solid rgba(200,60,60,0.25)", borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(240,120,120,0.9)" }}>{error}</div>}
