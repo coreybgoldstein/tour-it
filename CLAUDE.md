@@ -36,9 +36,11 @@ User, Upload, Course, Hole, Comment, Like, Follow, Save, Trip, Notification, Upl
 
 ## Feed (TikTok/Reels style)
 - `scroll-snap-type: y mandatory`, each card `height: 100svh`
-- Top bar: course badge (40×40, border-radius 10px) + title + controls, z-index 20, top gradient only
+- Top bar: course badge (40×40, border-radius 10px) + course name + `Hole X · Shot Type · Apr 5` in green, z-index 20, top gradient only
 - Right sidebar (bottom: 100px): uploader avatar → like → comment → share → notes
 - Feed z-index: 100 (BottomNav also 100, wins by DOM order)
+- **Clips must be uniform across all surfaces** — home feed, course page, profile page, hole page all share the same layout. Any UI change to a clip must be applied to all 4 locations: `src/app/page.tsx` (FeedTopBar/VideoCard/SeriesCard), `src/app/courses/[id]/page.tsx` (FeedCard), `src/app/profile/page.tsx` (ProfileFeedCard), `src/app/courses/[id]/holes/[number]/page.tsx`
+- Notes sheet date format: full date (`{ month: "long", day: "numeric", year: "numeric" }`). Top bar date: compact (`{ month: "short", day: "numeric" }`)
 
 ## Key shared components / hooks
 - `BottomNav` — fixed, z-index 100, always on main pages

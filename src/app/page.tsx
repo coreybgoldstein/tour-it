@@ -37,6 +37,7 @@ type FeedClip = {
   seriesId: string | null;
   seriesOrder: number | null;
   yardageOverlay: string | null;
+  datePlayedAt: string | null;
   createdAt: string;
 };
 
@@ -107,11 +108,12 @@ function TourItLogo({ size = 26 }: { size?: number }) {
   );
 }
 
-function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, muted, onMuteToggle, onTapCourse }: {
+function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlayedAt, muted, onMuteToggle, onTapCourse }: {
   courseLogoUrl: string | null; courseName: string; holeNumber?: number; shotType?: string | null;
-  muted: boolean; onMuteToggle: () => void; onTapCourse: () => void;
+  datePlayedAt?: string | null; muted: boolean; onMuteToggle: () => void; onTapCourse: () => void;
 }) {
   const abbr = courseName.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
+  const dateLabel = datePlayedAt ? new Date(datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 14px 12px", zIndex: 20, gap: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)" }}>
       <button onClick={onTapCourse} style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
@@ -125,7 +127,7 @@ function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, muted, on
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{courseName}</div>
           {holeNumber && (
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
-              Hole {holeNumber}{shotType && SHOT_LABEL[shotType] ? ` · ${SHOT_LABEL[shotType]}` : ""}
+              Hole {holeNumber}{shotType && SHOT_LABEL[shotType] ? ` · ${SHOT_LABEL[shotType]}` : ""}{dateLabel ? ` · ${dateLabel}` : ""}
             </span>
           )}
         </div>
@@ -313,6 +315,7 @@ function SeriesCard({
         courseName={item.courseName}
         holeNumber={item.holeNumber}
         shotType={item.shots[shotIndex]?.shotType}
+        datePlayedAt={item.shots[shotIndex]?.datePlayedAt}
         muted={muted}
         onMuteToggle={onMuteToggle}
         onTapCourse={onTapCourse}
@@ -403,6 +406,7 @@ function VideoCard({
         courseName={clip.courseName}
         holeNumber={clip.holeNumber}
         shotType={clip.shotType}
+        datePlayedAt={clip.datePlayedAt}
         muted={muted}
         onMuteToggle={onMuteToggle}
         onTapCourse={onTapCourse}
@@ -471,7 +475,7 @@ export default function Home() {
     async function loadFeed() {
       const { data: uploads } = await supabase
         .from("Upload")
-        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, createdAt")
+        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
         .order("createdAt", { ascending: false })
         .limit(15);
 
@@ -545,7 +549,7 @@ export default function Home() {
     const supabase = createClient();
     const { data: uploads } = await supabase
       .from("Upload")
-      .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, createdAt")
+      .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
       .order("createdAt", { ascending: false })
       .lt("createdAt", feedCursorRef.current)
       .limit(15);

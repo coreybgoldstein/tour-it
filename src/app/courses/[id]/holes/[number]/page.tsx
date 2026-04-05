@@ -649,6 +649,7 @@ export default function HolePage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.7)" }}>{pageTitle}</span>
                     {!multiHoleKey && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· Par {par}</span>}
+                    {activeUpload?.datePlayedAt && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· {new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
                   </div>
                 </div>
               </button>

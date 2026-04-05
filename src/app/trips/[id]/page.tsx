@@ -538,33 +538,12 @@ export default function TripPage() {
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: trip.name.length > 22 ? 16 : trip.name.length > 14 ? 18 : 22, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{trip.name}</div>
             </div>
             {isOwner && (
-              <div style={{ display: "flex", gap: 6, flexShrink: 0, marginTop: 2 }}>
-                {confirmDelete ? (
-                  <>
-                    <button onClick={() => setConfirmDelete(false)}
-                      style={{ height: 32, borderRadius: 99, padding: "0 12px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>
-                      Cancel
-                    </button>
-                    <button onClick={handleDeleteTrip} disabled={deletingTrip}
-                      style={{ height: 32, borderRadius: 99, padding: "0 12px", background: "rgba(200,60,60,0.15)", border: "1px solid rgba(200,60,60,0.35)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(220,100,100,0.9)", cursor: "pointer" }}>
-                      {deletingTrip ? "Deleting…" : "Delete"}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
-                      style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                    <button onClick={() => setConfirmDelete(true)}
-                      style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(200,60,60,0.08)", border: "1px solid rgba(200,60,60,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(200,80,80,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                    </button>
-                  </>
-                )}
-              </div>
+              <button
+                onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
+                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, marginTop: 2 }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
             )}
           </div>
 
@@ -836,6 +815,18 @@ export default function TripPage() {
             <button onClick={saveEdit} disabled={!editName.trim() || saving} style={{ width: "100%", marginTop: 20, background: "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: (!editName.trim() || saving) ? 0.5 : 1 }}>
               {saving ? "Saving..." : "Save Changes"}
             </button>
+            {confirmDelete ? (
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>Cancel</button>
+                <button onClick={handleDeleteTrip} disabled={deletingTrip} style={{ flex: 1, background: "rgba(200,60,60,0.12)", border: "1px solid rgba(200,60,60,0.3)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(220,100,100,0.9)", cursor: "pointer" }}>
+                  {deletingTrip ? "Deleting…" : "Confirm Delete"}
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirmDelete(true)} style={{ width: "100%", marginTop: 10, background: "none", border: "1px solid rgba(200,60,60,0.2)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(200,80,80,0.6)", cursor: "pointer" }}>
+                Delete Trip
+              </button>
+            )}
           </div>
         </div>
       )}
