@@ -94,6 +94,7 @@ export default function ProfilePage() {
 
   // Edit state
   const [showEditSheet, setShowEditSheet] = useState(false);
+  type EditTagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
   const [editData, setEditData] = useState<{
     holeNumber: number | null;
     shotType: string;
@@ -102,9 +103,25 @@ export default function ProfilePage() {
     windCondition: string;
     landingZoneNote: string;
     whatCameraDoesntShow: string;
+    taggedUsers: EditTagUser[];
+    originalTagIds: Set<string>;
   } | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
+  const [editTagInput, setEditTagInput] = useState("");
+  const [editTagResults, setEditTagResults] = useState<EditTagUser[]>([]);
+  const editTagDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (editTagDebounce.current) clearTimeout(editTagDebounce.current);
+    if (!editTagInput.trim() || editTagInput.trim().length < 2) { setEditTagResults([]); return; }
+    editTagDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const taggedIds = new Set(editData?.taggedUsers.map(u => u.id) || []);
+      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${editTagInput.trim()}%`).limit(6);
+      setEditTagResults((data || []).filter((u: EditTagUser) => !taggedIds.has(u.id)));
+    }, 280);
+  }, [editTagInput, editData?.taggedUsers]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -306,12 +323,14 @@ if (userUploads && userUploads.length > 0) {
     if (!selectedClip) return;
     setEditLoading(true);
     setShowEditSheet(true);
+    setEditTagInput("");
+    setEditTagResults([]);
     const supabase = createClient();
-    const { data } = await supabase
-      .from("Upload")
-      .select("shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, holeId")
-      .eq("id", selectedClip.id)
-      .single();
+    const [{ data }, { data: tagRows }] = await Promise.all([
+      supabase.from("Upload").select("shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow").eq("id", selectedClip.id).single(),
+      supabase.from("UploadTag").select("userId, user:User(id, username, displayName, avatarUrl)").eq("uploadId", selectedClip.id),
+    ]);
+    const existingTagged: EditTagUser[] = (tagRows || []).map((r: any) => r.user).filter(Boolean);
     setEditData({
       holeNumber: selectedClip.holeNumber ?? null,
       shotType: data?.shotType || "",
@@ -320,6 +339,8 @@ if (userUploads && userUploads.length > 0) {
       windCondition: data?.windCondition || "",
       landingZoneNote: data?.landingZoneNote || "",
       whatCameraDoesntShow: data?.whatCameraDoesntShow || "",
+      taggedUsers: existingTagged,
+      originalTagIds: new Set(existingTagged.map(u => u.id)),
     });
     setEditLoading(false);
   }
@@ -361,6 +382,29 @@ if (userUploads && userUploads.length > 0) {
       whatCameraDoesntShow: editData.whatCameraDoesntShow || null,
       updatedAt: new Date().toISOString(),
     }).eq("id", selectedClip.id);
+
+    // Sync tags — delete removed, insert added, notify newly tagged
+    const currentIds = new Set(editData.taggedUsers.map(u => u.id));
+    const removedIds = [...editData.originalTagIds].filter(id => !currentIds.has(id));
+    const addedUsers = editData.taggedUsers.filter(u => !editData.originalTagIds.has(u.id));
+
+    if (removedIds.length > 0) {
+      await supabase.from("UploadTag").delete().eq("uploadId", selectedClip.id).in("userId", removedIds);
+    }
+    if (addedUsers.length > 0) {
+      const now = new Date().toISOString();
+      const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", user!.id).single();
+      const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
+      const courseName = selectedCourseName || "a course";
+      await supabase.from("UploadTag").insert(addedUsers.map(u => ({ id: crypto.randomUUID(), uploadId: selectedClip.id, userId: u.id, createdAt: now })));
+      await supabase.from("Notification").insert(addedUsers.map(u => ({
+        id: crypto.randomUUID(), userId: u.id, type: "clip_tag",
+        title: `${taggerName} tagged you in a clip`,
+        body: `${courseName}${editData.holeNumber ? ` · Hole ${editData.holeNumber}` : ""}`,
+        linkUrl: selectedClip.mediaUrl, referenceId: selectedClip.id,
+        read: false, createdAt: now, updatedAt: now,
+      })));
+    }
 
     // Update local state so hole number reflects immediately
     setUploads(prev => prev.map(u =>
@@ -494,6 +538,62 @@ if (userUploads && userUploads.length > 0) {
                           </button>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Tag players */}
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Tag players</div>
+
+                      {/* Current tags */}
+                      {editData.taggedUsers.length > 0 && (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                          {editData.taggedUsers.map(u => (
+                            <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 8px 3px 5px" }}>
+                              <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {u.avatarUrl
+                                  ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                              </div>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>@{u.username}</span>
+                              <button onClick={() => setEditData(d => d ? { ...d, taggedUsers: d.taggedUsers.filter(t => t.id !== u.id) } : d)}
+                                style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", marginLeft: 1 }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Search input */}
+                      <input
+                        value={editTagInput}
+                        onChange={e => setEditTagInput(e.target.value)}
+                        placeholder="Search by username…"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
+                      />
+                      {editTagResults.length > 0 && (
+                        <div style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 10, overflow: "hidden" }}>
+                          {editTagResults.map(u => (
+                            <button key={u.id}
+                              onClick={() => {
+                                setEditData(d => d ? { ...d, taggedUsers: [...d.taggedUsers, u] } : d);
+                                setEditTagInput("");
+                                setEditTagResults([]);
+                              }}
+                              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                              <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {u.avatarUrl
+                                  ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                              </div>
+                              <div>
+                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
+                                {u.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{u.displayName}</div>}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <button onClick={saveEdit} disabled={editSaving}
