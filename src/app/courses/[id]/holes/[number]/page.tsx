@@ -647,11 +647,11 @@ export default function HolePage() {
                 </div>
                 <div style={{ minWidth: 0, textAlign: "left" }}>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{pageTitle}</span>
-                    {!multiHoleKey && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>· Par {par}</span>}
-                    {activeUpload?.datePlayedAt && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>· {new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>}
-                  </div>
+                  <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(0,0,0,0.48)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "2px 8px", marginTop: 3 }}>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4ade80" }}>
+                      {pageTitle}{!multiHoleKey ? ` · Par ${par}` : ""}{activeUpload?.datePlayedAt ? ` · ${new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                    </span>
+                  </span>
                 </div>
               </button>
 

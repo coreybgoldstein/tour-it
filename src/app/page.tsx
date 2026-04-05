@@ -127,8 +127,10 @@ function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlaye
         <div style={{ minWidth: 0, textAlign: "left" }}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{courseName}</div>
           {holeNumber && (
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#1a9e42", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>
-              Hole {holeNumber}{shotType && SHOT_LABEL[shotType] ? ` · ${SHOT_LABEL[shotType]}` : ""}{dateLabel ? ` · ${dateLabel}` : ""}
+            <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(0,0,0,0.48)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "2px 8px", marginTop: 3 }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4ade80" }}>
+                Hole {holeNumber}{shotType && SHOT_LABEL[shotType] ? ` · ${SHOT_LABEL[shotType]}` : ""}{dateLabel ? ` · ${dateLabel}` : ""}
+              </span>
             </span>
           )}
         </div>
