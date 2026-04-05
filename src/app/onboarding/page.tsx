@@ -4,6 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos";
+
+const DEFAULT_AVATARS = [
+  "01-coffee", "02-burger-happy", "03-golf-glove", "04-sunscreen", "05-rangefinder",
+  "06-hotdog", "07-snack-bag", "08-golf-club", "09-burger-chill", "10-water-bottle",
+  "11-burger-orange", "12-water-bottle-yellow", "13-bloody-mary", "14-grape-soda", "15-beer-can",
+].map(name => `${SUPABASE_STORAGE}/default-avatars/${name}.png`);
+
 const HANDICAP_BUCKETS = [
   { label: "Scratch", sublabel: "0", value: 0 },
   { label: "Low", sublabel: "1–9", value: 5 },
@@ -27,6 +35,8 @@ export default function OnboardingPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const [selectedDefault, setSelectedDefault] = useState<string | null>(null);
 
   // Step 2 — Game
   const [handicapBucket, setHandicapBucket] = useState<number | null>(null);
@@ -94,7 +104,9 @@ export default function OnboardingPage() {
     const supabase = createClient();
     let avatarUrl: string | undefined;
 
-    if (avatarFile) {
+    if (selectedDefault) {
+      avatarUrl = selectedDefault;
+    } else if (avatarFile) {
       setUploadingAvatar(true);
       const ext = avatarFile.name.split(".").pop();
       const path = `avatars/${userId}/${Date.now()}.${ext}`;
@@ -222,24 +234,43 @@ export default function OnboardingPage() {
             </div>
 
             {/* Avatar picker */}
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
-              <div
-                onClick={() => avatarInputRef.current?.click()}
-                style={{ position: "relative", width: 96, height: 96, borderRadius: "50%", cursor: "pointer", background: avatarPreview ? "transparent" : "rgba(77,168,98,0.12)", border: avatarPreview ? "2.5px solid rgba(77,168,98,0.5)" : "2px dashed rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}
-              >
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <div style={{ textAlign: "center" }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block", margin: "0 auto 4px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(77,168,98,0.7)" }}>Add photo</span>
-                  </div>
-                )}
-                <div style={{ position: "absolute", bottom: 2, right: 2, width: 22, height: 22, borderRadius: "50%", background: "#2d7a42", border: "2px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <div style={{ marginBottom: 28 }}>
+              {/* Preview circle */}
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+                <div style={{ position: "relative", width: 88, height: 88, borderRadius: "50%", background: avatarPreview ? "transparent" : "rgba(77,168,98,0.08)", border: avatarPreview ? "none" : "2px dashed rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  )}
                 </div>
               </div>
-              <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarPick} style={{ display: "none" }} />
+
+              {/* Default character grid */}
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", textAlign: "center", marginBottom: 12 }}>
+                Pick a character
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 16 }}>
+                {DEFAULT_AVATARS.map((url) => (
+                  <div
+                    key={url}
+                    onClick={() => { setSelectedDefault(url); setAvatarPreview(url); setAvatarFile(null); }}
+                    style={{ aspectRatio: "1", borderRadius: "50%", overflow: "hidden", cursor: "pointer", border: selectedDefault === url ? "2.5px solid #4da862" : "2.5px solid transparent", boxShadow: selectedDefault === url ? "0 0 0 1px rgba(77,168,98,0.4)" : "none", transition: "border-color 0.15s" }}
+                  >
+                    <img src={url} alt="avatar option" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Upload own photo option */}
+              <button
+                onClick={() => avatarInputRef.current?.click()}
+                style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                {avatarFile ? "Photo selected ✓" : "Upload your own photo instead"}
+              </button>
+              <input ref={avatarInputRef} type="file" accept="image/*" onChange={e => { handleAvatarPick(e); setSelectedDefault(null); }} style={{ display: "none" }} />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 28 }}>
