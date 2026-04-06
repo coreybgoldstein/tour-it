@@ -248,7 +248,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
         </button>
 
         {/* Notes button — only show if clip has any intel */}
-        {(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt) && (
+        {(clip.shotType || clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt) && (
           <button className="action-btn" onClick={openNotes}>
             <div className="action-icon" style={notesOpen ? { borderColor: "rgba(26,158,66,0.5)", background: "rgba(26,158,66,0.15)" } : {}}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

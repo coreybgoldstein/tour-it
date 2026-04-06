@@ -60,7 +60,7 @@ function ProfileFeedCard({
     } catch {}
   };
 
-  const hasNotes = !!(clip.strategyNote || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
+  const hasNotes = !!(clip.shotType || clip.strategyNote || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000" }}>

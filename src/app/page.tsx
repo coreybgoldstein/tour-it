@@ -274,7 +274,7 @@ function SeriesCard({
   const touchStartY = useRef(0);
   const lastTapRef = useRef<number>(0);
   const activeShot = item.shots[shotIndex];
-  const hasNotes = !!(activeShot?.strategyNote || activeShot?.clubUsed || activeShot?.windCondition || activeShot?.datePlayedAt);
+  const hasNotes = !!(activeShot?.shotType || activeShot?.strategyNote || activeShot?.clubUsed || activeShot?.windCondition || activeShot?.datePlayedAt);
 
   useEffect(() => {
     if (!isActive) {
@@ -432,7 +432,7 @@ function VideoCard({
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
   const [videoPaused, setVideoPaused] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
-  const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
+  const hasNotes = !!(clip.shotType || clip.strategyNote || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   useEffect(() => {
     const video = videoRef.current;

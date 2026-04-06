@@ -550,7 +550,7 @@ export default function HolePage() {
 
   const activeUpload = uploads[activeIndex];
   const uploader = activeUpload ? uploaders[activeUpload.userId] : null;
-  const hasIntel = activeUpload && (activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow || activeUpload.clubUsed || activeUpload.windCondition || activeUpload.datePlayedAt);
+  const hasIntel = activeUpload && (activeUpload.shotType || activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow || activeUpload.clubUsed || activeUpload.windCondition || activeUpload.datePlayedAt);
 
   return (
     <>
