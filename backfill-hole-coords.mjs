@@ -99,14 +99,19 @@ function patchHole(id, patch) {
   });
 }
 
-async function getTeeNodes(lat, lng, radiusM = 1200) {
+// Query golf=hole relations/ways — these reliably have ref=<hole number> tags
+// and contain tee nodes with actual coordinates.
+// Falls back to golf=tee nodes with ref/hole tags.
+async function getHoleData(lat, lng, radiusM = 1500) {
   const query = `
-[out:json][timeout:25];
+[out:json][timeout:30];
 (
-  node[golf=tee](around:${radiusM},${lat},${lng});
-  way[golf=tee](around:${radiusM},${lat},${lng});
+  relation[golf=hole](around:${radiusM},${lat},${lng});
+  way[golf=hole](around:${radiusM},${lat},${lng});
+  node[golf=tee][ref](around:${radiusM},${lat},${lng});
+  node[golf=tee][hole](around:${radiusM},${lat},${lng});
 );
-out center;
+out geom;
 `;
   let attempts = 0;
   while (attempts < 3) {
@@ -114,28 +119,59 @@ out center;
       const resp = await postOverpass(query);
       if (resp.status === 200 && resp.body?.elements) return resp.body.elements;
       attempts++;
-      await sleep(3000);
+      await sleep(4000);
     } catch (e) {
       attempts++;
-      await sleep(3000);
+      await sleep(4000);
     }
   }
   return [];
 }
 
-function centroid(el) {
-  if (el.type === 'node') return { lat: el.lat, lng: el.lon };
-  if (el.center) return { lat: el.center.lat, lng: el.center.lon };
+// Extract tee coordinate from a golf=hole relation/way element.
+// Prefers nodes tagged golf=tee; falls back to first node of geometry.
+function teeCoordFromHoleElement(el) {
+  if (!el.members && !el.geometry && !el.nodes) return null;
+
+  // Relation: look for member nodes tagged golf=tee
+  if (el.type === 'relation' && el.members) {
+    const teeMembers = el.members.filter(m => m.type === 'node' && m.role === 'tee');
+    if (teeMembers.length > 0 && teeMembers[0].lat) {
+      return { lat: teeMembers[0].lat, lng: teeMembers[0].lon };
+    }
+    // Fallback: first node member with geometry
+    const firstNode = el.members.find(m => m.type === 'node' && m.lat);
+    if (firstNode) return { lat: firstNode.lat, lng: firstNode.lon };
+  }
+
+  // Way: use first point of geometry (tee is typically at start)
+  if (el.type === 'way' && el.geometry && el.geometry.length > 0) {
+    return { lat: el.geometry[0].lat, lng: el.geometry[0].lon };
+  }
+
   return null;
 }
 
+async function fetchAllCourses() {
+  const pageSize = 1000;
+  let offset = 0;
+  let all = [];
+  while (true) {
+    const resp = await supabaseGet(
+      `Course?select=id,name,latitude,longitude&latitude=not.is.null&longitude=not.is.null&order=name.asc&limit=${pageSize}&offset=${offset}`
+    );
+    const page = resp.body;
+    if (!Array.isArray(page) || page.length === 0) break;
+    all = all.concat(page);
+    if (page.length < pageSize) break;
+    offset += pageSize;
+  }
+  return all;
+}
+
 async function main() {
-  // Fetch all courses with coords
-  let coursesResp = await supabaseGet(
-    `Course?select=id,name,latitude,longitude&latitude=not.is.null&longitude=not.is.null&order=name.asc&limit=1000`
-  );
-  let courses = coursesResp.body;
-  if (!Array.isArray(courses)) { console.error('Bad response', courses); process.exit(1); }
+  let courses = await fetchAllCourses();
+  if (!courses.length) { console.error('No courses fetched'); process.exit(1); }
 
   if (filterName) {
     courses = courses.filter(c => c.name.toLowerCase().includes(filterName.toLowerCase()));
@@ -170,35 +206,45 @@ async function main() {
       continue;
     }
 
-    // Query OSM for tee nodes near this course
-    const teeNodes = await getTeeNodes(course.latitude, course.longitude);
-    await sleep(1100); // rate limit Overpass
+    // Query OSM for golf hole data near this course
+    const elements = await getHoleData(course.latitude, course.longitude);
+    await sleep(1200); // rate limit Overpass
 
-    if (teeNodes.length === 0) {
-      console.log(`  No OSM tee data found`);
+    if (elements.length === 0) {
+      console.log(`  No OSM data found`);
       totalNoData++;
       continue;
     }
 
     // Build map: hole number -> tee coords
-    // OSM ref tag is usually the hole number ("1", "2", etc.)
     const teeByHole = {};
-    for (const el of teeNodes) {
-      const ref = el.tags?.ref || el.tags?.hole;
-      if (!ref) continue;
-      const num = parseInt(ref, 10);
-      if (isNaN(num) || num < 1 || num > 18) continue;
-      const coords = centroid(el);
-      if (!coords) continue;
-      // Keep first match per hole number
-      if (!teeByHole[num]) teeByHole[num] = coords;
+
+    for (const el of elements) {
+      // golf=hole relations/ways — most reliable source
+      if (el.tags?.golf === 'hole') {
+        const ref = el.tags?.ref || el.tags?.hole;
+        if (!ref) continue;
+        const num = parseInt(ref, 10);
+        if (isNaN(num) || num < 1 || num > 18) continue;
+        const coords = teeCoordFromHoleElement(el);
+        if (!coords) continue;
+        if (!teeByHole[num]) teeByHole[num] = coords;
+      }
+      // golf=tee nodes with explicit ref or hole tag
+      else if (el.tags?.golf === 'tee' && el.type === 'node') {
+        const ref = el.tags?.ref || el.tags?.hole;
+        if (!ref) continue;
+        const num = parseInt(ref, 10);
+        if (isNaN(num) || num < 1 || num > 18) continue;
+        if (!teeByHole[num]) teeByHole[num] = { lat: el.lat, lng: el.lon };
+      }
     }
 
     const foundNums = Object.keys(teeByHole).length;
-    console.log(`  Found ${teeNodes.length} tee nodes → ${foundNums} numbered holes in OSM`);
+    console.log(`  Found ${elements.length} elements → ${foundNums} numbered holes`);
 
     if (foundNums === 0) {
-      console.log(`  Tee nodes have no ref/hole number tags, skipping`);
+      console.log(`  No hole numbers found in OSM data`);
       totalNoData++;
       continue;
     }
