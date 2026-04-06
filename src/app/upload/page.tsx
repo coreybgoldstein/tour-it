@@ -385,6 +385,8 @@ function UploadPageInner() {
         handicapRange: intel.handicap || null,
         datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
         rankScore: intelPct,
+        clipLat: gpsCoords?.lat ?? null,
+        clipLng: gpsCoords?.lng ?? null,
         tripId: preselectedTripId || null,
         tripPublic: preselectedTripId ? tripPublic : true,
         moderationStatus: "PENDING",
