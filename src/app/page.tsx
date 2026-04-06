@@ -129,7 +129,7 @@ function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlaye
           {holeNumber && (
             <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(0,0,0,0.48)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "2px 8px", marginTop: 3 }}>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4ade80" }}>
-                Hole {holeNumber}{shotType && SHOT_LABEL[shotType] ? ` · ${SHOT_LABEL[shotType]}` : ""}{dateLabel ? ` · ${dateLabel}` : ""}
+                Hole {holeNumber}{dateLabel ? ` · ${dateLabel}` : ""}
               </span>
             </span>
           )}
