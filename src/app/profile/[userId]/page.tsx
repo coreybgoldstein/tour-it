@@ -50,6 +50,7 @@ type CoursePlayed = {
   name: string;
   city: string;
   state: string;
+  logoUrl?: string | null;
 };
 
 type HomeCourse = {
@@ -167,7 +168,7 @@ export default function PublicProfilePage() {
         const uniqueCourseIds = [...new Set(userUploads.map((u: Upload) => u.courseId))];
         const { data: courses } = await supabase
           .from("Course")
-          .select("id, name, city, state")
+          .select("id, name, city, state, logoUrl")
           .in("id", uniqueCourseIds);
         setCoursesPlayed(courses || []);
       }
@@ -251,7 +252,9 @@ export default function PublicProfilePage() {
   }
 
   const initials = profile.displayName?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
-  const selectedCourseName = selectedClip ? coursesPlayed.find(c => c.id === selectedClip.courseId)?.name : null;
+  const selectedCourse = selectedClip ? coursesPlayed.find(c => c.id === selectedClip.courseId) : null;
+  const selectedCourseName = selectedCourse?.name ?? null;
+  const selectedCourseLogoUrl = selectedCourse?.logoUrl ?? null;
 
   return (
     <main style={{ background: "#07100a", minHeight: "100vh", fontFamily: "'Outfit', sans-serif", color: "#fff", paddingBottom: "80px" }}>
@@ -268,6 +271,7 @@ export default function PublicProfilePage() {
           clip={selectedClip}
           onClose={() => setSelectedClip(null)}
           courseName={selectedCourseName}
+          courseLogoUrl={selectedCourseLogoUrl}
           uploader={profile ? { id: profile.id, username: profile.username, avatarUrl: profile.avatarUrl } : null}
           currentUserId={currentUserId}
         />
