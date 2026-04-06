@@ -78,6 +78,8 @@ function UploadPageInner() {
   const courseDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [gpsSuggestions, setGpsSuggestions] = useState<Course[]>([]);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsSuggestedHole, setGpsSuggestedHole] = useState<number | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
   const [contentFormat, setContentFormat] = useState<string>("");
@@ -212,6 +214,7 @@ function UploadPageInner() {
       setGpsLoading(true);
       extractGPSFromVideo(file).then(async coords => {
         if (!coords) { setGpsLoading(false); return; }
+        setGpsCoords(coords);
         const supabase = createClient();
         const { data } = await supabase
           .from("Course")
@@ -273,6 +276,35 @@ function UploadPageInner() {
     return null;
   }
 
+
+  // When hole picker opens and we have GPS, find the closest hole by tee coords
+  useEffect(() => {
+    if (!gpsCoords || !selectedCourse || (contentFormat !== "SHOT" && contentFormat !== "FULL_HOLE")) {
+      setGpsSuggestedHole(null);
+      return;
+    }
+    const supabase = createClient();
+    supabase
+      .from("Hole")
+      .select("holeNumber, teeLat, teeLng")
+      .eq("courseId", selectedCourse.id)
+      .not("teeLat", "is", null)
+      .not("teeLng", "is", null)
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        const R = 6371000;
+        let best: number | null = null;
+        let bestDist = Infinity;
+        for (const h of data) {
+          const dLat = (h.teeLat - gpsCoords.lat) * Math.PI / 180;
+          const dLng = (h.teeLng - gpsCoords.lng) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) ** 2 + Math.cos(gpsCoords.lat * Math.PI / 180) * Math.cos(h.teeLat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+          const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          if (dist < bestDist) { bestDist = dist; best = h.holeNumber; }
+        }
+        if (best !== null && bestDist < 400) setGpsSuggestedHole(best);
+      });
+  }, [gpsCoords, selectedCourse, contentFormat]);
 
   const handleSubmit = async () => {
     const isMultiHole = contentFormat && contentFormat !== "SHOT" && contentFormat !== "FULL_HOLE";
@@ -804,16 +836,18 @@ function UploadPageInner() {
                 <p className="nine-label" style={{ marginTop: 0 }}>Front Nine</p>
                 <div className="holes-grid">
                   {frontNine.map(n => (
-                    <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }}>
+                    <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }} style={gpsSuggestedHole === n && selectedHole !== n ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.1)" } : {}}>
                       <div className="hole-btn-num">{n}</div>
+                      {gpsSuggestedHole === n && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862", letterSpacing: "0.05em", marginTop: 3 }}>📍 GPS</div>}
                     </button>
                   ))}
                 </div>
                 <p className="nine-label">Back Nine</p>
                 <div className="holes-grid">
                   {backNine.map(n => (
-                    <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }}>
+                    <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }} style={gpsSuggestedHole === n && selectedHole !== n ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.1)" } : {}}>
                       <div className="hole-btn-num">{n}</div>
+                      {gpsSuggestedHole === n && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862", letterSpacing: "0.05em", marginTop: 3 }}>📍 GPS</div>}
                     </button>
                   ))}
                 </div>
