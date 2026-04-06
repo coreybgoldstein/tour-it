@@ -270,6 +270,9 @@ model Upload {
   tripId               String?
   tripPublic           Boolean          @default(true)
 
+  clipLat              Float?
+  clipLng              Float?
+
   likeCount            Int              @default(0)
   commentCount         Int              @default(0)
   viewCount            Int              @default(0)
