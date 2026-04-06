@@ -12,6 +12,7 @@ export default function NotificationBell() {
 
   // Hide on these routes
   const hidden =
+    pathname === "/" ||
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/onboarding" ||

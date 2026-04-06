@@ -116,7 +116,7 @@ function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlaye
   const abbr = courseName.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
   const dateLabel = datePlayedAt ? new Date(datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
   return (
-    <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "52px 14px 12px", zIndex: 20, gap: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 100%)" }}>
+    <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "36px 14px 12px", zIndex: 20, gap: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 100%)" }}>
       <button onClick={onTapCourse} style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
         <div style={{ width: 46, height: 46, borderRadius: 12, background: "rgba(26,158,66,0.2)", border: "1.5px solid rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", flexShrink: 0, overflow: "hidden" }}>
           {courseLogoUrl
