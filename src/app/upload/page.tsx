@@ -249,6 +249,7 @@ function UploadPageInner() {
         });
         compressionPromiseRef.current = promise;
       } else {
+        setMediaFile(file);
         compressionPromiseRef.current = null;
       }
     } else {
