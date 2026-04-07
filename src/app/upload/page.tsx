@@ -517,7 +517,7 @@ function UploadPageInner() {
         .step-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.25); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 8px; }
         .step-title { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 900; color: #fff; line-height: 1.2; margin-bottom: 6px; }
         .step-sub { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 300; color: rgba(255,255,255,0.35); line-height: 1.5; margin-bottom: 24px; }
-        .search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 16px; font-family: 'Outfit', sans-serif; font-size: 14px; color: #fff; outline: none; margin-bottom: 12px; }
+        .search-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 16px; font-family: 'Outfit', sans-serif; font-size: 16px; color: #fff; outline: none; margin-bottom: 12px; }
         .search-input::placeholder { color: rgba(255,255,255,0.25); }
         .search-input:focus { border-color: rgba(77,168,98,0.4); }
         .course-list { display: flex; flex-direction: column; gap: 8px; }
@@ -549,9 +549,9 @@ function UploadPageInner() {
         .field { margin-bottom: 20px; }
         .field-label { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
         .optional-tag { font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.2); letter-spacing: 0.5px; background: rgba(255,255,255,0.05); border-radius: 99px; padding: 2px 7px; }
-        .field-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 11px 14px; font-family: 'Outfit', sans-serif; font-size: 14px; color: rgba(255,255,255,0.8); outline: none; }
+        .field-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 11px 14px; font-family: 'Outfit', sans-serif; font-size: 16px; color: rgba(255,255,255,0.8); outline: none; }
         .field-input:focus { border-color: rgba(77,168,98,0.4); }
-        .field-textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 11px 14px; font-family: 'Outfit', sans-serif; font-size: 14px; color: rgba(255,255,255,0.8); outline: none; resize: none; line-height: 1.5; }
+        .field-textarea { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 11px 14px; font-family: 'Outfit', sans-serif; font-size: 16px; color: rgba(255,255,255,0.8); outline: none; resize: none; line-height: 1.5; }
         .field-textarea:focus { border-color: rgba(77,168,98,0.4); }
         .pill-row { display: flex; flex-wrap: wrap; gap: 7px; }
         .pill-option { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 99px; padding: 7px 14px; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
