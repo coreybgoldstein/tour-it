@@ -385,7 +385,7 @@ function UploadPageInner() {
         strategyNote: intel.notes || null,
         handicapRange: intel.handicap || null,
         datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
-        rankScore: intelPct,
+        rankScore: 1 / Math.pow(2, 1.3), // base score for new clip, ~0.41
         clipLat: gpsCoords?.lat ?? null,
         clipLng: gpsCoords?.lng ?? null,
         tripId: preselectedTripId || null,

@@ -583,13 +583,21 @@ export default function Home() {
       .then(({ data }) => { if (data) setTrendingCourses(data); });
 
     async function loadFeed() {
-      const { data: uploads } = await supabase
+      const { data: rawUploads } = await supabase
         .from("Upload")
-        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
-        .order("createdAt", { ascending: false })
-        .limit(15);
+        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt, rankScore")
+        .order("rankScore", { ascending: false, nullsFirst: false })
+        .limit(30);
 
-      if (!uploads || uploads.length === 0) { setLoading(false); return; }
+      // Apply ±20% random jitter so new clips with similar scores shuffle each load
+      const uploads = rawUploads
+        ? [...rawUploads]
+            .map(u => ({ ...u, _jittered: (u.rankScore ?? 0) * (0.8 + Math.random() * 0.4) }))
+            .sort((a, b) => b._jittered - a._jittered)
+            .slice(0, 15)
+        : [];
+
+      if (!rawUploads || uploads.length === 0) { setLoading(false); return; }
 
       const courseIds = [...new Set(uploads.map((u: any) => u.courseId))];
       const userIds = [...new Set(uploads.map((u: any) => u.userId))];
@@ -802,8 +810,11 @@ export default function Home() {
       updatedAt: new Date().toISOString(),
     });
     if (!error) {
-      const { data: uploadData } = await supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single();
-      await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
+      const { data: uploadData } = await supabase.from("Upload").select("commentCount, likeCount, createdAt").eq("id", commentUploadId).single();
+      const newCommentCount = (uploadData?.commentCount || 0) + 1;
+      const { computeRankScore } = await import("@/lib/rankScore");
+      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
+      await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
       setCommentItems(prev => [...prev, {
         id,
         body: commentText.trim(),
