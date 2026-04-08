@@ -110,9 +110,10 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null }>;
+  clipIndex: number; totalClips: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -277,6 +278,15 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap }: {
 
       </div>
 
+      {/* Clip position dots — only when hole has multiple clips */}
+      {totalClips > 1 && (
+        <div style={{ position: "absolute", bottom: 28, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5, zIndex: 20, pointerEvents: "none" }}>
+          {Array.from({ length: totalClips }).map((_, i) => (
+            <div key={i} style={{ width: i === clipIndex ? 16 : 5, height: 5, borderRadius: 99, background: i === clipIndex ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.28)", transition: "width 0.2s, background 0.2s" }} />
+          ))}
+        </div>
+      )}
+
       {/* Notes bottom sheet */}
       {notesOpen && (
         <>
@@ -345,6 +355,7 @@ export default function CourseProfilePage() {
   const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [feedOpen, setFeedOpen] = useState(false);
+  const [showFeedHint, setShowFeedHint] = useState(false);
   const [feedStartHole, setFeedStartHole] = useState(1);
   const [activeHoleNum, setActiveHoleNum] = useState<number | null>(null);
   const [activeClipByHole, setActiveClipByHole] = useState<Record<number, number>>({});
@@ -736,6 +747,7 @@ export default function CourseProfilePage() {
         .feed-hole-page::-webkit-scrollbar { display: none; }
         .feed-clip-page { width: 100vw; height: 100svh; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
         .feed-end-snap { scroll-snap-align: start; scroll-snap-stop: always; }
+        @keyframes hint-fade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.95); } 15% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
         .clip-thumb { position: relative; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; background: #0d2318; cursor: pointer; transition: opacity 0.15s; }
         .clip-thumb:hover { opacity: 0.85; }
         .clip-thumb video, .clip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -935,7 +947,7 @@ export default function CourseProfilePage() {
                       <div
                         key={holeNum}
                         className={hasClips ? "clip-thumb" : "hole-empty"}
-                        onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
+                        onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); if (!localStorage.getItem("ti-feed-hint")) { setShowFeedHint(true); setTimeout(() => { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); }, 2800); } } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
                         style={{ cursor: "pointer" }}
                       >
                         {hasClips && topClip ? (
@@ -1183,7 +1195,7 @@ export default function CourseProfilePage() {
 
       {/* Full-screen feed modal — vertical = next hole, horizontal = other clips from same hole */}
       {feedOpen && (
-        <div className="feed-modal" ref={feedRef} onScroll={handleFeedScroll}>
+        <div className="feed-modal" ref={feedRef} onScroll={handleFeedScroll} onClick={() => { if (showFeedHint) { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); } }}>
           {holesWithClips.map(holeNum => {
             const clips = holeClipsMap[holeNum] || [];
             const isHoleActive = holeNum === activeHoleNum;
@@ -1209,12 +1221,33 @@ export default function CourseProfilePage() {
                       onComment={() => setCommentUploadId(clip.id)}
                       course={course}
                       uploaderMap={uploaders}
+                      clipIndex={clipIdx}
+                      totalClips={clips.length}
                     />
                   </div>
                 ))}
               </div>
             );
           })}
+          {/* One-time gesture hint */}
+          {showFeedHint && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 110, pointerEvents: "none" }}>
+              <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", animation: "hint-fade 2.8s ease forwards", background: "rgba(0,0,0,0.62)", backdropFilter: "blur(12px)", borderRadius: 16, padding: "16px 22px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, border: "1px solid rgba(255,255,255,0.1)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" }}>swipe for more shots</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+                <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.1)" }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.8)", letterSpacing: "0.02em" }}>scroll for next hole</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* End card — suggested courses */}
           {suggestedCourses.length > 0 && (
             <div className="feed-end-snap">
