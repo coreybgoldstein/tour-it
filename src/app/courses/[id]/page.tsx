@@ -768,7 +768,7 @@ export default function CourseProfilePage() {
       `}</style>
 
       {/* Hero */}
-      <div style={{ position: "relative", width: "100%", height: 220 }}>
+      <div style={{ position: "relative", width: "100%", height: (course.coverImageUrl || courseClips.find(c => c.mediaType === "PHOTO")) ? 220 : 140 }}>
         {course.coverImageUrl ? (
           <img src={course.coverImageUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : courseClips.find(c => c.mediaType === "PHOTO") ? (
