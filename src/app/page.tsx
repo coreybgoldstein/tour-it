@@ -13,6 +13,7 @@ type TrendingCourse = {
   uploadCount: number;
   coverImageUrl: string | null;
   logoUrl: string | null;
+  isPublic?: boolean;
 };
 
 const SHOT_LABEL: Record<string, string> = { DRIVE: "Drive", APPROACH: "Approach Shot", CHIP: "Chip", PUTT: "Putt", LAYUP: "Layup", FULL_SWING: "Full Swing" };
@@ -557,6 +558,7 @@ export default function Home() {
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const [nearMeRadius, setNearMeRadius] = useState(50);
+  const [publicOnly, setPublicOnly] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -834,19 +836,21 @@ export default function Home() {
     setSubmittingComment(false);
   }
 
-  function fetchNearMe(radiusOverride?: number) {
+  function fetchNearMe(radiusOverride?: number, publicOnlyOverride?: boolean) {
     if (!navigator.geolocation) return;
     setLocationStatus("loading");
     const radius = radiusOverride ?? nearMeRadius;
+    const onlyPublic = publicOnlyOverride ?? publicOnly;
 
     async function doFetch(lat: number, lng: number) {
       const RANGE = radius / 69; // degrees ≈ miles / 69
-      const { data } = await createClient()
+      let query = createClient()
         .from("Course")
-        .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
+        .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl, isPublic")
         .gte("latitude", lat - RANGE).lte("latitude", lat + RANGE)
-        .gte("longitude", lng - RANGE).lte("longitude", lng + RANGE)
-        .order("uploadCount", { ascending: false }).limit(20);
+        .gte("longitude", lng - RANGE).lte("longitude", lng + RANGE);
+      if (onlyPublic) query = query.eq("isPublic", true);
+      const { data } = await query.order("uploadCount", { ascending: false }).limit(20);
       setNearMeCourses(data || []);
       setLocationStatus("granted");
     }
@@ -980,6 +984,17 @@ export default function Home() {
                 <div style={{ padding: "0 20px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)", lineHeight: 1.5 }}>
                   Tap Enable to find courses within {nearMeRadius} miles of you.
                 </div>
+              )}
+              {locationStatus === "granted" && (
+                <button
+                  onClick={() => { const next = !publicOnly; setPublicOnly(next); fetchNearMe(undefined, next); }}
+                  style={{ display: "flex", alignItems: "center", gap: 7, padding: "0 20px 10px", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  <div style={{ width: 28, height: 16, borderRadius: 99, background: publicOnly ? "#2d7a42" : "rgba(255,255,255,0.1)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+                    <div style={{ position: "absolute", top: 2, left: publicOnly ? 12 : 2, width: 12, height: 12, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+                  </div>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: publicOnly ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.28)", letterSpacing: "0.06em" }}>Public only</span>
+                </button>
               )}
               {locationStatus === "loading" && (
                 <div className="courses-row">
