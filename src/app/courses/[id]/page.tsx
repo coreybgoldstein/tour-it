@@ -914,11 +914,18 @@ export default function CourseProfilePage() {
             </button>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 8 }}>
-            {[{ label: "Front 9", holes: [1,2,3,4,5,6,7,8,9] }, { label: "Back 9", holes: [10,11,12,13,14,15,16,17,18] }].map(({ label, holes: nineHoles }) => (
+          <div style={{ display: "flex", gap: 0 }}>
+            {[{ label: "Front 9", holes: [1,2,3,4,5,6,7,8,9] }, { label: "Back 9", holes: [10,11,12,13,14,15,16,17,18] }].map(({ label, holes: nineHoles }, sectionIdx) => (
+              <>
+                {sectionIdx === 1 && (
+                  <div style={{ width: 1, background: "rgba(77,168,98,0.25)", alignSelf: "stretch", margin: "0 6px", flexShrink: 0 }} />
+                )}
               <div key={label} style={{ flex: 1, minWidth: 0 }}>
                 {/* Section label */}
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.07em", textAlign: "center", marginBottom: 6 }}>{label}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                  <div style={{ width: 3, height: 14, background: "#4da862", borderRadius: 99, flexShrink: 0 }} />
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
+                </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
                   {nineHoles.map(holeNum => {
                     const clips = holeClipsMap[holeNum];
@@ -957,6 +964,7 @@ export default function CourseProfilePage() {
                   })}
                 </div>
               </div>
+              </>
             ))}
           </div>
         )}
