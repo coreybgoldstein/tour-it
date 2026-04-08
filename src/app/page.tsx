@@ -556,6 +556,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
+  const [nearMeRadius, setNearMeRadius] = useState(50);
   const [showWelcome, setShowWelcome] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -833,18 +834,19 @@ export default function Home() {
     setSubmittingComment(false);
   }
 
-  function fetchNearMe() {
+  function fetchNearMe(radiusOverride?: number) {
     if (!navigator.geolocation) return;
     setLocationStatus("loading");
+    const radius = radiusOverride ?? nearMeRadius;
 
     async function doFetch(lat: number, lng: number) {
-      const RANGE = 0.5;
+      const RANGE = radius / 69; // degrees ≈ miles / 69
       const { data } = await createClient()
         .from("Course")
         .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
         .gte("latitude", lat - RANGE).lte("latitude", lat + RANGE)
         .gte("longitude", lng - RANGE).lte("longitude", lng + RANGE)
-        .order("uploadCount", { ascending: false }).limit(10);
+        .order("uploadCount", { ascending: false }).limit(20);
       setNearMeCourses(data || []);
       setLocationStatus("granted");
     }
@@ -898,18 +900,15 @@ export default function Home() {
 
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
-          {/* Top bar — logo + slogan centered */}
-          <div style={{ padding: "16px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, gap: 6 }}>
+          {/* Top bar — logo */}
+          <div style={{ padding: "16px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
             <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 56, width: "auto", maxWidth: "88%" }} />
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: "0.04em" }}>
-              See the shots before you play them.
-            </div>
           </div>
 
           {/* Hero text */}
-          <div style={{ padding: "14px 20px 12px", flexShrink: 0 }}>
+          <div style={{ padding: "10px 20px 12px", flexShrink: 0 }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
-              Scout your next round.
+              Scout your next round
             </div>
           </div>
 
@@ -920,7 +919,7 @@ export default function Home() {
               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "rgba(26,158,66,0.07)", border: "1.5px solid rgba(26,158,66,0.55)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", boxShadow: "0 0 18px rgba(26,158,66,0.2), inset 0 0 10px rgba(26,158,66,0.04)" }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(26,158,66,0.85)" }}>Find a course — name, city, or state...</span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(26,158,66,0.85)" }}>Find a course — name, city, or state</span>
             </button>
           </div>
 
@@ -944,7 +943,7 @@ export default function Home() {
 
           {/* Popular courses */}
           <div style={{ flexShrink: 0 }}>
-            <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.22)" }}>
+            <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>
               Popular on Tour It
             </div>
             <div className="courses-row">
@@ -960,19 +959,26 @@ export default function Home() {
           {locationStatus !== "denied" && (
             <div style={{ flexShrink: 0, marginTop: 10 }}>
               <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.22)" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>
                   Courses Near Me
                 </div>
-                {locationStatus === "idle" && (
-                  <button onClick={fetchNearMe} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: 99, padding: "4px 12px", cursor: "pointer" }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#1a9e42" }}>Enable</span>
-                  </button>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {locationStatus === "granted" && [10, 25, 50].map(r => (
+                    <button key={r} onClick={() => { setNearMeRadius(r); fetchNearMe(r); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: nearMeRadius === r ? "#fff" : "rgba(255,255,255,0.35)", background: nearMeRadius === r ? "rgba(26,158,66,0.3)" : "rgba(255,255,255,0.05)", border: `1px solid ${nearMeRadius === r ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "3px 9px", cursor: "pointer" }}>
+                      {r}mi
+                    </button>
+                  ))}
+                  {locationStatus === "idle" && (
+                    <button onClick={() => fetchNearMe()} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: 99, padding: "4px 12px", cursor: "pointer" }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#1a9e42" }}>Enable</span>
+                    </button>
+                  )}
+                </div>
               </div>
               {locationStatus === "idle" && (
                 <div style={{ padding: "0 20px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)", lineHeight: 1.5 }}>
-                  Tap Enable to find courses within ~35 miles of you.
+                  Tap Enable to find courses within {nearMeRadius} miles of you.
                 </div>
               )}
               {locationStatus === "loading" && (
@@ -991,7 +997,7 @@ export default function Home() {
               )}
               {locationStatus === "granted" && nearMeCourses.length === 0 && (
                 <div style={{ padding: "0 20px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)" }}>
-                  No courses found within 35 miles.
+                  No courses found within {nearMeRadius} miles.
                 </div>
               )}
             </div>

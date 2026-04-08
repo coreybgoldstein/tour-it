@@ -258,7 +258,7 @@ function SearchPageInner() {
               onChange={e => setQuery(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              placeholder={searchTab === "courses" ? "Course name, city, or state..." : "Name or @username..."}
+              placeholder={searchTab === "courses" ? "Course name, city, or state" : "Name or @username"}
               autoComplete="off"
             />
             {query && (
