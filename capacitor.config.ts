@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   // Live server — loads the Vercel deployment inside the WebView.
   // Remove this block for a fully bundled static build.
   server: {
-    url: "https://tour-it.vercel.app",
+    url: "https://touritgolf.com",
     cleartext: false, // HTTPS only
   },
 
