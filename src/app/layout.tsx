@@ -29,16 +29,16 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Tour It — Scout Before You Play",
     description: "Preview any golf course, one hole at a time. Real videos and tips from golfers who've already played it.",
-    url: "https://tour-it.vercel.app",
+    url: "https://touritgolf.com",
     siteName: "Tour It",
     type: "website",
-    images: [{ url: "https://tour-it.vercel.app/tour-it-logo-new.png", width: 600, height: 300, alt: "Tour It" }],
+    images: [{ url: "https://touritgolf.com/tour-it-logo-new.png", width: 600, height: 300, alt: "Tour It" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Tour It — Scout Before You Play",
     description: "Preview any golf course, one hole at a time. Real videos and tips from golfers who've already played it.",
-    images: ["https://tour-it.vercel.app/tour-it-logo-new.png"],
+    images: ["https://touritgolf.com/tour-it-logo-new.png"],
   },
 };
 
