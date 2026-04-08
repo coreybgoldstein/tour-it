@@ -423,11 +423,12 @@ function SeriesCard({
 }
 
 function VideoCard({
-  clip, isActive, muted, onMuteToggle, onTapCourse, onTapUser, onComment,
+  clip, isActive, muted, onMuteToggle, onTapCourse, onTapUser, onComment, onEnded,
 }: {
   clip: FeedClip; isActive: boolean; muted: boolean;
   onMuteToggle: () => void;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
+  onEnded: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
@@ -449,12 +450,13 @@ function VideoCard({
   return (
     <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}>
       {clip.mediaType === "VIDEO" ? (
-        <video ref={videoRef} src={clip.mediaUrl} loop muted={muted} playsInline
+        <video ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline
           onClick={() => {
             const v = videoRef.current; if (!v) return;
             if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); }
             else { v.pause(); setVideoPaused(true); }
           }}
+          onEnded={onEnded}
           style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
         <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -1044,7 +1046,7 @@ export default function Home() {
             {item.type === "series" ? (
               <SeriesCard item={item} isActive={i === activeIndex} muted={muted} onMuteToggle={() => setMuted(m => !m)} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onMuteToggle={() => setMuted(m => !m)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onMuteToggle={() => setMuted(m => !m)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} />
             )}
           </div>
         ))}
