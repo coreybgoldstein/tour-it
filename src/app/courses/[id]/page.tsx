@@ -110,10 +110,10 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, onEnded }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null }>;
-  clipIndex: number; totalClips: number;
+  clipIndex: number; totalClips: number; onEnded: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -167,12 +167,13 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
     <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000" }}>
       {clip.mediaType === "VIDEO" ? (
         <video
-          ref={videoRef} src={clip.mediaUrl} loop muted={muted} playsInline
+          ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline
           onClick={() => {
             const v = videoRef.current; if (!v) return;
             if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); }
             else { v.pause(); setVideoPaused(true); }
           }}
+          onEnded={onEnded}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
         />
       ) : (
@@ -1223,6 +1224,13 @@ export default function CourseProfilePage() {
                       uploaderMap={uploaders}
                       clipIndex={clipIdx}
                       totalClips={clips.length}
+                      onEnded={() => {
+                        if (clipIdx < clips.length - 1) {
+                          holeScrollRefs.current[holeNum]?.scrollBy({ left: window.innerWidth, behavior: "smooth" });
+                        } else {
+                          feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" });
+                        }
+                      }}
                     />
                   </div>
                 ))}
