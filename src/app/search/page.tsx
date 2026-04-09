@@ -274,136 +274,105 @@ function SearchPageInner() {
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginBottom: 16 }}>
             Search
           </div>
-          {searchTab !== "ai" ? (
-            <div className={`search-box ${focused ? "focused" : ""}`}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                ref={inputRef}
-                className="search-input"
-                type="text"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                placeholder={searchTab === "courses" ? "Course name, city, or state" : "Name or @username"}
-                autoComplete="off"
-              />
-              {query && (
-                <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M18 6 6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              )}
-            </div>
-          ) : (
-            /* AI search input */
-            <div style={{ position: "relative" }}>
-              <div className={`search-box ${focused ? "focused" : ""}`} style={{ borderColor: focused ? "rgba(77,168,98,0.6)" : "rgba(77,168,98,0.25)", background: "rgba(77,168,98,0.05)" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 8v4l3 3"/>
-                </svg>
-                <input
-                  ref={aiInputRef}
-                  className="search-input"
-                  type="text"
-                  value={aiQuery}
-                  onChange={e => setAiQuery(e.target.value)}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  onKeyDown={e => e.key === "Enter" && runAiSearch(aiQuery)}
-                  placeholder="e.g. Best links courses in the Southeast…"
-                  autoComplete="off"
-                />
-                {aiQuery && (
-                  <button className="clear-btn" onClick={() => { setAiQuery(""); setAiResults([]); setAiExplanation(""); setAiError(""); }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                  </button>
-                )}
+          {/* Unified search bar */}
+          <div className={`search-box ${focused ? "focused" : ""}`}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              ref={inputRef}
+              className="search-input"
+              type="text"
+              value={query}
+              onChange={e => { setQuery(e.target.value); if (aiResults.length > 0 || aiExplanation) { setAiResults([]); setAiExplanation(""); setAiError(""); } }}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onKeyDown={e => { if (e.key === "Enter" && searchTab === "courses") runAiSearch(query); }}
+              placeholder={searchTab === "courses" ? "Search courses or ask anything…" : "Name or @username"}
+              autoComplete="off"
+            />
+            {/* ✦ AI trigger — only on courses tab */}
+            {searchTab === "courses" && query.trim() && !aiLoading && (
+              <button
+                onClick={() => runAiSearch(query)}
+                title="Search with AI"
+                style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 8, background: aiResults.length > 0 ? "rgba(77,168,98,0.2)" : "rgba(77,168,98,0.1)", border: `1px solid ${aiResults.length > 0 ? "rgba(77,168,98,0.5)" : "rgba(77,168,98,0.25)"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#4da862", fontSize: 14, fontWeight: 700, transition: "all 0.15s" }}
+              >✦</button>
+            )}
+            {searchTab === "courses" && aiLoading && (
+              <div style={{ flexShrink: 0, display: "flex", gap: 3, alignItems: "center", paddingRight: 4 }}>
+                {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", animation: `ai-pulse 1.2s ease-in-out ${i * 0.18}s infinite` }} />)}
               </div>
-              <button
-                onClick={() => runAiSearch(aiQuery)}
-                disabled={!aiQuery.trim() || aiLoading}
-                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: aiQuery.trim() ? "#2d7a42" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 10, padding: "8px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: aiQuery.trim() ? "#fff" : "rgba(255,255,255,0.3)", cursor: aiQuery.trim() ? "pointer" : "default", transition: "all 0.15s", whiteSpace: "nowrap" }}
-              >
-                {aiLoading ? "…" : "Search"}
+            )}
+            <style>{`@keyframes ai-pulse { 0%,100%{opacity:0.2;transform:scale(0.75)} 50%{opacity:1;transform:scale(1)} }`}</style>
+            {query && !aiLoading && (
+              <button className="clear-btn" onClick={() => { setQuery(""); setAiResults([]); setAiExplanation(""); setAiError(""); inputRef.current?.focus(); }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Tab toggle */}
+          {/* Tab toggle: Courses + People only */}
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            {([
-              { key: "courses", label: "Courses" },
-              { key: "people", label: "People" },
-              { key: "ai", label: "✦ AI" },
-            ] as const).map(tab => (
+            {(["courses", "people"] as const).map(tab => (
               <button
-                key={tab.key}
-                onClick={() => { setSearchTab(tab.key); setQuery(""); setTimeout(() => { if (tab.key === "ai") aiInputRef.current?.focus(); else inputRef.current?.focus(); }, 50); }}
-                style={{ padding: "7px 18px", borderRadius: 99, border: tab.key === "ai" ? `1px solid ${searchTab === "ai" ? "rgba(77,168,98,0.6)" : "rgba(77,168,98,0.2)"}` : "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", background: searchTab === tab.key ? (tab.key === "ai" ? "rgba(77,168,98,0.15)" : "#2d7a42") : (tab.key === "ai" ? "transparent" : "rgba(255,255,255,0.07)"), color: searchTab === tab.key ? (tab.key === "ai" ? "#4da862" : "#fff") : (tab.key === "ai" ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.45)"), transition: "all 0.15s" }}
+                key={tab}
+                onClick={() => { setSearchTab(tab); setQuery(""); setAiResults([]); setAiExplanation(""); setAiError(""); setTimeout(() => inputRef.current?.focus(), 50); }}
+                style={{ padding: "7px 18px", borderRadius: 99, border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", background: searchTab === tab ? "#2d7a42" : "rgba(255,255,255,0.07)", color: searchTab === tab ? "#fff" : "rgba(255,255,255,0.45)", transition: "all 0.15s" }}
               >
-                {tab.label}
+                {tab === "courses" ? "Courses" : "People"}
               </button>
             ))}
           </div>
 
-          {/* AI prompt examples (shown when AI tab active and no query yet) */}
-          {searchTab === "ai" && !aiQuery && !aiLoading && aiResults.length === 0 && (
-            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-              {[
-                "Best golf trip destinations in the Midwest",
-                "Links style courses in the Southeast",
-                "Courses within 10 miles of JFK airport",
-                "Public courses in Scottsdale AZ",
-                "Bucket list courses with the most clips",
-              ].map(example => (
-                <button
-                  key={example}
-                  onClick={() => { setAiQuery(example); setTimeout(() => runAiSearch(example), 0); }}
-                  style={{ width: "100%", textAlign: "left", background: "rgba(77,168,98,0.05)", border: "1px solid rgba(77,168,98,0.15)", borderRadius: 12, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
-                >
-                  <span style={{ color: "#4da862", fontSize: 12, flexShrink: 0 }}>✦</span>
-                  {example}
-                </button>
-              ))}
+          {/* AI prompt examples — shown when Courses tab, no query yet */}
+          {searchTab === "courses" && !query && !aiLoading && aiResults.length === 0 && (
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.6)", marginBottom: 10 }}>✦ Ask anything</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                {[
+                  "Best golf trip destinations in the Midwest",
+                  "Links style courses in the Southeast",
+                  "Courses within 10 miles of JFK airport",
+                  "Public courses in Scottsdale AZ",
+                  "Bucket list courses with the most clips",
+                ].map(example => (
+                  <button
+                    key={example}
+                    onClick={() => { setQuery(example); runAiSearch(example); }}
+                    style={{ width: "100%", textAlign: "left", background: "rgba(77,168,98,0.04)", border: "1px solid rgba(77,168,98,0.12)", borderRadius: 11, padding: "10px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", cursor: "pointer", display: "flex", alignItems: "center", gap: 9 }}
+                  >
+                    <span style={{ color: "#4da862", fontSize: 11, flexShrink: 0 }}>✦</span>
+                    {example}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        {/* ── AI tab ── */}
-        {searchTab === "ai" && (
+        {/* ── AI results (inside Courses tab) ── */}
+        {searchTab === "courses" && (aiLoading || aiExplanation || aiError) && (
           <>
-            {aiLoading && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "48px 0 24px", gap: 14 }}>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {[0,1,2].map(i => (
-                    <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#4da862", animation: `ai-pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
-                  ))}
-                </div>
-                <style>{`@keyframes ai-pulse { 0%,100% { opacity:0.25; transform:scale(0.8); } 50% { opacity:1; transform:scale(1.1); } }`}</style>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Finding your courses…</div>
-              </div>
-            )}
-
             {!aiLoading && aiError && (
               <div style={{ margin: "24px 0", padding: "14px 16px", background: "rgba(220,60,60,0.08)", border: "1px solid rgba(220,60,60,0.2)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(240,120,120,0.9)" }}>
                 {aiError}
               </div>
             )}
-
-            {!aiLoading && !aiError && aiExplanation && (
-              <div style={{ margin: "18px 0 4px", padding: "12px 14px", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 10 }}>
-                <span style={{ color: "#4da862", fontSize: 14, flexShrink: 0, marginTop: 1 }}>✦</span>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{aiExplanation}</div>
+            {!aiLoading && aiExplanation && (
+              <div style={{ margin: "18px 0 4px", padding: "11px 13px", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 9 }}>
+                <span style={{ color: "#4da862", fontSize: 13, flexShrink: 0, marginTop: 1 }}>✦</span>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, flex: 1 }}>{aiExplanation}</div>
+                <button onClick={() => { setAiResults([]); setAiExplanation(""); setAiError(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
               </div>
             )}
-
             {!aiLoading && aiResults.length > 0 && (
               <>
-                <p className="section-label">{aiResults.length} course{aiResults.length !== 1 ? "s" : ""} found</p>
+                <p className="section-label">{aiResults.length} AI result{aiResults.length !== 1 ? "s" : ""}</p>
                 {aiResults.map(course => {
                   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                   const dist = aiDistances[course.id];
@@ -428,9 +397,8 @@ function SearchPageInner() {
                 })}
               </>
             )}
-
-            {!aiLoading && !aiError && aiQuery && aiResults.length === 0 && (
-              <div className="empty-hint">No courses matched your search.<br/><span style={{ fontSize: 12 }}>Try rephrasing or a broader region</span></div>
+            {!aiLoading && !aiError && aiExplanation && aiResults.length === 0 && (
+              <div className="empty-hint">No courses matched.<br/><span style={{ fontSize: 12 }}>Try rephrasing or a broader region</span></div>
             )}
           </>
         )}
@@ -481,8 +449,8 @@ function SearchPageInner() {
           </>
         )}
 
-        {/* ── Courses tab ── */}
-        {searchTab === "courses" && <>
+        {/* ── Courses tab (regular results — hidden while AI results showing) ── */}
+        {searchTab === "courses" && aiResults.length === 0 && !aiExplanation && <>
 
         {/* Results */}
         {loading && (
