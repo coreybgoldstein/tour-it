@@ -110,6 +110,27 @@ function TourItLogo({ size = 26 }: { size?: number }) {
   );
 }
 
+function NotificationBellInline() {
+  const router = useRouter();
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("Notification").select("id", { count: "exact", head: true }).eq("userId", user.id).eq("read", false)
+        .then(({ count }) => setUnread(count ?? 0));
+    });
+  }, []);
+  return (
+    <button onClick={() => router.push("/notifications")} style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      {unread > 0 && (
+        <div style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, borderRadius: "50%", background: "#4da862", border: "1.5px solid #1c4425" }} />
+      )}
+    </button>
+  );
+}
+
 function FeedTopBar({ courseLogoUrl, courseName, holeNumber, shotType, datePlayedAt, muted, onMuteToggle, onTapCourse }: {
   courseLogoUrl: string | null; courseName: string; holeNumber?: number; shotType?: string | null;
   datePlayedAt?: string | null; muted: boolean; onMuteToggle: () => void; onTapCourse: () => void;
@@ -906,13 +927,22 @@ export default function Home() {
 
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
-          {/* Top bar — logo */}
-          <div style={{ padding: "16px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-            <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 56, width: "auto", maxWidth: "88%" }} />
+          {/* Green header bar with logo + bell */}
+          <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", flexShrink: 0, paddingBottom: 18 }}>
+            <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 24, background: "linear-gradient(to bottom, transparent, #07100a)", pointerEvents: "none" }} />
+            {/* Notification bell — top right */}
+            <div style={{ position: "absolute", top: 52, right: 16, zIndex: 2 }}>
+              <NotificationBellInline />
+            </div>
+            {/* Logo centered */}
+            <div style={{ paddingTop: 56, display: "flex", justifyContent: "center", position: "relative", zIndex: 1 }}>
+              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 52, width: "auto", maxWidth: "72%" }} />
+            </div>
           </div>
 
           {/* Hero text */}
-          <div style={{ padding: "10px 20px 12px", flexShrink: 0 }}>
+          <div style={{ padding: "16px 20px 12px", flexShrink: 0 }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
               Scout your next round
             </div>
@@ -995,7 +1025,7 @@ export default function Home() {
                   <div style={{ width: 28, height: 16, borderRadius: 99, background: publicOnly ? "#2d7a42" : "rgba(255,255,255,0.1)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
                     <div style={{ position: "absolute", top: 2, left: publicOnly ? 12 : 2, width: 12, height: 12, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
                   </div>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: publicOnly ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.28)", letterSpacing: "0.06em" }}>Public only</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: publicOnly ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.45)", letterSpacing: "0.06em" }}>Public only</span>
                 </button>
               )}
               {locationStatus === "loading" && (
@@ -1028,7 +1058,7 @@ export default function Home() {
                   <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
                 </svg>
               </div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1, whiteSpace: "nowrap" }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 14, color: "rgba(255,255,255,0.75)", lineHeight: 1, whiteSpace: "nowrap" }}>
                 Scroll to find your next bucket list course
               </div>
               <div className="bounce-arrow" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
