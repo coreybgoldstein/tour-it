@@ -527,6 +527,41 @@ model Notification {
 }
 
 // ============================================================
+// SEARCH LOG
+// ============================================================
+
+model SearchLog {
+  id          String   @id @default(cuid())
+  query       String
+  params      Json?
+  resultIds   String[]
+  resultCount Int      @default(0)
+  userId      String?
+  createdAt   DateTime @default(now())
+
+  clicks      SearchClick[]
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+}
+
+model SearchClick {
+  id          String    @id @default(cuid())
+  searchLogId String
+  courseId    String
+  courseName  String
+  position    Int
+  userId      String?
+  createdAt   DateTime  @default(now())
+
+  searchLog   SearchLog @relation(fields: [searchLogId], references: [id], onDelete: Cascade)
+
+  @@index([searchLogId])
+  @@index([courseId])
+  @@index([createdAt(sort: Desc)])
+}
+
+// ============================================================
 // UPLOAD TAG
 // ============================================================
 

@@ -44,26 +44,39 @@ function SearchPageInner() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
   const [aiDistances, setAiDistances] = useState<Record<string, number>>({});
+  const [aiSearchLogId, setAiSearchLogId] = useState<string | null>(null);
   const aiInputRef = useRef<HTMLInputElement>(null);
 
   // People tab
   async function runAiSearch(q: string) {
     const trimmed = q.trim();
     if (!trimmed) return;
-    setAiLoading(true); setAiError(""); setAiResults([]); setAiExplanation(""); setAiDistances({});
+    setAiLoading(true); setAiError(""); setAiResults([]); setAiExplanation(""); setAiDistances({}); setAiSearchLogId(null);
     try {
-      const res = await fetch("/api/ai-search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: trimmed }) });
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (currentUserId) headers["x-user-id"] = currentUserId;
+      const res = await fetch("/api/ai-search", { method: "POST", headers, body: JSON.stringify({ query: trimmed }) });
       const json = await res.json();
       if (!res.ok || json.error) { setAiError(json.error || "Something went wrong"); }
       else {
         setAiResults(json.courses || []);
         setAiExplanation(json.explanation || "");
+        setAiSearchLogId(json.searchLogId || null);
         const dists: Record<string, number> = {};
         (json.courses || []).forEach((c: any) => { if (c.distanceMiles != null) dists[c.id] = c.distanceMiles; });
         setAiDistances(dists);
       }
     } catch (e: any) { setAiError(e.message || "Network error"); }
     setAiLoading(false);
+  }
+
+  function trackAiClick(courseId: string, courseName: string, position: number) {
+    if (!aiSearchLogId) return;
+    fetch("/api/ai-search/click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ searchLogId: aiSearchLogId, courseId, courseName, position, userId: currentUserId }),
+    }).catch(() => {});
   }
 
   type Person = { id: string; username: string; displayName: string; avatarUrl: string | null; uploadCount: number };
@@ -373,11 +386,11 @@ function SearchPageInner() {
             {!aiLoading && aiResults.length > 0 && (
               <>
                 <p className="section-label">{aiResults.length} AI result{aiResults.length !== 1 ? "s" : ""}</p>
-                {aiResults.map(course => {
+                {aiResults.map((course, idx) => {
                   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                   const dist = aiDistances[course.id];
                   return (
-                    <div key={course.id} className="course-row" onClick={() => router.push(`/courses/${course.id}`)}>
+                    <div key={course.id} className="course-row" onClick={() => { trackAiClick(course.id, course.name, idx); router.push(`/courses/${course.id}`); }}>
                       <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
                         {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
                       </div>
