@@ -47,6 +47,23 @@ function SearchPageInner() {
   const [aiSearchLogId, setAiSearchLogId] = useState<string | null>(null);
   const aiInputRef = useRef<HTMLInputElement>(null);
 
+  const [aiExamples] = useState(() => {
+    const pool = [
+      "Best golf trip destinations in the Midwest",
+      "Links style courses in the Southeast",
+      "Courses within 10 miles of JFK airport",
+      "Public courses in Scottsdale AZ",
+      "Bucket list courses in Florida",
+      "Best courses for a guys golf trip",
+      "Top rated courses in the Carolinas",
+      "Courses near Pebble Beach CA",
+      "Hidden gem courses in the Northeast",
+      "Best public courses in Texas",
+    ];
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  });
+
   // People tab
   async function runAiSearch(q: string) {
     const trimmed = q.trim();
@@ -345,13 +362,7 @@ function SearchPageInner() {
             <div style={{ marginTop: 18 }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.6)", marginBottom: 10 }}>✦ Ask anything</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                {[
-                  "Best golf trip destinations in the Midwest",
-                  "Links style courses in the Southeast",
-                  "Courses within 10 miles of JFK airport",
-                  "Public courses in Scottsdale AZ",
-                  "Bucket list courses with the most clips",
-                ].map(example => (
+                {aiExamples.map(example => (
                   <button
                     key={example}
                     onClick={() => { setQuery(example); runAiSearch(example); }}
