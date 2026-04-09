@@ -32,7 +32,7 @@ export default function BottomNav() {
   const isHome = pathname === "/";
   const isSearch = pathname === "/search";
   const isLists = pathname === "/lists";
-  const isProfile = pathname === "/profile";
+  const isProfile = pathname === "/profile" || pathname.startsWith("/profile/");
 
   if (keyboardOpen) return null;
 
