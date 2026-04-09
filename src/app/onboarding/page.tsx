@@ -165,7 +165,7 @@ export default function OnboardingPage() {
         .ob-input::placeholder { color: rgba(255,255,255,0.2); }
         .ob-label {
           font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600;
-          letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35);
+          letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.65);
           display: block; margin-bottom: 6px;
         }
         .ob-textarea {
@@ -185,9 +185,9 @@ export default function OnboardingPage() {
         .btn-ghost {
           width: 100%; background: transparent; border: none;
           padding: 13px; font-family: 'Outfit', sans-serif; font-size: 13px;
-          color: rgba(255,255,255,0.3); cursor: pointer;
+          color: rgba(255,255,255,0.55); cursor: pointer;
         }
-        .btn-ghost:hover { color: rgba(255,255,255,0.5); }
+        .btn-ghost:hover { color: rgba(255,255,255,0.75); }
         .course-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
         .course-row:last-child { border-bottom: none; }
         .course-row:active { opacity: 0.7; }
@@ -216,7 +216,7 @@ export default function OnboardingPage() {
         <div style={{ height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden", marginBottom: 8 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "#4da862", borderRadius: 99, transition: "width 0.4s ease" }} />
         </div>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginBottom: 32 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 32 }}>
           Step {step} of 3
         </div>
       </div>
@@ -229,7 +229,7 @@ export default function OnboardingPage() {
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 6 }}>
               Let's set up<br />your profile
             </div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.35)", marginBottom: 32, lineHeight: 1.6 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 32, lineHeight: 1.6 }}>
               {username ? `Welcome, @${username}. ` : ""}Tell the golf community who you are.
             </div>
 
@@ -247,7 +247,7 @@ export default function OnboardingPage() {
               </div>
 
               {/* Default character grid */}
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", textAlign: "center", marginBottom: 12 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)", textAlign: "center", marginBottom: 12 }}>
                 Pick a character
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 16 }}>
@@ -282,7 +282,7 @@ export default function OnboardingPage() {
                   value={displayName}
                   onChange={e => setDisplayName(e.target.value)}
                 />
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 5 }}>
                   This is what other golfers see — can be your real name or a nickname.
                 </div>
               </div>
@@ -302,7 +302,7 @@ export default function OnboardingPage() {
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 6 }}>
               What's your<br />game like?
             </div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.35)", marginBottom: 32, lineHeight: 1.6 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 32, lineHeight: 1.6 }}>
               Helps us match you with relevant content. You can change this anytime.
             </div>
 
@@ -320,7 +320,7 @@ export default function OnboardingPage() {
                   }}
                 >
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: !useCustom && handicapBucket === b.value ? "#4da862" : "#fff" }}>{b.label}</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{b.sublabel}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#4da862" }}>{b.sublabel}</span>
                 </button>
               ))}
             </div>
@@ -328,7 +328,7 @@ export default function OnboardingPage() {
             {/* Exact handicap input */}
             <button
               onClick={() => setUseCustom(c => !c)}
-              style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: useCustom ? "#4da862" : "rgba(255,255,255,0.3)", marginBottom: 12, padding: 0, display: "flex", alignItems: "center", gap: 5 }}
+              style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: useCustom ? "#4da862" : "rgba(255,255,255,0.6)", marginBottom: 12, padding: 0, display: "flex", alignItems: "center", gap: 5 }}
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 {useCustom ? <><polyline points="20 6 9 17 4 12"/></> : <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>}
@@ -367,7 +367,7 @@ export default function OnboardingPage() {
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 6 }}>
               Where do you<br />call home?
             </div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.35)", marginBottom: 32, lineHeight: 1.6 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 32, lineHeight: 1.6 }}>
               Your home course shows on your profile. You can always skip this.
             </div>
 
