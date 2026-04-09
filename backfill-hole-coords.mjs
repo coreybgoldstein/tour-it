@@ -34,7 +34,7 @@ function fetchJson(url, headers = {}) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(20000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(20000, () => { req.destroy(new Error('Timeout')); });
   });
 }
 
@@ -60,21 +60,38 @@ function postOverpass(query) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(30000, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.setTimeout(30000, () => { req.destroy(new Error('Timeout')); });
     req.write(body);
     req.end();
   });
 }
 
+async function withRetry(fn, label, attempts = 4) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const isLast = i === attempts - 1;
+      if (isLast) throw e;
+      const wait = 3000 * (i + 1);
+      console.log(`  [retry ${i + 1}] ${label} — ${e.message}, waiting ${wait / 1000}s`);
+      await sleep(wait);
+    }
+  }
+}
+
 function supabaseGet(path) {
-  return fetchJson(`${SUPABASE_URL}/rest/v1/${path}`, {
-    apikey: API_KEY,
-    Authorization: `Bearer ${API_KEY}`,
-  });
+  return withRetry(
+    () => fetchJson(`${SUPABASE_URL}/rest/v1/${path}`, {
+      apikey: API_KEY,
+      Authorization: `Bearer ${API_KEY}`,
+    }),
+    `GET ${path.split('?')[0]}`
+  );
 }
 
 function patchHole(id, patch) {
-  return new Promise((resolve, reject) => {
+  return withRetry(() => new Promise((resolve, reject) => {
     const body = JSON.stringify(patch);
     const url = new URL(`${SUPABASE_URL}/rest/v1/Hole?id=eq.${id}`);
     const options = {
@@ -96,7 +113,7 @@ function patchHole(id, patch) {
     req.on('error', reject);
     req.write(body);
     req.end();
-  });
+  }), `PATCH Hole ${id}`);
 }
 
 // Query golf=hole relations/ways — these reliably have ref=<hole number> tags
@@ -276,4 +293,21 @@ async function main() {
   console.log(`No OSM data:     ${totalNoData}`);
 }
 
-main().catch(err => { console.error('Fatal:', err); process.exit(1); });
+async function run() {
+  let attempts = 0;
+  while (true) {
+    try {
+      await main();
+      break; // finished cleanly
+    } catch (err) {
+      attempts++;
+      console.error(`\nCrash #${attempts}:`, err.message);
+      if (attempts >= 10) { console.error('Too many crashes, giving up.'); process.exit(1); }
+      const wait = Math.min(30000, 5000 * attempts);
+      console.log(`Restarting in ${wait / 1000}s...\n`);
+      await sleep(wait);
+    }
+  }
+}
+
+run();

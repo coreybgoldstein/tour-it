@@ -1,0 +1,4734 @@
+Processing 11231 courses...
+
+[1/11231] "The Old Course" at Sugar Loaf
+  All 18 holes already have coords, skipping
+[2/11231] #2 Green
+  All 18 holes already have coords, skipping
+[3/11231] #2 Tee Red
+  Found 16 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[4/11231] #2 Tee White
+  Found 16 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[5/11231] #8 White Tee
+  No OSM data found
+[6/11231] 10TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[7/11231] 10TH GREEN
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[8/11231] 10TH TEE BOX
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[9/11231] 11TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+    Hole 6: 32.423975, -97.698750
+    Hole 7: 32.423380, -97.698528
+    Hole 8: 32.422991, -97.697704
+  → Filled 3/18 missing holes
+[10/11231] 11TH GREEN
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[11/11231] 11TH SAND
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[12/11231] 11TH TEE BOX
+  No OSM data found
+[13/11231] 12 Oaks
+  All 18 holes already have coords, skipping
+[14/11231] 12 Shores
+  No OSM data found
+[15/11231] 12TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[16/11231] 12TH GREEN
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[17/11231] 12TH TEE
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[18/11231] 13TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[19/11231] 13TH GREEN
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[20/11231] 13TH SAND
+  No OSM data found
+[21/11231] 13TH TEE BOX
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[22/11231] 14TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[23/11231] 14TH GREEN
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[24/11231] 14TH TEE BOX
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[25/11231] 15TH FAIRWAY
+  No OSM data found
+[26/11231] 15TH GREEN
+  No OSM data found
+[27/11231] 15TH TEE BOX
+  No OSM data found
+[28/11231] 16 holes
+  Found 29 elements → 12 numbered holes
+  → Filled 0/6 missing holes
+[29/11231] 16TH FAIRWAY
+  No OSM data found
+[30/11231] 16TH GREEN
+  Found 1 elements → 1 numbered holes
+  → Filled 0/17 missing holes
+[31/11231] 16TH TEE
+  No OSM data found
+[32/11231] 1757 Golf Club
+  All 18 holes already have coords, skipping
+[33/11231] 17TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[34/11231] 17TH TEE
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[35/11231] 18 Hole Groomed Putting Course
+  No OSM data found
+[36/11231] 18TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[37/11231] 18TH GREEN
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[38/11231] 18TH SAND
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[39/11231] 18TH TEE
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[40/11231] 1912 Club
+  All 18 holes already have coords, skipping
+[41/11231] 1st Fairway
+  No OSM data found
+[42/11231] 1st Green
+  No OSM data found
+[43/11231] 1ST TEE
+  No OSM data found
+[44/11231] 1st Tee box
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[45/11231] 27 Pines Golf Course
+  No OSM data found
+[46/11231] 2nd Fairway
+  No OSM data found
+[47/11231] 2nd Green
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[48/11231] 2nd Tee Box
+  Found 3 elements → 3 numbered holes
+    Hole 6: 32.423975, -97.698750
+    Hole 7: 32.423380, -97.698528
+    Hole 8: 32.422991, -97.697704
+  → Filled 3/18 missing holes
+[49/11231] 3 Lakes Golf Course
+  No OSM data found
+[50/11231] 3's Greenville Golf & Gril
+  No OSM data found
+[51/11231] 3/30 Golf & Country Club
+  No OSM data found
+[52/11231] 3rd Fairway
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[53/11231] 3rd Green
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[54/11231] 3rd Tee Box
+  No OSM data found
+[55/11231] 4th Fairway
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[56/11231] 4th Green
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[57/11231] 4TH TEE
+  Found 3 elements → 3 numbered holes
+    Hole 6: 32.423975, -97.698750
+    Hole 7: 32.423380, -97.698528
+    Hole 8: 32.422991, -97.697704
+  → Filled 3/18 missing holes
+[58/11231] 4th Tee Box
+  No OSM data found
+[59/11231] 5 by 80 Golf and Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[60/11231] 5 Hole Golf Course
+  No OSM data found
+[61/11231] 5 holes
+  No OSM data found
+[62/11231] 5th Fairway
+  No OSM data found
+[63/11231] 5th Green
+  No OSM data found
+[64/11231] 5TH TEE
+  No OSM data found
+[65/11231] 5th Tee Box
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[66/11231] 6th Fairway
+  No OSM data found
+[67/11231] 6TH GREEN
+  No OSM data found
+[68/11231] 6th TEE
+  No OSM data found
+[69/11231] 6th Tee Box
+  No OSM data found
+[70/11231] 7 Lakes Golf Club
+  All 18 holes already have coords, skipping
+[71/11231] 7th Fairway
+  No OSM data found
+[72/11231] 7th Green
+  Found 3 elements → 3 numbered holes
+    Hole 6: 32.423975, -97.698750
+    Hole 7: 32.423380, -97.698528
+    Hole 8: 32.422991, -97.697704
+  → Filled 3/18 missing holes
+[73/11231] 7TH TEE
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[74/11231] 8th Fairway
+  No OSM data found
+[75/11231] 8TH GREEN
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[76/11231] 8th Tee Box
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[77/11231] 9-Hole Short/Executive Course
+  All 18 holes already have coords, skipping
+[78/11231] 9TH FAIRWAY
+  No OSM data found
+[79/11231] 9th Green
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[80/11231] 9th Tee Box
+  No OSM data found
+[81/11231] A. J. Jolly Golf Course
+  All 18 holes already have coords, skipping
+[82/11231] A. L. Gustin Golf Course
+  All 18 holes already have coords, skipping
+[83/11231] A.C. Read Golf Course
+  All 18 holes already have coords, skipping
+[84/11231] Abacoa Golf Club
+  No OSM data found
+[85/11231] Abandoned Stonybrook Golf Course
+  No OSM data found
+[86/11231] Abbey Springs Golf Course
+  Found 1 elements → 1 numbered holes
+  → Filled 0/17 missing holes
+[87/11231] Abenakee Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[88/11231] Abenaqui Country Club
+  All 18 holes already have coords, skipping
+[89/11231] Aberdeen Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[90/11231] Aberdeen Golf & Country Club
+  No OSM data found
+[91/11231] Aberdeen Golf Club
+  All 18 holes already have coords, skipping
+[92/11231] Abilene Country Club North Course
+  All 18 holes already have coords, skipping
+[93/11231] Abilene Country Club South Course (Fairway)
+  All 18 holes already have coords, skipping
+[94/11231] Abita Springs Golf Club
+  No OSM data found
+[95/11231] Achasta Golf Club
+  All 18 holes already have coords, skipping
+[96/11231] Ackerman-Allen Golf Course
+  All 18 holes already have coords, skipping
+[97/11231] Ackia Golf Course
+  No OSM data found
+[98/11231] Ackley Country Club
+  No OSM data found
+[99/11231] Acoaxet Club
+  Found 12 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[100/11231] Acorn Park Golf Course
+  No OSM data found
+[101/11231] Acorns Golf Links
+  Found 18 elements → 18 numbered holes
+    Hole 1: 38.292237, -90.199352
+    Hole 2: 38.295133, -90.197414
+    Hole 3: 38.297447, -90.198374
+    Hole 4: 38.298372, -90.201292
+    Hole 5: 38.298948, -90.205147
+    Hole 6: 38.298020, -90.198993
+    Hole 7: 38.299973, -90.197342
+    Hole 8: 38.295002, -90.197239
+    Hole 9: 38.292063, -90.199413
+    Hole 10: 38.293233, -90.201082
+    Hole 11: 38.296818, -90.201340
+    Hole 12: 38.298140, -90.205480
+    Hole 13: 38.299645, -90.204793
+    Hole 14: 38.299941, -90.198104
+    Hole 15: 38.300117, -90.202933
+    Hole 16: 38.300128, -90.206199
+    Hole 17: 38.297471, -90.205299
+    Hole 18: 38.296888, -90.200212
+  → Filled 18/18 missing holes
+[102/11231] Acushnet River Valley Golf Course
+  All 18 holes already have coords, skipping
+[103/11231] Adam's Rib Ranch
+  Found 18 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[104/11231] Adams Country Club
+  No OSM data found
+[105/11231] Adams County Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[106/11231] Adams Golf Course
+  All 18 holes already have coords, skipping
+[107/11231] Adams Pointe Golf Course
+  All 18 holes already have coords, skipping
+[108/11231] Adams Springs Golf Course
+  No OSM data found
+[109/11231] Addison Reserve Country Club
+  No OSM data found
+[110/11231] Adirondack Golf And Country Club
+  All 18 holes already have coords, skipping
+[111/11231] Admiral Nimitz Golf Course
+  No OSM data found
+[112/11231] Adobe Creek Golf Club
+  Found 20 elements → 18 numbered holes
+    Hole 1: 38.245855, -122.586329
+    Hole 2: 38.250756, -122.585377
+    Hole 3: 38.247802, -122.582319
+    Hole 4: 38.244462, -122.585368
+    Hole 5: 38.240471, -122.588875
+    Hole 6: 38.241742, -122.590685
+    Hole 7: 38.243567, -122.594262
+    Hole 8: 38.245600, -122.590871
+    Hole 9: 38.242314, -122.590217
+    Hole 10: 38.245751, -122.587312
+    Hole 11: 38.247841, -122.591467
+    Hole 12: 38.251054, -122.586962
+    Hole 13: 38.252269, -122.587297
+    Hole 14: 38.253485, -122.583260
+    Hole 15: 38.250832, -122.587254
+    Hole 16: 38.248742, -122.588493
+    Hole 17: 38.246853, -122.587658
+    Hole 18: 38.249864, -122.586782
+  → Filled 18/18 missing holes
+[113/11231] Adobe Creek National Golf Course
+  Found 27 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[114/11231] Adobe Dam Family Golf Center
+  No OSM data found
+[115/11231] Adobe Wells Golf Course
+  No OSM data found
+[116/11231] Adrian Country Club
+  All 18 holes already have coords, skipping
+[117/11231] Adventures Erie at Lake Pleasant
+  No OSM data found
+[118/11231] Aeropines Golf Course
+  All 18 holes already have coords, skipping
+[119/11231] Aetna Springs Golf Course
+  No OSM data found
+[120/11231] Agate Beach Golf Course
+  No OSM data found
+[121/11231] Agawam Hunt
+  All 18 holes already have coords, skipping
+[122/11231] Agawam Municipal Golf Course
+  All 18 holes already have coords, skipping
+[123/11231] Aguila Golf Course
+  All 18 holes already have coords, skipping
+[124/11231] Ahwanhee Estates and Country Club
+  No OSM data found
+[125/11231] Ahwatukee Country Club
+  No OSM data found
+[126/11231] Ahwatukee Lakes Golf Club
+  No OSM data found
+[127/11231] Aiken Golf Club
+  All 18 holes already have coords, skipping
+[128/11231] Ainsworth Municipal Golf Course
+  No OSM data found
+[129/11231] Airport Driving Range
+  No OSM data found
+[130/11231] Airport Golf
+  No OSM data found
+[131/11231] Airport Golf Club
+  No OSM data found
+[132/11231] Airport Golf Course
+  All 18 holes already have coords, skipping
+[133/11231] Airport National Golf Course
+  Found 27 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[134/11231] Airway Meadows Golf Club
+  All 18 holes already have coords, skipping
+[135/11231] Airways Golf Course
+  No OSM data found
+[136/11231] Ajo Country Club and Golf Course
+  No OSM data found
+[137/11231] Ak-Chin Southern Dunes Golf Club
+  All 18 holes already have coords, skipping
+[138/11231] Akron Golf Club
+  No OSM data found
+[139/11231] Ala Wai Golf Course
+  All 18 holes already have coords, skipping
+[140/11231] Alamance Country Club
+  No OSM data found
+[141/11231] Alapaha Golf Link & Driving Range
+  No OSM data found
+[142/11231] Alaqua Country Club
+  No OSM data found
+[143/11231] Albany 18 Hole Public Course
+  All 18 holes already have coords, skipping
+[144/11231] Albany Country Club
+  No OSM data found
+[145/11231] Albany Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[146/11231] Albany Golf Course
+  All 18 holes already have coords, skipping
+[147/11231] Albertville Golf and Country Club
+  Found 18 elements → 17 numbered holes
+    Hole 1: 34.296807, -86.198784
+    Hole 2: 34.297983, -86.202633
+    Hole 3: 34.294359, -86.201548
+    Hole 4: 34.291043, -86.200571
+    Hole 5: 34.294269, -86.201154
+    Hole 6: 34.297554, -86.202360
+    Hole 7: 34.296443, -86.201199
+    Hole 8: 34.294830, -86.196518
+    Hole 9: 34.296793, -86.200403
+    Hole 10: 34.297781, -86.198642
+    Hole 11: 34.300485, -86.196742
+    Hole 12: 34.298181, -86.199122
+    Hole 14: 34.301398, -86.195628
+    Hole 15: 34.299773, -86.196387
+    Hole 16: 34.297859, -86.197633
+    Hole 17: 34.295110, -86.196178
+    Hole 18: 34.296715, -86.196976
+  → Filled 17/18 missing holes
+[148/11231] Albia Golf and Leisure
+  Found 9 elements → 8 numbered holes
+    Hole 1: 41.032244, -92.784096
+    Hole 2: 41.029668, -92.783886
+    Hole 3: 41.032715, -92.782191
+    Hole 5: 41.029714, -92.784766
+    Hole 6: 41.033818, -92.787553
+    Hole 7: 41.031396, -92.787310
+    Hole 8: 41.033136, -92.787055
+    Hole 9: 41.029742, -92.784737
+  → Filled 8/18 missing holes
+[149/11231] Albion Country Club
+  No OSM data found
+[150/11231] Albion Ridges Golf Course
+  No OSM data found
+[151/11231] Albuquerque Country Club
+  No OSM data found
+[152/11231] Alburg Golf Links
+  Found 19 elements → 18 numbered holes
+    Hole 1: 44.907732, -73.305725
+    Hole 2: 44.904543, -73.309237
+    Hole 3: 44.907965, -73.308826
+    Hole 4: 44.912185, -73.307790
+    Hole 5: 44.912483, -73.305023
+    Hole 6: 44.911729, -73.306671
+    Hole 7: 44.907653, -73.306946
+    Hole 8: 44.912335, -73.305059
+    Hole 9: 44.912667, -73.302841
+    Hole 10: 44.908380, -73.303772
+    Hole 11: 44.912756, -73.301814
+    Hole 12: 44.912848, -73.298815
+    Hole 13: 44.909238, -73.299711
+    Hole 14: 44.913487, -73.296058
+    Hole 15: 44.911347, -73.294714
+    Hole 16: 44.909267, -73.297155
+    Hole 17: 44.908722, -73.299785
+    Hole 18: 44.904295, -73.301939
+  → Filled 18/18 missing holes
+[153/11231] Aldeen Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 42.291515, -88.987492
+    Hole 2: 42.295396, -88.988400
+    Hole 3: 42.291965, -88.989183
+    Hole 4: 42.295470, -88.989747
+    Hole 5: 42.291393, -88.989060
+    Hole 6: 42.291316, -88.991361
+    Hole 7: 42.296479, -88.990546
+    Hole 8: 42.296597, -88.986169
+    Hole 9: 42.295622, -88.985824
+    Hole 10: 42.290304, -88.986938
+    Hole 11: 42.286547, -88.986499
+    Hole 12: 42.289924, -88.985631
+    Hole 13: 42.286263, -88.986599
+    Hole 14: 42.286922, -88.987819
+    Hole 15: 42.289034, -88.988480
+    Hole 16: 42.286347, -88.989622
+    Hole 17: 42.289937, -88.990121
+    Hole 18: 42.290733, -88.993732
+  → Filled 18/18 missing holes
+[154/11231] Alderbrook Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 45.509664, -123.860591
+    Hole 2: 45.510536, -123.856572
+    Hole 3: 45.513597, -123.854359
+    Hole 4: 45.510472, -123.853741
+    Hole 5: 45.513777, -123.853757
+    Hole 6: 45.514232, -123.856074
+    Hole 7: 45.510316, -123.856726
+    Hole 8: 45.507491, -123.852663
+    Hole 9: 45.508485, -123.854547
+    Hole 10: 45.510518, -123.860695
+    Hole 11: 45.512019, -123.859133
+    Hole 12: 45.510668, -123.865636
+    Hole 13: 45.511215, -123.865041
+    Hole 14: 45.511854, -123.858934
+    Hole 15: 45.513917, -123.858749
+    Hole 16: 45.514434, -123.856640
+    Hole 17: 45.510810, -123.858088
+    Hole 18: 45.512239, -123.858072
+  → Filled 18/18 missing holes
+[155/11231] Alexandria Golf Club
+  No OSM data found
+[156/11231] Alfred E. Smith Golf Course
+  No OSM data found
+[157/11231] Alfred MacDonald Golf Course
+  All 18 holes already have coords, skipping
+[158/11231] Alfred Tup Holmes Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 33.712703, -84.464963
+    Hole 2: 33.710190, -84.460767
+    Hole 3: 33.706735, -84.458833
+    Hole 4: 33.706422, -84.461989
+    Hole 5: 33.707196, -84.460727
+    Hole 6: 33.708514, -84.463547
+    Hole 7: 33.705009, -84.463116
+    Hole 8: 33.707242, -84.461322
+    Hole 9: 33.710311, -84.464294
+    Hole 10: 33.714745, -84.464449
+    Hole 11: 33.714278, -84.466140
+    Hole 12: 33.711161, -84.466166
+    Hole 13: 33.708409, -84.464356
+    Hole 14: 33.706007, -84.465385
+    Hole 15: 33.707808, -84.465980
+    Hole 16: 33.704714, -84.463928
+    Hole 17: 33.710199, -84.464611
+    Hole 18: 33.712050, -84.465767
+  → Filled 18/18 missing holes
+[159/11231] Algona Country Club
+  No OSM data found
+[160/11231] Algonkian Regional Park Golf Course
+  Found 21 elements → 18 numbered holes
+    Hole 1: 39.058525, -77.374186
+    Hole 2: 39.056045, -77.374940
+    Hole 3: 39.057502, -77.380390
+    Hole 4: 39.057746, -77.375539
+    Hole 5: 39.061776, -77.359357
+    Hole 6: 39.056354, -77.381753
+    Hole 7: 39.058679, -77.386299
+    Hole 8: 39.059841, -77.382452
+    Hole 9: 39.059148, -77.379795
+    Hole 10: 39.058966, -77.373185
+    Hole 11: 39.057903, -77.369408
+    Hole 12: 39.056642, -77.365210
+    Hole 13: 39.055716, -77.363854
+    Hole 14: 39.056200, -77.368720
+    Hole 15: 39.057561, -77.372772
+    Hole 16: 39.055769, -77.368291
+    Hole 17: 39.054323, -77.365904
+    Hole 18: 39.054961, -77.370830
+  → Filled 18/18 missing holes
+[161/11231] Algonquin Golf Club
+  Found 36 elements → 18 numbered holes
+    Hole 1: 38.579762, -90.379789
+    Hole 2: 38.581317, -90.385359
+    Hole 3: 38.581177, -90.381613
+    Hole 4: 38.582363, -90.385411
+    Hole 5: 38.582732, -90.385077
+    Hole 6: 38.582348, -90.380242
+    Hole 7: 38.582076, -90.383279
+    Hole 8: 38.580421, -90.381111
+    Hole 9: 38.582072, -90.379478
+    Hole 10: 38.579627, -90.378960
+    Hole 11: 38.582752, -90.377546
+    Hole 12: 38.579271, -90.379352
+    Hole 13: 38.579431, -90.377485
+    Hole 14: 38.578069, -90.383471
+    Hole 15: 38.579865, -90.383264
+    Hole 16: 38.580575, -90.385233
+    Hole 17: 38.579484, -90.381284
+    Hole 18: 38.577932, -90.383011
+  → Filled 18/18 missing holes
+[162/11231] Alhambra Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 34.090623, -118.116050
+    Hole 2: 34.089395, -118.112281
+    Hole 3: 34.085310, -118.110333
+    Hole 4: 34.087095, -118.110319
+    Hole 5: 34.084845, -118.109283
+    Hole 6: 34.084889, -118.112492
+    Hole 7: 34.089019, -118.112496
+    Hole 8: 34.088794, -118.113340
+    Hole 9: 34.087872, -118.113300
+    Hole 10: 34.091884, -118.116520
+    Hole 11: 34.092148, -118.113767
+    Hole 12: 34.093316, -118.112976
+    Hole 13: 34.090287, -118.111274
+    Hole 14: 34.089472, -118.111429
+    Hole 15: 34.087388, -118.110551
+    Hole 16: 34.089747, -118.111623
+    Hole 17: 34.091734, -118.113794
+    Hole 18: 34.089929, -118.113058
+  → Filled 18/18 missing holes
+[163/11231] Aliante Golf Club
+  All 18 holes already have coords, skipping
+[164/11231] Alisal Ranch Course
+  No OSM data found
+[165/11231] Aliso Viejo Resort and Golf Course
+  Found 9 elements → 9 numbered holes
+    Hole 1: 33.600852, -117.727313
+    Hole 2: 33.603461, -117.726630
+    Hole 3: 33.600852, -117.726413
+    Hole 4: 33.603161, -117.725263
+    Hole 5: 33.604955, -117.728913
+    Hole 6: 33.605766, -117.729974
+    Hole 7: 33.602329, -117.723654
+    Hole 8: 33.600966, -117.723673
+    Hole 9: 33.597411, -117.723903
+  → Filled 9/18 missing holes
+[166/11231] All Seasons Driving Range
+  Found 18 elements → 18 numbered holes
+    Hole 1: 40.006480, -82.004604
+    Hole 2: 40.004703, -82.004415
+    Hole 3: 40.004596, -82.001440
+    Hole 4: 40.005555, -82.002499
+    Hole 5: 40.004800, -82.000608
+    Hole 6: 40.006055, -82.003050
+    Hole 7: 40.005008, -82.004239
+    Hole 8: 40.006745, -82.003703
+    Hole 9: 40.006065, -82.004501
+    Hole 10: 40.007603, -82.004327
+    Hole 11: 40.006625, -82.003136
+    Hole 12: 40.005920, -82.001659
+    Hole 13: 40.005365, -81.999972
+    Hole 14: 40.006280, -82.001575
+    Hole 15: 40.007641, -82.001837
+    Hole 16: 40.007196, -82.002155
+    Hole 17: 40.007536, -82.003406
+    Hole 18: 40.007964, -82.002408
+  → Filled 18/18 missing holes
+[167/11231] All Vets Golf Course
+  No OSM data found
+[168/11231] Allegheny Country Club
+  Found 1 elements → 1 numbered holes
+    Hole 1: 40.561711, -80.164026
+  → Filled 1/18 missing holes
+[169/11231] Allen County Country Club
+  No OSM data found
+[170/11231] Allen’s Golf Course
+  No OSM data found
+[171/11231] Allendale Country Club
+  All 18 holes already have coords, skipping
+[172/11231] Allenmore Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 47.240420, -122.476430
+    Hole 2: 47.242560, -122.472479
+    Hole 3: 47.241190, -122.473745
+    Hole 4: 47.242129, -122.470081
+    Hole 5: 47.239667, -122.468815
+    Hole 6: 47.235719, -122.469116
+    Hole 7: 47.240086, -122.469212
+    Hole 8: 47.240592, -122.472541
+    Hole 9: 47.242077, -122.470350
+    Hole 10: 47.239179, -122.474952
+    Hole 11: 47.239849, -122.470087
+    Hole 12: 47.235664, -122.470103
+    Hole 13: 47.235595, -122.472131
+    Hole 14: 47.238477, -122.472814
+    Hole 15: 47.236014, -122.470366
+    Hole 16: 47.239106, -122.472361
+    Hole 17: 47.238933, -122.474621
+    Hole 18: 47.235596, -122.473837
+  → Filled 18/18 missing holes
+[173/11231] Allentown Municipal Golf Course
+  All 18 holes already have coords, skipping
+[174/11231] Alley Pond Golf Center
+  No OSM data found
+[175/11231] Alliance Country Club
+  Found 19 elements → 18 numbered holes
+    Hole 1: 40.894177, -81.096346
+    Hole 2: 40.893147, -81.099717
+    Hole 3: 40.890000, -81.099856
+    Hole 4: 40.889363, -81.098211
+    Hole 5: 40.886988, -81.094519
+    Hole 6: 40.890182, -81.096548
+    Hole 7: 40.887011, -81.095405
+    Hole 8: 40.889899, -81.077222
+    Hole 9: 40.891525, -81.098953
+    Hole 10: 40.893997, -81.095300
+    Hole 11: 40.892393, -81.096728
+    Hole 12: 40.891002, -81.095581
+    Hole 13: 40.887194, -81.092887
+    Hole 14: 40.891166, -81.094103
+    Hole 15: 40.886979, -81.093277
+    Hole 16: 40.887666, -81.091089
+    Hole 17: 40.890096, -81.093130
+    Hole 18: 40.894150, -81.093549
+  → Filled 18/18 missing holes
+[176/11231] Alliance Municipal Golf Course
+  No OSM data found
+[177/11231] Alling Memorial Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 41.307863, -72.872757
+    Hole 2: 41.308089, -72.867728
+    Hole 3: 41.305360, -72.865622
+    Hole 4: 41.307496, -72.862681
+    Hole 5: 41.309003, -72.861594
+    Hole 6: 41.307860, -72.863677
+    Hole 7: 41.305351, -72.866241
+    Hole 8: 41.307979, -72.868070
+    Hole 9: 41.306027, -72.870187
+    Hole 10: 41.308790, -72.872618
+    Hole 11: 41.309635, -72.871493
+    Hole 12: 41.311559, -72.866564
+    Hole 13: 41.311299, -72.863896
+    Hole 14: 41.308536, -72.862947
+    Hole 15: 41.306966, -72.866065
+    Hole 16: 41.310804, -72.865209
+    Hole 17: 41.309448, -72.868642
+    Hole 18: 41.308623, -72.867017
+  → Filled 18/18 missing holes
+[178/11231] Alma Municipal Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[179/11231] Almaden Golf and Country Club
+  No OSM data found
+[180/11231] Alondra Park Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 33.881601, -118.342190
+    Hole 2: 33.882002, -118.338004
+    Hole 3: 33.884857, -118.342566
+    Hole 4: 33.885310, -118.339074
+    Hole 5: 33.886394, -118.338528
+    Hole 6: 33.882917, -118.337438
+    Hole 7: 33.886521, -118.337506
+    Hole 8: 33.883133, -118.336520
+    Hole 9: 33.881370, -118.337445
+    Hole 10: 33.882346, -118.342888
+    Hole 11: 33.885507, -118.342808
+    Hole 12: 33.885271, -118.339323
+    Hole 13: 33.887144, -118.340280
+    Hole 14: 33.886296, -118.336975
+    Hole 15: 33.884393, -118.335699
+    Hole 16: 33.880380, -118.336811
+    Hole 17: 33.879627, -118.340636
+    Hole 18: 33.881132, -118.337436
+  → Filled 18/18 missing holes
+[181/11231] Alpena Golf Club
+  All 18 holes already have coords, skipping
+[182/11231] Alpine Country Club
+  Found 8 elements → 8 numbered holes
+  → Filled 0/10 missing holes
+[183/11231] Alpine Golf & Country Club
+  No OSM data found
+[184/11231] Alpine Golf Club
+  No OSM data found
+[185/11231] Alpine Golf Course
+  All 18 holes already have coords, skipping
+[186/11231] Alpine Lake Resort Golf Course
+  No OSM data found
+[187/11231] Alpine Meadows Golf Course
+  No OSM data found
+[188/11231] Alpine Resort Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[189/11231] Alpine Target Golf Center
+  Found 18 elements → 18 numbered holes
+    Hole 1: 32.532892, -94.698939
+    Hole 2: 32.532211, -94.695901
+    Hole 3: 32.532413, -94.695121
+    Hole 4: 32.535241, -94.699293
+    Hole 5: 32.536175, -94.698445
+    Hole 6: 32.534302, -94.696718
+    Hole 7: 32.532493, -94.694506
+    Hole 8: 32.533345, -94.697020
+    Hole 9: 32.535040, -94.699209
+    Hole 10: 32.532660, -94.699350
+    Hole 11: 32.532812, -94.702391
+    Hole 12: 32.533188, -94.702181
+    Hole 13: 32.538219, -94.700418
+    Hole 14: 32.535434, -94.699185
+    Hole 15: 32.537852, -94.699715
+    Hole 16: 32.535346, -94.699514
+    Hole 17: 32.532992, -94.699563
+    Hole 18: 32.536299, -94.700546
+  → Filled 18/18 missing holes
+[190/11231] Alpine Valley Resort
+  Found 1 elements → 1 numbered holes
+  → Filled 0/17 missing holes
+[191/11231] Alta Golf and Country Club
+  Found 9 elements → 9 numbered holes
+    Hole 1: 42.668538, -95.296809
+    Hole 2: 42.666513, -95.295305
+    Hole 3: 42.671155, -95.296753
+    Hole 4: 42.672580, -95.294371
+    Hole 5: 42.670245, -95.295427
+    Hole 6: 42.671260, -95.294445
+    Hole 7: 42.665854, -95.294399
+    Hole 8: 42.666967, -95.297735
+    Hole 9: 42.665891, -95.299066
+  → Filled 9/18 missing holes
+[192/11231] Alta Lake Golf Resort
+  No OSM data found
+[193/11231] Alta Mesa Golf Club
+  No OSM data found
+[194/11231] Alta Sierra Country Club
+  All 18 holes already have coords, skipping
+[195/11231] Alta Vista Country Club
+  All 18 holes already have coords, skipping
+[196/11231] Altadena Golf Course
+  Found 9 elements → 9 numbered holes
+    Hole 1: 34.185525, -118.118700
+    Hole 2: 34.183154, -118.117800
+    Hole 3: 34.180142, -118.119023
+    Hole 4: 34.181037, -118.121265
+    Hole 5: 34.184734, -118.120713
+    Hole 6: 34.180688, -118.120405
+    Hole 7: 34.180444, -118.118611
+    Hole 8: 34.182862, -118.118989
+    Hole 9: 34.181149, -118.119544
+  → Filled 9/18 missing holes
+[197/11231] Alto Lakes Golf & Country Club
+  No OSM data found
+[198/11231] Alwyn Downs Golf Club
+  No OSM data found
+[199/11231] Amana Colonies Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 41.809150, -91.904874
+    Hole 2: 41.813408, -91.906547
+    Hole 3: 41.817474, -91.908449
+    Hole 4: 41.819866, -91.912317
+    Hole 5: 41.822108, -91.912489
+    Hole 6: 41.820180, -91.908902
+    Hole 7: 41.817150, -91.902327
+    Hole 8: 41.814174, -91.904596
+    Hole 9: 41.812194, -91.902923
+    Hole 10: 41.809046, -91.905294
+    Hole 11: 41.813004, -91.907413
+    Hole 12: 41.816877, -91.911250
+    Hole 13: 41.817748, -91.916843
+    Hole 14: 41.818358, -91.918530
+    Hole 15: 41.815568, -91.917253
+    Hole 16: 41.814242, -91.911339
+    Hole 17: 41.810500, -91.909697
+    Hole 18: 41.808469, -91.909654
+  → Filled 18/18 missing holes
+[200/11231] Amarillo Country Club
+  No OSM data found
+[201/11231] Amaze Zing Golf
+  No OSM data found
+[202/11231] Amberwood Golf Course (The Villages)
+  Found 25 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[203/11231] Amelia Golf & Country Club
+  No OSM data found
+[204/11231] Amelia River Golf Course
+  Found 28 elements → 18 numbered holes
+    Hole 1: 30.593937, -81.447491
+    Hole 2: 30.597277, -81.448639
+    Hole 3: 30.593013, -81.449578
+    Hole 4: 30.596005, -81.451078
+    Hole 5: 30.593902, -81.453851
+    Hole 6: 30.593489, -81.455619
+    Hole 7: 30.605256, -81.461424
+    Hole 8: 30.604911, -81.460134
+    Hole 9: 30.601366, -81.461204
+    Hole 10: 30.600350, -81.465085
+    Hole 11: 30.598723, -81.447587
+    Hole 12: 30.603403, -81.446632
+    Hole 13: 30.605490, -81.456079
+    Hole 14: 30.607780, -81.461280
+    Hole 15: 30.605657, -81.445572
+    Hole 16: 30.604909, -81.457078
+    Hole 17: 30.601823, -81.445345
+    Hole 18: 30.600379, -81.460502
+  → Filled 18/18 missing holes
+[205/11231] American Classic Golf Club
+  Found 27 elements → 18 numbered holes
+    Hole 1: 38.736086, -75.147039
+    Hole 2: 38.736626, -75.145554
+    Hole 3: 38.734394, -75.142532
+    Hole 4: 38.735110, -75.144910
+    Hole 5: 38.734254, -75.142972
+    Hole 6: 38.734074, -75.144423
+    Hole 7: 38.735350, -75.146383
+    Hole 8: 38.733766, -75.145283
+    Hole 9: 38.733834, -75.145656
+    Hole 10: 38.743435, -75.147282
+    Hole 11: 38.744494, -75.146790
+    Hole 12: 38.745341, -75.145878
+    Hole 13: 38.746309, -75.145245
+    Hole 14: 38.746430, -75.144136
+    Hole 15: 38.747265, -75.144532
+    Hole 16: 38.746380, -75.145449
+    Hole 17: 38.745883, -75.146223
+    Hole 18: 38.745235, -75.147113
+  → Filled 18/18 missing holes
+[206/11231] American Dunes Golf Club
+  All 18 holes already have coords, skipping
+[207/11231] American Falls Golf Club
+  No OSM data found
+[208/11231] American Golf Club
+  No OSM data found
+[209/11231] American Lake Veterans Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 47.137804, -122.575354
+    Hole 2: 47.140544, -122.575292
+    Hole 3: 47.141591, -122.574111
+    Hole 4: 47.142818, -122.576601
+    Hole 5: 47.142418, -122.568890
+    Hole 6: 47.140589, -122.573345
+    Hole 7: 47.141483, -122.569273
+    Hole 8: 47.139126, -122.573410
+    Hole 9: 47.140608, -122.573915
+    Hole 10: 47.138047, -122.577748
+    Hole 11: 47.141180, -122.578533
+    Hole 12: 47.143156, -122.575164
+    Hole 13: 47.144605, -122.571072
+    Hole 14: 47.143502, -122.575013
+    Hole 15: 47.142520, -122.577513
+    Hole 16: 47.140510, -122.580123
+    Hole 17: 47.138418, -122.579335
+    Hole 18: 47.140875, -122.578211
+  → Filled 18/18 missing holes
+[210/11231] American Legion Country Club
+  All 18 holes already have coords, skipping
+[211/11231] American Legion Golf Course
+  Found 34 elements → 18 numbered holes
+    Hole 1: 42.024493, -92.934105
+    Hole 2: 42.021359, -92.936419
+    Hole 3: 42.028810, -92.930467
+    Hole 4: 42.022652, -92.939095
+    Hole 5: 42.024972, -92.938771
+    Hole 6: 42.021672, -92.937871
+    Hole 7: 42.023448, -92.937784
+    Hole 8: 42.027684, -92.937197
+    Hole 9: 42.023803, -92.937478
+    Hole 10: 42.024379, -92.934934
+    Hole 11: 42.021299, -92.936262
+    Hole 12: 42.034221, -92.929937
+    Hole 13: 42.022339, -92.934311
+    Hole 14: 42.021745, -92.929478
+    Hole 15: 42.024864, -92.927247
+    Hole 16: 42.024341, -92.930892
+    Hole 17: 42.022608, -92.930776
+    Hole 18: 42.021642, -92.935379
+  → Filled 18/18 missing holes
+[212/11231] Amery Golf Club
+  No OSM data found
+[213/11231] Ames Golf & Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 42.073937, -93.656440
+    Hole 2: 42.074413, -93.650305
+    Hole 3: 42.070805, -93.650694
+    Hole 4: 42.073498, -93.651805
+    Hole 5: 42.073355, -93.654425
+    Hole 6: 42.071093, -93.652264
+    Hole 7: 42.073689, -93.656287
+    Hole 8: 42.070846, -93.652345
+    Hole 9: 42.072140, -93.656481
+    Hole 10: 42.075023, -93.656196
+    Hole 11: 42.077026, -93.651611
+    Hole 12: 42.074418, -93.652994
+    Hole 13: 42.074080, -93.650038
+    Hole 14: 42.077703, -93.650483
+    Hole 15: 42.077160, -93.651643
+    Hole 16: 42.075680, -93.657350
+    Hole 17: 42.077751, -93.655016
+    Hole 18: 42.077635, -93.659077
+  → Filled 18/18 missing holes
+[214/11231] Amesbury Golf and Country Club
+  Found 9 elements → 9 numbered holes
+    Hole 1: 42.859429, -70.913087
+    Hole 2: 42.860325, -70.910134
+    Hole 3: 42.861116, -70.907545
+    Hole 4: 42.862021, -70.911546
+    Hole 5: 42.863871, -70.910418
+    Hole 6: 42.863894, -70.916669
+    Hole 7: 42.861136, -70.915541
+    Hole 8: 42.863000, -70.911373
+    Hole 9: 42.862005, -70.911561
+  → Filled 9/18 missing holes
+[215/11231] Amherst Audubon Golf Course
+  Found 9 elements → 9 numbered holes
+    Hole 1: 42.990735, -78.769180
+    Hole 2: 42.989816, -78.769192
+    Hole 3: 42.989395, -78.769914
+    Hole 4: 42.988333, -78.769283
+    Hole 5: 42.987054, -78.769297
+    Hole 6: 42.986026, -78.770315
+    Hole 7: 42.986690, -78.770810
+    Hole 8: 42.988452, -78.770673
+    Hole 9: 42.990137, -78.770834
+  → Filled 9/18 missing holes
+[216/11231] Amherst Country Club
+  All 18 holes already have coords, skipping
+[217/11231] Amherst Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[218/11231] Amory Golf Course
+  No OSM data found
+[219/11231] Amsterdam Municipal Golf Course
+  No OSM data found
+[220/11231] Anaconda Country Club
+  Found 9 elements → 9 numbered holes
+    Hole 1: 46.114198, -112.828320
+    Hole 2: 46.112968, -112.832830
+    Hole 3: 46.114367, -112.834238
+    Hole 4: 46.114295, -112.838547
+    Hole 5: 46.112879, -112.842590
+    Hole 6: 46.109538, -112.843248
+    Hole 7: 46.112511, -112.839269
+    Hole 8: 46.113634, -112.833919
+    Hole 9: 46.112261, -112.834454
+  → Filled 9/18 missing holes
+[221/11231] Anaconda Hills Golf Course
+  All 18 holes already have coords, skipping
+[222/11231] Anaheim Hills Golf Course
+  All 18 holes already have coords, skipping
+[223/11231] Ancala Country Club
+  No OSM data found
+[224/11231] Anchorage Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 61.127547, -149.812640
+    Hole 2: 61.124712, -149.810380
+    Hole 3: 61.127485, -149.809338
+    Hole 4: 61.127990, -149.806324
+    Hole 5: 61.124435, -149.806423
+    Hole 6: 61.123653, -149.812918
+    Hole 7: 61.124772, -149.804626
+    Hole 8: 61.128171, -149.805077
+    Hole 9: 61.129660, -149.806425
+    Hole 10: 61.128537, -149.817345
+    Hole 11: 61.125955, -149.822396
+    Hole 12: 61.124300, -149.816282
+    Hole 13: 61.125919, -149.824072
+    Hole 14: 61.128532, -149.821296
+    Hole 15: 61.124240, -149.827642
+    Hole 16: 61.124396, -149.822138
+    Hole 17: 61.125602, -149.824986
+    Hole 18: 61.124548, -149.815171
+  → Filled 18/18 missing holes
+[225/11231] Anchored Soul Golf
+  No OSM data found
+[226/11231] Ancil Hoffman Golf Course
+  No OSM data found
+[227/11231] Andalusia Country Club
+  No OSM data found
+[228/11231] Anderson Country Club
+  No OSM data found
+[229/11231] Anderson Creek Club
+  All 18 holes already have coords, skipping
+[230/11231] Anderson Fields Golf Course
+  No OSM data found
+[231/11231] Anderson Golf Course
+  No OSM data found
+[232/11231] Andover Country Club
+  All 18 holes already have coords, skipping
+[233/11231] Andover Golf & Country Club
+  Found 16 elements → 16 numbered holes
+    Hole 2: 37.990785, -84.426346
+    Hole 3: 37.993710, -84.421541
+    Hole 4: 37.993726, -84.422767
+    Hole 5: 37.996168, -84.425647
+    Hole 6: 37.998942, -84.423578
+    Hole 7: 37.999508, -84.425855
+    Hole 8: 37.995486, -84.426095
+    Hole 9: 37.992760, -84.423532
+    Hole 10: 37.992431, -84.429660
+    Hole 11: 37.992750, -84.425918
+    Hole 12: 37.993558, -84.424959
+    Hole 13: 37.998198, -84.427744
+    Hole 14: 37.995907, -84.428341
+    Hole 15: 37.993230, -84.427202
+    Hole 16: 37.997253, -84.429420
+    Hole 18: 37.995554, -84.429803
+  → Filled 16/18 missing holes
+[234/11231] Andover Public Golf Course
+  No OSM data found
+[235/11231] Andrew Johnson Golf Club
+  All 18 holes already have coords, skipping
+[236/11231] Andrews County Golf Course
+  No OSM data found
+[237/11231] Andrews East Course
+  Found 48 elements → 18 numbered holes
+    Hole 1: 38.788191, -76.886938
+    Hole 2: 38.795504, -76.885893
+    Hole 3: 38.797499, -76.883236
+    Hole 4: 38.794505, -76.885220
+    Hole 5: 38.791024, -76.882459
+    Hole 6: 38.788603, -76.883977
+    Hole 7: 38.791653, -76.882146
+    Hole 8: 38.792550, -76.881503
+    Hole 9: 38.783511, -76.870564
+    Hole 10: 38.792886, -76.886449
+    Hole 11: 38.792422, -76.890762
+    Hole 12: 38.794239, -76.889161
+    Hole 13: 38.793547, -76.887211
+    Hole 14: 38.796833, -76.887614
+    Hole 15: 38.796582, -76.891626
+    Hole 16: 38.792589, -76.892372
+    Hole 17: 38.791113, -76.891530
+    Hole 18: 38.791770, -76.886863
+  → Filled 18/18 missing holes
+[238/11231] Andrews South Course
+  Found 47 elements → 18 numbered holes
+    Hole 1: 38.788191, -76.886938
+    Hole 2: 38.795504, -76.885893
+    Hole 3: 38.797499, -76.883236
+    Hole 4: 38.794505, -76.885220
+    Hole 5: 38.791024, -76.882459
+    Hole 6: 38.788603, -76.883977
+    Hole 7: 38.791653, -76.882146
+    Hole 8: 38.792550, -76.881503
+    Hole 9: 38.783511, -76.870564
+    Hole 10: 38.792886, -76.886449
+    Hole 11: 38.792422, -76.890762
+    Hole 12: 38.794239, -76.889161
+    Hole 13: 38.793547, -76.887211
+    Hole 14: 38.796833, -76.887614
+    Hole 15: 38.783727, -76.879984
+    Hole 16: 38.792589, -76.892372
+    Hole 17: 38.791113, -76.891530
+    Hole 18: 38.791770, -76.886863
+  → Filled 18/18 missing holes
+[239/11231] Androscoggin Valley Country Club
+  No OSM data found
+[240/11231] Anetsberger Golf Course
+  Found 9 elements → 9 numbered holes
+    Hole 1: 42.108927, -87.814001
+    Hole 2: 42.112606, -87.814630
+    Hole 3: 42.110194, -87.815608
+    Hole 4: 42.110526, -87.818064
+    Hole 5: 42.112512, -87.813810
+    Hole 6: 42.113653, -87.815610
+    Hole 7: 42.111075, -87.818447
+    Hole 8: 42.114105, -87.815261
+    Hole 9: 42.112693, -87.813417
+  → Filled 9/18 missing holes
+[241/11231] Angel Fire Country Club
+  All 18 holes already have coords, skipping
+[242/11231] Angel Hill GC
+  All 18 holes already have coords, skipping
+[243/11231] Angel Park Golf Club
+  All 18 holes already have coords, skipping
+[244/11231] Angel Park Golf Club - Palm
+  Found 59 elements → 18 numbered holes
+    Hole 1: 36.174154, -115.286695
+    Hole 2: 36.175119, -115.286763
+    Hole 3: 36.176408, -115.286763
+    Hole 4: 36.176892, -115.284256
+    Hole 5: 36.176820, -115.283084
+    Hole 6: 36.176308, -115.281457
+    Hole 7: 36.176380, -115.283068
+    Hole 8: 36.176204, -115.284347
+    Hole 9: 36.176245, -115.286046
+    Hole 10: 36.175160, -115.285462
+    Hole 11: 36.175579, -115.284145
+    Hole 12: 36.174911, -115.285030
+    Hole 13: 36.179203, -115.285158
+    Hole 14: 36.175489, -115.280091
+    Hole 15: 36.171573, -115.281622
+    Hole 16: 36.174703, -115.279811
+    Hole 17: 36.171377, -115.281086
+    Hole 18: 36.170664, -115.282174
+  → Filled 18/18 missing holes
+[245/11231] Angeles National Golf Club
+  All 18 holes already have coords, skipping
+[246/11231] Angels Crossing Golf Course
+  All 18 holes already have coords, skipping
+[247/11231] Anglebrook Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 41.316177, -73.725835
+    Hole 2: 41.318943, -73.719708
+    Hole 3: 41.318273, -73.724188
+    Hole 4: 41.317602, -73.729265
+    Hole 5: 41.316452, -73.732644
+    Hole 6: 41.315245, -73.727894
+    Hole 7: 41.315466, -73.732189
+    Hole 8: 41.311162, -73.730381
+    Hole 9: 41.311675, -73.727729
+    Hole 10: 41.316291, -73.724757
+    Hole 11: 41.312499, -73.724163
+    Hole 12: 41.317162, -73.721603
+    Hole 13: 41.313235, -73.721702
+    Hole 14: 41.317537, -73.719021
+    Hole 15: 41.315434, -73.717564
+    Hole 16: 41.312963, -73.719229
+    Hole 17: 41.312023, -73.723521
+    Hole 18: 41.312062, -73.725871
+  → Filled 18/18 missing holes
+[248/11231] Angushire Golf Club
+  No OSM data found
+[249/11231] Ankeny Golf and Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[250/11231] Ann Arbor Country Club
+  No OSM data found
+[251/11231] Ann Arbor Golf and Outing Club
+  All 18 holes already have coords, skipping
+[252/11231] Annandale Country Club
+  All 18 holes already have coords, skipping
+[253/11231] Annandale Golf Club
+  Found 9 elements → 8 numbered holes
+  → Filled 0/10 missing holes
+[254/11231] Annbriar Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 38.352880, -90.200888
+    Hole 2: 38.354016, -90.196667
+    Hole 3: 38.352129, -90.192013
+    Hole 4: 38.352935, -90.197248
+    Hole 5: 38.351766, -90.199874
+    Hole 6: 38.350957, -90.194482
+    Hole 7: 38.351161, -90.198933
+    Hole 8: 38.350963, -90.200853
+    Hole 9: 38.347348, -90.202647
+    Hole 10: 38.352817, -90.201365
+    Hole 11: 38.357120, -90.201416
+    Hole 12: 38.354819, -90.203205
+    Hole 13: 38.351743, -90.205594
+    Hole 14: 38.351662, -90.202315
+    Hole 15: 38.348739, -90.206959
+    Hole 16: 38.348292, -90.204928
+    Hole 17: 38.345461, -90.201353
+    Hole 18: 38.346748, -90.203244
+  → Filled 18/18 missing holes
+[255/11231] Anne Arundell Manor
+  All 18 holes already have coords, skipping
+[256/11231] Anneberg Golf Course
+  All 18 holes already have coords, skipping
+[257/11231] Anniston Country Club
+  No OSM data found
+[258/11231] Ansley Golf Club
+  No OSM data found
+[259/11231] Ansley Golf Club - Settindown
+  All 18 holes already have coords, skipping
+[260/11231] Antelope Greens Golf Course
+  Found 13 elements → 13 numbered holes
+    Hole 1: 38.713678, -121.407230
+    Hole 2: 38.710050, -121.406788
+    Hole 3: 38.706739, -121.409926
+    Hole 4: 38.709991, -121.406631
+    Hole 5: 38.709595, -121.404668
+    Hole 6: 38.712168, -121.402039
+    Hole 7: 38.706588, -121.401872
+    Hole 8: 38.709725, -121.403655
+    Hole 9: 38.710066, -121.405810
+    Hole 10: 38.713235, -121.409091
+    Hole 11: 38.711781, -121.408602
+    Hole 17: 38.708110, -121.410320
+    Hole 18: 38.710628, -121.406897
+  → Filled 13/18 missing holes
+[261/11231] Antelope Hills Golf Course
+  All 18 holes already have coords, skipping
+[262/11231] Antelope Valley Country Club
+  All 18 holes already have coords, skipping
+[263/11231] Anthem Country Club
+  No OSM data found
+[264/11231] Anthem Golf & Country Club
+  No OSM data found
+[265/11231] Anthon Golf Club
+  No OSM data found
+[266/11231] Anthony Country Club
+  No OSM data found
+[267/11231] Antioch Golf Club
+  All 18 holes already have coords, skipping
+[268/11231] Antioch Hills Golf Club
+  All 18 holes already have coords, skipping
+[269/11231] Antler Creek Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 38.972389, -104.597499
+    Hole 2: 38.969438, -104.593988
+    Hole 3: 38.968129, -104.601253
+    Hole 4: 38.965942, -104.603207
+    Hole 5: 38.962250, -104.604253
+    Hole 6: 38.960611, -104.602126
+    Hole 7: 38.962365, -104.596198
+    Hole 8: 38.967438, -104.592404
+    Hole 9: 38.970136, -104.592974
+    Hole 10: 38.973492, -104.596807
+    Hole 11: 38.979473, -104.596406
+    Hole 12: 38.982906, -104.598269
+    Hole 13: 38.986836, -104.598810
+    Hole 14: 38.987840, -104.601870
+    Hole 15: 38.983701, -104.604739
+    Hole 16: 38.976866, -104.607118
+    Hole 17: 38.974760, -104.604360
+    Hole 18: 38.972971, -104.601576
+  → Filled 18/18 missing holes
+[270/11231] Antrim Dells
+  No OSM data found
+[271/11231] Apache Creek Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 33.383509, -111.562012
+    Hole 2: 33.381925, -111.558714
+    Hole 3: 33.379539, -111.556772
+    Hole 4: 33.380043, -111.561608
+    Hole 5: 33.380529, -111.557211
+    Hole 6: 33.381173, -111.560981
+    Hole 7: 33.381787, -111.561620
+    Hole 8: 33.379249, -111.562810
+    Hole 9: 33.382475, -111.561986
+    Hole 10: 33.385463, -111.561570
+    Hole 11: 33.385030, -111.555262
+    Hole 12: 33.383537, -111.555784
+    Hole 13: 33.384984, -111.556584
+    Hole 14: 33.380519, -111.555198
+    Hole 15: 33.381033, -111.555948
+    Hole 16: 33.383687, -111.557088
+    Hole 17: 33.385015, -111.558150
+    Hole 18: 33.383420, -111.558467
+  → Filled 18/18 missing holes
+[272/11231] Apache Stronghold Golf Club
+  No OSM data found
+[273/11231] Apache Wells Golf Club
+  All 18 holes already have coords, skipping
+[274/11231] Apalachin Golf Course
+  No OSM data found
+[275/11231] Apawamis Golf Club
+  All 18 holes already have coords, skipping
+[276/11231] Aplington Recreation Complex
+  Found 9 elements → 9 numbered holes
+    Hole 1: 42.582965, -92.893696
+    Hole 2: 42.583619, -92.899121
+    Hole 3: 42.582474, -92.893194
+    Hole 4: 42.580830, -92.892563
+    Hole 5: 42.579563, -92.893092
+    Hole 6: 42.580288, -92.899160
+    Hole 7: 42.581319, -92.894735
+    Hole 8: 42.581178, -92.899255
+    Hole 9: 42.581854, -92.895164
+  → Filled 9/18 missing holes
+[277/11231] Apostle Highlands Golf Course
+  No OSM data found
+[278/11231] Apple Canyon Lake Golf Course
+  No OSM data found
+[279/11231] Apple Creek Country Club
+  No OSM data found
+[280/11231] Apple Greens East
+  All 18 holes already have coords, skipping
+[281/11231] Apple Greens Golf Course
+  No OSM data found
+[282/11231] Apple Hill Golf Club
+  Found 27 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[283/11231] Apple Island Resort Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[284/11231] Apple Mountain Golf Club
+  No OSM data found
+[285/11231] Apple Mountain Golf Course
+  All 18 holes already have coords, skipping
+[286/11231] Apple Rock
+  Found 22 elements → 18 numbered holes
+    Hole 1: 30.544939, -98.402070
+    Hole 2: 30.548309, -98.403860
+    Hole 3: 30.552454, -98.401102
+    Hole 4: 30.553635, -98.400356
+    Hole 5: 30.551022, -98.406451
+    Hole 6: 30.552430, -98.411375
+    Hole 7: 30.548965, -98.410336
+    Hole 8: 30.549217, -98.404649
+    Hole 9: 30.547572, -98.405541
+    Hole 10: 30.546380, -98.399413
+    Hole 11: 30.549826, -98.394331
+    Hole 12: 30.554311, -98.390680
+    Hole 13: 30.551731, -98.391418
+    Hole 14: 30.548431, -98.394081
+    Hole 15: 30.545850, -98.392290
+    Hole 16: 30.542520, -98.392477
+    Hole 17: 30.541245, -98.395247
+    Hole 18: 30.542807, -98.395939
+  → Filled 18/18 missing holes
+[287/11231] Apple Tree Golf Course & Resort
+  All 18 holes already have coords, skipping
+[288/11231] Apple Valley Country Club Golf Course
+  No OSM data found
+[289/11231] Apple Valley Golf Club
+  All 18 holes already have coords, skipping
+[290/11231] Apple Valley Golf Course
+  All 18 holes already have coords, skipping
+[291/11231] Applebrook Golf Club
+  All 18 holes already have coords, skipping
+[292/11231] Applewood Golf Course
+  All 18 holes already have coords, skipping
+[293/11231] Applewood Hills Golf Course
+  All 18 holes already have coords, skipping
+[294/11231] Aptos Seascape Golf Course
+  All 18 holes already have coords, skipping
+[295/11231] Aquarina Country Club
+  All 18 holes already have coords, skipping
+[296/11231] Aquia Harbour Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[297/11231] Arbor Hills Golf Club
+  No OSM data found
+[298/11231] Arbor Pointe Golf Club
+  No OSM data found
+[299/11231] Arbor Trace Golf Club
+  All 18 holes already have coords, skipping
+[300/11231] Arbuckle Golf Course
+  No OSM data found
+[301/11231] Arcadia Bluffs - South Course
+  All 18 holes already have coords, skipping
+[302/11231] Arcadia Bluffs Golf Club
+  All 18 holes already have coords, skipping
+[303/11231] Arcadia Country Club
+  Found 4 elements → 4 numbered holes
+  → Filled 0/14 missing holes
+[304/11231] Arcadia Hills Golf Club
+  No OSM data found
+[305/11231] Arcadia Municipal Golf Course
+  No OSM data found
+[306/11231] Arcadia Par 3 Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 34.104357, -118.016936
+    Hole 2: 34.103591, -118.016825
+    Hole 3: 34.102295, -118.016920
+    Hole 4: 34.100986, -118.017515
+    Hole 5: 34.100520, -118.018110
+    Hole 6: 34.099988, -118.019038
+    Hole 7: 34.100365, -118.019424
+    Hole 8: 34.100828, -118.018404
+    Hole 9: 34.101727, -118.017652
+    Hole 10: 34.102955, -118.017213
+    Hole 11: 34.101842, -118.018040
+    Hole 12: 34.101372, -118.018782
+    Hole 13: 34.100569, -118.019847
+    Hole 14: 34.101378, -118.019135
+    Hole 15: 34.102203, -118.018502
+    Hole 16: 34.101455, -118.019602
+    Hole 17: 34.102697, -118.019177
+    Hole 18: 34.102414, -118.017916
+  → Filled 18/18 missing holes
+[307/11231] Arcadian Shores Golf Club
+  Found 18 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[308/11231] Archer City Country Club
+  No OSM data found
+[309/11231] Architects Golf Club
+  No OSM data found
+[310/11231] Arcola Country Club
+  Found 12 elements → 12 numbered holes
+  → Filled 0/6 missing holes
+[311/11231] Ardsley Country Club
+  No OSM data found
+[312/11231] Argyle Country Club
+  All 18 holes already have coords, skipping
+[313/11231] Arizona Biltmore Estates Course
+  All 18 holes already have coords, skipping
+[314/11231] Arizona Biltmore Links Course
+  Found 36 elements → 18 numbered holes
+    Hole 1: 33.520918, -112.018184
+    Hole 2: 33.518720, -112.016139
+    Hole 3: 33.513916, -112.016410
+    Hole 4: 33.513004, -112.017448
+    Hole 5: 33.510948, -112.022186
+    Hole 6: 33.511754, -112.024389
+    Hole 7: 33.514908, -112.025524
+    Hole 8: 33.517583, -112.027134
+    Hole 9: 33.518780, -112.027360
+    Hole 10: 33.522255, -112.018370
+    Hole 11: 33.525881, -112.019980
+    Hole 12: 33.526317, -112.022257
+    Hole 13: 33.526453, -112.027674
+    Hole 14: 33.528565, -112.025662
+    Hole 15: 33.529116, -112.022876
+    Hole 16: 33.529173, -112.019709
+    Hole 17: 33.529857, -112.015458
+    Hole 18: 33.526505, -112.018173
+  → Filled 18/18 missing holes
+[315/11231] Arizona City Golf Course
+  No OSM data found
+[316/11231] Arizona Country Club
+  No OSM data found
+[317/11231] Arizona Golf Resort
+  All 18 holes already have coords, skipping
+[318/11231] Arizona Grand Golf Course
+  All 18 holes already have coords, skipping
+[319/11231] Arizona Grand Resort
+  Found 18 elements → 18 numbered holes
+    Hole 1: 33.373419, -111.970882
+    Hole 2: 33.371074, -111.972008
+    Hole 3: 33.372866, -111.969090
+    Hole 4: 33.367993, -111.969557
+    Hole 5: 33.369718, -111.972909
+    Hole 6: 33.368960, -111.971355
+    Hole 7: 33.363640, -111.971197
+    Hole 8: 33.360369, -111.971728
+    Hole 9: 33.359534, -111.973116
+    Hole 10: 33.361823, -111.975354
+    Hole 11: 33.363660, -111.980437
+    Hole 12: 33.364568, -111.975402
+    Hole 13: 33.364300, -111.977228
+    Hole 14: 33.363694, -111.982511
+    Hole 15: 33.365003, -111.980606
+    Hole 16: 33.364723, -111.976608
+    Hole 17: 33.367236, -111.976339
+    Hole 18: 33.370116, -111.975772
+  → Filled 18/18 missing holes
+[320/11231] Arizona National Golf Club
+  All 18 holes already have coords, skipping
+[321/11231] Arizona Traditions Golf Club
+  All 18 holes already have coords, skipping
+[322/11231] Arkansas City Country Club
+  No OSM data found
+[323/11231] Arlington Greens Golf Course
+  No OSM data found
+[324/11231] Arlington Lakes Golf Course
+  No OSM data found
+[325/11231] Arlington Park Golf Course
+  Found 8 elements → 8 numbered holes
+    Hole 10: 41.139076, -85.024511
+    Hole 11: 41.137152, -85.025556
+    Hole 12: 41.137963, -85.026562
+    Hole 13: 41.136625, -85.030340
+    Hole 14: 41.136814, -85.033275
+    Hole 15: 41.139941, -85.032240
+    Hole 16: 41.141993, -85.030622
+    Hole 18: 41.140926, -85.028543
+  → Filled 8/18 missing holes
+[326/11231] Arlington Ridge Golf Club
+  All 18 holes already have coords, skipping
+[327/11231] Armco Park Golf Course
+  All 18 holes already have coords, skipping
+[328/11231] Armitage Golf Club
+  No OSM data found
+[329/11231] Army Navy Country Club
+  All 18 holes already have coords, skipping
+[330/11231] Arnold Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[331/11231] Arnold Palmer Course
+  Found 19 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[332/11231] Arnold Palmer Golf Course (PGA West)
+  No OSM data found
+[333/11231] Arnold's Golf Course
+  No OSM data found
+[334/11231] Aronimink Golf Club
+  All 18 holes already have coords, skipping
+[335/11231] Arrowhead Club
+  Found 35 elements → 18 numbered holes
+    Hole 1: 44.063770, -103.275355
+    Hole 2: 44.053397, -103.270468
+    Hole 3: 44.050625, -103.267780
+    Hole 4: 44.049762, -103.265345
+    Hole 5: 44.051339, -103.269481
+    Hole 6: 44.053656, -103.271482
+    Hole 7: 44.049241, -103.270554
+    Hole 8: 44.047086, -103.267448
+    Hole 9: 44.049808, -103.269969
+    Hole 10: 44.050232, -103.264342
+    Hole 11: 44.053393, -103.265522
+    Hole 12: 44.052067, -103.266160
+    Hole 13: 44.056131, -103.266589
+    Hole 14: 44.054620, -103.267443
+    Hole 15: 44.057468, -103.270817
+    Hole 16: 44.054643, -103.267818
+    Hole 17: 44.054130, -103.271922
+    Hole 18: 44.053606, -103.269819
+  → Filled 18/18 missing holes
+[336/11231] Arrowhead Country Club
+  All 18 holes already have coords, skipping
+[337/11231] Arrowhead Golf Club
+  No OSM data found
+[338/11231] Arrowhead Golf Course
+  No OSM data found
+[339/11231] Arrowhead Golf Course & Marina
+  Found 26 elements → 18 numbered holes
+    Hole 1: 43.201656, -77.874774
+    Hole 2: 43.199720, -77.877591
+    Hole 3: 43.200727, -77.879777
+    Hole 4: 43.200662, -77.882941
+    Hole 5: 43.201070, -77.884194
+    Hole 6: 43.201668, -77.885821
+    Hole 7: 43.201749, -77.883747
+    Hole 8: 43.201231, -77.882421
+    Hole 9: 43.200839, -77.879786
+    Hole 10: 43.201690, -77.875950
+    Hole 11: 43.202002, -77.879813
+    Hole 12: 43.201712, -77.881300
+    Hole 13: 43.202579, -77.885269
+    Hole 14: 43.203209, -77.889603
+    Hole 15: 43.204925, -77.891754
+    Hole 16: 43.203170, -77.887405
+    Hole 17: 43.202750, -77.883636
+    Hole 18: 43.202697, -77.881098
+  → Filled 18/18 missing holes
+[340/11231] Arrowhead Heights Golf Course
+  No OSM data found
+[341/11231] Arrowhead Lakes Golf Course
+  No OSM data found
+[342/11231] Arrowhead Meadows Golf Course
+  No OSM data found
+[343/11231] Arrowhead Pointe
+  All 18 holes already have coords, skipping
+[344/11231] Arrowood Golf Course
+  All 18 holes already have coords, skipping
+[345/11231] Arroyo Del Oso Golf Course
+  No OSM data found
+[346/11231] Arroyo Fairways Mobile Home Club
+  No OSM data found
+[347/11231] Arroyo Golf Club
+  All 18 holes already have coords, skipping
+[348/11231] Arroyo Seco Golf Course
+  All 18 holes already have coords, skipping
+[349/11231] Arroyo Trabuco Golf Club‎
+  All 18 holes already have coords, skipping
+[350/11231] Arsenal Island Golf Course
+  No OSM data found
+[351/11231] Artesia Country Club
+  All 18 holes already have coords, skipping
+[352/11231] Arthur B. Sim Golf Course
+  All 18 holes already have coords, skipping
+[353/11231] Arthur Hills
+  No OSM data found
+[354/11231] Arthur Hills Championship Course
+  No OSM data found
+[355/11231] Arthur Hills Golf Course
+  All 18 holes already have coords, skipping
+[356/11231] Ascarate Golf Course
+  No OSM data found
+[357/11231] Ash Brook Golf Course
+  No OSM data found
+[358/11231] Ash Hollow Golf Course
+  No OSM data found
+[359/11231] Asheboro Country Club
+  No OSM data found
+[360/11231] Asheboro Municipal Golf Course
+  No OSM data found
+[361/11231] Asheville Municipal Golf Course
+  Found 17 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[362/11231] Ashfield Community Golf Course
+  No OSM data found
+[363/11231] Ashland Golf Club
+  No OSM data found
+[364/11231] Ashland Golf Course
+  No OSM data found
+[365/11231] Ashley Plantation
+  Found 16 elements → 16 numbered holes
+    Hole 1: 37.435920, -79.894606
+    Hole 2: 37.433780, -79.901156
+    Hole 3: 37.432570, -79.901424
+    Hole 6: 37.424296, -79.896075
+    Hole 7: 37.427836, -79.897508
+    Hole 8: 37.430982, -79.899349
+    Hole 9: 37.434115, -79.897330
+    Hole 10: 37.435967, -79.890527
+    Hole 11: 37.439041, -79.897667
+    Hole 12: 37.442974, -79.899150
+    Hole 13: 37.444463, -79.894229
+    Hole 14: 37.442927, -79.896876
+    Hole 15: 37.440242, -79.894961
+    Hole 16: 37.443673, -79.893582
+    Hole 17: 37.441558, -79.892012
+    Hole 18: 37.437681, -79.892999
+  → Filled 16/18 missing holes
+[366/11231] Ashton Hills Golf Club
+  All 18 holes already have coords, skipping
+[367/11231] Ashwood Golf Course
+  Found 4 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[368/11231] Aspen Acres Golf Course
+  No OSM data found
+[369/11231] Aspen Golf Course
+  Found 36 elements → 18 numbered holes
+    Hole 1: 39.206852, -106.856004
+    Hole 2: 39.204087, -106.851065
+    Hole 3: 39.205370, -106.854785
+    Hole 4: 39.202743, -106.851057
+    Hole 5: 39.203751, -106.856275
+    Hole 6: 39.203421, -106.855593
+    Hole 7: 39.201268, -106.852373
+    Hole 8: 39.196649, -106.853570
+    Hole 9: 39.199794, -106.850915
+    Hole 10: 39.199314, -106.851521
+    Hole 11: 39.194594, -106.853086
+    Hole 12: 39.192794, -106.854693
+    Hole 13: 39.197910, -106.858075
+    Hole 14: 39.197578, -106.857093
+    Hole 15: 39.201655, -106.858578
+    Hole 16: 39.197415, -106.855953
+    Hole 17: 39.198037, -106.854600
+    Hole 18: 39.201066, -106.855604
+  → Filled 18/18 missing holes
+[370/11231] Aspen Lakes Golf Course
+  All 18 holes already have coords, skipping
+[371/11231] Aspen Ridge Golf Course
+  No OSM data found
+[372/11231] Aspen Valley Golf Club
+  No OSM data found
+[373/11231] Aspetuck Valley Country Club
+  All 18 holes already have coords, skipping
+[374/11231] Assateague Greens Golf Course
+  Found 27 elements → 18 numbered holes
+    Hole 1: 38.304006, -75.130712
+    Hole 2: 38.307370, -75.128621
+    Hole 3: 38.310405, -75.128903
+    Hole 4: 38.306029, -75.130840
+    Hole 5: 38.309179, -75.130516
+    Hole 6: 38.307643, -75.131492
+    Hole 7: 38.303614, -75.131970
+    Hole 8: 38.300310, -75.133063
+    Hole 9: 38.301918, -75.135233
+    Hole 10: 38.302587, -75.130178
+    Hole 11: 38.301818, -75.127240
+    Hole 12: 38.306403, -75.125251
+    Hole 13: 38.305627, -75.124548
+    Hole 14: 38.301731, -75.122226
+    Hole 15: 38.304018, -75.125175
+    Hole 16: 38.301210, -75.123208
+    Hole 17: 38.300298, -75.127068
+    Hole 18: 38.300123, -75.129880
+  → Filled 18/18 missing holes
+[375/11231] Aston Oaks Golf Club
+  No OSM data found
+[376/11231] Astoria Golf & Country Club
+  No OSM data found
+[377/11231] ASU Driving Range
+  No OSM data found
+[378/11231] Atchison Golf Club at Bellevue
+  No OSM data found
+[379/11231] Athens Country Club
+  No OSM data found
+[380/11231] Athens Golf Center
+  No OSM data found
+[381/11231] Atikwa Golf Club
+  All 18 holes already have coords, skipping
+[382/11231] Atkins Golf Club at the University of Illinois
+  All 18 holes already have coords, skipping
+[383/11231] Atkinson Resort & Country Club
+  No OSM data found
+[384/11231] Atkinson-Stuart Country Club
+  No OSM data found
+[385/11231] Atlanta Athletic Club
+  All 18 holes already have coords, skipping
+[386/11231] Atlanta Country Club Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 33.939456, -84.425602
+    Hole 2: 33.936781, -84.421729
+    Hole 3: 33.933628, -84.425685
+    Hole 4: 33.931157, -84.424092
+    Hole 5: 33.929794, -84.427663
+    Hole 6: 33.928308, -84.430845
+    Hole 7: 33.929148, -84.431109
+    Hole 8: 33.931757, -84.430583
+    Hole 9: 33.935733, -84.426577
+    Hole 10: 33.940566, -84.425639
+    Hole 11: 33.943553, -84.429358
+    Hole 12: 33.942056, -84.435802
+    Hole 13: 33.938501, -84.435208
+    Hole 14: 33.937152, -84.433990
+    Hole 15: 33.939388, -84.432349
+    Hole 16: 33.942948, -84.429418
+    Hole 17: 33.941481, -84.427023
+    Hole 18: 33.939613, -84.431091
+  → Filled 18/18 missing holes
+[387/11231] Atlanta National Golf Club
+  All 18 holes already have coords, skipping
+[388/11231] Atlantic Beach Country Club
+  No OSM data found
+[389/11231] Atlantic City Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 39.370170, -74.543261
+    Hole 2: 39.367652, -74.546775
+    Hole 3: 39.364131, -74.550022
+    Hole 4: 39.362569, -74.546767
+    Hole 5: 39.362954, -74.544974
+    Hole 6: 39.364893, -74.548226
+    Hole 7: 39.368300, -74.543721
+    Hole 8: 39.365295, -74.546014
+    Hole 9: 39.366556, -74.544508
+    Hole 10: 39.369935, -74.541931
+    Hole 11: 39.366453, -74.543510
+    Hole 12: 39.364023, -74.546781
+    Hole 13: 39.364760, -74.544975
+    Hole 14: 39.366799, -74.539688
+    Hole 15: 39.370429, -74.537481
+    Hole 16: 39.368606, -74.537745
+    Hole 17: 39.371886, -74.535732
+    Hole 18: 39.370627, -74.537462
+  → Filled 18/18 missing holes
+[390/11231] Atlantic Country Club
+  All 18 holes already have coords, skipping
+[391/11231] Atlantic Golf & Country Club
+  All 18 holes already have coords, skipping
+[392/11231] Atlantic Golf Club
+  Found 27 elements → 18 numbered holes
+    Hole 1: 40.941078, -72.327706
+    Hole 2: 40.943371, -72.333500
+    Hole 3: 40.942166, -72.334933
+    Hole 4: 40.940677, -72.329866
+    Hole 5: 40.941586, -72.327148
+    Hole 6: 40.940690, -72.330033
+    Hole 7: 40.941940, -72.331901
+    Hole 8: 40.944316, -72.332308
+    Hole 9: 40.942794, -72.330017
+    Hole 10: 40.953613, -72.341885
+    Hole 11: 40.953402, -72.336225
+    Hole 12: 40.951983, -72.335880
+    Hole 13: 40.949575, -72.333531
+    Hole 14: 40.946446, -72.337707
+    Hole 15: 40.949010, -72.340326
+    Hole 16: 40.949666, -72.343692
+    Hole 17: 40.950059, -72.340807
+    Hole 18: 40.952498, -72.337272
+  → Filled 18/18 missing holes
+[393/11231] Atlantic National Golf Club
+  No OSM data found
+[394/11231] Atlantis Country Club
+  All 18 holes already have coords, skipping
+[395/11231] Atlantis Golf Club
+  All 18 holes already have coords, skipping
+[396/11231] Atlas Valley Country Club
+  No OSM data found
+[397/11231] Attalla Country Club
+  No OSM data found
+[398/11231] Atunyote at Turning Stone
+  All 18 holes already have coords, skipping
+[399/11231] Atwood Country Club
+  No OSM data found
+[400/11231] Atwood Homestead
+  All 18 holes already have coords, skipping
+[401/11231] Auburn Golf Course
+  All 18 holes already have coords, skipping
+[402/11231] Auburn Hills
+  All 18 holes already have coords, skipping
+[403/11231] Auburn Hills Golf Course
+  All 18 holes already have coords, skipping
+[404/11231] Auburn Links
+  No OSM data found
+[405/11231] Auburn University Club
+  No OSM data found
+[406/11231] Auburn Valley Golf Club
+  All 18 holes already have coords, skipping
+[407/11231] Audubon 9-Par Golf Course
+  Found 11 elements → 9 numbered holes
+    Hole 1: 42.990735, -78.769180
+    Hole 2: 42.989816, -78.769192
+    Hole 3: 42.989395, -78.769914
+    Hole 4: 42.976258, -78.758763
+    Hole 5: 42.977096, -78.763450
+    Hole 6: 42.986026, -78.770315
+    Hole 7: 42.986690, -78.770810
+    Hole 8: 42.988452, -78.770673
+    Hole 9: 42.990137, -78.770834
+  → Filled 9/18 missing holes
+[408/11231] Audubon Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 38.199409, -85.728508
+    Hole 2: 38.197659, -85.725741
+    Hole 3: 38.196892, -85.721795
+    Hole 4: 38.199182, -85.719665
+    Hole 5: 38.202707, -85.719320
+    Hole 6: 38.202189, -85.719742
+    Hole 7: 38.199819, -85.723816
+    Hole 8: 38.203599, -85.719552
+    Hole 9: 38.202635, -85.723738
+    Hole 10: 38.200023, -85.728398
+    Hole 11: 38.200870, -85.724787
+    Hole 12: 38.201958, -85.721858
+    Hole 13: 38.198640, -85.724424
+    Hole 14: 38.198742, -85.723330
+    Hole 15: 38.200366, -85.719414
+    Hole 16: 38.197806, -85.723538
+    Hole 17: 38.199673, -85.727304
+    Hole 18: 38.200740, -85.724474
+  → Filled 18/18 missing holes
+[409/11231] Audubon Golf and Country Club
+  No OSM data found
+[410/11231] Audubon Park Golf Course
+  No OSM data found
+[411/11231] Auglaize Golf Club
+  No OSM data found
+[412/11231] Augusta Country Club
+  No OSM data found
+[413/11231] Augusta Municipal Golf Course
+  Found 8 elements → 8 numbered holes
+  → Filled 0/10 missing holes
+[414/11231] Augusta National Golf Club
+  No holes found, skipping
+[415/11231] Augusta Pines Golf Course
+  No OSM data found
+[416/11231] Augusta Ranch Golf Club
+  No OSM data found
+[417/11231] Augustine Golf Course
+  Found 17 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[418/11231] Aurelia Golf Club
+  No OSM data found
+[419/11231] Aurora Country Club
+  All 18 holes already have coords, skipping
+[420/11231] Aurora Hills Golf Course
+  All 18 holes already have coords, skipping
+[421/11231] Ausable Club Golf Course
+  No OSM data found
+[422/11231] Austin Bayou Golf Course
+  Found 9 elements → 9 numbered holes
+    Hole 1: 29.292118, -95.364112
+    Hole 2: 29.295464, -95.364665
+    Hole 3: 29.294637, -95.363224
+    Hole 4: 29.295236, -95.362076
+    Hole 5: 29.295310, -95.357671
+    Hole 6: 29.293833, -95.355799
+    Hole 7: 29.292779, -95.360150
+    Hole 8: 29.293532, -95.358481
+    Hole 9: 29.295273, -95.362580
+  → Filled 9/18 missing holes
+[423/11231] Austin Country Club
+  Found 38 elements → 17 numbered holes
+    Hole 1: 43.675916, -92.924404
+    Hole 2: 43.678597, -92.921820
+    Hole 3: 43.676862, -92.928510
+    Hole 4: 43.679749, -92.928456
+    Hole 6: 43.679392, -92.920152
+    Hole 7: 43.675466, -92.920905
+    Hole 8: 43.677053, -92.921235
+    Hole 9: 43.675426, -92.926550
+    Hole 10: 43.676416, -92.925758
+    Hole 11: 43.675291, -92.929373
+    Hole 12: 43.674466, -92.924168
+    Hole 13: 43.675761, -92.920769
+    Hole 14: 43.674616, -92.919116
+    Hole 15: 43.677981, -92.919098
+    Hole 16: 43.679528, -92.920098
+    Hole 17: 43.679842, -92.926648
+    Hole 18: 43.678523, -92.921723
+  → Filled 17/18 missing holes
+[424/11231] Austin Golf Course
+  All 18 holes already have coords, skipping
+[425/11231] Autumn Ridge Colf Course
+  Found 1 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[426/11231] Autumn Ridge Golf
+  All 18 holes already have coords, skipping
+[427/11231] Avalon at Buhl Park
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[428/11231] Avalon Golf & Country Club
+  No OSM data found
+[429/11231] Avalon Golf Links
+  Found 27 elements → 9 numbered holes
+    Hole 1: 48.536548, -122.326120
+    Hole 2: 48.539767, -122.326069
+    Hole 3: 48.539901, -122.324311
+    Hole 4: 48.543717, -122.325914
+    Hole 5: 48.541048, -122.329083
+    Hole 6: 48.539032, -122.328115
+    Hole 7: 48.543044, -122.325954
+    Hole 8: 48.540607, -122.326560
+    Hole 9: 48.541010, -122.327495
+  → Filled 9/18 missing holes
+[430/11231] Avalon Lakes Golf Course
+  Found 35 elements → 18 numbered holes
+    Hole 1: 41.239009, -80.717448
+    Hole 2: 41.240542, -80.721050
+    Hole 3: 41.243154, -80.717977
+    Hole 4: 41.246342, -80.718800
+    Hole 5: 41.246203, -80.716218
+    Hole 6: 41.243617, -80.716161
+    Hole 7: 41.240185, -80.720017
+    Hole 8: 41.242367, -80.716271
+    Hole 9: 41.241232, -80.717917
+    Hole 10: 41.237880, -80.717905
+    Hole 11: 41.238902, -80.722991
+    Hole 12: 41.243477, -80.723969
+    Hole 13: 41.243389, -80.720450
+    Hole 14: 41.246878, -80.723338
+    Hole 15: 41.243809, -80.719156
+    Hole 16: 41.240974, -80.721917
+    Hole 17: 41.243018, -80.722476
+    Hole 18: 41.239397, -80.722420
+  → Filled 18/18 missing holes
+[431/11231] Avery Ranch Golf Club
+  Found 17 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[432/11231] Aviara Golf Club
+  All 18 holes already have coords, skipping
+[433/11231] Aviator Golf Center
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[434/11231] Avila Beach Resort Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 35.182736, -120.739461
+    Hole 2: 35.184922, -120.740184
+    Hole 3: 35.186091, -120.738930
+    Hole 4: 35.189975, -120.741145
+    Hole 5: 35.189857, -120.737356
+    Hole 6: 35.186774, -120.736989
+    Hole 7: 35.187313, -120.737626
+    Hole 8: 35.188889, -120.740281
+    Hole 9: 35.186954, -120.738475
+    Hole 10: 35.181395, -120.737937
+    Hole 11: 35.183963, -120.732335
+    Hole 12: 35.182298, -120.728369
+    Hole 13: 35.184781, -120.724282
+    Hole 14: 35.180295, -120.724800
+    Hole 15: 35.183061, -120.725549
+    Hole 16: 35.180170, -120.724863
+    Hole 17: 35.182350, -120.729364
+    Hole 18: 35.183677, -120.732308
+  → Filled 18/18 missing holes
+[435/11231] Avila Golf & Country Club
+  All 18 holes already have coords, skipping
+[436/11231] Avoca Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[437/11231] Avon Field
+  Found 2 elements → 2 numbered holes
+    Hole 8: 39.159472, -84.476428
+    Hole 9: 39.160292, -84.474690
+  → Filled 2/18 missing holes
+[438/11231] Avon Oaks Country Club
+  All 18 holes already have coords, skipping
+[439/11231] Avondale Golf Club
+  All 18 holes already have coords, skipping
+[440/11231] Awarii Dunes Golf Course
+  All 18 holes already have coords, skipping
+[441/11231] Ayden Golf & Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[442/11231] Azalea
+  Found 12 elements → 12 numbered holes
+  → Filled 0/6 missing holes
+[443/11231] Azalea City Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 30.703104, -88.169478
+    Hole 2: 30.700278, -88.169682
+    Hole 3: 30.698477, -88.173713
+    Hole 4: 30.701665, -88.172910
+    Hole 5: 30.703327, -88.173372
+    Hole 6: 30.704514, -88.169394
+    Hole 7: 30.701442, -88.171765
+    Hole 8: 30.698743, -88.172525
+    Hole 9: 30.700148, -88.171072
+    Hole 10: 30.703540, -88.167860
+    Hole 11: 30.703496, -88.163564
+    Hole 12: 30.699749, -88.166006
+    Hole 13: 30.698066, -88.169218
+    Hole 14: 30.698865, -88.170174
+    Hole 15: 30.699813, -88.166961
+    Hole 16: 30.703559, -88.164733
+    Hole 17: 30.701318, -88.167306
+    Hole 18: 30.699948, -88.169128
+  → Filled 18/18 missing holes
+[444/11231] Azusa Greens Country Club
+  No OSM data found
+[445/11231] B L England Golf Course
+  No OSM data found
+[446/11231] B's On The  River
+  No OSM data found
+[447/11231] Babbitt Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[448/11231] Babcock National
+  All 18 holes already have coords, skipping
+[449/11231] Babe Zaharias Golf Course
+  No OSM data found
+[450/11231] Baca Grande Golf Club
+  No OSM data found
+[451/11231] Bacall Golf Course (The Villages)
+  Found 54 elements → 9 numbered holes
+    Hole 1: 28.894797, -81.969743
+    Hole 2: 28.893940, -81.973955
+    Hole 3: 28.895163, -81.978851
+    Hole 4: 28.885804, -81.960606
+    Hole 5: 28.888437, -81.962374
+    Hole 6: 28.889680, -81.967323
+    Hole 7: 28.896578, -81.974245
+    Hole 8: 28.895459, -81.973063
+    Hole 9: 28.891037, -81.968753
+  → Filled 9/18 missing holes
+[452/11231] Back Acres Country Club
+  No OSM data found
+[453/11231] Backbone Golf and Country Club
+  No OSM data found
+[454/11231] Bacon Park Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[455/11231] Badin Inn Golf Club
+  No OSM data found
+[456/11231] Badlands Golf Club
+  All 18 holes already have coords, skipping
+[457/11231] Badlands Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 44.978131, -92.596704
+    Hole 2: 44.980402, -92.598264
+    Hole 3: 44.982113, -92.598252
+    Hole 4: 44.985133, -92.598671
+    Hole 5: 44.984270, -92.592743
+    Hole 6: 44.983586, -92.594012
+    Hole 7: 44.984314, -92.597580
+    Hole 8: 44.981143, -92.596569
+    Hole 9: 44.982570, -92.594630
+    Hole 10: 44.979250, -92.594694
+    Hole 11: 44.982339, -92.594559
+    Hole 12: 44.984502, -92.592761
+    Hole 13: 44.988784, -92.593745
+    Hole 14: 44.988253, -92.592215
+    Hole 15: 44.983768, -92.591716
+    Hole 16: 44.983125, -92.592116
+    Hole 17: 44.980161, -92.592572
+    Hole 18: 44.982009, -92.594636
+  → Filled 18/18 missing holes
+[458/11231] Baehmann's Par 3 Course
+  No OSM data found
+[459/11231] Bailey Ranch Golf Club
+  All 18 holes already have coords, skipping
+[460/11231] Baiting Hallow Golf Club
+  All 18 holes already have coords, skipping
+[461/11231] Baker City Golf Club
+  No OSM data found
+[462/11231] Baker Hill Golf Club
+  All 18 holes already have coords, skipping
+[463/11231] Bakersfeild Country Club
+  All 18 holes already have coords, skipping
+[464/11231] Bakersfield Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 35.392670, -118.940058
+    Hole 2: 35.396108, -118.938623
+    Hole 3: 35.395516, -118.933115
+    Hole 4: 35.393742, -118.933982
+    Hole 5: 35.395610, -118.938302
+    Hole 6: 35.392240, -118.935988
+    Hole 7: 35.387461, -118.935727
+    Hole 8: 35.390535, -118.934942
+    Hole 9: 35.392182, -118.935950
+    Hole 10: 35.392692, -118.940784
+    Hole 11: 35.394277, -118.944408
+    Hole 12: 35.395673, -118.939025
+    Hole 13: 35.392699, -118.939353
+    Hole 14: 35.392377, -118.936327
+    Hole 15: 35.396119, -118.939270
+    Hole 16: 35.396114, -118.945244
+    Hole 17: 35.393617, -118.945266
+    Hole 18: 35.391638, -118.945184
+  → Filled 18/18 missing holes
+[465/11231] Bakker Crossing Championship Golf Course
+  All 18 holes already have coords, skipping
+[466/11231] Bala Golf Course
+  No OSM data found
+[467/11231] Balboa Championship Course
+  Found 27 elements → 18 numbered holes
+    Hole 1: 32.724984, -117.138300
+    Hole 2: 32.724811, -117.140278
+    Hole 3: 32.727345, -117.137373
+    Hole 4: 32.728716, -117.134612
+    Hole 5: 32.731884, -117.134226
+    Hole 6: 32.734331, -117.135129
+    Hole 7: 32.733264, -117.133879
+    Hole 8: 32.736905, -117.134301
+    Hole 9: 32.734340, -117.136137
+    Hole 10: 32.732603, -117.135685
+    Hole 11: 32.730048, -117.135971
+    Hole 12: 32.732304, -117.136786
+    Hole 13: 32.729871, -117.137234
+    Hole 14: 32.730806, -117.137935
+    Hole 15: 32.727189, -117.139829
+    Hole 16: 32.729191, -117.140893
+    Hole 17: 32.724353, -117.141577
+    Hole 18: 32.723386, -117.140920
+  → Filled 18/18 missing holes
+[468/11231] Balboa Executive 9-hole Course
+  All 18 holes already have coords, skipping
+[469/11231] Balboa Golf Course
+  All 18 holes already have coords, skipping
+[470/11231] Balboa Municipal Golf Course
+  All 18 holes already have coords, skipping
+[471/11231] Balboa Park Golf Course
+  Found 27 elements → 18 numbered holes
+    Hole 1: 32.724984, -117.138300
+    Hole 2: 32.724811, -117.140278
+    Hole 3: 32.727345, -117.137373
+    Hole 4: 32.728716, -117.134612
+    Hole 5: 32.731884, -117.134226
+    Hole 6: 32.734331, -117.135129
+    Hole 7: 32.733264, -117.133879
+    Hole 8: 32.736905, -117.134301
+    Hole 9: 32.734340, -117.136137
+    Hole 10: 32.732603, -117.135685
+    Hole 11: 32.730048, -117.135971
+    Hole 12: 32.732304, -117.136786
+    Hole 13: 32.729871, -117.137234
+    Hole 14: 32.730806, -117.137935
+    Hole 15: 32.727189, -117.139829
+    Hole 16: 32.729191, -117.140893
+    Hole 17: 32.724353, -117.141577
+    Hole 18: 32.723386, -117.140920
+  → Filled 18/18 missing holes
+[472/11231] Balcones Country Club
+  No OSM data found
+[473/11231] Bald Eagle Golf Club
+  No OSM data found
+[474/11231] Bald Head Island Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 33.862508, -78.004342
+    Hole 2: 33.865146, -78.002345
+    Hole 3: 33.867333, -78.001999
+    Hole 4: 33.867665, -77.997911
+    Hole 5: 33.866057, -77.993365
+    Hole 6: 33.869340, -77.996897
+    Hole 7: 33.871476, -78.000803
+    Hole 8: 33.867371, -78.003788
+    Hole 9: 33.866282, -78.005448
+    Hole 10: 33.861647, -78.002844
+    Hole 11: 33.861131, -77.998209
+    Hole 12: 33.865405, -77.997981
+    Hole 13: 33.862964, -77.995074
+    Hole 14: 33.862999, -77.992040
+    Hole 15: 33.860081, -77.994851
+    Hole 16: 33.857090, -77.992638
+    Hole 17: 33.857424, -77.994883
+    Hole 18: 33.860694, -77.999049
+  → Filled 18/18 missing holes
+[475/11231] Bald Knob Country Club
+  No OSM data found
+[476/11231] Bald Mountain Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 35.461173, -82.189291
+    Hole 2: 35.465828, -82.191058
+    Hole 3: 35.467664, -82.191282
+    Hole 4: 35.470749, -82.194070
+    Hole 5: 35.472189, -82.194602
+    Hole 6: 35.474694, -82.194685
+    Hole 7: 35.472861, -82.195288
+    Hole 8: 35.467976, -82.193692
+    Hole 9: 35.465471, -82.191040
+    Hole 10: 35.461198, -82.190781
+    Hole 11: 35.464042, -82.192806
+    Hole 12: 35.460211, -82.194308
+    Hole 13: 35.461863, -82.196568
+    Hole 14: 35.465247, -82.198315
+    Hole 15: 35.467987, -82.200788
+    Hole 16: 35.464534, -82.197131
+    Hole 17: 35.464727, -82.194761
+    Hole 18: 35.465388, -82.191245
+  → Filled 18/18 missing holes
+[477/11231] Bald Peak Colony Club
+  All 18 holes already have coords, skipping
+[478/11231] Baldwin Golf Course
+  No OSM data found
+[479/11231] Bali Hai Golf Club
+  All 18 holes already have coords, skipping
+[480/11231] Ballamor Golf Club
+  All 18 holes already have coords, skipping
+[481/11231] Ballantyne Country Club
+  No OSM data found
+[482/11231] BallenIsles
+  No OSM data found
+[483/11231] Ballinger Country Club
+  No OSM data found
+[484/11231] Ballston Spa Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 43.000844, -73.870680
+    Hole 2: 43.004474, -73.871394
+    Hole 3: 43.003852, -73.874069
+    Hole 4: 42.999905, -73.872438
+    Hole 5: 42.999491, -73.876593
+    Hole 6: 43.001960, -73.876012
+    Hole 7: 43.001880, -73.878090
+    Hole 8: 42.998854, -73.876607
+    Hole 9: 42.999214, -73.871209
+    Hole 10: 42.999727, -73.871850
+    Hole 11: 43.003786, -73.873210
+    Hole 12: 43.005564, -73.870708
+    Hole 13: 43.004816, -73.875142
+    Hole 14: 43.005524, -73.880256
+    Hole 15: 43.003158, -73.876457
+    Hole 16: 43.005456, -73.878041
+    Hole 17: 43.004055, -73.874285
+    Hole 18: 43.003771, -73.873202
+  → Filled 18/18 missing holes
+[485/11231] Ballwin Golf Course & Event Center
+  Found 11 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[486/11231] Bally's Golf Links at Ferry Point
+  All 18 holes already have coords, skipping
+[487/11231] Ballyhack Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 37.231963, -79.890946
+    Hole 2: 37.235591, -79.890251
+    Hole 3: 37.232488, -79.886540
+    Hole 4: 37.234894, -79.886088
+    Hole 5: 37.231584, -79.887309
+    Hole 6: 37.234390, -79.890145
+    Hole 7: 37.231377, -79.889622
+    Hole 8: 37.230317, -79.888143
+    Hole 9: 37.229476, -79.885580
+    Hole 10: 37.229345, -79.888978
+    Hole 11: 37.224064, -79.888894
+    Hole 12: 37.226456, -79.891440
+    Hole 13: 37.229797, -79.894550
+    Hole 14: 37.230239, -79.897364
+    Hole 15: 37.233507, -79.894932
+    Hole 16: 37.229205, -79.897489
+    Hole 17: 37.227817, -79.892942
+    Hole 18: 37.226421, -79.891148
+  → Filled 18/18 missing holes
+[488/11231] Ballyneal Golf and Hunt Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 40.420029, -102.270198
+    Hole 2: 40.423132, -102.270623
+    Hole 3: 40.427223, -102.272628
+    Hole 4: 40.426350, -102.274584
+    Hole 5: 40.423477, -102.279523
+    Hole 6: 40.423990, -102.280554
+    Hole 7: 40.420399, -102.277407
+    Hole 8: 40.423128, -102.276992
+    Hole 9: 40.419821, -102.272849
+    Hole 10: 40.419597, -102.268570
+    Hole 11: 40.414502, -102.269211
+    Hole 12: 40.416404, -102.269560
+    Hole 13: 40.418621, -102.272757
+    Hole 14: 40.415703, -102.275960
+    Hole 15: 40.413176, -102.272231
+    Hole 16: 40.414940, -102.270389
+    Hole 17: 40.411514, -102.268643
+    Hole 18: 40.415626, -102.266724
+  → Filled 18/18 missing holes
+[489/11231] Ballyowens Golf Club
+  All 18 holes already have coords, skipping
+[490/11231] Balmoral
+  All 18 holes already have coords, skipping
+[491/11231] Balmoral Golf Course
+  No OSM data found
+[492/11231] Balmoral Woods Country Club
+  No OSM data found
+[493/11231] Baltimore Country Club
+  All 18 holes already have coords, skipping
+[494/11231] Baltusrol Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 40.705781, -74.326759
+    Hole 2: 40.703180, -74.322328
+    Hole 3: 40.700353, -74.326091
+    Hole 4: 40.704581, -74.326188
+    Hole 5: 40.702536, -74.325705
+    Hole 6: 40.700754, -74.329009
+    Hole 7: 40.697249, -74.331742
+    Hole 8: 40.694314, -74.328053
+    Hole 9: 40.692912, -74.330966
+    Hole 10: 40.693658, -74.333665
+    Hole 11: 40.694732, -74.328660
+    Hole 12: 40.695286, -74.332798
+    Hole 13: 40.694679, -74.330263
+    Hole 14: 40.694672, -74.335523
+    Hole 15: 40.698078, -74.332129
+    Hole 16: 40.695018, -74.336047
+    Hole 17: 40.696787, -74.334954
+    Hole 18: 40.700942, -74.330178
+  → Filled 18/18 missing holes
+[495/11231] Banbury Golf Course
+  All 18 holes already have coords, skipping
+[496/11231] Bandon Dunes Golf Resort
+  All 18 holes already have coords, skipping
+[497/11231] Bandon Preserve Golf Course
+  Found 58 elements → 18 numbered holes
+    Hole 1: 43.194367, -124.389934
+    Hole 2: 43.181442, -124.392988
+    Hole 3: 43.179559, -124.391813
+    Hole 4: 43.175933, -124.389797
+    Hole 5: 43.198405, -124.396186
+    Hole 6: 43.197096, -124.395085
+    Hole 7: 43.198070, -124.392318
+    Hole 8: 43.195354, -124.392200
+    Hole 9: 43.198355, -124.392552
+    Hole 10: 43.195933, -124.395914
+    Hole 11: 43.196871, -124.397135
+    Hole 12: 43.177571, -124.385914
+    Hole 13: 43.177234, -124.382273
+    Hole 14: 43.175090, -124.387875
+    Hole 15: 43.171922, -124.389190
+    Hole 16: 43.175691, -124.389380
+    Hole 17: 43.180292, -124.388159
+    Hole 18: 43.198829, -124.387382
+  → Filled 18/18 missing holes
+[498/11231] Bandon Sheep Ranch
+  All 18 holes already have coords, skipping
+[499/11231] Bandon Trails
+  No holes found, skipping
+[500/11231] Bangor Municipal Golf Course
+  All 18 holes already have coords, skipping
+[501/11231] Banner Country Club
+  All 18 holes already have coords, skipping
+[502/11231] Banyan Cay
+  No OSM data found
+[503/11231] Banyan Golf Club
+  All 18 holes already have coords, skipping
+[504/11231] Banyan Golf Course
+  No OSM data found
+[505/11231] Baptist Village Golf Course
+  No OSM data found
+[506/11231] Baraboo Country Club
+  No OSM data found
+[507/11231] Barbour Country Club Golf Course
+  No OSM data found
+[508/11231] Bardmoor Country Club
+  Found 36 elements → 18 numbered holes
+    Hole 1: 27.865124, -82.748283
+    Hole 2: 27.868180, -82.747296
+    Hole 3: 27.869703, -82.750128
+    Hole 4: 27.869980, -82.751537
+    Hole 5: 27.868044, -82.747420
+    Hole 6: 27.867523, -82.749022
+    Hole 7: 27.870843, -82.752947
+    Hole 8: 27.860811, -82.739264
+    Hole 9: 27.867310, -82.745580
+    Hole 10: 27.865742, -82.748790
+    Hole 11: 27.867209, -82.752145
+    Hole 12: 27.865389, -82.754043
+    Hole 13: 27.867449, -82.757315
+    Hole 14: 27.869246, -82.755876
+    Hole 15: 27.866626, -82.754962
+    Hole 16: 27.870351, -82.753436
+    Hole 17: 27.865821, -82.754085
+    Hole 18: 27.869288, -82.752757
+  → Filled 18/18 missing holes
+[509/11231] Barefoot Bay Golf Course
+  No OSM data found
+[510/11231] Barker Lake Golf Course
+  No OSM data found
+[511/11231] Barlett hills golf club
+  All 18 holes already have coords, skipping
+[512/11231] Barney Road Golf Course
+  No OSM data found
+[513/11231] Barnyard 9 Golf Course
+  No OSM data found
+[514/11231] Barnyard Swing
+  No OSM data found
+[515/11231] Barona Resort Golf Course
+  No OSM data found
+[516/11231] Barren River Lake State Park Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 36.865322, -86.061219
+    Hole 2: 36.865382, -86.065256
+    Hole 3: 36.866733, -86.065552
+    Hole 4: 36.870214, -86.066610
+    Hole 5: 36.874039, -86.066202
+    Hole 6: 36.871915, -86.064855
+    Hole 7: 36.868891, -86.064237
+    Hole 8: 36.870122, -86.066008
+    Hole 9: 36.866880, -86.064580
+    Hole 10: 36.864706, -86.060382
+    Hole 11: 36.862286, -86.058338
+    Hole 12: 36.858246, -86.055601
+    Hole 13: 36.857308, -86.055755
+    Hole 14: 36.856791, -86.059488
+    Hole 15: 36.860686, -86.059235
+    Hole 16: 36.863374, -86.063035
+    Hole 17: 36.860940, -86.062603
+    Hole 18: 36.863749, -86.063777
+  → Filled 18/18 missing holes
+[517/11231] Barren View Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[518/11231] Barrington Golf Club
+  All 18 holes already have coords, skipping
+[519/11231] Barrington Hills Country Club
+  All 18 holes already have coords, skipping
+[520/11231] Bartley Cavanaugh Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 38.457243, -121.499117
+    Hole 2: 38.458405, -121.495159
+    Hole 3: 38.455944, -121.494247
+    Hole 4: 38.450863, -121.493506
+    Hole 5: 38.451985, -121.499583
+    Hole 6: 38.454819, -121.498282
+    Hole 7: 38.452346, -121.497439
+    Hole 8: 38.454928, -121.498853
+    Hole 9: 38.456757, -121.495762
+    Hole 10: 38.456773, -121.499530
+    Hole 11: 38.456991, -121.495463
+    Hole 12: 38.452793, -121.495972
+    Hole 13: 38.451142, -121.493526
+    Hole 14: 38.452869, -121.495681
+    Hole 15: 38.455754, -121.496730
+    Hole 16: 38.452131, -121.497326
+    Hole 17: 38.455836, -121.496608
+    Hole 18: 38.457035, -121.495667
+  → Filled 18/18 missing holes
+[521/11231] Barton Creek Crenshaw Cliffside
+  All 18 holes already have coords, skipping
+[522/11231] Barton Creek Fazio Canyons
+  Found 18 elements → 18 numbered holes
+    Hole 1: 30.271716, -97.876280
+    Hole 2: 30.272388, -97.871757
+    Hole 3: 30.274873, -97.869044
+    Hole 4: 30.275921, -97.870390
+    Hole 5: 30.276370, -97.873987
+    Hole 6: 30.275063, -97.879349
+    Hole 7: 30.276603, -97.883460
+    Hole 8: 30.274824, -97.878121
+    Hole 9: 30.275618, -97.875213
+    Hole 10: 30.269822, -97.875143
+    Hole 11: 30.270871, -97.871171
+    Hole 12: 30.269568, -97.871460
+    Hole 13: 30.268138, -97.874570
+    Hole 14: 30.267105, -97.877367
+    Hole 15: 30.264007, -97.882415
+    Hole 16: 30.266341, -97.886779
+    Hole 17: 30.269850, -97.884098
+    Hole 18: 30.268540, -97.881447
+  → Filled 18/18 missing holes
+[523/11231] Barton Creek Fazio Foothills
+  Found 38 elements → 18 numbered holes
+    Hole 1: 30.291061, -97.861211
+    Hole 2: 30.289141, -97.858786
+    Hole 3: 30.287015, -97.861716
+    Hole 4: 30.285619, -97.860316
+    Hole 5: 30.282741, -97.862349
+    Hole 6: 30.285726, -97.867460
+    Hole 7: 30.289464, -97.864999
+    Hole 8: 30.287080, -97.862053
+    Hole 9: 30.288262, -97.855496
+    Hole 10: 30.290824, -97.856428
+    Hole 11: 30.293363, -97.852343
+    Hole 12: 30.298063, -97.855469
+    Hole 13: 30.298383, -97.857753
+    Hole 14: 30.302676, -97.856806
+    Hole 15: 30.302784, -97.855278
+    Hole 16: 30.297137, -97.855438
+    Hole 17: 30.293149, -97.856360
+    Hole 18: 30.293370, -97.852643
+  → Filled 18/18 missing holes
+[524/11231] Barton Creek Lakeside Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 30.458783, -98.098144
+    Hole 2: 30.461817, -98.095710
+    Hole 3: 30.458355, -98.092581
+    Hole 4: 30.456869, -98.092516
+    Hole 5: 30.459841, -98.088711
+    Hole 6: 30.457909, -98.084782
+    Hole 7: 30.460903, -98.088856
+    Hole 8: 30.461307, -98.093365
+    Hole 9: 30.462835, -98.096013
+    Hole 10: 30.461330, -98.099463
+    Hole 11: 30.458967, -98.102084
+    Hole 12: 30.460348, -98.103071
+    Hole 13: 30.462575, -98.101481
+    Hole 14: 30.467193, -98.100857
+    Hole 15: 30.466633, -98.099310
+    Hole 16: 30.466182, -98.094420
+    Hole 17: 30.464154, -98.097279
+    Hole 18: 30.463576, -98.097797
+  → Filled 18/18 missing holes
+[525/11231] Barton Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 44.765203, -72.167785
+    Hole 2: 44.763308, -72.166456
+    Hole 3: 44.766235, -72.166997
+    Hole 4: 44.765520, -72.165016
+    Hole 5: 44.769063, -72.166381
+    Hole 6: 44.765356, -72.162792
+    Hole 7: 44.765387, -72.165520
+    Hole 8: 44.769455, -72.167995
+    Hole 9: 44.768454, -72.167635
+    Hole 10: 44.765228, -72.169061
+    Hole 11: 44.762700, -72.170184
+    Hole 12: 44.763697, -72.165901
+    Hole 13: 44.761239, -72.162969
+    Hole 14: 44.764759, -72.160333
+    Hole 15: 44.764527, -72.161891
+    Hole 16: 44.763537, -72.166208
+    Hole 17: 44.762392, -72.163990
+    Hole 18: 44.762569, -72.169951
+  → Filled 18/18 missing holes
+[526/11231] Barton Hills Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 42.323156, -83.764434
+    Hole 2: 42.324060, -83.769025
+    Hole 3: 42.327144, -83.773693
+    Hole 4: 42.329851, -83.769111
+    Hole 5: 42.326808, -83.770014
+    Hole 6: 42.325401, -83.768337
+    Hole 7: 42.326219, -83.772429
+    Hole 8: 42.325187, -83.767404
+    Hole 9: 42.328052, -83.768544
+    Hole 10: 42.324247, -83.764845
+    Hole 11: 42.327663, -83.767588
+    Hole 12: 42.329837, -83.768226
+    Hole 13: 42.327737, -83.765172
+    Hole 14: 42.324625, -83.762056
+    Hole 15: 42.328008, -83.765054
+    Hole 16: 42.325454, -83.760994
+    Hole 17: 42.327759, -83.759501
+    Hole 18: 42.327782, -83.765791
+  → Filled 18/18 missing holes
+[527/11231] Bartram Trail Golf Club
+  No OSM data found
+[528/11231] Bas Ridge Golf Club
+  All 18 holes already have coords, skipping
+[529/11231] Baseline Golf Course
+  All 18 holes already have coords, skipping
+[530/11231] Basking Ridge Country Club
+  No OSM data found
+[531/11231] Bass Creek Golf Club
+  No OSM data found
+[532/11231] Bass Lake Golf Course
+  No OSM data found
+[533/11231] Bass River Golf Course
+  All 18 holes already have coords, skipping
+[534/11231] Bass Rocks Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 42.613059, -70.640163
+    Hole 2: 42.611698, -70.636940
+    Hole 3: 42.610554, -70.635864
+    Hole 4: 42.607925, -70.633871
+    Hole 5: 42.604887, -70.635147
+    Hole 6: 42.602567, -70.637909
+    Hole 7: 42.604881, -70.635498
+    Hole 8: 42.608534, -70.636331
+    Hole 9: 42.607915, -70.638925
+    Hole 10: 42.605740, -70.636637
+    Hole 11: 42.607916, -70.639302
+    Hole 12: 42.610159, -70.636207
+    Hole 13: 42.608708, -70.639111
+    Hole 14: 42.610450, -70.637591
+    Hole 15: 42.613413, -70.641020
+    Hole 16: 42.615563, -70.637400
+    Hole 17: 42.613463, -70.638988
+    Hole 18: 42.615451, -70.636310
+  → Filled 18/18 missing holes
+[535/11231] Bassett Country Club
+  No OSM data found
+[536/11231] Batavia Country Club
+  All 18 holes already have coords, skipping
+[537/11231] Batesville Municipal Golf Course
+  No OSM data found
+[538/11231] Bath Country Club
+  All 18 holes already have coords, skipping
+[539/11231] Battenkill Country Club
+  No OSM data found
+[540/11231] Battle Creek Country Club
+  No OSM data found
+[541/11231] Battle Creek Golf Club
+  No OSM data found
+[542/11231] Battle Creek Golf Course
+  All 18 holes already have coords, skipping
+[543/11231] Battle Ground Golf Club LLC
+  All 18 holes already have coords, skipping
+[544/11231] Battle Island State Park Golf Course
+  No OSM data found
+[545/11231] Battle Lake Golf Club
+  All 18 holes already have coords, skipping
+[546/11231] Battlefield Golf Club
+  All 18 holes already have coords, skipping
+[547/11231] Battlefield Golf Club and Estates
+  No OSM data found
+[548/11231] Battleground Country Club
+  All 18 holes already have coords, skipping
+[549/11231] Battleground Golf Course at Deer Park
+  All 18 holes already have coords, skipping
+[550/11231] Battlement Mesa Golf Club
+  Found 14 elements → 11 numbered holes
+  → Filled 0/7 missing holes
+[551/11231] Bavarian Hills
+  No OSM data found
+[552/11231] Bay Breeze Golf Course
+  No OSM data found
+[553/11231] Bay Breeze Golf Links
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[554/11231] Bay City Country Club
+  All 18 holes already have coords, skipping
+[555/11231] Bay Club at Mattapoisett
+  All 18 holes already have coords, skipping
+[556/11231] Bay Colony Golf Club
+  Found 5 elements → 5 numbered holes
+  → Filled 0/13 missing holes
+[557/11231] Bay Creek Golf Course
+  All 18 holes already have coords, skipping
+[558/11231] Bay Forest Golf Club
+  All 18 holes already have coords, skipping
+[559/11231] Bay Golf Course
+  Found 2 elements → 2 numbered holes
+  → Filled 0/16 missing holes
+[560/11231] Bay Harbor Golf Club
+  Found 15 elements → 10 numbered holes
+  → Filled 0/8 missing holes
+[561/11231] Bay Hill Golf Club
+  All 18 holes already have coords, skipping
+[562/11231] Bay Hills Golf Club
+  All 18 holes already have coords, skipping
+[563/11231] Bay Meadows
+  Found 10 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[564/11231] Bay Meadows Golf Course
+  All 18 holes already have coords, skipping
+[565/11231] Bay Point Resort Golf Club
+  All 18 holes already have coords, skipping
+[566/11231] Bay Pointe
+  Found 17 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[567/11231] Bay Pointe Golf Club
+  All 18 holes already have coords, skipping
+[568/11231] Bay Ridge Golf Course
+  No OSM data found
+[569/11231] Bay View Retirees Golf Course
+  All 18 holes already have coords, skipping
+[570/11231] Bay-Cel Golf Course
+  No OSM data found
+[571/11231] Bayberry Hills Golf Course
+  All 18 holes already have coords, skipping
+[572/11231] Baylands Golf Links
+  All 18 holes already have coords, skipping
+[573/11231] Bayonet at Puppy Creek
+  All 18 holes already have coords, skipping
+[574/11231] Bayonet Golf Course
+  No OSM data found
+[575/11231] Bayonne Golf Club
+  All 18 holes already have coords, skipping
+[576/11231] Bayou Barriere Golf Course
+  No OSM data found
+[577/11231] Bayou Bend Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 30.197844, -92.379455
+    Hole 2: 30.199887, -92.378602
+    Hole 3: 30.198938, -92.375589
+    Hole 4: 30.197115, -92.375447
+    Hole 5: 30.199001, -92.378696
+    Hole 6: 30.196556, -92.375614
+    Hole 7: 30.195811, -92.376015
+    Hole 8: 30.197467, -92.378003
+    Hole 9: 30.194699, -92.375911
+    Hole 10: 30.197102, -92.379268
+    Hole 11: 30.196013, -92.377980
+    Hole 12: 30.194221, -92.375831
+    Hole 13: 30.191785, -92.376264
+    Hole 14: 30.192717, -92.378291
+    Hole 15: 30.196446, -92.380497
+    Hole 16: 30.191731, -92.379234
+    Hole 17: 30.191905, -92.376214
+    Hole 18: 30.194079, -92.377584
+  → Filled 18/18 missing holes
+[578/11231] Bayou Country Club
+  No OSM data found
+[579/11231] Bayou Desiard Country Club
+  No OSM data found
+[580/11231] Bayou Golf Club
+  No OSM data found
+[581/11231] Bayou Side Golf Course
+  No OSM data found
+[582/11231] Baypointe Golf Course
+  No OSM data found
+[583/11231] Bayside Golf Club
+  All 18 holes already have coords, skipping
+[584/11231] Baytowne Golf Club
+  All 18 holes already have coords, skipping
+[585/11231] Baytree National
+  All 18 holes already have coords, skipping
+[586/11231] Bayview
+  No OSM data found
+[587/11231] Bayville Golf Club
+  All 18 holes already have coords, skipping
+[588/11231] Baywood Golf Club
+  No OSM data found
+[589/11231] Baywood Golf Course
+  No OSM data found
+[590/11231] Baywood Greens Golf Course
+  All 18 holes already have coords, skipping
+[591/11231] Bea Practice Facility
+  Found 36 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[592/11231] Beach Club Golf Links
+  No OSM data found
+[593/11231] Beacon Hill Country Club
+  No OSM data found
+[594/11231] Beacon Hill Golf and Banquet Facility
+  Found 6 elements → 6 numbered holes
+  → Filled 0/12 missing holes
+[595/11231] Beacon Lakes Golf Club
+  All 18 holes already have coords, skipping
+[596/11231] Beacon Rock Golf Course
+  No OSM data found
+[597/11231] Bear Chase Golf Club
+  All 18 holes already have coords, skipping
+[598/11231] Bear Creek Country Club
+  All 18 holes already have coords, skipping
+[599/11231] Bear Creek Golf Club
+  All 18 holes already have coords, skipping
+[600/11231] Bear Creek Golf Complex
+  All 18 holes already have coords, skipping
+[601/11231] Bear Creek Golf Course
+  All 18 holes already have coords, skipping
+[602/11231] Bear Creek Golf Course (closed)
+  No OSM data found
+[603/11231] Bear Creek Golf World
+  No OSM data found
+[604/11231] Bear Creek Valley Golf Club
+  Found 18 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[605/11231] Bear Hill Golf Club
+  No OSM data found
+[606/11231] Bear Lake Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[607/11231] Bear Lake Highlands
+  No OSM data found
+[608/11231] Bear Lake Reserve Golf Club
+  No OSM data found
+[609/11231] Bear Lake West Golf Course
+  No OSM data found
+[610/11231] Bear Lakes Country Club
+  No OSM data found
+[611/11231] Bear Mountain Golf Course
+  All 18 holes already have coords, skipping
+[612/11231] Bear Ridge Golf Course
+  All 18 holes already have coords, skipping
+[613/11231] Bear Trace at Cumberland Mountain State Park
+  All 18 holes already have coords, skipping
+[614/11231] Bear Trace Golf Course
+  All 18 holes already have coords, skipping
+[615/11231] Bear Trap Dunes Golf Course
+  No OSM data found
+[616/11231] Bear Valley Golf Course
+  No OSM data found
+[617/11231] Bear's Best Atlanta
+  All 18 holes already have coords, skipping
+[618/11231] Bear's Best Las Vegas
+  Found 8 elements → 8 numbered holes
+  → Filled 0/10 missing holes
+[619/11231] Bear's Paw Country Club
+  Found 5 elements → 5 numbered holes
+  → Filled 0/13 missing holes
+[620/11231] Bearpath
+  All 18 holes already have coords, skipping
+[621/11231] Beatrice Country Club
+  All 18 holes already have coords, skipping
+[622/11231] BeauPre Golf Course
+  No OSM data found
+[623/11231] Beaver Brook Country Club
+  No OSM data found
+[624/11231] Beaver Brook Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[625/11231] Beaver Creek Country Club
+  All 18 holes already have coords, skipping
+[626/11231] Beaver Creek Golf Club
+  All 18 holes already have coords, skipping
+[627/11231] Beaver Creek Golf Course
+  No OSM data found
+[628/11231] Beaver Creek Meadows Golf Course
+  No OSM data found
+[629/11231] Beaver Dam Country Club
+  All 18 holes already have coords, skipping
+[630/11231] Beaver Dam Lodge Golf Course (Hamilton Ranch)
+  No OSM data found
+[631/11231] Beaver Hills Country Club
+  All 18 holes already have coords, skipping
+[632/11231] Beaver Island Golf Course
+  No OSM data found
+[633/11231] Beaver Meadow Creek Golf Course
+  Found 11 elements → 11 numbered holes
+    Hole 1: 42.651119, -78.361551
+    Hole 2: 42.651674, -78.362282
+    Hole 3: 42.653057, -78.362154
+    Hole 4: 42.653053, -78.360401
+    Hole 5: 42.654244, -78.360963
+    Hole 6: 42.656338, -78.360935
+    Hole 7: 42.656246, -78.360170
+    Hole 8: 42.654259, -78.360043
+    Hole 9: 42.652515, -78.360209
+    Hole 10: 42.652043, -78.361702
+    Hole 11: 42.651451, -78.360143
+  → Filled 11/18 missing holes
+[634/11231] Beaver Meadow Golf Course
+  All 18 holes already have coords, skipping
+[635/11231] Beaver Meadows Golf Club
+  No OSM data found
+[636/11231] Beaver River Golf Club
+  All 18 holes already have coords, skipping
+[637/11231] Beaver Valley Golf Club
+  No OSM data found
+[638/11231] Beavercreek Golf Club
+  All 18 holes already have coords, skipping
+[639/11231] Beaverhead Golf Course
+  No OSM data found
+[640/11231] Beckett Country Club
+  No OSM data found
+[641/11231] Beckett Ridge Country Club
+  All 18 holes already have coords, skipping
+[642/11231] Bedford Country Club
+  No OSM data found
+[643/11231] Bedford Creek Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[644/11231] Bedford Elks Golf Course
+  No OSM data found
+[645/11231] Bedford Golf and Tennis Club
+  No OSM data found
+[646/11231] Bedford Golf Course
+  No OSM data found
+[647/11231] Bedford Hills Golf Club
+  All 18 holes already have coords, skipping
+[648/11231] Bedford Trails Golf Course
+  All 18 holes already have coords, skipping
+[649/11231] Bedford Valley
+  Found 18 elements → 18 numbered holes
+    Hole 1: 42.408866, -85.216246
+    Hole 2: 42.409573, -85.211878
+    Hole 3: 42.406096, -85.212095
+    Hole 4: 42.402592, -85.212209
+    Hole 5: 42.403123, -85.217829
+    Hole 6: 42.403562, -85.215203
+    Hole 7: 42.407234, -85.215015
+    Hole 8: 42.403578, -85.213493
+    Hole 9: 42.405628, -85.212783
+    Hole 10: 42.407434, -85.216338
+    Hole 11: 42.404379, -85.217209
+    Hole 12: 42.403203, -85.220790
+    Hole 13: 42.404933, -85.220979
+    Hole 14: 42.409216, -85.219538
+    Hole 15: 42.405426, -85.219404
+    Hole 16: 42.407913, -85.217718
+    Hole 17: 42.403531, -85.219504
+    Hole 18: 42.404475, -85.218043
+  → Filled 18/18 missing holes
+[650/11231] Beech Creek Golf Club
+  No OSM data found
+[651/11231] Beech Creek Golf Course
+  No OSM data found
+[652/11231] Beech Hollow Golf Course
+  All 18 holes already have coords, skipping
+[653/11231] Beech Mountain Club
+  Found 4 elements → 4 numbered holes
+  → Filled 0/14 missing holes
+[654/11231] Beech Nut Golf Course
+  No OSM data found
+[655/11231] Beech Woods Golf Course
+  No OSM data found
+[656/11231] Beeches Golf Club
+  No OSM data found
+[657/11231] Beechmont Country Club
+  No OSM data found
+[658/11231] Beechwood Golf Club
+  No OSM data found
+[659/11231] Beechwood Golf Course
+  All 18 holes already have coords, skipping
+[660/11231] Beechwood Greens Golf Club
+  No OSM data found
+[661/11231] Beechwoods Golf Course
+  No OSM data found
+[662/11231] Beekman Golf Course
+  Found 27 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[663/11231] Bel Meadow Country Club
+  No OSM data found
+[664/11231] Bel-Air Country Club
+  All 18 holes already have coords, skipping
+[665/11231] Bel-Air Golf Course Tupelo
+  No OSM data found
+[666/11231] Bel-Aire Golf Course
+  No OSM data found
+[667/11231] Bel-Wood Country Club
+  Found 18 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[668/11231] Belfair
+  Found 16 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[669/11231] Belgrade Lakes Golf Club
+  All 18 holes already have coords, skipping
+[670/11231] Belk Park Golf Course
+  All 18 holes already have coords, skipping
+[671/11231] Bell Gardens Golf Course
+  All 18 holes already have coords, skipping
+[672/11231] Bell Nob Golf Course
+  No OSM data found
+[673/11231] Bella Collina Towne & Golf Club
+  No OSM data found
+[674/11231] Bella Ridge Golf Course
+  All 18 holes already have coords, skipping
+[675/11231] Bella Rosa
+  No OSM data found
+[676/11231] Bella Vista Country Club Golf Course
+  All 18 holes already have coords, skipping
+[677/11231] Bella Vista Golf Course
+  All 18 holes already have coords, skipping
+[678/11231] Bellair Golf Course
+  Found 11 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[679/11231] Belle Acres Golf Course
+  No OSM data found
+[680/11231] Belle Fourche Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[681/11231] Belle Haven Country Club
+  No OSM data found
+[682/11231] Belle Isle Practice Center
+  No OSM data found
+[683/11231] Belle Meade
+  All 18 holes already have coords, skipping
+[684/11231] Belle Meade Country Club
+  Found 1 elements → 1 numbered holes
+  → Filled 0/17 missing holes
+[685/11231] Belle Plaine Country Club
+  No OSM data found
+[686/11231] Belle River Golf and Country Club
+  No OSM data found
+[687/11231] Belle Terre Country Club
+  No OSM data found
+[688/11231] Belleair Country Club
+  All 18 holes already have coords, skipping
+[689/11231] Bellefonte Country Club
+  All 18 holes already have coords, skipping
+[690/11231] Bellerive Country Club
+  All 18 holes already have coords, skipping
+[691/11231] Belles Springs Golf Course
+  No OSM data found
+[692/11231] Belleville Country Club
+  No OSM data found
+[693/11231] Bellevue Golf and Country Club
+  No OSM data found
+[694/11231] Bellevue Golf Club
+  No OSM data found
+[695/11231] Bellewood Country Club
+  All 18 holes already have coords, skipping
+[696/11231] Bellingham Country Club
+  All 18 holes already have coords, skipping
+[697/11231] Bello Woods Golf Course
+  Found 13 elements → 11 numbered holes
+  → Filled 0/7 missing holes
+[698/11231] Bellows Falls Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[699/11231] Bellows Golf Course
+  No OSM data found
+[700/11231] Bellport Country Club
+  No OSM data found
+[701/11231] Bellwood Oaks Golf Course
+  All 18 holes already have coords, skipping
+[702/11231] Belmar Golf Club
+  All 18 holes already have coords, skipping
+[703/11231] Belmond Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[704/11231] Belmont Country Club
+  No OSM data found
+[705/11231] Belmont Country Club Golf Course
+  Found 21 elements → 18 numbered holes
+    Hole 1: 39.070584, -77.493020
+    Hole 2: 39.074151, -77.494542
+    Hole 3: 39.073357, -77.499360
+    Hole 4: 39.077263, -77.485692
+    Hole 5: 39.074936, -77.487007
+    Hole 6: 39.078238, -77.491778
+    Hole 7: 39.067006, -77.497939
+    Hole 8: 39.063538, -77.496646
+    Hole 9: 39.065638, -77.495326
+    Hole 10: 39.070214, -77.488713
+    Hole 11: 39.064898, -77.489258
+    Hole 12: 39.062807, -77.488395
+    Hole 13: 39.059157, -77.487295
+    Hole 14: 39.054533, -77.490179
+    Hole 15: 39.056553, -77.495370
+    Hole 16: 39.059826, -77.498188
+    Hole 17: 39.061333, -77.495589
+    Hole 18: 39.064779, -77.493654
+  → Filled 18/18 missing holes
+[706/11231] Belmont Golf Course (The Villages)
+  Found 33 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[707/11231] Belmont Golf Course & Recreation Center
+  Found 32 elements → 18 numbered holes
+    Hole 1: 37.617840, -77.461569
+    Hole 2: 37.618350, -77.458314
+    Hole 3: 37.619888, -77.460990
+    Hole 4: 37.618180, -77.459127
+    Hole 5: 37.618625, -77.461446
+    Hole 6: 37.621147, -77.464139
+    Hole 7: 37.617783, -77.465000
+    Hole 8: 37.620372, -77.465238
+    Hole 9: 37.619877, -77.468942
+    Hole 10: 37.616836, -77.465925
+    Hole 11: 37.612817, -77.465495
+    Hole 12: 37.609900, -77.464298
+    Hole 13: 37.613203, -77.464041
+    Hole 14: 37.612340, -77.462604
+    Hole 15: 37.609692, -77.463202
+    Hole 16: 37.612418, -77.461724
+    Hole 17: 37.614199, -77.464765
+    Hole 18: 37.617471, -77.464851
+  → Filled 18/18 missing holes
+[708/11231] Belmont Hills Country Club
+  All 18 holes already have coords, skipping
+[709/11231] Belmont Lake Golf Club
+  No OSM data found
+[710/11231] Belmont Pines Golf Course
+  No OSM data found
+[711/11231] Belmor Park Golf & Country Club
+  No OSM data found
+[712/11231] Beloit Country Club
+  No OSM data found
+[713/11231] Belterra Golf Course
+  All 18 holes already have coords, skipping
+[714/11231] Belvedere Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 45.291676, -85.269068
+    Hole 2: 45.295046, -85.268921
+    Hole 3: 45.295651, -85.274326
+    Hole 4: 45.293864, -85.269879
+    Hole 5: 45.292143, -85.270276
+    Hole 6: 45.295097, -85.275340
+    Hole 7: 45.296521, -85.271699
+    Hole 8: 45.295234, -85.266455
+    Hole 9: 45.294472, -85.268461
+    Hole 10: 45.290064, -85.267348
+    Hole 11: 45.290721, -85.260926
+    Hole 12: 45.291007, -85.265826
+    Hole 13: 45.294989, -85.264049
+    Hole 14: 45.291171, -85.263697
+    Hole 15: 45.292047, -85.261365
+    Hole 16: 45.295531, -85.260639
+    Hole 17: 45.295484, -85.264989
+    Hole 18: 45.294250, -85.265910
+  → Filled 18/18 missing holes
+[715/11231] Bemidji Town & Country Club
+  All 18 holes already have coords, skipping
+[716/11231] Bemus Point Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[717/11231] Ben Geren Golf Course
+  Found 26 elements → 9 numbered holes
+    Hole 1: 35.313125, -94.364862
+    Hole 2: 35.316231, -94.365409
+    Hole 3: 35.317444, -94.359942
+    Hole 4: 35.315844, -94.364132
+    Hole 5: 35.314918, -94.362909
+    Hole 6: 35.312722, -94.361605
+    Hole 7: 35.314544, -94.358161
+    Hole 8: 35.316523, -94.356199
+    Hole 9: 35.313980, -94.361800
+  → Filled 9/18 missing holes
+[718/11231] Benbow Valley Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[719/11231] Bend Golf & Country Club
+  All 18 holes already have coords, skipping
+[720/11231] Bennett Valley Golf Course
+  No OSM data found
+[721/11231] Bennington Golf Club
+  No OSM data found
+[722/11231] Benona Shores Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 43.584371, -86.507336
+    Hole 2: 43.587908, -86.507060
+    Hole 3: 43.586235, -86.506534
+    Hole 4: 43.585272, -86.505827
+    Hole 5: 43.587249, -86.504042
+    Hole 6: 43.585380, -86.505135
+    Hole 7: 43.584216, -86.503662
+    Hole 8: 43.581122, -86.503836
+    Hole 9: 43.582346, -86.505087
+    Hole 10: 43.584146, -86.506906
+    Hole 11: 43.584424, -86.503557
+    Hole 12: 43.584013, -86.500114
+    Hole 13: 43.583172, -86.500244
+    Hole 14: 43.581163, -86.500075
+    Hole 15: 43.583341, -86.503000
+    Hole 16: 43.580799, -86.502797
+    Hole 17: 43.578095, -86.503368
+    Hole 18: 43.581701, -86.506368
+  → Filled 18/18 missing holes
+[723/11231] Benson Park Golf Course
+  Found 18 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[724/11231] Bent Creek Country Club
+  All 18 holes already have coords, skipping
+[725/11231] Bent Creek Golf Club
+  Found 18 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[726/11231] Bent Creek Golf Course
+  All 18 holes already have coords, skipping
+[727/11231] Bent Oak Park
+  No OSM data found
+[728/11231] Bent Pine Golf Club
+  No OSM data found
+[729/11231] Bent Tree Country Club
+  No OSM data found
+[730/11231] Bent Tree Golf Club
+  All 18 holes already have coords, skipping
+[731/11231] Bent Tree Golf Course
+  No OSM data found
+[732/11231] Bentley Village Golf Course
+  No OSM data found
+[733/11231] Benton Country Club
+  No OSM data found
+[734/11231] Benton Golf & Country Club
+  No OSM data found
+[735/11231] Bentwater
+  All 18 holes already have coords, skipping
+[736/11231] Bentwater Golf Club
+  All 18 holes already have coords, skipping
+[737/11231] Bentwinds Country Club
+  No OSM data found
+[738/11231] Bentwood Country Club Golf Course
+  No OSM data found
+[739/11231] Bentwood Golf Course
+  No OSM data found
+[740/11231] Benvenue Country Club Course
+  All 18 holes already have coords, skipping
+[741/11231] Bergen Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[742/11231] Bergen Point Golf Course
+  No OSM data found
+[743/11231] Bergen Point Golf Course - Driving Range
+  No OSM data found
+[744/11231] Berkeley Country Club
+  Found 2 elements → 2 numbered holes
+  → Filled 0/16 missing holes
+[745/11231] Berkeley Hills Country Club
+  All 18 holes already have coords, skipping
+[746/11231] Berkleigh Golf Club
+  All 18 holes already have coords, skipping
+[747/11231] Berkley Hills Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[748/11231] Berkshire Country Club
+  No OSM data found
+[749/11231] Berkshire Hill Golf Course
+  Found 6 elements → 6 numbered holes
+  → Filled 0/12 missing holes
+[750/11231] Berkshire Hills Country Club
+  All 18 holes already have coords, skipping
+[751/11231] Berkshire Valley Golf Course
+  All 18 holes already have coords, skipping
+[752/11231] Berlin Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[753/11231] Bermuda Dunes Golf Club
+  No OSM data found
+[754/11231] Bermuda Run Country Club
+  All 18 holes already have coords, skipping
+[755/11231] Bermuda Run West
+  All 18 holes already have coords, skipping
+[756/11231] Bernardo Heights Country Club
+  All 18 holes already have coords, skipping
+[757/11231] Berrien Hills Golf Club
+  No OSM data found
+[758/11231] Berry Creek Country Club
+  No OSM data found
+[759/11231] Berry Hills Country Club
+  All 18 holes already have coords, skipping
+[760/11231] Berwick Golf Club
+  No OSM data found
+[761/11231] Bethany Bay Golf Club
+  No OSM data found
+[762/11231] Bethel Island Golf Course
+  No OSM data found
+[763/11231] Bethesda Country Club
+  Found 20 elements → 2 numbered holes
+  → Filled 0/16 missing holes
+[764/11231] Bethlehem Country Club
+  All 18 holes already have coords, skipping
+[765/11231] Bethlehem Golf Club - 18 Hole Monocacy Course
+  No OSM data found
+[766/11231] Bethlehem Golf Club - 9 Hole Course
+  No OSM data found
+[767/11231] Bethpage Black Golf Course
+  All 18 holes already have coords, skipping
+[768/11231] Bethpage State Park Golf Courses
+  All 18 holes already have coords, skipping
+[769/11231] Bethpage Yellow Golf Course
+  All 18 holes already have coords, skipping
+[770/11231] Betsie Valley
+  Found 33 elements → 18 numbered holes
+    Hole 1: 44.517427, -85.991851
+    Hole 2: 44.521396, -86.008858
+    Hole 3: 44.522186, -86.011464
+    Hole 4: 44.524504, -86.014995
+    Hole 5: 44.520387, -86.011985
+    Hole 6: 44.518858, -86.013082
+    Hole 7: 44.514665, -86.008517
+    Hole 8: 44.515451, -86.013260
+    Hole 9: 44.518951, -86.014868
+    Hole 10: 44.517293, -85.994172
+    Hole 11: 44.518361, -86.018657
+    Hole 12: 44.521675, -86.013601
+    Hole 13: 44.515420, -86.002679
+    Hole 14: 44.516940, -86.006879
+    Hole 15: 44.527768, -86.007284
+    Hole 16: 44.529975, -86.002693
+    Hole 17: 44.526516, -86.006307
+    Hole 18: 44.524389, -86.003788
+  → Filled 18/18 missing holes
+[771/11231] Better Shots Driving Range
+  No OSM data found
+[772/11231] Betty Allison Family Golf Center
+  No OSM data found
+[773/11231] Beverly Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 41.735792, -87.684530
+    Hole 2: 41.737533, -87.683044
+    Hole 3: 41.742008, -87.685211
+    Hole 4: 41.740913, -87.682911
+    Hole 5: 41.742570, -87.686892
+    Hole 6: 41.738919, -87.685953
+    Hole 7: 41.740845, -87.685465
+    Hole 8: 41.735853, -87.685266
+    Hole 9: 41.738787, -87.687187
+    Hole 10: 41.734035, -87.685132
+    Hole 11: 41.734876, -87.686951
+    Hole 12: 41.730067, -87.686877
+    Hole 13: 41.728439, -87.686961
+    Hole 14: 41.728947, -87.682638
+    Hole 15: 41.729892, -87.685738
+    Hole 16: 41.734176, -87.685824
+    Hole 17: 41.730280, -87.685535
+    Hole 18: 41.729404, -87.682649
+  → Filled 18/18 missing holes
+[774/11231] Beverly Golf & Tennis Club
+  All 18 holes already have coords, skipping
+[775/11231] Beverly Park Golf Course
+  No OSM data found
+[776/11231] Beverly Park Junior Golf Course
+  No OSM data found
+[777/11231] Bey Lea Golf Course
+  No OSM data found
+[778/11231] Biddeford Saco Country Club
+  All 18 holes already have coords, skipping
+[779/11231] Bide-A-Wee Golf Course
+  All 18 holes already have coords, skipping
+[780/11231] Bidermann Golf Course
+  All 18 holes already have coords, skipping
+[781/11231] Bidwell Park Golf Course
+  No OSM data found
+[782/11231] Big Al's Greens & Grille
+  No OSM data found
+[783/11231] Big Beaver Creek Golf Club
+  All 18 holes already have coords, skipping
+[784/11231] Big Bend Golf & Country Club
+  No OSM data found
+[785/11231] Big Bend Golf Course
+  All 18 holes already have coords, skipping
+[786/11231] Big Canyon Country Club
+  No OSM data found
+[787/11231] Big Creek
+  All 18 holes already have coords, skipping
+[788/11231] Big Fish Golf Course
+  All 18 holes already have coords, skipping
+[789/11231] Big Foot Country Club
+  All 18 holes already have coords, skipping
+[790/11231] Big Hickory Golf Course
+  No OSM data found
+[791/11231] Big Hollow Par III
+  No OSM data found
+[792/11231] Big Horn Golf Club - Canyons Course
+  No OSM data found
+[793/11231] Big Horn Golf Club - Mountains Course
+  No OSM data found
+[794/11231] Big Lake Country Club
+  No OSM data found
+[795/11231] Big Meadow Golf Course
+  No OSM data found
+[796/11231] Big Met Golf Course
+  All 18 holes already have coords, skipping
+[797/11231] Big Oak
+  Found 4 elements → 4 numbered holes
+  → Filled 0/14 missing holes
+[798/11231] Big Oaks Colf Course
+  All 18 holes already have coords, skipping
+[799/11231] Big Oaks Golf Course
+  All 18 holes already have coords, skipping
+[800/11231] Big River Golf Course
+  All 18 holes already have coords, skipping
+[801/11231] Big Rock Country Club
+  No OSM data found
+[802/11231] Big Run Golf Club
+  All 18 holes already have coords, skipping
+[803/11231] Big Sand Lake Club Golf Course
+  No OSM data found
+[804/11231] Big Sky Golf Course
+  No OSM data found
+[805/11231] Big Spring Country Club
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[806/11231] Big Stone Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[807/11231] Big Sugar Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 36.420266, -94.106720
+    Hole 2: 36.419968, -94.113163
+    Hole 3: 36.417050, -94.112456
+    Hole 4: 36.413920, -94.111651
+    Hole 5: 36.417434, -94.113175
+    Hole 6: 36.418765, -94.114414
+    Hole 7: 36.422774, -94.113981
+    Hole 8: 36.421630, -94.110161
+    Hole 9: 36.421238, -94.112265
+    Hole 10: 36.420998, -94.104992
+    Hole 11: 36.420387, -94.099764
+    Hole 12: 36.420060, -94.095007
+    Hole 13: 36.424031, -94.094628
+    Hole 14: 36.425072, -94.092776
+    Hole 15: 36.423553, -94.096101
+    Hole 16: 36.426920, -94.095722
+    Hole 17: 36.426936, -94.098352
+    Hole 18: 36.425822, -94.102992
+  → Filled 18/18 missing holes
+[808/11231] Big Walnut Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[809/11231] Big Wick
+  All 18 holes already have coords, skipping
+[810/11231] Bigwood Golf Course
+  Found 10 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[811/11231] Bijou Municipal Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[812/11231] Bill and Payne Stewart Golf Course
+  No OSM data found
+[813/11231] Bill Roberts Municipal Golf Course
+  All 18 holes already have coords, skipping
+[814/11231] Billy Caldwell Golf Course
+  Found 18 elements → 12 numbered holes
+  → Filled 0/6 missing holes
+[815/11231] Biltmore Country Club
+  Found 20 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[816/11231] Biltmore Forest Country Club
+  No OSM data found
+[817/11231] Biltmore Golf Course
+  All 18 holes already have coords, skipping
+[818/11231] Binder Park Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[819/11231] Bing Maloney Golf Club
+  All 18 holes already have coords, skipping
+[820/11231] Binghamton Country Club
+  All 18 holes already have coords, skipping
+[821/11231] Binks Forest Golf Club
+  All 18 holes already have coords, skipping
+[822/11231] Birch Bay Village Golf Course
+  No OSM data found
+[823/11231] Birch Creek Golf Course
+  No OSM data found
+[824/11231] Birch Hills Golf Course
+  All 18 holes already have coords, skipping
+[825/11231] Birch Pointe Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[826/11231] Birch Ridge Golf Course
+  No OSM data found
+[827/11231] Birch Run Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 41.172069, -83.678050
+    Hole 2: 41.170128, -83.678101
+    Hole 3: 41.168471, -83.677940
+    Hole 4: 41.168925, -83.672246
+    Hole 5: 41.169443, -83.676783
+    Hole 6: 41.172580, -83.676240
+    Hole 7: 41.172428, -83.674698
+    Hole 8: 41.170513, -83.675426
+    Hole 9: 41.169438, -83.676974
+    Hole 10: 41.172984, -83.679257
+    Hole 11: 41.170159, -83.679170
+    Hole 12: 41.172042, -83.680990
+    Hole 13: 41.170031, -83.678557
+    Hole 14: 41.169377, -83.679603
+    Hole 15: 41.171838, -83.682289
+    Hole 16: 41.168477, -83.679226
+    Hole 17: 41.168858, -83.682986
+    Hole 18: 41.172218, -83.682897
+  → Filled 18/18 missing holes
+[828/11231] Birch Tree Golf Course
+  No OSM data found
+[829/11231] Birch Valley Golf Course
+  No OSM data found
+[830/11231] Birchwood Country Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[831/11231] Birchwood Farms Golf & Country Club
+  Found 27 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[832/11231] Birchwood Golf Course
+  No OSM data found
+[833/11231] Bird Creek Golf Club
+  No OSM data found
+[834/11231] Birdie Ranch Golf Club at Silver Creek
+  No OSM data found
+[835/11231] Birdsfoot
+  Found 18 elements → 18 numbered holes
+    Hole 1: 40.745843, -79.662575
+    Hole 2: 40.744618, -79.666735
+    Hole 3: 40.741277, -79.664900
+    Hole 4: 40.737975, -79.669292
+    Hole 5: 40.739500, -79.668541
+    Hole 6: 40.743631, -79.667311
+    Hole 7: 40.741404, -79.664696
+    Hole 8: 40.744785, -79.666595
+    Hole 9: 40.743971, -79.661357
+    Hole 10: 40.746799, -79.662263
+    Hole 11: 40.747566, -79.666356
+    Hole 12: 40.749160, -79.664285
+    Hole 13: 40.748334, -79.669398
+    Hole 14: 40.743618, -79.668220
+    Hole 15: 40.740409, -79.669201
+    Hole 16: 40.743890, -79.667997
+    Hole 17: 40.747572, -79.666838
+    Hole 18: 40.745516, -79.667200
+  → Filled 18/18 missing holes
+[836/11231] Birdwood Golf Course
+  All 18 holes already have coords, skipping
+[837/11231] Birkdale Golf Club
+  No OSM data found
+[838/11231] Birmingham Country Club
+  All 18 holes already have coords, skipping
+[839/11231] Birnam Wood Golf Club
+  All 18 holes already have coords, skipping
+[840/11231] Birnamwood Golf Course
+  No OSM data found
+[841/11231] Bishop Golf Club
+  No OSM data found
+[842/11231] Bishops Bay Golf Course
+  All 18 holes already have coords, skipping
+[843/11231] Bishops Gate Golf and Lakeside Community
+  All 18 holes already have coords, skipping
+[844/11231] Bittersweet Golf Club
+  All 18 holes already have coords, skipping
+[845/11231] Bixby Village Golf Course
+  Found 11 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[846/11231] Black Bear
+  All 18 holes already have coords, skipping
+[847/11231] Black Bear Golf Club
+  No OSM data found
+[848/11231] Black Bear Golf Course
+  No OSM data found
+[849/11231] Black Brook Golf Club
+  No OSM data found
+[850/11231] Black Bull
+  No OSM data found
+[851/11231] Black Canyon Golf Course
+  No OSM data found
+[852/11231] Black Course
+  Found 26 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[853/11231] Black Creek Golf Club
+  All 18 holes already have coords, skipping
+[854/11231] Black Desert Golf Course
+  All 18 holes already have coords, skipping
+[855/11231] Black Forest at Wilderness Valley
+  No OSM data found
+[856/11231] Black Gold Golf Club
+  All 18 holes already have coords, skipping
+[857/11231] Black Hall Club
+  All 18 holes already have coords, skipping
+[858/11231] Black Hawk Golf Course
+  No OSM data found
+[859/11231] Black Hawk Run Golf Club
+  No OSM data found
+[860/11231] Black Horse Golf
+  No OSM data found
+[861/11231] Black Horse Golf Course
+  No OSM data found
+[862/11231] Black Knight Golf Course
+  No OSM data found
+[863/11231] Black Lake Golf Course
+  All 18 holes already have coords, skipping
+[864/11231] Black Mesa Golf Club
+  All 18 holes already have coords, skipping
+[865/11231] Black Mountain Golf Course
+  No OSM data found
+[866/11231] Black Mountain Ranch Golf Course
+  No OSM data found
+[867/11231] Black Oak Golf Club
+  No OSM data found
+[868/11231] Black Oak Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[869/11231] Black River Golf Club
+  All 18 holes already have coords, skipping
+[870/11231] Black River Golf Course
+  No OSM data found
+[871/11231] Black Rock Country Club
+  All 18 holes already have coords, skipping
+[872/11231] Black Rock Creek Golf Course
+  No OSM data found
+[873/11231] Black Rock Golf Course
+  All 18 holes already have coords, skipping
+[874/11231] Black Sheep Golf Club
+  Found 9 elements → 8 numbered holes
+  → Filled 0/10 missing holes
+[875/11231] Black Squirrel Golf Club
+  All 18 holes already have coords, skipping
+[876/11231] Black Stone Creek Golf Club
+  No OSM data found
+[877/11231] Black Swan Country Club
+  All 18 holes already have coords, skipping
+[878/11231] Black Wolf Links Golf Course
+  No OSM data found
+[879/11231] Blackberry Farm Golf Course
+  All 18 holes already have coords, skipping
+[880/11231] Blackberry Oaks Golf Course
+  All 18 holes already have coords, skipping
+[881/11231] Blackberry Trail Golf Course
+  All 18 holes already have coords, skipping
+[882/11231] Blackduck Municipal Golf Course
+  No OSM data found
+[883/11231] Blackfoot Golf Course
+  All 18 holes already have coords, skipping
+[884/11231] Blackford Golf Club
+  No OSM data found
+[885/11231] Blackhawk Country Club
+  All 18 holes already have coords, skipping
+[886/11231] Blackhawk Golf Club
+  Found 1 elements → 1 numbered holes
+  → Filled 0/17 missing holes
+[887/11231] Blackhawk Golf Course
+  No OSM data found
+[888/11231] Blackhead Lodge and Country Club
+  No OSM data found
+[889/11231] Blackheath Golf Club
+  All 18 holes already have coords, skipping
+[890/11231] BlackHorse Golf Club
+  All 18 holes already have coords, skipping
+[891/11231] Blackledge Country Club
+  Found 36 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[892/11231] Blacklick Woods Golf Course
+  All 18 holes already have coords, skipping
+[893/11231] Blackmoor Golf Club
+  No OSM data found
+[894/11231] Blacksburg Country Club
+  All 18 holes already have coords, skipping
+[895/11231] Blacksburg Municipal Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[896/11231] Blackshire
+  All 18 holes already have coords, skipping
+[897/11231] Blackstone Country Club
+  All 18 holes already have coords, skipping
+[898/11231] Blackstone Golf Club
+  All 18 holes already have coords, skipping
+[899/11231] Blackstone National Golf Club
+  All 18 holes already have coords, skipping
+[900/11231] Blackthorn Golf Club
+  No OSM data found
+[901/11231] Blackwater Golf Club
+  All 18 holes already have coords, skipping
+[902/11231] Blackwolf Run
+  All 18 holes already have coords, skipping
+[903/11231] Blair Academy
+  No OSM data found
+[904/11231] Blair Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[905/11231] Blanford Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[906/11231] Blank Park Golf Course
+  All 18 holes already have coords, skipping
+[907/11231] Blessings Golf Club
+  All 18 holes already have coords, skipping
+[908/11231] Blind Brook Club
+  No OSM data found
+[909/11231] Blissful Meadows Golf Club
+  All 18 holes already have coords, skipping
+[910/11231] Bloch Memorial Golf Course
+  Found 10 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[911/11231] Bloody Point
+  No OSM data found
+[912/11231] Bloomfield Country Club
+  No OSM data found
+[913/11231] Bloomfield Hills Country Club
+  All 18 holes already have coords, skipping
+[914/11231] Blooming Prairie Country Club
+  No OSM data found
+[915/11231] Bloomingdale Golf Club
+  Found 19 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[916/11231] Bloomington Country Club
+  No OSM data found
+[917/11231] Blossom Golf Center
+  No OSM data found
+[918/11231] Blossom Trails Golf Club
+  All 18 holes already have coords, skipping
+[919/11231] Blowing Rock Country Club
+  Found 17 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[920/11231] Blue Ash Golf Course
+  All 18 holes already have coords, skipping
+[921/11231] Blue Bell Country Club
+  All 18 holes already have coords, skipping
+[922/11231] Blue Course
+  All 18 holes already have coords, skipping
+[923/11231] Blue Fox Run Golf Course
+  Found 27 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[924/11231] Blue Heron Golf Course
+  No OSM data found
+[925/11231] Blue Heron Hills
+  All 18 holes already have coords, skipping
+[926/11231] Blue Heron Pines
+  No OSM data found
+[927/11231] Blue Heron Pines Golf Club
+  No OSM data found
+[928/11231] Blue Hill Country Club
+  All 18 holes already have coords, skipping
+[929/11231] Blue Hill Golf Course
+  No OSM data found
+[930/11231] Blue Hills Country Club
+  All 18 holes already have coords, skipping
+[931/11231] Blue Hills Golf Club
+  All 18 holes already have coords, skipping
+[932/11231] Blue Knob Golf Coub
+  Found 8 elements → 8 numbered holes
+  → Filled 0/10 missing holes
+[933/11231] Blue Lakes Country Club
+  Found 36 elements → 18 numbered holes
+    Hole 1: 42.607746, -114.469463
+    Hole 2: 42.606781, -114.467409
+    Hole 3: 42.604414, -114.465677
+    Hole 4: 42.603644, -114.463763
+    Hole 5: 42.601752, -114.462225
+    Hole 6: 42.602779, -114.465487
+    Hole 7: 42.601806, -114.467607
+    Hole 8: 42.603944, -114.469658
+    Hole 9: 42.608962, -114.475088
+    Hole 10: 42.607954, -114.469825
+    Hole 11: 42.607483, -114.463733
+    Hole 12: 42.609777, -114.465154
+    Hole 13: 42.610642, -114.472630
+    Hole 14: 42.613113, -114.469118
+    Hole 15: 42.609400, -114.471548
+    Hole 16: 42.607715, -114.474097
+    Hole 17: 42.606522, -114.469048
+    Hole 18: 42.604107, -114.467156
+  → Filled 18/18 missing holes
+[934/11231] Blue Mash Golf Course
+  All 18 holes already have coords, skipping
+[935/11231] Blue Mound Golf & Country Club
+  All 18 holes already have coords, skipping
+[936/11231] Blue Mountain Golf Course
+  All 18 holes already have coords, skipping
+[937/11231] Blue Ridge Shadows Golf Club
+  All 18 holes already have coords, skipping
+[938/11231] Blue Ridge Trail Golf Club
+  Found 27 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[939/11231] Blue Rock Golf Course
+  All 18 holes already have coords, skipping
+[940/11231] Blue Rock Spring Golf Club
+  All 18 holes already have coords, skipping
+[941/11231] Blue Rock Spring Golf Club - East Course
+  All 18 holes already have coords, skipping
+[942/11231] Blue Rock Spring Golf Club - West Course
+  All 18 holes already have coords, skipping
+[943/11231] Blue Sky Golf Club
+  No OSM data found
+[944/11231] Blue Top Ridge
+  Found 18 elements → 18 numbered holes
+    Hole 1: 41.501956, -91.532817
+    Hole 2: 41.499814, -91.537612
+    Hole 3: 41.503832, -91.537970
+    Hole 4: 41.502069, -91.540652
+    Hole 5: 41.504630, -91.536630
+    Hole 6: 41.501247, -91.536033
+    Hole 7: 41.503158, -91.535144
+    Hole 8: 41.503627, -91.527956
+    Hole 9: 41.501255, -91.526675
+    Hole 10: 41.501073, -91.531996
+    Hole 11: 41.497263, -91.533450
+    Hole 12: 41.499689, -91.533367
+    Hole 13: 41.497021, -91.540229
+    Hole 14: 41.497442, -91.535289
+    Hole 15: 41.495806, -91.536110
+    Hole 16: 41.495916, -91.540813
+    Hole 17: 41.501100, -91.540056
+    Hole 18: 41.499075, -91.537197
+  → Filled 18/18 missing holes
+[945/11231] Blueberry Hill Golf Course
+  No OSM data found
+[946/11231] Blueberry Hills Golf Course
+  No OSM data found
+[947/11231] Blueberry Mountain Golf Driving Range
+  No OSM data found
+[948/11231] Blueberry Pines Golf Club
+  All 18 holes already have coords, skipping
+[949/11231] Bluebonnet Country Golf Course
+  No OSM data found
+[950/11231] Bluefield Elks Club Golf Course
+  No OSM data found
+[951/11231] Bluejack National Golf Club
+  All 18 holes already have coords, skipping
+[952/11231] Blues Creek Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 40.302935, -83.332737
+    Hole 2: 40.302962, -83.329019
+    Hole 3: 40.303017, -83.324153
+    Hole 4: 40.303878, -83.327576
+    Hole 5: 40.303757, -83.323496
+    Hole 6: 40.304614, -83.326913
+    Hole 7: 40.303274, -83.332423
+    Hole 8: 40.304786, -83.327710
+    Hole 9: 40.305905, -83.333037
+    Hole 10: 40.302518, -83.333150
+    Hole 11: 40.301712, -83.328348
+    Hole 12: 40.299879, -83.331537
+    Hole 13: 40.300537, -83.330250
+    Hole 14: 40.300016, -83.329054
+    Hole 15: 40.301028, -83.323217
+    Hole 16: 40.301656, -83.326752
+    Hole 17: 40.302280, -83.323896
+    Hole 18: 40.302090, -83.328059
+  → Filled 18/18 missing holes
+[953/11231] Bluestone Country Club
+  All 18 holes already have coords, skipping
+[954/11231] Bluewater Bay Resort
+  No OSM data found
+[955/11231] Bluff Creek Golf Course
+  All 18 holes already have coords, skipping
+[956/11231] Bluffton Golf Club
+  All 18 holes already have coords, skipping
+[957/11231] Blythe Golf Course
+  No OSM data found
+[958/11231] Blythefield Country Club
+  All 18 holes already have coords, skipping
+[959/11231] Boaz Golf and Country Club
+  No OSM data found
+[960/11231] Bob Burns Golf
+  No OSM data found
+[961/11231] Bob O'Connor Golf Course
+  All 18 holes already have coords, skipping
+[962/11231] Bob-O-Link Golf Club
+  All 18 holes already have coords, skipping
+[963/11231] Bob-O-Link Golf Course
+  All 18 holes already have coords, skipping
+[964/11231] Bobby Jones Golf Club
+  No OSM data found
+[965/11231] Bobby Nichols Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[966/11231] Boca Delray Golf & Country Club
+  Found 15 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[967/11231] Boca Green Country Club
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[968/11231] Boca Grove
+  No OSM data found
+[969/11231] Boca Lago Country Club
+  Found 18 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[970/11231] Boca Rio Golf Club
+  All 18 holes already have coords, skipping
+[971/11231] Boca Royale Club
+  No OSM data found
+[972/11231] Boca West
+  No OSM data found
+[973/11231] Boca Woods Country Club
+  All 18 holes already have coords, skipping
+[974/11231] Bocaire Country Club
+  Found 26 elements → 9 numbered holes
+    Hole 1: 26.428974, -80.117078
+    Hole 2: 26.429774, -80.121551
+    Hole 3: 26.429933, -80.115643
+    Hole 4: 26.431583, -80.115695
+    Hole 5: 26.431688, -80.111183
+    Hole 6: 26.431682, -80.105819
+    Hole 7: 26.427825, -80.105229
+    Hole 8: 26.428312, -80.107927
+    Hole 9: 26.430315, -80.110370
+  → Filled 9/18 missing holes
+[975/11231] Bogart Golf Course (The Villages)
+  Found 59 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[976/11231] Bogey Hills Country Club
+  All 18 holes already have coords, skipping
+[977/11231] Boiling Springs Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 36.452589, -99.314642
+    Hole 2: 36.449289, -99.313072
+    Hole 3: 36.450181, -99.309364
+    Hole 4: 36.448719, -99.312587
+    Hole 5: 36.448184, -99.314027
+    Hole 6: 36.447582, -99.317491
+    Hole 7: 36.449620, -99.313223
+    Hole 8: 36.448537, -99.317473
+    Hole 9: 36.451386, -99.316333
+    Hole 10: 36.452419, -99.316271
+    Hole 11: 36.450543, -99.316642
+    Hole 12: 36.446708, -99.317472
+    Hole 13: 36.447954, -99.313831
+    Hole 14: 36.447759, -99.311567
+    Hole 15: 36.450414, -99.309468
+    Hole 16: 36.452961, -99.312213
+    Hole 17: 36.454479, -99.312962
+    Hole 18: 36.449876, -99.312612
+  → Filled 18/18 missing holes
+[978/11231] Boise Ranch Golf Course
+  All 18 holes already have coords, skipping
+[979/11231] Bolingbrook Golf Club
+  All 18 holes already have coords, skipping
+[980/11231] Bolivar Municpal Golf Course
+  No OSM data found
+[981/11231] Bomber Bayou Golf Course
+  No OSM data found
+[982/11231] Bomber's Golf Course
+  Found 6 elements → 6 numbered holes
+  → Filled 0/12 missing holes
+[983/11231] Bonaventure Country Club
+  Found 17 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[984/11231] Bonifay Country Club (The Villages)
+  Found 51 elements → 9 numbered holes
+    Hole 1: 28.859430, -81.977239
+    Hole 2: 28.859175, -81.983598
+    Hole 3: 28.860421, -81.981183
+    Hole 4: 28.864093, -81.982575
+    Hole 5: 28.864923, -81.975690
+    Hole 6: 28.864949, -81.970938
+    Hole 7: 28.863895, -81.964682
+    Hole 8: 28.864107, -81.971635
+    Hole 9: 28.864636, -81.975806
+  → Filled 9/18 missing holes
+[985/11231] Bonita Bay Club West
+  No OSM data found
+[986/11231] Bonita Bay East
+  Found 17 elements → 7 numbered holes
+    Hole 1: 26.284394, -81.659578
+    Hole 2: 26.289278, -81.657581
+    Hole 3: 26.292345, -81.657659
+    Hole 5: 26.283317, -81.659979
+    Hole 6: 26.280549, -81.663394
+    Hole 7: 26.279735, -81.657959
+    Hole 8: 26.290208, -81.659292
+  → Filled 7/18 missing holes
+[987/11231] Bonita Fairways Golf Course
+  No OSM data found
+[988/11231] Bonita Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 32.680490, -117.014276
+    Hole 2: 32.683635, -117.011375
+    Hole 3: 32.686746, -117.012359
+    Hole 4: 32.682959, -117.010304
+    Hole 5: 32.679763, -117.010009
+    Hole 6: 32.683046, -117.011485
+    Hole 7: 32.681101, -117.011751
+    Hole 8: 32.678487, -117.010747
+    Hole 9: 32.678247, -117.013513
+    Hole 10: 32.680561, -117.014539
+    Hole 11: 32.683521, -117.013634
+    Hole 12: 32.682813, -117.011373
+    Hole 13: 32.678323, -117.010648
+    Hole 14: 32.677500, -117.013582
+    Hole 15: 32.676255, -117.016542
+    Hole 16: 32.676215, -117.016182
+    Hole 17: 32.679968, -117.014346
+    Hole 18: 32.678667, -117.010899
+  → Filled 18/18 missing holes
+[989/11231] Bonita Pass Golf Course (The Villages)
+  Found 60 elements → 9 numbered holes
+    Hole 1: 28.893169, -81.994757
+    Hole 2: 28.895956, -81.998841
+    Hole 3: 28.895377, -82.002604
+    Hole 4: 28.898445, -82.001096
+    Hole 5: 28.898195, -82.005308
+    Hole 6: 28.898478, -82.006929
+    Hole 7: 28.894740, -82.006526
+    Hole 8: 28.887215, -82.000510
+    Hole 9: 28.895303, -81.998019
+  → Filled 9/18 missing holes
+[990/11231] Bonneville Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 40.747327, -111.824970
+    Hole 2: 40.746796, -111.818804
+    Hole 3: 40.743128, -111.819786
+    Hole 4: 40.747043, -111.819868
+    Hole 5: 40.743600, -111.821344
+    Hole 6: 40.744462, -111.827670
+    Hole 7: 40.745303, -111.828909
+    Hole 8: 40.748258, -111.829732
+    Hole 9: 40.745426, -111.827604
+    Hole 10: 40.745482, -111.824611
+    Hole 11: 40.747506, -111.819314
+    Hole 12: 40.748204, -111.815206
+    Hole 13: 40.743851, -111.815905
+    Hole 14: 40.747491, -111.814185
+    Hole 15: 40.743201, -111.814014
+    Hole 16: 40.743073, -111.817461
+    Hole 17: 40.747156, -111.817277
+    Hole 18: 40.747124, -111.820254
+  → Filled 18/18 missing holes
+[991/11231] Bonnie Briar Country Club
+  Found 24 elements → 15 numbered holes
+  → Filled 0/3 missing holes
+[992/11231] Bonnie Brook Golf Course
+  All 18 holes already have coords, skipping
+[993/11231] Bonnie Brook Golf Range
+  Found 2 elements → 2 numbered holes
+    Hole 12: 42.452462, -83.265220
+    Hole 13: 42.452561, -83.266874
+  → Filled 2/18 missing holes
+[994/11231] Bonnie Dundee Golf Club
+  No OSM data found
+[995/11231] Bonnie View Golf Course
+  No OSM data found
+[996/11231] Bonniebrook Clubhouse Golf Course
+  No OSM data found
+[997/11231] Bookcliff Country Club
+  No OSM data found
+[998/11231] Boomerang Links
+  Found 18 elements → 18 numbered holes
+    Hole 1: 40.430270, -104.798654
+    Hole 2: 40.434852, -104.800421
+    Hole 3: 40.436407, -104.796761
+    Hole 4: 40.439924, -104.795729
+    Hole 5: 40.440680, -104.792588
+    Hole 6: 40.437120, -104.792757
+    Hole 7: 40.434528, -104.794058
+    Hole 8: 40.435277, -104.794967
+    Hole 9: 40.434598, -104.800449
+    Hole 10: 40.428708, -104.799454
+    Hole 11: 40.424522, -104.802121
+    Hole 12: 40.422447, -104.803174
+    Hole 13: 40.422233, -104.797195
+    Hole 14: 40.421709, -104.799196
+    Hole 15: 40.422303, -104.803675
+    Hole 16: 40.427253, -104.802542
+    Hole 17: 40.428756, -104.800837
+    Hole 18: 40.425028, -104.801816
+  → Filled 18/18 missing holes
+[999/11231] Boone Creek Golf Course
+  No OSM data found
+[1000/11231] Boone Golf Club
+  All 18 holes already have coords, skipping
+[1001/11231] Boone Links Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1002/11231] Boone Valley Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 38.625562, -90.874602
+    Hole 2: 38.622848, -90.877530
+    Hole 3: 38.624323, -90.881958
+    Hole 4: 38.622832, -90.881550
+    Hole 5: 38.625902, -90.886443
+    Hole 6: 38.628830, -90.886254
+    Hole 7: 38.624699, -90.882531
+    Hole 8: 38.625070, -90.878429
+    Hole 9: 38.623488, -90.878542
+    Hole 10: 38.628135, -90.876126
+    Hole 11: 38.630674, -90.876160
+    Hole 12: 38.630217, -90.879376
+    Hole 13: 38.629542, -90.881407
+    Hole 14: 38.628017, -90.876211
+    Hole 15: 38.627000, -90.881359
+    Hole 16: 38.627575, -90.884450
+    Hole 17: 38.626963, -90.883181
+    Hole 18: 38.624519, -90.878240
+  → Filled 18/18 missing holes
+[1003/11231] Boone's Trace National Golf Club
+  No OSM data found
+[1004/11231] Boonsboro Country Club
+  No OSM data found
+[1005/11231] Boothbay Harbor Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 43.877733, -69.628883
+    Hole 2: 43.875308, -69.628560
+    Hole 3: 43.874566, -69.628092
+    Hole 4: 43.870657, -69.628158
+    Hole 5: 43.870879, -69.623366
+    Hole 6: 43.874446, -69.627299
+    Hole 7: 43.872580, -69.622448
+    Hole 8: 43.874642, -69.622893
+    Hole 9: 43.876004, -69.627839
+    Hole 10: 43.876919, -69.621000
+    Hole 11: 43.873971, -69.621559
+    Hole 12: 43.876107, -69.618747
+    Hole 13: 43.877535, -69.613614
+    Hole 14: 43.877529, -69.618277
+    Hole 15: 43.879286, -69.614316
+    Hole 16: 43.878589, -69.618842
+    Hole 17: 43.876679, -69.621266
+    Hole 18: 43.876320, -69.623391
+  → Filled 18/18 missing holes
+[1006/11231] Bootheel Golf Course (closed)
+  All 18 holes already have coords, skipping
+[1007/11231] Borrego Springs Resort
+  No OSM data found
+[1008/11231] Bos Landen Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 41.391807, -92.950588
+    Hole 2: 41.393762, -92.955267
+    Hole 3: 41.393997, -92.960539
+    Hole 4: 41.395545, -92.960973
+    Hole 5: 41.397856, -92.958857
+    Hole 6: 41.398548, -92.954154
+    Hole 7: 41.397374, -92.954520
+    Hole 8: 41.395949, -92.958162
+    Hole 9: 41.394184, -92.953673
+    Hole 10: 41.391785, -92.949079
+    Hole 11: 41.393249, -92.943515
+    Hole 12: 41.388588, -92.942297
+    Hole 13: 41.387818, -92.945979
+    Hole 14: 41.388841, -92.948027
+    Hole 15: 41.389255, -92.953997
+    Hole 16: 41.391842, -92.956722
+    Hole 17: 41.392559, -92.954430
+    Hole 18: 41.389890, -92.952996
+  → Filled 18/18 missing holes
+[1009/11231] Boscobel Golf Club
+  All 18 holes already have coords, skipping
+[1010/11231] Bosque Valley Golf Course
+  No OSM data found
+[1011/11231] Boston Golf Club
+  Found 23 elements → 18 numbered holes
+    Hole 1: 42.190582, -70.901097
+    Hole 2: 42.192374, -70.906640
+    Hole 3: 42.189750, -70.910138
+    Hole 4: 42.191347, -70.905091
+    Hole 5: 42.187884, -70.907510
+    Hole 6: 42.185931, -70.904974
+    Hole 7: 42.184961, -70.906565
+    Hole 8: 42.187393, -70.903085
+    Hole 9: 42.187687, -70.904950
+    Hole 10: 42.190082, -70.899282
+    Hole 11: 42.187299, -70.896625
+    Hole 12: 42.185932, -70.894777
+    Hole 13: 42.187532, -70.890408
+    Hole 14: 42.191552, -70.891102
+    Hole 15: 42.191505, -70.896366
+    Hole 16: 42.188307, -70.890841
+    Hole 17: 42.186725, -70.894413
+    Hole 18: 42.191069, -70.896664
+  → Filled 18/18 missing holes
+[1012/11231] Botetourt Golf & Swim Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 37.474707, -79.925286
+    Hole 2: 37.474683, -79.929954
+    Hole 3: 37.475906, -79.927553
+    Hole 4: 37.475866, -79.930253
+    Hole 5: 37.476864, -79.930265
+    Hole 6: 37.478438, -79.930668
+    Hole 7: 37.478462, -79.926155
+    Hole 8: 37.477337, -79.929815
+    Hole 9: 37.478078, -79.927155
+    Hole 10: 37.475762, -79.924456
+    Hole 11: 37.476995, -79.923776
+    Hole 12: 37.476495, -79.919613
+    Hole 13: 37.478606, -79.921216
+    Hole 14: 37.477417, -79.924926
+    Hole 15: 37.478927, -79.921909
+    Hole 16: 37.480384, -79.919859
+    Hole 17: 37.479859, -79.920993
+    Hole 18: 37.478200, -79.926012
+  → Filled 18/18 missing holes
+[1013/11231] Botten's Green Acres
+  Found 9 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[1014/11231] Bougainvillea Course
+  No OSM data found
+[1015/11231] Boughton Ridge Golf Course
+  No OSM data found
+[1016/11231] Boulder City Municipal Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 35.959133, -114.843422
+    Hole 2: 35.963317, -114.843889
+    Hole 3: 35.960711, -114.844765
+    Hole 4: 35.963934, -114.844405
+    Hole 5: 35.963465, -114.842289
+    Hole 6: 35.958414, -114.842206
+    Hole 7: 35.957727, -114.837624
+    Hole 8: 35.954920, -114.837856
+    Hole 9: 35.957461, -114.838007
+    Hole 10: 35.958309, -114.842531
+    Hole 11: 35.954675, -114.843012
+    Hole 12: 35.954800, -114.838572
+    Hole 13: 35.951542, -114.839629
+    Hole 14: 35.949267, -114.841224
+    Hole 15: 35.951581, -114.840152
+    Hole 16: 35.949843, -114.843844
+    Hole 17: 35.953530, -114.841315
+    Hole 18: 35.955243, -114.844172
+  → Filled 18/18 missing holes
+[1017/11231] Boulder Country Club
+  All 18 holes already have coords, skipping
+[1018/11231] Boulder Creek Golf & Country Club
+  No OSM data found
+[1019/11231] Boulder Creek Golf Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 41.252638, -81.323849
+    Hole 2: 41.252094, -81.316754
+    Hole 3: 41.252888, -81.312607
+    Hole 4: 41.252513, -81.309615
+    Hole 5: 41.251553, -81.312916
+    Hole 6: 41.249811, -81.308875
+    Hole 7: 41.250454, -81.315201
+    Hole 8: 41.251415, -81.315760
+    Hole 9: 41.251181, -81.320000
+    Hole 10: 41.252871, -81.323741
+    Hole 11: 41.254457, -81.316138
+    Hole 12: 41.253805, -81.311941
+    Hole 13: 41.254584, -81.308543
+    Hole 14: 41.256766, -81.313006
+    Hole 15: 41.256218, -81.316800
+    Hole 16: 41.255832, -81.313420
+    Hole 17: 41.252825, -81.316527
+    Hole 18: 41.253379, -81.317430
+  → Filled 18/18 missing holes
+[1020/11231] Boulder Creek Golf Course
+  Found 11 elements → 11 numbered holes
+  → Filled 0/7 missing holes
+[1021/11231] Boulder Pointe Golf Club
+  Found 27 elements → 18 numbered holes
+    Hole 1: 42.833556, -83.277332
+    Hole 2: 42.835130, -83.270504
+    Hole 3: 42.837352, -83.268556
+    Hole 4: 42.841677, -83.270166
+    Hole 5: 42.841606, -83.265958
+    Hole 6: 42.835644, -83.268175
+    Hole 7: 42.832995, -83.262342
+    Hole 8: 42.833244, -83.267947
+    Hole 9: 42.833815, -83.272844
+    Hole 10: 42.834959, -83.277727
+    Hole 11: 42.834987, -83.283454
+    Hole 12: 42.833007, -83.285641
+    Hole 13: 42.830648, -83.291204
+    Hole 14: 42.829518, -83.293651
+    Hole 15: 42.830015, -83.297986
+    Hole 16: 42.829424, -83.291311
+    Hole 17: 42.828983, -83.285125
+    Hole 18: 42.832068, -83.280602
+  → Filled 18/18 missing holes
+[1022/11231] Boulder Ridge Country Club
+  Found 1 elements → 1 numbered holes
+    Hole 6: 42.183416, -88.352414
+  → Filled 1/18 missing holes
+[1023/11231] Boundary Oak Golf Course
+  All 18 holes already have coords, skipping
+[1024/11231] Bountiful Ridge Golf Course
+  All 18 holes already have coords, skipping
+[1025/11231] Bourne Golf Club
+  All 18 holes already have coords, skipping
+[1026/11231] Bowden Golf Course
+  Found 17 elements → 17 numbered holes
+    Hole 1: 32.861729, -83.570157
+    Hole 2: 32.858519, -83.572992
+    Hole 3: 32.855857, -83.573221
+    Hole 4: 32.853619, -83.573461
+    Hole 5: 32.855617, -83.571368
+    Hole 6: 32.858286, -83.569689
+    Hole 7: 32.858439, -83.571278
+    Hole 8: 32.860212, -83.567932
+    Hole 9: 32.860234, -83.566751
+    Hole 10: 32.863035, -83.568714
+    Hole 11: 32.864684, -83.564523
+    Hole 13: 32.858861, -83.561653
+    Hole 14: 32.857202, -83.562770
+    Hole 15: 32.858955, -83.559501
+    Hole 16: 32.860250, -83.560067
+    Hole 17: 32.859984, -83.562752
+    Hole 18: 32.860735, -83.566142
+  → Filled 17/18 missing holes
+[1027/11231] Bowes Creek Country Club
+  Found 10 elements → 10 numbered holes
+    Hole 1: 41.999913, -88.379573
+    Hole 2: 41.996931, -88.381211
+    Hole 3: 41.994023, -88.385967
+    Hole 4: 41.992230, -88.384925
+    Hole 5: 41.994239, -88.389121
+    Hole 6: 41.994111, -88.385878
+    Hole 7: 41.995636, -88.379119
+    Hole 8: 41.993337, -88.376138
+    Hole 9: 41.996685, -88.380896
+    Hole 17: 41.996563, -88.387175
+  → Filled 10/18 missing holes
+[1028/11231] Bowie Golf and Coutry Club
+  All 18 holes already have coords, skipping
+[1029/11231] Bowler's Country Club
+  No OSM data found
+[1030/11231] Bowling Green Country Club
+  Found 54 elements → 18 numbered holes
+    Hole 1: 38.993322, -78.131572
+    Hole 2: 38.988829, -78.132132
+    Hole 3: 38.987579, -78.130585
+    Hole 4: 38.988350, -78.127435
+    Hole 5: 38.987312, -78.131422
+    Hole 6: 38.990249, -78.134854
+    Hole 7: 38.993061, -78.132809
+    Hole 8: 38.990562, -78.135756
+    Hole 9: 38.991549, -78.135687
+    Hole 10: 38.994412, -78.130795
+    Hole 11: 38.992717, -78.128013
+    Hole 12: 38.989728, -78.130167
+    Hole 13: 38.988820, -78.129251
+    Hole 14: 38.991787, -78.126692
+    Hole 15: 38.993935, -78.125240
+    Hole 16: 38.995641, -78.124895
+    Hole 17: 38.992697, -78.127820
+    Hole 18: 38.995297, -78.126631
+  → Filled 18/18 missing holes
+[1031/11231] Bowling Green Golf Club
+  No OSM data found
+[1032/11231] Brabender's Southwoods Golf Course
+  No OSM data found
+[1033/11231] Brackenridge Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 29.449998, -98.477037
+    Hole 2: 29.453231, -98.476504
+    Hole 3: 29.454295, -98.475726
+    Hole 4: 29.449577, -98.476135
+    Hole 5: 29.452021, -98.474750
+    Hole 6: 29.455698, -98.474265
+    Hole 7: 29.452591, -98.475400
+    Hole 8: 29.455913, -98.475318
+    Hole 9: 29.454461, -98.476774
+    Hole 10: 29.450291, -98.477666
+    Hole 11: 29.449779, -98.479719
+    Hole 12: 29.451033, -98.483165
+    Hole 13: 29.448604, -98.479226
+    Hole 14: 29.449780, -98.483232
+    Hole 15: 29.447236, -98.478908
+    Hole 16: 29.448840, -98.478740
+    Hole 17: 29.446534, -98.476854
+    Hole 18: 29.448994, -98.478775
+  → Filled 18/18 missing holes
+[1034/11231] Brackenridge Heights Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1035/11231] Bradenton Country Club
+  All 18 holes already have coords, skipping
+[1036/11231] Bradford Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 42.751371, -71.066737
+    Hole 2: 42.753275, -71.071190
+    Hole 3: 42.754631, -71.072562
+    Hole 4: 42.754847, -71.069284
+    Hole 5: 42.757626, -71.066578
+    Hole 6: 42.758779, -71.065847
+    Hole 7: 42.756997, -71.065880
+    Hole 8: 42.754060, -71.067319
+    Hole 9: 42.751884, -71.064337
+    Hole 10: 42.747349, -71.067860
+    Hole 11: 42.745009, -71.071905
+    Hole 12: 42.743333, -71.070060
+    Hole 13: 42.743824, -71.067453
+    Hole 14: 42.745331, -71.069980
+    Hole 15: 42.745605, -71.063947
+    Hole 16: 42.744023, -71.067194
+    Hole 17: 42.744249, -71.071650
+    Hole 18: 42.747890, -71.069604
+  → Filled 18/18 missing holes
+[1037/11231] Bradford Creek Public Golf Course
+  All 18 holes already have coords, skipping
+[1038/11231] Bradford Golf Club
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1039/11231] Bradshaw Ranch Golf Course
+  Found 9 elements → 9 numbered holes
+    Hole 1: 38.490835, -121.336040
+    Hole 2: 38.489975, -121.336351
+    Hole 3: 38.490133, -121.338462
+    Hole 4: 38.490433, -121.339378
+    Hole 5: 38.491536, -121.338915
+    Hole 6: 38.491032, -121.337794
+    Hole 7: 38.490629, -121.338712
+    Hole 8: 38.490959, -121.336096
+    Hole 9: 38.491515, -121.337322
+  → Filled 9/18 missing holes
+[1040/11231] Brae Burn Country Club
+  All 18 holes already have coords, skipping
+[1041/11231] Brae Burn Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1042/11231] Brae Loch Golf Course
+  Found 18 elements → 17 numbered holes
+    Hole 1: 42.349553, -88.005964
+    Hole 3: 42.349479, -88.010957
+    Hole 4: 42.347512, -88.013583
+    Hole 5: 42.347517, -88.009105
+    Hole 6: 42.348110, -88.007462
+    Hole 7: 42.348615, -88.013182
+    Hole 8: 42.349080, -88.007546
+    Hole 9: 42.347492, -88.004548
+    Hole 10: 42.349866, -88.005762
+    Hole 11: 42.349939, -88.010641
+    Hole 12: 42.350375, -88.013092
+    Hole 13: 42.351523, -88.014096
+    Hole 14: 42.351063, -88.008306
+    Hole 15: 42.350456, -88.012686
+    Hole 16: 42.350216, -88.010326
+    Hole 17: 42.350905, -88.005833
+    Hole 18: 42.351602, -88.008234
+  → Filled 17/18 missing holes
+[1043/11231] Brae-Burn Golf Club
+  No OSM data found
+[1044/11231] BraeBurn Country Club
+  All 18 holes already have coords, skipping
+[1045/11231] Braelinn Golf Club
+  All 18 holes already have coords, skipping
+[1046/11231] Braemar Country Club
+  Found 18 elements → 18 numbered holes
+    Hole 1: 43.223921, -77.763657
+    Hole 2: 43.227689, -77.765122
+    Hole 3: 43.231020, -77.766262
+    Hole 4: 43.231411, -77.766408
+    Hole 5: 43.236341, -77.766661
+    Hole 6: 43.237632, -77.763800
+    Hole 7: 43.234676, -77.765050
+    Hole 8: 43.229892, -77.765150
+    Hole 9: 43.226765, -77.764786
+    Hole 10: 43.222922, -77.762260
+    Hole 11: 43.226222, -77.761043
+    Hole 12: 43.226963, -77.758988
+    Hole 13: 43.227014, -77.762831
+    Hole 14: 43.228281, -77.759106
+    Hole 15: 43.228344, -77.763219
+    Hole 16: 43.232068, -77.764260
+    Hole 17: 43.227308, -77.763442
+    Hole 18: 43.225992, -77.763159
+  → Filled 18/18 missing holes
+[1047/11231] Braemar Golf Course
+  All 18 holes already have coords, skipping
+[1048/11231] Brainerd Golf Course
+  All 18 holes already have coords, skipping
+[1049/11231] Braintree Municipal Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 42.195872, -71.010700
+    Hole 2: 42.193536, -71.009920
+    Hole 3: 42.191015, -71.011851
+    Hole 4: 42.189103, -71.011987
+    Hole 5: 42.186517, -71.014716
+    Hole 6: 42.186426, -71.018127
+    Hole 7: 42.190765, -71.018177
+    Hole 8: 42.187958, -71.015050
+    Hole 9: 42.192569, -71.010880
+    Hole 10: 42.196076, -71.011801
+    Hole 11: 42.191971, -71.012922
+    Hole 12: 42.188221, -71.015300
+    Hole 13: 42.189474, -71.015464
+    Hole 14: 42.193271, -71.017786
+    Hole 15: 42.190736, -71.014582
+    Hole 16: 42.193838, -71.013877
+    Hole 17: 42.195988, -71.012683
+    Hole 18: 42.198905, -71.010312
+  → Filled 18/18 missing holes
+[1050/11231] Brambleton Golf Club
+  All 18 holes already have coords, skipping
+[1051/11231] Bramblewood Country Club
+  No OSM data found
+[1052/11231] Brandermill Country Club
+  All 18 holes already have coords, skipping
+[1053/11231] Brandon Golf Course
+  Found 18 elements → 18 numbered holes
+    Hole 1: 43.588759, -96.558066
+    Hole 2: 43.591928, -96.562732
+    Hole 3: 43.592162, -96.560625
+    Hole 4: 43.595305, -96.559664
+    Hole 5: 43.593009, -96.559933
+    Hole 6: 43.592469, -96.555786
+    Hole 7: 43.591894, -96.560212
+    Hole 8: 43.591148, -96.555566
+    Hole 9: 43.590717, -96.561134
+    Hole 10: 43.587744, -96.559278
+    Hole 11: 43.588953, -96.562509
+    Hole 12: 43.591863, -96.564157
+    Hole 13: 43.595581, -96.565037
+    Hole 14: 43.595267, -96.562623
+    Hole 15: 43.592858, -96.563100
+    Hole 16: 43.595395, -96.560939
+    Hole 17: 43.591842, -96.563206
+    Hole 18: 43.590103, -96.562416
+  → Filled 18/18 missing holes
+[1054/11231] Brandywine Country Club
+  No OSM data found
+[1055/11231] Branson Bay Golf Course
+  No OSM data found
+[1056/11231] Brantingham Golf Course
+  No OSM data found
+[1057/11231] Brattleboro Country Club
+  All 18 holes already have coords, skipping
+[1058/11231] Brazell's Creek Golf Course
+  No OSM data found
+[1059/11231] Brea Creek Golf Course
+  Found 24 elements → 12 numbered holes
+  → Filled 0/6 missing holes
+[1060/11231] Breakfast Hill Golf Club
+  All 18 holes already have coords, skipping
+[1061/11231] Breaking Bad Golf
+  No OSM data found
+[1062/11231] Breckenridge Golf Club
+  All 18 holes already have coords, skipping
+[1063/11231] Breckinridge Golf Course
+  No OSM data found
+[1064/11231] Breda Golf Club
+  No OSM data found
+[1065/11231] Breezewood Links
+  No OSM data found
+[1066/11231] Brenham Country Club
+  No OSM data found
+[1067/11231] Brent Bruehl Memorial Golf Course
+  No OSM data found
+[1068/11231] Brentwood
+  No OSM data found
+[1069/11231] Brentwood Country Club
+  All 18 holes already have coords, skipping
+[1070/11231] Brentwood Golf Club and Banquet Center
+  Found 18 elements → 18 numbered holes
+    Hole 1: 42.619523, -83.526602
+    Hole 2: 42.619755, -83.521340
+    Hole 3: 42.618013, -83.521788
+    Hole 4: 42.615359, -83.522746
+    Hole 5: 42.616693, -83.524884
+    Hole 6: 42.616948, -83.527885
+    Hole 7: 42.612431, -83.530285
+    Hole 8: 42.614829, -83.529879
+    Hole 9: 42.618681, -83.525526
+    Hole 10: 42.618885, -83.529318
+    Hole 11: 42.618482, -83.533011
+    Hole 12: 42.620203, -83.528029
+    Hole 13: 42.622299, -83.528206
+    Hole 14: 42.626574, -83.531171
+    Hole 15: 42.623153, -83.529497
+    Hole 16: 42.624848, -83.531797
+    Hole 17: 42.620496, -83.531712
+    Hole 18: 42.620481, -83.530121
+  → Filled 18/18 missing holes
+[1071/11231] Brentwood Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1072/11231] Breton Bay Golf Course
+  All 18 holes already have coords, skipping
+[1073/11231] Bretton Woods Golf Course
+  Found 24 elements → 18 numbered holes
+    Hole 1: 39.074999, -77.332054
+    Hole 2: 39.071633, -77.334715
+    Hole 3: 39.070773, -77.332745
+    Hole 4: 39.070122, -77.340004
+    Hole 5: 39.074291, -77.340074
+    Hole 6: 39.075686, -77.336259
+    Hole 7: 39.077324, -77.334924
+    Hole 8: 39.073270, -77.335074
+    Hole 9: 39.077571, -77.332615
+    Hole 10: 39.075616, -77.332315
+    Hole 11: 39.072286, -77.335234
+    Hole 12: 39.072538, -77.339290
+    Hole 13: 39.071312, -77.334429
+    Hole 14: 39.072148, -77.339310
+    Hole 15: 39.069491, -77.339401
+    Hole 16: 39.070948, -77.332314
+    Hole 17: 39.068762, -77.331511
+    Hole 18: 39.070655, -77.331874
+  → Filled 18/18 missing holes
+[1074/11231] Bretwood Golf Course
+  All 18 holes already have coords, skipping
+[1075/11231] Brevofield Golf Links
+  Found 18 elements → 18 numbered holes
+    Hole 1: 36.005301, -78.567873
+    Hole 2: 36.002941, -78.570367
+    Hole 3: 36.000564, -78.572684
+    Hole 4: 36.002277, -78.575766
+    Hole 5: 36.003839, -78.578086
+    Hole 6: 36.002075, -78.575550
+    Hole 7: 36.001632, -78.571889
+    Hole 8: 36.003182, -78.575143
+    Hole 9: 36.004311, -78.569769
+    Hole 10: 36.006200, -78.569023
+    Hole 11: 36.006674, -78.571559
+    Hole 12: 36.008043, -78.568926
+    Hole 13: 36.007703, -78.572327
+    Hole 14: 36.009044, -78.568445
+    Hole 15: 36.009776, -78.570722
+    Hole 16: 36.009861, -78.567501
+    Hole 17: 36.005821, -78.569130
+    Hole 18: 36.004268, -78.573136
+  → Filled 18/18 missing holes
+[1076/11231] Briar Bay Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1077/11231] Briar Creek Golf Course
+  No OSM data found
+[1078/11231] Briar Leaf Golf Club
+  No OSM data found
+[1079/11231] Briar Ridge Golf Course
+  No OSM data found
+[1080/11231] Briarbrook Golf Course
+  No OSM data found
+[1081/11231] Briardale Greens Golf Course
+  Found 18 elements → 0 numbered holes
+  No hole numbers found in OSM data
+[1082/11231] Briarmeade Golf Club
+  No OSM data found
+[1083/11231] Briarwood & Walnut Grove Courses (The Villages)
+  Found 49 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1084/11231] Briarwood Club of Ankeny
+  All 18 holes already have coords, skipping
+[1085/11231] Briarwood Country Club
+  Found 8 elements → 8 numbered holes
+    Hole 1: 42.165854, -87.837349
+    Hole 2: 42.162656, -87.838062
+    Hole 3: 42.158737, -87.838151
+    Hole 5: 42.163368, -87.842767
+    Hole 6: 42.160455, -87.840416
+    Hole 7: 42.157627, -87.837724
+    Hole 8: 42.160825, -87.835460
+    Hole 9: 42.162011, -87.836559
+  → Filled 8/18 missing holes
+[1086/11231] Briarwood Golf Club
+  All 18 holes already have coords, skipping
+[1087/11231] Brickshire Golf Club
+  All 18 holes already have coords, skipping
+[1088/11231] Brickyard Crossing Golf Course
+  No OSM data found
+[1089/11231] Bridge Haven Golf Club
+  All 18 holes already have coords, skipping
+[1090/11231] BridgeMill Athletic Club
+  Found 17 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[1091/11231] Bridgeport Country Club
+  No OSM data found
+[1092/11231] Bridger Creek Golf Course
+  No OSM data found
+[1093/11231] Bridges Golf Club
+  Found 18 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[1094/11231] Bridges Golf Course
+  All 18 holes already have coords, skipping
+[1095/11231] Bridgeton Berry Hill Golf Course
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1096/11231] Bridgewater
+  No OSM data found
+[1097/11231] Bridgewater Golf Club
+  All 18 holes already have coords, skipping
+[1098/11231] Bridgewater Links
+  No OSM data found
+[1099/11231] Bridlewood Golf Course
+  Found 18 elements → 17 numbered holes
+    Hole 2: 33.053501, -97.093657
+    Hole 3: 33.058326, -97.094402
+    Hole 4: 33.058121, -97.091304
+    Hole 5: 33.054313, -97.089832
+    Hole 6: 33.048114, -97.088743
+    Hole 7: 33.043431, -97.089065
+    Hole 8: 33.042240, -97.093722
+    Hole 9: 33.044788, -97.093377
+    Hole 10: 33.050184, -97.091351
+    Hole 11: 33.052515, -97.094000
+    Hole 12: 33.055144, -97.097822
+    Hole 13: 33.054945, -97.099882
+    Hole 14: 33.055771, -97.105030
+    Hole 15: 33.056659, -97.109451
+    Hole 16: 33.054549, -97.105648
+    Hole 17: 33.054073, -97.100160
+    Hole 18: 33.053466, -97.097684
+  → Filled 17/18 missing holes
+[1100/11231] Brier Creek Country Club
+  All 18 holes already have coords, skipping
+[1101/11231] Brier Patch Golf Links
+  All 18 holes already have coords, skipping
+[1102/11231] Briery Country Club
+  No OSM data found
+[1103/11231] Briggs Ranch
+  Found 23 elements → 18 numbered holes
+    Hole 1: 29.406892, -98.759539
+    Hole 2: 29.408688, -98.755409
+    Hole 3: 29.404711, -98.754803
+    Hole 4: 29.403321, -98.754181
+    Hole 5: 29.405278, -98.752786
+    Hole 6: 29.400857, -98.754601
+    Hole 7: 29.397053, -98.754317
+    Hole 8: 29.401194, -98.756237
+    Hole 9: 29.402642, -98.758093
+    Hole 10: 29.406563, -98.760689
+    Hole 11: 29.407275, -98.763746
+    Hole 12: 29.401586, -98.764490
+    Hole 13: 29.397633, -98.765507
+    Hole 14: 29.402802, -98.765262
+    Hole 15: 29.404884, -98.766805
+    Hole 16: 29.404014, -98.768613
+    Hole 17: 29.406618, -98.765549
+    Hole 18: 29.408693, -98.764567
+  → Filled 18/18 missing holes
+[1104/11231] Briggs Woods Golf Course
+  All 18 holes already have coords, skipping
+[1105/11231] Bright Grandview Golf Course
+  Found 18 elements → 17 numbered holes
+  → Filled 0/1 missing holes
+[1106/11231] Brighton Dale Links
+  All 18 holes already have coords, skipping
+[1107/11231] Brighton Park Golf Course
+  All 18 holes already have coords, skipping
+[1108/11231] Brightwood Hills Golf Course
+  No OSM data found
+[1109/11231] Brimfield View Driving Range
+  No OSM data found
+[1110/11231] Bristol Golf Park
+  Found 9 elements → 9 numbered holes
+  → Filled 0/9 missing holes
+[1111/11231] Bristol Oaks Golf Club
+  All 18 holes already have coords, skipping
+[1112/11231] Bristol Ridge Golf Course
+  No OSM data found
+[1113/11231] Bristow Manor Golf Club
+  All 18 holes already have coords, skipping
+[1114/11231] Britt Country Club
+  No OSM data found
+[1115/11231] Brittany
+Fatal: Error: getaddrinfo ENOTFOUND awlbxzpevwidowxxvuef.supabase.co
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+  errno: -3008,
+  code: 'ENOTFOUND',
+  syscall: 'getaddrinfo',
+  hostname: 'awlbxzpevwidowxxvuef.supabase.co'
+}
+Processing 11231 courses...
+
+[1/11231] "The Old Course" at Sugar Loaf
+  All 18 holes already have coords, skipping
+[2/11231] #2 Green
+  All 18 holes already have coords, skipping
+[3/11231] #2 Tee Red
+  Found 16 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[4/11231] #2 Tee White
+  Found 16 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[5/11231] #8 White Tee
+  Found 16 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[6/11231] 10TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[7/11231] 10TH GREEN
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[8/11231] 10TH TEE BOX
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[9/11231] 11TH FAIRWAY
+  Found 3 elements → 3 numbered holes
+  → Filled 0/15 missing holes
+[10/11231] 11TH GREEN
+Processing 11231 courses...
+
+[1/11231] "The Old Course" at Sugar Loaf
+  All 18 holes already have coords, skipping
+[2/11231] #2 Green
+  All 18 holes already have coords, skipping
+[3/11231] #2 Tee Red
+  Found 16 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[4/11231] #2 Tee White
+  Found 16 elements → 16 numbered holes
+  → Filled 0/2 missing holes
+[5/11231] #8 White Tee

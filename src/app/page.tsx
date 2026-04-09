@@ -582,6 +582,7 @@ export default function Home() {
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const [nearMeRadius, setNearMeRadius] = useState(50);
   const [publicOnly, setPublicOnly] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -923,21 +924,80 @@ export default function Home() {
         .splash-fade-out { animation: splash-fade-out 0.6s ease forwards; }
       `}</style>
 
+      {/* ── Hamburger drawer ── */}
+      {menuOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200 }}>
+          {/* Backdrop */}
+          <div onClick={() => setMenuOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }} />
+          {/* Panel */}
+          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "72vw", maxWidth: 300, background: "#07100a", borderRight: "1px solid rgba(77,168,98,0.18)", display: "flex", flexDirection: "column", paddingTop: 64, paddingBottom: 40 }}>
+            {/* Close */}
+            <button onClick={() => setMenuOpen(false)} style={{ position: "absolute", top: 18, right: 16, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+
+            {/* Logo mark */}
+            <div style={{ paddingLeft: 24, paddingBottom: 28, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 36, width: "auto" }} />
+            </div>
+
+            {/* Nav items */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 12 }}>
+              {[
+                { label: "My Profile", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>, onClick: () => { setMenuOpen(false); router.push("/profile"); } },
+                { label: "My Trips", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>, onClick: () => { setMenuOpen(false); router.push("/trips"); } },
+                { label: "Privacy Policy", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, onClick: () => { setMenuOpen(false); router.push("/privacy"); } },
+                { label: "Contact Us", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>, onClick: () => { setMenuOpen(false); window.location.href = "mailto:corey@touritgolf.com"; } },
+              ].map(item => (
+                <button key={item.label} onClick={item.onClick} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 24px", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.82)", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 500, textAlign: "left", transition: "background 0.15s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(77,168,98,0.08)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "none")}
+                >
+                  <span style={{ color: "#4da862", flexShrink: 0 }}>{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Log out */}
+            {user && (
+              <button
+                onClick={async () => {
+                  setMenuOpen(false);
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                  router.push("/login");
+                }}
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid rgba(255,255,255,0.07)", cursor: "pointer", color: "rgba(255,100,100,0.8)", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 500, width: "100%", textAlign: "left" }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Log Out
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div ref={feedRef} className="feed" onScroll={handleScroll}>
 
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
-          {/* Green header bar with logo + bell */}
-          <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", flexShrink: 0, paddingBottom: 18 }}>
+          {/* Green header bar */}
+          <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", flexShrink: 0 }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 24, background: "linear-gradient(to bottom, transparent, #07100a)", pointerEvents: "none" }} />
-            {/* Notification bell — top right */}
-            <div style={{ position: "absolute", top: 52, right: 16, zIndex: 2 }}>
+            {/* 3-col row: hamburger | logo | bell */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 56, paddingBottom: 18, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
+              {/* Hamburger */}
+              <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer", flexShrink: 0 }}>
+                <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
+                <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
+                <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
+              </button>
+              {/* Logo */}
+              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 48, width: "auto", maxWidth: "58%" }} />
+              {/* Bell */}
               <NotificationBellInline />
-            </div>
-            {/* Logo centered */}
-            <div style={{ paddingTop: 56, display: "flex", justifyContent: "center", position: "relative", zIndex: 1 }}>
-              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 52, width: "auto", maxWidth: "72%" }} />
             </div>
           </div>
 

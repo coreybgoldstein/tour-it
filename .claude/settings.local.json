@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push:*)",
+      "Bash(git log:*)",
+      "Bash(npm list:*)",
+      "Bash(npx prisma:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(magick --version)",
+      "Bash(convert --version)",
+      "Bash(node -e \"require\\('sharp'\\)\")",
+      "Bash(node:*)",
+      "Bash(explorer C:\\\\Users\\\\corey\\\\Downloads\\\\avatars:*)",
+      "Bash(npx tsc:*)",
+      "Read(//c/Users/corey/Downloads/**)",
+      "Bash(mkdir -p tourit_avatars_clean)",
+      "Bash(powershell -Command \"Expand-Archive -Path 'tourit_avatars_clean.zip' -DestinationPath 'tourit_avatars_clean' -Force\")",
+      "Bash(SUPABASE_SERVICE_ROLE_KEY=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3bGJ4enBldndpZG93eHh2dWVmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzAxODQ5OSwiZXhwIjoyMDg4NTk0NDk5fQ.TU53et5QL6MwLmcv1wQNwDMLtjp62xaLSrElrCpGV0I\" node backfill-avatars.mjs)",
+      "Bash(cd /tmp)",
+      "Bash(unzip -l \"/mnt/c/Users/corey/Downloads/files.zip\")",
+      "Bash(python3 -c \"import zipfile; z=zipfile.ZipFile\\('/mnt/c/Users/corey/Downloads/files.zip'\\); [print\\(f.filename\\) for f in z.infolist\\(\\)]\")",
+      "Bash(powershell -Command \"Expand-Archive -Path 'files.zip' -DestinationPath 'files_extracted' -Force; Get-ChildItem 'files_extracted' -Recurse | Select-Object FullName, Name\")",
+      "Bash(SUPABASE_SERVICE_ROLE_KEY=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3bGJ4enBldndpZG93eHh2dWVmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzAxODQ5OSwiZXhwIjoyMDg4NTk0NDk5fQ.TU53et5QL6MwLmcv1wQNwDMLtjp62xaLSrElrCpGV0I\" node replace-avatars.mjs)",
+      "Bash(npm run:*)",
+      "Bash(grep -c \"4da862\" src/app/page.tsx src/app/courses/[id]/page.tsx src/app/profile/page.tsx \"src/app/courses/[id]/holes/[number]/page.tsx\")",
+      "Bash(npm install:*)",
+      "Bash(ls -la /c/Users/corey/tour-it/next.config.*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(npx cap:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
