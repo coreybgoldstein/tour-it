@@ -36,65 +36,7 @@ function SearchPageInner() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
-  // AI search tab
-  const [searchTab, setSearchTab] = useState<"courses" | "people" | "ai">("courses");
-  const [aiQuery, setAiQuery] = useState("");
-  const [aiResults, setAiResults] = useState<Course[]>([]);
-  const [aiExplanation, setAiExplanation] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState("");
-  const [aiDistances, setAiDistances] = useState<Record<string, number>>({});
-  const [aiSearchLogId, setAiSearchLogId] = useState<string | null>(null);
-  const aiInputRef = useRef<HTMLInputElement>(null);
-
-  const [aiExamples] = useState(() => {
-    const pool = [
-      "Best golf trip destinations in the Midwest",
-      "Links style courses in the Southeast",
-      "Courses within 10 miles of JFK airport",
-      "Public courses in Scottsdale AZ",
-      "Bucket list courses in Florida",
-      "Best courses for a guys golf trip",
-      "Top rated courses in the Carolinas",
-      "Courses near Pebble Beach CA",
-      "Hidden gem courses in the Northeast",
-      "Best public courses in Texas",
-    ];
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
-  });
-
-  // People tab
-  async function runAiSearch(q: string) {
-    const trimmed = q.trim();
-    if (!trimmed) return;
-    setAiLoading(true); setAiError(""); setAiResults([]); setAiExplanation(""); setAiDistances({}); setAiSearchLogId(null);
-    try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (currentUserId) headers["x-user-id"] = currentUserId;
-      const res = await fetch("/api/ai-search", { method: "POST", headers, body: JSON.stringify({ query: trimmed }) });
-      const json = await res.json();
-      if (!res.ok || json.error) { setAiError(json.error || "Something went wrong"); }
-      else {
-        setAiResults(json.courses || []);
-        setAiExplanation(json.explanation || "");
-        setAiSearchLogId(json.searchLogId || null);
-        const dists: Record<string, number> = {};
-        (json.courses || []).forEach((c: any) => { if (c.distanceMiles != null) dists[c.id] = c.distanceMiles; });
-        setAiDistances(dists);
-      }
-    } catch (e: any) { setAiError(e.message || "Network error"); }
-    setAiLoading(false);
-  }
-
-  function trackAiClick(courseId: string, courseName: string, position: number) {
-    if (!aiSearchLogId) return;
-    fetch("/api/ai-search/click", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ searchLogId: aiSearchLogId, courseId, courseName, position, userId: currentUserId }),
-    }).catch(() => {});
-  }
+  const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
 
   type Person = { id: string; username: string; displayName: string; avatarUrl: string | null; uploadCount: number };
   const [peopleResults, setPeopleResults] = useState<Person[]>([]);
@@ -314,29 +256,14 @@ function SearchPageInner() {
               className="search-input"
               type="text"
               value={query}
-              onChange={e => { setQuery(e.target.value); if (aiResults.length > 0 || aiExplanation) { setAiResults([]); setAiExplanation(""); setAiError(""); } }}
+              onChange={e => setQuery(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              onKeyDown={e => { if (e.key === "Enter" && searchTab === "courses") runAiSearch(query); }}
-              placeholder={searchTab === "courses" ? "Search courses or ask anything…" : "Name or @username"}
+              placeholder={searchTab === "courses" ? "Search courses…" : "Name or @username"}
               autoComplete="off"
             />
-            {/* ✦ AI trigger — only on courses tab */}
-            {searchTab === "courses" && query.trim() && !aiLoading && (
-              <button
-                onClick={() => runAiSearch(query)}
-                title="Search with AI"
-                style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 8, background: aiResults.length > 0 ? "rgba(77,168,98,0.2)" : "rgba(77,168,98,0.1)", border: `1px solid ${aiResults.length > 0 ? "rgba(77,168,98,0.5)" : "rgba(77,168,98,0.25)"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#4da862", fontSize: 14, fontWeight: 700, transition: "all 0.15s" }}
-              >✦</button>
-            )}
-            {searchTab === "courses" && aiLoading && (
-              <div style={{ flexShrink: 0, display: "flex", gap: 3, alignItems: "center", paddingRight: 4 }}>
-                {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", animation: `ai-pulse 1.2s ease-in-out ${i * 0.18}s infinite` }} />)}
-              </div>
-            )}
-            <style>{`@keyframes ai-pulse { 0%,100%{opacity:0.2;transform:scale(0.75)} 50%{opacity:1;transform:scale(1)} }`}</style>
-            {query && !aiLoading && (
-              <button className="clear-btn" onClick={() => { setQuery(""); setAiResults([]); setAiExplanation(""); setAiError(""); inputRef.current?.focus(); }}>
+            {query && (
+              <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M18 6 6 18M6 6l12 12"/>
                 </svg>
@@ -344,88 +271,19 @@ function SearchPageInner() {
             )}
           </div>
 
-          {/* Tab toggle: Courses + People only */}
+          {/* Tab toggle: Courses + People */}
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
             {(["courses", "people"] as const).map(tab => (
               <button
                 key={tab}
-                onClick={() => { setSearchTab(tab); setQuery(""); setAiResults([]); setAiExplanation(""); setAiError(""); setTimeout(() => inputRef.current?.focus(), 50); }}
+                onClick={() => { setSearchTab(tab); setQuery(""); setTimeout(() => inputRef.current?.focus(), 50); }}
                 style={{ padding: "7px 18px", borderRadius: 99, border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", background: searchTab === tab ? "#2d7a42" : "rgba(255,255,255,0.07)", color: searchTab === tab ? "#fff" : "rgba(255,255,255,0.45)", transition: "all 0.15s" }}
               >
                 {tab === "courses" ? "Courses" : "People"}
               </button>
             ))}
           </div>
-
-          {/* AI prompt examples — shown when Courses tab, no query yet */}
-          {searchTab === "courses" && !query && !aiLoading && aiResults.length === 0 && (
-            <div style={{ marginTop: 18 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.6)", marginBottom: 10 }}>✦ Ask anything</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                {aiExamples.map(example => (
-                  <button
-                    key={example}
-                    onClick={() => { setQuery(example); runAiSearch(example); }}
-                    style={{ width: "100%", textAlign: "left", background: "rgba(77,168,98,0.04)", border: "1px solid rgba(77,168,98,0.12)", borderRadius: 11, padding: "10px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", cursor: "pointer", display: "flex", alignItems: "center", gap: 9 }}
-                  >
-                    <span style={{ color: "#4da862", fontSize: 11, flexShrink: 0 }}>✦</span>
-                    {example}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
-
-        {/* ── AI results (inside Courses tab) ── */}
-        {searchTab === "courses" && (aiLoading || aiExplanation || aiError) && (
-          <>
-            {!aiLoading && aiError && (
-              <div style={{ margin: "24px 0", padding: "14px 16px", background: "rgba(220,60,60,0.08)", border: "1px solid rgba(220,60,60,0.2)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(240,120,120,0.9)" }}>
-                {aiError}
-              </div>
-            )}
-            {!aiLoading && aiExplanation && (
-              <div style={{ margin: "18px 0 4px", padding: "11px 13px", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 9 }}>
-                <span style={{ color: "#4da862", fontSize: 13, flexShrink: 0, marginTop: 1 }}>✦</span>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, flex: 1 }}>{aiExplanation}</div>
-                <button onClick={() => { setAiResults([]); setAiExplanation(""); setAiError(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
-              </div>
-            )}
-            {!aiLoading && aiResults.length > 0 && (
-              <>
-                <p className="section-label">{aiResults.length} AI result{aiResults.length !== 1 ? "s" : ""}</p>
-                {aiResults.map((course, idx) => {
-                  const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
-                  const dist = aiDistances[course.id];
-                  return (
-                    <div key={course.id} className="course-row" onClick={() => { trackAiClick(course.id, course.name, idx); router.push(`/courses/${course.id}`); }}>
-                      <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                        {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="course-name">{course.name}</div>
-                        <div className="course-meta">
-                          {[course.city, course.state].filter(s => s?.trim()).join(", ")}
-                          {dist != null && <span style={{ color: "rgba(77,168,98,0.8)", marginLeft: 8 }}>{dist} mi away</span>}
-                          {course.uploadCount > 0 && <span className="clip-count">{course.uploadCount} clips</span>}
-                        </div>
-                      </div>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                        <path d="m9 18 6-6-6-6"/>
-                      </svg>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-            {!aiLoading && !aiError && aiExplanation && aiResults.length === 0 && (
-              <div className="empty-hint">No courses matched.<br/><span style={{ fontSize: 12 }}>Try rephrasing or a broader region</span></div>
-            )}
-          </>
-        )}
 
         {/* ── People tab ── */}
         {searchTab === "people" && (
@@ -473,8 +331,8 @@ function SearchPageInner() {
           </>
         )}
 
-        {/* ── Courses tab (regular results — hidden while AI results showing or loading) ── */}
-        {searchTab === "courses" && aiResults.length === 0 && !aiExplanation && !aiLoading && <>
+        {/* ── Courses tab ── */}
+        {searchTab === "courses" && <>
 
         {/* Results */}
         {loading && (
