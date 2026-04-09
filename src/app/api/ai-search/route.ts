@@ -158,7 +158,20 @@ Examples:
         .sort((a, b) => (a as any).distanceMiles - (b as any).distanceMiles);
     }
 
-    return NextResponse.json({ courses: results, explanation: params.explanation });
+    // Log the search (fire-and-forget)
+    const userId = req.headers.get("x-user-id") || null;
+    const searchLogId = crypto.randomUUID();
+    supabase.from("SearchLog").insert({
+      id: searchLogId,
+      query,
+      params,
+      resultIds: results.map((c: any) => c.id),
+      resultCount: results.length,
+      userId,
+      createdAt: new Date().toISOString(),
+    }).then(() => {}).catch(() => {});
+
+    return NextResponse.json({ courses: results, explanation: params.explanation, searchLogId });
   } catch (err: any) {
     console.error("AI search error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
