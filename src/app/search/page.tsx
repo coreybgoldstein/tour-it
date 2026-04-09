@@ -473,8 +473,8 @@ function SearchPageInner() {
           </>
         )}
 
-        {/* ── Courses tab (regular results — hidden while AI results showing) ── */}
-        {searchTab === "courses" && aiResults.length === 0 && !aiExplanation && <>
+        {/* ── Courses tab (regular results — hidden while AI results showing or loading) ── */}
+        {searchTab === "courses" && aiResults.length === 0 && !aiExplanation && !aiLoading && <>
 
         {/* Results */}
         {loading && (
