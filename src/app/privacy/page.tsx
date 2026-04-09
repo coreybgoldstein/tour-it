@@ -23,7 +23,7 @@ export default function PrivacyPage() {
             Last updated: April 2026
           </div>
           <div style={{ marginTop: 16, fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}>
-            Tour It is a golf course scouting platform operated by Tour It. We built this for golfers, not advertisers. Here's exactly what we collect, why, and what we don't do with it.
+            Tour It is a golf course scouting platform. We built this for golfers. Here's exactly what we collect, why, and how we use it — including advertising.
           </div>
         </div>
 
@@ -38,21 +38,23 @@ export default function PrivacyPage() {
           <Item label="To run the platform" value="Your content and account info power the course scouting experience — the feed, course pages, hole grids, and scout notes." />
           <Item label="To improve hole suggestions" value="GPS data from uploads is used to refine which hole a clip belongs to, making the upload experience smarter over time." />
           <Item label="To send notifications" value="If you opt in, we may send push notifications for likes, comments, and follows." />
+          <Item label="To show relevant advertising" value="Tour It is ad-supported. We may use information about how you use the platform — such as courses you browse, clips you watch, and general location — to serve ads that are relevant to you. This helps keep Tour It free." />
+          <Item label="To improve ad relevance" value="We may work with advertising partners who use aggregated or anonymized usage data to measure ad performance and improve targeting. This data does not directly identify you by name." />
         </Section>
 
         <Section title="What we don't do">
           <div style={{ fontSize: 14, color: "rgba(255,255,255,0.65)", lineHeight: 1.8 }}>
             <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
               <span style={{ color: "#4da862", flexShrink: 0 }}>✓</span>
-              <span>We do not sell your data to third parties.</span>
+              <span>We do not sell your personal information (name, email, account data) to third parties.</span>
             </div>
             <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
               <span style={{ color: "#4da862", flexShrink: 0 }}>✓</span>
-              <span>We do not use your data for ad targeting.</span>
+              <span>We do not share your personal information with other users without your consent.</span>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <span style={{ color: "#4da862", flexShrink: 0 }}>✓</span>
-              <span>We do not share your personal information with other users without your consent.</span>
+              <span>We do not build individual profiles to sell to data brokers.</span>
             </div>
           </div>
         </Section>
