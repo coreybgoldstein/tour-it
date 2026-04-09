@@ -55,10 +55,10 @@ export default function BottomNav() {
         onClick={() => router.push("/")}
         style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}
       >
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isHome ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isHome ? "#4da862" : "rgba(255,255,255,0.65)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         </svg>
-        <span style={{ fontSize: "9px", color: isHome ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Home</span>
+        <span style={{ fontSize: "9px", color: isHome ? "#4da862" : "rgba(255,255,255,0.6)", fontFamily: "'Outfit', sans-serif" }}>Home</span>
       </button>
 
       {/* Search */}
@@ -66,10 +66,10 @@ export default function BottomNav() {
         onClick={() => router.push("/search")}
         style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}
       >
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isSearch ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isSearch ? "#4da862" : "rgba(255,255,255,0.65)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
-        <span style={{ fontSize: "9px", color: isSearch ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Search</span>
+        <span style={{ fontSize: "9px", color: isSearch ? "#4da862" : "rgba(255,255,255,0.6)", fontFamily: "'Outfit', sans-serif" }}>Search</span>
       </button>
 
       {/* Upload FAB */}
@@ -84,7 +84,7 @@ export default function BottomNav() {
             <path d="M5 15v5h14v-5"/>
           </svg>
         </div>
-        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.04em" }}>UPLOAD</span>
+        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.04em" }}>UPLOAD</span>
       </button>
 
       {/* Lists */}
@@ -92,10 +92,10 @@ export default function BottomNav() {
         onClick={() => router.push("/lists")}
         style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}
       >
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isLists ? "#4da862" : "rgba(255,255,255,0.35)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={isLists ? "#4da862" : "rgba(255,255,255,0.65)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
         </svg>
-        <span style={{ fontSize: "9px", color: isLists ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Lists</span>
+        <span style={{ fontSize: "9px", color: isLists ? "#4da862" : "rgba(255,255,255,0.6)", fontFamily: "'Outfit', sans-serif" }}>Lists</span>
       </button>
 
       {/* Profile */}
@@ -114,7 +114,7 @@ export default function BottomNav() {
             : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={isProfile ? "#4da862" : "rgba(255,255,255,0.5)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           }
         </div>
-        <span style={{ fontSize: "9px", color: isProfile ? "#4da862" : "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>
+        <span style={{ fontSize: "9px", color: isProfile ? "#4da862" : "rgba(255,255,255,0.6)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>
       </button>
 
     </nav>
