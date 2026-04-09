@@ -36,8 +36,36 @@ function SearchPageInner() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
+  // AI search tab
+  const [searchTab, setSearchTab] = useState<"courses" | "people" | "ai">("courses");
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiResults, setAiResults] = useState<Course[]>([]);
+  const [aiExplanation, setAiExplanation] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiDistances, setAiDistances] = useState<Record<string, number>>({});
+  const aiInputRef = useRef<HTMLInputElement>(null);
+
   // People tab
-  const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
+  async function runAiSearch(q: string) {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    setAiLoading(true); setAiError(""); setAiResults([]); setAiExplanation(""); setAiDistances({});
+    try {
+      const res = await fetch("/api/ai-search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: trimmed }) });
+      const json = await res.json();
+      if (!res.ok || json.error) { setAiError(json.error || "Something went wrong"); }
+      else {
+        setAiResults(json.courses || []);
+        setAiExplanation(json.explanation || "");
+        const dists: Record<string, number> = {};
+        (json.courses || []).forEach((c: any) => { if (c.distanceMiles != null) dists[c.id] = c.distanceMiles; });
+        setAiDistances(dists);
+      }
+    } catch (e: any) { setAiError(e.message || "Network error"); }
+    setAiLoading(false);
+  }
+
   type Person = { id: string; username: string; displayName: string; avatarUrl: string | null; uploadCount: number };
   const [peopleResults, setPeopleResults] = useState<Person[]>([]);
   const [peopleLoading, setPeopleLoading] = useState(false);
@@ -246,43 +274,166 @@ function SearchPageInner() {
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginBottom: 16 }}>
             Search
           </div>
-          <div className={`search-box ${focused ? "focused" : ""}`}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input
-              ref={inputRef}
-              className="search-input"
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              placeholder={searchTab === "courses" ? "Course name, city, or state" : "Name or @username"}
-              autoComplete="off"
-            />
-            {query && (
-              <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M18 6 6 18M6 6l12 12"/>
+          {searchTab !== "ai" ? (
+            <div className={`search-box ${focused ? "focused" : ""}`}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                ref={inputRef}
+                className="search-input"
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                placeholder={searchTab === "courses" ? "Course name, city, or state" : "Name or @username"}
+                autoComplete="off"
+              />
+              {query && (
+                <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6 6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          ) : (
+            /* AI search input */
+            <div style={{ position: "relative" }}>
+              <div className={`search-box ${focused ? "focused" : ""}`} style={{ borderColor: focused ? "rgba(77,168,98,0.6)" : "rgba(77,168,98,0.25)", background: "rgba(77,168,98,0.05)" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 8v4l3 3"/>
                 </svg>
+                <input
+                  ref={aiInputRef}
+                  className="search-input"
+                  type="text"
+                  value={aiQuery}
+                  onChange={e => setAiQuery(e.target.value)}
+                  onFocus={() => setFocused(true)}
+                  onBlur={() => setFocused(false)}
+                  onKeyDown={e => e.key === "Enter" && runAiSearch(aiQuery)}
+                  placeholder="e.g. Best links courses in the Southeast…"
+                  autoComplete="off"
+                />
+                {aiQuery && (
+                  <button className="clear-btn" onClick={() => { setAiQuery(""); setAiResults([]); setAiExplanation(""); setAiError(""); }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => runAiSearch(aiQuery)}
+                disabled={!aiQuery.trim() || aiLoading}
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: aiQuery.trim() ? "#2d7a42" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 10, padding: "8px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: aiQuery.trim() ? "#fff" : "rgba(255,255,255,0.3)", cursor: aiQuery.trim() ? "pointer" : "default", transition: "all 0.15s", whiteSpace: "nowrap" }}
+              >
+                {aiLoading ? "…" : "Search"}
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Tab toggle */}
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            {(["courses", "people"] as const).map(tab => (
+            {([
+              { key: "courses", label: "Courses" },
+              { key: "people", label: "People" },
+              { key: "ai", label: "✦ AI" },
+            ] as const).map(tab => (
               <button
-                key={tab}
-                onClick={() => { setSearchTab(tab); setQuery(""); }}
-                style={{ padding: "7px 18px", borderRadius: 99, border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", background: searchTab === tab ? "#2d7a42" : "rgba(255,255,255,0.07)", color: searchTab === tab ? "#fff" : "rgba(255,255,255,0.45)", transition: "all 0.15s" }}
+                key={tab.key}
+                onClick={() => { setSearchTab(tab.key); setQuery(""); setTimeout(() => { if (tab.key === "ai") aiInputRef.current?.focus(); else inputRef.current?.focus(); }, 50); }}
+                style={{ padding: "7px 18px", borderRadius: 99, border: tab.key === "ai" ? `1px solid ${searchTab === "ai" ? "rgba(77,168,98,0.6)" : "rgba(77,168,98,0.2)"}` : "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", background: searchTab === tab.key ? (tab.key === "ai" ? "rgba(77,168,98,0.15)" : "#2d7a42") : (tab.key === "ai" ? "transparent" : "rgba(255,255,255,0.07)"), color: searchTab === tab.key ? (tab.key === "ai" ? "#4da862" : "#fff") : (tab.key === "ai" ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.45)"), transition: "all 0.15s" }}
               >
-                {tab === "courses" ? "Courses" : "People"}
+                {tab.label}
               </button>
             ))}
           </div>
+
+          {/* AI prompt examples (shown when AI tab active and no query yet) */}
+          {searchTab === "ai" && !aiQuery && !aiLoading && aiResults.length === 0 && (
+            <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+              {[
+                "Best golf trip destinations in the Midwest",
+                "Links style courses in the Southeast",
+                "Courses within 10 miles of JFK airport",
+                "Public courses in Scottsdale AZ",
+                "Bucket list courses with the most clips",
+              ].map(example => (
+                <button
+                  key={example}
+                  onClick={() => { setAiQuery(example); setTimeout(() => runAiSearch(example), 0); }}
+                  style={{ width: "100%", textAlign: "left", background: "rgba(77,168,98,0.05)", border: "1px solid rgba(77,168,98,0.15)", borderRadius: 12, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
+                >
+                  <span style={{ color: "#4da862", fontSize: 12, flexShrink: 0 }}>✦</span>
+                  {example}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* ── AI tab ── */}
+        {searchTab === "ai" && (
+          <>
+            {aiLoading && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "48px 0 24px", gap: 14 }}>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {[0,1,2].map(i => (
+                    <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#4da862", animation: `ai-pulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                  ))}
+                </div>
+                <style>{`@keyframes ai-pulse { 0%,100% { opacity:0.25; transform:scale(0.8); } 50% { opacity:1; transform:scale(1.1); } }`}</style>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Finding your courses…</div>
+              </div>
+            )}
+
+            {!aiLoading && aiError && (
+              <div style={{ margin: "24px 0", padding: "14px 16px", background: "rgba(220,60,60,0.08)", border: "1px solid rgba(220,60,60,0.2)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(240,120,120,0.9)" }}>
+                {aiError}
+              </div>
+            )}
+
+            {!aiLoading && !aiError && aiExplanation && (
+              <div style={{ margin: "18px 0 4px", padding: "12px 14px", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <span style={{ color: "#4da862", fontSize: 14, flexShrink: 0, marginTop: 1 }}>✦</span>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>{aiExplanation}</div>
+              </div>
+            )}
+
+            {!aiLoading && aiResults.length > 0 && (
+              <>
+                <p className="section-label">{aiResults.length} course{aiResults.length !== 1 ? "s" : ""} found</p>
+                {aiResults.map(course => {
+                  const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+                  const dist = aiDistances[course.id];
+                  return (
+                    <div key={course.id} className="course-row" onClick={() => router.push(`/courses/${course.id}`)}>
+                      <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
+                        {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="course-name">{course.name}</div>
+                        <div className="course-meta">
+                          {[course.city, course.state].filter(s => s?.trim()).join(", ")}
+                          {dist != null && <span style={{ color: "rgba(77,168,98,0.8)", marginLeft: 8 }}>{dist} mi away</span>}
+                          {course.uploadCount > 0 && <span className="clip-count">{course.uploadCount} clips</span>}
+                        </div>
+                      </div>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                        <path d="m9 18 6-6-6-6"/>
+                      </svg>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {!aiLoading && !aiError && aiQuery && aiResults.length === 0 && (
+              <div className="empty-hint">No courses matched your search.<br/><span style={{ fontSize: 12 }}>Try rephrasing or a broader region</span></div>
+            )}
+          </>
+        )}
 
         {/* ── People tab ── */}
         {searchTab === "people" && (
