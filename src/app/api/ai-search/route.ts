@@ -169,7 +169,7 @@ Examples:
       resultCount: results.length,
       userId,
       createdAt: new Date().toISOString(),
-    }).then(() => {}).catch(() => {});
+    }).then(() => {}, () => {});
 
     return NextResponse.json({ courses: results, explanation: params.explanation, searchLogId });
   } catch (err: any) {

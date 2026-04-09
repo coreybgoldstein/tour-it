@@ -678,30 +678,23 @@ function UploadPageInner() {
                     📍 Reading location from video...
                   </p>
                 )}
-                <button className="btn-primary" onClick={() => setStep(2)}>
-                  Next: Select Course →
+                <button
+                  className="btn-primary"
+                  onClick={() => { if (!compressing) setStep(2); }}
+                  disabled={compressing}
+                  style={compressing ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                >
+                  {compressing ? `Compressing… ${compressPct}%` : "Next: Select Course →"}
                 </button>
               </>
             ) : (
-              <>
-                <div className="upload-zone" onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto 12px", display: "block" }}>
+              <div className="upload-zone" onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}>
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto 14px", display: "block" }}>
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                   </svg>
-                  <div className="upload-zone-title">Tap to upload video or photo</div>
-                  <div className="upload-zone-sub">Single clip</div>
+                  <div className="upload-zone-title">Tap to select video or photo</div>
+                  <div className="upload-zone-sub">Single clip or multiple at once</div>
                 </div>
-                <button
-                  onClick={() => { if (fileInputRef.current) fileInputRef.current.click(); }}
-                  style={{ marginTop: 10, width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer" }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="8" height="8" rx="1"/>
-                  </svg>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>Batch Upload</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)" }}>— select multiple clips at once</span>
-                </button>
-              </>
             )}
             {error && <div className="error-box">{error}</div>}
           </div>
