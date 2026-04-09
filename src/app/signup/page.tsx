@@ -122,7 +122,7 @@ export default function SignUpPage() {
         .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: #4da862; }
         .tagline {
           font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 300;
-          color: rgba(255,255,255,0.3); margin-bottom: 28px;
+          color: rgba(255,255,255,0.55); margin-bottom: 28px;
         }
         .title {
           font-family: 'Playfair Display', serif;
@@ -130,13 +130,13 @@ export default function SignUpPage() {
         }
         .subtitle {
           font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 300;
-          color: rgba(255,255,255,0.35); margin-bottom: 24px;
+          color: rgba(255,255,255,0.6); margin-bottom: 24px;
         }
         .field { margin-bottom: 14px; }
         .field-label {
           font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600;
           letter-spacing: 0.12em; text-transform: uppercase;
-          color: rgba(255,255,255,0.35); margin-bottom: 7px; display: block;
+          color: rgba(255,255,255,0.65); margin-bottom: 7px; display: block;
         }
         .field-input {
           width: 100%; background: rgba(255,255,255,0.04);
@@ -164,7 +164,7 @@ export default function SignUpPage() {
         }
         .success-sub {
           font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 300;
-          color: rgba(255,255,255,0.4); line-height: 1.6;
+          color: rgba(255,255,255,0.65); line-height: 1.6;
         }
         .btn-submit {
           width: 100%; background: #2d7a42; border: none; cursor: pointer;
@@ -181,7 +181,7 @@ export default function SignUpPage() {
         }
         .login-link {
           text-align: center; font-family: 'Outfit', sans-serif;
-          font-size: 13px; color: rgba(255,255,255,0.3);
+          font-size: 13px; color: rgba(255,255,255,0.6);
         }
         .login-link a {
           color: #4da862; text-decoration: none; font-weight: 500;

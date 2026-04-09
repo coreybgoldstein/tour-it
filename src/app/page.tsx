@@ -983,21 +983,24 @@ export default function Home() {
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
           {/* Green header bar */}
-          <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", flexShrink: 0 }}>
+          <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", borderBottom: "1px solid rgba(77,168,98,0.35)", flexShrink: 0 }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 24, background: "linear-gradient(to bottom, transparent, #07100a)", pointerEvents: "none" }} />
             {/* 3-col row: hamburger | logo | bell */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 56, paddingBottom: 18, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: 52, paddingBottom: 12, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
               {/* Hamburger */}
-              <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer", flexShrink: 0 }}>
+              <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
               </button>
-              {/* Logo */}
-              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 48, width: "auto", maxWidth: "58%" }} />
-              {/* Bell */}
-              <NotificationBellInline />
+              {/* Logo — centered in middle column */}
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 44, width: "auto" }} />
+              </div>
+              {/* Bell — right-aligned in third column */}
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <NotificationBellInline />
+              </div>
             </div>
           </div>
 
