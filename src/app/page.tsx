@@ -788,10 +788,7 @@ export default function Home() {
     }
     try {
       const raw = localStorage.getItem("tour-it-location");
-      if (raw) {
-        const { ts } = JSON.parse(raw);
-        if (Date.now() - ts < 86400000) fetchNearMe();
-      }
+      if (raw) fetchNearMe(); // fetchNearMe always refreshes coords in background
     } catch {}
   }, []);
 
@@ -879,25 +876,29 @@ export default function Home() {
       setLocationStatus("granted");
     }
 
-    // Use cached coords if fresh (< 24h)
+    // Use cached coords if fresh (< 1h) for instant display, but always refresh in background
+    let usedCache = false;
     try {
       const raw = localStorage.getItem("tour-it-location");
       if (raw) {
         const { lat, lng, ts } = JSON.parse(raw);
-        if (Date.now() - ts < 86400000) { doFetch(lat, lng); return; }
+        if (Date.now() - ts < 3600000) { doFetch(lat, lng); usedCache = true; }
       }
     } catch {}
 
-    // Request fresh permission
+    // Always request fresh location to keep coords current
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
         localStorage.setItem("tour-it-location", JSON.stringify({ lat, lng, ts: Date.now() }));
-        doFetch(lat, lng);
+        // If we didn't use cache, fetch now; if we did, silently update for next load
+        if (!usedCache) doFetch(lat, lng);
       },
       () => {
-        localStorage.setItem("tour-it-location-denied", "1");
-        setLocationStatus("denied");
+        if (!usedCache) {
+          localStorage.setItem("tour-it-location-denied", "1");
+          setLocationStatus("denied");
+        }
       }
     );
   }
