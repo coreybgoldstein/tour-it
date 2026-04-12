@@ -594,11 +594,13 @@ export default function Home() {
     const supabase = createClient();
 
     supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data.user ?? null);
-      if (data.user) {
-        const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
-        setUserProfile(profile);
+      if (!data.user) {
+        router.replace("/login");
+        return;
       }
+      setUser(data.user);
+      const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
+      setUserProfile(profile);
     });
 
     supabase
