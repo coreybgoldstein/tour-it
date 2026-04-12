@@ -768,7 +768,7 @@ export default function CourseProfilePage() {
       `}</style>
 
       {/* Hero */}
-      <div style={{ position: "relative", width: "100%", height: (course.coverImageUrl || courseClips.find(c => c.mediaType === "PHOTO")) ? 220 : 140 }}>
+      <div style={{ position: "relative", width: "100%", minHeight: 220, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
         {course.coverImageUrl ? (
           <img src={course.coverImageUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : courseClips.find(c => c.mediaType === "PHOTO") ? (
@@ -804,7 +804,7 @@ export default function CourseProfilePage() {
         </button>
 
 
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 20px 18px", zIndex: 10 }}>
+        <div style={{ position: "relative", padding: "0 20px 18px", zIndex: 10, marginTop: 100 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.45)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em" }}>
             {[course.city, course.state].filter(s => s?.trim()).join(", ")}
             {course.city || course.state ? " · " : ""}{course.isPublic ? "Public" : "Private"}
