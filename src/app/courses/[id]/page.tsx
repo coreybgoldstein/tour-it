@@ -110,10 +110,10 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, onEnded }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, onEnded, onReport }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null }>;
-  clipIndex: number; totalClips: number; onEnded: () => void;
+  clipIndex: number; totalClips: number; onEnded: () => void; onReport?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -277,6 +277,15 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
           <span style={{ height: 13, display: "block" }} />
         </button>
 
+        {onReport && (
+          <button className="action-btn" onClick={onReport}>
+            <div className="action-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            </div>
+            <span style={{ height: 13, display: "block" }} />
+          </button>
+        )}
+
       </div>
 
       {/* Clip position dots — only when hole has multiple clips */}
@@ -382,6 +391,10 @@ export default function CourseProfilePage() {
   const [contributeError, setContributeError] = useState<string | null>(null);
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [reportClipId, setReportClipId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState<string | null>(null);
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
   const [commentItems, setCommentItems] = useState<{ id: string; body: string; username: string; avatarUrl: string | null; createdAt: string }[]>([]);
   const [commentText, setCommentText] = useState("");
@@ -1231,6 +1244,7 @@ export default function CourseProfilePage() {
                           feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" });
                         }
                       }}
+                      onReport={user && clip.userId !== user.id ? () => setReportClipId(clip.id) : undefined}
                     />
                   </div>
                 ))}
@@ -1319,6 +1333,53 @@ export default function CourseProfilePage() {
               {[extendedClip.strategyNote, extendedClip.landingZoneNote, extendedClip.whatCameraDoesntShow].filter(Boolean).join(" · ")}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Report clip sheet */}
+      {reportClipId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }} onClick={() => { setReportClipId(null); setReportReason(null); setReportDone(false); }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 18px" }} />
+            {reportDone ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>Report submitted</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Thanks for keeping Tour It quality.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>Report clip</div>
+                {[
+                  { value: "WRONG_HOLE", label: "Wrong hole" },
+                  { value: "WRONG_COURSE", label: "Wrong course" },
+                  { value: "LOW_QUALITY", label: "Low quality / unviewable" },
+                  { value: "INAPPROPRIATE", label: "Inappropriate content" },
+                  { value: "SPAM", label: "Spam" },
+                  { value: "COPYRIGHT", label: "Copyright issue" },
+                  { value: "OTHER", label: "Other" },
+                ].map(opt => (
+                  <button key={opt.value} onClick={() => setReportReason(opt.value)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: reportReason === opt.value ? "rgba(255,255,255,0.06)" : "none", border: reportReason === opt.value ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent", borderRadius: 10, padding: "11px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.75)", textAlign: "left" }}>
+                    {opt.label}
+                    {reportReason === opt.value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </button>
+                ))}
+                <button
+                  disabled={!reportReason || submittingReport}
+                  onClick={async () => {
+                    if (!reportReason || !user) return;
+                    setSubmittingReport(true);
+                    await createClient().from("ModerationReport").insert({ id: crypto.randomUUID(), reportedById: user.id, uploadId: reportClipId, reason: reportReason, createdAt: new Date().toISOString() });
+                    setSubmittingReport(false);
+                    setReportDone(true);
+                    setTimeout(() => { setReportClipId(null); setReportReason(null); setReportDone(false); }, 1800);
+                  }}
+                  style={{ width: "100%", marginTop: 8, background: reportReason ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: reportReason ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)", cursor: reportReason ? "pointer" : "not-allowed" }}>
+                  {submittingReport ? "Submitting…" : "Submit report"}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
 

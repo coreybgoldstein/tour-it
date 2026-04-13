@@ -12,7 +12,7 @@ const SHOT_LABEL: Record<string, string> = {
 };
 
 function ProfileFeedCard({
-  clip, isActive, courseName, courseLogoUrl, onClose, onOptions, uploaderInfo, onComment, isOwner,
+  clip, isActive, courseName, courseLogoUrl, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; courseId: string; holeNumber?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null };
   isActive: boolean;
@@ -20,6 +20,7 @@ function ProfileFeedCard({
   courseLogoUrl: string | null;
   onClose: () => void;
   onOptions?: () => void;
+  onReport?: () => void;
   uploaderInfo: { id: string; username: string; avatarUrl: string | null };
   onComment: () => void;
   isOwner: boolean;
@@ -121,11 +122,15 @@ function ProfileFeedCard({
               : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
             }
           </button>
-          {isOwner && !clip.isTagged && onOptions && (
+          {isOwner && !clip.isTagged && onOptions ? (
             <button className="pf-ctrl-btn" onClick={onOptions}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
             </button>
-          )}
+          ) : !isOwner && onReport ? (
+            <button className="pf-ctrl-btn" onClick={onReport}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            </button>
+          ) : null}
           <button className="pf-ctrl-btn" onClick={onClose}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
@@ -316,6 +321,16 @@ export default function ProfilePage() {
   const [followSheet, setFollowSheet] = useState<"followers" | "following" | null>(null);
   const [followList, setFollowList] = useState<FollowUser[]>([]);
   const [followListLoading, setFollowListLoading] = useState(false);
+
+  // Delete account
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  // Report clip
+  const [reportClipId, setReportClipId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState<string | null>(null);
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
 
   // Edit home course debounce
   useEffect(() => {
@@ -630,6 +645,7 @@ export default function ProfilePage() {
                 courseLogoUrl={coursesPlayed.find(c => c.id === clip.courseId)?.logoUrl ?? null}
                 onClose={() => setFeedOpen(false)}
                 onOptions={isOwner ? () => { setFeedOpen(false); setSelectedClip(clip); } : undefined}
+                onReport={!isOwner && currentUserId ? () => { setFeedOpen(false); setReportClipId(clip.id); } : undefined}
                 uploaderInfo={{ id: profile.id, username: profile.username, avatarUrl: profile.avatarUrl }}
                 onComment={() => setCommentUploadId(clip.id)}
                 isOwner={isOwner}
@@ -812,6 +828,91 @@ export default function ProfilePage() {
             <button onClick={handleSaveProfile} style={{ width: "100%", padding: "12px", background: "#1a9e42", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
               {saving ? "Saving…" : "Save changes"}
             </button>
+            <div style={{ marginTop: 28, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
+              <button onClick={() => { setShowEdit(false); setShowDeleteAccount(true); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,100,100,0.45)", padding: "4px 0" }}>
+                Delete account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete account confirmation */}
+      {showDeleteAccount && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }} onClick={() => setShowDeleteAccount(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "24px 20px 44px" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 700, color: "#fff", marginBottom: 8, textAlign: "center" }}>Delete your account?</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", textAlign: "center", marginBottom: 24, lineHeight: 1.5 }}>
+              All your clips, likes, and data will be permanently deleted. This cannot be undone.
+            </div>
+            <button
+              onClick={async () => {
+                setDeletingAccount(true);
+                const supabase = createClient();
+                await supabase.from("User").delete().eq("id", currentUserId!);
+                await supabase.auth.signOut();
+                router.replace("/login");
+              }}
+              disabled={deletingAccount}
+              style={{ width: "100%", background: "rgba(200,50,50,0.8)", border: "none", borderRadius: 14, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginBottom: 10, opacity: deletingAccount ? 0.6 : 1 }}
+            >
+              {deletingAccount ? "Deleting…" : "Yes, delete my account"}
+            </button>
+            <button onClick={() => setShowDeleteAccount(false)} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Report clip sheet */}
+      {reportClipId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }} onClick={() => { setReportClipId(null); setReportReason(null); setReportDone(false); }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 18px" }} />
+            {reportDone ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>Report submitted</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Thanks for keeping Tour It quality.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>Report clip</div>
+                {[
+                  { value: "WRONG_HOLE", label: "Wrong hole" },
+                  { value: "WRONG_COURSE", label: "Wrong course" },
+                  { value: "LOW_QUALITY", label: "Low quality / unviewable" },
+                  { value: "INAPPROPRIATE", label: "Inappropriate content" },
+                  { value: "SPAM", label: "Spam" },
+                  { value: "COPYRIGHT", label: "Copyright issue" },
+                  { value: "OTHER", label: "Other" },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setReportReason(opt.value)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: reportReason === opt.value ? "rgba(255,255,255,0.06)" : "none", border: reportReason === opt.value ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent", borderRadius: 10, padding: "11px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.75)", textAlign: "left" }}
+                  >
+                    {opt.label}
+                    {reportReason === opt.value && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    )}
+                  </button>
+                ))}
+                <button
+                  disabled={!reportReason || submittingReport}
+                  onClick={async () => {
+                    if (!reportReason || !currentUserId) return;
+                    setSubmittingReport(true);
+                    await createClient().from("ModerationReport").insert({ id: crypto.randomUUID(), reportedById: currentUserId, uploadId: reportClipId, reason: reportReason, createdAt: new Date().toISOString() });
+                    setSubmittingReport(false);
+                    setReportDone(true);
+                    setTimeout(() => { setReportClipId(null); setReportReason(null); setReportDone(false); }, 1800);
+                  }}
+                  style={{ width: "100%", marginTop: 8, background: reportReason ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: reportReason ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)", cursor: reportReason ? "pointer" : "not-allowed" }}
+                >
+                  {submittingReport ? "Submitting…" : "Submit report"}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

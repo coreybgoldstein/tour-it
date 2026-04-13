@@ -210,13 +210,14 @@ function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () =
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onNotes, notesOpen }: {
+function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onNotes, notesOpen, onReport }: {
   userId: string; avatarUrl: string | null; username: string;
   courseId: string; courseName: string;
   liked: boolean; onLike: () => void; likeCount: number;
   onComment: () => void; commentCount: number;
   onTapUser: () => void;
   onNotes: (() => void) | null; notesOpen: boolean;
+  onReport?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
@@ -277,6 +278,15 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
         </div>
         <span style={{ height: 13, display: "block" }} />
       </button>
+      {/* Report (non-owner only) */}
+      {onReport && (
+        <button onClick={onReport} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          </div>
+          <span style={{ height: 13, display: "block" }} />
+        </button>
+      )}
     </div>
   );
 }
@@ -444,12 +454,13 @@ function SeriesCard({
 }
 
 function VideoCard({
-  clip, isActive, muted, onMuteToggle, onTapCourse, onTapUser, onComment, onEnded,
+  clip, isActive, muted, onMuteToggle, onTapCourse, onTapUser, onComment, onEnded, onReport,
 }: {
   clip: FeedClip; isActive: boolean; muted: boolean;
   onMuteToggle: () => void;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
   onEnded: () => void;
+  onReport?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
@@ -513,7 +524,7 @@ function VideoCard({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onNotes={hasNotes ? () => setNotesOpen(o => !o) : null} notesOpen={notesOpen} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onNotes={hasNotes ? () => setNotesOpen(o => !o) : null} notesOpen={notesOpen} onReport={onReport} />
 
       {notesOpen && (
         <>
@@ -584,6 +595,10 @@ export default function Home() {
   const [publicOnly, setPublicOnly] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [reportClipId, setReportClipId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState<string | null>(null);
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedCursorRef = useRef<string | null>(null);
@@ -1142,7 +1157,7 @@ export default function Home() {
             {item.type === "series" ? (
               <SeriesCard item={item} isActive={i === activeIndex} muted={muted} onMuteToggle={() => setMuted(m => !m)} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onMuteToggle={() => setMuted(m => !m)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} muted={muted} onMuteToggle={() => setMuted(m => !m)} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} />
             )}
           </div>
         ))}
@@ -1294,6 +1309,53 @@ export default function Home() {
           <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>
         </button>
       </nav>
+
+      {/* Report clip sheet */}
+      {reportClipId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 150 }} onClick={() => { setReportClipId(null); setReportReason(null); setReportDone(false); }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 18px" }} />
+            {reportDone ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>Report submitted</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Thanks for keeping Tour It quality.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>Report clip</div>
+                {[
+                  { value: "WRONG_HOLE", label: "Wrong hole" },
+                  { value: "WRONG_COURSE", label: "Wrong course" },
+                  { value: "LOW_QUALITY", label: "Low quality / unviewable" },
+                  { value: "INAPPROPRIATE", label: "Inappropriate content" },
+                  { value: "SPAM", label: "Spam" },
+                  { value: "COPYRIGHT", label: "Copyright issue" },
+                  { value: "OTHER", label: "Other" },
+                ].map(opt => (
+                  <button key={opt.value} onClick={() => setReportReason(opt.value)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: reportReason === opt.value ? "rgba(255,255,255,0.06)" : "none", border: reportReason === opt.value ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent", borderRadius: 10, padding: "11px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.75)", textAlign: "left" }}>
+                    {opt.label}
+                    {reportReason === opt.value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </button>
+                ))}
+                <button
+                  disabled={!reportReason || submittingReport}
+                  onClick={async () => {
+                    if (!reportReason || !user) return;
+                    setSubmittingReport(true);
+                    await createClient().from("ModerationReport").insert({ id: crypto.randomUUID(), reportedById: user.id, uploadId: reportClipId, reason: reportReason, createdAt: new Date().toISOString() });
+                    setSubmittingReport(false);
+                    setReportDone(true);
+                    setTimeout(() => { setReportClipId(null); setReportReason(null); setReportDone(false); }, 1800);
+                  }}
+                  style={{ width: "100%", marginTop: 8, background: reportReason ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: reportReason ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)", cursor: reportReason ? "pointer" : "not-allowed" }}>
+                  {submittingReport ? "Submitting…" : "Submit report"}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Splash screen ── */}
       {splashVisible && (
