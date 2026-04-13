@@ -753,7 +753,7 @@ export default function CourseProfilePage() {
   const hero = getCourseHero(course.name);
 
   return (
-    <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif" }}>
+    <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingLeft: isDesktop ? 72 : 0 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -769,6 +769,7 @@ export default function CourseProfilePage() {
         .clip-thumb:hover { opacity: 0.85; }
         .clip-thumb video, .clip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .hole-empty { position: relative; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+        @media (min-width: 768px) { .clip-thumb, .hole-empty { aspect-ratio: auto; height: 110px; } }
         .hole-cell-indicator { display: flex; gap: 3px; position: absolute; bottom: 6px; right: 6px; }
         .hole-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.4); }
         .hole-dot.active { background: #1a9e42; }
@@ -955,7 +956,7 @@ export default function CourseProfilePage() {
                   <div style={{ width: 3, height: 14, background: "#4da862", borderRadius: 99, flexShrink: 0 }} />
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
+                <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(9, 1fr)" : "repeat(3, 1fr)", gap: 3 }}>
                   {nineHoles.map(holeNum => {
                     const clips = holeClipsMap[holeNum];
                     const topClip = clips?.[0];

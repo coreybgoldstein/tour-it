@@ -1021,9 +1021,9 @@ export default function Home() {
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
               </button>
-              {/* Logo — centered in middle column */}
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 44, width: "auto" }} />
+              {/* Logo — centered on mobile, left-aligned on desktop */}
+              <div style={{ display: "flex", justifyContent: isDesktop ? "flex-start" : "center" }}>
+                <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 56 : 44, width: "auto" }} />
               </div>
               {/* Bell — right-aligned in third column */}
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
