@@ -591,7 +591,7 @@ export default function HolePage() {
         {/* Show series cards or single clip feed */}
         {uploads.length > 0 ? (
           <div
-            style={{ position: "relative", width: "100%", height: "100dvh", background: "#000", display: "flex", justifyContent: "center" }}
+            style={{ position: "relative", width: "100%", height: "100dvh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
