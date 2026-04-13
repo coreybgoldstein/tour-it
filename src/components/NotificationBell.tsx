@@ -12,11 +12,11 @@ export default function NotificationBell() {
 
   // Hide on these routes
   const hidden =
-    pathname === "/" ||
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/onboarding" ||
     pathname === "/upload" ||
+    pathname === "/notifications" || // already on notifications page
     pathname.startsWith("/admin") ||
     pathname.startsWith("/courses/"); // clips are inside course pages
 
