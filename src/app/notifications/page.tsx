@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BottomNav from "@/components/BottomNav";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 
 interface Notification {
   id: string;
@@ -38,6 +40,10 @@ function NotifIcon({ type }: { type: string }) {
       bg: "rgba(180,120,255,0.15)",
       svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b478ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>,
     },
+    like: {
+      bg: "rgba(255,90,90,0.15)",
+      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff5a5a" stroke="#ff5a5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
+    },
   };
   const { bg, svg } = icons[type] ?? {
     bg: "rgba(255,255,255,0.08)",
@@ -64,6 +70,7 @@ function timeAgo(iso: string) {
 
 export default function NotificationsPage() {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -123,7 +130,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#07100a", paddingBottom: 100 }}>
+    <div style={{ minHeight: "100vh", background: "#07100a", paddingBottom: 100, paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 680 : undefined }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "52px 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)" }}>
         <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
@@ -212,6 +219,7 @@ export default function NotificationsPage() {
           ))}
         </div>
       )}
+      <BottomNav />
     </div>
   );
 }

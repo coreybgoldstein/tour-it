@@ -603,8 +603,31 @@ export default function ProfilePage() {
   }
 
   if (loading) return (
-    <main style={{ background: "#07100a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: "rgba(255,255,255,0.3)", fontSize: "13px", fontFamily: "'Outfit', sans-serif" }}>Loading...</div>
+    <main style={{ background: "#07100a", minHeight: "100vh", paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 760 : undefined }}>
+      {/* Banner */}
+      <div className="skeleton" style={{ width: "100%", height: 130 }} />
+      {/* Avatar + name row */}
+      <div style={{ padding: "0 20px", marginTop: -32, marginBottom: 16 }}>
+        <div className="skeleton" style={{ width: 72, height: 72, borderRadius: "50%", marginBottom: 12, border: "3px solid #07100a" }} />
+        <div className="skeleton" style={{ width: 140, height: 18, marginBottom: 8 }} />
+        <div className="skeleton" style={{ width: 90, height: 13, borderRadius: 99 }} />
+      </div>
+      {/* Stats row */}
+      <div style={{ display: "flex", gap: 24, padding: "0 20px 20px" }}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div className="skeleton" style={{ width: 28, height: 18 }} />
+            <div className="skeleton" style={{ width: 44, height: 11, borderRadius: 99 }} />
+          </div>
+        ))}
+      </div>
+      {/* Clip grid */}
+      <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className="skeleton" style={{ aspectRatio: "9/16", borderRadius: 6 }} />
+        ))}
+      </div>
+      <BottomNav />
     </main>
   );
 

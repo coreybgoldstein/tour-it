@@ -735,8 +735,37 @@ export default function CourseProfilePage() {
 
   if (loading) {
     return (
-      <main style={{ minHeight: "100vh", background: "#07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)" }}>Loading...</div>
+      <main style={{ minHeight: "100vh", background: "#07100a", paddingLeft: isDesktop ? 72 : 0 }}>
+        {/* Hero skeleton */}
+        <div className="skeleton" style={{ width: "100%", height: 220 }} />
+        {/* Course name + meta */}
+        <div style={{ padding: "20px 20px 0" }}>
+          <div className="skeleton" style={{ width: 80, height: 11, marginBottom: 10, borderRadius: 99 }} />
+          <div className="skeleton" style={{ width: "65%", height: 26, marginBottom: 10 }} />
+          <div style={{ display: "flex", gap: 8 }}>
+            {[60, 72, 52].map(w => <div key={w} className="skeleton" style={{ width: w, height: 24, borderRadius: 99 }} />)}
+          </div>
+        </div>
+        {/* Action bar */}
+        <div style={{ display: "flex", gap: 8, padding: "18px 20px" }}>
+          {[90, 80, 100].map(w => <div key={w} className="skeleton" style={{ width: w, height: 40, borderRadius: 12 }} />)}
+        </div>
+        {/* 18-hole grid */}
+        <div style={{ padding: "0 14px", maxWidth: isDesktop ? 840 : undefined }}>
+          <div style={{ display: "flex", gap: 0 }}>
+            {[0, 1].map(half => (
+              <div key={half} style={{ flex: 1, minWidth: 0, marginLeft: half === 1 ? 13 : 0 }}>
+                <div className="skeleton" style={{ width: 60, height: 12, marginBottom: 10, borderRadius: 99 }} />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div key={i} className="skeleton" style={{ aspectRatio: isDesktop ? "auto" : "9/16", height: isDesktop ? 130 : undefined, borderRadius: 8 }} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <BottomNav />
       </main>
     );
   }
