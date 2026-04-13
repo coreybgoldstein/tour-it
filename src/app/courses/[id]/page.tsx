@@ -118,6 +118,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [muted, setMuted] = useState(false);
   const [videoPaused, setVideoPaused] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -165,8 +166,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000", display: "flex", justifyContent: "center" }}>
-      <div style={{ position: "relative", width: "100%", maxWidth: 390, height: "100%", overflow: "hidden" }}>
+    <div style={{ position: "relative", width: "100%", height: "100svh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}>
+      <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...(isDesktop ? { maxWidth: 390 } : {}) }}>
       {clip.mediaType === "VIDEO" ? (
         <video
           ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline

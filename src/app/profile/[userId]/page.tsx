@@ -28,6 +28,7 @@ function ProfileFeedCard({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [muted, setMuted] = useState(false);
   const [videoPaused, setVideoPaused] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -67,8 +68,8 @@ function ProfileFeedCard({
   const hasNotes = !!(clip.shotType || clip.strategyNote || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000", display: "flex", justifyContent: "center" }}>
-      <div style={{ position: "relative", width: "100%", maxWidth: 390, height: "100%", overflow: "hidden" }}>
+    <div style={{ position: "relative", width: "100%", height: "100svh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}>
+      <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...(isDesktop ? { maxWidth: 390 } : {}) }}>
       <style>{`
         .pf-top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 36px 14px 12px; z-index: 20; gap: 10px; }
         .pf-ctrl-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }

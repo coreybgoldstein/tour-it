@@ -307,6 +307,7 @@ function SeriesCard({
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const lastTapRef = useRef<number>(0);
+  const isDesktop = useIsDesktop();
   const activeShot = item.shots[shotIndex];
   const hasNotes = !!(activeShot?.shotType || activeShot?.strategyNote || activeShot?.clubUsed || activeShot?.windCondition || activeShot?.datePlayedAt);
 
@@ -352,11 +353,11 @@ function SeriesCard({
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000", display: "flex", justifyContent: "center" }}
+    <div style={{ position: "relative", width: "100%", height: "100svh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div style={{ position: "relative", width: "100%", maxWidth: 390, height: "100%", overflow: "hidden", background: "#07100a" }}>
+      <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", background: "#07100a", ...(isDesktop ? { maxWidth: 390 } : {}) }}>
       {item.shots.map((shot, i) => (
         <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.18s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
           {shot.mediaType === "VIDEO" ? (
@@ -470,6 +471,7 @@ function VideoCard({
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
   const [videoPaused, setVideoPaused] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const isDesktop = useIsDesktop();
   const hasNotes = !!(clip.shotType || clip.strategyNote || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   useEffect(() => {
@@ -484,9 +486,8 @@ function VideoCard({
   }, [muted]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000", display: "flex", justifyContent: "center" }}>
-      {/* Inner wrapper — constrains clip to 390px on desktop */}
-      <div style={{ position: "relative", width: "100%", maxWidth: 390, height: "100%", overflow: "hidden" }}>
+    <div style={{ position: "relative", width: "100%", height: "100svh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}>
+      <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...(isDesktop ? { maxWidth: 390 } : {}) }}>
       {clip.mediaType === "VIDEO" ? (
         <video ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline
           onClick={() => {

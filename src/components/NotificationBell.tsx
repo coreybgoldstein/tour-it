@@ -12,6 +12,7 @@ export default function NotificationBell() {
 
   // Hide on these routes
   const hidden =
+    pathname === "/" || // home has its own inline bell
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/onboarding" ||
