@@ -29,7 +29,21 @@
       "Bash(ls -la /c/Users/corey/tour-it/next.config.*)",
       "Bash(echo \"exit: $?\")",
       "Bash(npx cap:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(Select-String ANTHROPIC:*)",
+      "Bash(ls *.mjs *.js *.ts)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(ls:*)",
+      "Bash(grep -n \"background.*#000\\\\|background.*\\\\\"#000\\\\\"\\\\|maxWidth.*390\\\\|justifyContent.*center\" /c/Users/corey/tour-it/src/app/courses/[id]/page.tsx)",
+      "Bash(grep -n \"function.*FeedCard\\\\|function.*ProfileFeed\\\\|isDesktop\" /c/Users/corey/tour-it/src/app/courses/[id]/page.tsx)",
+      "Bash(grep -n \"useIsDesktop\" /c/Users/corey/tour-it/src/app/courses/[id]/page.tsx)",
+      "Bash(grep -n \"background.*\\\\\"#000\\\\\"\\\\|maxWidth.*390\\\\|justifyContent.*center\" /c/Users/corey/tour-it/src/app/profile/[userId]/page.tsx)",
+      "Bash(grep -n \"background.*\\\\\"#000\\\\\"\\\\|maxWidth.*390\\\\|justifyContent.*center\\\\|useIsDesktop\" /c/Users/corey/tour-it/src/app/courses/[id]/holes/[number]/page.tsx)",
+      "Bash(grep -n \"function ProfileFeedCard\\\\|useIsDesktop\" /c/Users/corey/tour-it/src/app/profile/[userId]/page.tsx)",
+      "Bash(grep -n \"100svh\\\\|100%.*height\\\\|inner.*wrapper\\\\|maxWidth.*390\" /c/Users/corey/tour-it/src/app/courses/[id]/holes/[number]/page.tsx)",
+      "Bash(grep -i \"anthropic\\\\|ANTHROPIC\" /c/Users/corey/tour-it/.env*)",
+      "WebSearch",
+      "WebFetch(domain:course.bluegolf.com)"
     ]
   }
 }
