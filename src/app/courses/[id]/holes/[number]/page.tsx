@@ -364,6 +364,7 @@ export default function HolePage() {
       let query = supabase.from("Upload").select("*")
         .eq("courseId", id)
         .eq("shotType", multiHoleKey.shotType)
+        .eq("moderationStatus", "APPROVED")
         .order("rankScore", { ascending: false });
       if (multiHoleKey.group) query = query.eq("yardageOverlay", multiHoleKey.group);
       query.then(async ({ data: uploadsData }) => {
@@ -397,6 +398,7 @@ export default function HolePage() {
           .from("Upload")
           .select("*")
           .eq("holeId", holeRes.data.id)
+          .eq("moderationStatus", "APPROVED")
           .order("rankScore", { ascending: false });
 
         if (uploadsData) {

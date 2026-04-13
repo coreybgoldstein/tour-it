@@ -539,7 +539,7 @@ export default function CourseProfilePage() {
       if (holesData) setHoles(holesData.map((h: any) => ({ holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber })));
 
       const { data: uploads } = await supabase
-        .from("Upload").select("*").eq("courseId", id).order("rankScore", { ascending: false });
+        .from("Upload").select("*").eq("courseId", id).eq("moderationStatus", "APPROVED").order("rankScore", { ascending: false });
 
       const clips: Clip[] = (uploads || []).map((u: any) => ({
         ...u,

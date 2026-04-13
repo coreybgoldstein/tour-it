@@ -390,7 +390,7 @@ function UploadPageInner() {
         clipLng: gpsCoords?.lng ?? null,
         tripId: preselectedTripId || null,
         tripPublic: preselectedTripId ? tripPublic : true,
-        moderationStatus: "PENDING",
+        moderationStatus: "APPROVED",
         likeCount: 0,
         commentCount: 0,
         viewCount: 0,
