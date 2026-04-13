@@ -630,6 +630,7 @@ export default function Home() {
       const { data: rawUploads } = await supabase
         .from("Upload")
         .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt, rankScore")
+        .eq("moderationStatus", "APPROVED")
         .order("rankScore", { ascending: false, nullsFirst: false })
         .limit(30);
 
@@ -712,6 +713,7 @@ export default function Home() {
     const { data: uploads } = await supabase
       .from("Upload")
       .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
+      .eq("moderationStatus", "APPROVED")
       .order("createdAt", { ascending: false })
       .lt("createdAt", feedCursorRef.current)
       .limit(15);

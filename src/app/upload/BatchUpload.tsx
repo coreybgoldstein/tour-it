@@ -250,7 +250,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           landingZoneNote: null, whatCameraDoesntShow: null, handicapRange: null,
           datePlayedAt: new Date(clip.file.lastModified).toISOString(),
           rankScore: 0, tripId: null, tripPublic: true,
-          moderationStatus: "PENDING", likeCount: 0, commentCount: 0,
+          moderationStatus: "APPROVED", likeCount: 0, commentCount: 0,
           viewCount: 0, saveCount: 0, createdAt: now, updatedAt: now,
         });
 
