@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useLike } from "@/hooks/useLike";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { useSave } from "@/hooks/useSave";
 type Course = {
   id: string;
@@ -164,7 +165,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000" }}>
+    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000", display: "flex", justifyContent: "center" }}>
+      <div style={{ position: "relative", width: "100%", maxWidth: 390, height: "100%", overflow: "hidden" }}>
       {clip.mediaType === "VIDEO" ? (
         <video
           ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline
@@ -351,7 +353,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
           </div>
         </>
       )}
-
+      </div>{/* end inner wrapper */}
     </div>
   );
 }
@@ -359,6 +361,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
 export default function CourseProfilePage() {
   const { id } = useParams();
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
   const [suggestedCourses, setSuggestedCourses] = useState<SuggestedCourse[]>([]);
@@ -723,7 +726,7 @@ export default function CourseProfilePage() {
         setActiveHoleNum(holeNum);
         const inner = holeScrollRefs.current[holeNum];
         if (inner) {
-          const clipIdx = Math.round(inner.scrollLeft / window.innerWidth);
+          const clipIdx = Math.round(inner.scrollLeft / inner.offsetWidth);
           setActiveClipByHole(prev => ({ ...prev, [holeNum]: clipIdx }));
         }
       }
@@ -1209,7 +1212,7 @@ export default function CourseProfilePage() {
 
       {/* Full-screen feed modal — vertical = next hole, horizontal = other clips from same hole */}
       {feedOpen && (
-        <div className="feed-modal" ref={feedRef} onScroll={handleFeedScroll} onClick={() => { if (showFeedHint) { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); } }}>
+        <div className="feed-modal" ref={feedRef} onScroll={handleFeedScroll} onClick={() => { if (showFeedHint) { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); } }} style={{ left: isDesktop ? 72 : 0 }}>
           {holesWithClips.map(holeNum => {
             const clips = holeClipsMap[holeNum] || [];
             const isHoleActive = holeNum === activeHoleNum;
@@ -1222,7 +1225,7 @@ export default function CourseProfilePage() {
                 onScroll={() => {
                   const inner = holeScrollRefs.current[holeNum];
                   if (!inner) return;
-                  const clipIdx = Math.round(inner.scrollLeft / window.innerWidth);
+                  const clipIdx = Math.round(inner.scrollLeft / inner.offsetWidth);
                   setActiveClipByHole(prev => ({ ...prev, [holeNum]: clipIdx }));
                 }}
               >
@@ -1239,7 +1242,8 @@ export default function CourseProfilePage() {
                       totalClips={clips.length}
                       onEnded={() => {
                         if (clipIdx < clips.length - 1) {
-                          holeScrollRefs.current[holeNum]?.scrollBy({ left: window.innerWidth, behavior: "smooth" });
+                          const hsr = holeScrollRefs.current[holeNum];
+                          hsr?.scrollBy({ left: hsr.offsetWidth, behavior: "smooth" });
                         } else {
                           feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" });
                         }

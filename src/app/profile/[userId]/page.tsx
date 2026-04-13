@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useLike } from "@/hooks/useLike";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -66,7 +67,8 @@ function ProfileFeedCard({
   const hasNotes = !!(clip.shotType || clip.strategyNote || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000" }}>
+    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000", display: "flex", justifyContent: "center" }}>
+      <div style={{ position: "relative", width: "100%", maxWidth: 390, height: "100%", overflow: "hidden" }}>
       <style>{`
         .pf-top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 36px 14px 12px; z-index: 20; gap: 10px; }
         .pf-ctrl-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
@@ -236,6 +238,7 @@ function ProfileFeedCard({
           </div>
         </>
       )}
+      </div>{/* end inner wrapper */}
     </div>
   );
 }
@@ -259,6 +262,7 @@ type FollowUser = { id: string; username: string; displayName: string; avatarUrl
 export default function ProfilePage() {
   const { userId } = useParams();
   const router = useRouter();
+  const isDesktop = useIsDesktop();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -637,7 +641,7 @@ export default function ProfilePage() {
       {feedOpen && (
         <div ref={feedScrollRef}
           onScroll={e => setFeedActiveIdx(Math.round((e.target as HTMLElement).scrollTop / window.innerHeight))}
-          style={{ position: "fixed", inset: 0, zIndex: 100, background: "#000", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none" }}>
+          style={{ position: "fixed", inset: 0, left: isDesktop ? 72 : 0, zIndex: 100, background: "#000", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none" }}>
           {allClips.map((clip, idx) => (
             <div key={clip.id + (clip.isTagged ? "-t" : "")} style={{ scrollSnapAlign: "start", scrollSnapStop: "always", height: "100svh", width: "100vw" }}>
               <ProfileFeedCard

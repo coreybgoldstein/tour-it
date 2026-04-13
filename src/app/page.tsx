@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLike } from "@/hooks/useLike";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
+import BottomNav from "@/components/BottomNav";
 
 type TrendingCourse = {
   id: string;
@@ -350,10 +352,11 @@ function SeriesCard({
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}
+    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000", display: "flex", justifyContent: "center" }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      <div style={{ position: "relative", width: "100%", maxWidth: 390, height: "100%", overflow: "hidden", background: "#07100a" }}>
       {item.shots.map((shot, i) => (
         <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.18s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
           {shot.mediaType === "VIDEO" ? (
@@ -449,6 +452,7 @@ function SeriesCard({
           </div>
         </>
       )}
+      </div>{/* end inner wrapper */}
     </div>
   );
 }
@@ -480,7 +484,9 @@ function VideoCard({
   }, [muted]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#07100a", overflow: "hidden" }}>
+    <div style={{ position: "relative", width: "100%", height: "100svh", background: "#000", display: "flex", justifyContent: "center" }}>
+      {/* Inner wrapper — constrains clip to 390px on desktop */}
+      <div style={{ position: "relative", width: "100%", maxWidth: 390, height: "100%", overflow: "hidden" }}>
       {clip.mediaType === "VIDEO" ? (
         <video ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline
           onClick={() => {
@@ -489,9 +495,9 @@ function VideoCard({
             else { v.pause(); setVideoPaused(true); }
           }}
           onEnded={onEnded}
-          style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
-        <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
@@ -567,12 +573,14 @@ function VideoCard({
           </div>
         </>
       )}
+      </div>{/* end inner wrapper */}
     </div>
   );
 }
 
 export default function Home() {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [user, setUser] = useState<any>(undefined); // undefined = auth not yet checked, null = confirmed logged out
   const [userProfile, setUserProfile] = useState<any>(null);
   const [trendingCourses, setTrendingCourses] = useState<TrendingCourse[]>([]);
@@ -998,7 +1006,7 @@ export default function Home() {
         </div>
       )}
 
-      <div ref={feedRef} className="feed" onScroll={handleScroll}>
+      <div ref={feedRef} className="feed" onScroll={handleScroll} style={{ paddingLeft: isDesktop ? 72 : 0 }}>
 
         {/* ── Discovery section ── */}
         <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
@@ -1008,7 +1016,7 @@ export default function Home() {
             {/* 3-col row: hamburger | logo | bell */}
             <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: "max(14px, env(safe-area-inset-top))", paddingBottom: 10, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
               {/* Hamburger */}
-              <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
+              <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: isDesktop ? "none" : "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
@@ -1285,32 +1293,7 @@ export default function Home() {
         </div>
       )}
 
-      <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "10px 8px 18px", background: "linear-gradient(to top, rgba(7,16,10,0.97) 0%, rgba(7,16,10,0.5) 100%)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        <button onClick={() => feedRef.current?.scrollTo({ top: 0, behavior: "smooth" })} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-          <span style={{ fontSize: "9px", color: "#1a9e42", fontFamily: "'Outfit', sans-serif" }}>Home</span>
-        </button>
-        <button onClick={() => router.push("/search")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Search</span>
-        </button>
-        <button onClick={() => router.push("/upload")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer", marginTop: "-18px" }}>
-          <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(45,122,66,0.5)" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 7 12 2 16 7"/><line x1="12" y1="2" x2="12" y2="15"/><path d="M5 15v5h14v-5"/></svg>
-          </div>
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.04em" }}>UPLOAD</span>
-        </button>
-        <button onClick={() => router.push("/lists")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Lists</span>
-        </button>
-        <button onClick={() => router.push(user ? "/profile" : "/login")} style={{ background: "none", border: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", cursor: "pointer" }}>
-          <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(26,158,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {userProfile?.avatarUrl ? <img src={userProfile.avatarUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-          </div>
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif" }}>Profile</span>
-        </button>
-      </nav>
+      <BottomNav />
 
       {/* Report clip sheet */}
       {reportClipId && (

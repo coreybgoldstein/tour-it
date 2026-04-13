@@ -43,3 +43,13 @@ input, textarea, select {
 * {
   box-sizing: border-box;
 }
+
+/* Desktop layout */
+@media (min-width: 768px) {
+  body {
+    background: #000;
+  }
+  .feed-clip-page {
+    width: calc(100vw - 72px) !important;
+  }
+}
