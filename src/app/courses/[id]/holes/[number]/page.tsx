@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1)" }}>
@@ -82,6 +83,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const touchStartX = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isDesktop = useIsDesktop();
 
   const activeShot = series.shots[shotIndex];
 
@@ -114,7 +116,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 200 }}
+    <div style={{ position: "fixed", inset: 0, left: isDesktop ? 72 : 0, background: "#000", zIndex: 200 }}
       ref={containerRef}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -256,6 +258,7 @@ function ClipActions({ upload }: { upload: Upload }) {
 export default function HolePage() {
   const { id, number } = useParams();
   const router = useRouter();
+  const isDesktop = useIsDesktop();
   const [course, setCourse] = useState<Course | null>(null);
   const [hole, setHole] = useState<Hole | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -588,10 +591,11 @@ export default function HolePage() {
         {/* Show series cards or single clip feed */}
         {uploads.length > 0 ? (
           <div
-            style={{ position: "relative", width: "100%", height: "100dvh", background: "#000" }}
+            style={{ position: "relative", width: "100%", height: "100dvh", background: "#000", display: "flex", justifyContent: "center" }}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
+            <div style={{ position: "relative", width: "100%", maxWidth: isDesktop ? 390 : "100%", height: "100%", overflow: "hidden" }}>
             {activeUpload.mediaType === "PHOTO" ? (
               <img src={activeUpload.mediaUrl} className="photo-el" alt="clip" onClick={() => {}} />
             ) : (
@@ -771,6 +775,7 @@ export default function HolePage() {
                 ))}
               </div>
             )}
+            </div>{/* end inner wrapper */}
           </div>
         ) : (
           /* Only series, no single clips — show series cards on dark bg */
