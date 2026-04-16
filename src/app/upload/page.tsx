@@ -471,13 +471,15 @@ function UploadPageInner() {
             Clip uploaded!
           </h1>
           <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginBottom: 28 }}>
-            Your intel for {selectedCourse?.name} — Hole {selectedHole} is under review and will go live shortly.
+            Your intel for {selectedCourse?.name}{selectedHole ? ` — Hole ${selectedHole}` : ""} is under review and will go live shortly.
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
             <button
               onClick={() => {
                 setStep(1);
                 setSelectedHole(null);
+                setContentFormat("");
+                setSelectedGroup("");
                 setMediaFile(null);
                 setMediaPreview(null);
                 setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", notes: "", handicap: "" });
@@ -487,9 +489,12 @@ function UploadPageInner() {
               Upload another
             </button>
             <button
-              onClick={() => router.push(`/courses/${selectedCourse?.id}/holes/${selectedHole}`)}
+              onClick={() => selectedHole
+                ? router.push(`/courses/${selectedCourse?.id}/holes/${selectedHole}`)
+                : router.push(`/courses/${selectedCourse?.id}`)
+              }
               style={{ background: "#2d7a42", border: "none", borderRadius: 99, padding: "10px 20px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
-              View hole
+              {selectedHole ? "View hole" : "View course"}
             </button>
           </div>
                 </div>
@@ -954,7 +959,7 @@ function UploadPageInner() {
         )}
 
         {/* Step 5 — Review */}
-        {step === 5 && selectedCourse && selectedHole && (
+        {step === 5 && selectedCourse && (
           <div className="anim">
             <p className="step-label">Step 5 of 5</p>
             <h1 className="step-title">Ready to submit?</h1>
@@ -967,7 +972,9 @@ function UploadPageInner() {
                 </div>
                 <div>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.9)" }}>{selectedCourse.name}</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Hole {selectedHole} · {mediaType}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
+                    {selectedHole ? `Hole ${selectedHole}` : CONTENT_FORMATS.find(f => f.value === contentFormat)?.label || contentFormat} · {mediaType}
+                  </div>
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
