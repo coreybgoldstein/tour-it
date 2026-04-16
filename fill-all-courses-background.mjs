@@ -10,7 +10,17 @@ import { createWriteStream, existsSync, readFileSync, writeFileSync } from 'fs';
 
 const SUPABASE_URL = 'https://awlbxzpevwidowxxvuef.supabase.co';
 const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3bGJ4enBldndpZG93eHh2dWVmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzAxODQ5OSwiZXhwIjoyMDg4NTk0NDk5fQ.TU53et5QL6MwLmcv1wQNwDMLtjp62xaLSrElrCpGV0I';
-const OVERPASS = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+];
+let overpassIndex = 0;
+function nextOverpass() {
+  const url = OVERPASS_MIRRORS[overpassIndex % OVERPASS_MIRRORS.length];
+  overpassIndex++;
+  return url;
+}
 const STORAGE_BUCKET = 'tour-it-photos';
 const PROGRESS_FILE = 'fill-progress.json';
 const LOG_FILE = 'fill-log.txt';
@@ -91,13 +101,31 @@ async function fetchWithRetry(url, opts = {}, maxRetries = 4) {
 // ── Overpass ──────────────────────────────────────────────────────────────────
 
 async function queryOverpass(query) {
-  const res = await fetchWithRetry(OVERPASS, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `data=${encodeURIComponent(query)}`,
-  });
-  if (!res.ok) throw new Error(`Overpass: ${res.status}`);
-  return res.json();
+  let delay = 5000;
+  for (let attempt = 0; attempt <= 6; attempt++) {
+    const mirror = nextOverpass();
+    try {
+      const res = await fetch(mirror, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+      });
+      if (res.status === 429 || res.status === 504 || res.status === 502) {
+        if (attempt === 6) throw new Error(`HTTP ${res.status} after 6 retries`);
+        log(`    Rate limited (${res.status}) on ${mirror}, switching mirror, waiting ${delay / 1000}s...`);
+        await sleep(delay);
+        delay = Math.min(delay * 1.5, 60000);
+        continue;
+      }
+      if (!res.ok) throw new Error(`Overpass: ${res.status}`);
+      return res.json();
+    } catch (err) {
+      if (attempt === 6) throw err;
+      log(`    Overpass error on ${mirror}: ${err.message}, retrying in ${delay / 1000}s...`);
+      await sleep(delay);
+      delay = Math.min(delay * 1.5, 60000);
+    }
+  }
 }
 
 // One query gets both the course metadata and its holes
