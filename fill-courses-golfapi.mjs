@@ -164,6 +164,15 @@ async function main() {
         log(`  matched: ${bestMatch.club_name} (${Math.round(bestDist)}m away)`);
         progress.stats.matched++;
 
+        // Fill missing city/state from API match
+        const coursePatch = {};
+        if (!course.city?.trim() && bestMatch.location?.city) coursePatch.city = bestMatch.location.city;
+        if (!course.state?.trim() && bestMatch.location?.state) coursePatch.state = bestMatch.location.state;
+        if (Object.keys(coursePatch).length > 0) {
+          await supabaseFetch(`/Course?id=eq.${course.id}`, { method: 'PATCH', body: JSON.stringify(coursePatch) });
+          log(`  filled: ${Object.entries(coursePatch).map(([k, v]) => `${k}="${v}"`).join(', ')}`);
+        }
+
         const tee = getBestTee(bestMatch.tees);
         if (!tee || !tee.holes || tee.holes.length < 9) {
           log(`  no usable hole data`);
