@@ -12,13 +12,19 @@ export default function ResetPasswordPage() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
+  const [linkInvalid, setLinkInvalid] = useState(false);
 
   // Supabase puts the session tokens in the URL hash when the user clicks the email link
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setReady(true);
     });
+    // If no PASSWORD_RECOVERY event after 6s, the link is invalid or expired
+    const timeout = setTimeout(() => {
+      if (!ready) setLinkInvalid(true);
+    }, 6000);
+    return () => { subscription.unsubscribe(); clearTimeout(timeout); };
   }, []);
 
   const handleReset = async () => {
@@ -67,6 +73,15 @@ export default function ResetPasswordPage() {
             </div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff", marginBottom: 10 }}>Password updated</div>
             <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>Taking you home...</p>
+          </div>
+        ) : linkInvalid ? (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(200,80,80,0.1)", border: "1px solid rgba(200,80,80,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(240,120,120,0.9)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Link expired</div>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginBottom: 20 }}>This reset link is invalid or has expired.<br/>Request a new one and try again.</p>
+            <a href="/forgot-password" style={{ display: "block", background: "#2d7a42", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", textDecoration: "none", textAlign: "center" }}>Request new link</a>
           </div>
         ) : !ready ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>

@@ -76,8 +76,9 @@ export default function SignUpPage() {
       });
 
       if (dbError) {
-        // Don't block signup if DB insert fails — log it but continue
-        console.error("User DB insert error:", dbError.message);
+        setError("Account created but profile setup failed. Please contact support.");
+        setLoading(false);
+        return;
       }
     }
 
@@ -197,7 +198,7 @@ export default function SignUpPage() {
         <p className="tagline">Scout every hole before you play it.</p>
 
         <h1 className="title">Create your account</h1>
-        <p className="subtitle">Free forever. No credit card needed.</p>
+        <p className="subtitle">Join the community. Start scouting.</p>
 
         {error && <div className="error-box">{error}</div>}
 
@@ -224,6 +225,7 @@ export default function SignUpPage() {
                 value={username}
                 onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s/g, ""))}
               />
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Lowercase only, no spaces</p>
             </div>
 
             <div className="field">
