@@ -483,8 +483,8 @@ function SearchPageInner() {
       {/* Filter bottom sheet */}
       {filterOpen && (
         <>
-          <div onClick={() => setFilterOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.5)" }} />
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, background: "#0d2318", border: "1px solid rgba(77,168,98,0.15)", borderRadius: "20px 20px 0 0", padding: "20px 20px 48px", maxHeight: "85vh", overflowY: "auto" }}>
+          <div onClick={() => setFilterOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 110, background: "rgba(0,0,0,0.5)" }} />
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 120, background: "#0d2318", border: "1px solid rgba(77,168,98,0.15)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", maxHeight: "85vh", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Filter Courses</div>
