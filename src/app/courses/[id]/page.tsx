@@ -382,7 +382,10 @@ export default function CourseProfilePage() {
   const holesWithClipsRef = useRef<number[]>([]);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scorecardOpen, setScorecardOpen] = useState(false);
-  const [holes, setHoles] = useState<{ holeNumber: number; par: number; handicapRank: number; yardage: number | null }[]>([]);
+  const [holes, setHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null }[]>([]);
+  const [scorecardEditMode, setScorecardEditMode] = useState(false);
+  const [editedHoles, setEditedHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null }[]>([]);
+  const [savingScorecard, setSavingScorecard] = useState(false);
   const [contributeOpen, setContributeOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -540,7 +543,11 @@ export default function CourseProfilePage() {
       const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank, yardage").eq("courseId", id).order("holeNumber", { ascending: true });
       const holeMap: Record<string, number> = {};
       holesData?.forEach((h: any) => { holeMap[h.id] = h.holeNumber; });
-      if (holesData) setHoles(holesData.map((h: any) => ({ holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null })));
+      if (holesData) {
+        const mapped = holesData.map((h: any) => ({ id: h.id, holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null }));
+        setHoles(mapped);
+        setEditedHoles(mapped);
+      }
 
       const { data: uploads } = await supabase
         .from("Upload").select("*").eq("courseId", id).eq("moderationStatus", "APPROVED").order("rankScore", { ascending: false });
@@ -1089,74 +1096,171 @@ export default function CourseProfilePage() {
 
 {/* Scorecard modal */}
       {scorecardOpen && (
-        <div onClick={() => setScorecardOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "85vh", overflowY: "auto" }}>
+        <div onClick={() => { if (!scorecardEditMode) setScorecardOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Scorecard</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 20 }}>{course.name}</div>
 
-            {[{ label: "Front 9", start: 0, end: 9 }, { label: "Back 9", start: 9, end: 18 }].map(({ label, start, end }) => {
-              const nine = holes.slice(start, end);
-              if (nine.length === 0) return null;
-              const totalPar = nine.reduce((s, h) => s + h.par, 0);
-              const totalYards = nine.reduce((s, h) => s + (h.yardage || 0), 0);
-              const hasYards = nine.some(h => h.yardage);
-              return (
-                <div key={label} style={{ marginBottom: 16 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>{label}</div>
-                  <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
-                    {/* Hole row */}
-                    <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                      <div style={{ width: 44, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Hole</div>
-                      {nine.map(h => (
-                        <div key={h.holeNumber} style={{ flex: 1, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{h.holeNumber}</div>
-                      ))}
-                      <div style={{ width: 36, padding: "8px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>{label === "Front 9" ? "Out" : "In"}</div>
-                    </div>
-                    {/* Yardage row */}
-                    {hasYards && (
-                      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                        <div style={{ width: 44, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Yds</div>
-                        {nine.map(h => (
-                          <div key={h.holeNumber} style={{ flex: 1, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>{h.yardage || "—"}</div>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+              <div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 2 }}>Scorecard</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{course.name}</div>
+              </div>
+              {!scorecardEditMode ? (
+                <button
+                  onClick={() => { setEditedHoles([...holes]); setScorecardEditMode(true); }}
+                  style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "7px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit
+                </button>
+              ) : (
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    onClick={() => { setScorecardEditMode(false); setEditedHoles([...holes]); }}
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "7px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}
+                  >Cancel</button>
+                  <button
+                    onClick={async () => {
+                      setSavingScorecard(true);
+                      const supabase = createClient();
+                      await Promise.all(editedHoles.map(h =>
+                        supabase.from("Hole").update({ par: h.par, yardage: h.yardage, handicapRank: h.handicapRank }).eq("id", h.id)
+                      ));
+                      setHoles([...editedHoles]);
+                      setScorecardEditMode(false);
+                      setSavingScorecard(false);
+                    }}
+                    disabled={savingScorecard}
+                    style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "7px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", cursor: "pointer", opacity: savingScorecard ? 0.6 : 1 }}
+                  >{savingScorecard ? "Saving..." : "Save"}</button>
+                </div>
+              )}
+            </div>
+
+            {/* Edit mode — vertical list */}
+            {scorecardEditMode ? (
+              <div>
+                <style>{`.sc-input { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 8px 10px; font-family: 'Outfit', sans-serif; font-size: 14px; color: #fff; outline: none; text-align: center; } .sc-input:focus { border-color: rgba(77,168,98,0.5); }`}</style>
+                {[{ label: "Front 9", start: 0, end: 9 }, { label: "Back 9", start: 9, end: 18 }].map(({ label, start, end }) => {
+                  const nine = editedHoles.slice(start, end);
+                  if (nine.length === 0) return null;
+                  return (
+                    <div key={label} style={{ marginBottom: 20 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 10 }}>{label}</div>
+                      {/* Column headers */}
+                      <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 1fr", gap: 6, marginBottom: 6 }}>
+                        <div />
+                        {["Par", "Yards", "HCP"].map(l => (
+                          <div key={l} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", textAlign: "center" }}>{l}</div>
                         ))}
-                        <div style={{ width: 36, padding: "8px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", flexShrink: 0 }}>{totalYards > 0 ? totalYards : "—"}</div>
                       </div>
-                    )}
-                    {/* Par row */}
-                    <div style={{ display: "flex" }}>
-                      <div style={{ width: 44, padding: "9px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Par</div>
-                      {nine.map(h => (
-                        <div key={h.holeNumber} style={{ flex: 1, padding: "9px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: h.par === 3 ? "#6bcf7f" : h.par === 5 ? "#f0c55a" : "#fff" }}>{h.par}</div>
-                      ))}
-                      <div style={{ width: 36, padding: "9px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#1a9e42", flexShrink: 0 }}>{totalPar}</div>
+                      {nine.map((h, idx) => {
+                        const globalIdx = start + idx;
+                        return (
+                          <div key={h.holeNumber} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 1fr", gap: 6, marginBottom: 6, alignItems: "center" }}>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", textAlign: "center" }}>{h.holeNumber}</div>
+                            <input
+                              className="sc-input"
+                              type="number" min={3} max={5}
+                              value={h.par}
+                              onChange={e => {
+                                const v = parseInt(e.target.value) || 4;
+                                setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, par: Math.min(5, Math.max(3, v)) } : eh));
+                              }}
+                            />
+                            <input
+                              className="sc-input"
+                              type="number" min={1}
+                              value={h.yardage ?? ""}
+                              placeholder="—"
+                              onChange={e => {
+                                const v = e.target.value === "" ? null : parseInt(e.target.value) || null;
+                                setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, yardage: v } : eh));
+                              }}
+                            />
+                            <input
+                              className="sc-input"
+                              type="number" min={1} max={18}
+                              value={h.handicapRank ?? ""}
+                              placeholder="—"
+                              onChange={e => {
+                                const v = e.target.value === "" ? null : parseInt(e.target.value) || null;
+                                setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, handicapRank: v as any } : eh));
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Read mode — horizontal table */
+              <>
+                {[{ label: "Front 9", start: 0, end: 9 }, { label: "Back 9", start: 9, end: 18 }].map(({ label, start, end }) => {
+                  const nine = holes.slice(start, end);
+                  if (nine.length === 0) return null;
+                  const totalPar = nine.reduce((s, h) => s + h.par, 0);
+                  const totalYards = nine.reduce((s, h) => s + (h.yardage || 0), 0);
+                  const hasYards = nine.some(h => h.yardage);
+                  const hasHcp = nine.some(h => h.handicapRank);
+                  return (
+                    <div key={label} style={{ marginBottom: 16 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>{label}</div>
+                      <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
+                        <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                          <div style={{ width: 36, padding: "8px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", flexShrink: 0 }}>Hole</div>
+                          {nine.map(h => <div key={h.holeNumber} style={{ flex: 1, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{h.holeNumber}</div>)}
+                          <div style={{ width: 30, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", flexShrink: 0 }}>{label === "Front 9" ? "Out" : "In"}</div>
+                        </div>
+                        {hasYards && (
+                          <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                            <div style={{ width: 36, padding: "8px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", flexShrink: 0 }}>Yds</div>
+                            {nine.map(h => <div key={h.holeNumber} style={{ flex: 1, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{h.yardage || "—"}</div>)}
+                            <div style={{ width: 30, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", flexShrink: 0 }}>{totalYards || "—"}</div>
+                          </div>
+                        )}
+                        <div style={{ display: "flex", borderBottom: hasHcp ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
+                          <div style={{ width: 36, padding: "9px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", flexShrink: 0 }}>Par</div>
+                          {nine.map(h => <div key={h.holeNumber} style={{ flex: 1, padding: "9px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: h.par === 3 ? "#6bcf7f" : h.par === 5 ? "#f0c55a" : "#fff" }}>{h.par}</div>)}
+                          <div style={{ width: 30, padding: "9px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#1a9e42", flexShrink: 0 }}>{totalPar}</div>
+                        </div>
+                        {hasHcp && (
+                          <div style={{ display: "flex" }}>
+                            <div style={{ width: 36, padding: "8px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", flexShrink: 0 }}>HCP</div>
+                            {nine.map(h => <div key={h.holeNumber} style={{ flex: 1, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{h.handicapRank || "—"}</div>)}
+                            <div style={{ width: 30, flexShrink: 0 }} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {holes.length > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "rgba(26,158,66,0.1)", borderRadius: 12, border: "1px solid rgba(26,158,66,0.2)", marginTop: 4 }}>
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Total</div>
+                      {holes.some(h => h.yardage) && (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{holes.reduce((s, h) => s + (h.yardage || 0), 0).toLocaleString()} yds · Championship tees</div>
+                      )}
+                    </div>
+                    <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#1a9e42" }}>Par {holes.reduce((s, h) => s + h.par, 0)}</span>
                   </div>
-                </div>
-              );
-            })}
-
-            {/* Total */}
-            {holes.length > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "rgba(26,158,66,0.1)", borderRadius: 12, border: "1px solid rgba(26,158,66,0.2)", marginTop: 4 }}>
-                <div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Total</div>
-                  {holes.some(h => h.yardage) && (
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{holes.reduce((s, h) => s + (h.yardage || 0), 0).toLocaleString()} yds · Championship tees</div>
-                  )}
-                </div>
-                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#1a9e42" }}>Par {holes.reduce((s, h) => s + h.par, 0)}</span>
-              </div>
+                )}
+                {holes.some(h => h.yardage) && (
+                  <div style={{ marginTop: 12, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.5 }}>
+                    Yardages shown are from the championship (tips) tees.
+                  </div>
+                )}
+              </>
             )}
 
-            {/* Yardage note */}
-            {holes.some(h => h.yardage) && (
-              <div style={{ marginTop: 12, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.5 }}>
-                Yardages shown are from the championship (tips) tees.
-              </div>
+            {!scorecardEditMode && (
+              <button onClick={() => setScorecardOpen(false)} style={{ marginTop: 20, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
             )}
-
-            <button onClick={() => setScorecardOpen(false)} style={{ marginTop: 20, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
           </div>
         </div>
       )}
