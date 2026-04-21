@@ -382,7 +382,7 @@ export default function CourseProfilePage() {
   const holesWithClipsRef = useRef<number[]>([]);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scorecardOpen, setScorecardOpen] = useState(false);
-  const [holes, setHoles] = useState<{ holeNumber: number; par: number; handicapRank: number }[]>([]);
+  const [holes, setHoles] = useState<{ holeNumber: number; par: number; handicapRank: number; yardage: number | null }[]>([]);
   const [contributeOpen, setContributeOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -537,10 +537,10 @@ export default function CourseProfilePage() {
       const { data: courseData } = await supabase.from("Course").select("*").eq("id", id).single();
       if (courseData) setCourse(courseData);
 
-      const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank").eq("courseId", id).order("holeNumber", { ascending: true });
+      const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank, yardage").eq("courseId", id).order("holeNumber", { ascending: true });
       const holeMap: Record<string, number> = {};
       holesData?.forEach((h: any) => { holeMap[h.id] = h.holeNumber; });
-      if (holesData) setHoles(holesData.map((h: any) => ({ holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber })));
+      if (holesData) setHoles(holesData.map((h: any) => ({ holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null })));
 
       const { data: uploads } = await supabase
         .from("Upload").select("*").eq("courseId", id).eq("moderationStatus", "APPROVED").order("rankScore", { ascending: false });
@@ -1098,7 +1098,9 @@ export default function CourseProfilePage() {
             {[{ label: "Front 9", start: 0, end: 9 }, { label: "Back 9", start: 9, end: 18 }].map(({ label, start, end }) => {
               const nine = holes.slice(start, end);
               if (nine.length === 0) return null;
-              const total = nine.reduce((s, h) => s + h.par, 0);
+              const totalPar = nine.reduce((s, h) => s + h.par, 0);
+              const totalYards = nine.reduce((s, h) => s + (h.yardage || 0), 0);
+              const hasYards = nine.some(h => h.yardage);
               return (
                 <div key={label} style={{ marginBottom: 16 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>{label}</div>
@@ -1109,15 +1111,25 @@ export default function CourseProfilePage() {
                       {nine.map(h => (
                         <div key={h.holeNumber} style={{ flex: 1, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{h.holeNumber}</div>
                       ))}
-                      <div style={{ width: 36, padding: "8px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Out</div>
+                      <div style={{ width: 36, padding: "8px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>{label === "Front 9" ? "Out" : "In"}</div>
                     </div>
+                    {/* Yardage row */}
+                    {hasYards && (
+                      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                        <div style={{ width: 44, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Yds</div>
+                        {nine.map(h => (
+                          <div key={h.holeNumber} style={{ flex: 1, padding: "8px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>{h.yardage || "—"}</div>
+                        ))}
+                        <div style={{ width: 36, padding: "8px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.55)", flexShrink: 0 }}>{totalYards > 0 ? totalYards : "—"}</div>
+                      </div>
+                    )}
                     {/* Par row */}
                     <div style={{ display: "flex" }}>
                       <div style={{ width: 44, padding: "9px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>Par</div>
                       {nine.map(h => (
                         <div key={h.holeNumber} style={{ flex: 1, padding: "9px 4px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: h.par === 3 ? "#6bcf7f" : h.par === 5 ? "#f0c55a" : "#fff" }}>{h.par}</div>
                       ))}
-                      <div style={{ width: 36, padding: "9px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#1a9e42", flexShrink: 0 }}>{total}</div>
+                      <div style={{ width: 36, padding: "9px 6px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#1a9e42", flexShrink: 0 }}>{totalPar}</div>
                     </div>
                   </div>
                 </div>
@@ -1127,8 +1139,20 @@ export default function CourseProfilePage() {
             {/* Total */}
             {holes.length > 0 && (
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: "rgba(26,158,66,0.1)", borderRadius: 12, border: "1px solid rgba(26,158,66,0.2)", marginTop: 4 }}>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Total Par</span>
-                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#1a9e42" }}>{holes.reduce((s, h) => s + h.par, 0)}</span>
+                <div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Total</div>
+                  {holes.some(h => h.yardage) && (
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{holes.reduce((s, h) => s + (h.yardage || 0), 0).toLocaleString()} yds · Championship tees</div>
+                  )}
+                </div>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#1a9e42" }}>Par {holes.reduce((s, h) => s + h.par, 0)}</span>
+              </div>
+            )}
+
+            {/* Yardage note */}
+            {holes.some(h => h.yardage) && (
+              <div style={{ marginTop: 12, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.5 }}>
+                Yardages shown are from the championship (tips) tees.
               </div>
             )}
 
