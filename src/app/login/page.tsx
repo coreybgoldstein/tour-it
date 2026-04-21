@@ -115,7 +115,7 @@ export default function LoginPage() {
         }
         .forgot a {
           font-family: 'Outfit', sans-serif; font-size: 12px;
-          color: rgba(255,255,255,0.3); text-decoration: none;
+          color: rgba(255,255,255,0.55); text-decoration: none;
           transition: color 0.15s;
         }
         .forgot a:hover { color: #4da862; }
@@ -134,7 +134,7 @@ export default function LoginPage() {
         }
         .signup-link {
           text-align: center; font-family: 'Outfit', sans-serif;
-          font-size: 13px; color: rgba(255,255,255,0.3);
+          font-size: 13px; color: rgba(255,255,255,0.55);
         }
         .signup-link a {
           color: #4da862; text-decoration: none; font-weight: 500;

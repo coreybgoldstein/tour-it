@@ -417,7 +417,7 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <button className="btn-primary" onClick={() => finish(false)} disabled={saving || !homeCourse} style={{ marginBottom: 10 }}>
+            <button className="btn-primary" onClick={() => finish(!homeCourse)} disabled={saving} style={{ marginBottom: 10 }}>
               {saving ? "Almost done..." : "Finish Setup ✓"}
             </button>
             <button className="btn-ghost" onClick={() => finish(true)}>
