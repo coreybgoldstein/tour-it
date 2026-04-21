@@ -26,6 +26,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Tour It — Scout Before You Play",
   description: "Preview any golf course, one hole at a time. Real videos and tips from golfers who've already played it.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
   openGraph: {
     title: "Tour It — Scout Before You Play",
     description: "Preview any golf course, one hole at a time. Real videos and tips from golfers who've already played it.",
