@@ -17,7 +17,8 @@ type Hole = {
   id: string;
   holeNumber: number;
   par: number;
-  handicap: number | null;
+  handicapRank: number | null;
+  yardage: number | null;
   uploadCount: number;
 };
 
@@ -77,6 +78,13 @@ export default function HolesOverviewPage() {
   const backNine = holes.filter(h => h.holeNumber >= 10);
   const abbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "";
 
+  const frontYardage = frontNine.reduce((sum, h) => sum + (h.yardage || 0), 0);
+  const backYardage = backNine.reduce((sum, h) => sum + (h.yardage || 0), 0);
+  const totalYardage = frontYardage + backYardage;
+  const frontPar = frontNine.reduce((sum, h) => sum + (h.par || 4), 0);
+  const backPar = backNine.reduce((sum, h) => sum + (h.par || 4), 0);
+  const hasYardage = totalYardage > 0;
+
   return (
     <main style={{ height: "100dvh", background: "#07100a", overflow: "hidden auto", fontFamily: "'Outfit', sans-serif", color: "#fff" }}>
       <style>{`
@@ -107,6 +115,23 @@ export default function HolesOverviewPage() {
 
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "12px 14px 0" }}>
 
+        {/* Yardage summary */}
+        {hasYardage && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+            {[
+              { label: "Front", yardage: frontYardage, par: frontPar },
+              { label: "Back", yardage: backYardage, par: backPar },
+              { label: "Total", yardage: totalYardage, par: frontPar + backPar },
+            ].map(({ label, yardage, par }) => (
+              <div key={label} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "8px 10px", textAlign: "center" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", lineHeight: 1 }}>{yardage > 0 ? yardage.toLocaleString() : "—"}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#4da862", marginTop: 2 }}>Par {par}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Front Nine */}
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", textTransform: "uppercase", marginBottom: 6 }}>
           Front Nine
@@ -126,6 +151,9 @@ export default function HolesOverviewPage() {
                   P{hole.par || 4}
                 </div>
               </div>
+              {hole.yardage ? (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.45)", marginBottom: 1 }}>{hole.yardage}y</div>
+              ) : null}
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 500, color: hole.uploadCount > 0 ? "#4da862" : "rgba(255,255,255,0.18)" }}>
                 {hole.uploadCount > 0 ? `${hole.uploadCount} clip${hole.uploadCount !== 1 ? "s" : ""}` : "—"}
               </div>
@@ -152,6 +180,9 @@ export default function HolesOverviewPage() {
                   P{hole.par || 4}
                 </div>
               </div>
+              {hole.yardage ? (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.45)", marginBottom: 1 }}>{hole.yardage}y</div>
+              ) : null}
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 500, color: hole.uploadCount > 0 ? "#4da862" : "rgba(255,255,255,0.18)" }}>
                 {hole.uploadCount > 0 ? `${hole.uploadCount} clip${hole.uploadCount !== 1 ? "s" : ""}` : "—"}
               </div>
