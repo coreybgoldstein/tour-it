@@ -206,6 +206,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
       setClips(prev => prev.map(c => c.id === clip.id ? { ...c, status: "uploading" } : c));
 
       try {
+        // Use compressed file if ready, otherwise upload original
         const fileToUpload = clip.compressedFile || clip.file;
         const isVideo = clip.file.type.startsWith("video/");
         const ext = fileToUpload.name.split(".").pop();
@@ -573,6 +574,11 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         {selectedCourse && assignedCount < clips.length && (
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", textAlign: "center", marginBottom: 10 }}>
             {clips.length - assignedCount} clip{clips.length - assignedCount !== 1 ? "s" : ""} still need a hole number
+          </div>
+        )}
+        {compressingCount > 0 && !uploading && (
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.7)", textAlign: "center", marginBottom: 8 }}>
+            {compressingCount} clip{compressingCount !== 1 ? "s" : ""} still compressing — you can upload now, they'll wait their turn
           </div>
         )}
         <button
