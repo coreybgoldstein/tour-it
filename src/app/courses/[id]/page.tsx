@@ -19,6 +19,7 @@ type Course = {
   description: string | null;
   coverImageUrl: string | null;
   logoUrl: string | null;
+  scorecardImageUrl: string | null;
 };
 
 type Clip = {
@@ -386,6 +387,9 @@ export default function CourseProfilePage() {
   const [scorecardEditMode, setScorecardEditMode] = useState(false);
   const [editedHoles, setEditedHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null }[]>([]);
   const [savingScorecard, setSavingScorecard] = useState(false);
+  const [scorecardView, setScorecardView] = useState<"digital" | "photo">("digital");
+  const [uploadingScorecardPhoto, setUploadingScorecardPhoto] = useState(false);
+  const scorecardPhotoRef = useRef<HTMLInputElement>(null);
   const [contributeOpen, setContributeOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -1101,12 +1105,12 @@ export default function CourseProfilePage() {
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
 
             {/* Header */}
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
               <div>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 2 }}>Scorecard</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{course.name}</div>
               </div>
-              {!scorecardEditMode ? (
+              {scorecardView === "digital" && !scorecardEditMode && (
                 <button
                   onClick={() => { setEditedHoles([...holes]); setScorecardEditMode(true); }}
                   style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "7px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
@@ -1114,7 +1118,8 @@ export default function CourseProfilePage() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   Edit
                 </button>
-              ) : (
+              )}
+              {scorecardEditMode && (
                 <div style={{ display: "flex", gap: 6 }}>
                   <button
                     onClick={() => { setScorecardEditMode(false); setEditedHoles([...holes]); }}
@@ -1138,8 +1143,71 @@ export default function CourseProfilePage() {
               )}
             </div>
 
-            {/* Edit mode — vertical list */}
-            {scorecardEditMode ? (
+            {/* Toggle */}
+            {!scorecardEditMode && (
+              <div style={{ display: "flex", background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: 3, marginBottom: 20 }}>
+                {(["digital", "photo"] as const).map(v => (
+                  <button
+                    key={v}
+                    onClick={() => setScorecardView(v)}
+                    style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, background: scorecardView === v ? "rgba(77,168,98,0.2)" : "transparent", color: scorecardView === v ? "#4da862" : "rgba(255,255,255,0.4)", transition: "all 0.15s" }}
+                  >{v === "digital" ? "Digital" : "Photo"}</button>
+                ))}
+              </div>
+            )}
+
+            {/* Hidden file input */}
+            <input
+              ref={scorecardPhotoRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={async e => {
+                const file = e.target.files?.[0];
+                if (!file || !course) return;
+                setUploadingScorecardPhoto(true);
+                const supabase = createClient();
+                const ext = file.name.split(".").pop();
+                const path = `scorecards/${course.id}.${ext}`;
+                const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: true });
+                if (!upErr) {
+                  const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+                  await supabase.from("Course").update({ scorecardImageUrl: publicUrl }).eq("id", course.id);
+                  setCourse(c => c ? { ...c, scorecardImageUrl: publicUrl } : c);
+                }
+                setUploadingScorecardPhoto(false);
+                e.target.value = "";
+              }}
+            />
+
+            {/* Photo view */}
+            {scorecardView === "photo" && (
+              <div>
+                {course.scorecardImageUrl ? (
+                  <div>
+                    <img src={course.scorecardImageUrl} alt="Scorecard" style={{ width: "100%", borderRadius: 12, marginBottom: 12 }} />
+                    <button
+                      onClick={() => scorecardPhotoRef.current?.click()}
+                      disabled={uploadingScorecardPhoto}
+                      style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}
+                    >{uploadingScorecardPhoto ? "Uploading..." : "Replace photo"}</button>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "40px 20px", border: "1.5px dashed rgba(255,255,255,0.1)", borderRadius: 16 }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>📷</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 16 }}>Upload a photo of the official scorecard</div>
+                    <button
+                      onClick={() => scorecardPhotoRef.current?.click()}
+                      disabled={uploadingScorecardPhoto}
+                      style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}
+                    >{uploadingScorecardPhoto ? "Uploading..." : "Upload photo"}</button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Digital edit mode */}
+            {scorecardView === "digital" && scorecardEditMode && (
               <div>
                 <style>{`.sc-input { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 8px; padding: 8px 10px; font-family: 'Outfit', sans-serif; font-size: 14px; color: #fff; outline: none; text-align: center; } .sc-input:focus { border-color: rgba(77,168,98,0.5); }`}</style>
                 {[{ label: "Front 9", start: 0, end: 9 }, { label: "Back 9", start: 9, end: 18 }].map(({ label, start, end }) => {
@@ -1196,8 +1264,10 @@ export default function CourseProfilePage() {
                   );
                 })}
               </div>
-            ) : (
-              /* Read mode — horizontal table */
+            )}
+
+            {/* Digital read mode */}
+            {scorecardView === "digital" && !scorecardEditMode && (
               <>
                 {[{ label: "Front 9", start: 0, end: 9 }, { label: "Back 9", start: 9, end: 18 }].map(({ label, start, end }) => {
                   const nine = holes.slice(start, end);
