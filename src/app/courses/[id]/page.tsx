@@ -763,19 +763,17 @@ export default function CourseProfilePage() {
           {[90, 80, 100].map(w => <div key={w} className="skeleton" style={{ width: w, height: 40, borderRadius: 12 }} />)}
         </div>
         {/* 18-hole grid */}
-        <div style={{ padding: "0 14px", maxWidth: isDesktop ? 840 : undefined }}>
-          <div style={{ display: "flex", gap: 0 }}>
-            {[0, 1].map(half => (
-              <div key={half} style={{ flex: 1, minWidth: 0, marginLeft: half === 1 ? 13 : 0 }}>
-                <div className="skeleton" style={{ width: 60, height: 12, marginBottom: 10, borderRadius: 99 }} />
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <div key={i} className="skeleton" style={{ aspectRatio: isDesktop ? "auto" : "9/16", height: isDesktop ? 130 : undefined, borderRadius: 8 }} />
-                  ))}
-                </div>
+        <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 24 }}>
+          {[0, 1].map(half => (
+            <div key={half}>
+              <div className="skeleton" style={{ width: 60, height: 12, marginBottom: 10, borderRadius: 99 }} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 5 }}>
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="skeleton" style={{ aspectRatio: "3/4", borderRadius: 10 }} />
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
         <BottomNav />
       </main>
@@ -793,6 +791,13 @@ export default function CourseProfilePage() {
   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
   const hero = getCourseHero(course.name);
 
+  const mostClippedHole = (() => {
+    const entries = Object.entries(holeClipsMap).filter(([, c]) => c.length > 0);
+    if (entries.length === 0) return null;
+    const sorted = entries.sort(([, a], [, b]) => b.length - a.length);
+    return sorted[0][1].length > 1 ? Number(sorted[0][0]) : null;
+  })();
+
   return (
     <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingLeft: isDesktop ? 72 : 0 }}>
       <style>{`
@@ -806,11 +811,10 @@ export default function CourseProfilePage() {
         .feed-clip-page { width: 100vw; height: 100svh; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
         .feed-end-snap { scroll-snap-align: start; scroll-snap-stop: always; }
         @keyframes hint-fade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.95); } 15% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
-        .clip-thumb { position: relative; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; background: #0d2318; cursor: pointer; transition: opacity 0.15s; }
+        .clip-thumb { position: relative; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden; background: #0e1a13; cursor: pointer; transition: opacity 0.15s; }
         .clip-thumb:hover { opacity: 0.85; }
-        .clip-thumb video, .clip-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .hole-empty { position: relative; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
-        @media (min-width: 768px) { .clip-thumb, .hole-empty { aspect-ratio: auto; height: 130px; } }
+        .clip-thumb video, .clip-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+        .hole-empty { position: relative; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden; background: #0a120d; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
         .hole-cell-indicator { display: flex; gap: 3px; position: absolute; bottom: 6px; right: 6px; }
         .hole-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.4); }
         .hole-dot.active { background: #1a9e42; }
@@ -863,12 +867,21 @@ export default function CourseProfilePage() {
 
 
         <div style={{ position: "relative", padding: "0 20px 18px", zIndex: 10, marginTop: 100 }}>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.45)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            {[course.city, course.state].filter(s => s?.trim()).join(", ")}
-            {course.city || course.state ? " · " : ""}{course.isPublic ? "Public" : "Private"}
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.45)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 6 }}>
+            <span>{[course.city, course.state].filter(s => s?.trim()).join(", ")}{course.city || course.state ? " · " : ""}{course.isPublic ? "Public" : "Private"}</span>
+            {(course.description || hero.description) && (
+              <button onClick={() => setAboutOpen(true)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </button>
+            )}
           </div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: 12, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: 6, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
             {course.name}
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)", marginBottom: 12, display: "flex", alignItems: "center", gap: 5 }}>
+            {holes.length > 0 && holes.some(h => h.par) && <span>Par {holes.reduce((s, h) => s + (h.par || 0), 0)}</span>}
+            {holes.length > 0 && holes.some(h => h.yardage) && <><span style={{ color: "rgba(255,255,255,0.18)" }}>·</span><span>{holes.reduce((s, h) => s + (h.yardage || 0), 0).toLocaleString()} yds</span></>}
+            {courseClips.length > 0 && <><span style={{ color: "rgba(255,255,255,0.18)" }}>·</span><span>{courseClips.length} clips</span></>}
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "4px 12px" }}>
@@ -878,15 +891,6 @@ export default function CourseProfilePage() {
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "4px 12px" }}>
                 Est. {hero.year}
               </span>
-            )}
-            {(course.description || hero.description) && (
-              <button
-                onClick={() => setAboutOpen(true)}
-                style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "4px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
-              >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                About
-              </button>
             )}
             {/* Save button — bottom right of hero */}
             <button
@@ -950,31 +954,66 @@ export default function CourseProfilePage() {
       </div>
 
 {/* Action bar */}
-<div style={{ padding: "14px 20px 16px", display: "flex", gap: 8, alignItems: "center", position: "relative" }}>
+<div style={{ padding: "14px 20px 16px", display: "flex", gap: 8 }}>
   <button
     onClick={() => setScorecardOpen(true)}
-    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, whiteSpace: "nowrap" }}
+    style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "11px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5 }}
   >
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg>
-    Scorecard
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></svg>
+    <span>Scorecard</span>
   </button>
   <button
     onClick={() => router.push(`/upload?courseId=${id}`)}
-    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+    style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "11px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5 }}
   >
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <span>Upload</span>
   </button>
   <button
     onClick={openContribute}
-    title="Suggest a cover photo or edit course info"
-    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+    style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "11px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.8)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5 }}
   >
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <span>Contribute</span>
   </button>
 </div>
 
-      {/* 18-hole grid — Front 9 left | Back 9 right, all visible at once */}
-      <div style={{ padding: courseClips.length === 0 ? "0 14px" : "14px 14px 0", maxWidth: isDesktop ? 840 : undefined }}>
+      {/* Series card */}
+      {(extendedClips.length > 0 || user) && (
+        <div style={{ padding: "0 16px 16px" }}>
+          {extendedClips.length > 0 ? (
+            <button
+              onClick={() => setExtendedClip(extendedClips[0])}
+              style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}
+            >
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Multi-hole series</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{extendedClips.length} playthrough{extendedClips.length !== 1 ? "s" : ""}</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          ) : user ? (
+            <button
+              onClick={() => router.push(`/upload?courseId=${id}`)}
+              style={{ width: "100%", background: "rgba(77,168,98,0.04)", border: "1px dashed rgba(77,168,98,0.2)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}
+            >
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.65)" }}>Post a multi-hole series</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.32)", marginTop: 1 }}>Front 9, Back 9, Full Round, or 3-hole clips</div>
+              </div>
+            </button>
+          ) : null}
+        </div>
+      )}
+
+      {/* 18-hole grid — stacked Front 9 / Back 9 */}
+      <div style={{ padding: courseClips.length === 0 ? "0 16px" : "0 16px", maxWidth: isDesktop ? 600 : undefined }}>
         {courseClips.length === 0 ? (
           <div style={{ textAlign: "center", padding: "28px 20px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>⛳</div>
@@ -985,58 +1024,68 @@ export default function CourseProfilePage() {
             </button>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 0 }}>
-            {[{ label: "Front 9", holes: [1,2,3,4,5,6,7,8,9] }, { label: "Back 9", holes: [10,11,12,13,14,15,16,17,18] }].map(({ label, holes: nineHoles }, sectionIdx) => (
-              <>
-                {sectionIdx === 1 && (
-                  <div style={{ width: 1, background: "rgba(77,168,98,0.25)", alignSelf: "stretch", margin: "0 6px", flexShrink: 0 }} />
-                )}
-              <div key={label} style={{ flex: 1, minWidth: 0 }}>
-                {/* Section label */}
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                  <div style={{ width: 3, height: 14, background: "#4da862", borderRadius: 99, flexShrink: 0 }} />
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
-                  {nineHoles.map(holeNum => {
-                    const clips = holeClipsMap[holeNum];
-                    const topClip = clips?.[0];
-                    const hasClips = clips && clips.length > 0;
-                    return (
-                      <div
-                        key={holeNum}
-                        className={hasClips ? "clip-thumb" : "hole-empty"}
-                        onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); if (!localStorage.getItem("ti-feed-hint")) { setShowFeedHint(true); setTimeout(() => { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); }, 2800); } } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {hasClips && topClip ? (
-                          <>
-                            {topClip.mediaType === "VIDEO" ? (
-                              <video src={topClip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            ) : (
-                              <img src={topClip.mediaUrl} alt={`Hole ${holeNum}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            )}
-                            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 55%)" }} />
-                            <div style={{ position: "absolute", bottom: 4, right: 4 }}>
-                              <FlagBadge label={holeNum} />
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ position: "absolute", bottom: 4, right: 4 }}>
-                              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 3, padding: "2px 5px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.2)" }}>{holeNum}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            {[{ label: "Front 9", nineHoles: [1,2,3,4,5,6,7,8,9] }, { label: "Back 9", nineHoles: [10,11,12,13,14,15,16,17,18] }].map(({ label, nineHoles }) => {
+              const scoutedCount = nineHoles.filter(h => holeClipsMap[h]?.length > 0).length;
+              return (
+                <div key={label}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <div style={{ width: 3, height: 14, background: "#4da862", borderRadius: 99, flexShrink: 0 }} />
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.28)" }}>{scoutedCount}/9 scouted</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 5 }}>
+                    {nineHoles.map(holeNum => {
+                      const clips = holeClipsMap[holeNum];
+                      const topClip = clips?.[0];
+                      const hasClips = clips && clips.length > 0;
+                      const isMostClipped = holeNum === mostClippedHole;
+                      return (
+                        <div
+                          key={holeNum}
+                          onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); if (!localStorage.getItem("ti-feed-hint")) { setShowFeedHint(true); setTimeout(() => { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); }, 2800); } } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
+                          style={{ position: "relative", aspectRatio: "3/4", borderRadius: 10, overflow: "hidden", background: hasClips ? "#0e1a13" : "#0a120d", border: `1px solid ${hasClips ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)"}`, cursor: "pointer" }}
+                        >
+                          {hasClips && topClip ? (
+                            <>
+                              {topClip.mediaType === "VIDEO" ? (
+                                <video src={topClip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                              ) : (
+                                <img src={topClip.mediaUrl} alt={`Hole ${holeNum}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                              )}
+                              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 55%)" }} />
+                              {isMostClipped && (
+                                <div style={{ position: "absolute", top: 5, left: 5, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", borderRadius: 4, padding: "2px 5px", display: "flex", alignItems: "center", gap: 2 }}>
+                                  <span style={{ fontSize: 8, color: "#f5c518" }}>★</span>
+                                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>Top</span>
+                                </div>
+                              )}
+                              <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                                <FlagBadge label={holeNum} />
                               </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
+                              {clips.length > 1 && (
+                                <div style={{ position: "absolute", bottom: 5, left: 5, fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.7)", background: "rgba(0,0,0,0.5)", borderRadius: 4, padding: "2px 5px" }}>{clips.length} clips</div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "rgba(255,255,255,0.05)" }}>{holeNum}</span>
+                              </div>
+                              <div style={{ position: "absolute", bottom: 5, right: 5 }}>
+                                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 3, padding: "2px 5px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.16)" }}>{holeNum}</span>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-              </>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
