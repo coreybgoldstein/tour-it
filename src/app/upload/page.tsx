@@ -106,9 +106,11 @@ function UploadPageInner() {
     handicap: "",
   });
 
+  const [uploadStage, setUploadStage] = useState<"idle" | "compressing" | "uploading">("idle");
   const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const compressionPromiseRef = useRef<Promise<File> | null>(null);
+  const compressedFileRef = useRef<File | null>(null);
 
   type TagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
   const [tagInput, setTagInput] = useState("");
@@ -209,8 +211,12 @@ function UploadPageInner() {
     const dateFromFile = new Date(file.lastModified).toISOString().split("T")[0];
     setIntel(prev => ({ ...prev, datePlayed: prev.datePlayed || dateFromFile }));
 
+    // Always set mediaFile immediately so user can proceed through all steps
+    setMediaFile(file);
+    compressedFileRef.current = null;
+
     if (isVideo) {
-      // Start GPS extraction in parallel with compression
+      // Start GPS extraction in parallel
       setGpsLoading(true);
       extractGPSFromVideo(file).then(async coords => {
         if (!coords) { setGpsLoading(false); return; }
@@ -229,17 +235,17 @@ function UploadPageInner() {
         setGpsLoading(false);
       });
 
-      // Start compression in the background — user can proceed through steps while it runs
+      // Start compression in the background — user fills in details while it runs
       const SKIP_MB = 30;
       if (file.size >= SKIP_MB * 1024 * 1024) {
         setOriginalSize(file.size);
         setCompressing(true);
         setCompressPct(0);
-        const promise = compressVideo(file, (stage, pct) => {
+        compressionPromiseRef.current = compressVideo(file, (stage, pct) => {
           setCompressStage(stage);
           setCompressPct(pct);
         }).then(compressed => {
-          setMediaFile(compressed);
+          compressedFileRef.current = compressed;
           setCompressedSize(compressed.size);
           setCompressing(false);
           return compressed;
@@ -247,13 +253,9 @@ function UploadPageInner() {
           setCompressing(false);
           return file;
         });
-        compressionPromiseRef.current = promise;
       } else {
-        setMediaFile(file);
         compressionPromiseRef.current = null;
       }
-    } else {
-      setMediaFile(file);
     }
   };
 
@@ -313,12 +315,16 @@ function UploadPageInner() {
     setUploading(true);
     setError("");
 
-    // If compression is still running, wait for it before uploading
+    // If compression is still running, wait for it
     let fileToUpload = mediaFile;
     if (compressionPromiseRef.current) {
+      setUploadStage("compressing");
       fileToUpload = await compressionPromiseRef.current;
       compressionPromiseRef.current = null;
+    } else if (compressedFileRef.current) {
+      fileToUpload = compressedFileRef.current;
     }
+    setUploadStage("uploading");
 
     if (mediaType === "VIDEO" && fileToUpload.size > 500 * 1024 * 1024) {
       setError("Video is too large (max 500 MB). Try trimming it to under 2 minutes.");
@@ -445,6 +451,7 @@ function UploadPageInner() {
       setError(err?.message || "Something went wrong. Please try again.");
     }
     setUploading(false);
+    setUploadStage("idle");
   };
 
   if (!authChecked) {
@@ -613,6 +620,24 @@ function UploadPageInner() {
         <div className="progress-fill" style={{ width: `${(step / 5) * 100}%` }} />
       </div>
 
+      {/* Compression status banner — visible on all steps while running */}
+      {compressing && step > 1 && (
+        <div style={{ margin: "0 20px 16px", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)" }}>
+              {compressStage || "Compressing video…"}
+            </span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>{compressPct}%</span>
+          </div>
+          <div style={{ height: 3, background: "rgba(255,255,255,0.07)", borderRadius: 99, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${compressPct || 5}%`, background: "#4da862", borderRadius: 99, transition: "width 0.3s ease" }} />
+          </div>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 5, marginBottom: 0 }}>
+            Compressing in background — your clip will upload automatically when ready
+          </p>
+        </div>
+      )}
+
       <div className="upload-wrap">
 
         {/* Step 1 — Upload clip */}
@@ -647,7 +672,7 @@ function UploadPageInner() {
                 ) : (
                   <img src={mediaPreview} className="preview-img" alt="preview" />
                 )}
-                <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); setGpsSuggestions([]); setCompressing(false); setOriginalSize(null); setCompressedSize(null); }}>
+                <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); setGpsSuggestions([]); setCompressing(false); setOriginalSize(null); setCompressedSize(null); compressionPromiseRef.current = null; compressedFileRef.current = null; }}>
                   Choose different file
                 </button>
 
@@ -685,11 +710,9 @@ function UploadPageInner() {
                 )}
                 <button
                   className="btn-primary"
-                  onClick={() => { if (!compressing) setStep(2); }}
-                  disabled={compressing}
-                  style={compressing ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                  onClick={() => setStep(2)}
                 >
-                  {compressing ? `Compressing… ${compressPct}%` : "Next: Select Course →"}
+                  Next: Select Course →
                 </button>
               </>
             ) : (
@@ -1043,8 +1066,22 @@ function UploadPageInner() {
               </div>
             </div>
 
+            {compressing && !uploading && (
+              <div style={{ background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)" }}>Video compressing…</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>{compressPct}%</span>
+                </div>
+                <div style={{ height: 3, background: "rgba(255,255,255,0.07)", borderRadius: 99, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${compressPct || 5}%`, background: "#4da862", borderRadius: 99, transition: "width 0.3s ease" }} />
+                </div>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 5, marginBottom: 0 }}>
+                  Submit now — upload will start automatically when compression finishes
+                </p>
+              </div>
+            )}
             <button className="btn-primary" disabled={uploading} onClick={handleSubmit}>
-              {uploading && compressing ? "Finishing compression…" : uploading ? "Uploading..." : "Submit clip"}
+              {uploadStage === "compressing" ? `Finishing compression… ${compressPct}%` : uploadStage === "uploading" ? "Uploading…" : "Submit clip"}
             </button>
             <button className="btn-secondary" onClick={() => setStep(4)}>Edit intel</button>
           </div>
