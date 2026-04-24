@@ -948,6 +948,7 @@ export default function Home() {
         @keyframes splash-logo-in { 0% { opacity: 0; transform: scale(0.82); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes splash-tagline-in { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes splash-fade-out { 0% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .splash-logo { animation: splash-logo-in 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
         .splash-tagline { animation: splash-tagline-in 0.5s ease forwards 0.5s; opacity: 0; }
         .splash-fade-out { animation: splash-fade-out 0.6s ease forwards; }
@@ -1161,6 +1162,14 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* ── Feed loading skeleton ── */}
+        {loading && (
+          <div className="feed-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, background: "#07100a" }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", border: "2.5px solid rgba(77,168,98,0.25)", borderTopColor: "#4da862", animation: "spin 0.9s linear infinite" }} />
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>Loading clips…</span>
+          </div>
+        )}
 
         {/* ── Feed clips ── */}
         {!loading && feedItems.map((item, i) => (
