@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLike } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
-import { useAutoHide } from "@/hooks/useAutoHide";
 import BottomNav from "@/components/BottomNav";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { HoleProgressStrip } from "@/components/clip/HoleProgressStrip";
@@ -277,7 +276,6 @@ function SeriesCard({
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const isDesktop = useIsDesktop();
-  const { visible, show } = useAutoHide(isActive);
   const activeShot = item.shots[shotIndex];
   const hasNotes = !!(activeShot?.strategyNote || activeShot?.clubUsed || activeShot?.windCondition || activeShot?.datePlayedAt);
 
@@ -330,9 +328,9 @@ function SeriesCard({
       {item.shots.map((shot, i) => (
         <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.18s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
           {shot.mediaType === "VIDEO" ? (
-            <video ref={el => { videoRefs.current[shot.id] = el; }} src={shot.mediaUrl} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={show} />
+            <video ref={el => { videoRefs.current[shot.id] = el; }} src={shot.mediaUrl} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
           ) : (
-            <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={show} />
+            <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
           )}
         </div>
       ))}
@@ -346,10 +344,10 @@ function SeriesCard({
         muted={muted}
         onMuteToggle={handleMuteToggle}
         onTapCourse={onTapCourse}
-        visible={visible}
+        visible={true}
       />
 
-      <HoleProgressStrip scoutedHoles={[]} currentHole={item.holeNumber} visible={visible} />
+      <HoleProgressStrip scoutedHoles={[]} currentHole={item.holeNumber} visible={true} />
 
       {/* Shot progress dots */}
       {item.shots.length > 1 && (
@@ -413,7 +411,6 @@ function VideoCard({
   const [intelOpen, setIntelOpen] = useState(false);
   const [muted, setMuted] = useState(sessionMute.get());
   const isDesktop = useIsDesktop();
-  const { visible, show } = useAutoHide(isActive);
   const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   useEffect(() => {
@@ -440,14 +437,13 @@ function VideoCard({
         <video ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline
           onClick={() => {
             const v = videoRef.current; if (!v) return;
-            show();
             if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); }
             else { v.pause(); setVideoPaused(true); }
           }}
           onEnded={onEnded}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
-        <img src={clip.mediaUrl} alt="clip" onClick={show} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
@@ -467,10 +463,10 @@ function VideoCard({
         muted={muted}
         onMuteToggle={handleMuteToggle}
         onTapCourse={onTapCourse}
-        visible={visible}
+        visible={true}
       />
 
-      <HoleProgressStrip scoutedHoles={[]} currentHole={clip.holeNumber} visible={visible} />
+      <HoleProgressStrip scoutedHoles={[]} currentHole={clip.holeNumber} visible={true} />
 
       {clip.yardageOverlay && (
         <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 10, pointerEvents: "none" }}>
