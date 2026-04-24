@@ -1039,35 +1039,50 @@ export default function CourseProfilePage() {
                       const hasClips = clips && clips.length > 0;
                       const clipCount = clips?.length || 0;
                       const holeData = holes.find(h => h.holeNumber === holeNum);
+                      const topClip = clips?.[0];
                       return (
                         <div
                           key={holeNum}
                           onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); if (!localStorage.getItem("ti-feed-hint")) { setShowFeedHint(true); setTimeout(() => { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); }, 2800); } } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
-                          style={{ aspectRatio: "3/4", borderRadius: 12, padding: 10, display: "flex", flexDirection: "column", cursor: "pointer", background: hasClips ? "#0e1a13" : "#0a120d", border: `1px solid ${hasClips ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)"}` }}
+                          style={{ aspectRatio: "3/4", borderRadius: 12, padding: 10, display: "flex", flexDirection: "column", cursor: "pointer", position: "relative", overflow: "hidden", background: hasClips ? "#0e1a13" : "#0a120d", border: `1px solid ${hasClips ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)"}` }}
                         >
-                          {/* Top row: Par + Yardage */}
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasClips ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.35)" }}>
-                              {holeData?.par ? `Par ${holeData.par}` : ""}
-                            </span>
-                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasClips ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)" }}>
-                              {holeData?.yardage ? holeData.yardage : ""}
-                            </span>
-                          </div>
-                          {/* Center: hole number */}
-                          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: holeNum <= 9 ? 44 : 40, fontWeight: 400, color: hasClips ? "#ffffff" : "rgba(255,255,255,0.3)", letterSpacing: "-1px", lineHeight: 1 }}>{holeNum}</span>
-                          </div>
-                          {/* Bottom: clip indicator */}
-                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                            {hasClips ? (
-                              <>
-                                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
-                              </>
-                            ) : (
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>No clips yet</span>
-                            )}
+                          {/* Background thumbnail for populated tiles */}
+                          {hasClips && topClip && (
+                            <>
+                              {topClip.mediaType === "VIDEO" ? (
+                                <video src={topClip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                              ) : (
+                                <img src={topClip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                              )}
+                              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.72) 0%, rgba(7,16,10,0.55) 40%, rgba(7,16,10,0.78) 100%)" }} />
+                            </>
+                          )}
+                          {/* Content */}
+                          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
+                            {/* Top row: Par + Yardage */}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasClips ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.35)" }}>
+                                {holeData?.par ? `Par ${holeData.par}` : ""}
+                              </span>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasClips ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)" }}>
+                                {holeData?.yardage ? holeData.yardage : ""}
+                              </span>
+                            </div>
+                            {/* Center: hole number */}
+                            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: holeNum <= 9 ? 44 : 40, fontWeight: 400, color: hasClips ? "#ffffff" : "rgba(255,255,255,0.3)", letterSpacing: "-1px", lineHeight: 1 }}>{holeNum}</span>
+                            </div>
+                            {/* Bottom: clip indicator */}
+                            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                              {hasClips ? (
+                                <>
+                                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
+                                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
+                                </>
+                              ) : (
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>No clips yet</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
