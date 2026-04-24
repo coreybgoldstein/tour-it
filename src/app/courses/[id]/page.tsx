@@ -871,7 +871,7 @@ export default function CourseProfilePage() {
             <span>{[course.city, course.state].filter(s => s?.trim()).join(", ")}{course.city || course.state ? " · " : ""}{course.isPublic ? "Public" : "Private"}</span>
             {(course.description || hero.description) && (
               <button onClick={() => setAboutOpen(true)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="12.01" r="0.1" fill="rgba(255,255,255,0.85)" stroke="rgba(255,255,255,0.85)" strokeWidth="3"/></svg>
               </button>
             )}
           </div>
@@ -884,9 +884,6 @@ export default function CourseProfilePage() {
             {courseClips.length > 0 && <><span style={{ color: "rgba(255,255,255,0.18)" }}>·</span><span>{courseClips.length} clips</span></>}
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "4px 12px" }}>
-              {course.holeCount || 18} holes
-            </span>
             {hero.year && (
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "4px 12px" }}>
                 Est. {hero.year}
@@ -1029,56 +1026,49 @@ export default function CourseProfilePage() {
               const scoutedCount = nineHoles.filter(h => holeClipsMap[h]?.length > 0).length;
               return (
                 <div key={label}>
+                  {/* Section header */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                    <div style={{ width: 3, height: 14, background: "#4da862", borderRadius: 99, flexShrink: 0 }} />
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.28)" }}>{scoutedCount}/9 scouted</span>
+                    <div style={{ width: 3, height: 14, background: "#4da862", borderRadius: 1, flexShrink: 0 }} />
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862", letterSpacing: "1.6px", textTransform: "uppercase" }}>{label}</span>
+                    <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{scoutedCount} holes scouted</span>
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 5 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                     {nineHoles.map(holeNum => {
                       const clips = holeClipsMap[holeNum];
-                      const topClip = clips?.[0];
                       const hasClips = clips && clips.length > 0;
-                      const isMostClipped = holeNum === mostClippedHole;
+                      const clipCount = clips?.length || 0;
+                      const holeData = holes.find(h => h.holeNumber === holeNum);
                       return (
                         <div
                           key={holeNum}
                           onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); if (!localStorage.getItem("ti-feed-hint")) { setShowFeedHint(true); setTimeout(() => { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); }, 2800); } } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
-                          style={{ position: "relative", aspectRatio: "3/4", borderRadius: 10, overflow: "hidden", background: hasClips ? "#0e1a13" : "#0a120d", border: `1px solid ${hasClips ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)"}`, cursor: "pointer" }}
+                          style={{ aspectRatio: "3/4", borderRadius: 12, padding: 10, display: "flex", flexDirection: "column", cursor: "pointer", background: hasClips ? "#0e1a13" : "#0a120d", border: `1px solid ${hasClips ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)"}` }}
                         >
-                          {hasClips && topClip ? (
-                            <>
-                              {topClip.mediaType === "VIDEO" ? (
-                                <video src={topClip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                              ) : (
-                                <img src={topClip.mediaUrl} alt={`Hole ${holeNum}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                              )}
-                              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 55%)" }} />
-                              {isMostClipped && (
-                                <div style={{ position: "absolute", top: 5, left: 5, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", borderRadius: 4, padding: "2px 5px", display: "flex", alignItems: "center", gap: 2 }}>
-                                  <span style={{ fontSize: 8, color: "#f5c518" }}>★</span>
-                                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>Top</span>
-                                </div>
-                              )}
-                              <div style={{ position: "absolute", bottom: 5, right: 5 }}>
-                                <FlagBadge label={holeNum} />
-                              </div>
-                              {clips.length > 1 && (
-                                <div style={{ position: "absolute", bottom: 5, left: 5, fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 600, color: "rgba(255,255,255,0.7)", background: "rgba(0,0,0,0.5)", borderRadius: 4, padding: "2px 5px" }}>{clips.length} clips</div>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "rgba(255,255,255,0.05)" }}>{holeNum}</span>
-                              </div>
-                              <div style={{ position: "absolute", bottom: 5, right: 5 }}>
-                                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 3, padding: "2px 5px 3px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.16)" }}>{holeNum}</span>
-                                </div>
-                              </div>
-                            </>
-                          )}
+                          {/* Top row: Par + Yardage */}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasClips ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.35)" }}>
+                              {holeData?.par ? `Par ${holeData.par}` : ""}
+                            </span>
+                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasClips ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)" }}>
+                              {holeData?.yardage ? holeData.yardage : ""}
+                            </span>
+                          </div>
+                          {/* Center: hole number */}
+                          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: holeNum <= 9 ? 44 : 40, fontWeight: 400, color: hasClips ? "#ffffff" : "rgba(255,255,255,0.3)", letterSpacing: "-1px", lineHeight: 1 }}>{holeNum}</span>
+                          </div>
+                          {/* Bottom: clip indicator */}
+                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                            {hasClips ? (
+                              <>
+                                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
+                              </>
+                            ) : (
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>No clips yet</span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
