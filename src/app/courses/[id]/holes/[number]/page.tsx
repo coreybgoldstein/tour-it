@@ -6,6 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
+import { ClipTopPill } from "@/components/clip/ClipTopPill";
+import { HoleProgressStrip } from "@/components/clip/HoleProgressStrip";
+import { LateralClipDots } from "@/components/clip/LateralClipDots";
+import { IntelPanel } from "@/components/clip/IntelPanel";
+import { sessionMute } from "@/lib/sessionMute";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1)" }}>
@@ -267,8 +272,7 @@ export default function HolePage() {
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
-  const [notesOpen, setNotesOpen] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(sessionMute.get());
   const [copied, setCopied] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [reportClipId, setReportClipId] = useState<string | null>(null);
@@ -638,65 +642,46 @@ export default function HolePage() {
 
             <div className="gradient-top" />
 
-            {/* Top bar — back + course flag/name (clickable) + mute */}
-            <div className="top-bar">
-              <button className="back-btn" onClick={() => router.back()}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-              </button>
+            <ClipTopPill
+              courseLogoUrl={course?.logoUrl ?? null}
+              courseName={course?.name ?? ""}
+              holeNumber={holeNum}
+              holePar={!multiHoleKey ? par : undefined}
+              muted={muted}
+              onMuteToggle={() => { const n = !muted; setMuted(n); sessionMute.set(n); }}
+              onTapCourse={() => router.push(`/courses/${id}`)}
+              visible={true}
+            />
 
-              {/* Course identity — clickable → course page */}
-              <button
-                onClick={() => router.push(`/courses/${id}`)}
-                style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-              >
-                <div className="course-top-badge">
-                  {course?.logoUrl
-                    ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : courseAbbr
-                  }
-                </div>
-                <div style={{ minWidth: 0, textAlign: "left" }}>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.15, textShadow: "0 1px 6px rgba(0,0,0,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course?.name}</div>
-                  <span style={{ display: "inline-flex", alignItems: "center", background: "rgba(0,0,0,0.48)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "2px 8px", marginTop: 3 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4ade80" }}>
-                      {pageTitle}{!multiHoleKey ? ` · Par ${par}` : ""}{activeUpload?.datePlayedAt ? ` · ${new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
-                    </span>
-                  </span>
-                </div>
-              </button>
+            <HoleProgressStrip
+              scoutedHoles={holeList.filter(h => h.uploadCount > 0).map(h => h.holeNumber)}
+              currentHole={holeNum}
+              visible={true}
+            />
 
-              <button className="mute-btn" onClick={() => setMuted(!muted)}>
-                {muted
-                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                }
-              </button>
-            </div>
+            <LateralClipDots clipIndex={activeIndex} clipCount={uploads.length} />
 
-            {/* Clip counter dots */}
-            {uploads.length > 1 && (
-              <div style={{ position: "absolute", top: 48, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 4, zIndex: 20 }}>
-                {uploads.map((_, i) => (
-                  <div key={i} style={{ height: 3, borderRadius: 99, background: i === activeIndex ? "#fff" : "rgba(255,255,255,0.3)", width: i === activeIndex ? 20 : 6, transition: "all 0.3s" }} />
-                ))}
-              </div>
-            )}
-
-            {/* Right sidebar — uploader → like → comment → share → hole badge */}
+            {/* Right sidebar */}
             <div className="right-actions">
 
+              {/* Intel — hero first */}
+              {hasIntel && (
+                <button className="action-btn" onClick={() => setIntelOpen(o => !o)}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "rgba(77,168,98,0.4)" : "rgba(77,168,98,0.25)", backdropFilter: "blur(8px)", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                  </div>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
+                </button>
+              )}
+
               {/* Uploader avatar */}
-              <button
-                className="action-btn"
-                onClick={() => activeUpload && router.push(`/profile/${activeUpload.userId}`)}
-              >
-                <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <button className="action-btn" onClick={() => activeUpload && router.push(`/profile/${activeUpload.userId}`)}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {uploader?.avatarUrl
                     ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   }
                 </div>
-                {uploader && <span className="action-label" style={{ maxWidth: 52, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{uploader.username}</span>}
               </button>
 
               {/* Like */}
@@ -709,18 +694,6 @@ export default function HolePage() {
                 </div>
                 <span className="action-label">{activeUpload.commentCount || 0}</span>
               </button>
-
-              {/* Notes */}
-              {hasIntel && (
-                <button className="action-btn" onClick={() => setNotesOpen(o => !o)}>
-                  <div className="action-icon" style={notesOpen ? { borderColor: "rgba(26,158,66,0.5)", background: "rgba(26,158,66,0.15)" } : {}}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={notesOpen ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                  </div>
-                  <span style={{ height: 13, display: "block" }} />
-                </button>
-              )}
 
               {/* Share */}
               <button className="action-btn" onClick={handleShare}>
@@ -896,48 +869,22 @@ export default function HolePage() {
         </div>
       )}
 
-      {/* Notes sheet */}
-      {notesOpen && activeUpload && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 60 }} onClick={() => setNotesOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(10,28,16,0.97)", borderTop: "1px solid rgba(26,158,66,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", backdropFilter: "blur(20px)" }}>
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", marginBottom: 16 }}>{holeNum ? `Hole ${holeNum} · ` : ""}Scout Notes</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {activeUpload.shotType && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Shot Type</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#1a9e42" }}>{activeUpload.shotType.replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase())}</span>
-                </div>
-              )}
-              {activeUpload.clubUsed && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Club</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{activeUpload.clubUsed}</span>
-                </div>
-              )}
-              {activeUpload.windCondition && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Wind</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{activeUpload.windCondition.replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase())}</span>
-                </div>
-              )}
-              {activeUpload.datePlayedAt && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Played</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{new Date(activeUpload.datePlayedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
-                </div>
-              )}
-              {(activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow) && (
-                <div style={{ paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Notes</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.6 }}>
-                    {[activeUpload.strategyNote, activeUpload.landingZoneNote, activeUpload.whatCameraDoesntShow].filter(Boolean).join("\n\n")}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {activeUpload && (
+        <IntelPanel
+          open={intelOpen}
+          onClose={() => setIntelOpen(false)}
+          holeNumber={holeNum}
+          holePar={!multiHoleKey ? par : undefined}
+          clubUsed={activeUpload.clubUsed}
+          windCondition={activeUpload.windCondition}
+          strategyNote={activeUpload.strategyNote}
+          landingZoneNote={activeUpload.landingZoneNote}
+          whatCameraDoesntShow={activeUpload.whatCameraDoesntShow}
+          datePlayedAt={activeUpload.datePlayedAt}
+          uploaderUsername={uploaders[activeUpload.userId]?.username ?? "golfer"}
+          uploaderAvatarUrl={uploaders[activeUpload.userId]?.avatarUrl}
+          uploaderId={activeUpload.userId}
+        />
       )}
 
       <BottomNav />
