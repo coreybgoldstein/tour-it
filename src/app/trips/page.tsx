@@ -28,14 +28,14 @@ export default function TripsPage() {
 
       // Trips where user is a member
       const { data: memberRows } = await supabase
-        .from("TripMember")
+        .from("GolfTripMember")
         .select("tripId")
         .eq("userId", data.user.id);
 
       const tripIds = (memberRows || []).map((r: any) => r.tripId);
       if (tripIds.length > 0) {
         const { data: tripData } = await supabase
-          .from("Trip")
+          .from("GolfTrip")
           .select("id, name, description, startDate, endDate, imageUrl")
           .in("id", tripIds)
           .order("startDate", { ascending: false });
