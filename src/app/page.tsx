@@ -1103,8 +1103,8 @@ export default function Home() {
             style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 96, background: "none", border: "none", cursor: "pointer", width: "100%" }}
           >
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "2.5px", textTransform: "uppercase", color: "rgba(255,255,255,0.28)" }}>
-                Scout the feed
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "2.8px", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>
+                Tour the feed
               </div>
               <div className="bounce-arrow">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
