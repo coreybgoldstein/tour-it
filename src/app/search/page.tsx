@@ -310,6 +310,7 @@ function SearchPageInner() {
               onBlur={() => setFocused(false)}
               placeholder={searchTab === "courses" ? "Search courses…" : "Name or @username"}
               autoComplete="off"
+              autoFocus
             />
             {query && (
               <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>

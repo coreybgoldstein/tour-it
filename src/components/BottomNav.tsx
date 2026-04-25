@@ -53,7 +53,13 @@ export default function BottomNav() {
     {
       label: "Search",
       active: isSearch,
-      onClick: () => router.push("/search"),
+      onClick: () => {
+        if (isSearch) {
+          (document.querySelector('input.search-input') as HTMLInputElement | null)?.focus();
+        } else {
+          router.push("/search");
+        }
+      },
       icon: (active: boolean) => (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
