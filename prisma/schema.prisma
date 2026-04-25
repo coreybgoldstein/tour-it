@@ -160,9 +160,10 @@ model Course {
   holeCount     Int      @default(18)
   isPublic      Boolean  @default(true)
   isVerified    Boolean  @default(false)
-  coverImageUrl String?
-  logoUrl       String?
-  searchVector  String?
+  coverImageUrl     String?
+  logoUrl           String?
+  scorecardImageUrl String?
+  searchVector      String?
   uploadCount   Int      @default(0)
   saveCount     Int      @default(0)
   viewCount     Int      @default(0)
@@ -257,6 +258,7 @@ model Upload {
   clubUsed             String?
   distancePlayed       Int?
   windCondition        WindCondition?
+  conditions           String?
   lieType              LieType?
   handicapRange        HandicapRange?
   strategyNote         String?

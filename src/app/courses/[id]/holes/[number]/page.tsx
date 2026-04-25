@@ -7,7 +7,8 @@ import { useLike } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
-import { HoleProgressStrip } from "@/components/clip/HoleProgressStrip";
+import { HoleSideBar } from "@/components/clip/HoleSideBar";
+import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 function FlagBadge({ label }: { label: string | number }) {
@@ -36,6 +37,7 @@ type Hole = {
   par: number;
   handicap: number | null;
   uploadCount: number;
+  yardage?: number | null;
 };
 
 type Upload = {
@@ -286,7 +288,7 @@ export default function HolePage() {
   // All holes with upload counts — used to skip empty holes on swipe
   const [holeList, setHoleList] = useState<{holeNumber: number; uploadCount: number}[]>([]);
   const [endOfContent, setEndOfContent] = useState<"prev" | "next" | null>(null);
-  const [uploaders, setUploaders] = useState<Record<string, {username: string; avatarUrl: string | null}>>({});
+  const [uploaders, setUploaders] = useState<Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null}>>({});
   const [videoPaused, setVideoPaused] = useState(false);
   const endOfContentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
@@ -379,10 +381,10 @@ export default function HolePage() {
           setUploads(filtered);
           if (filtered.length > 0) {
             const userIds = [...new Set(filtered.map((u: Upload) => u.userId))];
-            const { data: users } = await supabase.from("User").select("id, username, avatarUrl").in("id", userIds as string[]);
+            const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds as string[]);
             if (users) {
-              const map: Record<string, {username: string; avatarUrl: string | null}> = {};
-              users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl }; });
+              const map: Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null}> = {};
+              users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null }; });
               setUploaders(map);
             }
           }
@@ -417,10 +419,10 @@ export default function HolePage() {
           // Fetch uploader info for single clips
           if (singleClips.length > 0) {
             const userIds = [...new Set(singleClips.map((u: Upload) => u.userId))];
-            const { data: users } = await supabase.from("User").select("id, username, avatarUrl").in("id", userIds as string[]);
+            const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds as string[]);
             if (users) {
-              const map: Record<string, {username: string; avatarUrl: string | null}> = {};
-              users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl }; });
+              const map: Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null}> = {};
+              users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null }; });
               setUploaders(map);
             }
           }
@@ -444,7 +446,7 @@ export default function HolePage() {
           // Fetch usernames for series
           if (seriesGroups.length > 0) {
             const userIds = [...new Set(seriesGroups.map(s => s.shots[0]?.userId).filter(Boolean))];
-            const { data: users } = await supabase.from("User").select("id, username, avatarUrl").in("id", userIds);
+            const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds);
             const enriched = seriesGroups.map(sg => ({
               ...sg,
               username: users?.find((u: any) => u.id === sg.shots[0]?.userId)?.username || "golfer",
@@ -582,9 +584,9 @@ export default function HolePage() {
           .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .course-top-badge { width: 46px; height: 46px; border-radius: 12px; background: rgba(26,158,66,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; color: #1a9e42; flex-shrink: 0; overflow: hidden; }
-          .right-actions { position: absolute; right: 14px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 30; }
+          .right-actions { position: absolute; right: 12px; bottom: 100px; display: flex; flex-direction: column; align-items: center; gap: 14px; z-index: 30; }
           .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
-          .action-icon { width: 46px; height: 46px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
+          .action-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
           .action-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,0.95); }
           .bottom-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 16px 88px; z-index: 20; }
           .series-card { background: linear-gradient(135deg, rgba(180,145,60,0.15), rgba(180,145,60,0.05)); border: 1px solid rgba(180,145,60,0.35); border-radius: 14px; padding: 14px; cursor: pointer; transition: all 0.15s; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
@@ -645,23 +647,27 @@ export default function HolePage() {
               courseLogoUrl={course?.logoUrl ?? null}
               courseName={course?.name ?? ""}
               holeNumber={holeNum}
-              holePar={!multiHoleKey ? par : undefined}
               muted={muted}
               onMuteToggle={() => { const n = !muted; setMuted(n); sessionMute.set(n); }}
               onTapCourse={() => router.push(`/courses/${id}`)}
               visible={true}
+              showParYardage={false}
             />
 
-            <HoleProgressStrip
-              scoutedHoles={holeList.filter(h => h.uploadCount > 0).map(h => h.holeNumber)}
-              currentHole={holeNum}
-              visible={true}
-            />
+            {(() => {
+              const scoutedHoles = holeList.filter(h => h.uploadCount > 0).map(h => h.holeNumber);
+              return (
+                <>
+                  <HoleSideBar holeIndex={scoutedHoles.indexOf(holeNum ?? -1)} scoutedHoles={scoutedHoles} />
+                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={uploads.length} />
+                </>
+              );
+            })()}
 
-            {/* Right sidebar */}
+            {/* Right sidebar — Intel → Avatar → Like → Comment → SEND IT → Report */}
             <div className="right-actions">
 
-              {/* Intel — hero first */}
+              {/* Intel */}
               {hasIntel && (
                 <button className="action-btn" onClick={() => setIntelOpen(o => !o)}>
                   <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "rgba(77,168,98,0.4)" : "rgba(77,168,98,0.25)", backdropFilter: "blur(8px)", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -670,6 +676,16 @@ export default function HolePage() {
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
                 </button>
               )}
+
+              {/* Uploader avatar — directly below Intel */}
+              <button className="action-btn" onClick={() => activeUpload && router.push(`/profile/${activeUpload.userId}`)}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {uploader?.avatarUrl
+                    ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  }
+                </div>
+              </button>
 
               {/* Like */}
               <ClipActions key={activeUpload.id} upload={activeUpload} />
@@ -682,7 +698,7 @@ export default function HolePage() {
                 <span className="action-label">{activeUpload.commentCount || 0}</span>
               </button>
 
-              {/* Share */}
+              {/* SEND IT */}
               <button className="action-btn" onClick={handleShare}>
                 <div className="action-icon" style={copied ? { borderColor: "rgba(26,158,66,0.5)", background: "rgba(26,158,66,0.2)" } : {}}>
                   {copied
@@ -709,16 +725,6 @@ export default function HolePage() {
                   <span style={{ height: 13, display: "block" }} />
                 </button>
               )}
-
-              {/* Uploader avatar */}
-              <button className="action-btn" onClick={() => activeUpload && router.push(`/profile/${activeUpload.userId}`)}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {uploader?.avatarUrl
-                    ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  }
-                </div>
-              </button>
 
             </div>
 
@@ -872,6 +878,7 @@ export default function HolePage() {
           onClose={() => setIntelOpen(false)}
           holeNumber={holeNum}
           holePar={!multiHoleKey ? par : undefined}
+          holeYardage={hole?.yardage}
           clubUsed={activeUpload.clubUsed}
           windCondition={activeUpload.windCondition}
           strategyNote={activeUpload.strategyNote}
@@ -882,6 +889,7 @@ export default function HolePage() {
           uploaderAvatarUrl={uploaders[activeUpload.userId]?.avatarUrl}
           uploaderId={activeUpload.userId}
           currentUserId={user?.id}
+          uploaderHandicap={uploaders[activeUpload.userId]?.handicapIndex ?? null}
         />
       )}
 

@@ -7,7 +7,6 @@ import { useLike } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import BottomNav from "@/components/BottomNav";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
-import { HoleProgressStrip } from "@/components/clip/HoleProgressStrip";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 
@@ -33,13 +32,17 @@ type FeedClip = {
   courseLogoUrl: string | null;
   holeId: string;
   holeNumber?: number;
+  holePar?: number | null;
+  holeYardage?: number | null;
   strategyNote: string | null;
   clubUsed: string | null;
   windCondition: string | null;
+  conditions?: string | null;
   shotType: string | null;
   username: string;
   avatarUrl: string | null;
   userId: string;
+  uploaderHandicap?: number | null;
   likeCount: number;
   commentCount: number;
   seriesId: string | null;
@@ -197,11 +200,11 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
     else { navigator.clipboard.writeText(url).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
   return (
-    <div style={{ position: "absolute", right: 14, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, zIndex: 10 }}>
-      {/* Intel — hero button, always first */}
+    <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+      {/* Intel */}
       {onIntel && (
         <button onClick={onIntel} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "rgba(77,168,98,0.4)" : "rgba(77,168,98,0.25)", backdropFilter: "blur(8px)", border: `1.5px solid ${intelOpen ? "#4da862" : "#4da862"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "rgba(77,168,98,0.4)" : "rgba(77,168,98,0.25)", backdropFilter: "blur(8px)", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
             </svg>
@@ -209,6 +212,15 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
         </button>
       )}
+      {/* Uploader avatar — directly below Intel */}
+      <button onClick={onTapUser} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {avatarUrl
+            ? <img src={avatarUrl} alt={username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          }
+        </div>
+      </button>
       {/* Like */}
       <button onClick={onLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
         <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "rgba(26,158,66,0.15)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "rgba(26,158,66,0.7)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -223,7 +235,7 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
         </div>
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{commentCount}</span>
       </button>
-      {/* Share / SEND IT */}
+      {/* SEND IT */}
       <button onClick={handleShare} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
         <div style={{ width: 40, height: 40, borderRadius: "50%", background: copied ? "rgba(26,158,66,0.2)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${copied ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {copied
@@ -249,15 +261,6 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
           <span style={{ height: 13, display: "block" }} />
         </button>
       )}
-      {/* Uploader */}
-      <button onClick={onTapUser} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {avatarUrl
-            ? <img src={avatarUrl} alt={username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          }
-        </div>
-      </button>
     </div>
   );
 }
@@ -342,13 +345,13 @@ function SeriesCard({
         courseLogoUrl={item.courseLogoUrl}
         courseName={item.courseName}
         holeNumber={item.holeNumber}
+        holePar={item.shots[0]?.holePar}
+        holeYardage={item.shots[0]?.holeYardage}
         muted={muted}
         onMuteToggle={handleMuteToggle}
         onTapCourse={onTapCourse}
         visible={true}
       />
-
-      <HoleProgressStrip scoutedHoles={[]} currentHole={item.holeNumber} visible={true} />
 
       {/* Shot progress dots */}
       {item.shots.length > 1 && (
@@ -385,14 +388,18 @@ function SeriesCard({
         open={intelOpen}
         onClose={() => setIntelOpen(false)}
         holeNumber={item.holeNumber}
+        holePar={item.shots[0]?.holePar}
+        holeYardage={item.shots[0]?.holeYardage}
         clubUsed={activeShot?.clubUsed}
         windCondition={activeShot?.windCondition}
+        conditions={activeShot?.conditions}
         strategyNote={activeShot?.strategyNote}
         datePlayedAt={activeShot?.datePlayedAt}
         uploaderUsername={item.username}
         uploaderAvatarUrl={item.avatarUrl}
         uploaderId={item.userId}
         currentUserId={currentUserId}
+        uploaderHandicap={item.shots[0]?.uploaderHandicap}
       />
       </div>{/* end inner wrapper */}
     </div>
@@ -463,13 +470,13 @@ function VideoCard({
         courseLogoUrl={clip.courseLogoUrl}
         courseName={clip.courseName}
         holeNumber={clip.holeNumber}
+        holePar={clip.holePar}
+        holeYardage={clip.holeYardage}
         muted={muted}
         onMuteToggle={handleMuteToggle}
         onTapCourse={onTapCourse}
         visible={true}
       />
-
-      <HoleProgressStrip scoutedHoles={[]} currentHole={clip.holeNumber} visible={true} />
 
       {clip.yardageOverlay && (
         <div style={{ position: "absolute", top: "42%", left: 16, zIndex: 10, pointerEvents: "none" }}>
@@ -486,14 +493,18 @@ function VideoCard({
         open={intelOpen}
         onClose={() => setIntelOpen(false)}
         holeNumber={clip.holeNumber}
+        holePar={clip.holePar}
+        holeYardage={clip.holeYardage}
         clubUsed={clip.clubUsed}
         windCondition={clip.windCondition}
+        conditions={clip.conditions}
         strategyNote={clip.strategyNote}
         datePlayedAt={clip.datePlayedAt}
         uploaderUsername={clip.username}
         uploaderAvatarUrl={clip.avatarUrl}
         uploaderId={clip.userId}
         currentUserId={currentUserId}
+        uploaderHandicap={clip.uploaderHandicap}
       />
       </div>{/* end inner wrapper */}
     </div>
@@ -579,19 +590,26 @@ export default function Home() {
 
       const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
         supabase.from("Course").select("id, name, logoUrl").in("id", courseIds),
-        supabase.from("User").select("id, username, avatarUrl").in("id", userIds),
-        supabase.from("Hole").select("id, holeNumber").in("id", holeIds),
+        supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
+        supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds),
       ]);
 
-      const enriched: FeedClip[] = uploads.map((u: any) => ({
-        ...u,
-        commentCount: u.commentCount || 0,
-        courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
-        courseLogoUrl: courses?.find((c: any) => c.id === u.courseId)?.logoUrl || null,
-        username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
-        avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
-        holeNumber: holes?.find((h: any) => h.id === u.holeId)?.holeNumber || undefined,
-      }));
+      const enriched: FeedClip[] = uploads.map((u: any) => {
+        const hole = holes?.find((h: any) => h.id === u.holeId);
+        const user = users?.find((usr: any) => usr.id === u.userId);
+        return {
+          ...u,
+          commentCount: u.commentCount || 0,
+          courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
+          courseLogoUrl: courses?.find((c: any) => c.id === u.courseId)?.logoUrl || null,
+          username: user?.username || "golfer",
+          avatarUrl: user?.avatarUrl || null,
+          uploaderHandicap: user?.handicapIndex ?? null,
+          holeNumber: hole?.holeNumber || undefined,
+          holePar: hole?.par ?? null,
+          holeYardage: hole?.yardage ?? null,
+        };
+      });
 
       const seriesMap: Record<string, FeedClip[]> = {};
       const singleClips: FeedClip[] = [];
@@ -660,19 +678,26 @@ export default function Home() {
 
     const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
       supabase.from("Course").select("id, name, logoUrl").in("id", courseIds),
-      supabase.from("User").select("id, username, avatarUrl").in("id", userIds),
-      supabase.from("Hole").select("id, holeNumber").in("id", holeIds),
+      supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
+      supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds),
     ]);
 
-    const enriched: FeedClip[] = uploads.map((u: any) => ({
-      ...u,
-      commentCount: u.commentCount || 0,
-      courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
-      courseLogoUrl: courses?.find((c: any) => c.id === u.courseId)?.logoUrl || null,
-      username: users?.find((usr: any) => usr.id === u.userId)?.username || "golfer",
-      avatarUrl: users?.find((usr: any) => usr.id === u.userId)?.avatarUrl || null,
-      holeNumber: holes?.find((h: any) => h.id === u.holeId)?.holeNumber || undefined,
-    }));
+    const enriched: FeedClip[] = uploads.map((u: any) => {
+      const hole = holes?.find((h: any) => h.id === u.holeId);
+      const user = users?.find((usr: any) => usr.id === u.userId);
+      return {
+        ...u,
+        commentCount: u.commentCount || 0,
+        courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
+        courseLogoUrl: courses?.find((c: any) => c.id === u.courseId)?.logoUrl || null,
+        username: user?.username || "golfer",
+        avatarUrl: user?.avatarUrl || null,
+        uploaderHandicap: user?.handicapIndex ?? null,
+        holeNumber: hole?.holeNumber || undefined,
+        holePar: hole?.par ?? null,
+        holeYardage: hole?.yardage ?? null,
+      };
+    });
 
     const seriesMap: Record<string, FeedClip[]> = {};
     const singleClips: FeedClip[] = [];

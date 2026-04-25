@@ -8,7 +8,6 @@ import { useLike } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { useSave } from "@/hooks/useSave";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
-import { HoleProgressStrip } from "@/components/clip/HoleProgressStrip";
 import { HoleSideBar } from "@/components/clip/HoleSideBar";
 import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
@@ -120,7 +119,7 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
 
 function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holePar, holeYardage, scoutedHoles, holeIndex, onEnded, onReport, currentUserId }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
-  course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null }>;
+  course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }>;
   clipIndex: number; totalClips: number;
   holePar?: number | null; holeYardage?: number | null;
   scoutedHoles: number[];
@@ -197,22 +196,20 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         courseLogoUrl={course?.logoUrl ?? null}
         courseName={course?.name ?? ""}
         holeNumber={clip.holeNumber}
-        holePar={holePar}
-        holeYardage={holeYardage}
         muted={muted}
         onMuteToggle={handleMuteToggle}
         onTapCourse={onClose}
         visible={true}
+        showParYardage={false}
       />
 
-      <HoleProgressStrip scoutedHoles={scoutedHoles} currentHole={clip.holeNumber} totalHoles={course?.holeCount ?? 18} visible={true} />
 
       <HoleSideBar holeIndex={holeIndex} scoutedHoles={scoutedHoles} />
 
       <HoleIdentityCard holeNumber={clip.holeNumber} holePar={holePar} clipCount={totalClips} />
 
-      {/* Right rail — Intel → Like → Comment → SEND IT → Report → Avatar */}
-      <div style={{ position: "absolute", right: 14, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, zIndex: 10 }}>
+      {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
+      <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
         {hasNotes && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "rgba(77,168,98,0.4)" : "rgba(77,168,98,0.25)", backdropFilter: "blur(8px)", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -221,6 +218,15 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
           </button>
         )}
+        {/* Avatar — directly below Intel */}
+        <button onClick={() => router.push(`/profile/${clip.userId}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {uploader?.avatarUrl
+              ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            }
+          </div>
+        </button>
         <button onClick={toggleLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "rgba(26,158,66,0.15)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "rgba(26,158,66,0.7)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#1a9e42" : "none"} stroke={liked ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -250,15 +256,6 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
             <span style={{ height: 13, display: "block" }} />
           </button>
         )}
-        {/* Avatar — always last */}
-        <button onClick={() => router.push(`/profile/${clip.userId}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {uploader?.avatarUrl
-              ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            }
-          </div>
-        </button>
       </div>
 
       <IntelPanel
@@ -277,6 +274,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         uploaderAvatarUrl={uploader?.avatarUrl}
         uploaderId={clip.userId}
         currentUserId={currentUserId}
+        uploaderHandicap={uploader?.handicapIndex ?? null}
       />
       </div>{/* end inner wrapper */}
     </div>
@@ -290,7 +288,7 @@ export default function CourseProfilePage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
   const [suggestedCourses, setSuggestedCourses] = useState<SuggestedCourse[]>([]);
-  const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null }>>({});
+  const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }>>({});
   const [loading, setLoading] = useState(true);
   const [feedOpen, setFeedOpen] = useState(false);
   const [showFeedHint, setShowFeedHint] = useState(false);
@@ -511,10 +509,10 @@ export default function CourseProfilePage() {
       // Fetch uploader info
       if (clips.length > 0) {
         const userIds = [...new Set(clips.map((c: any) => c.userId).filter(Boolean))];
-        const { data: users } = await supabase.from("User").select("id, username, avatarUrl").in("id", userIds);
+        const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds);
         if (users) {
-          const map: Record<string, { username: string; avatarUrl: string | null }> = {};
-          users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl }; });
+          const map: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }> = {};
+          users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null }; });
           setUploaders(map);
         }
       }
