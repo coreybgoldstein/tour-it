@@ -1100,22 +1100,22 @@ export default function Home() {
           {/* Bridge to feed */}
           <button
             onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 96, background: "none", border: "none", cursor: "pointer", width: "100%" }}
+            style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "flex-end", justifyContent: "center", paddingBottom: 80, background: "none", border: "none", cursor: "pointer", width: "100%", gap: 28 }}
           >
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <div className="bounce-arrow" style={{ animationDelay: "0s" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, paddingBottom: 4 }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "2.8px", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>
                 Tour the feed
               </div>
-              <div className="bounce-arrow">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </div>
-              <div className="bounce-arrow" style={{ marginTop: -10, opacity: 0.4 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </div>
+            </div>
+            <div className="bounce-arrow" style={{ animationDelay: "0.2s" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </div>
           </button>
 
