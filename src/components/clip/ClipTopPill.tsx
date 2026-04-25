@@ -43,8 +43,9 @@ export function ClipTopPill({
         pointerEvents: visible ? "auto" : "none",
       }}
     >
-      {/* Pill — dynamic width, hugs content */}
-      <div
+      {/* Pill — entire pill navigates to course page */}
+      <button
+        onClick={onTapCourse}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -57,23 +58,19 @@ export function ClipTopPill({
           borderRadius: 999,
           padding: "5px 12px 5px 5px",
           overflow: "hidden",
+          border: "none",
+          cursor: "pointer",
         }}
       >
-        {/* Logo + course name → course page */}
-        <button
-          onClick={onTapCourse}
-          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, minWidth: 0, flexShrink: 1, overflow: "hidden" }}
-        >
-          <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            {courseLogoUrl
-              ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#1a9e42" }}>{abbr}</span>
-            }
-          </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {courseName}
-          </span>
-        </button>
+        <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {courseLogoUrl
+            ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#1a9e42" }}>{abbr}</span>
+          }
+        </div>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {courseName}
+        </span>
 
         {/* Hole number — never truncated */}
         {holeNumber && (
@@ -100,7 +97,7 @@ export function ClipTopPill({
             )}
           </>
         )}
-      </div>
+      </button>
 
       {/* Mute button — always pinned to far right */}
       <button
