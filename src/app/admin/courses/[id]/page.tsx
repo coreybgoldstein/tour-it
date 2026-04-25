@@ -429,10 +429,11 @@ export default function AdminCourseEditPage() {
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                         <label style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Handicap Rank</label>
-                        <input type="number" min="1" max="18" value={form.handicapRank}
-                          onChange={e => updateHoleField(hole.id, "handicapRank", e.target.value)}
-                          placeholder="1–18"
-                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                        <select value={form.handicapRank} onChange={e => updateHoleField(hole.id, "handicapRank", e.target.value)}
+                          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}>
+                          <option value="" style={{ background: "#07100a" }}>—</option>
+                          {Array.from({ length: 18 }, (_, i) => i + 1).map(n => <option key={n} value={n} style={{ background: "#07100a" }}>{n}</option>)}
+                        </select>
                       </div>
                     </div>
 
