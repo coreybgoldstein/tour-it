@@ -9,7 +9,8 @@ import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { useSave } from "@/hooks/useSave";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { HoleProgressStrip } from "@/components/clip/HoleProgressStrip";
-import { LateralClipDots } from "@/components/clip/LateralClipDots";
+import { HoleSideBar } from "@/components/clip/HoleSideBar";
+import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 type Course = {
@@ -117,13 +118,15 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holePar, holeYardage, scoutedHoles, onEnded, onReport }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holePar, holeYardage, scoutedHoles, holeIndex, onEnded, onReport, currentUserId }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null }>;
   clipIndex: number; totalClips: number;
   holePar?: number | null; holeYardage?: number | null;
   scoutedHoles: number[];
+  holeIndex: number;
   onEnded: () => void; onReport?: () => void;
+  currentUserId?: string | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -204,57 +207,37 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
 
       <HoleProgressStrip scoutedHoles={scoutedHoles} currentHole={clip.holeNumber} totalHoles={course?.holeCount ?? 18} visible={true} />
 
-      <LateralClipDots clipIndex={clipIndex} clipCount={totalClips} />
+      <HoleSideBar holeIndex={holeIndex} scoutedHoles={scoutedHoles} />
 
-      {/* Right rail */}
+      <HoleIdentityCard holeNumber={clip.holeNumber} holePar={holePar} clipCount={totalClips} />
+
+      {/* Right rail — Intel → Like → Comment → SEND IT → Report → Avatar */}
       <div style={{ position: "absolute", right: 14, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, zIndex: 10 }}>
-        {/* Intel — hero first */}
         {hasNotes && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "rgba(77,168,98,0.4)" : "rgba(77,168,98,0.25)", backdropFilter: "blur(8px)", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-              </svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             </div>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
           </button>
         )}
-        {/* Uploader */}
-        <button onClick={() => router.push(`/profile/${clip.userId}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {uploader?.avatarUrl
-              ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            }
-          </div>
-        </button>
-        {/* Like */}
         <button onClick={toggleLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "rgba(26,158,66,0.15)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "rgba(26,158,66,0.7)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#1a9e42" : "none"} stroke={liked ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </div>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
         </button>
-        {/* Comment */}
         <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{clip.commentCount || 0}</span>
         </button>
-        {/* SEND IT */}
         <button onClick={handleShare} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: copied ? "rgba(26,158,66,0.2)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${copied ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {copied
-              ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.05em" }}>SENT</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 3 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em", marginRight: "-0.12em" }}>SEND</span>
-                  <div style={{ width: 20, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} />
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span>
-                </div>
+              ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 }}><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.05em" }}>SENT</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 3 }}><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em", marginRight: "-0.12em" }}>SEND</span><div style={{ width: 20, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} /><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span></div>
             }
           </div>
           <span style={{ height: 13, display: "block" }} />
@@ -267,6 +250,15 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
             <span style={{ height: 13, display: "block" }} />
           </button>
         )}
+        {/* Avatar — always last */}
+        <button onClick={() => router.push(`/profile/${clip.userId}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {uploader?.avatarUrl
+              ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            }
+          </div>
+        </button>
       </div>
 
       <IntelPanel
@@ -284,6 +276,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         uploaderUsername={uploader?.username ?? "golfer"}
         uploaderAvatarUrl={uploader?.avatarUrl}
         uploaderId={clip.userId}
+        currentUserId={currentUserId}
       />
       </div>{/* end inner wrapper */}
     </div>
@@ -1458,6 +1451,7 @@ export default function CourseProfilePage() {
                       holePar={holeData?.par}
                       holeYardage={holeData?.yardage}
                       scoutedHoles={holesWithClips}
+                      holeIndex={holesWithClips.indexOf(holeNum)}
                       onEnded={() => {
                         if (clipIdx < clips.length - 1) {
                           const hsr = holeScrollRefs.current[holeNum];
@@ -1467,6 +1461,7 @@ export default function CourseProfilePage() {
                         }
                       }}
                       onReport={user && clip.userId !== user.id ? () => setReportClipId(clip.id) : undefined}
+                      currentUserId={user?.id}
                     />
                   </div>
                   );
