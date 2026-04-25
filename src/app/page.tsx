@@ -687,7 +687,7 @@ export default function Home() {
     const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
 
     const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
-      supabase.from("Course").select("id, name, logoUrl").in("id", courseIds),
+      supabase.from("Course").select("id, name, logoUrl, city, state").in("id", courseIds),
       supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
       supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds),
     ]);
