@@ -13,14 +13,14 @@ export function HoleSideBar({
       style={{
         position: "absolute",
         left: 10,
-        top: "50%",
-        transform: "translateY(-50%)",
+        top: 80,
+        bottom: 168,
         zIndex: 20,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        justifyContent: "center",
         gap: 5,
-        maxHeight: "calc(100dvh - 220px)",
         overflow: "hidden",
         pointerEvents: "none",
       }}
@@ -35,6 +35,7 @@ export function HoleSideBar({
             borderRadius: 2,
             transition: "all 150ms ease",
             marginBottom: holeNum === 9 ? 7 : 0,
+            boxShadow: i === holeIndex ? "0 0 0 2px #4da862" : "none",
           }}
         />
       ))}
