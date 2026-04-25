@@ -97,18 +97,18 @@ export function IntelPanel({
       {/* Dim overlay */}
       <div
         onClick={onClose}
-        style={{ position: "absolute", inset: 0, zIndex: 45, background: "rgba(7,16,10,0.35)" }}
+        style={{ position: "fixed", inset: 0, zIndex: 145, background: "rgba(7,16,10,0.35)" }}
       />
       {/* Panel */}
       <div
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         style={{
-          position: "absolute",
+          position: "fixed",
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 50,
+          zIndex: 150,
           background: "rgba(10,18,13,0.96)",
           backdropFilter: "blur(20px)",
           borderRadius: "18px 18px 0 0",
