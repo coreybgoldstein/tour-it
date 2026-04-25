@@ -21,13 +21,6 @@ type TrendingCourse = {
   isPublic?: boolean;
 };
 
-type FreshClip = {
-  id: string;
-  mediaUrl: string;
-  courseId: string;
-  courseName: string;
-  holeNumber?: number;
-};
 
 const SHOT_LABEL: Record<string, string> = { DRIVE: "Drive", APPROACH: "Approach Shot", CHIP: "Chip", PUTT: "Putt", LAYUP: "Layup", FULL_SWING: "Full Swing" };
 
@@ -519,34 +512,6 @@ function VideoCard({
   );
 }
 
-function FreshClipCard({ clip, onClick }: { clip: FreshClip; onClick: () => void }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.intersectionRatio >= 0.5) el.play().catch(() => {});
-        else el.pause();
-      },
-      { threshold: 0.5 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return (
-    <div onClick={onClick} style={{ width: 110, height: 196, borderRadius: 12, flexShrink: 0, overflow: "hidden", position: "relative", cursor: "pointer", background: "#0c1e11" }}>
-      <video ref={videoRef} src={clip.mediaUrl} muted loop playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 45%, rgba(0,0,0,0.88) 100%)" }} />
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 8px 10px" }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{clip.courseName}</div>
-        {clip.holeNumber && (
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.55)", marginTop: 1 }}>Hole {clip.holeNumber}</div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function Home() {
   const router = useRouter();
@@ -567,7 +532,6 @@ export default function Home() {
   const [splashFading, setSplashFading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
-  const [freshClips, setFreshClips] = useState<FreshClip[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const [nearMeRadius, setNearMeRadius] = useState(50);
   const [publicOnly, setPublicOnly] = useState(true);
@@ -604,30 +568,6 @@ export default function Home() {
       .limit(10)
       .then(({ data }) => { if (data) setTrendingCourses(data); });
 
-    // Fresh from the course — 10 most recent approved video uploads
-    (async () => {
-      const { data: freshRaw } = await supabase
-        .from("Upload")
-        .select("id, mediaUrl, courseId, holeId")
-        .eq("mediaType", "VIDEO")
-        .eq("moderationStatus", "APPROVED")
-        .order("createdAt", { ascending: false })
-        .limit(10);
-      if (!freshRaw || freshRaw.length === 0) return;
-      const fcourseIds = [...new Set(freshRaw.map((u: any) => u.courseId))];
-      const fholeIds = [...new Set(freshRaw.map((u: any) => u.holeId).filter(Boolean))];
-      const [{ data: fCourses }, { data: fHoles }] = await Promise.all([
-        supabase.from("Course").select("id, name").in("id", fcourseIds),
-        fholeIds.length > 0 ? supabase.from("Hole").select("id, holeNumber").in("id", fholeIds) : Promise.resolve({ data: [] }),
-      ]);
-      setFreshClips(freshRaw.map((u: any) => ({
-        id: u.id,
-        mediaUrl: u.mediaUrl,
-        courseId: u.courseId,
-        courseName: fCourses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
-        holeNumber: fHoles?.find((h: any) => h.id === u.holeId)?.holeNumber,
-      })));
-    })();
 
     async function loadFeed() {
       const { data: rawUploads } = await supabase
@@ -1101,11 +1041,16 @@ export default function Home() {
           {/* Courses Near Me */}
           {locationStatus !== "denied" && (
             <div style={{ flexShrink: 0, marginTop: 10 }}>
-              <div style={{ padding: "0 20px 6px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>
-                    Courses Near Me
-                  </div>
+              <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", flexShrink: 0 }}>
+                  Courses Near Me
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap" }}>
+                  {locationStatus === "granted" && [10, 25, 50].map(r => (
+                    <button key={r} onClick={() => { setNearMeRadius(r); fetchNearMe(r); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: nearMeRadius === r ? "#fff" : "rgba(255,255,255,0.35)", background: nearMeRadius === r ? "rgba(26,158,66,0.3)" : "rgba(255,255,255,0.05)", border: `1px solid ${nearMeRadius === r ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "3px 9px", cursor: "pointer", whiteSpace: "nowrap" }}>
+                      {r}mi
+                    </button>
+                  ))}
                   {locationStatus === "idle" && (
                     <button onClick={() => fetchNearMe()} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: 99, padding: "4px 12px", cursor: "pointer" }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
@@ -1113,15 +1058,6 @@ export default function Home() {
                     </button>
                   )}
                 </div>
-                {locationStatus === "granted" && (
-                  <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                    {[10, 25, 50].map(r => (
-                      <button key={r} onClick={() => { setNearMeRadius(r); fetchNearMe(r); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: nearMeRadius === r ? "#fff" : "rgba(255,255,255,0.35)", background: nearMeRadius === r ? "rgba(26,158,66,0.3)" : "rgba(255,255,255,0.05)", border: `1px solid ${nearMeRadius === r ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "4px 10px", cursor: "pointer" }}>
-                        {r}mi
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
               {locationStatus === "idle" && (
                 <div style={{ padding: "0 20px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)", lineHeight: 1.5 }}>
@@ -1161,28 +1097,27 @@ export default function Home() {
             </div>
           )}
 
-          {/* Fresh from the Course */}
-          {freshClips.length > 0 && (
-            <div style={{ flexShrink: 0, marginTop: 14, position: "relative" }}>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 28, background: "linear-gradient(to bottom, #07100a, transparent)", zIndex: 1, pointerEvents: "none" }} />
-              <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>
-                Fresh from the course
+          {/* Bridge to feed */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 92, paddingLeft: 16, paddingRight: 16 }}>
+            <button
+              onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
+              style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            >
+              <div style={{ background: "linear-gradient(160deg, rgba(26,158,66,0.1) 0%, rgba(7,16,10,0.0) 100%)", border: "1px solid rgba(26,158,66,0.22)", borderRadius: 18, padding: "18px 20px 22px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, boxShadow: "0 0 24px rgba(26,158,66,0.07), inset 0 0 16px rgba(26,158,66,0.04)" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.2px" }}>
+                  Watch hole clips
+                </div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.38)", letterSpacing: "0.02em" }}>
+                  Real footage from every course
+                </div>
+                <div className="bounce-arrow" style={{ marginTop: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+                  </svg>
+                </div>
               </div>
-              <div className="courses-row">
-                {freshClips.map(clip => (
-                  <FreshClipCard
-                    key={clip.id}
-                    clip={clip}
-                    onClick={() => router.push(clip.holeNumber ? `/courses/${clip.courseId}/holes/${clip.holeNumber}` : `/courses/${clip.courseId}`)}
-                  />
-                ))}
-              </div>
-              <div style={{ height: 88 }} />
-            </div>
-          )}
-
-          {/* Spacer so content scrolls up enough to reveal fresh clips without the old scroll prompt */}
-          {freshClips.length === 0 && <div style={{ flex: 1, minHeight: 80 }} />}
+            </button>
+          </div>
 
         </div>
 
