@@ -25,6 +25,12 @@ enum TeeColor {
   CUSTOM
 }
 
+enum CourseType {
+  PUBLIC
+  PRIVATE
+  SEMI_PRIVATE
+}
+
 enum MediaType {
   VIDEO
   PHOTO
@@ -159,6 +165,9 @@ model Course {
   description   String?
   holeCount     Int      @default(18)
   isPublic      Boolean  @default(true)
+  courseType    CourseType?
+  zipCode       String?
+  yearEstablished Int?
   isVerified    Boolean  @default(false)
   coverImageUrl     String?
   logoUrl           String?

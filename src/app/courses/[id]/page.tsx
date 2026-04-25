@@ -20,6 +20,9 @@ type Course = {
   country: string;
   holeCount: number;
   isPublic: boolean;
+  courseType: "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE" | null;
+  zipCode: string | null;
+  yearEstablished: number | null;
   uploadCount: number;
   description: string | null;
   coverImageUrl: string | null;
@@ -321,6 +324,12 @@ export default function CourseProfilePage() {
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
   const [contributeError, setContributeError] = useState<string | null>(null);
+  const [editCourseName, setEditCourseName] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editState, setEditState] = useState("");
+  const [editZip, setEditZip] = useState("");
+  const [editYearEstablished, setEditYearEstablished] = useState("");
+  const [editCourseType, setEditCourseType] = useState<"PUBLIC" | "PRIVATE" | "SEMI_PRIVATE" | "">("");
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [reportClipId, setReportClipId] = useState<string | null>(null);
@@ -534,6 +543,12 @@ export default function CourseProfilePage() {
 
   const openContribute = useCallback(() => {
     if (!course) return;
+    setEditCourseName(course.name || "");
+    setEditCity(course.city || "");
+    setEditState(course.state || "");
+    setEditZip(course.zipCode || "");
+    setEditYearEstablished(course.yearEstablished?.toString() || "");
+    setEditCourseType(course.courseType || "");
     setEditDescription(course.description || "");
     setCoverFile(null);
     setCoverPreview(null);
@@ -624,15 +639,23 @@ export default function CourseProfilePage() {
 
     if (editDescription.trim()) updates.description = editDescription.trim();
 
-    if (Object.keys(updates).length > 0) {
-      const { error: dbErr } = await supabase.from("Course").update(updates).eq("id", id as string);
+    const infoUpdates: Record<string, string | number | null> = { ...updates };
+    if (editCourseName.trim()) infoUpdates.name = editCourseName.trim();
+    if (editCity.trim()) infoUpdates.city = editCity.trim();
+    if (editState.trim()) infoUpdates.state = editState.trim();
+    infoUpdates.zipCode = editZip.trim() || null;
+    infoUpdates.yearEstablished = editYearEstablished ? parseInt(editYearEstablished) : null;
+    if (editCourseType) infoUpdates.courseType = editCourseType;
+
+    if (Object.keys(infoUpdates).length > 0) {
+      const { error: dbErr } = await supabase.from("Course").update(infoUpdates).eq("id", id as string);
       if (dbErr) {
         setContributing(false);
         setContributeError(`Failed to save: ${dbErr.message}`);
         return;
       }
-      setCourse(prev => prev ? { ...prev, ...updates } : prev);
-      if (updates.coverImageUrl) setCoverPreview(null);
+      setCourse(prev => prev ? { ...prev, ...infoUpdates } : prev);
+      if (infoUpdates.coverImageUrl) setCoverPreview(null);
     }
 
     setContributing(false);
@@ -1327,6 +1350,59 @@ export default function CourseProfilePage() {
               </div>
             ) : (
               <>
+                {/* Course Info fields */}
+                <div style={{ marginBottom: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Info</div>
+
+                  {/* Name */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                    <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Name</label>
+                    <input value={editCourseName} onChange={e => setEditCourseName(e.target.value)}
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                  </div>
+
+                  {/* City / State */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 80px", gap: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>City</label>
+                      <input value={editCity} onChange={e => setEditCity(e.target.value)}
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>State</label>
+                      <input value={editState} onChange={e => setEditState(e.target.value)} maxLength={2} placeholder="IL"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                    </div>
+                  </div>
+
+                  {/* Zip / Year */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Zip Code</label>
+                      <input value={editZip} onChange={e => setEditZip(e.target.value)} placeholder="60601"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Year Est.</label>
+                      <input type="number" value={editYearEstablished} onChange={e => setEditYearEstablished(e.target.value)} placeholder="1924" min="1800" max={new Date().getFullYear()}
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                    </div>
+                  </div>
+
+                  {/* Course type */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                    <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Access</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {(["PUBLIC", "SEMI_PRIVATE", "PRIVATE"] as const).map(type => (
+                        <button key={type} onClick={() => setEditCourseType(editCourseType === type ? "" : type)}
+                          style={{ flex: 1, background: editCourseType === type ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${editCourseType === type ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, padding: "10px 6px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editCourseType === type ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer" }}>
+                          {type === "SEMI_PRIVATE" ? "Semi-Private" : type.charAt(0) + type.slice(1).toLowerCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Cover photo */}
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Cover Photo</div>
