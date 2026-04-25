@@ -120,10 +120,11 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holePar, holeYardage, scoutedHoles, holeIndex, onEnded, onReport, currentUserId }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, scoutedHoles, holeIndex, onEnded, onReport, currentUserId }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }>;
   clipIndex: number; totalClips: number;
+  holeNumber?: number | null;
   holePar?: number | null; holeYardage?: number | null;
   scoutedHoles: number[];
   holeIndex: number;
@@ -198,7 +199,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       <ClipTopPill
         courseLogoUrl={course?.logoUrl ?? null}
         courseName={course?.name ?? ""}
-        holeNumber={clip.holeNumber}
+        holeNumber={holeNumber}
         muted={muted}
         onMuteToggle={handleMuteToggle}
         onTapCourse={onClose}
@@ -209,7 +210,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
 
       <HoleSideBar holeIndex={holeIndex} scoutedHoles={scoutedHoles} />
 
-      <HoleIdentityCard holeNumber={clip.holeNumber} holePar={holePar} clipCount={totalClips} />
+      <HoleIdentityCard holeNumber={holeNumber} holePar={holePar} clipCount={totalClips} />
 
       {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
       <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
@@ -264,7 +265,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       <IntelPanel
         open={intelOpen}
         onClose={() => setIntelOpen(false)}
-        holeNumber={clip.holeNumber}
+        holeNumber={holeNumber ?? undefined}
         holePar={holePar}
         holeYardage={holeYardage}
         clubUsed={clip.clubUsed}
@@ -1524,6 +1525,7 @@ export default function CourseProfilePage() {
                       uploaderMap={uploaders}
                       clipIndex={clipIdx}
                       totalClips={clips.length}
+                      holeNumber={holeNum}
                       holePar={holeData?.par}
                       holeYardage={holeData?.yardage}
                       scoutedHoles={holesWithClips}
