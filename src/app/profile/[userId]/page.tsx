@@ -17,7 +17,7 @@ const SHOT_LABEL: Record<string, string> = {
 };
 
 function ProfileFeedCard({
-  clip, isActive, courseName, courseLogoUrl, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner,
+  clip, isActive, courseName, courseLogoUrl, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; courseId: string; holeNumber?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null };
   isActive: boolean;
@@ -29,6 +29,7 @@ function ProfileFeedCard({
   uploaderInfo: { id: string; username: string; avatarUrl: string | null };
   onComment: () => void;
   isOwner: boolean;
+  currentUserId?: string | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -104,6 +105,14 @@ function ProfileFeedCard({
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
           </button>
         )}
+        {isOwner && !clip.isTagged && onOptions && (
+          <button onClick={onOptions} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.8)" }}>Edit</span>
+          </button>
+        )}
         <button onClick={toggleLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "rgba(26,158,66,0.15)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "rgba(26,158,66,0.7)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#1a9e42" : "none"} stroke={liked ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -125,14 +134,6 @@ function ProfileFeedCard({
           </div>
           <span style={{ height: 13, display: "block" }} />
         </button>
-        {isOwner && !clip.isTagged && onOptions && (
-          <button onClick={onOptions} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-            </div>
-            <span style={{ height: 13, display: "block" }} />
-          </button>
-        )}
         <button onClick={() => router.push(`/profile/${uploaderInfo.id}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ position: "relative", width: 40, height: 40 }}>
             <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -160,6 +161,7 @@ function ProfileFeedCard({
         uploaderUsername={uploaderInfo.username}
         uploaderAvatarUrl={uploaderInfo.avatarUrl}
         uploaderId={uploaderInfo.id}
+        currentUserId={currentUserId}
       />
       </div>{/* end inner wrapper */}
     </div>
@@ -601,6 +603,7 @@ export default function ProfilePage() {
                 uploaderInfo={{ id: profile.id, username: profile.username, avatarUrl: profile.avatarUrl }}
                 onComment={() => setCommentUploadId(clip.id)}
                 isOwner={isOwner}
+                currentUserId={currentUserId}
               />
             </div>
           ))}

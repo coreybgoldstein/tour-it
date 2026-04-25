@@ -263,11 +263,12 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
 }
 
 function SeriesCard({
-  item, isActive, onTapCourse, onTapUser, onComment,
+  item, isActive, onTapCourse, onTapUser, onComment, currentUserId,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
   isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
+  currentUserId?: string | null;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
@@ -391,6 +392,7 @@ function SeriesCard({
         uploaderUsername={item.username}
         uploaderAvatarUrl={item.avatarUrl}
         uploaderId={item.userId}
+        currentUserId={currentUserId}
       />
       </div>{/* end inner wrapper */}
     </div>
@@ -398,12 +400,13 @@ function SeriesCard({
 }
 
 function VideoCard({
-  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport,
+  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, currentUserId,
 }: {
   clip: FeedClip; isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
   onEnded: () => void;
   onReport?: () => void;
+  currentUserId?: string | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
@@ -490,6 +493,7 @@ function VideoCard({
         uploaderUsername={clip.username}
         uploaderAvatarUrl={clip.avatarUrl}
         uploaderId={clip.userId}
+        currentUserId={currentUserId}
       />
       </div>{/* end inner wrapper */}
     </div>
@@ -1091,9 +1095,9 @@ export default function Home() {
         {!loading && feedItems.map((item, i) => (
           <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
             {item.type === "series" ? (
-              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} />
+              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} currentUserId={user?.id} />
             )}
           </div>
         ))}

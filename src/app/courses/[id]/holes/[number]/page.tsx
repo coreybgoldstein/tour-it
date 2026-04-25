@@ -881,6 +881,7 @@ export default function HolePage() {
           uploaderUsername={uploaders[activeUpload.userId]?.username ?? "golfer"}
           uploaderAvatarUrl={uploaders[activeUpload.userId]?.avatarUrl}
           uploaderId={activeUpload.userId}
+          currentUserId={user?.id}
         />
       )}
 

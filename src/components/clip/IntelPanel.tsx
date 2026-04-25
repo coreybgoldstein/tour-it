@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export function IntelPanel({
   open,
@@ -18,6 +19,7 @@ export function IntelPanel({
   uploaderUsername,
   uploaderAvatarUrl,
   uploaderId,
+  currentUserId,
 }: {
   open: boolean;
   onClose: () => void;
@@ -33,9 +35,40 @@ export function IntelPanel({
   uploaderUsername: string;
   uploaderAvatarUrl?: string | null;
   uploaderId?: string;
+  currentUserId?: string | null;
 }) {
   const router = useRouter();
   const dragStartY = useRef<number | null>(null);
+  const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  const isOwnClip = !!(currentUserId && uploaderId && currentUserId === uploaderId);
+  const showFollow = !isOwnClip && !!uploaderId && !!currentUserId;
+
+  useEffect(() => {
+    if (!open || !showFollow) return;
+    createClient()
+      .from("Follow")
+      .select("id")
+      .eq("followerId", currentUserId!)
+      .eq("followingId", uploaderId!)
+      .maybeSingle()
+      .then(({ data }) => setIsFollowing(!!data));
+  }, [open, showFollow, currentUserId, uploaderId]);
+
+  const handleFollow = async () => {
+    if (!currentUserId || !uploaderId || followLoading) return;
+    setFollowLoading(true);
+    const supabase = createClient();
+    if (isFollowing) {
+      await supabase.from("Follow").delete().eq("followerId", currentUserId).eq("followingId", uploaderId);
+      setIsFollowing(false);
+    } else {
+      await supabase.from("Follow").insert({ followerId: currentUserId, followingId: uploaderId });
+      setIsFollowing(true);
+    }
+    setFollowLoading(false);
+  };
 
   const uploaderNotes = [strategyNote, landingZoneNote, whatCameraDoesntShow]
     .filter(Boolean)
@@ -57,15 +90,10 @@ export function IntelPanel({
 
   return (
     <>
-      {/* Dim overlay — tap to close, video continues behind */}
+      {/* Dim overlay */}
       <div
         onClick={onClose}
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 45,
-          background: "rgba(7,16,10,0.35)",
-        }}
+        style={{ position: "absolute", inset: 0, zIndex: 45, background: "rgba(7,16,10,0.35)" }}
       />
       {/* Panel */}
       <div
@@ -121,9 +149,7 @@ export function IntelPanel({
             {holeYardage != null && (
               <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 12px" }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "1.2px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", marginBottom: 4 }}>Played From</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff" }}>
-                  {holeYardage} yds{holePar != null ? ` · Par ${holePar}` : ""}
-                </div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff" }}>{holeYardage} yds</div>
               </div>
             )}
             {windCondition && (
@@ -149,7 +175,7 @@ export function IntelPanel({
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={() => uploaderId && router.push(`/profile/${uploaderId}`)}
-            style={{ background: "none", border: "none", padding: 0, cursor: uploaderId ? "pointer" : "default" }}
+            style={{ background: "none", border: "none", padding: 0, cursor: uploaderId ? "pointer" : "default", flexShrink: 0 }}
           >
             <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.25)", background: "rgba(45,122,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {uploaderAvatarUrl
@@ -166,6 +192,27 @@ export function IntelPanel({
               </div>
             )}
           </div>
+          {showFollow && isFollowing !== null && (
+            <button
+              onClick={handleFollow}
+              disabled={followLoading}
+              style={{
+                background: isFollowing ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 11,
+                fontWeight: 500,
+                color: isFollowing ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.85)",
+                cursor: "pointer",
+                flexShrink: 0,
+                opacity: followLoading ? 0.6 : 1,
+              }}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+          )}
         </div>
       </div>
     </>
