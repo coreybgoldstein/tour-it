@@ -6,6 +6,7 @@ export function ClipTopPill({
   muted, onMuteToggle,
   onTapCourse,
   visible,
+  showParYardage = true,
 }: {
   courseLogoUrl: string | null;
   courseName: string;
@@ -16,6 +17,7 @@ export function ClipTopPill({
   onMuteToggle: () => void;
   onTapCourse: () => void;
   visible: boolean;
+  showParYardage?: boolean;
 }) {
   const abbr = courseName
     .split(" ")
@@ -41,18 +43,19 @@ export function ClipTopPill({
         pointerEvents: visible ? "auto" : "none",
       }}
     >
-      {/* Pill */}
+      {/* Pill — dynamic width, hugs content */}
       <div
         style={{
-          flex: 1,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          flexShrink: 1,
           minWidth: 0,
+          maxWidth: "calc(100% - 48px)",
           background: "rgba(0,0,0,0.55)",
           backdropFilter: "blur(8px)",
           borderRadius: 999,
-          padding: "6px 14px 6px 6px",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
+          padding: "5px 12px 5px 5px",
           overflow: "hidden",
         }}
       >
@@ -72,25 +75,25 @@ export function ClipTopPill({
           </span>
         </button>
 
-        {/* Hole info — never truncated */}
+        {/* Hole number — never truncated */}
         {holeNumber && (
           <>
             <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, flexShrink: 0 }}>·</span>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#4da862", flexShrink: 0 }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#4da862", flexShrink: 0, whiteSpace: "nowrap" }}>
               Hole {holeNumber}
             </span>
-            {holePar != null && (
+            {showParYardage && holePar != null && (
               <>
                 <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, flexShrink: 0 }}>·</span>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", flexShrink: 0 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", flexShrink: 0, whiteSpace: "nowrap" }}>
                   Par {holePar}
                 </span>
               </>
             )}
-            {holeYardage != null && (
+            {showParYardage && holeYardage != null && (
               <>
                 <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, flexShrink: 0 }}>·</span>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", flexShrink: 0 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", flexShrink: 0, whiteSpace: "nowrap" }}>
                   {holeYardage} yds
                 </span>
               </>
@@ -102,7 +105,7 @@ export function ClipTopPill({
       {/* Mute button */}
       <button
         onClick={onMuteToggle}
-        style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+        style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
       >
         {muted
           ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
