@@ -12,6 +12,7 @@ export function IntelPanel({
   holeYardage,
   clubUsed,
   windCondition,
+  conditions,
   strategyNote,
   landingZoneNote,
   whatCameraDoesntShow,
@@ -20,6 +21,7 @@ export function IntelPanel({
   uploaderAvatarUrl,
   uploaderId,
   currentUserId,
+  uploaderHandicap,
 }: {
   open: boolean;
   onClose: () => void;
@@ -28,6 +30,7 @@ export function IntelPanel({
   holeYardage?: number | null;
   clubUsed?: string | null;
   windCondition?: string | null;
+  conditions?: string | null;
   strategyNote?: string | null;
   landingZoneNote?: string | null;
   whatCameraDoesntShow?: string | null;
@@ -36,6 +39,7 @@ export function IntelPanel({
   uploaderAvatarUrl?: string | null;
   uploaderId?: string;
   currentUserId?: string | null;
+  uploaderHandicap?: number | null;
 }) {
   const router = useRouter();
   const dragStartY = useRef<number | null>(null);
@@ -138,7 +142,7 @@ export function IntelPanel({
         </div>
 
         {/* Data cards */}
-        {(clubUsed || windCondition || holeYardage != null) && (
+        {(clubUsed || windCondition || conditions || holeYardage != null) && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: uploaderNotes ? 14 : 16 }}>
             {clubUsed && (
               <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 12px" }}>
@@ -156,6 +160,12 @@ export function IntelPanel({
               <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 12px" }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "1.2px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", marginBottom: 4 }}>Wind</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff" }}>{formatWind(windCondition)}</div>
+              </div>
+            )}
+            {conditions && (
+              <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "10px 12px" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "1.2px", color: "rgba(255,255,255,0.5)", textTransform: "uppercase", marginBottom: 4 }}>Conditions</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff" }}>{conditions}</div>
               </div>
             )}
           </div>
@@ -185,7 +195,14 @@ export function IntelPanel({
             </div>
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "#fff" }}>@{uploaderUsername}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "#fff" }}>@{uploaderUsername}</span>
+              {uploaderHandicap != null && (
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, color: "#4da862", background: "rgba(77,168,98,0.2)", borderRadius: 999, padding: "1px 6px" }}>
+                  {uploaderHandicap} HCP
+                </span>
+              )}
+            </div>
             {datePlayedAt && (
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 1 }}>
                 Uploaded {new Date(datePlayedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}

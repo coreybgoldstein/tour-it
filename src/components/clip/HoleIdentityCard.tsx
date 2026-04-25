@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 export function HoleIdentityCard({
   holeNumber,
   holePar,
@@ -9,24 +11,35 @@ export function HoleIdentityCard({
   holePar?: number | null;
   clipCount: number;
 }) {
+  const isFirst = useRef(true);
+  const [opacity, setOpacity] = useState(1);
+
+  useEffect(() => {
+    if (isFirst.current) { isFirst.current = false; return; }
+    setOpacity(0);
+    const t = setTimeout(() => setOpacity(1), 10);
+    return () => clearTimeout(t);
+  }, [holeNumber]);
+
   if (!holeNumber) return null;
   return (
     <div
       style={{
-        position: "absolute",
-        bottom: 90,
+        position: "fixed",
+        bottom: 0,
         left: 0,
-        zIndex: 20,
+        zIndex: 101,
         background: "rgba(7,16,10,0.82)",
         backdropFilter: "blur(10px)",
         borderRadius: "0 16px 0 0",
         borderTop: "1px solid rgba(77,168,98,0.2)",
         borderRight: "1px solid rgba(77,168,98,0.2)",
         padding: "12px 16px 16px 14px",
+        opacity,
+        transition: "opacity 150ms ease",
         pointerEvents: "none",
       }}
     >
-      {/* Multi-clip stacked icon */}
       {clipCount > 1 && (
         <div style={{ position: "absolute", top: 8, right: 8, opacity: 0.55, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -36,7 +49,6 @@ export function HoleIdentityCard({
         </div>
       )}
 
-      {/* Hole number */}
       <div style={{
         fontFamily: "'Playfair Display', serif",
         fontSize: 52,
@@ -44,12 +56,10 @@ export function HoleIdentityCard({
         color: "#fff",
         lineHeight: 1,
         letterSpacing: "-1px",
-        transition: "opacity 150ms ease",
       }}>
         {holeNumber}
       </div>
 
-      {/* Par */}
       {holePar != null && (
         <div style={{
           fontFamily: "'Outfit', sans-serif",
