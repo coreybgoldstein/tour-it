@@ -31,6 +31,8 @@ type FeedClip = {
   courseId: string;
   courseName: string;
   courseLogoUrl: string | null;
+  courseCity?: string | null;
+  courseState?: string | null;
   holeId: string;
   holeNumber?: number;
   holePar?: number | null;
@@ -55,7 +57,7 @@ type FeedClip = {
 
 type FeedItem =
   | { type: "clip"; clip: FeedClip }
-  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseLogoUrl: string | null; courseId: string; holeId: string; holeNumber?: number; username: string; avatarUrl: string | null; userId: string };
+  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseLogoUrl: string | null; courseCity?: string | null; courseState?: string | null; courseId: string; holeId: string; holeNumber?: number; username: string; avatarUrl: string | null; userId: string };
 
 type CommentItem = {
   id: string;
@@ -345,6 +347,7 @@ function SeriesCard({
       <ClipTopPill
         courseLogoUrl={item.courseLogoUrl}
         courseName={item.courseName}
+        courseLocation={[item.courseCity, item.courseState].filter(Boolean).join(", ") || null}
         holeNumber={item.holeNumber}
         holePar={item.shots[0]?.holePar}
         holeYardage={item.shots[0]?.holeYardage}
@@ -470,6 +473,7 @@ function VideoCard({
       <ClipTopPill
         courseLogoUrl={clip.courseLogoUrl}
         courseName={clip.courseName}
+        courseLocation={[clip.courseCity, clip.courseState].filter(Boolean).join(", ") || null}
         holeNumber={clip.holeNumber}
         holePar={clip.holePar}
         holeYardage={clip.holeYardage}
@@ -592,7 +596,7 @@ export default function Home() {
       const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
 
       const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
-        supabase.from("Course").select("id, name, logoUrl").in("id", courseIds),
+        supabase.from("Course").select("id, name, logoUrl, city, state").in("id", courseIds),
         supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
         supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds),
       ]);
@@ -600,11 +604,14 @@ export default function Home() {
       const enriched: FeedClip[] = uploads.map((u: any) => {
         const hole = holes?.find((h: any) => h.id === u.holeId);
         const user = users?.find((usr: any) => usr.id === u.userId);
+        const course = courses?.find((c: any) => c.id === u.courseId);
         return {
           ...u,
           commentCount: u.commentCount || 0,
-          courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
-          courseLogoUrl: courses?.find((c: any) => c.id === u.courseId)?.logoUrl || null,
+          courseName: course?.name || "Unknown Course",
+          courseLogoUrl: course?.logoUrl || null,
+          courseCity: course?.city || null,
+          courseState: course?.state || null,
           username: user?.username || "golfer",
           avatarUrl: user?.avatarUrl || null,
           uploaderHandicap: user?.handicapIndex ?? null,
@@ -628,7 +635,7 @@ export default function Home() {
       const seriesItems: FeedItem[] = Object.entries(seriesMap).map(([seriesId, shots]) => {
         const sorted = shots.sort((a, b) => (a.seriesOrder || 0) - (b.seriesOrder || 0));
         const first = sorted[0];
-        return { type: "series", seriesId, shots: sorted, courseName: first.courseName, courseLogoUrl: first.courseLogoUrl, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
+        return { type: "series", seriesId, shots: sorted, courseName: first.courseName, courseLogoUrl: first.courseLogoUrl, courseCity: first.courseCity, courseState: first.courseState, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
       });
 
       const singleItems: FeedItem[] = singleClips
@@ -688,11 +695,14 @@ export default function Home() {
     const enriched: FeedClip[] = uploads.map((u: any) => {
       const hole = holes?.find((h: any) => h.id === u.holeId);
       const user = users?.find((usr: any) => usr.id === u.userId);
+      const course = courses?.find((c: any) => c.id === u.courseId);
       return {
         ...u,
         commentCount: u.commentCount || 0,
-        courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown Course",
-        courseLogoUrl: courses?.find((c: any) => c.id === u.courseId)?.logoUrl || null,
+        courseName: course?.name || "Unknown Course",
+        courseLogoUrl: course?.logoUrl || null,
+        courseCity: course?.city || null,
+        courseState: course?.state || null,
         username: user?.username || "golfer",
         avatarUrl: user?.avatarUrl || null,
         uploaderHandicap: user?.handicapIndex ?? null,

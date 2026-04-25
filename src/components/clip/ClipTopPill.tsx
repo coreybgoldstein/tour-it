@@ -1,7 +1,7 @@
 "use client";
 
 export function ClipTopPill({
-  courseLogoUrl, courseName,
+  courseLogoUrl, courseName, courseLocation,
   holeNumber, holePar, holeYardage,
   muted, onMuteToggle,
   onTapCourse,
@@ -10,6 +10,7 @@ export function ClipTopPill({
 }: {
   courseLogoUrl: string | null;
   courseName: string;
+  courseLocation?: string | null;
   holeNumber?: number | null;
   holePar?: number | null;
   holeYardage?: number | null;
@@ -68,9 +69,16 @@ export function ClipTopPill({
             : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#1a9e42" }}>{abbr}</span>
           }
         </div>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {courseName}
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {courseName}
+          </span>
+          {courseLocation && (
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 400, color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1 }}>
+              {courseLocation}
+            </span>
+          )}
+        </div>
 
         {/* Hole number — never truncated */}
         {holeNumber && (
