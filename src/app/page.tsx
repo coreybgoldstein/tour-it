@@ -1098,26 +1098,26 @@ export default function Home() {
           )}
 
           {/* Bridge to feed */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 92, paddingLeft: 16, paddingRight: 16 }}>
-            <button
-              onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-              style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-            >
-              <div style={{ background: "linear-gradient(160deg, rgba(26,158,66,0.1) 0%, rgba(7,16,10,0.0) 100%)", border: "1px solid rgba(26,158,66,0.22)", borderRadius: 18, padding: "18px 20px 22px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, boxShadow: "0 0 24px rgba(26,158,66,0.07), inset 0 0 16px rgba(26,158,66,0.04)" }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.2px" }}>
-                  Watch hole clips
-                </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.38)", letterSpacing: "0.02em" }}>
-                  Real footage from every course
-                </div>
-                <div className="bounce-arrow" style={{ marginTop: 6 }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
-                  </svg>
-                </div>
+          <button
+            onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
+            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", paddingBottom: 96, background: "none", border: "none", cursor: "pointer", width: "100%" }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "2.5px", textTransform: "uppercase", color: "rgba(255,255,255,0.28)" }}>
+                Scout the feed
               </div>
-            </button>
-          </div>
+              <div className="bounce-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+              <div className="bounce-arrow" style={{ marginTop: -10, opacity: 0.4 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+            </div>
+          </button>
 
         </div>
 
