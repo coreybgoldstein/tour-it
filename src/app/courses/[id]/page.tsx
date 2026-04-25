@@ -1226,15 +1226,16 @@ export default function CourseProfilePage() {
                         return (
                           <div key={h.holeNumber} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 1fr", gap: 6, marginBottom: 6, alignItems: "center" }}>
                             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", textAlign: "center" }}>{h.holeNumber}</div>
-                            <input
+                            <select
                               className="sc-input"
-                              type="number" min={3} max={5}
                               value={h.par}
                               onChange={e => {
-                                const v = parseInt(e.target.value) || 4;
-                                setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, par: Math.min(5, Math.max(3, v)) } : eh));
+                                const v = parseInt(e.target.value);
+                                setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, par: v } : eh));
                               }}
-                            />
+                            >
+                              {[3, 4, 5].map(p => <option key={p} value={p} style={{ background: "#07100a" }}>{p}</option>)}
+                            </select>
                             <input
                               className="sc-input"
                               type="number" min={1}
@@ -1245,16 +1246,17 @@ export default function CourseProfilePage() {
                                 setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, yardage: v } : eh));
                               }}
                             />
-                            <input
+                            <select
                               className="sc-input"
-                              type="number" min={1} max={18}
                               value={h.handicapRank ?? ""}
-                              placeholder="—"
                               onChange={e => {
-                                const v = e.target.value === "" ? null : parseInt(e.target.value) || null;
+                                const v = e.target.value === "" ? null : parseInt(e.target.value);
                                 setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, handicapRank: v as any } : eh));
                               }}
-                            />
+                            >
+                              <option value="" style={{ background: "#07100a" }}>—</option>
+                              {Array.from({ length: 18 }, (_, i) => i + 1).map(n => <option key={n} value={n} style={{ background: "#07100a" }}>{n}</option>)}
+                            </select>
                           </div>
                         );
                       })}
