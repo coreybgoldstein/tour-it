@@ -12,7 +12,10 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
+    // Code exchange failed — send to target page to show expired message
+    return NextResponse.redirect(`${origin}${next}?invalid=1`);
   }
 
-  return NextResponse.redirect(`${origin}/login?error=invalid_link`);
+  // No code (hash-based flow) — redirect to target page, tokens in hash will be handled client-side
+  return NextResponse.redirect(`${origin}${next}`);
 }
