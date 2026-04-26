@@ -37,6 +37,7 @@ function SearchPageInner() {
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [results, setResults] = useState<Course[]>([]);
   const [popular, setPopular] = useState<Course[]>([]);
+  const [recentSearches, setRecentSearches] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -92,6 +93,25 @@ function SearchPageInner() {
       .limit(12)
       .then(({ data }) => { if (data) setPopular(data); });
   }, []);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("tour-it-recent-searches");
+      if (stored) setRecentSearches(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  function addRecentSearch(course: Course) {
+    const updated = [course, ...recentSearches.filter(c => c.id !== course.id)].slice(0, 3);
+    setRecentSearches(updated);
+    try { localStorage.setItem("tour-it-recent-searches", JSON.stringify(updated)); } catch {}
+  }
+
+  function removeRecentSearch(id: string) {
+    const updated = recentSearches.filter(c => c.id !== id);
+    setRecentSearches(updated);
+    try { localStorage.setItem("tour-it-recent-searches", JSON.stringify(updated)); } catch {}
+  }
 
   // Geocode zip from URL on mount
   useEffect(() => {
@@ -150,7 +170,7 @@ function SearchPageInner() {
   const search = useCallback((q: string, coords: { lat: number; lng: number } | null, state: string, city: string, holes: string, courseType: string, radius: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    const hasQuery = q.trim().length >= 2;
+    const hasQuery = q.trim().length >= 1;
     const hasAnyFilter = state || city || coords || holes !== "all" || courseType;
 
     if (!hasQuery && !hasAnyFilter) {
@@ -253,7 +273,7 @@ function SearchPageInner() {
     setFilterOpen(true);
   }
 
-  const showResults = query.trim().length >= 2 || hasFilters;
+  const showResults = query.trim().length >= 1 || hasFilters;
   const displayList = showResults ? results : [];
 
   async function toggleFollow(targetId: string) {
@@ -450,7 +470,7 @@ function SearchPageInner() {
               {displayList.map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (
-                  <div key={course.id} className="course-row" onClick={() => router.push(`/courses/${course.id}`)}>
+                  <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
                       {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
                     </div>
@@ -470,6 +490,33 @@ function SearchPageInner() {
             </>
           )}
 
+          {/* Recent searches */}
+          {!showResults && recentSearches.length > 0 && (
+            <>
+              <p className="section-label">Recently Viewed</p>
+              {recentSearches.map(course => {
+                const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+                return (
+                  <div key={course.id} className="course-row" style={{ position: "relative" }} onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
+                    <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
+                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="course-name">{course.name}</div>
+                      <div className="course-meta">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); removeRecentSearch(course.id); }}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: "6px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
           {/* Popular courses (no search or filters) */}
           {!showResults && popular.length > 0 && (
             <>
@@ -477,7 +524,7 @@ function SearchPageInner() {
               {popular.map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (
-                  <div key={course.id} className="course-row" onClick={() => router.push(`/courses/${course.id}`)}>
+                  <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className="course-badge has-clips" style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
                       {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
                     </div>
@@ -500,7 +547,7 @@ function SearchPageInner() {
           {!showResults && popular.length === 0 && (
             <div className="empty-hint">
               Search from 11,000+ courses across the US<br/>
-              <span style={{ fontSize: 12 }}>Type at least 2 characters to search</span>
+              <span style={{ fontSize: 12 }}>Start typing to search</span>
             </div>
           )}
 
