@@ -29,6 +29,10 @@ function SearchPageInner() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setInputRef = useCallback((el: HTMLInputElement | null) => {
+    inputRef.current = el;
+    if (el) el.focus();
+  }, []);
 
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [results, setResults] = useState<Course[]>([]);
@@ -98,7 +102,6 @@ function SearchPageInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 50); }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -335,7 +338,7 @@ function SearchPageInner() {
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input
-              ref={inputRef}
+              ref={setInputRef}
               className="search-input"
               type="text"
               value={query}
@@ -344,7 +347,6 @@ function SearchPageInner() {
               onBlur={() => setFocused(false)}
               placeholder={searchTab === "courses" ? "Search courses…" : "Name or @username"}
               autoComplete="off"
-              autoFocus
             />
             {query && (
               <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
