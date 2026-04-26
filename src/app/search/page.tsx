@@ -46,25 +46,25 @@ function SearchPageInner() {
 
   const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
 
-  // Filters
+  // Filters — initialized from URL params so they survive navigation
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterState, setFilterState] = useState("");
-  const [filterCity, setFilterCity] = useState("");
-  const [filterZip, setFilterZip] = useState("");
-  const [filterHoles, setFilterHoles] = useState<"all" | "9" | "18">("all");
-  const [filterCourseType, setFilterCourseType] = useState<"" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE">("");
-  const [filterRadius, setFilterRadius] = useState<"10" | "25" | "50">("25");
+  const [filterState, setFilterState] = useState(searchParams.get("state") || "");
+  const [filterCity, setFilterCity] = useState(searchParams.get("city") || "");
+  const [filterZip, setFilterZip] = useState(searchParams.get("zip") || "");
+  const [filterHoles, setFilterHoles] = useState<"all" | "9" | "18">((searchParams.get("holes") as "9" | "18") || "all");
+  const [filterCourseType, setFilterCourseType] = useState<"" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE">((searchParams.get("type") as "" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE") || "");
+  const [filterRadius, setFilterRadius] = useState<"10" | "25" | "50">((searchParams.get("radius") as "10" | "25" | "50") || "25");
   const [zipCoords, setZipCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [zipLoading, setZipLoading] = useState(false);
   const [zipError, setZipError] = useState("");
 
   // Draft filter state (inside sheet, not yet applied)
-  const [draftState, setDraftState] = useState("");
-  const [draftCity, setDraftCity] = useState("");
-  const [draftZip, setDraftZip] = useState("");
-  const [draftHoles, setDraftHoles] = useState<"all" | "9" | "18">("all");
-  const [draftCourseType, setDraftCourseType] = useState<"" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE">("");
-  const [draftRadius, setDraftRadius] = useState<"10" | "25" | "50">("25");
+  const [draftState, setDraftState] = useState(searchParams.get("state") || "");
+  const [draftCity, setDraftCity] = useState(searchParams.get("city") || "");
+  const [draftZip, setDraftZip] = useState(searchParams.get("zip") || "");
+  const [draftHoles, setDraftHoles] = useState<"all" | "9" | "18">((searchParams.get("holes") as "9" | "18") || "all");
+  const [draftCourseType, setDraftCourseType] = useState<"" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE">((searchParams.get("type") as "" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE") || "");
+  const [draftRadius, setDraftRadius] = useState<"10" | "25" | "50">((searchParams.get("radius") as "10" | "25" | "50") || "25");
 
   type Person = { id: string; username: string; displayName: string; avatarUrl: string | null; uploadCount: number };
   const [peopleResults, setPeopleResults] = useState<Person[]>([]);
@@ -87,6 +87,15 @@ function SearchPageInner() {
       .order("uploadCount", { ascending: false })
       .limit(12)
       .then(({ data }) => { if (data) setPopular(data); });
+  }, []);
+
+  // Geocode zip from URL on mount
+  useEffect(() => {
+    const zipParam = searchParams.get("zip");
+    if (zipParam && zipParam.length === 5) {
+      geocodeZip(zipParam).then(coords => { if (coords) setZipCoords(coords); });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { setTimeout(() => inputRef.current?.focus(), 50); }, []);
@@ -207,6 +216,16 @@ function SearchPageInner() {
     setFilterRadius(draftRadius);
     setZipCoords(coords);
     setFilterOpen(false);
+
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (draftState) params.set("state", draftState);
+    if (draftCity) params.set("city", draftCity);
+    if (draftZip) params.set("zip", draftZip);
+    if (draftHoles !== "all") params.set("holes", draftHoles);
+    if (draftCourseType) params.set("type", draftCourseType);
+    if (draftZip) params.set("radius", draftRadius);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
   }
 
   function clearFilters() {
@@ -215,6 +234,9 @@ function SearchPageInner() {
     setDraftState(""); setDraftCity(""); setDraftZip(""); setDraftHoles("all");
     setDraftCourseType(""); setDraftRadius("25");
     setZipError("");
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
   }
 
   function openFilterSheet() {
