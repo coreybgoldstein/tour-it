@@ -1110,7 +1110,7 @@ export default function Home() {
           {/* Bridge to feed */}
           <button
             onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-            style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", paddingBottom: 30, background: "none", border: "none", cursor: "pointer", width: "100%", gap: 28 }}
+            style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", paddingBottom: 120, background: "none", border: "none", cursor: "pointer", width: "100%", gap: 28 }}
           >
             <div className="bounce-arrow" style={{ animationDelay: "0s" }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
