@@ -972,7 +972,7 @@ export default function Home() {
       <div ref={feedRef} className="feed" onScroll={handleScroll} style={{ paddingLeft: isDesktop ? 72 : 0 }}>
 
         {/* ── Discovery section ── */}
-        <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none", overscrollBehaviorY: "none" }}>
+        <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {/* Green header bar */}
           <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", borderBottom: "1px solid rgba(77,168,98,0.35)", flexShrink: 0 }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
