@@ -501,7 +501,7 @@ export default function ProfilePage() {
   }
 
   async function saveClipEdit() {
-    if (!selectedClip || !editData || editSaving) return;
+    if (!selectedClip || !editData || editSaving || !isOwner || !currentUserId) return;
     setEditSaving(true);
     const supabase = createClient();
     let holeId = selectedClip.holeId;
@@ -513,7 +513,7 @@ export default function ProfilePage() {
         holeId = newId;
       }
     }
-    await supabase.from("Upload").update({ holeId, shotType: editData.shotType || null, clubUsed: editData.clubUsed || null, windCondition: editData.windCondition || null, strategyNote: editData.strategyNote || null, landingZoneNote: editData.landingZoneNote || null, whatCameraDoesntShow: editData.whatCameraDoesntShow || null, updatedAt: new Date().toISOString() }).eq("id", selectedClip.id);
+    await supabase.from("Upload").update({ holeId, shotType: editData.shotType || null, clubUsed: editData.clubUsed || null, windCondition: editData.windCondition || null, strategyNote: editData.strategyNote || null, landingZoneNote: editData.landingZoneNote || null, whatCameraDoesntShow: editData.whatCameraDoesntShow || null, updatedAt: new Date().toISOString() }).eq("id", selectedClip.id).eq("userId", currentUserId);
     const currentIds = new Set(editData.taggedUsers.map(u => u.id));
     const removedIds = [...editData.originalTagIds].filter(id => !currentIds.has(id));
     const addedUsers = editData.taggedUsers.filter(u => !editData.originalTagIds.has(u.id));
@@ -527,7 +527,7 @@ export default function ProfilePage() {
   }
 
   async function handleDeleteClip() {
-    if (!selectedClip) return;
+    if (!selectedClip || !isOwner || !currentUserId) return;
     setDeleting(true);
     try {
       const supabase = createClient();
@@ -535,7 +535,7 @@ export default function ProfilePage() {
       const bucket = selectedClip.mediaType === "VIDEO" ? "tour-it-videos" : "tour-it-photos";
       const bucketIndex = url.indexOf(`/${bucket}/`);
       if (bucketIndex !== -1) await supabase.storage.from(bucket).remove([url.substring(bucketIndex + bucket.length + 2)]);
-      await supabase.from("Upload").delete().eq("id", selectedClip.id);
+      await supabase.from("Upload").delete().eq("id", selectedClip.id).eq("userId", currentUserId);
       setUploads(prev => prev.filter(u => u.id !== selectedClip.id));
     } catch {}
     setDeleting(false); setSelectedClip(null); setConfirmDelete(false);
