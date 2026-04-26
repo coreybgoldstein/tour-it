@@ -342,8 +342,13 @@ function UploadPageInner() {
       const folderKey = selectedHole || contentFormat || "misc";
       const filePath = `${user.id}/${selectedCourse.id}/${folderKey}/${Date.now()}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, fileToUpload, { cacheControl: "3600", upsert: false });
-      if (uploadError) { setError(`Upload failed: ${uploadError.message}`); setUploading(false); return; }
+      let uploadError = (await supabase.storage.from(bucket).upload(filePath, fileToUpload, { cacheControl: "3600", upsert: false })).error;
+      if (uploadError) {
+        // Retry once on transient network errors
+        await new Promise(r => setTimeout(r, 1500));
+        uploadError = (await supabase.storage.from(bucket).upload(filePath, fileToUpload, { cacheControl: "3600", upsert: true })).error;
+      }
+      if (uploadError) { setError("Upload failed — check your connection and try again."); setUploading(false); return; }
 
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
