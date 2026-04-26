@@ -57,7 +57,15 @@ export default function BottomNav() {
         if (isSearch) {
           (document.querySelector('input.search-input') as HTMLInputElement | null)?.focus();
         } else {
+          // Focus a ghost input synchronously inside the gesture so iOS opens the keyboard.
+          // The search page's useEffect then transfers focus to the real input.
+          const ghost = document.createElement("input");
+          ghost.setAttribute("type", "text");
+          Object.assign(ghost.style, { position: "fixed", top: "0", left: "0", width: "1px", height: "1px", opacity: "0", fontSize: "16px" });
+          document.body.appendChild(ghost);
+          ghost.focus();
           router.push("/search");
+          setTimeout(() => ghost.remove(), 1000);
         }
       },
       icon: (active: boolean) => (
