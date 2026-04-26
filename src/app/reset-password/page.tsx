@@ -14,13 +14,28 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
   const [linkInvalid, setLinkInvalid] = useState(false);
 
-  // Supabase puts the session tokens in the URL hash when the user clicks the email link
   useEffect(() => {
     const supabase = createClient();
+
+    // Failed code exchange from callback route
+    if (new URLSearchParams(window.location.search).get("invalid")) { setLinkInvalid(true); return; }
+
+    // PKCE flow — Supabase sends ?code= in the URL query string
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) setLinkInvalid(true);
+        else setReady(true);
+        // Clean the code from the URL bar
+        window.history.replaceState({}, "", "/reset-password");
+      });
+      return;
+    }
+
+    // Hash-based flow — Supabase appends #access_token=...&type=recovery
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") setReady(true);
     });
-    // If no PASSWORD_RECOVERY event after 6s, the link is invalid or expired
     const timeout = setTimeout(() => {
       if (!ready) setLinkInvalid(true);
     }, 6000);
