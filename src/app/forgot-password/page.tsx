@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (resetError) {
-      setError("Something went wrong. Please try again.");
+      setError(resetError.message || "Something went wrong. Please try again.");
       setLoading(false);
       return;
     }
