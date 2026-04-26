@@ -19,6 +19,7 @@ type Course = {
   state: string;
   holeCount: number;
   isPublic: boolean;
+  courseType: string | null;
   uploadCount: number;
   logoUrl: string | null;
 };
@@ -51,6 +52,8 @@ function SearchPageInner() {
   const [filterCity, setFilterCity] = useState("");
   const [filterZip, setFilterZip] = useState("");
   const [filterHoles, setFilterHoles] = useState<"all" | "9" | "18">("all");
+  const [filterCourseType, setFilterCourseType] = useState<"" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE">("");
+  const [filterRadius, setFilterRadius] = useState<"10" | "25" | "50">("25");
   const [zipCoords, setZipCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [zipLoading, setZipLoading] = useState(false);
   const [zipError, setZipError] = useState("");
@@ -60,6 +63,8 @@ function SearchPageInner() {
   const [draftCity, setDraftCity] = useState("");
   const [draftZip, setDraftZip] = useState("");
   const [draftHoles, setDraftHoles] = useState<"all" | "9" | "18">("all");
+  const [draftCourseType, setDraftCourseType] = useState<"" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE">("");
+  const [draftRadius, setDraftRadius] = useState<"10" | "25" | "50">("25");
 
   type Person = { id: string; username: string; displayName: string; avatarUrl: string | null; uploadCount: number };
   const [peopleResults, setPeopleResults] = useState<Person[]>([]);
@@ -69,7 +74,7 @@ function SearchPageInner() {
   const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
   const peopleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const activeFilterCount = [filterState, filterCity, filterZip, filterHoles !== "all"].filter(Boolean).length;
+  const activeFilterCount = [filterState, filterCity, filterZip, filterHoles !== "all", filterCourseType].filter(Boolean).length;
   const hasFilters = activeFilterCount > 0;
 
   // Load popular courses
@@ -77,7 +82,7 @@ function SearchPageInner() {
     const supabase = createClient();
     supabase
       .from("Course")
-      .select("id, name, city, state, holeCount, isPublic, uploadCount, logoUrl")
+      .select("id, name, city, state, holeCount, isPublic, courseType, uploadCount, logoUrl")
       .gt("uploadCount", 0)
       .order("uploadCount", { ascending: false })
       .limit(12)
@@ -130,11 +135,11 @@ function SearchPageInner() {
   }
 
   // Course search — runs on query or filter change
-  const search = useCallback((q: string, coords: { lat: number; lng: number } | null, state: string, city: string, holes: string) => {
+  const search = useCallback((q: string, coords: { lat: number; lng: number } | null, state: string, city: string, holes: string, courseType: string, radius: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const hasQuery = q.trim().length >= 2;
-    const hasAnyFilter = state || city || coords || holes !== "all";
+    const hasAnyFilter = state || city || coords || holes !== "all" || courseType;
 
     if (!hasQuery && !hasAnyFilter) {
       setResults([]);
@@ -147,7 +152,7 @@ function SearchPageInner() {
       const supabase = createClient();
       let qb = supabase
         .from("Course")
-        .select("id, name, city, state, holeCount, isPublic, uploadCount, logoUrl");
+        .select("id, name, city, state, holeCount, isPublic, courseType, uploadCount, logoUrl");
 
       if (hasQuery) {
         qb = qb.or(`name.ilike.%${q}%,city.ilike.%${q}%,state.ilike.%${q}%`);
@@ -155,8 +160,9 @@ function SearchPageInner() {
       if (state) qb = qb.eq("state", state);
       if (city) qb = qb.ilike("city", `%${city}%`);
       if (holes !== "all") qb = qb.eq("holeCount", parseInt(holes));
+      if (courseType) qb = qb.eq("courseType", courseType);
       if (coords) {
-        const delta = 0.36; // ~25 miles
+        const delta = ({ "10": 0.145, "25": 0.362, "50": 0.724 } as Record<string, number>)[radius] ?? 0.362;
         qb = qb
           .gte("latitude", coords.lat - delta)
           .lte("latitude", coords.lat + delta)
@@ -171,8 +177,8 @@ function SearchPageInner() {
   }, []);
 
   useEffect(() => {
-    search(query, zipCoords, filterState, filterCity, filterHoles);
-  }, [query, zipCoords, filterState, filterCity, filterHoles, search]);
+    search(query, zipCoords, filterState, filterCity, filterHoles, filterCourseType, filterRadius);
+  }, [query, zipCoords, filterState, filterCity, filterHoles, filterCourseType, filterRadius, search]);
 
   // Apply filters from draft
   async function applyFilters() {
@@ -197,13 +203,17 @@ function SearchPageInner() {
     setFilterCity(draftCity);
     setFilterZip(draftZip);
     setFilterHoles(draftHoles);
+    setFilterCourseType(draftCourseType);
+    setFilterRadius(draftRadius);
     setZipCoords(coords);
     setFilterOpen(false);
   }
 
   function clearFilters() {
     setFilterState(""); setFilterCity(""); setFilterZip(""); setFilterHoles("all"); setZipCoords(null);
+    setFilterCourseType(""); setFilterRadius("25");
     setDraftState(""); setDraftCity(""); setDraftZip(""); setDraftHoles("all");
+    setDraftCourseType(""); setDraftRadius("25");
     setZipError("");
   }
 
@@ -212,6 +222,8 @@ function SearchPageInner() {
     setDraftCity(filterCity);
     setDraftZip(filterZip);
     setDraftHoles(filterHoles);
+    setDraftCourseType(filterCourseType);
+    setDraftRadius(filterRadius);
     setZipError("");
     setFilterOpen(true);
   }
@@ -352,8 +364,9 @@ function SearchPageInner() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
               {filterState && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", color: "#4da862" }}>{filterState}</span>}
               {filterCity && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", color: "#4da862" }}>{filterCity}</span>}
-              {filterZip && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", color: "#4da862" }}>Near {filterZip}</span>}
+              {filterZip && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", color: "#4da862" }}>Within {filterRadius} mi of {filterZip}</span>}
               {filterHoles !== "all" && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", color: "#4da862" }}>{filterHoles} holes</span>}
+              {filterCourseType && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", color: "#4da862" }}>{filterCourseType === "PUBLIC" ? "Public" : filterCourseType === "PRIVATE" ? "Private" : "Semi-Private"}</span>}
               <button onClick={clearFilters} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 99, background: "none", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.35)", cursor: "pointer" }}>Clear</button>
             </div>
           )}
@@ -513,9 +526,9 @@ function SearchPageInner() {
                 />
               </div>
 
-              {/* Zip */}
+              {/* Zip + Radius */}
               <div>
-                <label className="filter-sheet-label">Near Zip Code <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,0.2)" }}>— within 25 miles</span></label>
+                <label className="filter-sheet-label">Near Zip Code</label>
                 <input
                   className="filter-sheet-input"
                   placeholder="e.g. 90210"
@@ -525,6 +538,28 @@ function SearchPageInner() {
                   maxLength={5}
                 />
                 {zipError && <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#ef4444", marginTop: 6 }}>{zipError}</p>}
+                <div style={{ marginTop: 10 }}>
+                  <label className="filter-sheet-label" style={{ marginBottom: 6 }}>Radius</label>
+                  <div className="holes-toggle">
+                    {(["10", "25", "50"] as const).map(r => (
+                      <button key={r} className={`holes-btn ${draftRadius === r ? "active" : ""}`} onClick={() => setDraftRadius(r)}>
+                        {r} mi
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Course Type */}
+              <div>
+                <label className="filter-sheet-label">Course Type</label>
+                <div className="holes-toggle" style={{ flexWrap: "wrap", gap: 8 }}>
+                  {([["", "Any"], ["PUBLIC", "Public"], ["PRIVATE", "Private"], ["SEMI_PRIVATE", "Semi-Private"]] as const).map(([val, label]) => (
+                    <button key={val} className={`holes-btn ${draftCourseType === val ? "active" : ""}`} style={{ flex: "1 1 calc(50% - 4px)" }} onClick={() => setDraftCourseType(val)}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Holes */}
