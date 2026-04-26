@@ -88,16 +88,18 @@ export default function NotificationBell() {
           <div
             style={{
               position: "absolute",
-              top: -4,
-              right: -4,
-              minWidth: 16,
-              height: 16,
-              borderRadius: 8,
-              background: "#4da862",
+              top: -5,
+              right: -6,
+              minWidth: 17,
+              height: 17,
+              borderRadius: 10,
+              background: "#e8353a",
+              border: "1.5px solid #07100a",
+              boxShadow: "0 1px 6px rgba(232,53,58,0.55)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "0 3px",
+              padding: "0 4px",
             }}
           >
             <span
@@ -107,6 +109,7 @@ export default function NotificationBell() {
                 fontWeight: 700,
                 color: "#fff",
                 lineHeight: 1,
+                letterSpacing: "-0.2px",
               }}
             >
               {unreadCount > 99 ? "99+" : unreadCount}
