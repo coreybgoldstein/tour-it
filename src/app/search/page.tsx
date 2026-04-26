@@ -84,7 +84,7 @@ function SearchPageInner() {
       .then(({ data }) => { if (data) setPopular(data); });
   }, []);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { setTimeout(() => inputRef.current?.focus(), 50); }, []);
 
   useEffect(() => {
     const supabase = createClient();
