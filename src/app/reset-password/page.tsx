@@ -16,30 +16,41 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    let subscription: { unsubscribe: () => void } | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    // Failed code exchange from callback route
-    if (new URLSearchParams(window.location.search).get("invalid")) { setLinkInvalid(true); return; }
+    if (new URLSearchParams(window.location.search).get("invalid")) {
+      setLinkInvalid(true);
+      return;
+    }
 
-    // PKCE flow — Supabase sends ?code= in the URL query string
+    // PKCE code landed directly on this page (fallback path)
     const code = new URLSearchParams(window.location.search).get("code");
     if (code) {
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (error) setLinkInvalid(true);
         else setReady(true);
-        // Clean the code from the URL bar
         window.history.replaceState({}, "", "/reset-password");
       });
       return;
     }
 
-    // Hash-based flow — Supabase appends #access_token=...&type=recovery
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setReady(true);
+    // Normal path: /auth/callback exchanged the code server-side and set a session cookie
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) { setReady(true); return; }
+
+      // Hash-based flow fallback
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
+      });
+      subscription = data.subscription;
+      timer = setTimeout(() => setLinkInvalid(true), 6000);
     });
-    const timeout = setTimeout(() => {
-      if (!ready) setLinkInvalid(true);
-    }, 6000);
-    return () => { subscription.unsubscribe(); clearTimeout(timeout); };
+
+    return () => {
+      subscription?.unsubscribe();
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const handleReset = async () => {
