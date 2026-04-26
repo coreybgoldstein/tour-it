@@ -137,7 +137,9 @@ function NotificationBellInline() {
     <button onClick={() => router.push("/notifications")} style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       {unread > 0 && (
-        <div style={{ position: "absolute", top: 4, right: 4, width: 8, height: 8, borderRadius: "50%", background: "#4da862", border: "1.5px solid #1c4425" }} />
+        <div style={{ position: "absolute", top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 8, background: "#e8353a", border: "1.5px solid #07100a", boxShadow: "0 1px 5px rgba(232,53,58,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
+          <span style={{ fontSize: 9, fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "#fff", lineHeight: 1, letterSpacing: "-0.2px" }}>{unread > 99 ? "99+" : unread}</span>
+        </div>
       )}
     </button>
   );
