@@ -55,7 +55,9 @@ When asked to seed, fill, or enrich course data:
 - Logo: club crest/emblem preferred over wordmark. Must NOT be transparent (dark green background).
 - Cover: wide landscape or aerial shot of the course, not a clubhouse or portrait.
 - NO `.aspx` URLs, NO `getImage.gif?ID=` URLs — unstable CMS URLs that will 404
-- Known hotlink blockers (fetch will fail — find image elsewhere): Clubessential CMS, ClubHouseOnline, bocaresort.com
+- Known hotlink blockers (fetch will fail — find image elsewhere): Clubessential CMS, ClubHouseOnline, bocaresort.com, trumpgolfdoral.com (uses getImage.gif CMS)
+- Good fallback logo sources: `ttusa.s3.amazonaws.com/images/gallery/_logos/l{id}.jpg` (TeeTimesUSA), `logos.bluegolf.com/{slug}/profile.png` (BlueGolf — check content-type, may fail), `production-club.s3.amazonaws.com/media/club_logos_svg/*.svg` (ClubLink)
+- Avoid generic system-wide logos (e.g. Miami-Dade Golf, county park logos) — these are not club-specific. Set logoUrl to null rather than use a generic system logo.
 
 ### Skip these:
 - Courses currently closed for renovation
