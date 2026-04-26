@@ -50,3 +50,9 @@ User, Upload, Course, Hole, Comment, Like, Follow, Save, Trip, Notification, Upl
 
 ## Supabase project
 URL: `https://awlbxzpevwidowxxvuef.supabase.co`
+
+## Course seeding
+See `.claude/CLAUDE.md` for full rules. Key points:
+- **Never insert** — only UPDATE existing records (DB has 11,000+ courses)
+- Query DB first, enrich only what's already there
+- Images: fetch from any source → upload to `tour-it-photos/course-images/{courseId}-{type}.{ext}` → store Supabase URL. Never store external URLs.
