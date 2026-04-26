@@ -283,7 +283,10 @@ function SeriesCard({
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const isDesktop = useIsDesktop();
+  const router = useRouter();
   const activeShot = item.shots[shotIndex];
+  const { liked: seriesLiked, likeCount: seriesLikeCount, toggleLike: seriesToggleLike } = useLike({ uploadId: activeShot?.id || "", initialLikeCount: activeShot?.likeCount || 0 });
+  const handleSeriesLike = currentUserId ? seriesToggleLike : () => router.push("/login");
   const hasNotes = !!(activeShot?.strategyNote || activeShot?.clubUsed || activeShot?.windCondition || activeShot?.datePlayedAt);
 
   useEffect(() => {
@@ -386,7 +389,7 @@ function SeriesCard({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} courseId={item.courseId} courseName={item.courseName} liked={false} onLike={() => {}} likeCount={item.shots[0]?.likeCount || 0} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} />
 
       <IntelPanel
         open={intelOpen}
@@ -425,7 +428,9 @@ function VideoCard({
   const [intelOpen, setIntelOpen] = useState(false);
   const [muted, setMuted] = useState(sessionMute.get());
   const isDesktop = useIsDesktop();
+  const router = useRouter();
   const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
+  const handleLike = currentUserId ? toggleLike : () => router.push("/login");
 
   useEffect(() => {
     const video = videoRef.current;
@@ -492,7 +497,7 @@ function VideoCard({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={toggleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} />
 
       <IntelPanel
         open={intelOpen}
@@ -555,13 +560,11 @@ export default function Home() {
     const supabase = createClient();
 
     supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) {
-        router.replace("/login");
-        return;
+      setUser(data.user ?? null);
+      if (data.user) {
+        const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
+        setUserProfile(profile);
       }
-      setUser(data.user);
-      const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
-      setUserProfile(profile);
     });
 
     supabase
@@ -1107,6 +1110,14 @@ export default function Home() {
             </div>
           )}
 
+          {/* Guest sign-up prompt */}
+          {!user && (
+            <div style={{ display: "flex", gap: 8, padding: "0 20px 20px", justifyContent: "center" }}>
+              <a href="/signup" style={{ flex: 1, maxWidth: 160, textAlign: "center", background: "#2d7a42", borderRadius: 12, padding: "12px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", textDecoration: "none" }}>Create account</a>
+              <a href="/login" style={{ flex: 1, maxWidth: 160, textAlign: "center", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "12px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Sign in</a>
+            </div>
+          )}
+
           {/* Bridge to feed */}
           <button
             onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
@@ -1189,11 +1200,20 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <div style={{ padding: "10px 16px 36px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
-              <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder={user ? "Add a comment..." : "Log in to comment"} disabled={!user} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
-              <button onClick={submitComment} disabled={!commentText.trim() || submittingComment || !user} style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: (!commentText.trim() || !user) ? 0.4 : 1 }}>
-                {submittingComment ? "..." : "Post"}
-              </button>
+            <div style={{ padding: "10px 16px 36px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              {!user && (
+                <div style={{ textAlign: "center", padding: "8px 0 10px" }}>
+                  <a href="/login" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862", fontWeight: 500 }}>Sign in to leave a comment</a>
+                </div>
+              )}
+              {user && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..." style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
+                  <button onClick={submitComment} disabled={!commentText.trim() || submittingComment} style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: !commentText.trim() ? 0.4 : 1 }}>
+                    {submittingComment ? "..." : "Post"}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
