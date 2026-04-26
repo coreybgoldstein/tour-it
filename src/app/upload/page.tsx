@@ -107,6 +107,7 @@ function UploadPageInner() {
   });
 
   const [uploadStage, setUploadStage] = useState<"idle" | "compressing" | "uploading">("idle");
+  const [uploadPct, setUploadPct] = useState(0);
   const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const compressionPromiseRef = useRef<Promise<File> | null>(null);
@@ -342,13 +343,32 @@ function UploadPageInner() {
       const folderKey = selectedHole || contentFormat || "misc";
       const filePath = `${user.id}/${selectedCourse.id}/${folderKey}/${Date.now()}.${ext}`;
 
-      let uploadError = (await supabase.storage.from(bucket).upload(filePath, fileToUpload, { cacheControl: "3600", upsert: false })).error;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+      const xhrUpload = (upsert: boolean) => new Promise<{ error: Error | null }>((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100)); };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) { resolve({ error: null }); return; }
+          try { resolve({ error: new Error(JSON.parse(xhr.responseText).message || xhr.statusText) }); } catch { resolve({ error: new Error(xhr.statusText || "Upload failed") }); }
+        };
+        xhr.onerror = () => resolve({ error: new Error("Load failed") });
+        xhr.open("POST", `${supabaseUrl}/storage/v1/object/${bucket}/${filePath}`);
+        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+        xhr.setRequestHeader("x-upsert", upsert ? "true" : "false");
+        xhr.send(fileToUpload);
+      });
+
+      setUploadPct(0);
+      let { error: uploadError } = await xhrUpload(false);
       if (uploadError) {
-        // Retry once on transient network errors
+        setUploadPct(0);
         await new Promise(r => setTimeout(r, 1500));
-        uploadError = (await supabase.storage.from(bucket).upload(filePath, fileToUpload, { cacheControl: "3600", upsert: true })).error;
+        ({ error: uploadError } = await xhrUpload(true));
       }
-      if (uploadError) { setError("Upload failed — check your connection and try again."); setUploading(false); return; }
+      if (uploadError) { setError("Upload failed — check your connection and try again."); setUploading(false); setUploadStage("idle"); return; }
 
       const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
@@ -1085,14 +1105,67 @@ function UploadPageInner() {
                 </p>
               </div>
             )}
-            <button className="btn-primary" disabled={uploading} onClick={handleSubmit}>
-              {uploadStage === "compressing" ? `Finishing compression… ${compressPct}%` : uploadStage === "uploading" ? "Uploading…" : "Submit clip"}
+            <button
+              className="btn-primary"
+              disabled={uploading}
+              onClick={handleSubmit}
+              style={{ position: "relative", overflow: "hidden" }}
+            >
+              {uploading && (
+                <div style={{
+                  position: "absolute", left: 0, top: 0, bottom: 0,
+                  width: `${uploadStage === "uploading" ? uploadPct : compressPct}%`,
+                  background: "rgba(255,255,255,0.18)",
+                  transition: "width 0.4s ease",
+                  pointerEvents: "none",
+                }} />
+              )}
+              <span style={{ position: "relative", zIndex: 1 }}>
+                {uploadStage === "compressing"
+                  ? `Compressing… ${compressPct}%`
+                  : uploadStage === "uploading"
+                  ? `Uploading… ${uploadPct}%`
+                  : "Submit clip"}
+              </span>
             </button>
-            <button className="btn-secondary" onClick={() => setStep(4)}>Edit intel</button>
+            {!uploading && <button className="btn-secondary" onClick={() => setStep(4)}>Edit intel</button>}
           </div>
         )}
 
       </div>
+
+      {/* Upload progress bar — fixed above BottomNav */}
+      {uploading && (
+        <div style={{
+          position: "fixed", bottom: 62, left: 0, right: 0, zIndex: 200,
+          background: "rgba(7,16,10,0.97)",
+          backdropFilter: "blur(16px)",
+          borderTop: "1px solid rgba(77,168,98,0.25)",
+          padding: "14px 20px 16px",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>
+              {uploadStage === "compressing" ? "Compressing video…" : "Uploading to servers…"}
+            </span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862" }}>
+              {uploadStage === "compressing" ? compressPct : uploadPct}%
+            </span>
+          </div>
+          <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden" }}>
+            <div style={{
+              height: "100%",
+              width: `${uploadStage === "compressing" ? compressPct : uploadPct}%`,
+              background: "linear-gradient(90deg, #2d7a42, #4da862)",
+              borderRadius: 99,
+              transition: "width 0.4s ease",
+            }} />
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 7 }}>
+            Don't close this page until the upload finishes
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </main>
   );
