@@ -255,6 +255,13 @@ export default function SignUpPage() {
               {loading ? "Creating account..." : "Create account"}
             </button>
 
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", textAlign: "center", lineHeight: 1.6, marginTop: 4 }}>
+              By creating an account you agree to our{" "}
+              <a href="/terms" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline" }}>Terms of Service</a>
+              {" "}and{" "}
+              <a href="/privacy" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "underline" }}>Privacy Policy</a>.
+            </div>
+
             <div className="divider" />
 
             <div className="login-link">
