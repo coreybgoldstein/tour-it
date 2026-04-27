@@ -43,7 +43,27 @@
       "Bash(grep -n \"100svh\\\\|100%.*height\\\\|inner.*wrapper\\\\|maxWidth.*390\" /c/Users/corey/tour-it/src/app/courses/[id]/holes/[number]/page.tsx)",
       "Bash(grep -i \"anthropic\\\\|ANTHROPIC\" /c/Users/corey/tour-it/.env*)",
       "WebSearch",
-      "WebFetch(domain:course.bluegolf.com)"
+      "WebFetch(domain:course.bluegolf.com)",
+      "Bash(pm2 start:*)",
+      "Bash(powercfg /SETACVALUEINDEX SCHEME_CURRENT SUB_BUTTONS LIDACTION 0)",
+      "Bash(powercfg /SETACTIVE SCHEME_CURRENT)",
+      "Bash(powercfg /change standby-timeout-ac 0)",
+      "Bash(powercfg /change -standby-timeout-ac 0)",
+      "Bash(powercfg /x -standby-timeout-ac 0)",
+      "Bash(powercfg /query SCHEME_CURRENT SUB_BUTTONS)",
+      "Bash(findstr /i \"lid\\\\|current\")",
+      "Bash(powercfg /?)",
+      "Bash(powercfg /X standby-timeout-ac 0)",
+      "Bash(powercfg /Q)",
+      "Bash(powercfg:*)",
+      "Bash(cmd /c \"powercfg /change standby-timeout-ac 0\")",
+      "Bash(cmd /c \"powercfg /L\")",
+      "Bash(cmd /c 'powercfg /L')",
+      "Bash(powercfg.exe:*)",
+      "Bash(powershell -Command \"powercfg /LIST\")",
+      "Bash(powershell -Command \"powercfg /change standby-timeout-ac 0; powercfg /change monitor-timeout-ac 0\")",
+      "Bash(powershell -Command \"powercfg /SETACVALUEINDEX SCHEME_CURRENT SUB_BUTTONS LIDACTION 0; powercfg /SETACTIVE SCHEME_CURRENT\")",
+      "Bash(pm2 logs:*)"
     ]
   }
 }

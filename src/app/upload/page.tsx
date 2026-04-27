@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { compressVideo } from "@/lib/compressVideo";
 import BatchUpload from "./BatchUpload";
+import { sendPushToUser } from "@/lib/sendPush";
 
 type Course = {
   id: string;
@@ -469,6 +470,7 @@ function UploadPageInner() {
             }))
           ),
         ]);
+        taggedUsers.forEach(u => sendPushToUser(u.id, "You were tagged in a clip", `${taggerName} tagged you at ${selectedCourse.name} — Hole ${selectedHole}`, `/courses/${selectedCourse.id}`));
       }
 
       setSubmitted(true);

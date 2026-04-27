@@ -9,6 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
+import EditClipSheet from "@/components/EditClipSheet";
 
 type TrendingCourse = {
   id: string;
@@ -189,7 +190,7 @@ function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () =
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport }: {
+function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport, onEdit }: {
   userId: string; avatarUrl: string | null; username: string;
   courseId: string; courseName: string;
   liked: boolean; onLike: () => void; likeCount: number;
@@ -197,6 +198,7 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
   onTapUser: () => void;
   onIntel: (() => void) | null; intelOpen: boolean;
   onReport?: () => void;
+  onEdit?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
@@ -262,6 +264,15 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
         <button onClick={onReport} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+          </div>
+          <span style={{ height: 13, display: "block" }} />
+        </button>
+      )}
+      {/* Edit (own clips only) */}
+      {onEdit && (
+        <button onClick={onEdit} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </div>
           <span style={{ height: 13, display: "block" }} />
         </button>
@@ -416,12 +427,13 @@ function SeriesCard({
 }
 
 function VideoCard({
-  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, currentUserId,
+  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId,
 }: {
   clip: FeedClip; isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
   onEnded: () => void;
   onReport?: () => void;
+  onEdit?: () => void;
   currentUserId?: string | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -499,7 +511,7 @@ function VideoCard({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} />
 
       <IntelPanel
         open={intelOpen}
@@ -552,6 +564,7 @@ export default function Home() {
   const [reportReason, setReportReason] = useState<string | null>(null);
   const [submittingReport, setSubmittingReport] = useState(false);
   const [reportDone, setReportDone] = useState(false);
+  const [editClipInfo, setEditClipInfo] = useState<{ id: string; courseId: string; holeId: string | null; holeNumber: number | null } | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedCursorRef = useRef<string | null>(null);
@@ -566,6 +579,7 @@ export default function Home() {
       if (data.user) {
         const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
         setUserProfile(profile);
+        import("@/lib/registerPush").then(({ registerPush }) => registerPush(data.user!.id));
       }
     });
 
@@ -1158,7 +1172,7 @@ export default function Home() {
             {item.type === "series" ? (
               <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} currentUserId={user?.id} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} />
             )}
           </div>
         ))}
@@ -1340,6 +1354,27 @@ export default function Home() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Edit clip sheet */}
+      {editClipInfo && (
+        <EditClipSheet
+          uploadId={editClipInfo.id}
+          courseId={editClipInfo.courseId}
+          currentHoleId={editClipInfo.holeId}
+          currentHoleNumber={editClipInfo.holeNumber}
+          currentUserId={user?.id ?? null}
+          onClose={() => setEditClipInfo(null)}
+          onSaved={(updated) => {
+            setFeedItems(prev => prev.map(item => {
+              if (item.type === "clip" && item.clip.id === editClipInfo.id) {
+                return { ...item, clip: { ...item.clip, holeNumber: updated.holeNumber ?? item.clip.holeNumber, holeId: updated.holeId ?? item.clip.holeId, shotType: updated.shotType, clubUsed: updated.clubUsed, windCondition: updated.windCondition, strategyNote: updated.strategyNote } };
+              }
+              return item;
+            }));
+            setEditClipInfo(null);
+          }}
+        />
       )}
 
       {/* ── Splash screen ── */}

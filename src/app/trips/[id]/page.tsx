@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { sendPushToUser } from "@/lib/sendPush";
 
 type Trip = {
   id: string;
@@ -347,6 +348,7 @@ export default function TripPage() {
         createdAt: now,
         updatedAt: now,
       });
+      sendPushToUser(inviteeId, "You've been invited!", `${inviterName} added you to "${tripName}"`, `/trips/${id}`);
     }
     setInviting(null);
   };

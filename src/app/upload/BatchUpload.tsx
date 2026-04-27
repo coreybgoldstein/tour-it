@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { compressVideo } from "@/lib/compressVideo";
+import { sendPushToUser } from "@/lib/sendPush";
 
 type Course = { id: string; name: string; city: string; state: string; holeCount: number };
 type TagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
@@ -82,6 +83,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
   const [uploading, setUploading] = useState(false);
   const [doneCount, setDoneCount] = useState(0);
   const [allDone, setAllDone] = useState(false);
+  const [dupeCount, setDupeCount] = useState(0);
 
   // Tag search state — one active clip at a time
   const [tagClipId, setTagClipId] = useState<string | null>(null);
@@ -93,7 +95,19 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
 
   // Initialize clips, generate thumbnails, kick off compression
   useEffect(() => {
-    const initial: BatchClip[] = initialFiles.map(file => ({
+    // Filter out non-media files and deduplicate by name+size
+    const seen = new Set<string>();
+    const valid = initialFiles.filter(f => {
+      if (!f.type.startsWith("video/") && !f.type.startsWith("image/")) return false;
+      const key = `${f.name}:${f.size}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    const removed = initialFiles.length - valid.length;
+    if (removed > 0) setDupeCount(removed);
+
+    const initial: BatchClip[] = valid.map(file => ({
       id: crypto.randomUUID(),
       file,
       thumbnail: "",
@@ -287,6 +301,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
               }))
             ),
           ]);
+          clip.taggedUsers.forEach(u => sendPushToUser(u.id, `${taggerName} tagged you in a clip`, `${selectedCourse.name} · Hole ${clip.holeNumber}`, `/courses/${selectedCourse.id}`));
         }
 
         done++;
@@ -363,6 +378,14 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           )}
         </div>
       </div>
+
+      {/* Duplicate removal notice */}
+      {dupeCount > 0 && (
+        <div style={{ margin: "10px 20px 0", padding: "8px 12px", background: "rgba(255,190,50,0.08)", border: "1px solid rgba(255,190,50,0.2)", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,190,50,0.9)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>{dupeCount} duplicate{dupeCount > 1 ? "s" : ""} removed</span>
+          <button onClick={() => setDupeCount(0)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,190,50,0.6)", fontSize: 14, padding: "0 0 0 8px" }}>✕</button>
+        </div>
+      )}
 
       {/* Course selector */}
       <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>

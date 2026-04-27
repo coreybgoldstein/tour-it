@@ -119,6 +119,7 @@ model User {
   bio              String?
   handicapIndex    Float?
   homeCourseId     String?
+  pushSubscription String?
   isVerified       Boolean  @default(false)
   isAdmin          Boolean  @default(false)
   uploadCount      Int      @default(0)
