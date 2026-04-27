@@ -12,6 +12,8 @@ import { HoleSideBar } from "@/components/clip/HoleSideBar";
 import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
+import EditClipSheet from "@/components/EditClipSheet";
+import { sendPushToUser } from "@/lib/sendPush";
 type Course = {
   id: string;
   name: string;
@@ -120,7 +122,7 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, scoutedHoles, holeIndex, onEnded, onReport, currentUserId }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }>;
   clipIndex: number; totalClips: number;
@@ -128,7 +130,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   holePar?: number | null; holeYardage?: number | null;
   scoutedHoles: number[];
   holeIndex: number;
-  onEnded: () => void; onReport?: () => void;
+  onEnded: () => void; onReport?: () => void; onEdit?: () => void;
   currentUserId?: string | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -260,6 +262,14 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
             <span style={{ height: 13, display: "block" }} />
           </button>
         )}
+        {onEdit && (
+          <button onClick={onEdit} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <span style={{ height: 13, display: "block" }} />
+          </button>
+        )}
       </div>
 
       <IntelPanel
@@ -303,9 +313,13 @@ export default function CourseProfilePage() {
   const [extendedClips, setExtendedClips] = useState<Clip[]>([]);
   const [holesWithClips, setHolesWithClips] = useState<number[]>([]);
   const [extendedClip, setExtendedClip] = useState<Clip | null>(null);
+  const [hasMoreClips, setHasMoreClips] = useState(false);
+  const [loadingMoreClips, setLoadingMoreClips] = useState(false);
+  const [editClipInfo, setEditClipInfo] = useState<{ id: string; holeId: string | null; holeNumber: number | null } | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const holeScrollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const holesWithClipsRef = useRef<number[]>([]);
+  const holeMapRef = useRef<Record<string, number>>({});
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scorecardOpen, setScorecardOpen] = useState(false);
   const [holes, setHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null }[]>([]);
@@ -459,6 +473,7 @@ export default function CourseProfilePage() {
               updatedAt: notifNow,
             }))
           );
+          tagged.forEach(u => sendPushToUser(u.id, "You were mentioned", `${senderName} mentioned you in a comment`, `/courses/${id}`));
         }
       }
 
@@ -478,6 +493,7 @@ export default function CourseProfilePage() {
       const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank, yardage").eq("courseId", id).order("holeNumber", { ascending: true });
       const holeMap: Record<string, number> = {};
       holesData?.forEach((h: any) => { holeMap[h.id] = h.holeNumber; });
+      holeMapRef.current = holeMap;
       if (holesData) {
         const mapped = holesData.map((h: any) => ({ id: h.id, holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null }));
         setHoles(mapped);
@@ -485,7 +501,8 @@ export default function CourseProfilePage() {
       }
 
       const { data: uploads } = await supabase
-        .from("Upload").select("*").eq("courseId", id).eq("moderationStatus", "APPROVED").order("rankScore", { ascending: false });
+        .from("Upload").select("*").eq("courseId", id).eq("moderationStatus", "APPROVED").order("rankScore", { ascending: false }).range(0, 49);
+      setHasMoreClips((uploads?.length || 0) === 50);
 
       const clips: Clip[] = (uploads || []).map((u: any) => ({
         ...u,
@@ -541,6 +558,53 @@ export default function CourseProfilePage() {
 
     loadData();
   }, [id]);
+
+  const loadMoreClips = useCallback(async () => {
+    if (loadingMoreClips || !hasMoreClips || !id) return;
+    setLoadingMoreClips(true);
+    const supabase = createClient();
+    const { data: uploads } = await supabase
+      .from("Upload").select("*").eq("courseId", id).eq("moderationStatus", "APPROVED")
+      .order("rankScore", { ascending: false })
+      .range(courseClips.length, courseClips.length + 49);
+    if (uploads?.length) {
+      const newClips: Clip[] = uploads.map((u: any) => ({
+        ...u,
+        holeNumber: u.holeId ? holeMapRef.current[u.holeId] : undefined,
+        isForeign: false,
+        likeCount: u.likeCount || 0,
+      }));
+      const combined = [...courseClips, ...newClips].sort((a, b) => (a.holeNumber ?? 999) - (b.holeNumber ?? 999));
+      setCourseClips(combined);
+      const map: Record<number, Clip[]> = {};
+      const extended: Clip[] = [];
+      for (const clip of combined) {
+        if (clip.holeNumber) {
+          if (!map[clip.holeNumber]) map[clip.holeNumber] = [];
+          map[clip.holeNumber].push(clip);
+        } else { extended.push(clip); }
+      }
+      setHoleClipsMap(map);
+      setExtendedClips(extended);
+      const hw = Object.keys(map).map(Number).sort((a, b) => a - b);
+      setHolesWithClips(hw);
+      holesWithClipsRef.current = hw;
+      // Fetch uploaders for new clips
+      const newUserIds = [...new Set(newClips.map((c) => c.userId).filter(Boolean))];
+      if (newUserIds.length > 0) {
+        const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", newUserIds);
+        if (users) {
+          const newMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }> = {};
+          users.forEach((u: any) => { newMap[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null }; });
+          setUploaders(prev => ({ ...prev, ...newMap }));
+        }
+      }
+      setHasMoreClips(uploads.length === 50);
+    } else {
+      setHasMoreClips(false);
+    }
+    setLoadingMoreClips(false);
+  }, [loadingMoreClips, hasMoreClips, id, courseClips]);
 
   const openContribute = useCallback(() => {
     if (!course) return;
@@ -1074,6 +1138,19 @@ export default function CourseProfilePage() {
         </div>
       )}
 
+      {/* Load more clips */}
+      {hasMoreClips && (
+        <div style={{ padding: "8px 16px 16px", display: "flex", justifyContent: "center" }}>
+          <button
+            onClick={loadMoreClips}
+            disabled={loadingMoreClips}
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "11px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: loadingMoreClips ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.7)", cursor: loadingMoreClips ? "default" : "pointer" }}
+          >
+            {loadingMoreClips ? "Loading…" : "Load more clips"}
+          </button>
+        </div>
+      )}
+
       <div style={{ height: 100 }} />
 
 {/* Contribute link */}
@@ -1539,6 +1616,7 @@ export default function CourseProfilePage() {
                         }
                       }}
                       onReport={user && clip.userId !== user.id ? () => setReportClipId(clip.id) : undefined}
+                      onEdit={user && clip.userId === user.id ? () => setEditClipInfo({ id: clip.id, holeId: clip.holeId ?? null, holeNumber: clip.holeNumber ?? null }) : undefined}
                       currentUserId={user?.id}
                     />
                   </div>
@@ -1677,6 +1755,22 @@ export default function CourseProfilePage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Edit clip sheet */}
+      {editClipInfo && course && (
+        <EditClipSheet
+          uploadId={editClipInfo.id}
+          courseId={course.id}
+          currentHoleId={editClipInfo.holeId}
+          currentHoleNumber={editClipInfo.holeNumber}
+          currentUserId={user?.id ?? null}
+          onClose={() => setEditClipInfo(null)}
+          onSaved={(updated) => {
+            setCourseClips(prev => prev.map(c => c.id === editClipInfo.id ? { ...c, holeNumber: updated.holeNumber ?? c.holeNumber, holeId: updated.holeId ?? c.holeId, shotType: updated.shotType, clubUsed: updated.clubUsed, windCondition: updated.windCondition, strategyNote: updated.strategyNote } : c));
+            setEditClipInfo(null);
+          }}
+        />
       )}
 
       {/* Comment sheet */}
