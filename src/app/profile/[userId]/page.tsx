@@ -17,12 +17,13 @@ const SHOT_LABEL: Record<string, string> = {
 };
 
 function ProfileFeedCard({
-  clip, isActive, courseName, courseLogoUrl, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId,
+  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null };
   isActive: boolean;
   courseName: string | null;
   courseLogoUrl: string | null;
+  courseLocation?: string | null;
   onClose: () => void;
   onOptions?: () => void;
   onReport?: () => void;
@@ -86,6 +87,7 @@ function ProfileFeedCard({
       <ClipTopPill
         courseLogoUrl={courseLogoUrl}
         courseName={courseName ?? ""}
+        courseLocation={courseLocation}
         holeNumber={clip.holeNumber}
         holePar={clip.holePar}
         holeYardage={clip.holeYardage}
@@ -617,6 +619,7 @@ export default function ProfilePage() {
                 isActive={idx === feedActiveIdx}
                 courseName={coursesPlayed.find(c => c.id === clip.courseId)?.name ?? null}
                 courseLogoUrl={coursesPlayed.find(c => c.id === clip.courseId)?.logoUrl ?? null}
+                courseLocation={(() => { const c = coursesPlayed.find(c => c.id === clip.courseId); return c ? [c.city, c.state].filter(Boolean).join(", ") || null : null; })()}
                 onClose={() => setFeedOpen(false)}
                 onOptions={isOwner ? () => { setFeedOpen(false); setSelectedClip(clip); } : undefined}
                 onReport={!isOwner && currentUserId ? () => { setFeedOpen(false); setReportClipId(clip.id); } : undefined}
