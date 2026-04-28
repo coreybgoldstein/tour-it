@@ -433,6 +433,19 @@ function UploadPageInner() {
 
       if (dbError) { setError(`Failed to save: ${dbError.message}`); setUploading(false); return; }
 
+      // Auto-link to round
+      const roundDate = intel.datePlayed
+        ? new Date(intel.datePlayed).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0];
+      const { data: existingRound } = await supabase.from("Round").select("id").eq("userId", user.id).eq("courseId", selectedCourse.id).eq("date", roundDate).single();
+      if (existingRound) {
+        await supabase.from("Upload").update({ roundId: existingRound.id }).eq("id", uploadId);
+      } else {
+        const newRoundId = crypto.randomUUID();
+        await supabase.from("Round").insert({ id: newRoundId, userId: user.id, courseId: selectedCourse.id, date: roundDate, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+        await supabase.from("Upload").update({ roundId: newRoundId }).eq("id", uploadId);
+      }
+
       // Increment upload counters
       const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
       await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
