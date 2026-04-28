@@ -226,14 +226,33 @@ function UploadPageInner() {
         const supabase = createClient();
         const { data } = await supabase
           .from("Course")
-          .select("id, name, city, state, holeCount")
+          .select("id, name, city, state, holeCount, latitude, longitude")
           .gte("latitude", coords.lat - 0.05)
           .lte("latitude", coords.lat + 0.05)
           .gte("longitude", coords.lng - 0.05)
           .lte("longitude", coords.lng + 0.05)
           .order("uploadCount", { ascending: false })
           .limit(5);
-        setGpsSuggestions(data || []);
+        const courses = (data || []) as (Course & { latitude: number | null; longitude: number | null })[];
+        setGpsSuggestions(courses);
+
+        // Auto-select the closest course if it's within 500m
+        if (courses.length > 0) {
+          const R = 6371000;
+          const withDist = courses
+            .filter(c => c.latitude != null && c.longitude != null)
+            .map(c => {
+              const dLat = (c.latitude! - coords.lat) * Math.PI / 180;
+              const dLng = (c.longitude! - coords.lng) * Math.PI / 180;
+              const a = Math.sin(dLat/2)**2 + Math.cos(coords.lat*Math.PI/180)*Math.cos(c.latitude!*Math.PI/180)*Math.sin(dLng/2)**2;
+              return { course: c, dist: R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) };
+            })
+            .sort((a, b) => a.dist - b.dist);
+          if (withDist.length > 0 && withDist[0].dist < 500) {
+            setSelectedCourse(withDist[0].course);
+            setStep(prev => (prev <= 2 ? 3 : prev));
+          }
+        }
         setGpsLoading(false);
       });
 
@@ -263,22 +282,26 @@ function UploadPageInner() {
 
   // Scan video binary for iPhone ©xyz GPS atom (no library needed)
   async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
-    try {
-      const buffer = await file.slice(0, 524288).arrayBuffer(); // first 512KB
-      const bytes = new Uint8Array(buffer);
-      for (let i = 0; i < bytes.length - 20; i++) {
-        // Look for ©xyz (0xA9 0x78 0x79 0x7A)
-        if (bytes[i] === 0xA9 && bytes[i+1] === 0x78 && bytes[i+2] === 0x79 && bytes[i+3] === 0x7A) {
-          const strLen = (bytes[i + 4] << 8) | bytes[i + 5];
-          if (strLen > 0 && strLen < 60) {
-            const gpsStr = new TextDecoder().decode(bytes.slice(i + 8, i + 8 + strLen));
-            const match = gpsStr.match(/([+-]\d+\.\d+)([+-]\d+\.\d+)/);
-            if (match) return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+    const CHUNK = 524288; // 512KB
+    const scanChunk = async (blob: Blob) => {
+      try {
+        const bytes = new Uint8Array(await blob.arrayBuffer());
+        for (let i = 0; i < bytes.length - 20; i++) {
+          if (bytes[i] === 0xA9 && bytes[i+1] === 0x78 && bytes[i+2] === 0x79 && bytes[i+3] === 0x7A) {
+            const strLen = (bytes[i + 4] << 8) | bytes[i + 5];
+            if (strLen > 0 && strLen < 60) {
+              const gpsStr = new TextDecoder().decode(bytes.slice(i + 8, i + 8 + strLen));
+              const match = gpsStr.match(/([+-]\d+\.\d+)([+-]\d+\.\d+)/);
+              if (match) return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+            }
           }
         }
-      }
-    } catch {}
-    return null;
+      } catch {}
+      return null;
+    };
+    // Check front first, then tail (moov atom is typically at end of iPhone recordings)
+    return (await scanChunk(file.slice(0, CHUNK))) ??
+           (file.size > CHUNK ? await scanChunk(file.slice(Math.max(0, file.size - CHUNK))) : null);
   }
 
 
@@ -307,7 +330,11 @@ function UploadPageInner() {
           const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
           if (dist < bestDist) { bestDist = dist; best = h.holeNumber; }
         }
-        if (best !== null && bestDist < 400) setGpsSuggestedHole(best);
+        if (best !== null && bestDist < 400) {
+          setGpsSuggestedHole(best);
+          // Auto-select the hole if GPS is very close (within 200m)
+          if (bestDist < 200) setSelectedHole(best);
+        }
       });
   }, [gpsCoords, selectedCourse, contentFormat]);
 
