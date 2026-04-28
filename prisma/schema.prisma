@@ -128,6 +128,7 @@ model User {
   updatedAt        DateTime @updatedAt
 
   uploads          Upload[]
+  rounds           Round[]
   uploadPhotos     UploadPhoto[]
   comments         Comment[]
   likes            Like[]
@@ -300,9 +301,12 @@ model Upload {
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
 
+  roundId              String?
+
   user                 User             @relation(fields: [userId], references: [id])
   hole                 Hole             @relation(fields: [holeId], references: [id])
   teeBox               TeeBox?          @relation(fields: [teeBoxId], references: [id])
+  round                Round?           @relation(fields: [roundId], references: [id])
   photos               UploadPhoto[]
   comments             Comment[]
   likes                Like[]
@@ -317,6 +321,29 @@ model Upload {
   @@index([moderationStatus])
   @@index([createdAt(sort: Desc)])
   @@index([seriesId])
+}
+
+// ============================================================
+// ROUND
+// ============================================================
+
+model Round {
+  id          String   @id @default(cuid())
+  userId      String
+  courseId    String
+  date        String
+  totalScore  Int?
+  fairwaysHit Int?
+  putts       Int?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  uploads     Upload[]
+
+  @@index([userId])
+  @@index([courseId])
 }
 
 // ============================================================

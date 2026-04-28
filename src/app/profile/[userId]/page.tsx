@@ -197,6 +197,7 @@ type Upload = { id: string; mediaUrl: string; mediaType: string; courseId: strin
 type CoursePlayed = { id: string; name: string; city: string; state: string; logoUrl: string | null };
 type HomeCourse = { id: string; name: string };
 type SavedCourse = { id: string; courseId: string; saveType: "PLAYED" | "BUCKET_LIST"; course: { id: string; name: string; city: string; state: string } };
+type Round = { id: string; courseId: string; date: string; totalScore: number | null; fairwaysHit: number | null; putts: number | null; notes: string | null; createdAt: string };
 type EditTagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 type FollowUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 
@@ -210,8 +211,8 @@ export default function ProfilePage() {
   const [taggedUploads, setTaggedUploads] = useState<Upload[]>([]);
   const [coursesPlayed, setCoursesPlayed] = useState<CoursePlayed[]>([]);
   const [homeCourse, setHomeCourse] = useState<HomeCourse | null>(null);
-  const [savedCourses, setSavedCourses] = useState<SavedCourse[]>([]);
-  const [coursesTab, setCoursesTab] = useState<"BUCKET_LIST" | "PLAYED" | "UPLOADED">("BUCKET_LIST");
+  const [rounds, setRounds] = useState<Round[]>([]);
+  const [profileTab, setProfileTab] = useState<"clips" | "rounds">("clips");
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -372,12 +373,6 @@ export default function ProfilePage() {
             }));
           }
         }
-        const { data: saves } = await supabase.from("Save").select("id, courseId, saveType").eq("userId", authUser.id).not("courseId", "is", null);
-        if (saves && saves.length > 0) {
-          const savedCourseIds = saves.map((s: any) => s.courseId);
-          const { data: savedCoursesData } = await supabase.from("Course").select("id, name, city, state").in("id", savedCourseIds);
-          setSavedCourses(saves.map((s: any) => ({ ...s, course: savedCoursesData?.find((c: any) => c.id === s.courseId) || { id: s.courseId, name: "Unknown", city: "", state: "" } })));
-        }
         // Assign avatar if missing
         if (!profileData.avatarUrl) {
           const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos";
@@ -387,6 +382,9 @@ export default function ProfilePage() {
           setProfile(p => p ? { ...p, avatarUrl } : p);
         }
       }
+
+      const { data: roundsData } = await supabase.from("Round").select("id, courseId, date, totalScore, fairwaysHit, putts, notes, createdAt").eq("userId", userId as string).order("date", { ascending: false });
+      setRounds(roundsData || []);
 
       setLoading(false);
     }
@@ -983,7 +981,7 @@ export default function ProfilePage() {
       <div style={{ display: "flex", justifyContent: "space-around", padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 12 }}>
         {[
           { num: allClips.length, label: "Clips", onClick: undefined as (() => void) | undefined },
-          { num: coursesPlayed.length, label: "Courses", onClick: undefined as (() => void) | undefined },
+          { num: rounds.length, label: "Rounds", onClick: undefined as (() => void) | undefined },
           { num: followerCount, label: "Followers", onClick: () => openFollowSheet("followers") },
           { num: followingCount, label: "Following", onClick: () => openFollowSheet("following") },
         ].map(s => (
@@ -994,99 +992,84 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Courses section */}
-      {isOwner ? (
-        (savedCourses.length > 0 || coursesPlayed.length > 0) && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>My courses</div>
-              <div style={{ display: "flex", gap: 4 }}>
-                {(["BUCKET_LIST", "PLAYED", "UPLOADED"] as const).map(tab => (
-                  <button key={tab} onClick={() => setCoursesTab(tab)} style={{ padding: "3px 8px", borderRadius: 99, border: "none", fontSize: 9, fontWeight: 600, cursor: "pointer", background: coursesTab === tab ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.05)", color: coursesTab === tab ? "#1a9e42" : "rgba(255,255,255,0.35)" }}>
-                    {tab === "BUCKET_LIST" ? "Bucket List" : tab === "PLAYED" ? "Played" : "Uploaded"}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 6, padding: "0 20px", overflowX: "auto", paddingBottom: 2 }}>
-              {coursesTab === "BUCKET_LIST" && (savedCourses.filter(s => s.saveType === "BUCKET_LIST").length === 0
-                ? <div style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No bucket list courses yet</div>
-                : savedCourses.filter(s => s.saveType === "BUCKET_LIST").map(s => (
-                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(26,158,66,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#1a9e42", flexShrink: 0, display: "block" }} />
-                    <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
-                  </button>
-                )))}
-              {coursesTab === "PLAYED" && (savedCourses.filter(s => s.saveType === "PLAYED").length === 0
-                ? <div style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No played courses marked yet</div>
-                : savedCourses.filter(s => s.saveType === "PLAYED").map(s => (
-                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(26,158,66,0.18)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#1a9e42", flexShrink: 0, display: "block" }} />
-                    <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>{s.course.name}</span>
-                  </button>
-                )))}
-              {coursesTab === "UPLOADED" && (coursesPlayed.length === 0
-                ? <div style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", padding: "6px 0" }}>No uploads yet</div>
-                : coursesPlayed.map(c => (
-                  <button key={c.id} onClick={() => router.push(`/courses/${c.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
-                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0, display: "block" }} />
-                    <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.65)" }}>{c.name}</span>
-                  </button>
-                )))}
-            </div>
-          </div>
-        )
-      ) : (
-        coursesPlayed.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", padding: "0 20px", marginBottom: 8 }}>Courses</div>
-            <div style={{ display: "flex", gap: 6, padding: "0 20px", overflowX: "auto", paddingBottom: 2 }}>
-              {coursesPlayed.map(c => (
-                <button key={c.id} onClick={() => router.push(`/courses/${c.id}`)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 13px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>
-                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.3)", flexShrink: 0, display: "block" }} />
-                  <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.65)", fontFamily: "'Outfit', sans-serif" }}>{c.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )
-      )}
+      {/* Clips / Rounds tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
+        {(["clips", "rounds"] as const).map(tab => (
+          <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${profileTab === tab ? "#4da862" : "transparent"}`, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: profileTab === tab ? "#fff" : "rgba(255,255,255,0.35)", cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: -1 }}>
+            {tab === "clips" ? "Clips" : "Rounds"}
+          </button>
+        ))}
+      </div>
 
       {/* Clips grid */}
-      <div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", marginBottom: 10 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>Clips</div>
-          {allClips.length > 0 && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>Tap to view</div>}
-        </div>
-        {allClips.length === 0 ? (
-          <div style={{ padding: "32px 20px", textAlign: "center" }}>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>No clips yet</div>
-            {isOwner && <button onClick={() => router.push("/upload")} style={{ background: "#1a9e42", border: "none", borderRadius: 10, padding: "10px 24px", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", marginTop: 8 }}>Upload a clip</button>}
-          </div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
-            {allClips.map((upload, i) => (
-              <div key={upload.id + (upload.isTagged ? "-t" : "")} className="clip-thumb" onClick={() => openFeed(i)}
-                style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}>
-                {upload.mediaType === "PHOTO" ? <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <video src={upload.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
-                <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.9)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1, marginRight: 4 }}>{coursesPlayed.find(c => c.id === upload.courseId)?.name || ""}</div>
-                  <FlagBadge label={upload.holeNumber ?? "·"} />
-                </div>
-                {isOwner && (
-                  <div style={{ position: "absolute", top: 5, right: 5, width: 20, height: 20, borderRadius: "50%", background: upload.isTagged ? "rgba(26,158,66,0.75)" : "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {upload.isTagged
-                      ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-                      : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-                    }
+      {profileTab === "clips" && (
+        <div style={{ paddingTop: 12 }}>
+          {allClips.length === 0 ? (
+            <div style={{ padding: "32px 20px", textAlign: "center" }}>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>No clips yet</div>
+              {isOwner && <button onClick={() => router.push("/upload")} style={{ background: "#1a9e42", border: "none", borderRadius: 10, padding: "10px 24px", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", marginTop: 8 }}>Upload a clip</button>}
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
+              {allClips.map((upload, i) => (
+                <div key={upload.id + (upload.isTagged ? "-t" : "")} className="clip-thumb" onClick={() => openFeed(i)}
+                  style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}>
+                  {upload.mediaType === "PHOTO" ? <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <video src={upload.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
+                  <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.9)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1, marginRight: 4 }}>{coursesPlayed.find(c => c.id === upload.courseId)?.name || ""}</div>
+                    <FlagBadge label={upload.holeNumber ?? "·"} />
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                  {isOwner && (
+                    <div style={{ position: "absolute", top: 5, right: 5, width: 20, height: 20, borderRadius: "50%", background: upload.isTagged ? "rgba(26,158,66,0.75)" : "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {upload.isTagged
+                        ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                        : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                      }
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Rounds list */}
+      {profileTab === "rounds" && (
+        <div style={{ padding: "16px 20px 32px" }}>
+          {rounds.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>No rounds logged yet</div>
+              {isOwner && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.2)" }}>Rounds are logged automatically when you upload a clip</div>}
+            </div>
+          ) : (
+            rounds.map(r => {
+              const course = coursesPlayed.find(c => c.id === r.courseId);
+              const [y, m, d] = r.date.split("-").map(Number);
+              const dateStr = new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              return (
+                <div key={r.id} onClick={() => router.push(`/profile/${userId}/rounds/${r.id}`)}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, marginBottom: 8, cursor: "pointer" }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course?.name || "Unknown Course"}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{dateStr}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0, marginLeft: 12 }}>
+                    {r.totalScore != null && (
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1 }}>{r.totalScore}</div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>Score</div>
+                      </div>
+                    )}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
 
       <BottomNav />
 

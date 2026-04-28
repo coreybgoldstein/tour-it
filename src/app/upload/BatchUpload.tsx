@@ -269,6 +269,17 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           viewCount: 0, saveCount: 0, createdAt: now, updatedAt: now,
         });
 
+        // Auto-link to round
+        const roundDate = new Date(clip.file.lastModified).toISOString().split("T")[0];
+        const { data: existingRound } = await supabase.from("Round").select("id").eq("userId", user.id).eq("courseId", selectedCourse.id).eq("date", roundDate).single();
+        if (existingRound) {
+          await supabase.from("Upload").update({ roundId: existingRound.id }).eq("id", uploadId);
+        } else {
+          const newRoundId = crypto.randomUUID();
+          await supabase.from("Round").insert({ id: newRoundId, userId: user.id, courseId: selectedCourse.id, date: roundDate, createdAt: now, updatedAt: now });
+          await supabase.from("Upload").update({ roundId: newRoundId }).eq("id", uploadId);
+        }
+
         // Increment counters
         const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
         await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
