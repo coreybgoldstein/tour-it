@@ -13,6 +13,8 @@ import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
+import { HlsVideo } from "@/components/HlsVideo";
+import { getVideoSrc } from "@/lib/getVideoSrc";
 import { sendPushToUser } from "@/lib/sendPush";
 import { formatClipDate } from "@/lib/formatClipDate";
 type Course = {
@@ -37,6 +39,7 @@ type Clip = {
   id: string;
   mediaType: string;
   mediaUrl: string;
+  cloudflareVideoId?: string | null;
   shotType: string | null;
   clubUsed: string | null;
   strategyNote: string | null;
@@ -176,8 +179,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
     <div style={{ position: "relative", width: "100%", height: "100svh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}>
       <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...(isDesktop ? { maxWidth: 390 } : {}) }}>
       {clip.mediaType === "VIDEO" ? (
-        <video
-          ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline
+        <HlsVideo
+          ref={videoRef} src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} muted={muted} playsInline
           onClick={() => {
             const v = videoRef.current; if (!v) return;
             if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); }
@@ -1071,7 +1074,7 @@ export default function CourseProfilePage() {
                           {hasClips && topClip && (
                             <>
                               {topClip.mediaType === "VIDEO" ? (
-                                <video src={topClip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                                <HlsVideo src={getVideoSrc(topClip.mediaUrl, topClip.cloudflareVideoId)} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                               ) : (
                                 <img src={topClip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                               )}
@@ -1132,7 +1135,7 @@ export default function CourseProfilePage() {
                 style={{ position: "relative", width: 110, flexShrink: 0, aspectRatio: "9/16", borderRadius: 8, overflow: "hidden", background: "#0d2318", cursor: "pointer" }}
               >
                 {clip.mediaType === "VIDEO" ? (
-                  <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <HlsVideo src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
@@ -1709,7 +1712,7 @@ export default function CourseProfilePage() {
           </div>
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {extendedClip.mediaType === "VIDEO" ? (
-              <video src={extendedClip.mediaUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} controls playsInline autoPlay muted />
+              <HlsVideo src={getVideoSrc(extendedClip.mediaUrl, extendedClip.cloudflareVideoId)} style={{ width: "100%", height: "100%", objectFit: "cover" }} controls playsInline autoPlay muted />
             ) : (
               <img src={extendedClip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             )}

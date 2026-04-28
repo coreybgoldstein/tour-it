@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
+import { HlsVideo } from "@/components/HlsVideo";
+import { getVideoSrc } from "@/lib/getVideoSrc";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -14,6 +16,7 @@ export type ClipViewerClip = {
   id: string;
   mediaUrl: string;
   mediaType: string;
+  cloudflareVideoId?: string | null;
   courseId: string;
   holeId?: string;
   holeNumber?: number | null;
@@ -168,9 +171,9 @@ export default function ClipViewer({
       <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "#000" }}>
         {/* Media */}
         {clip.mediaType === "VIDEO" ? (
-          <video
+          <HlsVideo
             ref={videoRef}
-            src={clip.mediaUrl}
+            src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)}
             loop muted={muted} playsInline
             onClick={() => {
               const v = videoRef.current; if (!v) return;

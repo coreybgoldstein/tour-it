@@ -260,6 +260,7 @@ model Upload {
 
   mediaType            MediaType
   mediaUrl             String
+  cloudflareVideoId    String?
   thumbnailUrl         String?
   durationSeconds      Int?
   fileSizeBytes        BigInt?

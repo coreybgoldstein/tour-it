@@ -12,6 +12,8 @@ import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
+import { HlsVideo } from "@/components/HlsVideo";
+import { getVideoSrc } from "@/lib/getVideoSrc";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1)" }}>
@@ -45,6 +47,7 @@ type Upload = {
   id: string;
   mediaType: string;
   mediaUrl: string;
+  cloudflareVideoId?: string | null;
   shotType: string | null;
   clubUsed: string | null;
   strategyNote: string | null;
@@ -132,9 +135,9 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
       {series.shots.map((shot, i) => (
         <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.2s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
           {shot.mediaType === "VIDEO" ? (
-            <video
-              ref={el => { videoRefs.current[shot.id] = el; }}
-              src={shot.mediaUrl}
+            <HlsVideo
+              ref={el => { videoRefs.current[shot.id] = el as HTMLVideoElement | null; }}
+              src={getVideoSrc(shot.mediaUrl, shot.cloudflareVideoId)}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
               loop
               playsInline
@@ -605,10 +608,10 @@ export default function HolePage() {
             {activeUpload.mediaType === "PHOTO" ? (
               <img src={activeUpload.mediaUrl} className="photo-el" alt="clip" onClick={() => {}} />
             ) : (
-              <video
-                ref={el => { videoRefs.current[activeUpload.id] = el; }}
+              <HlsVideo
+                ref={el => { videoRefs.current[activeUpload.id] = el as HTMLVideoElement | null; }}
                 key={activeUpload.id}
-                src={activeUpload.mediaUrl}
+                src={getVideoSrc(activeUpload.mediaUrl, activeUpload.cloudflareVideoId)}
                 className="video-el"
                 autoPlay
                 playsInline

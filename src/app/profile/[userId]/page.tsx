@@ -10,6 +10,8 @@ import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
+import { HlsVideo } from "@/components/HlsVideo";
+import { getVideoSrc } from "@/lib/getVideoSrc";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -19,7 +21,7 @@ const SHOT_LABEL: Record<string, string> = {
 function ProfileFeedCard({
   clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId,
 }: {
-  clip: { id: string; mediaUrl: string; mediaType: string; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null };
+  clip: { id: string; mediaUrl: string; mediaType: string; cloudflareVideoId?: string | null; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null };
   isActive: boolean;
   courseName: string | null;
   courseLogoUrl: string | null;
@@ -67,7 +69,7 @@ function ProfileFeedCard({
       <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...(isDesktop ? { maxWidth: 390 } : {}) }}>
 
       {clip.mediaType === "VIDEO" ? (
-        <video ref={videoRef} src={clip.mediaUrl} loop muted={muted} playsInline
+        <HlsVideo ref={videoRef} src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} loop muted={muted} playsInline
           onClick={() => { const v = videoRef.current; if (!v) return; if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); } else { v.pause(); setVideoPaused(true); } }}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
@@ -323,8 +325,8 @@ export default function ProfilePage() {
 
       const [{ data: rawUploads }, { count: followers }, { count: following }] = await Promise.all([
         owner
-          ? supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).order("createdAt", { ascending: false })
-          : supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).eq("moderationStatus", "APPROVED").order("createdAt", { ascending: false }),
+          ? supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).order("createdAt", { ascending: false })
+          : supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).eq("moderationStatus", "APPROVED").order("createdAt", { ascending: false }),
         supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", userId).eq("status", "ACTIVE"),
         supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", userId).eq("status", "ACTIVE"),
       ]);
@@ -364,7 +366,7 @@ export default function ProfilePage() {
         const { data: tagRows } = await supabase.from("UploadTag").select("uploadId").eq("userId", authUser.id).eq("approved", true);
         if (tagRows && tagRows.length > 0) {
           const taggedUploadIds = tagRows.map((t: any) => t.uploadId);
-          const { data: taggedData } = await supabase.from("Upload").select("id, mediaUrl, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").in("id", taggedUploadIds).order("createdAt", { ascending: false });
+          const { data: taggedData } = await supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").in("id", taggedUploadIds).order("createdAt", { ascending: false });
           if (taggedData && taggedData.length > 0) {
             const taggedHoleIds = [...new Set(taggedData.map((u: any) => u.holeId).filter(Boolean))];
             const { data: taggedHoles } = await supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", taggedHoleIds);
