@@ -11,6 +11,8 @@ import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
 import { formatClipDate } from "@/lib/formatClipDate";
+import { HlsVideo } from "@/components/HlsVideo";
+import { getVideoSrc } from "@/lib/getVideoSrc";
 
 type TrendingCourse = {
   id: string;
@@ -30,6 +32,7 @@ type FeedClip = {
   id: string;
   mediaUrl: string;
   mediaType: string;
+  cloudflareVideoId?: string | null;
   courseId: string;
   courseName: string;
   courseLogoUrl: string | null;
@@ -352,7 +355,7 @@ function SeriesCard({
       {item.shots.map((shot, i) => (
         <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.18s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
           {shot.mediaType === "VIDEO" ? (
-            <video ref={el => { videoRefs.current[shot.id] = el; }} src={shot.mediaUrl} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
+            <HlsVideo ref={el => { videoRefs.current[shot.id] = el as HTMLVideoElement | null; }} src={getVideoSrc(shot.mediaUrl, shot.cloudflareVideoId)} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
           ) : (
             <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
           )}
@@ -468,7 +471,7 @@ function VideoCard({
     <div style={{ position: "relative", width: "100%", height: "100svh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}>
       <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...(isDesktop ? { maxWidth: 390 } : {}) }}>
       {clip.mediaType === "VIDEO" ? (
-        <video ref={videoRef} src={clip.mediaUrl} muted={muted} playsInline
+        <HlsVideo ref={videoRef} src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} muted={muted} playsInline
           onClick={() => {
             const v = videoRef.current; if (!v) return;
             if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); }
@@ -604,7 +607,7 @@ export default function Home() {
     async function loadFeed() {
       const { data: rawUploads } = await supabase
         .from("Upload")
-        .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt, rankScore")
+        .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt, rankScore")
         .eq("moderationStatus", "APPROVED")
         .order("rankScore", { ascending: false, nullsFirst: false })
         .limit(30);
@@ -697,7 +700,7 @@ export default function Home() {
     const supabase = createClient();
     const { data: uploads } = await supabase
       .from("Upload")
-      .select("id, mediaUrl, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
+      .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
       .eq("moderationStatus", "APPROVED")
       .order("createdAt", { ascending: false })
       .lt("createdAt", feedCursorRef.current)

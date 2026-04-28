@@ -223,16 +223,29 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         // Use compressed file if ready, otherwise upload original
         const fileToUpload = clip.compressedFile || clip.file;
         const isVideo = clip.file.type.startsWith("video/");
-        const ext = fileToUpload.name.split(".").pop();
-        const bucket = isVideo ? "tour-it-videos" : "tour-it-photos";
-        const filePath = `${user.id}/${selectedCourse.id}/${clip.holeNumber}/${Date.now()}.${ext}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from(bucket)
-          .upload(filePath, fileToUpload, { cacheControl: "3600", upsert: false });
-        if (uploadError) throw new Error(uploadError.message);
+        let mediaUrl = "";
+        let cloudflareVideoId: string | null = null;
 
-        const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+        if (isVideo) {
+          const cfRes = await fetch("/api/cloudflare-stream/direct-upload", { method: "POST" });
+          if (!cfRes.ok) throw new Error("Could not start Cloudflare upload");
+          const { uploadUrl, uid } = await cfRes.json();
+          const formData = new FormData();
+          formData.append("file", fileToUpload);
+          const uploadRes = await fetch(uploadUrl, { method: "POST", body: formData });
+          if (!uploadRes.ok) throw new Error("Cloudflare upload failed");
+          cloudflareVideoId = uid;
+        } else {
+          const ext = fileToUpload.name.split(".").pop();
+          const filePath = `${user.id}/${selectedCourse.id}/${clip.holeNumber}/${Date.now()}.${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from("tour-it-photos")
+            .upload(filePath, fileToUpload, { cacheControl: "3600", upsert: false });
+          if (uploadError) throw new Error(uploadError.message);
+          const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(filePath);
+          mediaUrl = publicUrl;
+        }
 
         // Find or create Hole row
         let holeId: string | null = null;
@@ -259,7 +272,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
 
         await supabase.from("Upload").insert({
           id: uploadId, userId: user.id, courseId: selectedCourse.id, holeId,
-          mediaType: isVideo ? "VIDEO" : "PHOTO", mediaUrl: publicUrl,
+          mediaType: isVideo ? "VIDEO" : "PHOTO", mediaUrl, cloudflareVideoId,
           teeBoxId: null, shotType: clip.shotType, yardageOverlay: null,
           clubUsed: null, windCondition: null, strategyNote: null,
           landingZoneNote: null, whatCameraDoesntShow: null, handicapRange: null,
@@ -304,7 +317,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
                 type: "clip_tag",
                 title: `${taggerName} tagged you in a clip`,
                 body: `${selectedCourse.name} · Hole ${clip.holeNumber}`,
-                linkUrl: publicUrl,
+                linkUrl: `/courses/${selectedCourse.id}`,
                 referenceId: uploadId,
                 read: false,
                 createdAt: notifNow,

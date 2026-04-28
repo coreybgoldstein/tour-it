@@ -366,39 +366,61 @@ function UploadPageInner() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError("You must be logged in to upload."); setUploading(false); return; }
 
-      const ext = fileToUpload.name.split(".").pop();
-      const bucket = mediaType === "VIDEO" ? "tour-it-videos" : "tour-it-photos";
-      const folderKey = selectedHole || contentFormat || "misc";
-      const filePath = `${user.id}/${selectedCourse.id}/${folderKey}/${Date.now()}.${ext}`;
+      let mediaUrl = "";
+      let cloudflareVideoId: string | null = null;
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      if (mediaType === "VIDEO") {
+        // Get a one-time Cloudflare direct-upload URL from our server
+        const cfRes = await fetch("/api/cloudflare-stream/direct-upload", { method: "POST" });
+        if (!cfRes.ok) { setError("Could not start upload — please try again."); setUploading(false); setUploadStage("idle"); return; }
+        const { uploadUrl, uid } = await cfRes.json();
 
-      const xhrUpload = (upsert: boolean) => new Promise<{ error: Error | null }>((resolve) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100)); };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) { resolve({ error: null }); return; }
-          try { resolve({ error: new Error(JSON.parse(xhr.responseText).message || xhr.statusText) }); } catch { resolve({ error: new Error(xhr.statusText || "Upload failed") }); }
-        };
-        xhr.onerror = () => resolve({ error: new Error("Load failed") });
-        xhr.open("POST", `${supabaseUrl}/storage/v1/object/${bucket}/${filePath}`);
-        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
-        xhr.setRequestHeader("x-upsert", upsert ? "true" : "false");
-        xhr.send(fileToUpload);
-      });
+        // Upload the video file directly to Cloudflare
+        const uploadError = await new Promise<Error | null>((resolve) => {
+          const formData = new FormData();
+          formData.append("file", fileToUpload);
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100)); };
+          xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve(null) : resolve(new Error(`Upload failed: ${xhr.status}`));
+          xhr.onerror = () => resolve(new Error("Network error"));
+          xhr.open("POST", uploadUrl);
+          xhr.send(formData);
+        });
+        if (uploadError) { setError("Upload failed — check your connection and try again."); setUploading(false); setUploadStage("idle"); return; }
+        cloudflareVideoId = uid;
+      } else {
+        // Photos still go to Supabase Storage
+        const ext = fileToUpload.name.split(".").pop();
+        const filePath = `${user.id}/${selectedCourse.id}/${selectedHole || contentFormat || "misc"}/${Date.now()}.${ext}`;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-      setUploadPct(0);
-      let { error: uploadError } = await xhrUpload(false);
-      if (uploadError) {
+        const xhrUpload = (upsert: boolean) => new Promise<{ error: Error | null }>((resolve) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100)); };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) { resolve({ error: null }); return; }
+            try { resolve({ error: new Error(JSON.parse(xhr.responseText).message || xhr.statusText) }); } catch { resolve({ error: new Error(xhr.statusText || "Upload failed") }); }
+          };
+          xhr.onerror = () => resolve({ error: new Error("Load failed") });
+          xhr.open("POST", `${supabaseUrl}/storage/v1/object/tour-it-photos/${filePath}`);
+          xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+          xhr.setRequestHeader("x-upsert", upsert ? "true" : "false");
+          xhr.send(fileToUpload);
+        });
+
         setUploadPct(0);
-        await new Promise(r => setTimeout(r, 1500));
-        ({ error: uploadError } = await xhrUpload(true));
+        let { error: uploadError } = await xhrUpload(false);
+        if (uploadError) {
+          setUploadPct(0);
+          await new Promise(r => setTimeout(r, 1500));
+          ({ error: uploadError } = await xhrUpload(true));
+        }
+        if (uploadError) { setError("Upload failed — check your connection and try again."); setUploading(false); setUploadStage("idle"); return; }
+        const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(filePath);
+        mediaUrl = publicUrl;
       }
-      if (uploadError) { setError("Upload failed — check your connection and try again."); setUploading(false); setUploadStage("idle"); return; }
-
-      const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
       // Only look up holeId for single-hole content; create the Hole row if it doesn't exist yet
       let holeId: string | null = null;
@@ -435,7 +457,8 @@ function UploadPageInner() {
         courseId: selectedCourse.id,
         holeId,
         mediaType: mediaType,
-        mediaUrl: publicUrl,
+        mediaUrl,
+        cloudflareVideoId,
         teeBoxId: null,
         shotType: resolvedShotType,
         yardageOverlay: contentFormat === "THREE_HOLE" ? selectedGroup : null,

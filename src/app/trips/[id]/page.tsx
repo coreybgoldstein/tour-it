@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { sendPushToUser } from "@/lib/sendPush";
+import { HlsVideo } from "@/components/HlsVideo";
+import { getVideoSrc } from "@/lib/getVideoSrc";
 
 type Trip = {
   id: string;
@@ -37,6 +39,7 @@ type Clip = {
   id: string;
   mediaType: string;
   mediaUrl: string;
+  cloudflareVideoId?: string | null;
   courseId: string;
   tripPublic: boolean;
   strategyNote: string | null;
@@ -287,7 +290,7 @@ export default function TripPage() {
         })));
       }
 
-      const { data: clipsData } = await supabase.from("Upload").select("id, mediaType, mediaUrl, courseId, tripPublic, strategyNote, shotType").eq("tripId", id).order("createdAt", { ascending: false });
+      const { data: clipsData } = await supabase.from("Upload").select("id, mediaType, mediaUrl, cloudflareVideoId, courseId, tripPublic, strategyNote, shotType").eq("tripId", id).order("createdAt", { ascending: false });
       if (clipsData) setClips(clipsData);
 
       setLoading(false);
@@ -688,7 +691,7 @@ export default function TripPage() {
               {clips.map((clip, i) => (
                 <div key={clip.id} className="clip-thumb" onClick={() => { setFeedIndex(i); setFeedOpen(true); }}>
                   {clip.mediaType === "VIDEO"
-                    ? <video src={clip.mediaUrl} muted playsInline preload="none" />
+                    ? <HlsVideo src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} muted playsInline preload="none" />
                     : <img src={clip.mediaUrl} alt="clip" />
                   }
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
@@ -724,7 +727,7 @@ export default function TripPage() {
           {clips.map((clip, i) => (
             <div key={clip.id} className="feed-snap">
               {clip.mediaType === "VIDEO"
-                ? <video ref={el => { videoRefs.current[clip.id] = el; }} src={clip.mediaUrl} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ? <HlsVideo ref={el => { videoRefs.current[clip.id] = el as HTMLVideoElement | null; }} src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               }
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none" }} />
