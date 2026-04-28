@@ -203,6 +203,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       <ClipTopPill
         courseLogoUrl={course?.logoUrl ?? null}
         courseName={course?.name ?? ""}
+        courseLocation={[course?.city, course?.state].filter(Boolean).join(", ") || null}
         holeNumber={holeNumber}
         muted={muted}
         onMuteToggle={handleMuteToggle}

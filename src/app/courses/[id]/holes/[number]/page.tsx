@@ -647,6 +647,7 @@ export default function HolePage() {
             <ClipTopPill
               courseLogoUrl={course?.logoUrl ?? null}
               courseName={course?.name ?? ""}
+              courseLocation={[course?.city, course?.state].filter(Boolean).join(", ") || null}
               holeNumber={holeNum}
               muted={muted}
               onMuteToggle={() => { const n = !muted; setMuted(n); sessionMute.set(n); }}
