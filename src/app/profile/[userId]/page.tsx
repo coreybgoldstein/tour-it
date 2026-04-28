@@ -9,6 +9,7 @@ import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
+import { formatClipDate } from "@/lib/formatClipDate";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -18,7 +19,7 @@ const SHOT_LABEL: Record<string, string> = {
 function ProfileFeedCard({
   clip, isActive, courseName, courseLogoUrl, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId,
 }: {
-  clip: { id: string; mediaUrl: string; mediaType: string; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null };
+  clip: { id: string; mediaUrl: string; mediaType: string; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null };
   isActive: boolean;
   courseName: string | null;
   courseLogoUrl: string | null;
@@ -171,6 +172,13 @@ function ProfileFeedCard({
         currentUserId={currentUserId}
         uploaderHandicap={uploaderInfo.handicapIndex}
       />
+      {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
+        <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+            {formatClipDate(clip.datePlayedAt, clip.createdAt)}
+          </span>
+        </div>
+      )}
       </div>{/* end inner wrapper */}
     </div>
   );

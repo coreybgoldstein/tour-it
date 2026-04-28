@@ -11,6 +11,7 @@ import { HoleSideBar } from "@/components/clip/HoleSideBar";
 import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
+import { formatClipDate } from "@/lib/formatClipDate";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1)" }}>
@@ -733,6 +734,14 @@ export default function HolePage() {
               <div style={{ position: "absolute", bottom: 220, left: "50%", transform: "translateX(-50%)", zIndex: 30, background: "rgba(0,0,0,0.72)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "8px 16px", whiteSpace: "nowrap" }}>
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.65)" }}>
                   {endOfContent === "next" ? "No more holes with clips" : "That's the first hole with clips"}
+                </span>
+              </div>
+            )}
+
+            {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && (
+              <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+                  {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}
                 </span>
               </div>
             )}
