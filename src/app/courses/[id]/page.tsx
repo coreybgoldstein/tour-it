@@ -14,6 +14,7 @@ import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
 import { sendPushToUser } from "@/lib/sendPush";
+import { formatClipDate } from "@/lib/formatClipDate";
 type Course = {
   id: string;
   name: string;
@@ -53,6 +54,7 @@ type Clip = {
   courseName?: string;
   isForeign?: boolean;
   userId: string;
+  createdAt: string;
 };
 
 type SuggestedCourse = {
@@ -290,6 +292,15 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         currentUserId={currentUserId}
         uploaderHandicap={uploader?.handicapIndex ?? null}
       />
+
+      {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
+        <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+            {formatClipDate(clip.datePlayedAt, clip.createdAt)}
+          </span>
+        </div>
+      )}
+
       </div>{/* end inner wrapper */}
     </div>
   );
