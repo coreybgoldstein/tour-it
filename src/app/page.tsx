@@ -10,6 +10,7 @@ import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
+import { formatClipDate } from "@/lib/formatClipDate";
 
 type TrendingCourse = {
   id: string;
@@ -512,6 +513,14 @@ function VideoCard({
       )}
 
       <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} />
+
+      {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
+        <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+            {formatClipDate(clip.datePlayedAt, clip.createdAt)}
+          </span>
+        </div>
+      )}
 
       <IntelPanel
         open={intelOpen}
