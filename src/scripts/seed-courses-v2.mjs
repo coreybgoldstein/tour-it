@@ -105,16 +105,17 @@ function extractCourseStats(course) {
   };
 }
 
-// ── Step 2: Google Custom Search ──────────────────────────────────────────────
+// ── Step 2: Image search (Google CSE → TeeTimesUSA fallback) ─────────────────
 
 async function googleImageSearch(query) {
+  if (!GOOGLE_KEY || !GOOGLE_CX) return null;
   const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_KEY}&cx=${GOOGLE_CX}&searchType=image&num=5&q=${encodeURIComponent(query)}`;
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
+    if (data.error) return null;
     const items = data.items || [];
-    // Prefer jpg/png, skip transparent logos for cover, skip tiny images
     for (const item of items) {
       const link = item.link || "";
       const ext = link.split("?")[0].split(".").pop()?.toLowerCase();
@@ -126,6 +127,58 @@ async function googleImageSearch(query) {
   } catch {
     return null;
   }
+}
+
+// DuckDuckGo image search — no API key, returns real search results
+async function ddgImageSearch(query) {
+  const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+  try {
+    // Step 1: get vqd token
+    const pageRes = await fetch(
+      `https://duckduckgo.com/?q=${encodeURIComponent(query)}&iax=images&ia=images`,
+      { headers: { "User-Agent": UA } }
+    );
+    const html = await pageRes.text();
+    const tokenMatch = html.match(/vqd=['"]?([\d-]+)['"]?/);
+    if (!tokenMatch) return null;
+    const vqd = tokenMatch[1];
+
+    // Step 2: fetch image results
+    const imgRes = await fetch(
+      `https://duckduckgo.com/i.js?l=us-en&o=json&q=${encodeURIComponent(query)}&vqd=${vqd}&f=,,,,,&p=1`,
+      { headers: { "User-Agent": UA, Referer: "https://duckduckgo.com/" } }
+    );
+    if (!imgRes.ok) return null;
+    const data = await imgRes.json();
+    const results = data.results || [];
+    for (const r of results) {
+      const url = r.image || "";
+      const ext = url.split("?")[0].split(".").pop()?.toLowerCase();
+      if (!["jpg", "jpeg", "png", "webp"].includes(ext)) continue;
+      if ((r.width || 0) < 200) continue;
+      return url;
+    }
+    return results[0]?.image || null;
+  } catch {
+    return null;
+  }
+}
+
+async function findImages(courseName, city, state) {
+  // Try Google CSE first
+  const [gCover, gLogo] = await Promise.all([
+    googleImageSearch(`${courseName} ${city} golf course aerial landscape`),
+    googleImageSearch(`${courseName} ${city} golf club logo crest emblem`),
+  ]);
+  if (gCover || gLogo) return { cover: gCover, logo: gLogo };
+
+  // Fallback: DuckDuckGo image search (no API key needed)
+  console.log(`  (Google CSE unavailable — trying DuckDuckGo)`);
+  const [ddgCover, ddgLogo] = await Promise.all([
+    ddgImageSearch(`${courseName} ${city} golf course aerial landscape`),
+    ddgImageSearch(`${courseName} ${city} golf club logo crest emblem`),
+  ]);
+  return { cover: ddgCover, logo: ddgLogo };
 }
 
 // ── Step 3: Haiku description ─────────────────────────────────────────────────
@@ -279,13 +332,8 @@ async function processCourse(courseName) {
 
   console.log(`  Found: ${name} — ${city}, ${state} | par ${stats.par} | ${stats.yardage}y`);
 
-  // 2. Google image search
-  const coverQuery = `${name} ${city} golf course aerial landscape`;
-  const logoQuery = `${name} ${city} golf club logo crest emblem`;
-  const [rawCoverUrl, rawLogoUrl] = await Promise.all([
-    googleImageSearch(coverQuery),
-    googleImageSearch(logoQuery),
-  ]);
+  // 2. Image search (Google CSE with TeeTimesUSA fallback)
+  const { cover: rawCoverUrl, logo: rawLogoUrl } = await findImages(name, city, state);
 
   // 3. Haiku description
   let description = null;
