@@ -177,7 +177,7 @@ async function researchCourses(courseNames) {
   console.log(`  🔍 Researching: ${courseNames.join(", ")}`);
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-5",
     max_tokens: 4000,
     system: SEEDER_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userMessage }],
@@ -229,8 +229,7 @@ async function upsertCourse(courseData) {
     coverImageUrl: courseData.coverPhotoUrl || null,
     logoUrl: courseData.logoUrl || null,
     yearEstablished: courseData.yearEstablished || null,
-    access: courseData.access || null,
-    // Legacy fields — kept for backwards compatibility
+    courseType: courseData.access || null,
     isPublic: courseData.access === "Public" || courseData.access === "Semi-Private",
     isVerified: false,
     holeCount: 18,
