@@ -285,11 +285,67 @@ async function findImages(courseName, city, state) {
   return { cover: ddgCover, logo: ddgLogo };
 }
 
-// ── Step 3: Haiku description ─────────────────────────────────────────────────
+// ── Step 3: Wikipedia lookup ──────────────────────────────────────────────────
 
-async function generateDescription(name, city, state, par, yardage, slope, rating, teeCount) {
-  // Only build facts we actually have from the Golf Course API — never invent details
-  const facts = [
+async function wikipediaLookup(name, city, state) {
+  const UA = "TourItGolf/1.0 (corey@touritgolf.com)";
+
+  // Build candidate title slugs to try directly
+  const baseName = name.replace(/\s+(golf course|golf club|country club|golf & country club|golf resort)$/i, "").trim();
+  const titleCandidates = [
+    name,
+    baseName,
+    `${baseName}, ${city}`,
+    `${baseName} Golf Club`,
+    `${baseName} Golf Course`,
+  ].map(t => t.replace(/\s+/g, "_"));
+
+  for (const title of titleCandidates) {
+    try {
+      const res = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+        { headers: { "User-Agent": UA } }
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      // Validate it's actually about this golf course
+      if (!data.extract || data.extract.length < 100) continue;
+      const extractLower = data.extract.toLowerCase();
+      if (!extractLower.includes("golf") && !extractLower.includes(city.toLowerCase())) continue;
+      return data.extract;
+    } catch { continue; }
+  }
+
+  // Fallback: OpenSearch to find the right Wikipedia title
+  try {
+    const searchRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(baseName + " golf")}&limit=3&format=json`,
+      { headers: { "User-Agent": UA } }
+    );
+    if (!searchRes.ok) return null;
+    const [, titles] = await searchRes.json();
+    for (const title of titles) {
+      const res = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+        { headers: { "User-Agent": UA } }
+      );
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (!data.extract || data.extract.length < 100) continue;
+      const extractLower = data.extract.toLowerCase();
+      if (!extractLower.includes("golf")) continue;
+      if (!extractLower.includes(city.toLowerCase()) && !extractLower.includes(state.toLowerCase())) continue;
+      return data.extract;
+    }
+  } catch { /* */ }
+
+  return null;
+}
+
+// ── Step 4: Haiku description ─────────────────────────────────────────────────
+
+async function generateDescription(name, city, state, par, yardage, slope, rating, teeCount, wikiText) {
+  const apiFactsList = [
     par ? `par ${par}` : null,
     yardage ? `${yardage.toLocaleString()} yards from the back tees` : null,
     slope ? `slope rating ${slope}` : null,
@@ -298,24 +354,52 @@ async function generateDescription(name, city, state, par, yardage, slope, ratin
     `in ${city}, ${state}`,
   ].filter(Boolean);
 
+  let prompt;
+
+  if (wikiText) {
+    prompt = `You are writing a course description for a golf scouting app.
+
+Wikipedia text about ${name}:
+"""
+${wikiText.slice(0, 800)}
+"""
+
+Verified golf stats: ${apiFactsList.join(", ")}.
+
+Write 2-3 sentences using ONLY information from the Wikipedia text and verified stats above.
+Include 1 interesting fact (designer, year opened, notable tournament, or course feature) if mentioned in the Wikipedia text.
+Do NOT invent anything not stated in the sources above.
+Plain, informative tone — not a brochure. Just the description, no preamble.`;
+  } else {
+    prompt = `Write a 2-sentence description for ${name} golf course using ONLY these verified facts: ${apiFactsList.join(", ")}.
+Do NOT add designer names, year opened, course history, or any detail not provided.
+Plain, informative tone. Just the description, no preamble.`;
+  }
+
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5",
-    max_tokens: 150,
-    messages: [
-      {
-        role: "user",
-        content: `Write a 2-sentence description for ${name} golf course using ONLY these verified facts: ${facts.join(", ")}.
-
-STRICT RULES:
-- Use ONLY the facts listed above. Do not add course history, designer names, year opened, signature holes, or any detail not provided.
-- If a fact is not listed, do not mention it.
-- Write in plain, informative language — like a scorecard description, not a brochure.
-- Just the description, no preamble.`,
-      },
-    ],
+    max_tokens: 200,
+    messages: [{ role: "user", content: prompt }],
   });
 
   return msg.content.find((b) => b.type === "text")?.text?.trim() || null;
+}
+
+function extractYearFromText(text) {
+  if (!text) return null;
+  const match = text.match(/(?:opened|established|built|founded|designed|constructed)\s+in\s+((?:19|20)\d{2})/i)
+    || text.match(/\b((?:19|20)\d{2})\b.*?(?:opened|established|built|founded)/i);
+  const year = match ? parseInt(match[1]) : null;
+  return year && year >= 1850 && year <= new Date().getFullYear() ? year : null;
+}
+
+function extractCourseTypeFromText(text) {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  if (/semi.?private|resort/.test(lower)) return "SEMI_PRIVATE";
+  if (/private club|members.?only|membership/.test(lower)) return "PRIVATE";
+  if (/public course|open to the public|daily fee/.test(lower)) return "PUBLIC";
+  return null;
 }
 
 // ── Step 4: Image upload ──────────────────────────────────────────────────────
@@ -635,31 +719,46 @@ async function processCourseById(course) {
 
   // Check if already fully seeded
   const { rows } = await db.query(
-    `SELECT description, "coverImageUrl", "logoUrl" FROM "Course" WHERE id = $1`,
+    `SELECT description, "coverImageUrl", "logoUrl", "yearEstablished", "courseType", "zipCode" FROM "Course" WHERE id = $1`,
     [course.id]
   );
   const existing = rows[0];
-  if (existing?.description && existing?.coverImageUrl && existing?.logoUrl) {
-    console.log(`  Already seeded — skipping`);
+  if (existing?.description && existing?.coverImageUrl && existing?.logoUrl
+      && existing?.yearEstablished && existing?.courseType && existing?.zipCode) {
+    console.log(`  Already fully seeded — skipping`);
     return { cover: true, logo: true, desc: true };
   }
 
-  // Try Golf Course API for stats (optional — skip if rate limited)
-  let stats = { par: null, yardage: null, slope: null, holes: 18 };
+  // Try Golf Course API for stats + zip
+  let stats = { par: null, yardage: null, slope: null, rating: null, holes: 18, teeCount: null, zipCode: null, courseType: null };
   try {
     let results = await searchGolfCourseAPI(course.name);
     if (!results.length) results = await searchGolfCourseAPI(simplifySearchQuery(course.name));
-    if (results.length) stats = extractCourseStats(results[0]);
-  } catch { /* rate limited or network error — continue without stats */ }
+    if (results.length) {
+      const match = results[0];
+      stats = { ...stats, ...extractCourseStats(match) };
+      const address = match.location?.address || "";
+      const zipMatch = address.match(/\b(\d{5})\b/);
+      if (zipMatch) stats.zipCode = zipMatch[1];
+    }
+  } catch { /* rate limited — continue without */ }
+
+  // Wikipedia lookup for real description content
+  const wikiText = await wikipediaLookup(course.name, course.city, course.state);
+  if (wikiText) {
+    console.log(`  Wikipedia: found`);
+    if (!stats.courseType) stats.courseType = extractCourseTypeFromText(wikiText);
+    if (!stats.yearEstablished) stats.yearEstablished = extractYearFromText(wikiText);
+  }
 
   // Image search
   const { cover: rawCoverUrl, logo: rawLogoUrl } = await findImages(course.name, course.city, course.state);
 
   // Description
-  let description = existing?.description || null;
-  if (!description && process.env.ANTHROPIC_API_KEY) {
+  let description = null;
+  if (process.env.ANTHROPIC_API_KEY) {
     try {
-      description = await generateDescription(course.name, course.city, course.state, stats.par, stats.yardage, stats.slope, stats.rating, stats.teeCount);
+      description = await generateDescription(course.name, course.city, course.state, stats.par, stats.yardage, stats.slope, stats.rating, stats.teeCount, wikiText);
     } catch { description = null; }
   }
 
@@ -670,13 +769,16 @@ async function processCourseById(course) {
     existing?.logoUrl ? Promise.resolve(null) : uploadImage(rawLogoUrl, `course-images/${safeSlug}-logo.png`),
   ]);
 
-  console.log(`  Cover: ${(coverImageUrl || existing?.coverImageUrl) ? "✅" : "✗"} | Logo: ${(logoUrl || existing?.logoUrl) ? "✅" : "✗"} | Desc: ${description ? "✅" : "✗"}`);
+  console.log(`  Wiki: ${wikiText ? "✅" : "✗"} | Cover: ${(coverImageUrl || existing?.coverImageUrl) ? "✅" : "✗"} | Logo: ${(logoUrl || existing?.logoUrl) ? "✅" : "✗"} | Desc: ${description ? "✅" : "✗"}`);
 
-  // Update DB
+  // Update DB — only overwrite null fields
   const update = { updatedAt: new Date().toISOString() };
-  if (description && !existing?.description) update.description = description;
+  if (description) update.description = description;
   if (coverImageUrl && !existing?.coverImageUrl) update.coverImageUrl = coverImageUrl;
   if (logoUrl && !existing?.logoUrl) update.logoUrl = logoUrl;
+  if (stats.yearEstablished && !existing?.yearEstablished) update.yearEstablished = stats.yearEstablished;
+  if (stats.courseType && !existing?.courseType) update.courseType = stats.courseType;
+  if (stats.zipCode && !existing?.zipCode) update.zipCode = stats.zipCode;
 
   if (Object.keys(update).length > 1) {
     await db.query(
