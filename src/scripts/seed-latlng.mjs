@@ -30,6 +30,9 @@ const GOLF_API_KEY = process.env.GOLF_COURSE_API_KEY;
 const args = process.argv.slice(2);
 const limitIdx = args.indexOf("--limit");
 const LIMIT = limitIdx !== -1 ? parseInt(args[limitIdx + 1]) : null;
+const nameIdx = args.indexOf("--name");
+const NAME_FILTER = nameIdx !== -1 ? args[nameIdx + 1] : null;
+const ALL_COURSES = args.includes("--all"); // include courses without descriptions too
 
 async function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
@@ -81,11 +84,13 @@ async function nominatimGeocode(name, city, state) {
 async function main() {
   await db.connect();
 
+  let whereClause = `WHERE latitude IS NULL AND longitude IS NULL`;
+  if (!ALL_COURSES) whereClause += ` AND description IS NOT NULL`;
+  if (NAME_FILTER) whereClause += ` AND name ILIKE '%${NAME_FILTER.replace(/'/g, "''")}%'`;
+
   const { rows: courses } = await db.query(
     `SELECT id, name, city, state FROM "Course"
-     WHERE latitude IS NULL
-       AND longitude IS NULL
-       AND description IS NOT NULL
+     ${whereClause}
      ORDER BY "uploadCount" DESC, "createdAt" ASC
      ${LIMIT ? `LIMIT ${LIMIT}` : "LIMIT 5000"}`
   );
