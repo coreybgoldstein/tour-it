@@ -879,6 +879,11 @@ function UploadPageInner() {
                     <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>
                       📍 Location found but no nearby course in our database. Search by name below.
                     </p>
+                    {gpsCoords && (
+                      <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.2)", margin: "4px 0 0", fontFamily: "monospace" }}>
+                        {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
+                      </p>
+                    )}
                   </div>
                 )}
                 {/* No location at all */}
