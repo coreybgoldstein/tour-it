@@ -80,7 +80,7 @@ function UploadPageInner() {
   const [gpsSuggestions, setGpsSuggestions] = useState<Course[]>([]);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<"idle" | "scanning" | "found" | "no_nearby" | "no_gps">("idle");
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "scanning" | "found" | "no_nearby" | "no_gps" | "device">("idle");
   const [gpsSuggestedHole, setGpsSuggestedHole] = useState<number | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
@@ -219,15 +219,11 @@ function UploadPageInner() {
     compressedFileRef.current = null;
 
     if (isVideo) {
-      // Start GPS extraction in parallel
       setGpsLoading(true);
       setGpsStatus("scanning");
-      extractGPSFromVideo(file).then(async coords => {
-        if (!coords) {
-          setGpsLoading(false);
-          setGpsStatus("no_gps");
-          return;
-        }
+
+      // Shared: look up nearby courses for a lat/lng and auto-select the closest
+      const resolveLocation = async (coords: { lat: number; lng: number }, source: "file" | "device") => {
         setGpsCoords(coords);
         const supabase = createClient();
         const { data } = await supabase
@@ -242,29 +238,51 @@ function UploadPageInner() {
         const courses = (data || []) as (Course & { latitude: number | null; longitude: number | null })[];
         setGpsSuggestions(courses);
 
-        // Auto-select the closest course if it's within 1km
-        if (courses.length > 0) {
-          const R = 6371000;
-          const withDist = courses
-            .filter(c => c.latitude != null && c.longitude != null)
-            .map(c => {
-              const dLat = (c.latitude! - coords.lat) * Math.PI / 180;
-              const dLng = (c.longitude! - coords.lng) * Math.PI / 180;
-              const a = Math.sin(dLat/2)**2 + Math.cos(coords.lat*Math.PI/180)*Math.cos(c.latitude!*Math.PI/180)*Math.sin(dLng/2)**2;
-              return { course: c, dist: R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) };
-            })
-            .sort((a, b) => a.dist - b.dist);
-          if (withDist.length > 0 && withDist[0].dist < 1000) {
-            setSelectedCourse(withDist[0].course);
-            setStep(prev => (prev <= 2 ? 3 : prev));
-            setGpsStatus("found");
-          } else {
-            setGpsStatus("no_nearby");
-          }
+        const R = 6371000;
+        const withDist = courses
+          .filter(c => c.latitude != null && c.longitude != null)
+          .map(c => {
+            const dLat = (c.latitude! - coords.lat) * Math.PI / 180;
+            const dLng = (c.longitude! - coords.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(coords.lat*Math.PI/180)*Math.cos(c.latitude!*Math.PI/180)*Math.sin(dLng/2)**2;
+            return { course: c, dist: R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) };
+          })
+          .sort((a, b) => a.dist - b.dist);
+
+        if (withDist.length > 0 && withDist[0].dist < 1000) {
+          setSelectedCourse(withDist[0].course);
+          setStep(prev => (prev <= 2 ? 3 : prev));
+          setGpsStatus(source === "device" ? "device" : "found");
         } else {
           setGpsStatus("no_nearby");
         }
         setGpsLoading(false);
+      };
+
+      // Try to get device geolocation in parallel (iOS strips GPS from file picker)
+      const deviceCoordsPromise = new Promise<{ lat: number; lng: number } | null>(resolve => {
+        if (!navigator.geolocation) { resolve(null); return; }
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => resolve(null),
+          { timeout: 8000, maximumAge: 60000, enableHighAccuracy: true }
+        );
+      });
+
+      // Try file GPS first, fall back to device geolocation
+      extractGPSFromVideo(file).then(async fileCoords => {
+        if (fileCoords) {
+          await resolveLocation(fileCoords, "file");
+          return;
+        }
+        // File GPS failed (iOS strips it from the file picker) — try device location
+        const deviceCoords = await deviceCoordsPromise;
+        if (deviceCoords) {
+          await resolveLocation(deviceCoords, "device");
+        } else {
+          setGpsLoading(false);
+          setGpsStatus("no_gps");
+        }
       });
 
       // Start compression in the background — user fills in details while it runs
@@ -856,10 +874,10 @@ function UploadPageInner() {
                   </p>
                 )}
                 {/* Found courses */}
-                {(gpsStatus === "found" || (gpsSuggestions.length > 0)) && (
+                {((gpsStatus === "found" || gpsStatus === "device") || (gpsSuggestions.length > 0)) && (
                   <>
                     <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.6)", marginBottom: 8 }}>
-                      📍 Suggested from your video
+                      {gpsStatus === "device" ? "📍 Nearby (your current location)" : "📍 Suggested from your video"}
                     </p>
                     {gpsSuggestions.map(course => {
                       const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
@@ -884,11 +902,11 @@ function UploadPageInner() {
                     </p>
                   </div>
                 )}
-                {/* No GPS in video */}
+                {/* No location at all */}
                 {gpsStatus === "no_gps" && (
                   <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
                     <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>
-                      No location in video — make sure Camera has location access in iOS Settings, or search by name below.
+                      Could not read your location. Allow location access when prompted, or search by name below.
                     </p>
                   </div>
                 )}
