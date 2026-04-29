@@ -18,6 +18,7 @@ import { createRequire } from "module";
 import { fileURLToPath } from "url";
 import path from "path";
 import { randomUUID } from "crypto";
+import fs from "fs";
 
 const require = createRequire(import.meta.url);
 const dotenv = require("dotenv");
@@ -57,12 +58,16 @@ function slugify(name, city = "") {
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const result = { zips: [], list: [] };
+  const result = { zips: [], list: [], popular: false, city: null, state: null, limit: null };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--zip" && args[i + 1])
       result.zips = args[i + 1].split(",").map((z) => z.trim());
     if (args[i] === "--list" && args[i + 1])
       result.list = args[i + 1].split(",").map((n) => n.trim());
+    if (args[i] === "--popular") result.popular = true;
+    if (args[i] === "--city" && args[i + 1]) result.city = args[i + 1];
+    if (args[i] === "--state" && args[i + 1]) result.state = args[i + 1].toUpperCase();
+    if (args[i] === "--limit" && args[i + 1]) result.limit = parseInt(args[i + 1]);
   }
   return result;
 }
@@ -373,43 +378,107 @@ async function processCourse(courseName) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
+// ── Resume tracking ───────────────────────────────────────────────────────────
+
+const RESUME_FILE = path.resolve(__dirname, "../../popular-seed-progress.json");
+
+function loadProgress() {
+  if (!fs.existsSync(RESUME_FILE)) return { done: [] };
+  try { return JSON.parse(fs.readFileSync(RESUME_FILE, "utf-8")); }
+  catch { return { done: [] }; }
+}
+
+function saveProgress(done) {
+  fs.writeFileSync(RESUME_FILE, JSON.stringify({ done }, null, 2));
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
 async function main() {
   const args = parseArgs();
 
-  if (!args.list.length && !args.zips.length) {
+  if (!args.list.length && !args.zips.length && !args.popular && !args.city && !args.state) {
     console.log("Usage:");
     console.log('  node src/scripts/seed-courses-v2.mjs --list "Course Name 1,Course Name 2"');
-    console.log("  node src/scripts/seed-courses-v2.mjs --zip 33317");
     console.log("  node src/scripts/seed-courses-v2.mjs --zip 33317,33069");
+    console.log("  node src/scripts/seed-courses-v2.mjs --city Miami --state FL");
+    console.log("  node src/scripts/seed-courses-v2.mjs --state FL");
+    console.log("  node src/scripts/seed-courses-v2.mjs --popular           # top 1000 list, 300/day");
+    console.log("  node src/scripts/seed-courses-v2.mjs --popular --limit 50");
     process.exit(0);
   }
 
   await db.connect();
 
-  let courseNames = [...args.list];
+  // Build course queue
+  let queue = []; // [{id, name, city, state}] for popular/city/state modes, or just names for list/zip
 
-  // Zip mode: find unseeded courses in DB for that zip
+  if (args.popular) {
+    const listPath = path.resolve(__dirname, "../../src/data/popular-courses-us.json");
+    if (!fs.existsSync(listPath)) {
+      console.log("Popular list not found. Run: node src/scripts/generate-popular-list.mjs");
+      await db.end(); return;
+    }
+    const allCourses = JSON.parse(fs.readFileSync(listPath, "utf-8"));
+    const { done } = loadProgress();
+    const doneSet = new Set(done);
+    queue = allCourses.filter(c => !doneSet.has(c.id));
+    const limit = args.limit || 300;
+    queue = queue.slice(0, limit);
+    console.log(`Popular mode: ${queue.length} courses to seed today (${done.length} already done)`);
+  }
+
+  if (args.city || args.state) {
+    let sql = `SELECT id, name, city, state FROM "Course"
+               WHERE (description IS NULL OR "coverImageUrl" IS NULL OR "logoUrl" IS NULL)`;
+    const params = [];
+    if (args.state) { sql += ` AND state = $${params.length + 1}`; params.push(args.state); }
+    if (args.city) { sql += ` AND city ILIKE $${params.length + 1}`; params.push(`%${args.city}%`); }
+    sql += ` ORDER BY name`;
+    const { rows } = await db.query(sql, params);
+    queue.push(...rows);
+    console.log(`${args.city || ""}${args.state ? ` ${args.state}` : ""}: ${rows.length} courses need seeding`);
+  }
+
   for (const zip of args.zips) {
     const { rows } = await db.query(
-      `SELECT name FROM "Course" WHERE "zipCode" = $1
+      `SELECT id, name, city, state FROM "Course" WHERE "zipCode" = $1
        AND (description IS NULL OR "coverImageUrl" IS NULL OR "logoUrl" IS NULL)
        ORDER BY name`,
       [zip]
     );
     console.log(`Zip ${zip}: ${rows.length} courses need seeding`);
-    courseNames.push(...rows.map((r) => r.name));
+    queue.push(...rows);
   }
 
-  if (!courseNames.length) {
+  // Plain --list names go through the old name-search path
+  const namedList = [...args.list];
+
+  if (!queue.length && !namedList.length) {
     console.log("All courses already seeded.");
-    await db.end();
-    return;
+    await db.end(); return;
   }
 
-  console.log(`\nSeeding ${courseNames.length} course(s)...\n`);
+  const total = queue.length + namedList.length;
+  console.log(`\nSeeding ${total} course(s)...\n`);
   let success = 0, failed = 0;
+  const newDone = [];
 
-  for (const name of courseNames) {
+  // Process queue items (have DB id already)
+  for (const course of queue) {
+    try {
+      const id = await processCourseById(course);
+      if (id) { success++; newDone.push(course.id); }
+      else failed++;
+    } catch (err) {
+      console.log(`  ✗ Error: ${err.message}`);
+      failed++;
+    }
+    await sleep(2000);
+  }
+
+  // Process plain name list
+  for (const name of namedList) {
     try {
       const id = await processCourse(name);
       if (id) success++;
@@ -418,11 +487,79 @@ async function main() {
       console.log(`  ✗ Error: ${err.message}`);
       failed++;
     }
-    await sleep(600); // ~100 req/min, well within free tier
+    await sleep(2000);
+  }
+
+  // Save resume progress for --popular mode
+  if (args.popular && newDone.length) {
+    const { done } = loadProgress();
+    saveProgress([...done, ...newDone]);
+    console.log(`\nProgress saved. ${done.length + newDone.length} courses done total.`);
   }
 
   await db.end();
   console.log(`\nDone. ✅ ${success} seeded, ✗ ${failed} failed.`);
+}
+
+// ── Process a course we already have a DB record for ─────────────────────────
+
+async function processCourseById(course) {
+  console.log(`\n→ ${course.name} (${course.city}, ${course.state})`);
+
+  // Check if already fully seeded
+  const { rows } = await db.query(
+    `SELECT description, "coverImageUrl", "logoUrl" FROM "Course" WHERE id = $1`,
+    [course.id]
+  );
+  const existing = rows[0];
+  if (existing?.description && existing?.coverImageUrl && existing?.logoUrl) {
+    console.log(`  Already seeded — skipping`);
+    return course.id;
+  }
+
+  // Try Golf Course API for stats (optional — skip if rate limited)
+  let stats = { par: null, yardage: null, slope: null, holes: 18 };
+  try {
+    let results = await searchGolfCourseAPI(course.name);
+    if (!results.length) results = await searchGolfCourseAPI(simplifySearchQuery(course.name));
+    if (results.length) stats = extractCourseStats(results[0]);
+  } catch { /* rate limited or network error — continue without stats */ }
+
+  // Image search
+  const { cover: rawCoverUrl, logo: rawLogoUrl } = await findImages(course.name, course.city, course.state);
+
+  // Description
+  let description = existing?.description || null;
+  if (!description && process.env.ANTHROPIC_API_KEY) {
+    try {
+      description = await generateDescription(course.name, course.city, course.state, stats.par, stats.yardage, stats.slope);
+    } catch { description = null; }
+  }
+
+  // Upload images
+  const safeSlug = slugify(course.name).slice(0, 40);
+  const [coverImageUrl, logoUrl] = await Promise.all([
+    existing?.coverImageUrl ? Promise.resolve(null) : uploadImage(rawCoverUrl, `course-images/${safeSlug}-cover.jpg`),
+    existing?.logoUrl ? Promise.resolve(null) : uploadImage(rawLogoUrl, `course-images/${safeSlug}-logo.png`),
+  ]);
+
+  console.log(`  Cover: ${(coverImageUrl || existing?.coverImageUrl) ? "✅" : "✗"} | Logo: ${(logoUrl || existing?.logoUrl) ? "✅" : "✗"} | Desc: ${description ? "✅" : "✗"}`);
+
+  // Update DB
+  const update = { updatedAt: new Date().toISOString() };
+  if (description && !existing?.description) update.description = description;
+  if (coverImageUrl && !existing?.coverImageUrl) update.coverImageUrl = coverImageUrl;
+  if (logoUrl && !existing?.logoUrl) update.logoUrl = logoUrl;
+
+  if (Object.keys(update).length > 1) {
+    await db.query(
+      `UPDATE "Course" SET ${Object.keys(update).map((k, i) => `"${k}" = $${i + 1}`).join(", ")} WHERE id = $${Object.keys(update).length + 1}`,
+      [...Object.values(update), course.id]
+    );
+  }
+
+  console.log(`  ✅ Updated (id: ${course.id})`);
+  return course.id;
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });
