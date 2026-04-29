@@ -43,6 +43,8 @@ const anthropic = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY 
 const GOLF_API_KEY = process.env.GOLF_COURSE_API_KEY;
 const GOOGLE_KEY = process.env.GOOGLE_SEARCH_KEY;
 const GOOGLE_CX = process.env.GOOGLE_CSE_ID;
+const RESEND_KEY = process.env.RESEND_API_KEY;
+const REPORT_EMAIL = "corey@touritgolf.com";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -74,6 +76,106 @@ function parseArgs() {
 
 async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+// ── Email reporting ───────────────────────────────────────────────────────────
+
+async function sendReport({ seeded, failed, missingCover, missingLogo, missingDesc, remaining, lowCredits, rows }) {
+  if (!RESEND_KEY) return;
+
+  const date = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const statusIcon = (ok) => ok ? "✅" : "❌";
+
+  const rowsHtml = rows.map(r =>
+    `<tr style="border-bottom:1px solid #333">
+      <td style="padding:6px 12px;color:#fff">${r.name}</td>
+      <td style="padding:6px 12px;color:#aaa">${r.city}, ${r.state}</td>
+      <td style="padding:6px 12px;text-align:center">${r.cover ? "✅" : "❌"}</td>
+      <td style="padding:6px 12px;text-align:center">${r.logo ? "✅" : "❌"}</td>
+      <td style="padding:6px 12px;text-align:center">${r.desc ? "✅" : "❌"}</td>
+    </tr>`
+  ).join("");
+
+  const creditWarning = lowCredits ? `
+    <div style="background:#7c2d12;border:1px solid #ef4444;border-radius:8px;padding:16px;margin-bottom:24px">
+      <strong style="color:#ef4444">⚠️ Anthropic API Credits Low</strong>
+      <p style="color:#fca5a5;margin:8px 0 0">Course descriptions stopped generating. Add credits at
+        <a href="https://console.anthropic.com/settings/billing" style="color:#f87171">console.anthropic.com/settings/billing</a>
+      </p>
+    </div>` : "";
+
+  const html = `
+<div style="font-family:system-ui,sans-serif;background:#07100a;color:#fff;padding:32px;max-width:700px;margin:0 auto">
+  <h1 style="font-size:22px;margin:0 0 4px;color:#4da862">Tour It — Course Seeding Report</h1>
+  <p style="color:#aaa;margin:0 0 24px">${date}</p>
+
+  ${creditWarning}
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:#4da862">${seeded}</div>
+      <div style="color:#aaa;font-size:13px">Seeded today</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:#fff">${remaining}</div>
+      <div style="color:#aaa;font-size:13px">Remaining</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:${failed > 0 ? "#ef4444" : "#4da862"}">${failed}</div>
+      <div style="color:#aaa;font-size:13px">Failed</div>
+    </div>
+  </div>
+
+  ${missingCover || missingLogo || missingDesc ? `
+  <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;margin-bottom:24px">
+    <p style="margin:0 0 8px;font-weight:600">Missing data after seeding:</p>
+    ${missingCover ? `<p style="margin:4px 0;color:#fbbf24">⚠️ ${missingCover} courses missing cover photo</p>` : ""}
+    ${missingLogo ? `<p style="margin:4px 0;color:#fbbf24">⚠️ ${missingLogo} courses missing logo</p>` : ""}
+    ${missingDesc ? `<p style="margin:4px 0;color:#fbbf24">⚠️ ${missingDesc} courses missing description</p>` : ""}
+  </div>` : ""}
+
+  <table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead>
+      <tr style="border-bottom:1px solid #4da862">
+        <th style="padding:8px 12px;text-align:left;color:#4da862">Course</th>
+        <th style="padding:8px 12px;text-align:left;color:#4da862">Location</th>
+        <th style="padding:8px 12px;text-align:center;color:#4da862">Cover</th>
+        <th style="padding:8px 12px;text-align:center;color:#4da862">Logo</th>
+        <th style="padding:8px 12px;text-align:center;color:#4da862">Desc</th>
+      </tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+</div>`;
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "Tour It Seeder <onboarding@resend.dev>",
+        to: REPORT_EMAIL,
+        subject: `Course Seeding Report — ${seeded} seeded, ${remaining} remaining`,
+        html,
+      }),
+    });
+    if (res.ok) console.log(`\n📧 Report sent to ${REPORT_EMAIL}`);
+    else console.log(`\n⚠️ Email failed: ${await res.text()}`);
+  } catch (err) {
+    console.log(`\n⚠️ Email error: ${err.message}`);
+  }
+}
+
+async function checkAnthropicCredits() {
+  try {
+    await anthropic.messages.create({
+      model: "claude-haiku-4-5", max_tokens: 1,
+      messages: [{ role: "user", content: "." }],
+    });
+    return true;
+  } catch (err) {
+    return !err.message?.includes("credit balance is too low");
+  }
 }
 
 // ── Step 1: Golf Course API ───────────────────────────────────────────────────
@@ -463,13 +565,17 @@ async function main() {
   console.log(`\nSeeding ${total} course(s)...\n`);
   let success = 0, failed = 0;
   const newDone = [];
+  const reportRows = [];
 
   // Process queue items (have DB id already)
   for (const course of queue) {
     try {
-      const id = await processCourseById(course);
-      if (id) { success++; newDone.push(course.id); }
-      else failed++;
+      const result = await processCourseById(course);
+      if (result) {
+        success++;
+        newDone.push(course.id);
+        reportRows.push({ name: course.name, city: course.city, state: course.state, ...result });
+      } else failed++;
     } catch (err) {
       console.log(`  ✗ Error: ${err.message}`);
       failed++;
@@ -480,8 +586,8 @@ async function main() {
   // Process plain name list
   for (const name of namedList) {
     try {
-      const id = await processCourse(name);
-      if (id) success++;
+      const result = await processCourse(name);
+      if (result) success++;
       else failed++;
     } catch (err) {
       console.log(`  ✗ Error: ${err.message}`);
@@ -491,14 +597,34 @@ async function main() {
   }
 
   // Save resume progress for --popular mode
+  let remaining = 0;
   if (args.popular && newDone.length) {
     const { done } = loadProgress();
-    saveProgress([...done, ...newDone]);
-    console.log(`\nProgress saved. ${done.length + newDone.length} courses done total.`);
+    const allDone = [...done, ...newDone];
+    saveProgress(allDone);
+    const listPath = path.resolve(__dirname, "../../src/data/popular-courses-us.json");
+    const allCourses = JSON.parse(fs.readFileSync(listPath, "utf-8"));
+    remaining = allCourses.length - allDone.length;
+    console.log(`\nProgress saved. ${allDone.length} courses done total, ${remaining} remaining.`);
   }
 
   await db.end();
   console.log(`\nDone. ✅ ${success} seeded, ✗ ${failed} failed.`);
+
+  // Send email report
+  if (args.popular || args.state || args.city) {
+    const lowCredits = !(await checkAnthropicCredits());
+    await sendReport({
+      seeded: success,
+      failed,
+      missingCover: reportRows.filter(r => !r.cover).length,
+      missingLogo: reportRows.filter(r => !r.logo).length,
+      missingDesc: reportRows.filter(r => !r.desc).length,
+      remaining,
+      lowCredits,
+      rows: reportRows,
+    });
+  }
 }
 
 // ── Process a course we already have a DB record for ─────────────────────────
@@ -514,7 +640,7 @@ async function processCourseById(course) {
   const existing = rows[0];
   if (existing?.description && existing?.coverImageUrl && existing?.logoUrl) {
     console.log(`  Already seeded — skipping`);
-    return course.id;
+    return { cover: true, logo: true, desc: true };
   }
 
   // Try Golf Course API for stats (optional — skip if rate limited)
@@ -559,7 +685,11 @@ async function processCourseById(course) {
   }
 
   console.log(`  ✅ Updated (id: ${course.id})`);
-  return course.id;
+  return {
+    cover: !!(coverImageUrl || existing?.coverImageUrl),
+    logo: !!(logoUrl || existing?.logoUrl),
+    desc: !!description,
+  };
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });
