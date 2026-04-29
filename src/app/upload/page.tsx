@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { compressVideo } from "@/lib/compressVideo";
 import BatchUpload from "./BatchUpload";
 import { sendPushToUser } from "@/lib/sendPush";
+import exifr from "exifr";
 
 type Course = {
   id: string;
@@ -310,36 +311,14 @@ function UploadPageInner() {
     }
   };
 
-  // Scan video binary for iPhone ©xyz GPS atom
+  // Extract GPS from video using exifr — handles HEVC, H.264, MOV, MP4, Dolby Vision
   async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
-    const CHUNK = 2097152; // 2MB — covers large moov atoms
-    const scanChunk = async (blob: Blob) => {
-      try {
-        const bytes = new Uint8Array(await blob.arrayBuffer());
-        for (let i = 0; i < bytes.length - 20; i++) {
-          // ©xyz atom marker (0xA9 = ©, then x, y, z)
-          if (bytes[i] === 0xA9 && bytes[i+1] === 0x78 && bytes[i+2] === 0x79 && bytes[i+3] === 0x7A) {
-            const strLen = (bytes[i + 4] << 8) | bytes[i + 5];
-            if (strLen > 0 && strLen < 100) {
-              const gpsStr = new TextDecoder().decode(bytes.slice(i + 6, i + 6 + strLen));
-              const match = gpsStr.match(/([+-]\d+\.\d+)([+-]\d+\.\d+)/);
-              if (match) return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
-            }
-          }
-        }
-      } catch {}
-      return null;
-    };
-    // Scan end first (moov atom is at end for unoptimized iPhone .mov),
-    // then front (faststart mp4), then middle (edited/processed videos)
-    const end = file.size > CHUNK ? await scanChunk(file.slice(Math.max(0, file.size - CHUNK))) : null;
-    if (end) return end;
-    const front = await scanChunk(file.slice(0, CHUNK));
-    if (front) return front;
-    if (file.size > CHUNK * 2) {
-      const mid = await scanChunk(file.slice(Math.floor(file.size / 2) - CHUNK / 2, Math.floor(file.size / 2) + CHUNK / 2));
-      if (mid) return mid;
-    }
+    try {
+      const gps = await exifr.gps(file);
+      if (gps?.latitude != null && gps?.longitude != null) {
+        return { lat: gps.latitude, lng: gps.longitude };
+      }
+    } catch {}
     return null;
   }
 
