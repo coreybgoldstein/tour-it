@@ -717,20 +717,21 @@ async function main() {
 async function processCourseById(course) {
   console.log(`\n→ ${course.name} (${course.city}, ${course.state})`);
 
-  // Check if already fully seeded
+  // Check if already fully seeded (including coordinates)
   const { rows } = await db.query(
-    `SELECT description, "coverImageUrl", "logoUrl", "yearEstablished", "courseType", "zipCode" FROM "Course" WHERE id = $1`,
+    `SELECT description, "coverImageUrl", "logoUrl", "yearEstablished", "courseType", "zipCode", latitude, longitude FROM "Course" WHERE id = $1`,
     [course.id]
   );
   const existing = rows[0];
   if (existing?.description && existing?.coverImageUrl && existing?.logoUrl
-      && existing?.yearEstablished && existing?.courseType && existing?.zipCode) {
+      && existing?.yearEstablished && existing?.courseType && existing?.zipCode
+      && existing?.latitude && existing?.longitude) {
     console.log(`  Already fully seeded — skipping`);
     return { cover: true, logo: true, desc: true };
   }
 
-  // Try Golf Course API for stats + zip
-  let stats = { par: null, yardage: null, slope: null, rating: null, holes: 18, teeCount: null, zipCode: null, courseType: null };
+  // Try Golf Course API for stats + zip + coordinates
+  let stats = { par: null, yardage: null, slope: null, rating: null, holes: 18, teeCount: null, zipCode: null, courseType: null, latitude: null, longitude: null };
   try {
     let results = await searchGolfCourseAPI(course.name);
     if (!results.length) results = await searchGolfCourseAPI(simplifySearchQuery(course.name));
@@ -740,6 +741,8 @@ async function processCourseById(course) {
       const address = match.location?.address || "";
       const zipMatch = address.match(/\b(\d{5})\b/);
       if (zipMatch) stats.zipCode = zipMatch[1];
+      if (match.location?.latitude) stats.latitude = parseFloat(match.location.latitude);
+      if (match.location?.longitude) stats.longitude = parseFloat(match.location.longitude);
     }
   } catch { /* rate limited — continue without */ }
 
@@ -779,6 +782,8 @@ async function processCourseById(course) {
   if (stats.yearEstablished && !existing?.yearEstablished) update.yearEstablished = stats.yearEstablished;
   if (stats.courseType && !existing?.courseType) update.courseType = stats.courseType;
   if (stats.zipCode && !existing?.zipCode) update.zipCode = stats.zipCode;
+  if (stats.latitude && !existing?.latitude) update.latitude = stats.latitude;
+  if (stats.longitude && !existing?.longitude) update.longitude = stats.longitude;
 
   if (Object.keys(update).length > 1) {
     await db.query(
