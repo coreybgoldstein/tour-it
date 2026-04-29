@@ -226,8 +226,10 @@ function UploadPageInner() {
       // Shared: look up nearby courses for a lat/lng and auto-select the closest
       const resolveLocation = async (coords: { lat: number; lng: number }, source: "file" | "device") => {
         setGpsCoords(coords);
+        console.log("[GPS] coords:", coords.lat.toFixed(6), coords.lng.toFixed(6));
+        console.log("[GPS] bbox:", coords.lat - 0.1, "to", coords.lat + 0.1, " / ", coords.lng - 0.1, "to", coords.lng + 0.1);
         const supabase = createClient();
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("Course")
           .select("id, name, city, state, holeCount, latitude, longitude")
           .gte("latitude", coords.lat - 0.1)
@@ -236,6 +238,7 @@ function UploadPageInner() {
           .lte("longitude", coords.lng + 0.1)
           .order("uploadCount", { ascending: false })
           .limit(5);
+        console.log("[GPS] query result:", data, "error:", error);
         const courses = (data || []) as (Course & { latitude: number | null; longitude: number | null })[];
         setGpsSuggestions(courses);
 
@@ -250,7 +253,8 @@ function UploadPageInner() {
           })
           .sort((a, b) => a.dist - b.dist);
 
-        if (withDist.length > 0 && withDist[0].dist < 1000) {
+        console.log("[GPS] withDist:", withDist.map(d => `${d.course.name} ${Math.round(d.dist)}m`));
+        if (withDist.length > 0 && withDist[0].dist < 2000) {
           setSelectedCourse(withDist[0].course);
           setStep(prev => (prev <= 2 ? 3 : prev));
           setGpsStatus(source === "device" ? "device" : "found");
@@ -315,10 +319,14 @@ function UploadPageInner() {
   async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
     try {
       const gps = await exifr.gps(file);
+      console.log("[exifr] raw gps:", JSON.stringify(gps));
       if (gps?.latitude != null && gps?.longitude != null) {
+        console.log("[exifr] returning:", gps.latitude, gps.longitude);
         return { lat: gps.latitude, lng: gps.longitude };
       }
-    } catch {}
+    } catch (e) {
+      console.log("[exifr] error:", e);
+    }
     return null;
   }
 
