@@ -1,0 +1,1610 @@
+[
+  {
+    "id": "cb89a60a-f3da-4f16-b9b4-a74eacb6c137",
+    "name": "Old Overton Club",
+    "city": "Vestavia Hills",
+    "state": "AL"
+  },
+  {
+    "id": "c62458ec-1282-4153-b783-bb273f55be24",
+    "name": "Timber Creek Golf Club",
+    "city": "Daphne",
+    "state": "AL"
+  },
+  {
+    "id": "1673730f-6343-4010-b217-534b3dd71316",
+    "name": "Lagoon Park Golf Course",
+    "city": "Montgomery",
+    "state": "AL"
+  },
+  {
+    "id": "c282fa4c-c7a3-44b4-8124-34fcf051a6b2",
+    "name": "Anchorage Golf Course",
+    "city": "Anchorage",
+    "state": "AK"
+  },
+  {
+    "id": "98d7ab6d-e1b2-4b93-905b-f6709c850dcf",
+    "name": "Birch Ridge Golf Course",
+    "city": "Soldotna",
+    "state": "AK"
+  },
+  {
+    "id": "aa7ab89c-f2e9-45b3-b03d-f19aca145e90",
+    "name": "Palmer Municipal Golf Course",
+    "city": "Palmer",
+    "state": "AK"
+  },
+  {
+    "id": "4f5fa3c0-9e73-4f65-a62e-690a9000e69a",
+    "name": "Grayhawk Golf Club - Talon Course",
+    "city": "Scottsdale",
+    "state": "AZ"
+  },
+  {
+    "id": "189f93b9-8daa-4290-9c58-7b0c06897d8c",
+    "name": "Grayhawk Golf Club - Raptor Course",
+    "city": "Scottsdale",
+    "state": "AZ"
+  },
+  {
+    "id": "d77234a3-d574-442f-b2a5-b41286230776",
+    "name": "Arizona National Golf Club",
+    "city": "Tucson",
+    "state": "AZ"
+  },
+  {
+    "id": "dc32f0ef-6701-4940-bf7f-cebf667fce6b",
+    "name": "Silverado Golf Club",
+    "city": "Scottsdale",
+    "state": "AZ"
+  },
+  {
+    "id": "672fb38d-1ef4-4ed5-96fd-85e4cad80c3d",
+    "name": "Ancala Country Club",
+    "city": "Scottsdale",
+    "state": "AZ"
+  },
+  {
+    "id": "07dc7133-1486-441f-b9b4-e29db65700f1",
+    "name": "Quintero Golf Club",
+    "city": "Peoria",
+    "state": "AZ"
+  },
+  {
+    "id": "7cb9cfde-c1e6-433b-84d0-35b08fa907ff",
+    "name": "Chenal Country Club",
+    "city": "Little Rock",
+    "state": "AR"
+  },
+  {
+    "id": "dac348fd-ac72-410c-a296-f7b950f403f6",
+    "name": "Hardscrabble Country Club",
+    "city": "Fort Smith",
+    "state": "AR"
+  },
+  {
+    "id": "5cd68b10-ff96-4344-a0c4-79158eb0019c",
+    "name": "Burns Park Golf Course",
+    "city": "North Little Rock",
+    "state": "AR"
+  },
+  {
+    "id": "93d03e3f-19d7-4541-92f7-6dfbb55fdf64",
+    "name": "Hot Springs Country Club",
+    "city": "Hot Springs",
+    "state": "AR"
+  },
+  {
+    "id": "f2285a3f-9699-4298-9271-b78850d6a031",
+    "name": "Jonesboro Country Club",
+    "city": "Jonesboro",
+    "state": "AR"
+  },
+  {
+    "id": "ad3fdf48-0b0d-4637-9b64-c5f8483042dd",
+    "name": "Texarkana Country Club",
+    "city": "Texarkana",
+    "state": "AR"
+  },
+  {
+    "id": "1ff5e051-b567-4893-85d7-86e927b749e4",
+    "name": "Spyglass Hill Golf Course",
+    "city": "Monterey County",
+    "state": "CA"
+  },
+  {
+    "id": "a4f292fc-6000-423b-a6d6-5e9c00e72d5f",
+    "name": "Torrey Pines South Course",
+    "city": "La Jolla",
+    "state": "CA"
+  },
+  {
+    "id": "8e19770b-e87c-4e1b-acfa-dce46fc88dc8",
+    "name": "Poppy Hills Golf Course",
+    "city": "Del Monte Forest",
+    "state": "CA"
+  },
+  {
+    "id": "b4ea2d95-08f6-45ae-89e1-7ee33da7a8a3",
+    "name": "Riviera Country Club",
+    "city": "Pacific Palisades",
+    "state": "CA"
+  },
+  {
+    "id": "c297a6bb-108a-466c-a43c-d1141e4f2473",
+    "name": "Los Angeles Country Club",
+    "city": "Los Angeles",
+    "state": "CA"
+  },
+  {
+    "id": "d7dc5f33-dfe4-4ac5-b6d4-e4a4a9d56540",
+    "name": "The Grand Golf Club",
+    "city": "San Diego",
+    "state": "CA"
+  },
+  {
+    "id": "adc102b4-6ef4-4af0-aca0-e6521ab96604",
+    "name": "Old Ranch Country Club",
+    "city": "Seal Beach",
+    "state": "CA"
+  },
+  {
+    "id": "634a4147-030e-4db0-9efa-690d8f1339eb",
+    "name": "Monarch Beach Golf Links",
+    "city": "Dana Point",
+    "state": "CA"
+  },
+  {
+    "id": "99faecaa-578a-4a91-89b7-535aa7e3ee54",
+    "name": "Rancho Santa Fe Golf Club",
+    "city": "Del Mar",
+    "state": "CA"
+  },
+  {
+    "id": "a5c751bd-cd22-41e1-a7c0-544413eeb0ff",
+    "name": "Meadow Club",
+    "city": "Fairfax",
+    "state": "CA"
+  },
+  {
+    "id": "c44eaf2b-bfc4-47d5-995e-1ee078ee3024",
+    "name": "Skylinks Golf Course",
+    "city": "Long Beach",
+    "state": "CA"
+  },
+  {
+    "id": "5446f357-d939-4200-ac88-64801a841919",
+    "name": "The Industry Hills Golf Club - Ike (Dwight D Eisenhower) Course",
+    "city": "Industry",
+    "state": "CA"
+  },
+  {
+    "id": "39abd329-4d6f-4f47-946f-2ceec97d62af",
+    "name": "Black Gold Golf Club",
+    "city": "Yorba Linda",
+    "state": "CA"
+  },
+  {
+    "id": "eceadafa-6010-4645-ba08-badd23e17e32",
+    "name": "TPC Colorado",
+    "city": "Berthoud",
+    "state": "CO"
+  },
+  {
+    "id": "be92ebd1-8fa0-461f-9684-d0930604a147",
+    "name": "The Ranch Country Club",
+    "city": "Westminster",
+    "state": "CO"
+  },
+  {
+    "id": "e7f44170-f533-4276-b487-b5e6b75d6c67",
+    "name": "Harmony Club",
+    "city": "Timnath",
+    "state": "CO"
+  },
+  {
+    "id": "dd36f64e-9315-4ef1-bb91-d736f65a6d93",
+    "name": "EagleVail Golf Club",
+    "city": "Eagle County",
+    "state": "CO"
+  },
+  {
+    "id": "e25ccd8e-1884-4630-b758-2fc726282f29",
+    "name": "CommonGround Golf Course",
+    "city": "Aurora",
+    "state": "CO"
+  },
+  {
+    "id": "291bf8fe-b5b5-4ffb-bb3d-96f3d3552e53",
+    "name": "Willis Case Golf Course",
+    "city": "Denver",
+    "state": "CO"
+  },
+  {
+    "id": "f74f27ee-21d0-4120-aac8-28cf427c9ed6",
+    "name": "Wellshire Golf Course",
+    "city": "Denver",
+    "state": "CO"
+  },
+  {
+    "id": "8a0dcf66-2755-4117-ad90-2f1baec05db7",
+    "name": "Harvard Gulch Golf Course",
+    "city": "Denver",
+    "state": "CO"
+  },
+  {
+    "id": "9f6d9ff9-00d4-4615-826a-2b620a9c5446",
+    "name": "City Park Golf Course",
+    "city": "Denver",
+    "state": "CO"
+  },
+  {
+    "id": "005343d3-dff4-415e-977f-71c9a7f20170",
+    "name": "Pinehurst Country Club",
+    "city": "Denver",
+    "state": "CO"
+  },
+  {
+    "id": "5a9ed731-8e36-4d46-825d-e98f3de52794",
+    "name": "TPC River Highlands",
+    "city": "Cromwell",
+    "state": "CT"
+  },
+  {
+    "id": "54e4e481-82c2-4657-8793-31723ee4e5a2",
+    "name": "Lyman Orchards Golf Club",
+    "city": "Middlefield",
+    "state": "CT"
+  },
+  {
+    "id": "befbb2e3-bce2-4c22-8f04-7deeb35c9cd6",
+    "name": "Blackledge Country Club",
+    "city": "Hebron",
+    "state": "CT"
+  },
+  {
+    "id": "c4ffa69d-f0d1-49d0-b044-a76861a58752",
+    "name": "Grassy Hill Country Club",
+    "city": "Orange",
+    "state": "CT"
+  },
+  {
+    "id": "40f85ca7-4511-43be-ba8c-dd96fc6c9044",
+    "name": "Tallwood Country Club",
+    "city": "Hebron",
+    "state": "CT"
+  },
+  {
+    "id": "ed4b65d6-bc92-46dc-ab8a-013f6dbe4b7e",
+    "name": "Shuttle Meadow Country Club",
+    "city": "Kensington",
+    "state": "CT"
+  },
+  {
+    "id": "cab347ba-300b-4d3c-bb9f-cc7e429b966b",
+    "name": "Richter Park Golf Course",
+    "city": "Danbury",
+    "state": "CT"
+  },
+  {
+    "id": "7f4f138e-986d-436a-b09b-59f708afdb2f",
+    "name": "Pomperaug Golf Club",
+    "city": "Southbury",
+    "state": "CT"
+  },
+  {
+    "id": "335aa657-ab1d-4f09-896c-06c81a397c3c",
+    "name": "Great River Golf Club",
+    "city": "Milford",
+    "state": "CT"
+  },
+  {
+    "id": "7495b44e-0e1d-4f44-8f89-13b4ba4160e6",
+    "name": "Ellington Ridge Country Club",
+    "city": "Ellington",
+    "state": "CT"
+  },
+  {
+    "id": "53bf72c4-d335-464c-a58c-5a2082905d1b",
+    "name": "Ed Oliver Golf Club",
+    "city": "Wilmington",
+    "state": "DE"
+  },
+  {
+    "id": "6b147906-ac6c-4cd0-ad35-791c8dcac426",
+    "name": "Naples Grande Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "ff964c71-fc86-40b6-ae11-bdb9eb708f78",
+    "name": "The Ritz-Carlton Golf Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "97fa6a69-49c0-4bd2-85b8-2acb4e22d9c1",
+    "name": "Old Palm Golf Club",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "42351c57-2826-470f-ac2e-437ea32865f1",
+    "name": "Hammock Creek Golf Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "17dffcd6-7656-4d38-9014-ff0195c0fe44",
+    "name": "TPC Sugarloaf",
+    "city": "Duluth",
+    "state": "GA"
+  },
+  {
+    "id": "f447c37b-6d66-44ca-a4bb-d1973152d083",
+    "name": "East Lake Golf Club",
+    "city": "Atlanta",
+    "state": "GA"
+  },
+  {
+    "id": "5fa06ab4-ba5d-486c-af38-7ddd1b24a721",
+    "name": "Chateau Elan Golf Club - Executive Par 3 Course",
+    "city": "Braselton",
+    "state": "GA"
+  },
+  {
+    "id": "ecdd6f76-5d4f-44f9-a024-dbc49b170a11",
+    "name": "Legacy Golf Links",
+    "city": "Smyrna",
+    "state": "GA"
+  },
+  {
+    "id": "9ee4bbf2-6b1d-4f5c-9ee6-dc1a5d2b8446",
+    "name": "Jekyll Island Golf Club",
+    "city": "Glynn County",
+    "state": "GA"
+  },
+  {
+    "id": "4ebd3030-d5d5-42ac-a586-5b16961ebc2e",
+    "name": "Atlanta National Golf Club",
+    "city": "Milton",
+    "state": "GA"
+  },
+  {
+    "id": "0e3910f2-4c83-4720-937e-83d3c375203b",
+    "name": "WIlmington Island Golf Club",
+    "city": "Savannah",
+    "state": "GA"
+  },
+  {
+    "id": "90a1c0a0-acc6-4ae3-ba77-250a2363d180",
+    "name": "Southbridge Golf Club",
+    "city": "Savannah",
+    "state": "GA"
+  },
+  {
+    "id": "46d74396-a80f-40fa-9e03-7d137c68e156",
+    "name": "Mauna Kea Golf Course",
+    "city": "Kohala Coast",
+    "state": "HI"
+  },
+  {
+    "id": "700c5e1f-4d84-41c5-99a2-d8312493fc33",
+    "name": "Hualalai Golf Club Nicklaus Course",
+    "city": "Kailua-Kona",
+    "state": "HI"
+  },
+  {
+    "id": "cdb699ed-a0fc-44fb-a8e0-714a4b4934aa",
+    "name": "Ko Olina Golf Club",
+    "city": "Kapolei",
+    "state": "HI"
+  },
+  {
+    "id": "68a539bf-ac71-4b9e-9548-baa7897aadd4",
+    "name": "The Coeur d'Alene Resort Golf Course",
+    "city": "Coeur d'Alene",
+    "state": "ID"
+  },
+  {
+    "id": "5572aed2-6adb-4359-abbb-e73369d4cfbf",
+    "name": "Crane Creek Country Club",
+    "city": "Boise",
+    "state": "ID"
+  },
+  {
+    "id": "d4ae1c93-b787-44c2-a9b6-4446e2fc9137",
+    "name": "TPC Deere Run",
+    "city": "Silvis",
+    "state": "IL"
+  },
+  {
+    "id": "1fa72657-8555-4976-9d04-38575c6ca865",
+    "name": "Old Elm Club",
+    "city": "Highland Park",
+    "state": "IL"
+  },
+  {
+    "id": "bf5656d2-d0bb-4a8e-867d-5082b3863bff",
+    "name": "Kemper Lakes Golf Club",
+    "city": "Hawthorn Woods",
+    "state": "IL"
+  },
+  {
+    "id": "383a1ff3-f5c0-4af1-b327-03e04d363d61",
+    "name": "Edgewood Golf Club",
+    "city": "Auburn",
+    "state": "IL"
+  },
+  {
+    "id": "5d817edb-567d-4b09-bd1a-c9efb71c0059",
+    "name": "Thunderhawk Golf Club",
+    "city": "Beach Park",
+    "state": "IL"
+  },
+  {
+    "id": "36826ec0-9f90-4cb8-84d5-8c94ab36225c",
+    "name": "Chicago Golf Club",
+    "city": "Wheaton",
+    "state": "IL"
+  },
+  {
+    "id": "599d54c1-873d-4647-acda-2988f2e51a7b",
+    "name": "Medinah Country Club",
+    "city": "Medinah",
+    "state": "IL"
+  },
+  {
+    "id": "144f5645-50df-4e60-9152-3aa383a098a3",
+    "name": "Olympia Fields Country Club",
+    "city": "Olympia Fields",
+    "state": "IL"
+  },
+  {
+    "id": "a772a836-3424-4e07-bb11-6af052733d2d",
+    "name": "Prairie Landing Golf Club",
+    "city": "West Chicago",
+    "state": "IL"
+  },
+  {
+    "id": "0794ddd3-4597-4acd-b0e7-d823900f94c4",
+    "name": "Downers Grove Golf Club",
+    "city": "Downers Grove",
+    "state": "IL"
+  },
+  {
+    "id": "34be64ec-b3d3-4484-b752-b6352e66e998",
+    "name": "George W. Dunne National Golf Course",
+    "city": "Oak Forest",
+    "state": "IL"
+  },
+  {
+    "id": "9ae9bc16-a75d-4087-92e3-ca5e09469b5d",
+    "name": "Harborside International Golf Center",
+    "city": "Chicago",
+    "state": "IL"
+  },
+  {
+    "id": "bc5fd70e-4a32-43a4-8a55-ff2554cb0828",
+    "name": "Old Orchard Country Club",
+    "city": "Pittsfield",
+    "state": "IL"
+  },
+  {
+    "id": "a3be5925-5cd4-44ff-9894-5328b1b65371",
+    "name": "Pine Meadow Golf Club",
+    "city": "Libertyville",
+    "state": "IL"
+  },
+  {
+    "id": "339fd30f-41f6-4b6d-b860-cec31039775d",
+    "name": "Brickyard Crossing Golf Course",
+    "city": "Indianapolis",
+    "state": "IN"
+  },
+  {
+    "id": "495e45ef-1186-41c8-839f-dd90ed11ec9a",
+    "name": "South Bend Country Club",
+    "city": "Saint Joseph County",
+    "state": "IN"
+  },
+  {
+    "id": "d4ca41b5-182a-4d5c-8cd7-0397d70aee87",
+    "name": "Bridgewater Golf Club",
+    "city": "Auburn",
+    "state": "IN"
+  },
+  {
+    "id": "19eea3c8-b143-4e93-8998-4049d3c439c3",
+    "name": "Crooked Stick Golf Club",
+    "city": "Carmel",
+    "state": "IN"
+  },
+  {
+    "id": "6fd88ffd-beb6-483e-94bf-582ce90a6aaa",
+    "name": "Wakonda Club",
+    "city": "Des Moines",
+    "state": "IA"
+  },
+  {
+    "id": "45760767-4079-43d5-97ef-a8ae87496aea",
+    "name": "Jester Park Golf Course",
+    "city": "Polk County",
+    "state": "IA"
+  },
+  {
+    "id": "ccd3e0d2-a915-4727-95c4-da404396e154",
+    "name": "Shadow Glen Golf Club",
+    "city": "Olathe",
+    "state": "KS"
+  },
+  {
+    "id": "90c46a3d-da80-44b9-9a08-f4cc1c4c18df",
+    "name": "Topeka Country Club",
+    "city": "Topeka",
+    "state": "KS"
+  },
+  {
+    "id": "e0875344-7e1e-4b2a-b886-6a193125fb21",
+    "name": "Wichita Country Club",
+    "city": "Wichita",
+    "state": "KS"
+  },
+  {
+    "id": "d4020113-5457-45c6-a647-f63e201f5f4f",
+    "name": "Valhalla Golf Club",
+    "city": "Louisville",
+    "state": "KY"
+  },
+  {
+    "id": "b9168d3c-08c2-436e-9557-956f77522ccc",
+    "name": "Wildwood Country Club",
+    "city": "Louisville",
+    "state": "KY"
+  },
+  {
+    "id": "14159c1c-8c30-4ac0-81f0-de14abaac91c",
+    "name": "Kearney Hill Golf Links",
+    "city": "Lexington",
+    "state": "KY"
+  },
+  {
+    "id": "e7baa093-962c-4d2a-84da-210f11990edb",
+    "name": "Big Spring Country Club",
+    "city": "Louisville",
+    "state": "KY"
+  },
+  {
+    "id": "8034ac2a-89b5-4225-ab74-9b3e8fc1cd39",
+    "name": "Red Oaks Golf Club",
+    "city": "St. Landry Parish",
+    "state": "LA"
+  },
+  {
+    "id": "5a5886b8-d0b5-47db-8a3c-95a663ea8af1",
+    "name": "Sunday River Golf Club",
+    "city": "Newry",
+    "state": "ME"
+  },
+  {
+    "id": "382f4df6-5e93-49d7-b4bd-eb4ac1ec4c5d",
+    "name": "Webhannet Golf Club",
+    "city": "Kennebunk",
+    "state": "ME"
+  },
+  {
+    "id": "d60c5a3f-6b09-481d-9b99-568f1eb3d8ef",
+    "name": "Belgrade Lakes Golf Club",
+    "city": "Belgrade",
+    "state": "ME"
+  },
+  {
+    "id": "efcdfa90-64c5-4f72-980c-a84347b1d2ed",
+    "name": "Martindale Country Club",
+    "city": "Auburn",
+    "state": "ME"
+  },
+  {
+    "id": "2573320e-2513-41a9-ab5f-d96f505b6156",
+    "name": "Penobscot Valley Country Club",
+    "city": "Orono",
+    "state": "ME"
+  },
+  {
+    "id": "59796389-831d-4f23-aee4-b7d51335a34d",
+    "name": "Cape Arundel Golf Club",
+    "city": "Kennebunkport",
+    "state": "ME"
+  },
+  {
+    "id": "f33f60d3-3b81-4320-a853-c6d73b290195",
+    "name": "Rum Pointe Seaside Golf Links",
+    "city": "Berlin",
+    "state": "MD"
+  },
+  {
+    "id": "a55aacd9-d910-49e8-b6aa-ec4f885bb859",
+    "name": "Needwood Golf Course",
+    "city": "Derwood",
+    "state": "MD"
+  },
+  {
+    "id": "9b66ec42-caeb-4615-923b-3478f4d03e01",
+    "name": "University of Maryland Golf Course",
+    "city": "College Park",
+    "state": "MD"
+  },
+  {
+    "id": "f5d09c7e-92e2-468e-9c9d-f8df77121096",
+    "name": "TPC Boston",
+    "city": "Norton",
+    "state": "MA"
+  },
+  {
+    "id": "fbb9e7af-8def-48ba-b51b-8d7da3c191c1",
+    "name": "Old Sandwich Golf Club",
+    "city": "Plymouth",
+    "state": "MA"
+  },
+  {
+    "id": "daa314cf-3947-42bd-97cb-79f144870ca0",
+    "name": "Cape Cod National Golf Club",
+    "city": "Brewster",
+    "state": "MA"
+  },
+  {
+    "id": "554caa01-a334-42ca-87a5-9094ba9103de",
+    "name": "Captains Golf Course",
+    "city": "Brewster",
+    "state": "MA"
+  },
+  {
+    "id": "0776e322-5bff-4597-a4ab-c2bd5ae1f6a1",
+    "name": "Myopia Hunt Club",
+    "city": "South Hamilton",
+    "state": "MA"
+  },
+  {
+    "id": "2ec0c30e-43cc-4732-a05f-93ce95dc18d6",
+    "name": "Green Harbor Golf Club",
+    "city": "Marshfield",
+    "state": "MA"
+  },
+  {
+    "id": "945fe028-c2ad-4894-86c3-102eab0cfdde",
+    "name": "Shining Rock Golf Club",
+    "city": "Northbridge",
+    "state": "MA"
+  },
+  {
+    "id": "7e55a84a-5eb7-49d1-8fa8-c16ecf622fb0",
+    "name": "Ledges Golf Club",
+    "city": "South Hadley",
+    "state": "MA"
+  },
+  {
+    "id": "1f7348ef-1d3a-4295-9e07-5e1a6ec978e6",
+    "name": "Pinehills Golf Club",
+    "city": "Plymouth",
+    "state": "MA"
+  },
+  {
+    "id": "b619983e-2730-46e0-b768-780ed0ea3c5c",
+    "name": "Cold Spring Country Club",
+    "city": "Belchertown",
+    "state": "MA"
+  },
+  {
+    "id": "ff21d3dc-7430-4891-88fc-f2f16fa471ce",
+    "name": "Boston Golf Club",
+    "city": "Hingham",
+    "state": "MA"
+  },
+  {
+    "id": "a5dfc62f-65ff-4fbe-817d-4237d076aef5",
+    "name": "Crystal Downs Country Club",
+    "city": "Lake Township",
+    "state": "MI"
+  },
+  {
+    "id": "88b255f9-d5bc-4669-a798-bb84579cba41",
+    "name": "The Orchards Golf Club",
+    "city": "Washington Township",
+    "state": "MI"
+  },
+  {
+    "id": "d036dbe6-5584-4888-9f49-0ddf50a4fca3",
+    "name": "Arcadia Bluffs Golf Club",
+    "city": "Arcadia",
+    "state": "MI"
+  },
+  {
+    "id": "5c277064-64ca-41d6-831a-c91545124c02",
+    "name": "Elk Ridge Golf Club",
+    "city": "Atlanta",
+    "state": "MI"
+  },
+  {
+    "id": "1485733f-de5d-4a5f-a305-cacab5869f25",
+    "name": "High Pointe Golf Club",
+    "city": "Williamsburg",
+    "state": "MI"
+  },
+  {
+    "id": "23f4c342-aae9-4664-8952-3e01620708a1",
+    "name": "Grayling Country Club",
+    "city": "Grayling",
+    "state": "MI"
+  },
+  {
+    "id": "6b50c566-8ee0-4d61-bd65-a62966d035d6",
+    "name": "Thoroughbred Golf Club",
+    "city": "Grant Township",
+    "state": "MI"
+  },
+  {
+    "id": "8ec3c2e1-8afc-4398-971c-6bab2c5c8c8d",
+    "name": "Scott Lake Country Club",
+    "city": "Comstock Park",
+    "state": "MI"
+  },
+  {
+    "id": "5972d694-60ef-4163-b1da-7406e87d6048",
+    "name": "Irish Hills Golf Club",
+    "city": "Cambridge Township",
+    "state": "MI"
+  },
+  {
+    "id": "44062153-7695-4abe-91c8-c1605e481688",
+    "name": "TPC Twin Cities",
+    "city": "Blaine",
+    "state": "MN"
+  },
+  {
+    "id": "41bb343a-099a-4583-aed0-af167a3cd410",
+    "name": "Windsong Farm Golf Club",
+    "city": "Independence",
+    "state": "MN"
+  },
+  {
+    "id": "3c76b496-387f-4768-ba65-6618dbd93e4d",
+    "name": "Bunker Hills Golf Course",
+    "city": "Coon Rapids",
+    "state": "MN"
+  },
+  {
+    "id": "9ec0f362-5939-489e-8582-79bf78d649d0",
+    "name": "Rush Creek Golf Club",
+    "city": "Maple Grove",
+    "state": "MN"
+  },
+  {
+    "id": "0f9bb7f3-6fda-47dd-8897-6e81e5676c29",
+    "name": "Ridges at Sand Creek",
+    "city": "Sand Creek Township",
+    "state": "MN"
+  },
+  {
+    "id": "2f0614e4-24a2-4322-867f-20bf9e94b42d",
+    "name": "Annandale Golf Club",
+    "city": "Madison",
+    "state": "MS"
+  },
+  {
+    "id": "10537c6f-663f-4f63-aef2-58e644d5f877",
+    "name": "Greenwood Country Club Golf Course",
+    "city": "Greenwood",
+    "state": "MS"
+  },
+  {
+    "id": "a095cd32-4c98-43e1-aa77-11af1b8c26fd",
+    "name": "Sycamore Creek Golf Club",
+    "city": "Osage Beach",
+    "state": "MO"
+  },
+  {
+    "id": "5bbc18aa-ff24-4595-be11-98642cec0f51",
+    "name": "Dalhousie Golf Club",
+    "city": "Cape Girardeau",
+    "state": "MO"
+  },
+  {
+    "id": "021cb932-874a-4349-a68d-12bbfa2ff622",
+    "name": "Old Kinderhook Resort, Golf, Club & Spa",
+    "city": "Camdenton",
+    "state": "MO"
+  },
+  {
+    "id": "c12e9790-9084-44b0-9b59-6c0173eb7524",
+    "name": "Iron Horse Golf Club",
+    "city": "Whitefish",
+    "state": "MT"
+  },
+  {
+    "id": "c638a267-c820-4e8e-8a20-261a25efe63f",
+    "name": "Stock Farm Club",
+    "city": "Ravalli County",
+    "state": "MT"
+  },
+  {
+    "id": "257b4ec4-5174-4f8b-8110-11daddb112b5",
+    "name": "Eagle Bend Golf Club",
+    "city": "Bigfork",
+    "state": "MT"
+  },
+  {
+    "id": "1b49d8d5-cb39-4758-a413-677a7a77ca43",
+    "name": "Big Sky Golf Course",
+    "city": "Big Sky",
+    "state": "MT"
+  },
+  {
+    "id": "972e4d0d-813d-451b-b5df-066c9c8170ca",
+    "name": "Missoula Country Club",
+    "city": "Missoula",
+    "state": "MT"
+  },
+  {
+    "id": "de238998-14d5-47a7-a230-0a326df36c2f",
+    "name": "The Ranch Club Golf Course",
+    "city": "Missoula",
+    "state": "MT"
+  },
+  {
+    "id": "799e691f-51ec-42df-83ee-f12f45cd9a05",
+    "name": "TPC Las Vegas",
+    "city": "Las Vegas",
+    "state": "NV"
+  },
+  {
+    "id": "448289a9-5fa8-40e2-8d54-05e2821f9ef7",
+    "name": "Cascata Golf Course",
+    "city": "Boulder City",
+    "state": "NV"
+  },
+  {
+    "id": "f8d0d657-bbbf-4932-ae12-defff079bd41",
+    "name": "Painted Desert Golf Club",
+    "city": "Las Vegas",
+    "state": "NV"
+  },
+  {
+    "id": "f77a79ac-4837-43eb-88e2-81ed63ffbf62",
+    "name": "Red Rock Country Club",
+    "city": "Summerlin South",
+    "state": "NV"
+  },
+  {
+    "id": "153c0131-3d14-4eb0-b74e-cccbd2e86244",
+    "name": "Desert Pines Golf Club",
+    "city": "Las Vegas",
+    "state": "NV"
+  },
+  {
+    "id": "103f639d-94f3-4c9b-bfcb-0877d36be8c8",
+    "name": "Reflection Bay Golf Club",
+    "city": "Henderson",
+    "state": "NV"
+  },
+  {
+    "id": "18ace8b0-d8f6-4552-88a8-5ca00981a8db",
+    "name": "Las Vegas National Golf Club",
+    "city": "Las Vegas",
+    "state": "NV"
+  },
+  {
+    "id": "a36fbc05-0f4c-4324-a0da-909f6d145127",
+    "name": "The Revere Golf Club",
+    "city": "Henderson",
+    "state": "NV"
+  },
+  {
+    "id": "cb246bcc-d626-4e32-9d82-9551d0141e6a",
+    "name": "Badlands Golf Club",
+    "city": "Las Vegas",
+    "state": "NV"
+  },
+  {
+    "id": "1101312b-1e09-492b-a724-c78b7e055fea",
+    "name": "Breakfast Hill Golf Club",
+    "city": "Greenland",
+    "state": "NH"
+  },
+  {
+    "id": "a3229ed0-0e45-4149-aa5a-d3f418a4d4c8",
+    "name": "Granite Fields Golf Club",
+    "city": "Kingston",
+    "state": "NH"
+  },
+  {
+    "id": "f50f4ab1-47b8-4606-9fda-b62e7816f6c8",
+    "name": "The Shattuck Golf Club",
+    "city": "Jaffrey",
+    "state": "NH"
+  },
+  {
+    "id": "6f8928b0-e0e7-4b99-a16a-9b56fa19b1d9",
+    "name": "Nippo Lake Golf Course",
+    "city": "Barrington",
+    "state": "NH"
+  },
+  {
+    "id": "58202654-6614-4405-953c-482685df1a40",
+    "name": "Country Club of New Hampshire",
+    "city": "North Sutton",
+    "state": "NH"
+  },
+  {
+    "id": "ffba89d0-ffc3-4a28-9996-215df85abbd5",
+    "name": "Sky Meadow Country Club",
+    "city": "Nashua",
+    "state": "NH"
+  },
+  {
+    "id": "c4e4b82f-738b-4aab-9a4d-3b01aefd286e",
+    "name": "Trump National Golf Club Bedminster",
+    "city": "Bedminster",
+    "state": "NJ"
+  },
+  {
+    "id": "742d55cc-cb56-4f79-b966-d2db2ce18b4f",
+    "name": "The Ridgewood Country Club",
+    "city": "Paramus",
+    "state": "NJ"
+  },
+  {
+    "id": "d7f33ed6-873a-4f70-9bcf-ddd19c3056b4",
+    "name": "Somerset Hills Country Club",
+    "city": "Bernardsville",
+    "state": "NJ"
+  },
+  {
+    "id": "24e1d93e-be31-41bf-9950-a053e7a63242",
+    "name": "Shackamaxon Country Club",
+    "city": "Scotch Plains",
+    "state": "NJ"
+  },
+  {
+    "id": "c1bb8c9c-9e18-4b0b-9db1-779b08e55ee0",
+    "name": "Galloping Hill Golf Course",
+    "city": "Union",
+    "state": "NJ"
+  },
+  {
+    "id": "990ac00c-5ca8-4ec4-a704-182ab4abec16",
+    "name": "High Bridge Hills Golf Club",
+    "city": "High Bridge",
+    "state": "NJ"
+  },
+  {
+    "id": "394cd15f-dde9-4f80-a832-4b1dbe98dce6",
+    "name": "Royce Brook Golf Club (East Course)",
+    "city": "Hillsborough Township",
+    "state": "NJ"
+  },
+  {
+    "id": "2f5ab7cc-3e9d-444a-9501-b99b93f8415e",
+    "name": "Forsgate Country Club",
+    "city": "Monroe Township",
+    "state": "NJ"
+  },
+  {
+    "id": "7d637e8d-c4f1-4e32-9117-544c608b3299",
+    "name": "Hominy Hill Golf Course",
+    "city": "Colts Neck Township",
+    "state": "NJ"
+  },
+  {
+    "id": "3ff41c77-8d3a-4043-9124-24e21c17fe26",
+    "name": "Beaver Brook Country Club",
+    "city": "Annandale",
+    "state": "NJ"
+  },
+  {
+    "id": "57d2209c-3bbd-4f6d-bc8c-9e5ea781696c",
+    "name": "Flanders Valley Golf Course",
+    "city": "Flanders",
+    "state": "NJ"
+  },
+  {
+    "id": "e661e992-8ba6-4d79-8cae-67b8c2f3383d",
+    "name": "Rock Spring Golf Club at West Orange",
+    "city": "West Orange",
+    "state": "NJ"
+  },
+  {
+    "id": "36100ab4-7d7a-4d8b-8623-671cb6d530f2",
+    "name": "Seaview Golf Club Bay Course",
+    "city": "Galloway Township",
+    "state": "NJ"
+  },
+  {
+    "id": "e2c3bf39-78bd-4252-bedf-49d81aadb486",
+    "name": "Twisted Dune Golf Club",
+    "city": "Egg Harbor Township",
+    "state": "NJ"
+  },
+  {
+    "id": "94c08c86-3a0e-4e7d-8375-cf51890821d8",
+    "name": "Ocean Acres Country Club",
+    "city": "Stafford Township",
+    "state": "NJ"
+  },
+  {
+    "id": "916e0a9b-c869-4473-8d55-659e44f0fd00",
+    "name": "Sandia Golf Club",
+    "city": "Albuquerque",
+    "state": "NM"
+  },
+  {
+    "id": "5cf9de0e-4741-4994-aa00-24e3c7d3463a",
+    "name": "Marty Sanchez Links de Santa Fe",
+    "city": "Santa Fe",
+    "state": "NM"
+  },
+  {
+    "id": "56e6b4e2-ec59-4608-8182-4d5028b66345",
+    "name": "Picacho Hills Country Club",
+    "city": "Doña Ana County",
+    "state": "NM"
+  },
+  {
+    "id": "6155211e-fc27-4f5e-a07b-482b2be10dfc",
+    "name": "New Mexico State University Golf Course",
+    "city": "Doña Ana County",
+    "state": "NM"
+  },
+  {
+    "id": "a0351310-57d7-4886-a4d2-d580e55fa87a",
+    "name": "Isleta Eagle Golf Course",
+    "city": "Bernalillo County",
+    "state": "NM"
+  },
+  {
+    "id": "f9ba78b7-bb4d-4978-9bb4-2a660d629a38",
+    "name": "Ladera Golf Course",
+    "city": "Albuquerque",
+    "state": "NM"
+  },
+  {
+    "id": "6108b5d8-54e7-4ad0-8b67-9ff4e1370642",
+    "name": "The Links at Sierra Blanca",
+    "city": "Ruidoso",
+    "state": "NM"
+  },
+  {
+    "id": "f000d4fd-2a18-4a76-9c27-cdc4a036990a",
+    "name": "Doral Arrowwood Golf Course",
+    "city": "Rye Brook",
+    "state": "NY"
+  },
+  {
+    "id": "3f6ac976-6b64-45c8-8f7c-9d145a12f844",
+    "name": "Leatherstocking Golf Course",
+    "city": "Cooperstown",
+    "state": "NY"
+  },
+  {
+    "id": "319983bd-d9b0-488e-a59f-8e4de41dc97f",
+    "name": "Hiland Park Country Club",
+    "city": "Queensbury",
+    "state": "NY"
+  },
+  {
+    "id": "4c2528ea-1397-4402-abba-0b2c0e8784c3",
+    "name": "Centennial Golf Club",
+    "city": "Carmel",
+    "state": "NY"
+  },
+  {
+    "id": "741a5807-14bc-4c65-96bb-086ebc0aa79e",
+    "name": "Maidstone Club",
+    "city": "Village of East Hampton",
+    "state": "NY"
+  },
+  {
+    "id": "7ca94467-fcf4-425f-8226-9e010824ac4f",
+    "name": "Wilshire Golf Club",
+    "city": "Winston-Salem",
+    "state": "NC"
+  },
+  {
+    "id": "371353af-0c97-43f5-b9a6-fd8561937751",
+    "name": "High Point Country Club",
+    "city": "High Point",
+    "state": "NC"
+  },
+  {
+    "id": "242004d9-b00f-4261-b965-5e364034469f",
+    "name": "Lonnie Poole Golf Course",
+    "city": "Raleigh",
+    "state": "NC"
+  },
+  {
+    "id": "8292a39f-5bf2-4f92-8ed2-1f7cf770d8fd",
+    "name": "Tobacco Road Golf Club",
+    "city": "Sanford",
+    "state": "NC"
+  },
+  {
+    "id": "f61edfb1-c7e9-477c-a9ed-99d2323c73cf",
+    "name": "Bully Pulpit Golf Course",
+    "city": "Billings County",
+    "state": "ND"
+  },
+  {
+    "id": "b5417ea3-ee29-45b1-9a22-1661f5741c53",
+    "name": "Oxbow Country Club",
+    "city": "Hickson",
+    "state": "ND"
+  },
+  {
+    "id": "64ba6baa-a7a3-4521-a81b-c5775a8f5a6f",
+    "name": "Hawktree Golf Club",
+    "city": "Burleigh County",
+    "state": "ND"
+  },
+  {
+    "id": "f9cb9d37-858c-4ce1-8d7a-e2a37859108e",
+    "name": "Muirfield Village Golf Club",
+    "city": "Dublin",
+    "state": "OH"
+  },
+  {
+    "id": "5a66db6a-d2c0-4c15-9607-4a45e365c6c5",
+    "name": "New Albany Country Club",
+    "city": "New Albany",
+    "state": "OH"
+  },
+  {
+    "id": "cfc569b3-1325-43c3-bc46-bdc3e02def2b",
+    "name": "Scioto Country Club",
+    "city": "Columbus",
+    "state": "OH"
+  },
+  {
+    "id": "c266e1d1-bf08-43ae-a48b-04ecbe57638f",
+    "name": "Pine Valley Golf Club",
+    "city": "Wadsworth",
+    "state": "OH"
+  },
+  {
+    "id": "68e30fe3-9a88-4606-b2bf-32d3147e65e2",
+    "name": "Majestic Springs Golf Club",
+    "city": "Adams Township",
+    "state": "OH"
+  },
+  {
+    "id": "1a6a64d8-1ef2-4437-bb84-9bc5334ca055",
+    "name": "Black Brook Golf Club",
+    "city": "Mentor",
+    "state": "OH"
+  },
+  {
+    "id": "60ece06a-0903-496e-89a8-4a94d7ca0a1a",
+    "name": "Shaker Run Golf Club",
+    "city": "Turtlecreek Township",
+    "state": "OH"
+  },
+  {
+    "id": "394c529b-aaee-4025-82fe-d4bd737ad587",
+    "name": "Sawmill Creek Golf Club",
+    "city": "Huron Township",
+    "state": "OH"
+  },
+  {
+    "id": "66f57f90-08de-4848-9f86-41d917f305fe",
+    "name": "The Patriot Golf Club",
+    "city": "Owasso",
+    "state": "OK"
+  },
+  {
+    "id": "000247b4-9de5-41e5-8de3-cee1707af3f7",
+    "name": "Tulsa Country Club",
+    "city": "Tulsa",
+    "state": "OK"
+  },
+  {
+    "id": "a2dc18d6-2565-4920-bc2e-7844083bf4f1",
+    "name": "Cedar Ridge Country Club",
+    "city": "Broken Arrow",
+    "state": "OK"
+  },
+  {
+    "id": "5184abcc-7279-40c0-8e6e-186ae2fd7b4f",
+    "name": "Southern Hills Country Club",
+    "city": "Tulsa",
+    "state": "OK"
+  },
+  {
+    "id": "6a698ee9-be8d-4090-b3c4-89521afb3a93",
+    "name": "Pumpkin Ridge Golf Club",
+    "city": "Washington County",
+    "state": "OR"
+  },
+  {
+    "id": "7b5cedcc-2b5a-4787-9b7d-995edac43264",
+    "name": "Tokatee Golf Club",
+    "city": "Blue River",
+    "state": "OR"
+  },
+  {
+    "id": "07953977-da50-42d1-980a-37f8f02474eb",
+    "name": "Arrowhead Golf Club",
+    "city": "Liberal",
+    "state": "OR"
+  },
+  {
+    "id": "d43e4179-90b4-45fc-8916-853e5c6117c2",
+    "name": "Quail Valley Golf Club",
+    "city": "Washington County",
+    "state": "OR"
+  },
+  {
+    "id": "e53f1c9c-a30d-48db-a02e-43b819b2b016",
+    "name": "Eastmoreland Golf Course",
+    "city": "Portland",
+    "state": "OR"
+  },
+  {
+    "id": "a3632773-5d00-415b-abbc-626e0a78c429",
+    "name": "Oregon Golf Club",
+    "city": "Clackamas County",
+    "state": "OR"
+  },
+  {
+    "id": "004217ee-40a3-45d7-b998-5ecfe49fe0af",
+    "name": "Whitemarsh Valley Country Club",
+    "city": "Whitemarsh Township",
+    "state": "PA"
+  },
+  {
+    "id": "63435122-cfb4-47b2-a93f-d75963c922ac",
+    "name": "Jericho National Golf Club",
+    "city": "Upper Makefield Township",
+    "state": "PA"
+  },
+  {
+    "id": "223b3ef3-6475-4861-9267-600430d39956",
+    "name": "Rhode Island Country Club",
+    "city": "Barrington",
+    "state": "RI"
+  },
+  {
+    "id": "bf2ad55e-b302-4bf6-ac52-068ee7fe71a7",
+    "name": "Kirkbrae Country Club",
+    "city": "Lincoln",
+    "state": "RI"
+  },
+  {
+    "id": "7130917a-5021-41a2-9891-578515a7b3a9",
+    "name": "Triggs Memorial Golf Course",
+    "city": "Providence",
+    "state": "RI"
+  },
+  {
+    "id": "5986294d-7216-421a-94e5-485bc447beae",
+    "name": "Green Valley Country Club",
+    "city": "Portsmouth",
+    "state": "RI"
+  },
+  {
+    "id": "8c374577-b296-4495-ba82-c00405d3746d",
+    "name": "Winnapaug Country Club",
+    "city": "Westerly",
+    "state": "RI"
+  },
+  {
+    "id": "5e077413-a0ef-44f0-9707-359c9fd64521",
+    "name": "Cranston Country Club",
+    "city": "Cranston",
+    "state": "RI"
+  },
+  {
+    "id": "92dc360a-4023-418b-a7ef-ea899477624f",
+    "name": "Laurel Lane Country Club",
+    "city": "West Kingston",
+    "state": "RI"
+  },
+  {
+    "id": "0aab1732-6b19-49c5-82bd-e12e7ae6c30a",
+    "name": "Montaup Country Club",
+    "city": "Portsmouth",
+    "state": "RI"
+  },
+  {
+    "id": "fb15840d-9448-4e25-a932-924faf1a4858",
+    "name": "Caledonia Golf & Fish Club",
+    "city": "Pawleys Island",
+    "state": "SC"
+  },
+  {
+    "id": "81744ab7-8c40-4c3f-b2ba-d724d6d278b8",
+    "name": "Arcadian Shores Golf Club",
+    "city": "Arcadian Shores",
+    "state": "SC"
+  },
+  {
+    "id": "cd34cf5f-99db-4e57-ac17-22198f6a166a",
+    "name": "Hilton Head National Golf Club",
+    "city": "Bluffton",
+    "state": "SC"
+  },
+  {
+    "id": "f37ccf76-b1fb-4571-9c83-8aca59e38a16",
+    "name": "Shipyard Golf Club",
+    "city": "Hilton Head Island",
+    "state": "SC"
+  },
+  {
+    "id": "a277d675-2025-456f-8837-a61f86528935",
+    "name": "Golden Bear Golf Club at Indigo Run",
+    "city": "Hilton Head Island",
+    "state": "SC"
+  },
+  {
+    "id": "4aa6ce27-dfde-4bf4-8132-1edff5ede3e8",
+    "name": "Country Club of Hilton Head",
+    "city": "Hilton Head Island",
+    "state": "SC"
+  },
+  {
+    "id": "71215f0c-ae8c-4241-b0a8-5c8a5e09fe3d",
+    "name": "Coosaw Creek Country Club",
+    "city": "North Charleston",
+    "state": "SC"
+  },
+  {
+    "id": "d26f51db-fcd8-46e4-8dd5-bdf603b2bb47",
+    "name": "RiverTowne Country Club",
+    "city": "Mount Pleasant",
+    "state": "SC"
+  },
+  {
+    "id": "fc9ef29b-2beb-443d-a67f-aa01bca81d14",
+    "name": "The Honors Course",
+    "city": "Ooltewah",
+    "state": "TN"
+  },
+  {
+    "id": "f7cfaa82-3afd-48af-9048-3777f0995821",
+    "name": "Oak Ridge Country Club",
+    "city": "Oak Ridge",
+    "state": "TN"
+  },
+  {
+    "id": "fcb4037c-22f7-4e2e-8b0a-733c952669ea",
+    "name": "Fall Creek Falls Golf Course",
+    "city": "Van Buren County",
+    "state": "TN"
+  },
+  {
+    "id": "029fd16a-52c2-4502-bff8-a389e3c47e7e",
+    "name": "Sweetens Cove Golf Club",
+    "city": "South Pittsburg",
+    "state": "TN"
+  },
+  {
+    "id": "d5669260-a441-41b3-ae2f-482b844cc0fd",
+    "name": "Old American Golf Club",
+    "city": "The Colony",
+    "state": "TX"
+  },
+  {
+    "id": "eaf4187e-bb20-4ea1-9d96-e66112687f31",
+    "name": "Shady Oaks Country Club",
+    "city": "Fort Worth",
+    "state": "TX"
+  },
+  {
+    "id": "d1c39784-70c4-413d-9d7a-fef451dec72b",
+    "name": "Colonial Country Club",
+    "city": "Fort Worth",
+    "state": "TX"
+  },
+  {
+    "id": "99913649-a267-4312-b850-9f41b932bfac",
+    "name": "Lantana Golf Club",
+    "city": "Lantana",
+    "state": "TX"
+  },
+  {
+    "id": "9d0875df-fcd9-41f1-8838-5d5000bcb721",
+    "name": "Soldier Hollow Golf Course",
+    "city": "Wasatch County",
+    "state": "UT"
+  },
+  {
+    "id": "606abdb6-3553-49d7-a803-25eaf9082b14",
+    "name": "Thanksgiving Point Golf Club",
+    "city": "Lehi",
+    "state": "UT"
+  },
+  {
+    "id": "d4b7cf67-f1f7-4615-bb38-dc93499eee5a",
+    "name": "Sunset View Golf Course",
+    "city": "Delta",
+    "state": "UT"
+  },
+  {
+    "id": "bfc05f56-fedc-4204-bce3-3c0e380f23be",
+    "name": "Mount Ogden Golf Course",
+    "city": "Ogden",
+    "state": "UT"
+  },
+  {
+    "id": "aae798ad-ce9b-47f7-8ac7-67759866eaa1",
+    "name": "Oquirrh Hills Golf Course",
+    "city": "Tooele",
+    "state": "UT"
+  },
+  {
+    "id": "75b8a19a-6ec4-46fd-ac49-60b25d002e69",
+    "name": "Ralph Myhre Golf Course",
+    "city": "Middlebury",
+    "state": "VT"
+  },
+  {
+    "id": "38e413cb-8e7f-438f-8816-733d45980bfb",
+    "name": "Woodstock Country Club",
+    "city": "Woodstock",
+    "state": "VT"
+  },
+  {
+    "id": "519bde2b-866f-4d9a-aab9-178061e1743e",
+    "name": "Ekwanok Country Club",
+    "city": "Manchester",
+    "state": "VT"
+  },
+  {
+    "id": "2a06869f-34ae-41e6-a3c7-5bb68b8a28d3",
+    "name": "Rutland Country Club",
+    "city": "Rutland",
+    "state": "VT"
+  },
+  {
+    "id": "9af5d447-674c-422b-a915-ae7ef6ba877f",
+    "name": "Jay Peak Resort Golf Course",
+    "city": "Jay",
+    "state": "VT"
+  },
+  {
+    "id": "d4dfe0af-08af-4a25-af70-793502518f6b",
+    "name": "Montague Golf Club",
+    "city": "Randolph",
+    "state": "VT"
+  },
+  {
+    "id": "29341788-19d1-428b-8d7c-3e5ca0592523",
+    "name": "Newport Country Club",
+    "city": "Newport",
+    "state": "VT"
+  },
+  {
+    "id": "fefc5a6b-b606-485e-8d78-ed7812d9b191",
+    "name": "Brambleton Golf Club",
+    "city": "Ashburn",
+    "state": "VA"
+  },
+  {
+    "id": "76988852-84f6-46cb-9ab8-4624998429af",
+    "name": "Hermitage Country Club",
+    "city": "Manakin-Sabot",
+    "state": "VA"
+  },
+  {
+    "id": "0c8f8f3a-227f-44f8-8168-ff885b1e933b",
+    "name": "Royal New Kent Golf Club",
+    "city": "New Kent County",
+    "state": "VA"
+  },
+  {
+    "id": "f7300d33-5ebc-4059-971f-ec6dc38f9ce2",
+    "name": "Stonehouse Golf Club",
+    "city": "James City County",
+    "state": "VA"
+  },
+  {
+    "id": "f2031e3b-abaa-42c6-af9d-e0e0bd130c24",
+    "name": "Brickshire Golf Club",
+    "city": "New Kent County",
+    "state": "VA"
+  },
+  {
+    "id": "3996132a-2d31-459b-a8c4-8bbb71608ccb",
+    "name": "Ford's Colony Country Club - Marsh Hawk Course",
+    "city": "James City County",
+    "state": "VA"
+  },
+  {
+    "id": "ae767c6f-55ac-40fd-b17c-ef27d577e233",
+    "name": "The Golf Club at Newcastle",
+    "city": "Newcastle",
+    "state": "WA"
+  },
+  {
+    "id": "c06105da-5e71-4f59-9bfb-7cf7a8d38cd6",
+    "name": "Willows Run Golf Club",
+    "city": "Redmond",
+    "state": "WA"
+  },
+  {
+    "id": "a1f454a2-1c34-409b-b8ed-9bcf3a0045a7",
+    "name": "High Cedars Golf Club",
+    "city": "Pierce County",
+    "state": "WA"
+  },
+  {
+    "id": "1e2d9e3b-90ac-4c5c-95f5-fac540fe5a85",
+    "name": "McCormick Woods Golf Club",
+    "city": "Port Orchard",
+    "state": "WA"
+  },
+  {
+    "id": "dbbd7070-9364-42ad-bb98-0d93ce6e55fb",
+    "name": "Eaglemont Golf Club",
+    "city": "Mount Vernon",
+    "state": "WA"
+  },
+  {
+    "id": "8e63f7c7-73bf-4619-b704-4f2db2542d3d",
+    "name": "Grandview Country Club Golf Course",
+    "city": "Daniels",
+    "state": "WV"
+  },
+  {
+    "id": "57fd78ad-c8a9-4a83-9b67-210522988225",
+    "name": "Whistling Straits",
+    "city": "Sheboygan",
+    "state": "WI"
+  },
+  {
+    "id": "37bc91e6-3741-48dd-b7b9-aa2533578b9c",
+    "name": "Blackwolf Run",
+    "city": "Kohler",
+    "state": "WI"
+  },
+  {
+    "id": "a8f6f7de-421f-4693-94af-78f6efd27150",
+    "name": "Erin Hills",
+    "city": "Erin",
+    "state": "WI"
+  },
+  {
+    "id": "4768bea1-807d-466c-a50c-44ba11051449",
+    "name": "University Ridge Golf Course",
+    "city": "Madison",
+    "state": "WI"
+  },
+  {
+    "id": "4828a50a-380d-40af-8538-a1f8a5425b7e",
+    "name": "Trappers Turn Golf Club",
+    "city": "Wisconsin Dells",
+    "state": "WI"
+  },
+  {
+    "id": "341b0e13-c7b3-4652-a936-00c3e75db550",
+    "name": "Broadlands Golf Club",
+    "city": "North Prairie",
+    "state": "WI"
+  },
+  {
+    "id": "3056f987-bfe1-4a07-9613-8553c2da950b",
+    "name": "Cheyenne Country Club",
+    "city": "Cheyenne",
+    "state": "WY"
+  },
+  {
+    "id": "98a88fd9-1b47-44c5-a137-545d10d24b98",
+    "name": "Little America Golf Course",
+    "city": "Cheyenne",
+    "state": "WY"
+  },
+  {
+    "id": "5503474e-d922-4f0e-a00b-bfaaf2b5d7d0",
+    "name": "Casper Municipal Golf Course",
+    "city": "Casper",
+    "state": "WY"
+  }
+]
