@@ -80,6 +80,7 @@ function UploadPageInner() {
   const [gpsSuggestions, setGpsSuggestions] = useState<Course[]>([]);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "scanning" | "found" | "no_nearby" | "no_gps">("idle");
   const [gpsSuggestedHole, setGpsSuggestedHole] = useState<number | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
@@ -220,23 +221,28 @@ function UploadPageInner() {
     if (isVideo) {
       // Start GPS extraction in parallel
       setGpsLoading(true);
+      setGpsStatus("scanning");
       extractGPSFromVideo(file).then(async coords => {
-        if (!coords) { setGpsLoading(false); return; }
+        if (!coords) {
+          setGpsLoading(false);
+          setGpsStatus("no_gps");
+          return;
+        }
         setGpsCoords(coords);
         const supabase = createClient();
         const { data } = await supabase
           .from("Course")
           .select("id, name, city, state, holeCount, latitude, longitude")
-          .gte("latitude", coords.lat - 0.05)
-          .lte("latitude", coords.lat + 0.05)
-          .gte("longitude", coords.lng - 0.05)
-          .lte("longitude", coords.lng + 0.05)
+          .gte("latitude", coords.lat - 0.1)
+          .lte("latitude", coords.lat + 0.1)
+          .gte("longitude", coords.lng - 0.1)
+          .lte("longitude", coords.lng + 0.1)
           .order("uploadCount", { ascending: false })
           .limit(5);
         const courses = (data || []) as (Course & { latitude: number | null; longitude: number | null })[];
         setGpsSuggestions(courses);
 
-        // Auto-select the closest course if it's within 500m
+        // Auto-select the closest course if it's within 1km
         if (courses.length > 0) {
           const R = 6371000;
           const withDist = courses
@@ -248,10 +254,15 @@ function UploadPageInner() {
               return { course: c, dist: R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) };
             })
             .sort((a, b) => a.dist - b.dist);
-          if (withDist.length > 0 && withDist[0].dist < 500) {
+          if (withDist.length > 0 && withDist[0].dist < 1000) {
             setSelectedCourse(withDist[0].course);
             setStep(prev => (prev <= 2 ? 3 : prev));
+            setGpsStatus("found");
+          } else {
+            setGpsStatus("no_nearby");
           }
+        } else {
+          setGpsStatus("no_nearby");
         }
         setGpsLoading(false);
       });
@@ -281,17 +292,18 @@ function UploadPageInner() {
     }
   };
 
-  // Scan video binary for iPhone ©xyz GPS atom (no library needed)
+  // Scan video binary for iPhone ©xyz GPS atom
   async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
-    const CHUNK = 524288; // 512KB
+    const CHUNK = 2097152; // 2MB — covers large moov atoms
     const scanChunk = async (blob: Blob) => {
       try {
         const bytes = new Uint8Array(await blob.arrayBuffer());
         for (let i = 0; i < bytes.length - 20; i++) {
+          // ©xyz atom marker (0xA9 = ©, then x, y, z)
           if (bytes[i] === 0xA9 && bytes[i+1] === 0x78 && bytes[i+2] === 0x79 && bytes[i+3] === 0x7A) {
             const strLen = (bytes[i + 4] << 8) | bytes[i + 5];
-            if (strLen > 0 && strLen < 60) {
-              const gpsStr = new TextDecoder().decode(bytes.slice(i + 8, i + 8 + strLen));
+            if (strLen > 0 && strLen < 100) {
+              const gpsStr = new TextDecoder().decode(bytes.slice(i + 6, i + 6 + strLen));
               const match = gpsStr.match(/([+-]\d+\.\d+)([+-]\d+\.\d+)/);
               if (match) return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
             }
@@ -300,9 +312,17 @@ function UploadPageInner() {
       } catch {}
       return null;
     };
-    // Check front first, then tail (moov atom is typically at end of iPhone recordings)
-    return (await scanChunk(file.slice(0, CHUNK))) ??
-           (file.size > CHUNK ? await scanChunk(file.slice(Math.max(0, file.size - CHUNK))) : null);
+    // Scan end first (moov atom is at end for unoptimized iPhone .mov),
+    // then front (faststart mp4), then middle (edited/processed videos)
+    const end = file.size > CHUNK ? await scanChunk(file.slice(Math.max(0, file.size - CHUNK))) : null;
+    if (end) return end;
+    const front = await scanChunk(file.slice(0, CHUNK));
+    if (front) return front;
+    if (file.size > CHUNK * 2) {
+      const mid = await scanChunk(file.slice(Math.floor(file.size / 2) - CHUNK / 2, Math.floor(file.size / 2) + CHUNK / 2));
+      if (mid) return mid;
+    }
+    return null;
   }
 
 
@@ -763,7 +783,7 @@ function UploadPageInner() {
                 ) : (
                   <img src={mediaPreview} className="preview-img" alt="preview" />
                 )}
-                <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); setGpsSuggestions([]); setCompressing(false); setOriginalSize(null); setCompressedSize(null); compressionPromiseRef.current = null; compressedFileRef.current = null; }}>
+                <button className="btn-secondary" style={{ marginBottom: 12 }} onClick={() => { setMediaFile(null); setMediaPreview(null); setGpsSuggestions([]); setGpsStatus("idle"); setGpsCoords(null); setCompressing(false); setOriginalSize(null); setCompressedSize(null); compressionPromiseRef.current = null; compressedFileRef.current = null; }}>
                   Choose different file
                 </button>
 
@@ -794,7 +814,7 @@ function UploadPageInner() {
                   </div>
                 )}
 
-                {gpsLoading && (
+                {gpsStatus === "scanning" && (
                   <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(77,168,98,0.6)", textAlign: "center", marginBottom: 12 }}>
                     📍 Reading location from video...
                   </p>
@@ -826,26 +846,52 @@ function UploadPageInner() {
             <h1 className="step-title">Which course?</h1>
             <p className="step-sub">Search by name, city, or state.</p>
 
-            {/* GPS suggestions */}
-            {(gpsSuggestions.length > 0 || gpsLoading) && (
+            {/* GPS status + suggestions */}
+            {mediaType === "VIDEO" && gpsStatus !== "idle" && (
               <div style={{ marginBottom: 16 }}>
-                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.6)", marginBottom: 8 }}>
-                  📍 Suggested from your video
-                </p>
-                {gpsLoading && <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)" }}>Reading location...</p>}
-                {gpsSuggestions.map(course => {
-                  const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
-                  return (
-                    <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
-                      <div className="course-abbr has-clips">{abbr}</div>
-                      <div>
-                        <div className="course-name-text">{course.name}</div>
-                        <div className="course-location-text">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-                {gpsSuggestions.length > 0 && <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />}
+                {/* Scanning */}
+                {gpsStatus === "scanning" && (
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(77,168,98,0.6)", marginBottom: 8 }}>
+                    📍 Reading location from video...
+                  </p>
+                )}
+                {/* Found courses */}
+                {(gpsStatus === "found" || (gpsSuggestions.length > 0)) && (
+                  <>
+                    <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.6)", marginBottom: 8 }}>
+                      📍 Suggested from your video
+                    </p>
+                    {gpsSuggestions.map(course => {
+                      const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+                      return (
+                        <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
+                          <div className="course-abbr">{abbr}</div>
+                          <div>
+                            <div className="course-name-text">{course.name}</div>
+                            <div className="course-location-text">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {gpsSuggestions.length > 0 && <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />}
+                  </>
+                )}
+                {/* GPS found but no course within range */}
+                {gpsStatus === "no_nearby" && (
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
+                    <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>
+                      📍 Location found but no nearby course in our database. Search by name below.
+                    </p>
+                  </div>
+                )}
+                {/* No GPS in video */}
+                {gpsStatus === "no_gps" && (
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
+                    <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>
+                      No location in video — make sure Camera has location access in iOS Settings, or search by name below.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
