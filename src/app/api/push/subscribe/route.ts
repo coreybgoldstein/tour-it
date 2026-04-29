@@ -1,19 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 
-const supabase = createClient(
+const supabaseAdmin = createServiceClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(req: NextRequest) {
-  const { userId, subscription } = await req.json();
-  if (!userId || !subscription) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  await supabase
+  const { subscription } = await req.json();
+  if (!subscription) return NextResponse.json({ error: "Missing subscription" }, { status: 400 });
+
+  await supabaseAdmin
     .from("User")
     .update({ pushSubscription: JSON.stringify(subscription) })
-    .eq("id", userId);
+    .eq("id", user.id);
 
   return NextResponse.json({ ok: true });
 }
