@@ -11,7 +11,7 @@ type Round = {
   totalScore: number | null; fairwaysHit: number | null; putts: number | null; notes: string | null;
 };
 type Clip = {
-  id: string; mediaUrl: string; mediaType: string; courseId: string;
+  id: string; mediaUrl: string; cloudflareVideoId?: string | null; mediaType: string; courseId: string;
   holeNumber?: number | null; shotType?: string | null; likeCount?: number;
 };
 type Course = { id: string; name: string; city: string; state: string; logoUrl: string | null };
@@ -62,7 +62,7 @@ export default function RoundDetailPage() {
       setCourse(courseData);
 
       const { data: clipsData } = await supabase.from("Upload")
-        .select("id, mediaUrl, mediaType, courseId, holeId, shotType, likeCount")
+        .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, shotType, likeCount")
         .eq("roundId", roundId as string).order("createdAt", { ascending: true });
 
       if (clipsData && clipsData.length > 0) {
@@ -186,7 +186,7 @@ export default function RoundDetailPage() {
                 style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)" }}>
                 {clip.mediaType === "PHOTO"
                   ? <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <video src={clip.mediaUrl} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <img src={clip.cloudflareVideoId ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400` : clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 }
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
                 {clip.holeNumber && (

@@ -9,6 +9,7 @@ type Tab = "overview" | "clips" | "reports";
 type ClipRow = {
   id: string;
   mediaUrl: string;
+  cloudflareVideoId?: string | null;
   mediaType: string;
   moderationStatus: string;
   createdAt: string;
@@ -280,7 +281,7 @@ export default function AdminPage() {
               <div key={clip.id} className="clip-row">
                 <div style={{ width: 52, height: 72, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "rgba(255,255,255,0.06)" }}>
                   {clip.mediaType === "VIDEO"
-                    ? <video src={clip.mediaUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted playsInline />
+                    ? <img src={clip.cloudflareVideoId ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=200` : clip.mediaUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : <img src={clip.mediaUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   }
                 </div>
