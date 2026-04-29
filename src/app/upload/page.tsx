@@ -264,7 +264,7 @@ function UploadPageInner() {
         setGpsLoading(false);
       };
 
-      // Try to get device geolocation in parallel (iOS strips GPS from file picker)
+      // Start device geolocation immediately in parallel — iOS often has stale/wrong GPS in the file
       const deviceCoordsPromise = new Promise<{ lat: number; lng: number } | null>(resolve => {
         if (!navigator.geolocation) { resolve(null); return; }
         navigator.geolocation.getCurrentPosition(
@@ -274,16 +274,33 @@ function UploadPageInner() {
         );
       });
 
-      // Try file GPS first, fall back to device geolocation
+      // Race file GPS against device GPS; use whichever finds a nearby course first
       extractGPSFromVideo(file).then(async fileCoords => {
         if (fileCoords) {
-          await resolveLocation(fileCoords, "file");
-          return;
+          // File GPS found — check if it points to a real course
+          const supabase = createClient();
+          const { data } = await supabase
+            .from("Course")
+            .select("id")
+            .gte("latitude", fileCoords.lat - 0.1)
+            .lte("latitude", fileCoords.lat + 0.1)
+            .gte("longitude", fileCoords.lng - 0.1)
+            .lte("longitude", fileCoords.lng + 0.1)
+            .limit(1);
+          if (data && data.length > 0) {
+            // File GPS is near a known course — use it
+            await resolveLocation(fileCoords, "file");
+            return;
+          }
+          console.log("[GPS] file coords found no course, trying device GPS");
         }
-        // File GPS failed (iOS strips it from the file picker) — try device location
+        // File GPS missing or pointed nowhere useful — fall back to device location
         const deviceCoords = await deviceCoordsPromise;
         if (deviceCoords) {
           await resolveLocation(deviceCoords, "device");
+        } else if (fileCoords) {
+          // Have file coords but no course nearby and no device — show them anyway
+          await resolveLocation(fileCoords, "file");
         } else {
           setGpsLoading(false);
           setGpsStatus("no_gps");
@@ -318,14 +335,25 @@ function UploadPageInner() {
   // Extract GPS from video using exifr — handles HEVC, H.264, MOV, MP4, Dolby Vision
   async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
     try {
+      // Try QuickTime-specific parsing first — reads the ©xyz atom iOS writes at recording time
+      const qt = await exifr.parse(file, { quicktime: true, tiff: false, exif: false, gps: false, iptc: false, xmp: false });
+      console.log("[exifr] quicktime parse:", JSON.stringify(qt));
+      if (qt?.latitude != null && qt?.longitude != null) {
+        console.log("[exifr] qt location:", qt.latitude, qt.longitude);
+        return { lat: qt.latitude, lng: qt.longitude };
+      }
+    } catch (e) {
+      console.log("[exifr] quicktime error:", e);
+    }
+    try {
+      // Fallback: standard EXIF GPS tags
       const gps = await exifr.gps(file);
-      console.log("[exifr] raw gps:", JSON.stringify(gps));
+      console.log("[exifr] exif gps:", JSON.stringify(gps));
       if (gps?.latitude != null && gps?.longitude != null) {
-        console.log("[exifr] returning:", gps.latitude, gps.longitude);
         return { lat: gps.latitude, lng: gps.longitude };
       }
     } catch (e) {
-      console.log("[exifr] error:", e);
+      console.log("[exifr] exif error:", e);
     }
     return null;
   }
