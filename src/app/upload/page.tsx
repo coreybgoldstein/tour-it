@@ -272,6 +272,7 @@ function UploadPageInner() {
           return compressed;
         }).catch(() => {
           setCompressing(false);
+          setError("Video compression failed. Your original file will be uploaded instead.");
           return file;
         });
       } else {
@@ -472,7 +473,7 @@ function UploadPageInner() {
         clipLng: gpsCoords?.lng ?? null,
         tripId: preselectedTripId || null,
         tripPublic: preselectedTripId ? tripPublic : true,
-        moderationStatus: "APPROVED",
+        moderationStatus: "PENDING",
         likeCount: 0,
         commentCount: 0,
         viewCount: 0,

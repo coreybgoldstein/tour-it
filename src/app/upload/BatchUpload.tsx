@@ -37,6 +37,7 @@ type BatchClip = {
 };
 
 const SKIP_MB = 30;
+const MAX_FILE_MB = 500;
 
 // Draw first frame of a video file to a canvas → return data URL
 async function generateThumbnail(file: File): Promise<string> {
@@ -99,6 +100,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
     const seen = new Set<string>();
     const valid = initialFiles.filter(f => {
       if (!f.type.startsWith("video/") && !f.type.startsWith("image/")) return false;
+      if (f.size > MAX_FILE_MB * 1024 * 1024) return false;
       const key = `${f.name}:${f.size}`;
       if (seen.has(key)) return false;
       seen.add(key);
@@ -278,7 +280,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           landingZoneNote: null, whatCameraDoesntShow: null, handicapRange: null,
           datePlayedAt: new Date(clip.file.lastModified).toISOString(),
           rankScore: 0, tripId: null, tripPublic: true,
-          moderationStatus: "APPROVED", likeCount: 0, commentCount: 0,
+          moderationStatus: "PENDING", likeCount: 0, commentCount: 0,
           viewCount: 0, saveCount: 0, createdAt: now, updatedAt: now,
         });
 

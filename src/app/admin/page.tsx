@@ -65,6 +65,10 @@ export default function AdminPage() {
   const [clipsFilter, setClipsFilter] = useState<"ALL" | "APPROVED" | "REJECTED">("ALL");
   const [actioning, setActioning] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [clipsHasMore, setClipsHasMore] = useState(false);
+  const [reportsHasMore, setReportsHasMore] = useState(false);
+  const [clipsLoadingMore, setClipsLoadingMore] = useState(false);
+  const [reportsLoadingMore, setReportsLoadingMore] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -110,14 +114,19 @@ export default function AdminPage() {
     });
   }, []);
 
-  async function loadClips(supabase: any, filter: "ALL" | "APPROVED" | "REJECTED") {
+  const PAGE = 50;
+
+  async function loadClips(supabase: any, filter: "ALL" | "APPROVED" | "REJECTED", append = false) {
+    const offset = append ? clips.length : 0;
     let q = supabase.from("Upload")
-      .select("id, mediaUrl, mediaType, moderationStatus, createdAt, courseId, userId, shotType, likeCount, commentCount")
+      .select("id, mediaUrl, cloudflareVideoId, mediaType, moderationStatus, createdAt, courseId, userId, shotType, likeCount, commentCount")
       .order("createdAt", { ascending: false })
-      .limit(50);
+      .range(offset, offset + PAGE - 1);
     if (filter !== "ALL") q = q.eq("moderationStatus", filter);
     const { data: uploadsData } = await q;
     if (!uploadsData) return;
+
+    setClipsHasMore(uploadsData.length === PAGE);
 
     const courseIds = [...new Set(uploadsData.map((u: any) => u.courseId))];
     const userIds = [...new Set(uploadsData.map((u: any) => u.userId))];
@@ -125,19 +134,25 @@ export default function AdminPage() {
       supabase.from("Course").select("id, name").in("id", courseIds),
       supabase.from("User").select("id, username").in("id", userIds),
     ]);
-    setClips(uploadsData.map((u: any) => ({
+    const mapped = uploadsData.map((u: any) => ({
       ...u,
       courseName: courses?.find((c: any) => c.id === u.courseId)?.name || "Unknown",
       username: users?.find((usr: any) => usr.id === u.userId)?.username || "unknown",
-    })));
+    }));
+    if (append) {
+      setClips(prev => [...prev, ...mapped]);
+    } else {
+      setClips(mapped);
+    }
   }
 
-  async function loadReports(supabase: any) {
+  async function loadReports(supabase: any, append = false) {
+    const offset = append ? reports.length : 0;
     const { data: reportsData } = await supabase
       .from("ModerationReport")
       .select("id, reason, createdAt, uploadId, status, reportedById")
       .order("createdAt", { ascending: false })
-      .limit(50);
+      .range(offset, offset + PAGE - 1);
     if (!reportsData) return;
 
     const reporterIds = [...new Set(reportsData.map((r: any) => r.reportedById))];
@@ -154,7 +169,9 @@ export default function AdminPage() {
       clipUserIds.length > 0 ? supabase.from("User").select("id, username").in("id", clipUserIds) : Promise.resolve({ data: [] }),
     ]);
 
-    setReports(reportsData.map((r: any) => {
+    setReportsHasMore(reportsData.length === PAGE);
+
+    const mapped = reportsData.map((r: any) => {
       const upload = uploads?.find((u: any) => u.id === r.uploadId);
       return {
         ...r,
@@ -163,7 +180,12 @@ export default function AdminPage() {
         clipCourse: courses?.find((c: any) => c.id === upload?.courseId)?.name || null,
         clipUser: clipUsers?.find((u: any) => u.id === upload?.userId)?.username || null,
       };
-    }));
+    });
+    if (append) {
+      setReports(prev => [...prev, ...mapped]);
+    } else {
+      setReports(mapped);
+    }
   }
 
   async function setClipStatus(clipId: string, status: "APPROVED" | "REJECTED") {
@@ -312,6 +334,12 @@ export default function AdminPage() {
               </div>
             ))}
             {clips.length === 0 && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", paddingTop: 40 }}>No clips</div>}
+            {clipsHasMore && (
+              <button disabled={clipsLoadingMore} onClick={async () => { setClipsLoadingMore(true); await loadClips(createClient(), clipsFilter, true); setClipsLoadingMore(false); }}
+                style={{ width: "100%", marginTop: 16, padding: "12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", cursor: "pointer", opacity: clipsLoadingMore ? 0.5 : 1 }}>
+                {clipsLoadingMore ? "Loading…" : "Load more"}
+              </button>
+            )}
           </div>
         )}
 
@@ -356,6 +384,12 @@ export default function AdminPage() {
               </div>
             ))}
             {reports.length === 0 && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", paddingTop: 40 }}>No reports</div>}
+            {reportsHasMore && (
+              <button disabled={reportsLoadingMore} onClick={async () => { setReportsLoadingMore(true); await loadReports(createClient(), true); setReportsLoadingMore(false); }}
+                style={{ width: "100%", marginTop: 16, padding: "12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", cursor: "pointer", opacity: reportsLoadingMore ? 0.5 : 1 }}>
+                {reportsLoadingMore ? "Loading…" : "Load more"}
+              </button>
+            )}
           </div>
         )}
 

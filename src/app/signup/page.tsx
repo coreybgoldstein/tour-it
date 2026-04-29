@@ -82,8 +82,8 @@ export default function SignUpPage() {
       }
     }
 
-    // If session is immediately available (email confirmation disabled), go straight to onboarding
-    if (authData.session) {
+    // Only proceed directly if email is already confirmed (handles confirmed re-signups)
+    if (authData.session && authData.user?.email_confirmed_at) {
       router.push("/onboarding");
       return;
     }
