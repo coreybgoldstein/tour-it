@@ -242,9 +242,14 @@ export default function AdminPage() {
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff" }}>Admin</div>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>Tour It — internal</div>
         </div>
-        <button onClick={() => router.push("/admin/courses")} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
-          Courses →
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => router.push("/admin/dashboard")} style={{ padding: "7px 14px", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862", cursor: "pointer" }}>
+            Dashboard →
+          </button>
+          <button onClick={() => router.push("/admin/courses")} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
+            Courses →
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
