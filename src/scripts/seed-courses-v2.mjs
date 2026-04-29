@@ -197,18 +197,15 @@ async function getGolfCourseById(id) {
 }
 
 function extractCourseStats(course) {
-  // Pull par and yardage from the longest tee set (usually "BACK" or "BLUE")
-  const tees = [
-    ...(course.tees?.male || []),
-    ...(course.tees?.female || []),
-  ];
-  const backTee = tees.find((t) => /back|blue|championship/i.test(t.tee_name)) || tees[0];
+  const maleTees = course.tees?.male || [];
+  const backTee = maleTees.find((t) => /back|blue|championship/i.test(t.tee_name)) || maleTees[0];
   return {
     par: backTee?.par_total || null,
     yardage: backTee?.total_yards || null,
     slope: backTee?.slope_rating || null,
     rating: backTee?.course_rating || null,
     holes: backTee?.number_of_holes || 18,
+    teeCount: maleTees.length || null,
   };
 }
 
@@ -290,26 +287,30 @@ async function findImages(courseName, city, state) {
 
 // ── Step 3: Haiku description ─────────────────────────────────────────────────
 
-async function generateDescription(name, city, state, par, yardage, slope) {
+async function generateDescription(name, city, state, par, yardage, slope, rating, teeCount) {
+  // Only build facts we actually have from the Golf Course API — never invent details
   const facts = [
     par ? `par ${par}` : null,
-    yardage ? `${yardage.toLocaleString()} yards` : null,
+    yardage ? `${yardage.toLocaleString()} yards from the back tees` : null,
     slope ? `slope rating ${slope}` : null,
-    `located in ${city}, ${state}`,
-  ]
-    .filter(Boolean)
-    .join(", ");
+    rating ? `course rating ${rating}` : null,
+    teeCount > 1 ? `${teeCount} sets of tees` : null,
+    `in ${city}, ${state}`,
+  ].filter(Boolean);
 
   const msg = await anthropic.messages.create({
     model: "claude-haiku-4-5",
-    max_tokens: 200,
+    max_tokens: 150,
     messages: [
       {
         role: "user",
-        content: `Write a 2-sentence description for ${name}, a golf course ${facts}.
-Voice: confident, specific, slightly editorial — like an enthusiastic golfer, not a PR firm.
-Avoid: "world-class", "stunning views", "something for everyone".
-Just the description, no preamble.`,
+        content: `Write a 2-sentence description for ${name} golf course using ONLY these verified facts: ${facts.join(", ")}.
+
+STRICT RULES:
+- Use ONLY the facts listed above. Do not add course history, designer names, year opened, signature holes, or any detail not provided.
+- If a fact is not listed, do not mention it.
+- Write in plain, informative language — like a scorecard description, not a brochure.
+- Just the description, no preamble.`,
       },
     ],
   });
@@ -446,7 +447,7 @@ async function processCourse(courseName) {
   let description = null;
   if (process.env.ANTHROPIC_API_KEY) {
     try {
-      description = await generateDescription(name, city, state, stats.par, stats.yardage, stats.slope);
+      description = await generateDescription(name, city, state, stats.par, stats.yardage, stats.slope, stats.rating, stats.teeCount);
     } catch {
       description = null;
     }
@@ -658,7 +659,7 @@ async function processCourseById(course) {
   let description = existing?.description || null;
   if (!description && process.env.ANTHROPIC_API_KEY) {
     try {
-      description = await generateDescription(course.name, course.city, course.state, stats.par, stats.yardage, stats.slope);
+      description = await generateDescription(course.name, course.city, course.state, stats.par, stats.yardage, stats.slope, stats.rating, stats.teeCount);
     } catch { description = null; }
   }
 
