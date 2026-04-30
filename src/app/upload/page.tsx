@@ -335,25 +335,13 @@ function UploadPageInner() {
   // Extract GPS from video using exifr — handles HEVC, H.264, MOV, MP4, Dolby Vision
   async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
     try {
-      // Try QuickTime-specific parsing first — reads the ©xyz atom iOS writes at recording time
-      const qt = await exifr.parse(file, { quicktime: true, tiff: false, exif: false, gps: false, iptc: false, xmp: false });
-      console.log("[exifr] quicktime parse:", JSON.stringify(qt));
-      if (qt?.latitude != null && qt?.longitude != null) {
-        console.log("[exifr] qt location:", qt.latitude, qt.longitude);
-        return { lat: qt.latitude, lng: qt.longitude };
-      }
-    } catch (e) {
-      console.log("[exifr] quicktime error:", e);
-    }
-    try {
-      // Fallback: standard EXIF GPS tags
       const gps = await exifr.gps(file);
-      console.log("[exifr] exif gps:", JSON.stringify(gps));
+      console.log("[exifr] gps:", JSON.stringify(gps));
       if (gps?.latitude != null && gps?.longitude != null) {
         return { lat: gps.latitude, lng: gps.longitude };
       }
     } catch (e) {
-      console.log("[exifr] exif error:", e);
+      console.log("[exifr] error:", e);
     }
     return null;
   }
