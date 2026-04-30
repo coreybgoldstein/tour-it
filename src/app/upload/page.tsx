@@ -609,7 +609,7 @@ function UploadPageInner() {
         clipLng: gpsCoords?.lng ?? null,
         tripId: preselectedTripId || null,
         tripPublic: preselectedTripId ? tripPublic : true,
-        moderationStatus: "PENDING",
+        moderationStatus: "APPROVED",
         likeCount: 0,
         commentCount: 0,
         viewCount: 0,
@@ -702,12 +702,27 @@ function UploadPageInner() {
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginBottom: 10 }}>
-            Clip uploaded!
+            Clip live!
           </h1>
-          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginBottom: 28 }}>
-            Your intel for {selectedCourse?.name}{selectedHole ? ` — Hole ${selectedHole}` : ""} is under review and will go live shortly.
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginBottom: 24 }}>
+            Your intel for {selectedCourse?.name}{selectedHole ? ` — Hole ${selectedHole}` : ""} is live.
           </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+          {/* Primary CTA — go to course */}
+          <button
+            onClick={() => router.push(`/courses/${selectedCourse?.id}`)}
+            style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 20px", marginBottom: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            {selectedCourse?.logoUrl ? (
+              <img src={selectedCourse.logoUrl} alt="" style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover" }} />
+            ) : (
+              <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
+                {selectedCourse?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}
+              </div>
+            )}
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>
+              View {selectedCourse?.name}
+            </span>
+          </button>
+          <div style={{ display: "flex", gap: 10 }}>
             <button
               onClick={() => {
                 setStep(1);
@@ -719,17 +734,16 @@ function UploadPageInner() {
                 setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", notes: "", handicap: "" });
                 setSubmitted(false);
               }}
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "10px 20px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
+              style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.55)", cursor: "pointer" }}>
               Upload another
             </button>
-            <button
-              onClick={() => selectedHole
-                ? router.push(`/courses/${selectedCourse?.id}/holes/${selectedHole}`)
-                : router.push(`/courses/${selectedCourse?.id}`)
-              }
-              style={{ background: "#2d7a42", border: "none", borderRadius: 99, padding: "10px 20px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
-              {selectedHole ? "View hole" : "View course"}
-            </button>
+            {selectedHole && (
+              <button
+                onClick={() => router.push(`/courses/${selectedCourse?.id}/holes/${selectedHole}`)}
+                style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.55)", cursor: "pointer" }}>
+                View Hole {selectedHole}
+              </button>
+            )}
           </div>
                 </div>
         <BottomNav />
