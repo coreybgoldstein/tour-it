@@ -141,7 +141,8 @@ function UploadPageInner() {
             const seen = new Set<string>();
             const courses: Course[] = [];
             for (const u of uploads || []) {
-              const c = (u as { Course: Course }).Course;
+              const raw = (u as unknown as { Course: Course | Course[] }).Course;
+              const c = Array.isArray(raw) ? raw[0] : raw;
               if (c && !seen.has(c.id)) { seen.add(c.id); courses.push(c); }
               if (courses.length >= 5) break;
             }
