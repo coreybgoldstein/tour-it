@@ -80,6 +80,7 @@ function UploadPageInner() {
   const courseDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [gpsSuggestions, setGpsSuggestions] = useState<Course[]>([]);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [recentCourses, setRecentCourses] = useState<Course[]>([]);
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState<"idle" | "scanning" | "found" | "no_nearby" | "no_gps" | "device">("idle");
   const [gpsSuggestedHole, setGpsSuggestedHole] = useState<number | null>(null);
@@ -129,6 +130,23 @@ function UploadPageInner() {
         router.push("/login?redirect=/upload");
       } else {
         setAuthChecked(true);
+        // Load recent courses for quick-pick on step 2
+        supabase
+          .from("Upload")
+          .select("courseId, Course:courseId(id, name, city, state, holeCount)")
+          .eq("userId", data.user.id)
+          .order("createdAt", { ascending: false })
+          .limit(30)
+          .then(({ data: uploads }) => {
+            const seen = new Set<string>();
+            const courses: Course[] = [];
+            for (const u of uploads || []) {
+              const c = (u as { Course: Course }).Course;
+              if (c && !seen.has(c.id)) { seen.add(c.id); courses.push(c); }
+              if (courses.length >= 5) break;
+            }
+            setRecentCourses(courses);
+          });
         // If coming from a course page, fetch just that one course
         if (preselectedCourseId) {
           const { data: course } = await supabase
@@ -332,11 +350,51 @@ function UploadPageInner() {
     }
   };
 
-  // Extract GPS from video using exifr — handles HEVC, H.264, MOV, MP4, Dolby Vision
+  // Extract GPS from video.
+  // Strategy: scan raw bytes for the QuickTime ©xyz atom (where iPhone writes recording GPS).
+  // iPhone MOV/HEVC files put moov at the END of the file, so we scan there first.
+  // Falls back to exifr EXIF GPS tags if ©xyz not found.
   async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
+    const CHUNK = 4 * 1024 * 1024; // 4 MB
+
+    const scanForXYZ = (bytes: Uint8Array): { lat: number; lng: number } | null => {
+      for (let i = 0; i < bytes.length - 32; i++) {
+        // ©xyz bytes: 0xA9 'x' 'y' 'z'
+        if (bytes[i] !== 0xA9 || bytes[i+1] !== 0x78 || bytes[i+2] !== 0x79 || bytes[i+3] !== 0x7A) continue;
+        // After the 4-byte type: 2-byte value length + 2-byte language code, then the ISO 6709 string
+        const str = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(i + 8, i + 72));
+        const m = str.match(/([+-]\d{1,3}\.?\d*)([+-]\d{1,3}\.?\d*)/);
+        if (!m) continue;
+        const lat = parseFloat(m[1]);
+        const lng = parseFloat(m[2]);
+        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && (lat !== 0 || lng !== 0)) {
+          console.log("[©xyz] found:", lat, lng);
+          return { lat, lng };
+        }
+      }
+      return null;
+    };
+
+    try {
+      // End of file first (iPhone non-fast-start recordings: moov is at the end)
+      const endBuf = await file.slice(Math.max(0, file.size - CHUNK)).arrayBuffer();
+      const r1 = scanForXYZ(new Uint8Array(endBuf));
+      if (r1) return r1;
+
+      // Start of file (fast-start / web-optimized)
+      if (file.size > CHUNK) {
+        const startBuf = await file.slice(0, CHUNK).arrayBuffer();
+        const r2 = scanForXYZ(new Uint8Array(startBuf));
+        if (r2) return r2;
+      }
+    } catch (e) {
+      console.log("[©xyz] scan error:", e);
+    }
+
+    // Fallback: EXIF GPS tags via exifr
     try {
       const gps = await exifr.gps(file);
-      console.log("[exifr] gps:", JSON.stringify(gps));
+      console.log("[exifr] gps fallback:", JSON.stringify(gps));
       if (gps?.latitude != null && gps?.longitude != null) {
         return { lat: gps.latitude, lng: gps.longitude };
       }
@@ -866,6 +924,26 @@ function UploadPageInner() {
             <p className="step-label">Step 2 of 5</p>
             <h1 className="step-title">Which course?</h1>
             <p className="step-sub">Search by name, city, or state.</p>
+
+            {/* Recent courses quick-picks */}
+            {recentCourses.length > 0 && !selectedCourse && gpsSuggestions.length === 0 && gpsStatus !== "found" && gpsStatus !== "device" && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Recent</p>
+                {recentCourses.map(course => {
+                  const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+                  return (
+                    <button key={course.id} className="course-item" onClick={() => { setSelectedCourse(course); setStep(3); }}>
+                      <div className="course-abbr">{abbr}</div>
+                      <div>
+                        <div className="course-name-text">{course.name}</div>
+                        <div className="course-location-text">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+                <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />
+              </div>
+            )}
 
             {/* GPS status + suggestions */}
             {mediaType === "VIDEO" && gpsStatus !== "idle" && (
