@@ -23,7 +23,7 @@ import fs from "fs";
 const require = createRequire(import.meta.url);
 const dotenv = require("dotenv");
 const { createClient } = require("@supabase/supabase-js");
-const { Client } = require("pg");
+const { Pool } = require("pg");
 const Anthropic = require("@anthropic-ai/sdk");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,7 +36,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const db = new Client({ connectionString: process.env.DATABASE_URL });
+const db = new Pool({ connectionString: process.env.DATABASE_URL, max: 2, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 });
 
 const anthropic = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -595,8 +595,6 @@ async function main() {
     process.exit(0);
   }
 
-  await db.connect();
-
   // Build course queue
   let queue = []; // [{id, name, city, state}] for popular/city/state modes, or just names for list/zip
 
@@ -623,8 +621,10 @@ async function main() {
     if (args.city) { sql += ` AND city ILIKE $${params.length + 1}`; params.push(`%${args.city}%`); }
     sql += ` ORDER BY name`;
     const { rows } = await db.query(sql, params);
-    queue.push(...rows);
-    console.log(`${args.city || ""}${args.state ? ` ${args.state}` : ""}: ${rows.length} courses need seeding`);
+    const label = `${args.city || ""}${args.state ? ` ${args.state}` : ""}`.trim();
+    console.log(`${label}: ${rows.length} courses need seeding`);
+    const stateLimit = args.limit || rows.length;
+    queue.push(...rows.slice(0, stateLimit));
   }
 
   for (const zip of args.zips) {
