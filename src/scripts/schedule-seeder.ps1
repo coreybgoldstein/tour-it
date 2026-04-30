@@ -14,5 +14,5 @@ $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hour
 
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "Tour It daily course seeder" -RunLevel Highest
 
-Write-Host "Task registered — runs daily at 7:00 AM"
+Write-Host "Task registered. Runs daily at 7:00 AM."
 Write-Host "To run now: Start-ScheduledTask -TaskName TourIt-CourseSeeder"
