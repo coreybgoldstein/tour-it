@@ -114,6 +114,7 @@ function UploadPageInner() {
   const [uploadPct, setUploadPct] = useState(0);
   const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const compressionPromiseRef = useRef<Promise<File> | null>(null);
   const compressedFileRef = useRef<File | null>(null);
 
@@ -165,6 +166,13 @@ function UploadPageInner() {
       }
     });
   }, []);
+
+  // Auto-focus search when GPS gives up so user can type immediately
+  useEffect(() => {
+    if (gpsStatus === "no_nearby" || gpsStatus === "no_gps") {
+      setTimeout(() => searchInputRef.current?.focus(), 100);
+    }
+  }, [gpsStatus]);
 
   // Tag user search
   useEffect(() => {
@@ -976,27 +984,7 @@ function UploadPageInner() {
                     {gpsSuggestions.length > 0 && <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "12px 0" }} />}
                   </>
                 )}
-                {/* GPS found but no course within range */}
-                {gpsStatus === "no_nearby" && (
-                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
-                    <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>
-                      📍 Location found but no nearby course in our database. Search by name below.
-                    </p>
-                    {gpsCoords && (
-                      <p style={{ fontFamily: "monospace", fontSize: 10, color: "rgba(255,255,255,0.2)", margin: "4px 0 0" }}>
-                        {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {/* No location at all */}
-                {gpsStatus === "no_gps" && (
-                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "10px 14px", marginBottom: 8 }}>
-                    <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", margin: 0 }}>
-                      Could not read your location. Allow location access when prompted, or search by name below.
-                    </p>
-                  </div>
-                )}
+                {/* GPS couldn't find a course — no blocking message, just let search take over */}
               </div>
             )}
 
@@ -1020,7 +1008,7 @@ function UploadPageInner() {
               </div>
             )}
 
-            <input className="search-input" placeholder="Search courses..." value={courseSearch} onChange={e => setCourseSearch(e.target.value)} />
+            <input ref={searchInputRef} className="search-input" placeholder="Search courses..." value={courseSearch} onChange={e => setCourseSearch(e.target.value)} />
             {courseLoading && (
               <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.25)", textAlign: "center", marginTop: 20 }}>Searching...</p>
             )}
