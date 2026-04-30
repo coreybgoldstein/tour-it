@@ -360,56 +360,109 @@ function UploadPageInner() {
   };
 
   // Extract GPS from video.
-  // Strategy: scan raw bytes for the QuickTime ©xyz atom (where iPhone writes recording GPS).
-  // iPhone MOV/HEVC files put moov at the END of the file, so we scan there first.
-  // Falls back to exifr EXIF GPS tags if ©xyz not found.
+  // Chain: (1) mdta keys/ilst — modern iOS (iPhone 8+, iOS 8+)
+  //        (2) ©xyz byte scan  — legacy iOS / some third-party cameras
+  //        (3) exifr EXIF GPS  — cameras that embed EXIF in MOV containers
   async function extractGPSFromVideo(file: File): Promise<{ lat: number; lng: number } | null> {
     const CHUNK = 4 * 1024 * 1024; // 4 MB
 
-    const scanForXYZ = (bytes: Uint8Array): { lat: number; lng: number } | null => {
-      for (let i = 0; i < bytes.length - 32; i++) {
-        // ©xyz bytes: 0xA9 'x' 'y' 'z'
-        if (bytes[i] !== 0xA9 || bytes[i+1] !== 0x78 || bytes[i+2] !== 0x79 || bytes[i+3] !== 0x7A) continue;
-        // After the 4-byte type: 2-byte value length + 2-byte language code, then the ISO 6709 string
-        const str = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(i + 8, i + 72));
-        const m = str.match(/([+-]\d{1,3}\.?\d*)([+-]\d{1,3}\.?\d*)/);
-        if (!m) continue;
-        const lat = parseFloat(m[1]);
-        const lng = parseFloat(m[2]);
-        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180 && (lat !== 0 || lng !== 0)) {
-          console.log("[©xyz] found:", lat, lng);
-          return { lat, lng };
-        }
-      }
-      return null;
-    };
-
-    try {
-      // End of file first (iPhone non-fast-start recordings: moov is at the end)
-      const endBuf = await file.slice(Math.max(0, file.size - CHUNK)).arrayBuffer();
-      const r1 = scanForXYZ(new Uint8Array(endBuf));
-      if (r1) return r1;
-
-      // Start of file (fast-start / web-optimized)
-      if (file.size > CHUNK) {
-        const startBuf = await file.slice(0, CHUNK).arrayBuffer();
-        const r2 = scanForXYZ(new Uint8Array(startBuf));
-        if (r2) return r2;
-      }
-    } catch (e) {
-      console.log("[©xyz] scan error:", e);
+    function parseISO6709(str: string | null | undefined): { lat: number; lng: number } | null {
+      if (!str) return null;
+      const m = str.match(/([+-]\d+\.?\d*)([+-]\d+\.?\d*)/);
+      if (!m) return null;
+      const lat = parseFloat(m[1]);
+      const lng = parseFloat(m[2]);
+      if (isNaN(lat) || isNaN(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+      return { lat, lng };
     }
 
-    // Fallback: EXIF GPS tags via exifr
+    // ── Strategy 1: mdta keys/ilst (modern iOS) ──────────────────────────────
+    try {
+      const tryMdta = (buf: ArrayBuffer, fileStart: number): Promise<{ lat: number; lng: number } | null> =>
+        new Promise((resolve) => {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const { createFile } = require("mp4box") as { createFile: () => any };
+          const mp4 = createFile();
+          let done = false;
+          const finish = (v: { lat: number; lng: number } | null) => { if (!done) { done = true; resolve(v); } };
+
+          mp4.onError = () => finish(null);
+          mp4.onReady = () => {
+            try {
+              const meta = mp4.moov?.meta;
+              if (!meta?.keys?.entries || !meta?.ilst?.entries) { finish(null); return; }
+              const keys = meta.keys.entries as any[];
+              const items = meta.ilst.entries as any[];
+              const idx = keys.findIndex(
+                (k: any) => k.namespace === "mdta" && k.value === "com.apple.quicktime.location.ISO6709"
+              );
+              if (idx === -1) { finish(null); return; }
+              const item = items[idx];
+              const iso = item?.data ? new TextDecoder().decode(item.data) : null;
+              finish(parseISO6709(iso));
+            } catch { finish(null); }
+          };
+
+          setTimeout(() => finish(null), 2000);
+          (buf as any).fileStart = fileStart;
+          mp4.appendBuffer(buf as any);
+          mp4.flush();
+        });
+
+      const endStart = Math.max(0, file.size - CHUNK);
+      const endBuf = await file.slice(endStart, file.size).arrayBuffer();
+      const r1 = await tryMdta(endBuf, endStart);
+      if (r1) { console.log("[GPS] mdta hit:", r1); return r1; }
+
+      // Also try start (fast-start / Android)
+      if (file.size > CHUNK) {
+        const startBuf = await file.slice(0, CHUNK).arrayBuffer();
+        const r2 = await tryMdta(startBuf, 0);
+        if (r2) { console.log("[GPS] mdta hit:", r2); return r2; }
+      }
+      console.log("[GPS] mdta miss, trying ©xyz");
+    } catch (e) {
+      console.log("[GPS] error:", e);
+    }
+
+    // ── Strategy 2: ©xyz byte scan (legacy iOS) ──────────────────────────────
+    try {
+      const scanForXYZ = (bytes: Uint8Array): { lat: number; lng: number } | null => {
+        for (let i = 0; i < bytes.length - 32; i++) {
+          if (bytes[i] !== 0xA9 || bytes[i+1] !== 0x78 || bytes[i+2] !== 0x79 || bytes[i+3] !== 0x7A) continue;
+          const str = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(i + 8, i + 72));
+          const r = parseISO6709(str);
+          if (r && (r.lat !== 0 || r.lng !== 0)) { console.log("[GPS] ©xyz hit:", r); return r; }
+        }
+        return null;
+      };
+
+      const endBuf2 = await file.slice(Math.max(0, file.size - CHUNK)).arrayBuffer();
+      const r3 = scanForXYZ(new Uint8Array(endBuf2));
+      if (r3) return r3;
+
+      if (file.size > CHUNK) {
+        const startBuf2 = await file.slice(0, CHUNK).arrayBuffer();
+        const r4 = scanForXYZ(new Uint8Array(startBuf2));
+        if (r4) return r4;
+      }
+      console.log("[GPS] ©xyz miss, trying exifr");
+    } catch (e) {
+      console.log("[GPS] error:", e);
+    }
+
+    // ── Strategy 3: exifr EXIF GPS ───────────────────────────────────────────
     try {
       const gps = await exifr.gps(file);
-      console.log("[exifr] gps fallback:", JSON.stringify(gps));
       if (gps?.latitude != null && gps?.longitude != null) {
+        console.log("[GPS] exifr hit:", { lat: gps.latitude, lng: gps.longitude });
         return { lat: gps.latitude, lng: gps.longitude };
       }
     } catch (e) {
-      console.log("[exifr] error:", e);
+      console.log("[GPS] error:", e);
     }
+
+    console.log("[GPS] all methods failed");
     return null;
   }
 
