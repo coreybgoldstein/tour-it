@@ -882,7 +882,7 @@ export default function CourseProfilePage() {
             <img
               src={course.logoUrl}
               alt={course.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }}
               onError={e => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }}
             />
           ) : null}
@@ -1678,7 +1678,7 @@ export default function CourseProfilePage() {
                         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)" }} />
                         {c.logoUrl && (
                           <div style={{ position: "absolute", top: 7, right: 7, width: 28, height: 18, borderRadius: 5, overflow: "hidden" }}>
-                            <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                           </div>
                         )}
                       </div>

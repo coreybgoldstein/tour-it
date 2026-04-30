@@ -712,7 +712,7 @@ function UploadPageInner() {
             onClick={() => router.push(`/courses/${selectedCourse?.id}`)}
             style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 20px", marginBottom: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
             {selectedCourse?.logoUrl ? (
-              <img src={selectedCourse.logoUrl} alt="" style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover" }} />
+              <img src={selectedCourse.logoUrl} alt="" style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover", backgroundColor: "#fff" }} />
             ) : (
               <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
                 {selectedCourse?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}
@@ -1090,7 +1090,7 @@ function UploadPageInner() {
             )}
             <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px" }}>
               {selectedCourse.logoUrl ? (
-                <img src={selectedCourse.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)" }} />
+                <img src={selectedCourse.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)", backgroundColor: "#fff" }} />
               ) : (
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>
                   {selectedCourse.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}

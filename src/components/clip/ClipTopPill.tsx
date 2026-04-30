@@ -65,7 +65,7 @@ export function ClipTopPill({
       >
         <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {courseLogoUrl
-            ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
             : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#1a9e42" }}>{abbr}</span>
           }
         </div>

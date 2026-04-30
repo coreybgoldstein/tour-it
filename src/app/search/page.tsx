@@ -472,7 +472,7 @@ function SearchPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
+                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -499,7 +499,7 @@ function SearchPageInner() {
                 return (
                   <div key={course.id} className="course-row" style={{ position: "relative" }} onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
+                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -526,7 +526,7 @@ function SearchPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className="course-badge has-clips" style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} /> : abbr}
+                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
