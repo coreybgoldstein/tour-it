@@ -15,6 +15,8 @@ type Course = {
   city: string;
   state: string;
   holeCount: number;
+  coverImageUrl?: string | null;
+  logoUrl?: string | null;
 };
 
 const TEE_COLORS = ["Black", "Blue", "White", "Red", "Gold", "Green"];
@@ -134,7 +136,7 @@ function UploadPageInner() {
         // Load recent courses for quick-pick on step 2
         supabase
           .from("Upload")
-          .select("courseId, Course:courseId(id, name, city, state, holeCount)")
+          .select("courseId, Course:courseId(id, name, city, state, holeCount, coverImageUrl, logoUrl)")
           .eq("userId", data.user.id)
           .order("createdAt", { ascending: false })
           .limit(30)
@@ -153,7 +155,7 @@ function UploadPageInner() {
         if (preselectedCourseId) {
           const { data: course } = await supabase
             .from("Course")
-            .select("id, name, city, state, holeCount")
+            .select("id, name, city, state, holeCount, coverImageUrl, logoUrl")
             .eq("id", preselectedCourseId)
             .single();
           if (course) setSelectedCourse(course);
@@ -198,7 +200,7 @@ function UploadPageInner() {
       const supabase = createClient();
       const { data } = await supabase
         .from("Course")
-        .select("id, name, city, state, holeCount")
+        .select("id, name, city, state, holeCount, coverImageUrl, logoUrl")
         .or(`name.ilike.%${q}%,city.ilike.%${q}%,state.ilike.%${q}%`)
         .order("uploadCount", { ascending: false })
         .limit(20);
@@ -258,7 +260,7 @@ function UploadPageInner() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("Course")
-          .select("id, name, city, state, holeCount, latitude, longitude")
+          .select("id, name, city, state, holeCount, coverImageUrl, logoUrl, latitude, longitude")
           .gte("latitude", coords.lat - 0.1)
           .lte("latitude", coords.lat + 0.1)
           .gte("longitude", coords.lng - 0.1)
@@ -1066,12 +1068,36 @@ function UploadPageInner() {
           </div>
         )}
 
+        {/* Course banner — shown on steps 3–5 */}
+        {step >= 3 && selectedCourse && (
+          <div style={{ marginBottom: 20, borderRadius: 16, overflow: "hidden", position: "relative", minHeight: 72, background: selectedCourse.coverImageUrl ? "transparent" : "rgba(77,168,98,0.08)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            {selectedCourse.coverImageUrl && (
+              <img src={selectedCourse.coverImageUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35 }} />
+            )}
+            <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px" }}>
+              {selectedCourse.logoUrl ? (
+                <img src={selectedCourse.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)" }} />
+              ) : (
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>
+                  {selectedCourse.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{selectedCourse.name}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)" }}>{[selectedCourse.city, selectedCourse.state].filter(Boolean).join(", ")}</div>
+              </div>
+              <button onClick={() => { setStep(2); setGpsStatus("idle"); setGpsSuggestions([]); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 8, padding: "5px 10px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", flexShrink: 0, whiteSpace: "nowrap" }}>
+                Change
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Step 3 — Format + Hole */}
         {step === 3 && selectedCourse && (
           <div className="anim">
             <p className="step-label">Step 3 of 5</p>
             <h1 className="step-title">What are you posting?</h1>
-            <p className="step-sub">{selectedCourse.name}</p>
 
             {/* Format grid */}
             {!contentFormat && (
