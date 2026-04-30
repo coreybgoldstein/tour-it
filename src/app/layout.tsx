@@ -25,24 +25,24 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Tour It — Scout Before You Play",
-  description: "Preview any golf course, one hole at a time. Real videos and tips from golfers who've already played it.",
+  description: "Scout any golf course before you play. Real hole-by-hole clips from golfers who've been there.",
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",
   },
   openGraph: {
     title: "Tour It — Scout Before You Play",
-    description: "Preview any golf course, one hole at a time. Real videos and tips from golfers who've already played it.",
+    description: "Scout any golf course before you play. Real hole-by-hole clips from golfers who've been there.",
     url: "https://touritgolf.com",
     siteName: "Tour It",
     type: "website",
-    images: [{ url: "https://touritgolf.com/tour-it-logo-new.png", width: 600, height: 300, alt: "Tour It" }],
+    images: [{ url: "https://touritgolf.com/og-image.png", width: 780, height: 370, alt: "Tour It — Scout Before You Play" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Tour It — Scout Before You Play",
-    description: "Preview any golf course, one hole at a time. Real videos and tips from golfers who've already played it.",
-    images: ["https://touritgolf.com/tour-it-logo-new.png"],
+    description: "Scout any golf course before you play. Real hole-by-hole clips from golfers who've been there.",
+    images: ["https://touritgolf.com/og-image.png"],
   },
 };
 
