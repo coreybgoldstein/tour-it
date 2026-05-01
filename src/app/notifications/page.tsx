@@ -114,7 +114,7 @@ export default function NotificationsPage() {
     if (!userId || acting) return;
     setActing(notifId);
     const supabase = createClient();
-    const { count } = await supabase.from("UploadTag").update({ approved: approve }).eq("userId", userId).eq("uploadId", uploadId).select("*", { count: "exact", head: true });
+    const { count } = await supabase.from("UploadTag").update({ approved: approve }, { count: "exact" }).eq("userId", userId).eq("uploadId", uploadId);
     if ((count ?? 0) === 0) {
       setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: "denied" } : n));
     } else {
