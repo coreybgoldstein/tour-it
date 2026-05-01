@@ -99,23 +99,7 @@ export default function AboutPage() {
       {/* Reading column */}
       <div style={{ maxWidth: 640, margin: "0 auto", padding: isDesktop ? "44px 32px 0" : "32px 24px 0" }}>
 
-        {/* Opening manifesto */}
-        <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
-          Golf is better when you know what&apos;s coming. The local member who&apos;s played the course a thousand times. The buddy who tells you to take one less club into 14. The regular who knows exactly where the green falls off. That kind of knowledge has always lived in the conversation between players — passed around the cart, shared over a beer after the round, dropped casually on the range.
-        </p>
-        <p style={{ fontSize: isDesktop ? 18 : 17, lineHeight: 1.7, color: "#fff", fontWeight: 600, marginBottom: 22 }}>
-          Tour It is where that conversation lives now.
-        </p>
-        <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
-          Search any course. Open any hole. See what real golfers saw — clips of the tee shot, the approach, the green, with notes on wind, lines, and what to know before you play. The kind of intel you&apos;d get from a buddy who played there last week, except the buddy is the entire community, and the course is anywhere.
-        </p>
-        <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 0 }}>
-          We&apos;re what happens when you ask your buddy &ldquo;what club did you hit there?&rdquo; — except now you can ask anyone, about any hole, on any course. Scroll through tracks you&apos;ve never played. Fall down a rabbit hole on a course three states away. Screenshot something and text it to the group chat at 11pm. Build a trip with your crew, map out the courses, settle the debate. The best golf trips don&apos;t happen by accident. They happen because someone did their homework.
-        </p>
-
-        <SectionDivider />
-
-        {/* Why I built Tour It — founder voice */}
+        {/* Why I built Tour It — founder voice, leads the page */}
         <div style={{
           background: "rgba(26,158,66,0.04)",
           border: "1px solid rgba(77,168,98,0.1)",
@@ -139,7 +123,6 @@ export default function AboutPage() {
           <p style={{ fontSize: isDesktop ? 16 : 15, lineHeight: 1.78, color: "rgba(255,255,255,0.72)", marginBottom: 28 }}>
             But there was always a gap. Flyovers don&apos;t tell you where the trouble is. Instagram clips are scattered — you stumble onto something good, but half the time you don&apos;t even know what hole you&apos;re looking at, let alone the line or the wind. I kept thinking —
           </p>
-          {/* Pull quote — the internal thought */}
           <blockquote style={{
             margin: "0 0 28px",
             padding: isDesktop ? "0 0 0 24px" : "0 0 0 18px",
@@ -166,6 +149,22 @@ export default function AboutPage() {
             Welcome to the Tour It community.
           </p>
         </div>
+
+        <SectionDivider />
+
+        {/* Manifesto */}
+        <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
+          Golf is better when you know what&apos;s coming. The local member who&apos;s played the course a thousand times. The buddy who tells you to take one less club into 14. The regular who knows exactly where the green falls off. That kind of knowledge has always lived in the conversation between players — passed around the cart, shared over a beer after the round, dropped casually on the range.
+        </p>
+        <p style={{ fontSize: isDesktop ? 18 : 17, lineHeight: 1.7, color: "#fff", fontWeight: 600, marginBottom: 22 }}>
+          Tour It is where that conversation lives now.
+        </p>
+        <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
+          Search any course. Open any hole. See what real golfers saw — clips of the tee shot, the approach, the green, with notes on wind, lines, and what to know before you play. The kind of intel you&apos;d get from a buddy who played there last week, except the buddy is the entire community, and the course is anywhere.
+        </p>
+        <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 0 }}>
+          We&apos;re what happens when you ask your buddy &ldquo;what club did you hit there?&rdquo; — except now you can ask anyone, about any hole, on any course. Scroll through tracks you&apos;ve never played. Fall down a rabbit hole on a course three states away. Screenshot something and text it to the group chat at 11pm. Build a trip with your crew, map out the courses, settle the debate. The best golf trips don&apos;t happen by accident. They happen because someone did their homework.
+        </p>
 
         <SectionDivider />
 
