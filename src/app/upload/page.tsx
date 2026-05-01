@@ -673,6 +673,31 @@ function UploadPageInner() {
         taggedUsers.forEach(u => sendPushToUser(u.id, "You were tagged in a clip", `${taggerName} tagged you at ${selectedCourse.name} — Hole ${selectedHole}`, `/courses/${selectedCourse.id}`));
       }
 
+      // Notify followers of new clip (fire-and-forget)
+      ;(async () => {
+        const { data: followers } = await supabase.from("Follow").select("followerId").eq("followingId", user.id).eq("status", "ACTIVE");
+        if (!followers?.length) return;
+        const { data: uploaderProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
+        const uploaderName = uploaderProfile?.displayName || uploaderProfile?.username || "Someone you follow";
+        const clipLink = selectedHole ? `/courses/${selectedCourse.id}/holes/${selectedHole}?clip=${uploadId}` : `/courses/${selectedCourse.id}`;
+        const holeLabel = selectedHole ? ` — Hole ${selectedHole}` : "";
+        const now = new Date().toISOString();
+        await supabase.from("Notification").insert(
+          followers.map((f: { followerId: string }) => ({
+            id: crypto.randomUUID(),
+            userId: f.followerId,
+            type: "new_clip",
+            title: "New clip",
+            body: `${uploaderName} posted a clip at ${selectedCourse.name}${holeLabel}`,
+            linkUrl: clipLink,
+            read: false,
+            createdAt: now,
+            updatedAt: now,
+          }))
+        );
+        followers.forEach((f: { followerId: string }) => sendPushToUser(f.followerId, "New clip", `${uploaderName} posted at ${selectedCourse.name}${holeLabel}`, clipLink));
+      })();
+
       setSubmitted(true);
     } catch (err: any) {
       setError(err?.message || "Something went wrong. Please try again.");
