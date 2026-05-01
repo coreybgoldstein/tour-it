@@ -298,6 +298,8 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         // Increment counters
         const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
         await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
+        const { data: uRow } = await supabase.from("User").select("uploadCount").eq("id", user.id).single();
+        await supabase.from("User").update({ uploadCount: (uRow?.uploadCount || 0) + 1 }).eq("id", user.id);
         if (holeId) {
           const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
           await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);

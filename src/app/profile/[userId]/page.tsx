@@ -13,6 +13,7 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import ProgressionTracker from "@/components/ProgressionTracker";
+import { rateLimit } from "@/lib/rateLimit";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -78,6 +79,11 @@ function ProfileFeedCard({
       )}
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.65) 100%)", pointerEvents: "none", zIndex: 5 }} />
+
+      {/* Close button */}
+      <button onClick={onClose} style={{ position: "absolute", top: 52, left: 16, zIndex: 30, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
 
       {videoPaused && (
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 15, pointerEvents: "none", opacity: 0.7 }}>
@@ -236,6 +242,8 @@ export default function ProfilePage() {
   // Owner: edit profile
   const [showEdit, setShowEdit] = useState(false);
   const [editHandicap, setEditHandicap] = useState("");
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editBio, setEditBio] = useState("");
   const [editHomeCourseSearch, setEditHomeCourseSearch] = useState("");
   const [editHomeCourseResults, setEditHomeCourseResults] = useState<HomeCourse[]>([]);
   const [editHomeCourseLoading, setEditHomeCourseLoading] = useState(false);
@@ -326,7 +334,11 @@ export default function ProfilePage() {
       const { data: profileData, error } = await supabase.from("User").select("id, username, displayName, avatarUrl, handicapIndex, homeCourseId, uploadCount, bio").eq("id", userId).single();
       if (error || !profileData) { setNotFound(true); setLoading(false); return; }
       setProfile(profileData);
-      if (owner) setEditHandicap(profileData.handicapIndex?.toString() || "");
+      if (owner) {
+        setEditHandicap(profileData.handicapIndex?.toString() || "");
+        setEditDisplayName(profileData.displayName || "");
+        setEditBio(profileData.bio || "");
+      }
 
       const [{ data: rawUploads }, { count: followers }, { count: following }] = await Promise.all([
         owner
@@ -382,18 +394,18 @@ export default function ProfilePage() {
             }));
           }
         }
-        // Assign avatar if missing
-        if (!profileData.avatarUrl) {
-          const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos";
-          const DEFAULT_AVATARS = ["01-coffee","02-burger-messy","03-golf-glove","04-sunscreen","05-rangefinder","06-hotdog","07-protein-bar","08-driver","09-cheeseburger","11-hamburger","12-water-jug","13-bloody-mary","14-cocktail","15-beer-can"].map(n => `${SUPABASE_STORAGE}/default-avatars/${n}.png`);
-          const avatarUrl = DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)];
-          await supabase.from("User").update({ avatarUrl }).eq("id", authUser.id);
-          setProfile(p => p ? { ...p, avatarUrl } : p);
-        }
       }
 
       const { data: roundsData } = await supabase.from("Round").select("id, courseId, date, totalScore, fairwaysHit, putts, notes, createdAt").eq("userId", userId as string).order("date", { ascending: false });
       setRounds(roundsData || []);
+      if (roundsData && roundsData.length > 0) {
+        const knownIds = new Set(userUploads.map((u: any) => u.courseId));
+        const missing = [...new Set((roundsData as any[]).map(r => r.courseId).filter((id: string) => !knownIds.has(id)))];
+        if (missing.length > 0) {
+          const { data: roundCourses } = await supabase.from("Course").select("id, name, city, state, logoUrl").in("id", missing);
+          if (roundCourses?.length) setCoursesPlayed(prev => { const seen = new Set(prev.map(c => c.id)); return [...prev, ...(roundCourses as any[]).filter(c => !seen.has(c.id))]; });
+        }
+      }
 
       const { data: badgesData } = await supabase.from("UserBadge").select("id, earnedAt, badge:badgeId(slug, name, description, category, rarity)").eq("userId", userId as string).order("earnedAt", { ascending: false });
       setEarnedBadges((badgesData || []) as unknown as EarnedBadge[]);
@@ -510,8 +522,9 @@ export default function ProfilePage() {
     if (!profile || !isOwner) return;
     setSaving(true);
     const hcp = editHandicap ? parseFloat(editHandicap) : null;
-    await createClient().from("User").update({ handicapIndex: hcp, homeCourseId: homeCourse?.id ?? null, updatedAt: new Date().toISOString() }).eq("id", profile.id);
-    setProfile(p => p ? { ...p, handicapIndex: hcp } : p);
+    const dn = editDisplayName.trim() || profile.displayName;
+    await createClient().from("User").update({ handicapIndex: isNaN(hcp!) ? null : hcp, displayName: dn, bio: editBio.trim() || null, homeCourseId: homeCourse?.id ?? null, updatedAt: new Date().toISOString() }).eq("id", profile.id);
+    setProfile(p => p ? { ...p, handicapIndex: isNaN(hcp!) ? null : hcp, displayName: dn, bio: editBio.trim() || null } : p);
     setSaving(false); setShowEdit(false); setEditHomeCourseSearch(""); setEditHomeCourseResults([]);
   }
 
@@ -782,7 +795,7 @@ export default function ProfilePage() {
       {/* Owner: edit profile sheet */}
       {isOwner && showEdit && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 150 }} onClick={() => setShowEdit(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px", maxHeight: "56vh", overflowY: "auto" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px", maxHeight: "80vh", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 18px" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14 }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "#1a3320", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>
@@ -796,6 +809,16 @@ export default function ProfilePage() {
               </button>
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Display name</label>
+              <input value={editDisplayName} onChange={e => setEditDisplayName(e.target.value)} placeholder="Your name or nickname"
+                style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Bio</label>
+              <textarea value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Tell the golf community about yourself..." rows={3}
+                style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif", resize: "none", boxSizing: "border-box" }} />
+            </div>
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Handicap index</label>
               <input type="number" step="0.1" min="-10" max="54" placeholder="e.g. 8.4" value={editHandicap} onChange={e => setEditHandicap(e.target.value)}
@@ -912,6 +935,7 @@ export default function ProfilePage() {
                   disabled={!reportReason || submittingReport}
                   onClick={async () => {
                     if (!reportReason || !currentUserId) return;
+                    if (!rateLimit(`report:${currentUserId}`, 5, 60000)) { setReportDone(true); setTimeout(() => { setReportClipId(null); setReportReason(null); setReportDone(false); }, 1800); return; }
                     setSubmittingReport(true);
                     await createClient().from("ModerationReport").insert({ id: crypto.randomUUID(), reportedById: currentUserId, uploadId: reportClipId, reason: reportReason, createdAt: new Date().toISOString() });
                     setSubmittingReport(false);
@@ -1059,7 +1083,9 @@ export default function ProfilePage() {
                   style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}>
                   {upload.mediaType === "PHOTO"
                     ? <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <img src={upload.cloudflareVideoId ? `https://videodelivery.net/${upload.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400` : upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : upload.cloudflareVideoId
+                      ? <img src={`https://videodelivery.net/${upload.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400`} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg></div>
                   }
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
                   <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>

@@ -126,7 +126,7 @@ export default function OnboardingProfilePage() {
     setSaving(true);
     const supabase = createClient();
     let hval: number | null = null;
-    if (useCustom && handicapCustom !== "") hval = parseFloat(handicapCustom);
+    if (useCustom && handicapCustom !== "") { const parsed = parseFloat(handicapCustom); if (!isNaN(parsed)) hval = parsed; }
     else if (handicapBucket !== null) hval = handicapBucket;
     if (hval !== null) await supabase.from("User").update({ handicapIndex: hval }).eq("id", userId);
     setSaving(false);

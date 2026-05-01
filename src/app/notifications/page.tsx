@@ -169,7 +169,7 @@ export default function NotificationsPage() {
               style={{ background: n.read ? "transparent" : "rgba(77,168,98,0.06)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "16px 20px" }}
             >
               <div
-                onClick={() => n.type !== "clip_tag" && n.linkUrl && router.push(n.linkUrl)}
+                onClick={() => { if (n.type !== "clip_tag" && n.linkUrl) { const url = n.linkUrl; if (url.startsWith("/")) router.push(url); } }}
                 style={{ display: "flex", alignItems: "flex-start", gap: 14, cursor: n.type !== "clip_tag" && n.linkUrl ? "pointer" : "default" }}
               >
                 {/* Type icon */}
@@ -211,7 +211,7 @@ export default function NotificationsPage() {
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>Added to your profile</span>
-                          <button onClick={() => n.linkUrl && router.push(n.linkUrl)} style={{ marginLeft: "auto", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "underline" }}>View clip</button>
+                          <button onClick={() => { if (n.linkUrl?.startsWith("/")) router.push(n.linkUrl); }} style={{ marginLeft: "auto", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "underline" }}>View clip</button>
                         </div>
                       ) : (
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>Declined</span>

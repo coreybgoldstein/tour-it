@@ -636,6 +636,8 @@ function UploadPageInner() {
       // Increment upload counters
       const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
       await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
+      const { data: uRow } = await supabase.from("User").select("uploadCount").eq("id", user.id).single();
+      await supabase.from("User").update({ uploadCount: (uRow?.uploadCount || 0) + 1 }).eq("id", user.id);
       let hRow: { uploadCount: number } | null = null;
       if (holeId) {
         const { data: holeRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
