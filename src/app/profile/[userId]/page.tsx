@@ -417,10 +417,10 @@ export default function ProfilePage() {
 
   // Comment load
   useEffect(() => {
-    const anyOpen = menuOpen || feedOpen || showEdit || intelOpen;
+    const anyOpen = menuOpen || feedOpen || showEdit;
     document.body.style.overflow = anyOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [menuOpen, feedOpen, showEdit, intelOpen]);
+  }, [menuOpen, feedOpen, showEdit]);
 
   useEffect(() => {
     if (!commentUploadId) { setCommentItems([]); return; }
