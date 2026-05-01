@@ -75,6 +75,15 @@ export const RANK_TIERS = [
 
 export type RankTierKey = typeof RANK_TIERS[number]["rank"];
 
+export const RANK_COLORS: Record<RankTierKey, string> = {
+  CADDIE:     "rgba(190,190,190,0.75)",
+  LOCAL:      "#4da862",
+  MARSHAL:    "#60a5fa",
+  COURSE_PRO: "#a78bfa",
+  TOUR_PRO:   "#f97316",
+  LEGEND:     "#fbbf24",
+};
+
 // Level curve: points required to reach level n
 // floor(50 * (n - 1)^2.3) — cheap early levels, expensive late ones
 export function pointsForLevel(n: number): number {
