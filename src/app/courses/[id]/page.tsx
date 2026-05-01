@@ -466,6 +466,7 @@ export default function CourseProfilePage() {
         const clipLink = uploadData.holeNumber ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}` : `/courses/${uploadData.courseId}`;
         await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, read: false, createdAt: notifNow, updatedAt: notifNow });
         sendPushToUser(uploadData.userId, "New comment", `${commenterName} commented on your clip`, clipLink);
+        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
       }
       setCommentItems(prev => [...prev, {
         id: newId, body: commentText.trim(), createdAt: new Date().toISOString(),
