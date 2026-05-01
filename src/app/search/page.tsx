@@ -77,6 +77,7 @@ function SearchPageInner() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
+  const [topGolfers, setTopGolfers] = useState<Person[]>([]);
   const peopleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeFilterCount = [filterState, filterCity, filterZip, filterHoles !== "all", filterCourseType].filter(Boolean).length;
@@ -131,6 +132,8 @@ function SearchPageInner() {
       const { data } = await supabase.from("Follow").select("followingId").eq("followerId", user.id).eq("status", "ACTIVE");
       setFollowingIds(new Set((data || []).map((r: any) => r.followingId)));
     });
+    supabase.from("User").select("id, username, displayName, avatarUrl, uploadCount").gt("uploadCount", 0).order("uploadCount", { ascending: false }).limit(12)
+      .then(({ data }) => { if (data) setTopGolfers(data as Person[]); });
   }, []);
 
   // People search
@@ -428,7 +431,41 @@ function SearchPageInner() {
               <div className="empty-hint">No golfers found for &ldquo;{query}&rdquo;</div>
             )}
             {!peopleLoading && !query.trim() && (
-              <div className="empty-hint">Search by name or @username</div>
+              <>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", padding: "4px 0 12px" }}>Top Golfers</div>
+                {topGolfers.map(person => (
+                  <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div onClick={() => router.push(`/profile/${person.id}`)} style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                      {person.avatarUrl ? <img src={person.avatarUrl} alt={person.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>{(person.displayName || person.username)[0].toUpperCase()}</span>}
+                    </div>
+                    <div onClick={() => router.push(`/profile/${person.id}`)} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{person.displayName || person.username}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>@{person.username} · {person.uploadCount} clip{person.uploadCount !== 1 ? "s" : ""}</div>
+                    </div>
+                    {person.id !== currentUserId && (
+                      <button
+                        onClick={async () => {
+                          if (!currentUserId || followingInProgress.has(person.id)) return;
+                          setFollowingInProgress(s => new Set(s).add(person.id));
+                          const supabase = createClient();
+                          const isFollowing = followingIds.has(person.id);
+                          if (isFollowing) {
+                            await supabase.from("Follow").delete().eq("followerId", currentUserId).eq("followingId", person.id);
+                            setFollowingIds(s => { const n = new Set(s); n.delete(person.id); return n; });
+                          } else {
+                            await supabase.from("Follow").upsert({ followerId: currentUserId, followingId: person.id, status: "ACTIVE", createdAt: new Date().toISOString() }, { onConflict: "followerId,followingId" });
+                            setFollowingIds(s => new Set(s).add(person.id));
+                          }
+                          setFollowingInProgress(s => { const n = new Set(s); n.delete(person.id); return n; });
+                        }}
+                        style={{ flexShrink: 0, background: followingIds.has(person.id) ? "rgba(255,255,255,0.07)" : "rgba(77,168,98,0.15)", border: `1px solid ${followingIds.has(person.id) ? "rgba(255,255,255,0.12)" : "rgba(77,168,98,0.4)"}`, borderRadius: 20, padding: "6px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: followingIds.has(person.id) ? "rgba(255,255,255,0.5)" : "#4da862", cursor: currentUserId ? "pointer" : "default", opacity: followingInProgress.has(person.id) ? 0.5 : 1 }}
+                      >
+                        {followingIds.has(person.id) ? "Following" : "Follow"}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </>
             )}
             {!peopleLoading && peopleResults.map(person => (
               <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
