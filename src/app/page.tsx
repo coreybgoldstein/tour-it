@@ -1255,8 +1255,12 @@ export default function Home() {
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", marginBottom: 10 }}>
               You&apos;re in. Welcome to Tour It.
             </div>
+            <div style={{ background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 16 }}>⚡</span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.7)" }}>You earned <strong style={{ color: "#4da862" }}>50 points</strong> for signing up. Keep going.</span>
+            </div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginBottom: 28 }}>
-              Every course on here gets better when golfers who&apos;ve played it contribute. Start by finding your home course — add a clip, drop some intel, and make it useful for whoever&apos;s playing next.
+              Every course on here gets better when golfers who&apos;ve played it contribute. Start by uploading a clip from a course you know.
             </div>
             <button
               onClick={() => { setShowWelcome(false); router.push("/search"); }}
