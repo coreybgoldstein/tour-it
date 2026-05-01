@@ -103,7 +103,7 @@ export default function BottomNav() {
       onClick: () => router.push("/profile"),
       isProfile: true,
       icon: (active: boolean) => (
-        <div style={{ width: isDesktop ? 28 : 24, height: isDesktop ? 28 : 24, borderRadius: "50%", overflow: "hidden", border: `1.5px solid ${active ? "#4da862" : "rgba(255,255,255,0.4)"}`, background: "rgba(77,168,98,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: isDesktop ? 28 : 24, height: isDesktop ? 28 : 24, borderRadius: "50%", overflow: "hidden", border: `1.8px solid ${active ? "#4da862" : "rgba(255,255,255,0.85)"}`, background: "rgba(77,168,98,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {avatarUrl
             ? <img src={avatarUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
