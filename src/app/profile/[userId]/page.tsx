@@ -450,8 +450,14 @@ export default function ProfilePage() {
       await supabase.from("Follow").delete().eq("followerId", currentUserId).eq("followingId", userId);
       setIsFollowing(false); setFollowerCount(prev => Math.max(0, prev - 1));
     } else {
-      await supabase.from("Follow").insert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: userId, status: "ACTIVE", createdAt: new Date().toISOString() });
+      await supabase.from("Follow").insert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: userId as string, status: "ACTIVE", createdAt: new Date().toISOString() });
       setIsFollowing(true); setFollowerCount(prev => prev + 1);
+      // Notify the person being followed
+      const { data: follower } = await supabase.from("User").select("displayName, username").eq("id", currentUserId).single();
+      const followerName = follower?.displayName || follower?.username || "Someone";
+      const now = new Date().toISOString();
+      await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: userId as string, type: "follow", title: "New follower", body: `${followerName} started following you`, linkUrl: `/profile/${currentUserId}`, read: false, createdAt: now, updatedAt: now });
+      fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, title: "New follower", body: `${followerName} started following you`, url: `/profile/${currentUserId}` }) }).catch(() => {});
     }
     setFollowLoading(false);
   }

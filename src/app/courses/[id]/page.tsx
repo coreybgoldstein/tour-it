@@ -455,8 +455,18 @@ export default function CourseProfilePage() {
       createdAt: now, updatedAt: now,
     });
     if (!error) {
-      const { data: uploadData } = await supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single();
+      const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId, holeNumber, courseId").eq("id", commentUploadId).single();
       await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
+
+      // Notify clip owner (skip if commenting on own clip)
+      if (uploadData?.userId && uploadData.userId !== user.id) {
+        const { data: commenterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
+        const commenterName = commenterProfile?.displayName || commenterProfile?.username || "Someone";
+        const notifNow = new Date().toISOString();
+        const clipLink = uploadData.holeNumber ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}` : `/courses/${uploadData.courseId}`;
+        await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, read: false, createdAt: notifNow, updatedAt: notifNow });
+        sendPushToUser(uploadData.userId, "New comment", `${commenterName} commented on your clip`, clipLink);
+      }
       setCommentItems(prev => [...prev, {
         id: newId, body: commentText.trim(), createdAt: new Date().toISOString(),
         username: user.user_metadata?.username || "you", avatarUrl: null,
