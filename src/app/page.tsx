@@ -13,6 +13,7 @@ import EditClipSheet from "@/components/EditClipSheet";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
+import { rateLimit } from "@/lib/rateLimit";
 
 type TrendingCourse = {
   id: string;
@@ -26,7 +27,11 @@ type TrendingCourse = {
 };
 
 
-const SHOT_LABEL: Record<string, string> = { DRIVE: "Drive", APPROACH: "Approach Shot", CHIP: "Chip", PUTT: "Putt", LAYUP: "Layup", FULL_SWING: "Full Swing" };
+const SHOT_LABEL: Record<string, string> = {
+  TEE_SHOT: "Tee Shot", DRIVE: "Tee Shot", APPROACH: "Approach", CHIP: "Chip",
+  PITCH: "Pitch", PUTT: "Putt", BUNKER: "Bunker", LAY_UP: "Layup", LAYUP: "Layup",
+  FULL_HOLE: "Full Hole", FULL_SWING: "Full Swing",
+};
 
 type FeedClip = {
   id: string;
@@ -672,7 +677,18 @@ export default function Home() {
         .sort((a, b) => { if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1; if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1; return 0; })
         .map(clip => ({ type: "clip", clip }));
 
-      setFeedItems([...seriesItems, ...singleItems]);
+      // Interleave: insert one series after every 4 single clips so a long series doesn't dominate
+      const interleaved: FeedItem[] = [];
+      let si = 0;
+      seriesItems.forEach((series, si2) => {
+        const start = si2 * 4;
+        const end = Math.min(start + 4, singleItems.length);
+        for (let j = start; j < end; j++) interleaved.push(singleItems[j]);
+        si = end;
+        interleaved.push(series);
+      });
+      while (si < singleItems.length) interleaved.push(singleItems[si++]);
+      setFeedItems(interleaved);
       feedCursorRef.current = rawUploads[rawUploads.length - 1].createdAt;
       hasMoreRef.current = rawUploads.length >= 30;
       setLoading(false);
@@ -1363,6 +1379,7 @@ export default function Home() {
                   disabled={!reportReason || submittingReport}
                   onClick={async () => {
                     if (!reportReason || !user) return;
+                    if (!rateLimit(`report:${user.id}`, 5, 60000)) { setReportDone(true); setTimeout(() => { setReportClipId(null); setReportReason(null); setReportDone(false); }, 1800); return; }
                     setSubmittingReport(true);
                     await createClient().from("ModerationReport").insert({ id: crypto.randomUUID(), reportedById: user.id, uploadId: reportClipId, reason: reportReason, createdAt: new Date().toISOString() });
                     setSubmittingReport(false);
