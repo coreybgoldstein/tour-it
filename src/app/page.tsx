@@ -603,15 +603,6 @@ export default function Home() {
       .limit(10)
       .then(({ data }) => { if (data) setTrendingCourses(data); });
 
-    supabase
-      .from("User")
-      .select("id, username, displayName, avatarUrl, uploadCount")
-      .gt("uploadCount", 0)
-      .order("uploadCount", { ascending: false })
-      .limit(10)
-      .then(({ data }) => { if (data) setTrendingGolfers(data); });
-
-
     async function loadFeed() {
       const { data: rawUploads } = await supabase
         .from("Upload")
