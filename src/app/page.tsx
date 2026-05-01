@@ -554,7 +554,6 @@ export default function Home() {
   const [user, setUser] = useState<any>(undefined); // undefined = auth not yet checked, null = confirmed logged out
   const [userProfile, setUserProfile] = useState<any>(null);
   const [trendingCourses, setTrendingCourses] = useState<TrendingCourse[]>([]);
-  const [trendingGolfers, setTrendingGolfers] = useState<{ id: string; username: string; displayName: string; avatarUrl: string | null; uploadCount: number }[]>([]);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [loading, setLoading] = useState(true);
@@ -1087,32 +1086,6 @@ export default function Home() {
               </div>
             );
           })()}
-
-          {/* Trending Golfers */}
-          {trendingGolfers.length > 0 && (
-            <div style={{ flexShrink: 0, marginTop: 10 }}>
-              <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>
-                Top Golfers
-              </div>
-              <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 20px 4px", scrollbarWidth: "none" }}>
-                {trendingGolfers.map(g => (
-                  <button key={g.id} onClick={() => router.push(`/profile/${g.id}`)}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "12px 10px", cursor: "pointer", flexShrink: 0, width: 84, minWidth: 84 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(26,158,66,0.15)", border: "1.5px solid rgba(26,158,66,0.25)", overflow: "hidden", flexShrink: 0 }}>
-                      {g.avatarUrl
-                        ? <img src={g.avatarUrl} alt={g.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                          </div>
-                      }
-                    </div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#fff", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%", maxWidth: 72 }}>{g.displayName || g.username}</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>{g.uploadCount} clip{g.uploadCount !== 1 ? "s" : ""}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Courses Near Me */}
           {locationStatus !== "denied" && (
