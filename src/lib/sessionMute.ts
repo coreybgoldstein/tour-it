@@ -1,5 +1,5 @@
 // Session-scoped mute state. Resets on page reload. Not persisted to localStorage or DB.
-let _muted = true;
+let _muted = false;
 
 export const sessionMute = {
   get: () => _muted,
