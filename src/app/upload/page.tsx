@@ -636,10 +636,29 @@ function UploadPageInner() {
       // Increment upload counters
       const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
       await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
+      let hRow: { uploadCount: number } | null = null;
       if (holeId) {
-        const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
+        const { data: holeRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
+        hRow = holeRow;
         await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);
       }
+
+      // Award contribution points + upsert CourseContribution (fire-and-forget)
+      ;(async () => {
+        const actions: string[] = ["upload_clip"];
+        if ((cRow?.uploadCount || 0) === 0) actions.push("upload_first_for_course");
+        if (holeId && (hRow?.uploadCount || 0) === 0) actions.push("upload_first_for_hole");
+        for (const action of actions) {
+          await fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, referenceId: uploadId }) }).catch(() => {});
+        }
+        const now = new Date().toISOString();
+        const { data: contrib } = await supabase.from("CourseContribution").select("id, uploadCount").eq("userId", user.id).eq("courseId", selectedCourse.id).maybeSingle();
+        if (contrib) {
+          await supabase.from("CourseContribution").update({ uploadCount: (contrib.uploadCount || 0) + 1, lastUploadAt: now, updatedAt: now }).eq("id", contrib.id);
+        } else {
+          await supabase.from("CourseContribution").insert({ id: crypto.randomUUID(), userId: user.id, courseId: selectedCourse.id, uploadCount: 1, firstUploadAt: now, lastUploadAt: now, createdAt: now, updatedAt: now });
+        }
+      })();
 
       // Tag notifications + UploadTag rows
       if (taggedUsers.length > 0) {

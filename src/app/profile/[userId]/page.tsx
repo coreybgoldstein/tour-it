@@ -435,8 +435,11 @@ export default function ProfilePage() {
     const supabase = createClient();
     const newId = crypto.randomUUID();
     await supabase.from("Comment").insert({ id: newId, userId: currentUserId, uploadId: commentUploadId, body: commentText.trim() });
-    const { data: uploadData } = await supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single();
+    const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId").eq("id", commentUploadId).single();
     await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
+    if (uploadData?.userId && uploadData.userId !== currentUserId) {
+      fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
+    }
     setCommentItems(prev => [...prev, { id: newId, body: commentText.trim(), createdAt: new Date().toISOString(), username: currentUserMeta?.username || "you", avatarUrl: currentUserMeta?.avatarUrl || null }]);
     setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: (u.commentCount || 0) + 1 } : u));
     setCommentText(""); setSubmittingComment(false);
@@ -458,6 +461,7 @@ export default function ProfilePage() {
       const now = new Date().toISOString();
       await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: userId as string, type: "follow", title: "New follower", body: `${followerName} started following you`, linkUrl: `/profile/${currentUserId}`, read: false, createdAt: now, updatedAt: now });
       fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, title: "New follower", body: `${followerName} started following you`, url: `/profile/${currentUserId}` }) }).catch(() => {});
+      fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "follow_received", recipientUserId: userId }) }).catch(() => {});
     }
     setFollowLoading(false);
   }

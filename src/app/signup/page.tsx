@@ -80,6 +80,8 @@ export default function SignUpPage() {
         setLoading(false);
         return;
       }
+
+      fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup" }) }).catch(() => {});
     }
 
     // Only proceed directly if email is already confirmed (handles confirmed re-signups)

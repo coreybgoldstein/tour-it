@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import {
   POINT_VALUES,
   ONE_TIME_ACTIONS,
@@ -25,7 +25,7 @@ export async function awardPoints({
   referenceId,
   metadata,
 }: AwardPointsOptions): Promise<{ totalPoints: number; level: number } | null> {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
   const points = POINT_VALUES[action];
 
   // Guard: skip one-time actions already awarded
