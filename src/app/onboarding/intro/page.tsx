@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const SLIDES = [
   {
@@ -55,6 +56,15 @@ export default function OnboardingIntroPage() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      setIsLoggedIn(!!data.user);
+    });
+  }, []);
+
+  const nextDestination = isLoggedIn === false ? "/signup" : "/onboarding/profile";
 
   function goTo(idx: number) {
     scrollRef.current?.children[idx]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
@@ -70,7 +80,7 @@ export default function OnboardingIntroPage() {
     if (activeIdx < SLIDES.length - 1) {
       goTo(activeIdx + 1);
     } else {
-      router.push("/onboarding/profile");
+      router.push(nextDestination);
     }
   }
 

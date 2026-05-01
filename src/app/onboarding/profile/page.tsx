@@ -73,10 +73,11 @@ export default function OnboardingProfilePage() {
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
     setCourseLoading(true);
     searchDebounce.current = setTimeout(async () => {
+      const safeCourseSearch = courseSearch.replace(/[(),]/g, "");
       const { data } = await createClient()
         .from("Course")
         .select("id, name, city, state")
-        .or(`name.ilike.%${courseSearch}%,city.ilike.%${courseSearch}%`)
+        .or(`name.ilike.%${safeCourseSearch}%,city.ilike.%${safeCourseSearch}%`)
         .order("uploadCount", { ascending: false })
         .limit(10);
       setCourseResults(data || []);
