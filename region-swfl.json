@@ -1,0 +1,656 @@
+[
+  {
+    "id": "7bc26609-e536-4ed2-9285-5863e15fa629",
+    "name": "River Hall Country Club",
+    "city": "Alva",
+    "state": "FL"
+  },
+  {
+    "id": "af0faf9f-1aaf-49f8-b970-094b7f02aac4",
+    "name": "Panther Run Golf Club",
+    "city": "Ave Maria",
+    "state": "FL"
+  },
+  {
+    "id": "53657d42-fa85-4740-be58-5e98ca646645",
+    "name": "Bonita Fairways Golf Course",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "39f5ae3b-7431-4975-801b-647c9422f35b",
+    "name": "Shadow Wood Country Club - North Course",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "a2019335-2477-4b0d-803a-49ccefb217bf",
+    "name": "Bonita Bay Club West",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "9cc29e02-1606-4ad5-a7e2-906d8f6991f3",
+    "name": "Congo River Golf",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "1a8698d7-c4e3-4f4e-9460-07d1e53aaf03",
+    "name": "Copperleaf Golf Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "daa17e53-eb0a-455e-b381-1390aab582c9",
+    "name": "The Colony Golf & Country Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "93d05911-3fe3-4ae0-b3c7-60191d8042d5",
+    "name": "Raptor Bay Golf Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "e9687985-438d-4e25-86a8-5d4e1e75b896",
+    "name": "Shadow Wood Country Club - South Course",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "3e9b5fe1-7373-4e16-870a-12e61df7ef14",
+    "name": "Spring Run Golf Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "6f900130-f7c7-4503-ac67-b1fe8c5c11d7",
+    "name": "Highland Woods Golf & Country Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "dc7b145e-5588-4520-8cb3-c80f0f8d9c0f",
+    "name": "Coral Oaks Golf Course",
+    "city": "Cape Coral",
+    "state": "FL"
+  },
+  {
+    "id": "4bc690f3-c272-469e-af41-ed9816d5588d",
+    "name": "Esplanade Golf",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "5763e903-03c6-4288-9ca4-6200da500351",
+    "name": "Country Club of Naples",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "03360211-c0a4-4722-8f8b-45c081e469dd",
+    "name": "Vineyards Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "91802951-6d2e-4590-9d1a-7002ef8eba80",
+    "name": "Cedar Hammock Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "e73fa0b7-0447-4cfe-af7c-1fc89654460a",
+    "name": "Bentley Village Golf Course",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "f6ff4a04-2fe5-40a5-afca-f006a778a418",
+    "name": "Eagle Creek Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "b9efdda2-4533-43c5-9975-638bb6377847",
+    "name": "Naples Lakes Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "6b147906-ac6c-4cd0-ad35-791c8dcac426",
+    "name": "Naples Grande Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "23bb4747-b289-47a4-87aa-33c897c8143c",
+    "name": "Quality Inn & Suites Golf Resort",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "b0336a32-84b2-44d9-a8af-47dc1ad63f0e",
+    "name": "Naples National Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "e786afe1-bbe9-4234-a556-7c3f75dd26b1",
+    "name": "Twin Eagles Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "aa3764b6-0630-4bf8-aa01-519ff1187a21",
+    "name": "Quail Run Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "44b766f7-6bf7-4353-9651-a7b816619228",
+    "name": "Pelican Marsh Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "416fcbea-0fe1-4636-9799-af2cfa5ab9bc",
+    "name": "Kensington Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "245c534c-b53c-4115-975b-b2c7180a6a98",
+    "name": "Bay Colony Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "52204396-5d45-49e9-b464-24fdf22e8767",
+    "name": "Hideout Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "e33485f3-53cf-438f-af50-5ca7fcd8b0ef",
+    "name": "Grey Oaks Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "569fc381-e542-4bf2-806a-98869f776207",
+    "name": "Wyndemere Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "00b281fd-1fb4-4df1-b170-0d24c4682d79",
+    "name": "Valencia Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "462f0967-3224-4e70-a04d-402ca4b6d16f",
+    "name": "TPC Treviso Bay",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "8857a978-1990-4585-a350-8a249115fde7",
+    "name": "Tiburón Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "d0081948-352f-42d7-ac63-c4c922255205",
+    "name": "The Golf Lodge at the Quarry",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "ad230422-49e6-44e9-b021-f25d2fefd819",
+    "name": "Quail West Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "c9fd2a09-a6e6-48cb-8298-4018f185f278",
+    "name": "Bonita Bay East",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "c4e09f7e-f28b-4e32-8b8a-f3e1daa83ae0",
+    "name": "Heritage Bay Golf and Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "45cb6be0-257e-4c0e-afa3-3dea01631e97",
+    "name": "Glen Eagle Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "ac27f530-e99b-45b7-95f2-2b6fddf1f0d0",
+    "name": "Talis Park Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "1265825f-fa6d-4da2-92ae-81ec1056183e",
+    "name": "Naples Heritage Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "cf06817d-ffc5-40cd-a33e-d1838cde2094",
+    "name": "Forest Glen Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "5966e2dc-71eb-41cd-b43f-442a2b0a8d81",
+    "name": "Windstar on Naples Bay",
+    "city": "East Naples",
+    "state": "FL"
+  },
+  {
+    "id": "0f7acfc9-07d5-478a-909c-a854754a14fc",
+    "name": "Lakewood Country Club of Naples",
+    "city": "East Naples",
+    "state": "FL"
+  },
+  {
+    "id": "68ac44d8-f126-48b9-94c0-51f827b10ae2",
+    "name": "Foxfire Country Club",
+    "city": "East Naples",
+    "state": "FL"
+  },
+  {
+    "id": "a7293162-7664-4ab6-a80d-eb7ece349f15",
+    "name": "Stoneybrook Golf Club-Estero",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "27d809c1-b67c-4e54-ae6e-4711635a7a17",
+    "name": "Old Corkscrew Golf Club",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "3b53ce87-d1cc-4408-85e2-ece916126c42",
+    "name": "Wildcat Run Golf and Country Club",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "3b2ccdb7-656e-4ace-8f2e-246870531038",
+    "name": "The Club at Grandezza",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "538c3efe-6400-4b17-85bc-bf20a2284e36",
+    "name": "Stoneybrook Golf Course",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "c567a38b-67df-432c-8c20-4902465b5eef",
+    "name": "Villages at Country Creek",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "5358131a-e54a-43f6-be2d-1bdcb0d2953d",
+    "name": "Cypress Lake Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "3417b1bb-2e16-49b7-a628-3dee5480812c",
+    "name": "Cross Creek Golf & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "b2c830d5-2f6d-4136-8cda-9a57b11488b3",
+    "name": "Legends Golf and Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "10339a95-f701-4643-ad09-9c5677a448dd",
+    "name": "Pelican Preserve Golf Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "f325ec4a-f2d3-4801-a0f5-29bee3c9382f",
+    "name": "Crown Colony Golf & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "a1a40eac-123e-4730-a9e8-0e1a7c79e0eb",
+    "name": "San Carlos Golf Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "4c4d1cdd-af0a-4080-abb7-aee6d29a88f8",
+    "name": "Whiskey Creek Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "e6f15035-96bc-4b04-b758-d3b872c281b3",
+    "name": "Estero Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "bd2a074e-4ec9-4e50-b273-286d2b171bca",
+    "name": "Myerlee Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "fba63012-c789-47f0-bfcf-aebd236879a2",
+    "name": "Gateway Golf & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "64e0836a-9c53-4234-a845-2d6f9e93ae98",
+    "name": "Fort Myers Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "cbb99bb9-c879-4950-af0e-2573c18d36f0",
+    "name": "Gulf Harbour Yacht & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "796c08f4-8d8d-4117-94fc-1254cbb5fa35",
+    "name": "Shell Point Golf Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "b6bd08b8-623a-43b8-88a2-a2cf5d0b46a3",
+    "name": "Legends Golf & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "25bc7a5e-b998-4393-ba1a-4a8c738a5532",
+    "name": "The Clutch",
+    "city": "Lee County",
+    "state": "FL"
+  },
+  {
+    "id": "9f51553e-844c-47c1-b665-d7041624628b",
+    "name": "The Club at Renaissance",
+    "city": "Lee County",
+    "state": "FL"
+  },
+  {
+    "id": "7fdcebbc-bd60-4cb2-8396-045fcd35ab38",
+    "name": "Burnt Store Golf Course",
+    "city": "Lee County",
+    "state": "FL"
+  },
+  {
+    "id": "d0652448-9dda-4fe5-897c-94f86afe7a84",
+    "name": "Royal Tee Golf Club",
+    "city": "Lee County",
+    "state": "FL"
+  },
+  {
+    "id": "724b9b34-7f50-4879-ab8d-6ba2c690b0d3",
+    "name": "The Club at Westminster",
+    "city": "Lehigh Acres",
+    "state": "FL"
+  },
+  {
+    "id": "dc09b0e6-a78e-4882-86e0-d157b105e765",
+    "name": "Mirror Lakes Golf Club",
+    "city": "Lehigh Acres",
+    "state": "FL"
+  },
+  {
+    "id": "1e2d079c-c564-48a4-b397-80e1a47a7de8",
+    "name": "Majestic Golf Club",
+    "city": "Lehigh Acres",
+    "state": "FL"
+  },
+  {
+    "id": "660750ed-767d-4d8f-b719-1e0eeb729099",
+    "name": "Hibiscus Golf Club",
+    "city": "Lely",
+    "state": "FL"
+  },
+  {
+    "id": "b5720c68-753a-46b8-9129-3477ee875664",
+    "name": "Royal Palm Country Club",
+    "city": "Lely",
+    "state": "FL"
+  },
+  {
+    "id": "62dbd5b6-448a-4aee-8854-3d0c131a8ecc",
+    "name": "Island Country Club",
+    "city": "Marco Island",
+    "state": "FL"
+  },
+  {
+    "id": "c671000e-5706-485c-9341-c7c76fb26ffa",
+    "name": "Hideaway Beach Golf Course",
+    "city": "Marco Island",
+    "state": "FL"
+  },
+  {
+    "id": "0af3d112-03e4-4820-b93a-195bf9b43ff1",
+    "name": "Club Pelican Bay",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "60c32879-8c73-405d-bd84-4ecb31cbca9a",
+    "name": "The Glades Golf & Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "9615bee5-0197-4f3c-b189-cea311af9070",
+    "name": "Calusa Pines Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "7c7a9b7d-798d-48c7-922a-cabf2ab127dd",
+    "name": "Cypress Woods Golf and Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "b1f5f73d-b877-44e9-9467-331e504209e9",
+    "name": "Quail Creek Village Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "6d4f1795-34ae-46eb-bea0-47dd61f9bbdf",
+    "name": "The Club at Olde Cypress",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "64d32ac1-2296-47b7-9f1b-7c7c2d763c7a",
+    "name": "The Club at the Strand",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "d32ff059-25a6-4795-aa9a-9ceb3315f192",
+    "name": "Eagle Lakes Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "66ebfea1-9b1e-4dc3-958b-d3531a3226d8",
+    "name": "The Classics Course at Lely Resort",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "d12869b6-7085-4f7e-b53e-513bac121195",
+    "name": "Royal Wood Golf & Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "1e035b29-2668-4552-ad93-8044c8bb3330",
+    "name": "Moorings Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "27a4f33f-b42a-4b6f-b654-496769add362",
+    "name": "Collier’s Reserve Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "3e4845ee-be00-4d34-950a-21d992133e37",
+    "name": "Hammock Bay Golf & Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "33fa8189-c63f-4d09-aff8-8d71504516c8",
+    "name": "The Rookery",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "79b3c0d2-90f0-49be-8f56-369b2854a17b",
+    "name": "Olde Florida Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "6c44908f-c0f3-412d-bfe1-2a89d4319982",
+    "name": "The Old Collier Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "2fe8c931-0a32-4412-a0c1-e72980b93de8",
+    "name": "Riviera Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "be7734ab-c037-46d9-98c8-64df8f095209",
+    "name": "Mustang Course at Lely Resort",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "c1eff3eb-546f-43bd-bce7-946741609331",
+    "name": "Vanderbilt Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "b06d3113-1a31-4d97-80fb-d45e48fcd6d7",
+    "name": "Golf Club of the Everglades",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "2dd4da61-c077-4139-a679-5b3772b94ab2",
+    "name": "Royal Poinciana Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "c83a0022-9506-401d-8ce4-5aff2355d8ae",
+    "name": "Mediterra Golf Course",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "650988fc-ebdb-4789-ad5a-9ae7868a2ae7",
+    "name": "Stonebridge Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "1ded41ab-eb31-4321-913e-a1ee3ca49c74",
+    "name": "Naples Beach Hotel and Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "06d6ee5a-9ea4-49c6-9485-97097ed9a7bf",
+    "name": "Quail Creek Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "19bd6fd6-75f8-4d8a-8eb5-5d19eb99c143",
+    "name": "Wilderness Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "81231001-5a74-4db5-9ee6-e612241ff0da",
+    "name": "Bear's Paw Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "a3fe7412-fc7b-4081-82d2-26cc55ba6a67",
+    "name": "Countryside Golf & Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "390f3abc-cd2d-4e73-bdbe-39f69ceeb660",
+    "name": "Hole In the Wall Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "034d5702-f236-4e1b-802b-43c4225e37ca",
+    "name": "Lely Resort Golf And Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "d1b1c9e6-006a-49f5-9e2c-bb84576c2e8f",
+    "name": "Del Tura Golf Club",
+    "city": "North Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "33f2378d-cf58-486a-9ee1-9734f2b7b771",
+    "name": "Six Lakes Country Club",
+    "city": "North Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "d0f36873-9aa1-4d2a-a98b-ffad008283ed",
+    "name": "Palms Course",
+    "city": "Oaks Clubhouse Drive",
+    "state": "FL"
+  }
+]

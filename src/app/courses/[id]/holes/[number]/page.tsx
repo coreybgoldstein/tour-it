@@ -14,6 +14,7 @@ import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
+import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1)" }}>
@@ -71,6 +72,7 @@ type CommentItem = {
   username: string;
   avatarUrl: string | null;
   createdAt: string;
+  rank?: string | null;
 };
 
 type Series = {
@@ -293,7 +295,7 @@ export default function HolePage() {
   // All holes with upload counts — used to skip empty holes on swipe
   const [holeList, setHoleList] = useState<{holeNumber: number; uploadCount: number}[]>([]);
   const [endOfContent, setEndOfContent] = useState<"prev" | "next" | null>(null);
-  const [uploaders, setUploaders] = useState<Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null}>>({});
+  const [uploaders, setUploaders] = useState<Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null}>>({});
   const [videoPaused, setVideoPaused] = useState(false);
   const endOfContentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
@@ -332,7 +334,7 @@ export default function HolePage() {
     setLoadingComments(true);
     createClient()
       .from("Comment")
-      .select("id, body, createdAt, userId, User:userId(username, avatarUrl)")
+      .select("id, body, createdAt, userId, User:userId(username, avatarUrl, UserProgression(rank))")
       .eq("uploadId", commentUploadId)
       .order("createdAt", { ascending: true })
       .then(({ data }) => {
@@ -340,6 +342,7 @@ export default function HolePage() {
           id: c.id, body: c.body, createdAt: c.createdAt,
           username: c.User?.username || "golfer",
           avatarUrl: c.User?.avatarUrl || null,
+          rank: (c.User?.UserProgression as any[])?.[0]?.rank || null,
         })));
         setLoadingComments(false);
       });
@@ -386,10 +389,15 @@ export default function HolePage() {
           setUploads(filtered);
           if (filtered.length > 0) {
             const userIds = [...new Set(filtered.map((u: Upload) => u.userId))];
-            const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds as string[]);
+            const [{ data: users }, { data: progs }] = await Promise.all([
+              supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds as string[]),
+              supabase.from("UserProgression").select("userId, rank").in("userId", userIds as string[]),
+            ]);
             if (users) {
-              const map: Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null}> = {};
-              users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null }; });
+              const rankMap: Record<string, string> = {};
+              progs?.forEach((p: any) => { rankMap[p.userId] = p.rank; });
+              const map: Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null}> = {};
+              users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null, rank: rankMap[u.id] || null }; });
               setUploaders(map);
             }
           }
@@ -424,10 +432,15 @@ export default function HolePage() {
           // Fetch uploader info for single clips
           if (singleClips.length > 0) {
             const userIds = [...new Set(singleClips.map((u: Upload) => u.userId))];
-            const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds as string[]);
+            const [{ data: users }, { data: progs }] = await Promise.all([
+              supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds as string[]),
+              supabase.from("UserProgression").select("userId, rank").in("userId", userIds as string[]),
+            ]);
             if (users) {
-              const map: Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null}> = {};
-              users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null }; });
+              const rankMap: Record<string, string> = {};
+              progs?.forEach((p: any) => { rankMap[p.userId] = p.rank; });
+              const map: Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null}> = {};
+              users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null, rank: rankMap[u.id] || null }; });
               setUploaders(map);
             }
           }
@@ -451,13 +464,24 @@ export default function HolePage() {
           // Fetch usernames for series
           if (seriesGroups.length > 0) {
             const userIds = [...new Set(seriesGroups.map(s => s.shots[0]?.userId).filter(Boolean))];
-            const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds);
+            const [{ data: users }, { data: progs }] = await Promise.all([
+              supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
+              supabase.from("UserProgression").select("userId, rank").in("userId", userIds),
+            ]);
+            const rankMap: Record<string, string> = {};
+            progs?.forEach((p: any) => { rankMap[p.userId] = p.rank; });
             const enriched = seriesGroups.map(sg => ({
               ...sg,
               username: users?.find((u: any) => u.id === sg.shots[0]?.userId)?.username || "golfer",
               avatarUrl: users?.find((u: any) => u.id === sg.shots[0]?.userId)?.avatarUrl || null,
             }));
             setSeries(enriched);
+            // Also enrich uploaders map with series user rank data
+            if (users) {
+              const seriesMap: Record<string, {username: string; avatarUrl: string | null; rank?: string | null}> = {};
+              users.forEach((u: any) => { seriesMap[u.id] = { username: u.username, avatarUrl: u.avatarUrl, rank: rankMap[u.id] || null }; });
+              setUploaders(prev => ({ ...prev, ...seriesMap }));
+            }
           }
         }
       }
@@ -696,7 +720,7 @@ export default function HolePage() {
 
               {/* Uploader avatar — directly below Intel */}
               <button className="action-btn" onClick={() => activeUpload && router.push(`/profile/${activeUpload.userId}`)}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className={isLegend(uploader?.rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploader?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {uploader?.avatarUrl
                     ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -863,14 +887,14 @@ export default function HolePage() {
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
                 <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: `1px solid ${getRankColor(c.rank)}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {c.avatarUrl
                       ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
                       : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     }
                   </div>
                   <div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42" }}>@{c.username} </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{c.body}</span>
                   </div>
                 </div>

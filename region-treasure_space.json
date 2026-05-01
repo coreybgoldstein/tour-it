@@ -1,0 +1,368 @@
+[
+  {
+    "id": "ad04f16c-ea23-4e65-be95-b60d1b3b0ad6",
+    "name": "Barefoot Bay Golf Course",
+    "city": "Barefoot Bay",
+    "state": "FL"
+  },
+  {
+    "id": "24dc5242-d266-46b0-9664-f2ca6483f4bd",
+    "name": "Fred Gay Golf Academy Driving Range",
+    "city": "Cocoa",
+    "state": "FL"
+  },
+  {
+    "id": "8a2c0e91-d27d-4448-badb-395cee9ffa0b",
+    "name": "Cocoa Beach Country Club",
+    "city": "Cocoa Beach",
+    "state": "FL"
+  },
+  {
+    "id": "2f4ef20a-d352-4ea1-a189-be6e3fd24c48",
+    "name": "Fairwinds Golf Course",
+    "city": "Fort Pierce",
+    "state": "FL"
+  },
+  {
+    "id": "574cd586-3af4-4949-9e28-c0b5ebc46ae2",
+    "name": "Gator Trace Golf & Country Club",
+    "city": "Fort Pierce",
+    "state": "FL"
+  },
+  {
+    "id": "2f9f8b68-b69b-491e-a85d-c0911b17613e",
+    "name": "Island Pines Golf Club",
+    "city": "Fort Pierce",
+    "state": "FL"
+  },
+  {
+    "id": "a303be1a-1c92-45e7-8151-a3faefba7237",
+    "name": "Indian Hills Golf Course",
+    "city": "Fort Pierce",
+    "state": "FL"
+  },
+  {
+    "id": "f237b02c-8dd3-4220-a91d-1321cc0c3e55",
+    "name": "Grand Harbor - Harbor Course",
+    "city": "Gifford",
+    "state": "FL"
+  },
+  {
+    "id": "83380bab-d1ab-4c02-8354-6985ed60e775",
+    "name": "Pointe West Country Club",
+    "city": "Indian River County",
+    "state": "FL"
+  },
+  {
+    "id": "9fc6dd84-84cb-4cf8-91bd-503fdafae114",
+    "name": "Indianwood Golf & Country Club",
+    "city": "Indiantown",
+    "state": "FL"
+  },
+  {
+    "id": "dd78ff2b-a3a8-4ec4-8e7b-00deb00f7dba",
+    "name": "The Ocean Club at Hutchinson Island Marriott Beach Resort",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "b95c936f-f1e5-40fd-808a-29a3ba769440",
+    "name": "YCS",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "f60ee92c-c936-4a98-a66f-fab803d044fb",
+    "name": "Martin Downs Country Club",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "277feba7-6439-4538-8b3a-ca40534188c6",
+    "name": "Heritage Ridge Golf Club",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "94c77b2e-5664-4b23-b8e6-c2156cf9b7b8",
+    "name": "Sailfish Sands Golf Course",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "4d8c069f-c31a-4490-8317-4262a2796a2f",
+    "name": "The Champions Club",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "407b1841-65af-49fb-ad9e-390e594e44ea",
+    "name": "Crane Creek Reserve Golf Course",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "8142131c-0e2e-4812-b9f3-32f830231fb5",
+    "name": "Harbor City Golf Course",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "3701491e-c161-4911-91a5-f38819b333ee",
+    "name": "Indian River Colony Club",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "ef61cf51-df81-4a27-aa59-6d69e1581c8f",
+    "name": "Duran Golf Club",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "4efc21f3-b5ab-4284-985f-fed28417bec5",
+    "name": "Suntree Country Club",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "7c91b93b-1392-426b-bc4e-e2eb3ad6082d",
+    "name": "Aquarina Country Club",
+    "city": "Melbourne Beach",
+    "state": "FL"
+  },
+  {
+    "id": "a91ecca7-93a1-4ccf-9011-b8ec340a9461",
+    "name": "Spessard Holland Golf Course",
+    "city": "Melbourne Beach",
+    "state": "FL"
+  },
+  {
+    "id": "1b45702b-a39d-450f-a29b-75dfc6958f5e",
+    "name": "The Habitat",
+    "city": "Melbourne Beach",
+    "state": "FL"
+  },
+  {
+    "id": "c18ea2bc-dc83-4cc1-9f9a-7db4c03d97e0",
+    "name": "The Savannahs Golf Course",
+    "city": "Merritt Island",
+    "state": "FL"
+  },
+  {
+    "id": "2f30679e-44a1-4450-9649-00cba8cfde74",
+    "name": "Indian River Preserve Golf Club",
+    "city": "Mims",
+    "state": "FL"
+  },
+  {
+    "id": "42351c57-2826-470f-ac2e-437ea32865f1",
+    "name": "Hammock Creek Golf Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "4cec6cc6-9eb6-4cc4-b8a2-5a45b7773f79",
+    "name": "The Golden Marsh",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "649c78bb-595f-4210-8146-15478c7cca64",
+    "name": "The River Ridge Course",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "d61012e7-17c7-4f4e-9a4a-5428390b4b18",
+    "name": "Piper’s Landing Yacht and Country Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "9383b7f6-4370-4fbb-adf3-2ba498ebf29d",
+    "name": "The Evergreen Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "6cee82db-cc1d-4000-86ef-79e93cdfde8e",
+    "name": "Monarch Country Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "af1a19b8-86ab-4c55-8aa2-b8e5f0927a4f",
+    "name": "The Fox Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "a730650b-c242-4ab5-bb05-f58d718fbac1",
+    "name": "Floridian Golf Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "2f754e22-3f35-4479-ab94-a68e0417a916",
+    "name": "Manatee Cove Golf Club",
+    "city": "Patrick Space Force Base",
+    "state": "FL"
+  },
+  {
+    "id": "efac01ac-6d53-4af4-b318-1d86ddfcf345",
+    "name": "Trident Golf Club",
+    "city": "Port Saint Lucie",
+    "state": "FL"
+  },
+  {
+    "id": "52c25a1f-cb69-4171-85ff-40b9f39a998b",
+    "name": "Miles Grant Country Club",
+    "city": "Port Salerno",
+    "state": "FL"
+  },
+  {
+    "id": "0f48996f-3661-414b-9114-22ea4b44448a",
+    "name": "Mariner Sands Golf & Country Club",
+    "city": "Port Salerno",
+    "state": "FL"
+  },
+  {
+    "id": "a6452527-0f21-483f-bd37-f9dbb028055b",
+    "name": "The Saints at Port Saint Lucie Golf Course",
+    "city": "Port St. Lucie",
+    "state": "FL"
+  },
+  {
+    "id": "862a4b96-4a13-4946-bf02-22b8cfdf99bb",
+    "name": "Saint Lucie Trail Golf Club",
+    "city": "Port St. Lucie",
+    "state": "FL"
+  },
+  {
+    "id": "ba39f646-0438-4bcb-bb09-4e0b325b951f",
+    "name": "PGA Golf Club",
+    "city": "Port St. Lucie",
+    "state": "FL"
+  },
+  {
+    "id": "d05ed7d7-2c71-44d3-9ac3-e684c6926655",
+    "name": "Tesero Golf Club",
+    "city": "PORT ST. LUCIE",
+    "state": "FL"
+  },
+  {
+    "id": "a0b50d4f-9d10-48f8-ad5c-55f6c36de391",
+    "name": "Rockledge Country Club",
+    "city": "Rockledge",
+    "state": "FL"
+  },
+  {
+    "id": "defdc000-17c6-4a5b-9b9f-b662883d6ebe",
+    "name": "Turtle Creek Golf Club",
+    "city": "Rockledge",
+    "state": "FL"
+  },
+  {
+    "id": "c46061a3-b7bf-46b3-b49b-6cc316aae572",
+    "name": "Viera East Golf Club",
+    "city": "Rockledge",
+    "state": "FL"
+  },
+  {
+    "id": "6e7f1c7b-63cd-4b7a-8751-be80adfa1ee6",
+    "name": "Red Stick Golf Club",
+    "city": "Sebastian",
+    "state": "FL"
+  },
+  {
+    "id": "f1da753d-bf26-4be5-b860-61971895e02f",
+    "name": "The West Course at John's Island Club",
+    "city": "Sebastian",
+    "state": "FL"
+  },
+  {
+    "id": "ad9d6958-4b39-4179-b9ce-03653d4420a2",
+    "name": "Sebastian Municipal Golf Course",
+    "city": "Sebastian",
+    "state": "FL"
+  },
+  {
+    "id": "aff200a9-7cd8-4836-ac7a-c684c44296a1",
+    "name": "Willoughby Golf Club",
+    "city": "Stuart",
+    "state": "FL"
+  },
+  {
+    "id": "90bf2564-d5b2-4777-b95c-4b4cc824b881",
+    "name": "Sailfish Pointe",
+    "city": "Stuart",
+    "state": "FL"
+  },
+  {
+    "id": "8f81147b-68f2-4b94-822c-72866ad9ef21",
+    "name": "The Florida Club",
+    "city": "Stuart",
+    "state": "FL"
+  },
+  {
+    "id": "d628275e-2ead-4b1d-86d2-2cc391e20cca",
+    "name": "Monterey Yacht & Country Club",
+    "city": "Stuart",
+    "state": "FL"
+  },
+  {
+    "id": "770c67ae-778c-4864-9242-37a8a749079f",
+    "name": "Sherwood Golf Club",
+    "city": "Titusville",
+    "state": "FL"
+  },
+  {
+    "id": "87ad940f-e81f-464e-b7e9-3fbe4f8e8447",
+    "name": "Vista Plantation Golf Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "a2f5feac-dce8-42ec-8a2b-eb3eb4cf2afc",
+    "name": "Hawk's Nest Golf Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "3df588eb-396c-44d9-8000-d8311d29f4f1",
+    "name": "Indian River Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "6f737ed3-86b2-432b-a08c-8087fe32f3e3",
+    "name": "Vero Beach Country Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "e18ec6b5-807e-43f8-a564-46ea559d4851",
+    "name": "American Golf Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "3dc6ca6d-e668-4394-b924-5eed6aaeb391",
+    "name": "Orchid Island Golf & Beach Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "02457082-610f-4d28-ba7e-fcb9f0c0524d",
+    "name": "Baytree National",
+    "city": "Viera",
+    "state": "FL"
+  },
+  {
+    "id": "2657d175-cf8b-432c-99af-a061e1f80b15",
+    "name": "Windsor Club",
+    "city": "Windsor",
+    "state": "FL"
+  }
+]

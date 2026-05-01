@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { rankLabel } from "@/lib/progression";
+import { RANK_COLORS } from "@/config/points-system";
+import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
 
 type Period = "all" | "monthly" | "weekly";
 
@@ -16,15 +18,6 @@ type Entry = {
   level: number;
   rank: string;
   user: { displayName: string; username: string; avatarUrl: string | null } | null;
-};
-
-const RANK_COLOR: Record<string, string> = {
-  CADDIE:     "rgba(200,200,200,0.7)",
-  LOCAL:      "#4da862",
-  MARSHAL:    "#60a5fa",
-  COURSE_PRO: "#a78bfa",
-  TOUR_PRO:   "#fbbf24",
-  LEGEND:     "#f87171",
 };
 
 const MEDAL = ["🥇", "🥈", "🥉"];
@@ -126,7 +119,7 @@ export default function LeaderboardsPage() {
         <div style={{ padding: "0 16px" }}>
           {entries.map((entry, i) => {
             const isMe = entry.userId === currentUserId;
-            const rankColor = RANK_COLOR[entry.rank] ?? "rgba(200,200,200,0.7)";
+            const rankColor = RANK_COLORS[entry.rank as keyof typeof RANK_COLORS] ?? "rgba(200,200,200,0.7)";
             return (
               <div
                 key={entry.userId}
@@ -138,8 +131,11 @@ export default function LeaderboardsPage() {
                   {i < 3 ? MEDAL[i] : i + 1}
                 </div>
 
-                {/* Avatar */}
-                <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", border: "1.5px solid rgba(255,255,255,0.1)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {/* Avatar with rank ring */}
+                <div
+                  className={isLegend(entry.rank) ? "legend-ring" : undefined}
+                  style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", border: getRankRingBorder(entry.rank), flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
                   {entry.user?.avatarUrl
                     ? <img src={entry.user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -148,11 +144,11 @@ export default function LeaderboardsPage() {
 
                 {/* Name + rank */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: isMe ? "#fff" : "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: isMe ? "#fff" : rankColor, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {entry.user?.displayName || entry.user?.username || "User"}
                     {isMe && <span style={{ marginLeft: 6, fontSize: 10, color: "#4da862" }}>you</span>}
                   </div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: rankColor, marginTop: 1 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
                     {rankLabel(entry.rank as Parameters<typeof rankLabel>[0])} · Lv {entry.level}
                   </div>
                 </div>

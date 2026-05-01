@@ -1,0 +1,350 @@
+[
+  {
+    "id": "997132a3-61ec-4563-bf1c-60f1ba504f61",
+    "name": "Tampa Palms Country Club",
+    "city": "ampa Palms Blvd",
+    "state": "FL"
+  },
+  {
+    "id": "2fde9602-3886-4db8-9ff6-8685fe103584",
+    "name": "Pelican Club",
+    "city": "Belleair",
+    "state": "FL"
+  },
+  {
+    "id": "57454cd3-f866-4fcb-a811-4536b6c2a312",
+    "name": "Brooksville Country Club",
+    "city": "Brooksville",
+    "state": "FL"
+  },
+  {
+    "id": "79a489ca-cc22-4281-911b-59d8e1e49639",
+    "name": "Carrollwood Country Club",
+    "city": "Carrollwood",
+    "state": "FL"
+  },
+  {
+    "id": "84ea7990-9488-4f11-a7fc-f41eb4a8208c",
+    "name": "Cheval Golf & Country Club",
+    "city": "Cheval",
+    "state": "FL"
+  },
+  {
+    "id": "499a289b-0142-4c47-b7c6-33b8e427141b",
+    "name": "The Landings Golf Club",
+    "city": "Clearwater",
+    "state": "FL"
+  },
+  {
+    "id": "fd155a2a-8edc-4dc9-b05f-fc1d46b48270",
+    "name": "Countryside Country Club",
+    "city": "Clearwater",
+    "state": "FL"
+  },
+  {
+    "id": "82799c30-40df-4631-a40e-9109a6a0c07e",
+    "name": "Feather Sound Country Club",
+    "city": "Clearwater",
+    "state": "FL"
+  },
+  {
+    "id": "98a845bd-02ac-42f2-876f-f569ea504a9c",
+    "name": "Chi Chi Rodriguez Golf Course",
+    "city": "Clearwater",
+    "state": "FL"
+  },
+  {
+    "id": "57029c92-e002-42fd-9ac8-4b3dd9809296",
+    "name": "Diamond Hill Golf Club",
+    "city": "Dover",
+    "state": "FL"
+  },
+  {
+    "id": "ab9c52de-dc0f-44ac-8a5c-9efbacfe9b97",
+    "name": "Dunedin Stirling Links",
+    "city": "Dunedin",
+    "state": "FL"
+  },
+  {
+    "id": "fd06e85c-10d8-4b31-8b25-550cfe56256e",
+    "name": "Dunedin Golf Club",
+    "city": "Dunedin",
+    "state": "FL"
+  },
+  {
+    "id": "b2346712-23a6-4bc6-b939-a35bed640730",
+    "name": "Pasadena Yacht & Country Club Golf",
+    "city": "Gulfport",
+    "state": "FL"
+  },
+  {
+    "id": "febc528c-a8c1-43dd-bdb0-d8dd1789a80f",
+    "name": "Skyview at Terra Vista",
+    "city": "Hernando",
+    "state": "FL"
+  },
+  {
+    "id": "2f0d8dcb-7e12-4745-9888-1be377eba70d",
+    "name": "Camp Phosphate Co #1",
+    "city": "Hernando",
+    "state": "FL"
+  },
+  {
+    "id": "23cae696-8cbe-4c33-9ee1-4b0517dc39da",
+    "name": "Rivard Golf Club",
+    "city": "Hernando County",
+    "state": "FL"
+  },
+  {
+    "id": "9bda42e4-20f5-47ea-afed-c50cf1b654ab",
+    "name": "Timber Pines Country Club",
+    "city": "Hernando County",
+    "state": "FL"
+  },
+  {
+    "id": "5669d1e9-874c-4467-bbbe-a703d970ff3b",
+    "name": "Temple Terrace Golf & Country Club",
+    "city": "Inverness Ave",
+    "state": "FL"
+  },
+  {
+    "id": "81525669-b4a3-418a-85a2-d77aee23e07c",
+    "name": "East Bay Golf Club",
+    "city": "Largo",
+    "state": "FL"
+  },
+  {
+    "id": "3560f882-3de3-480b-8788-e8ee837967a6",
+    "name": "Cove Cay Country Club",
+    "city": "Largo",
+    "state": "FL"
+  },
+  {
+    "id": "bd61979a-733b-46c5-b7be-57062257ccba",
+    "name": "Lutz Executive Golf Center",
+    "city": "Lutz",
+    "state": "FL"
+  },
+  {
+    "id": "2e1399ba-78d7-4e3e-9b11-ff28c0ee18ad",
+    "name": "TPC Tampa Bay",
+    "city": "Lutz",
+    "state": "FL"
+  },
+  {
+    "id": "3e195c18-15cc-4b3d-94b4-4e14b119a1fb",
+    "name": "Northdale Golf & Tennis Club",
+    "city": "Northdale",
+    "state": "FL"
+  },
+  {
+    "id": "8ed15baf-30ff-46fc-a577-152401461a97",
+    "name": "The Eagles Golf Club",
+    "city": "Odessa",
+    "state": "FL"
+  },
+  {
+    "id": "372c3138-729d-44cb-957c-7227a4a7548b",
+    "name": "Lansbrook Golf Club",
+    "city": "Palm Harbor",
+    "state": "FL"
+  },
+  {
+    "id": "2ecaef68-0515-4807-95c1-52b31bce3917",
+    "name": "Innisbrook Golf Resort",
+    "city": "Palm Harbor",
+    "state": "FL"
+  },
+  {
+    "id": "e8a8705e-dd28-449f-8f33-0ac6cf2de3c1",
+    "name": "Lexington Oaks Golf Club",
+    "city": "Pasco County",
+    "state": "FL"
+  },
+  {
+    "id": "7b48029a-1e5a-47da-b0f1-9c21b02c429d",
+    "name": "Mainlands Golf Course",
+    "city": "Pinellas Park",
+    "state": "FL"
+  },
+  {
+    "id": "575c3108-e153-446a-b603-2fe0724ba74c",
+    "name": "Timber Greens Golf and Country Club",
+    "city": "River Ridge",
+    "state": "FL"
+  },
+  {
+    "id": "0d93a34c-c7fd-45f5-bf05-661c77d0975c",
+    "name": "River Ridge Golf and Country Club",
+    "city": "River Ridge",
+    "state": "FL"
+  },
+  {
+    "id": "dcae56da-f8ac-4faf-b62b-79b4e97a157a",
+    "name": "Cypress Course",
+    "city": "Ruskin",
+    "state": "FL"
+  },
+  {
+    "id": "491bf80f-5aba-4cf6-9c28-9c69e7672428",
+    "name": "Saint Petersburg Country Club",
+    "city": "Saint Petersburg",
+    "state": "FL"
+  },
+  {
+    "id": "e1113e6c-94de-4904-a2a8-16e67b8437c9",
+    "name": "Twin Brooks Golf Course and Driving Range",
+    "city": "Saint Petersburg",
+    "state": "FL"
+  },
+  {
+    "id": "bad43319-7f9b-49ed-b81c-f88d821ac7f4",
+    "name": "Isla Del Sol",
+    "city": "Saint Petersburg",
+    "state": "FL"
+  },
+  {
+    "id": "75919c8c-743f-477e-97ef-5c4a26dcc887",
+    "name": "Baypointe Golf Course",
+    "city": "Seminole",
+    "state": "FL"
+  },
+  {
+    "id": "dc6c4ffe-209f-4e25-8dfe-c3c807d0977f",
+    "name": "Bardmoor Country Club",
+    "city": "Seminole",
+    "state": "FL"
+  },
+  {
+    "id": "50afef61-84eb-4934-b565-8e64ef6a28bd",
+    "name": "Seven Hills Golfers Club",
+    "city": "Spring Hill",
+    "state": "FL"
+  },
+  {
+    "id": "b73fddbc-81f4-4aa5-9c93-fd0950d63f2d",
+    "name": "High Point Golf Club",
+    "city": "Spring Hill",
+    "state": "FL"
+  },
+  {
+    "id": "cccdbf72-d59c-4c0d-a2a4-971dd0c96a18",
+    "name": "Mangrove Bay Municipal Golf Course",
+    "city": "St. Petersburg",
+    "state": "FL"
+  },
+  {
+    "id": "13c0d11a-ad6b-4c31-ab67-bad72dfe5545",
+    "name": "Scepter Golf Club",
+    "city": "Sun City Center",
+    "state": "FL"
+  },
+  {
+    "id": "064aa3ee-dc26-4a7e-b032-9e0a57691f74",
+    "name": "Club Renaissance",
+    "city": "Sun City Center",
+    "state": "FL"
+  },
+  {
+    "id": "2017a2be-2d97-4218-a486-037d13bea4c3",
+    "name": "Caloosa Golf & Country Club",
+    "city": "Sun City Center",
+    "state": "FL"
+  },
+  {
+    "id": "bfed011d-e0a1-4dd4-934a-271ecb9e00c1",
+    "name": "Freedom Fairways",
+    "city": "Sun City Center",
+    "state": "FL"
+  },
+  {
+    "id": "5da6052c-92a9-4ab3-a6c1-5fec4b902a09",
+    "name": "USF The Claw Golf Course",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "d5a7294e-485e-4f1a-a069-f60279daff95",
+    "name": "Westchase Golf Club",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "21fbe815-f6fe-4a42-8fb0-f290a4664ff0",
+    "name": "Avila Golf & Country Club",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "a0e824f7-4ea2-4223-b3cc-2dd73b44ea0d",
+    "name": "Countryway Golf Club",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "c42131ac-9c1c-4f6b-8323-33623171eb6b",
+    "name": "Babe Zaharias Golf Course",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "2df5388f-5c3e-4cec-aacd-091b93bf062d",
+    "name": "Hunter’s Green Country Club",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "9e4610f5-1c09-4e86-b6bf-785f284c9dfc",
+    "name": "Heritage Isles",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "bf5a181d-e2cf-4af8-8f41-2eeb56c6be78",
+    "name": "North Course",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "33f52471-b4cb-4c82-b6b5-4c8dd8861e58",
+    "name": "Rocky Point Golf Course",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "a1426f1b-a40b-4fbc-ae6e-c76fd0ab2ae6",
+    "name": "Tarpon Springs Golf Course",
+    "city": "Tarpon Springs",
+    "state": "FL"
+  },
+  {
+    "id": "55ee0622-0f3a-47cb-9183-9f792bc90bc2",
+    "name": "Heritage Springs Golf Course",
+    "city": "Trinity",
+    "state": "FL"
+  },
+  {
+    "id": "048d02f0-9be6-4111-82bc-bb0947734c88",
+    "name": "Fox Hollow Golf Club",
+    "city": "Trinity",
+    "state": "FL"
+  },
+  {
+    "id": "894dde27-ecf7-4644-a886-fb0c0a4f6d89",
+    "name": "River Hills golf course and country club",
+    "city": "Valrico",
+    "state": "FL"
+  },
+  {
+    "id": "8d63858e-cc6e-4f65-9b3d-b3dae04b3225",
+    "name": "Saddlebrook",
+    "city": "Wesley Chapel",
+    "state": "FL"
+  },
+  {
+    "id": "20024519-7108-487e-8a81-74ad5684e098",
+    "name": "Ventura Country Club",
+    "city": "Woodgate Blvd",
+    "state": "FL"
+  }
+]

@@ -1,0 +1,188 @@
+[
+  {
+    "id": "cee2ff50-7018-4dd5-ad6d-2bb35a139bd2",
+    "name": "Grande Oaks Golf Club",
+    "city": "Circle Davie",
+    "state": "FL"
+  },
+  {
+    "id": "80f18fd8-3e2f-42c6-90a7-cb54213fcdc7",
+    "name": "Wynmoor Golf Course",
+    "city": "Coconut Creek",
+    "state": "FL"
+  },
+  {
+    "id": "c2c5146e-e3a9-4a89-be45-cf04c5110b17",
+    "name": "Pine Island Ridge Golf Course",
+    "city": "Davie",
+    "state": "FL"
+  },
+  {
+    "id": "bf8eab84-b170-48a1-89ae-c1fa81979f0b",
+    "name": "Davie Golf and Country Club",
+    "city": "Davie",
+    "state": "FL"
+  },
+  {
+    "id": "7277e5fb-88cb-4ea9-9692-b7bd9f316a33",
+    "name": "Crystal Lake Country Club - Tam O'Shanter Golf Course (closed)",
+    "city": "Deerfield Beach",
+    "state": "FL"
+  },
+  {
+    "id": "6e952ec0-c969-4bf9-bcd2-315c353794b7",
+    "name": "Hillsboro Pines Golf Course",
+    "city": "Deerfield Beach",
+    "state": "FL"
+  },
+  {
+    "id": "ed3a80da-04ec-4bb8-81b8-d5210c070824",
+    "name": "Lago Mar Country Club",
+    "city": "Fort Lauderdale",
+    "state": "FL"
+  },
+  {
+    "id": "df1421d0-68da-46de-805d-b36d8c136391",
+    "name": "Fort Lauderdale Country Club",
+    "city": "Fort Lauderdale",
+    "state": "FL"
+  },
+  {
+    "id": "89d3e639-a097-486f-9091-5b3918e30af4",
+    "name": "Lauderhill Golf Course",
+    "city": "Fort Lauderdale",
+    "state": "FL"
+  },
+  {
+    "id": "35961f1f-4e13-40ef-87d5-17d38d79ed2c",
+    "name": "Coral Ridge Country Club",
+    "city": "Fort Lauderdale",
+    "state": "FL"
+  },
+  {
+    "id": "b305937c-a24b-4d75-a789-223794546e6f",
+    "name": "The Diplomat Golf Resort & Spa",
+    "city": "Hollywood",
+    "state": "FL"
+  },
+  {
+    "id": "36d89e60-745b-4786-b84c-0adac7b552a2",
+    "name": "Eco Golf Club",
+    "city": "Hollywood",
+    "state": "FL"
+  },
+  {
+    "id": "9c27acbe-e0b3-488b-b079-c8727d86d08b",
+    "name": "Orangebrook Golf & Country Club",
+    "city": "Hollywood",
+    "state": "FL"
+  },
+  {
+    "id": "58e01427-65fb-43a4-9736-2dc6bb3bed5c",
+    "name": "Inverrary Country Club",
+    "city": "Lauderhill",
+    "state": "FL"
+  },
+  {
+    "id": "4ec4c7d2-60b3-41c8-91fd-25eac14da4e2",
+    "name": "Margate Executive Golf Course",
+    "city": "Margate",
+    "state": "FL"
+  },
+  {
+    "id": "10d15e8a-b366-4c53-8c6e-fd14b622f82e",
+    "name": "Oriole Golf Club",
+    "city": "Margate",
+    "state": "FL"
+  },
+  {
+    "id": "3675f3cc-00d3-4e37-b7cf-43d48303f0b5",
+    "name": "Parkland Golf & Country",
+    "city": "Parkland",
+    "state": "FL"
+  },
+  {
+    "id": "82508898-f645-4839-afc7-2143a3f61b3d",
+    "name": "Hollybrook Golf and Tennis Club",
+    "city": "Pembroke Pines",
+    "state": "FL"
+  },
+  {
+    "id": "07962e4f-c633-4fd5-b198-fe892ce954f3",
+    "name": "Hollybrook Golf and Tennis Club - Executive Course",
+    "city": "Pembroke Pines",
+    "state": "FL"
+  },
+  {
+    "id": "0c9983e3-2bc4-4103-bdc5-745d0718f369",
+    "name": "Pembroke Lakes Golf",
+    "city": "Pembroke Pines",
+    "state": "FL"
+  },
+  {
+    "id": "688d9d25-e3ac-481c-8bfc-5a60af47ee47",
+    "name": "Jacararanda Golf Course",
+    "city": "Plantation",
+    "state": "FL"
+  },
+  {
+    "id": "22f3e18e-53f9-475f-a7ec-9275a9f03d85",
+    "name": "Plantation Preserve Golf Course & Club",
+    "city": "Plantation",
+    "state": "FL"
+  },
+  {
+    "id": "79fcf458-0e28-4be8-92eb-93d5b53bf84d",
+    "name": "Oaks Course",
+    "city": "Pompano Beach",
+    "state": "FL"
+  },
+  {
+    "id": "5564aa5d-b363-4d54-aba9-3daf6f89779f",
+    "name": "Seven Bridges at Springtree",
+    "city": "Sunrise",
+    "state": "FL"
+  },
+  {
+    "id": "0006c8b4-28b2-4683-b078-cca5fa2ff09e",
+    "name": "Sunrise Country Club",
+    "city": "Sunrise",
+    "state": "FL"
+  },
+  {
+    "id": "0e0b76ff-e795-4445-ad71-378ff59bfc2c",
+    "name": "Colony West Golf Club - Glades Course",
+    "city": "Tamarac",
+    "state": "FL"
+  },
+  {
+    "id": "a5c399df-884b-4a92-a8ab-730ebddcb120",
+    "name": "Colony West Golf Club - Championship Course",
+    "city": "Tamarac",
+    "state": "FL"
+  },
+  {
+    "id": "2dc9fac2-1801-473e-a3c7-7f9dae6445e2",
+    "name": "Woodmont Country Club- Pines 9",
+    "city": "Tamarac",
+    "state": "FL"
+  },
+  {
+    "id": "d3ff1c2f-6390-41a3-ada8-537bc532b90d",
+    "name": "Bonaventure Country Club",
+    "city": "Weston",
+    "state": "FL"
+  },
+  {
+    "id": "9a4e90c2-8e37-4844-b4a6-8585c8001ced",
+    "name": "Weston Hills Country Club Golf Course",
+    "city": "Weston",
+    "state": "FL"
+  },
+  {
+    "id": "a86cc933-f96d-47fe-a181-d79f06240a12",
+    "name": "Weston Hills Golf Course",
+    "city": "Weston",
+    "state": "FL"
+  }
+]

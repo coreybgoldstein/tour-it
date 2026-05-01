@@ -11,6 +11,7 @@ import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
 import { formatClipDate } from "@/lib/formatClipDate";
+import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { rateLimit } from "@/lib/rateLimit";
@@ -57,6 +58,7 @@ type FeedClip = {
   avatarUrl: string | null;
   userId: string;
   uploaderHandicap?: number | null;
+  rank?: string | null;
   likeCount: number;
   commentCount: number;
   seriesId: string | null;
@@ -68,7 +70,7 @@ type FeedClip = {
 
 type FeedItem =
   | { type: "clip"; clip: FeedClip }
-  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseLogoUrl: string | null; courseCity?: string | null; courseState?: string | null; courseId: string; holeId: string; holeNumber?: number; username: string; avatarUrl: string | null; userId: string };
+  | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseLogoUrl: string | null; courseCity?: string | null; courseState?: string | null; courseId: string; holeId: string; holeNumber?: number; username: string; avatarUrl: string | null; userId: string; rank?: string | null };
 
 type CommentItem = {
   id: string;
@@ -76,6 +78,7 @@ type CommentItem = {
   createdAt: string;
   username: string;
   avatarUrl: string | null;
+  rank?: string | null;
 };
 
 
@@ -191,8 +194,8 @@ function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () =
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport, onEdit }: {
-  userId: string; avatarUrl: string | null; username: string;
+function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport, onEdit }: {
+  userId: string; avatarUrl: string | null; username: string; rank?: string | null;
   courseId: string; courseName: string;
   liked: boolean; onLike: () => void; likeCount: number;
   onComment: () => void; commentCount: number;
@@ -222,7 +225,7 @@ function RightPanel({ userId, avatarUrl, username, courseId, courseName, liked, 
       )}
       {/* Uploader avatar — directly below Intel */}
       <button onClick={onTapUser} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className={isLegend(rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {avatarUrl
             ? <img src={avatarUrl} alt={username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -406,7 +409,7 @@ function SeriesCard({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} />
 
       <IntelPanel
         open={intelOpen}
@@ -524,7 +527,7 @@ function VideoCard({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} />
 
       {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
         <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
@@ -635,11 +638,15 @@ export default function Home() {
       const userIds = [...new Set(uploads.map((u: any) => u.userId))];
       const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
 
-      const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
+      const [{ data: courses }, { data: users }, { data: holes }, { data: progressions }] = await Promise.all([
         supabase.from("Course").select("id, name, logoUrl, city, state").in("id", courseIds),
         supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
         supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds),
+        supabase.from("UserProgression").select("userId, rank").in("userId", userIds),
       ]);
+
+      const rankMap: Record<string, string> = {};
+      progressions?.forEach((p: any) => { rankMap[p.userId] = p.rank; });
 
       const enriched: FeedClip[] = uploads.map((u: any) => {
         const hole = holes?.find((h: any) => h.id === u.holeId);
@@ -655,6 +662,7 @@ export default function Home() {
           username: user?.username || "golfer",
           avatarUrl: user?.avatarUrl || null,
           uploaderHandicap: user?.handicapIndex ?? null,
+          rank: rankMap[u.userId] || null,
           holeNumber: hole?.holeNumber || undefined,
           holePar: hole?.par ?? null,
           holeYardage: hole?.yardage ?? null,
@@ -675,7 +683,7 @@ export default function Home() {
       const seriesItems: FeedItem[] = Object.entries(seriesMap).map(([seriesId, shots]) => {
         const sorted = shots.sort((a, b) => (a.seriesOrder || 0) - (b.seriesOrder || 0));
         const first = sorted[0];
-        return { type: "series", seriesId, shots: sorted, courseName: first.courseName, courseLogoUrl: first.courseLogoUrl, courseCity: first.courseCity, courseState: first.courseState, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId };
+        return { type: "series", seriesId, shots: sorted, courseName: first.courseName, courseLogoUrl: first.courseLogoUrl, courseCity: first.courseCity, courseState: first.courseState, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId, rank: first.rank };
       });
 
       const singleItems: FeedItem[] = singleClips
@@ -737,11 +745,15 @@ export default function Home() {
     const userIds = [...new Set(uploads.map((u: any) => u.userId))];
     const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
 
-    const [{ data: courses }, { data: users }, { data: holes }] = await Promise.all([
+    const [{ data: courses }, { data: users }, { data: holes }, { data: progressions }] = await Promise.all([
       supabase.from("Course").select("id, name, logoUrl, city, state").in("id", courseIds),
       supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
       supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds),
+      supabase.from("UserProgression").select("userId, rank").in("userId", userIds),
     ]);
+
+    const rankMap: Record<string, string> = {};
+    progressions?.forEach((p: any) => { rankMap[p.userId] = p.rank; });
 
     const enriched: FeedClip[] = uploads.map((u: any) => {
       const hole = holes?.find((h: any) => h.id === u.holeId);
@@ -757,6 +769,7 @@ export default function Home() {
         username: user?.username || "golfer",
         avatarUrl: user?.avatarUrl || null,
         uploaderHandicap: user?.handicapIndex ?? null,
+        rank: rankMap[u.userId] || null,
         holeNumber: hole?.holeNumber || undefined,
         holePar: hole?.par ?? null,
         holeYardage: hole?.yardage ?? null,
@@ -844,7 +857,7 @@ export default function Home() {
     const supabase = createClient();
     supabase
       .from("Comment")
-      .select("id, body, createdAt, userId, user:User(username, avatarUrl)")
+      .select("id, body, createdAt, userId, user:User(username, avatarUrl, UserProgression(rank))")
       .eq("uploadId", commentUploadId)
       .order("createdAt", { ascending: true })
       .then(({ data }) => {
@@ -855,6 +868,7 @@ export default function Home() {
             createdAt: c.createdAt,
             username: c.user?.username || "golfer",
             avatarUrl: c.user?.avatarUrl || null,
+            rank: (c.user?.UserProgression as any[])?.[0]?.rank || null,
           })));
         }
         setLoadingComments(false);
@@ -1256,11 +1270,11 @@ export default function Home() {
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
                 <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: `1px solid ${getRankColor(c.rank)}40`, overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {c.avatarUrl ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42" }}>@{c.username} </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)" }}>{c.body}</span>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{formatTimeAgo(c.createdAt)}</div>
                   </div>
