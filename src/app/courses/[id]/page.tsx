@@ -167,7 +167,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
+    const base = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
+    const url = `${base}?clip=${clip.id}`;
     const text = `Tour It — ${course?.name || ""}${clip.holeNumber ? ` — Hole ${clip.holeNumber}` : ""}`;
     try {
       if (navigator.share) await navigator.share({ title: text, text, url });

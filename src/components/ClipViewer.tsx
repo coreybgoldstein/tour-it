@@ -120,7 +120,8 @@ export default function ClipViewer({
   };
 
   async function handleShare() {
-    const url = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
+    const base = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
+    const url = `${base}?clip=${clip.id}`;
     const text = `Tour It — ${courseName || ""}${clip.holeNumber ? ` — Hole ${clip.holeNumber}` : ""}`;
     try {
       if (navigator.share) await navigator.share({ title: text, text, url });
