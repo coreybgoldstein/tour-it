@@ -102,6 +102,17 @@ export function useLike({ uploadId, initialLikeCount }: UseLikeOptions): UseLike
         }).eq("id", uploadId);
         setLiked(true);
         setLikeCount(prev => prev + 1);
+
+        // Notify clip owner (skip if liking own clip)
+        const { data: upload } = await supabase.from("Upload").select("userId, courseId, holeNumber").eq("id", uploadId).single();
+        if (upload && upload.userId !== userId) {
+          const { data: liker } = await supabase.from("User").select("displayName, username").eq("id", userId).single();
+          const likerName = liker?.displayName || liker?.username || "Someone";
+          const now = new Date().toISOString();
+          const linkUrl = upload.holeNumber ? `/courses/${upload.courseId}/holes/${upload.holeNumber}?clip=${uploadId}` : `/courses/${upload.courseId}`;
+          await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: upload.userId, type: "like", title: "New like", body: `${likerName} liked your clip`, linkUrl, read: false, createdAt: now, updatedAt: now });
+          fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: upload.userId, title: "New like", body: `${likerName} liked your clip`, url: linkUrl }) }).catch(() => {});
+        }
       }
     } catch (error) {
       console.error("Error toggling like:", error);
