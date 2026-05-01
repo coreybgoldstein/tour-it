@@ -673,8 +673,8 @@ export default function Home() {
         .map(clip => ({ type: "clip", clip }));
 
       setFeedItems([...seriesItems, ...singleItems]);
-      feedCursorRef.current = uploads[uploads.length - 1].createdAt;
-      hasMoreRef.current = uploads.length === 15;
+      feedCursorRef.current = rawUploads[rawUploads.length - 1].createdAt;
+      hasMoreRef.current = rawUploads.length >= 30;
       setLoading(false);
     }
 

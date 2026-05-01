@@ -279,6 +279,7 @@ export default function ProfilePage() {
   // Delete account
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   // Report clip
   const [reportClipId, setReportClipId] = useState<string | null>(null);
@@ -836,27 +837,40 @@ export default function ProfilePage() {
 
       {/* Delete account confirmation */}
       {showDeleteAccount && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }} onClick={() => setShowDeleteAccount(false)}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }} onClick={() => { setShowDeleteAccount(false); setDeleteConfirmText(""); }}>
           <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "24px 20px 44px" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 20px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 700, color: "#fff", marginBottom: 8, textAlign: "center" }}>Delete your account?</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", textAlign: "center", marginBottom: 24, lineHeight: 1.5 }}>
-              All your clips, likes, and data will be permanently deleted. This cannot be undone.
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", textAlign: "center", marginBottom: 20, lineHeight: 1.5 }}>
+              All your clips, comments, likes, and data will be permanently deleted. This cannot be undone.
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 8, textAlign: "center" }}>Type <strong style={{ color: "rgba(200,80,80,0.9)" }}>DELETE</strong> to confirm</div>
+              <input
+                value={deleteConfirmText}
+                onChange={e => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: `1px solid ${deleteConfirmText === "DELETE" ? "rgba(200,80,80,0.6)" : "rgba(255,255,255,0.1)"}`, borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "#fff", outline: "none", textAlign: "center", letterSpacing: "0.05em" }}
+              />
             </div>
             <button
               onClick={async () => {
+                if (deleteConfirmText !== "DELETE") return;
                 setDeletingAccount(true);
-                const supabase = createClient();
-                await supabase.from("User").delete().eq("id", currentUserId!);
-                await supabase.auth.signOut();
-                router.replace("/login");
+                const res = await fetch("/api/user/delete", { method: "DELETE" });
+                if (res.ok) {
+                  await createClient().auth.signOut();
+                  router.replace("/login");
+                } else {
+                  setDeletingAccount(false);
+                }
               }}
-              disabled={deletingAccount}
-              style={{ width: "100%", background: "rgba(200,50,50,0.8)", border: "none", borderRadius: 14, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", marginBottom: 10, opacity: deletingAccount ? 0.6 : 1 }}
+              disabled={deletingAccount || deleteConfirmText !== "DELETE"}
+              style={{ width: "100%", background: deleteConfirmText === "DELETE" ? "rgba(200,50,50,0.85)" : "rgba(200,50,50,0.25)", border: "none", borderRadius: 14, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: deleteConfirmText === "DELETE" ? "#fff" : "rgba(255,255,255,0.3)", cursor: deleteConfirmText === "DELETE" ? "pointer" : "default", marginBottom: 10, transition: "all 0.15s" }}
             >
               {deletingAccount ? "Deleting…" : "Yes, delete my account"}
             </button>
-            <button onClick={() => setShowDeleteAccount(false)} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>Cancel</button>
+            <button onClick={() => { setShowDeleteAccount(false); setDeleteConfirmText(""); }} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>Cancel</button>
           </div>
         </div>
       )}

@@ -144,10 +144,11 @@ function SearchPageInner() {
     setPeopleLoading(true);
     peopleDebounceRef.current = setTimeout(async () => {
       const supabase = createClient();
+      const safeQuery = query.replace(/^@/, "").replace(/[(),]/g, "");
       const { data } = await supabase
         .from("User")
         .select("id, username, displayName, avatarUrl, uploadCount")
-        .or(`username.ilike.%${query.replace(/^@/, "")}%,displayName.ilike.%${query}%`)
+        .or(`username.ilike.%${safeQuery}%,displayName.ilike.%${safeQuery}%`)
         .limit(20);
       setPeopleResults((data || []).filter((u: Person) => u.id !== currentUserId));
       setPeopleLoading(false);
@@ -190,7 +191,8 @@ function SearchPageInner() {
         .select("id, name, city, state, holeCount, isPublic, courseType, uploadCount, logoUrl");
 
       if (hasQuery) {
-        qb = qb.or(`name.ilike.%${q}%,city.ilike.%${q}%,state.ilike.%${q}%`);
+        const safeQ = q.replace(/[(),]/g, "");
+        qb = qb.or(`name.ilike.%${safeQ}%,city.ilike.%${safeQ}%,state.ilike.%${safeQ}%`);
       }
       if (state) qb = qb.eq("state", state);
       if (city) qb = qb.ilike("city", `%${city}%`);

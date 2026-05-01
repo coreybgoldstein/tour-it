@@ -689,67 +689,62 @@ export default function CourseProfilePage() {
       return;
     }
 
-    const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+    const MAX_BYTES = 8 * 1024 * 1024;
     if (coverFile && coverFile.size > MAX_BYTES) {
-      setContributeError(`Cover photo is too large (${(coverFile.size / 1024 / 1024).toFixed(1)} MB). Please resize it to under 8 MB and try again.`);
+      setContributeError(`Cover photo is too large (${(coverFile.size / 1024 / 1024).toFixed(1)} MB). Please resize it to under 8 MB.`);
       return;
     }
     if (logoFile && logoFile.size > MAX_BYTES) {
-      setContributeError(`Logo file is too large (${(logoFile.size / 1024 / 1024).toFixed(1)} MB). Please resize it to under 8 MB and try again.`);
+      setContributeError(`Logo file is too large (${(logoFile.size / 1024 / 1024).toFixed(1)} MB). Please resize it to under 8 MB.`);
       return;
     }
 
     setContributing(true);
     const supabase = createClient();
-    const updates: Record<string, string> = {};
+    const payload: Record<string, string | number | null> = {};
 
     if (coverFile) {
       const ext = coverFile.name.split(".").pop();
       const path = `covers/${id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, coverFile, { upsert: true });
-      if (upErr) {
-        setContributing(false);
-        setContributeError(`Cover photo upload failed: ${upErr.message}`);
-        return;
-      }
-      const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
-      updates.coverImageUrl = publicUrl;
+      if (upErr) { setContributing(false); setContributeError(`Cover photo upload failed: ${upErr.message}`); return; }
+      payload.coverImageUrl = supabase.storage.from("tour-it-photos").getPublicUrl(path).data.publicUrl;
     }
 
     if (logoFile) {
       const ext = logoFile.name.split(".").pop();
       const path = `logos/${id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, logoFile, { upsert: true });
-      if (upErr) {
-        setContributing(false);
-        setContributeError(`Logo upload failed: ${upErr.message}`);
-        return;
-      }
-      const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
-      updates.logoUrl = publicUrl;
+      if (upErr) { setContributing(false); setContributeError(`Logo upload failed: ${upErr.message}`); return; }
+      payload.logoUrl = supabase.storage.from("tour-it-photos").getPublicUrl(path).data.publicUrl;
     }
 
-    if (editDescription.trim()) updates.description = editDescription.trim();
+    if (editDescription.trim()) payload.description = editDescription.trim();
+    payload.zipCode = editZip.trim() || null;
+    payload.yearEstablished = editYearEstablished ? parseInt(editYearEstablished) : null;
+    if (editCourseType) payload.courseType = editCourseType;
 
-    const infoUpdates: Record<string, string | number | null> = { ...updates };
-    if (editCourseName.trim()) infoUpdates.name = editCourseName.trim();
-    if (editCity.trim()) infoUpdates.city = editCity.trim();
-    if (editState.trim()) infoUpdates.state = editState.trim();
-    infoUpdates.zipCode = editZip.trim() || null;
-    infoUpdates.yearEstablished = editYearEstablished ? parseInt(editYearEstablished) : null;
-    if (editCourseType) infoUpdates.courseType = editCourseType;
-
-    if (Object.keys(infoUpdates).length > 0) {
-      const { error: dbErr } = await supabase.from("Course").update(infoUpdates).eq("id", id as string);
-      if (dbErr) {
-        setContributing(false);
-        setContributeError(`Failed to save: ${dbErr.message}`);
-        return;
-      }
-      setCourse(prev => prev ? { ...prev, ...infoUpdates } : prev);
-      if (infoUpdates.coverImageUrl) setCoverPreview(null);
+    if (Object.keys(payload).length === 0) {
+      setContributing(false);
+      setContributeError("No changes to submit.");
+      return;
     }
 
+    const res = await fetch(`/api/courses/${id}/contribute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: "Failed to save" }));
+      setContributing(false);
+      setContributeError(error || "Failed to save");
+      return;
+    }
+
+    setCourse(prev => prev ? { ...prev, ...payload } : prev);
+    if (payload.coverImageUrl) setCoverPreview(null);
     setContributing(false);
     setContributeSuccess(true);
   };
@@ -1460,27 +1455,6 @@ export default function CourseProfilePage() {
                 {/* Course Info fields */}
                 <div style={{ marginBottom: 20, display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Info</div>
-
-                  {/* Name */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                    <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Name</label>
-                    <input value={editCourseName} onChange={e => setEditCourseName(e.target.value)}
-                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
-                  </div>
-
-                  {/* City / State */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 80px", gap: 8 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                      <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>City</label>
-                      <input value={editCity} onChange={e => setEditCity(e.target.value)}
-                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                      <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>State</label>
-                      <input value={editState} onChange={e => setEditState(e.target.value)} maxLength={2} placeholder="IL"
-                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
-                    </div>
-                  </div>
 
                   {/* Zip / Year */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
