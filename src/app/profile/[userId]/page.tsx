@@ -395,7 +395,7 @@ export default function ProfilePage() {
       setRounds(roundsData || []);
 
       const { data: badgesData } = await supabase.from("UserBadge").select("id, earnedAt, badge:badgeId(slug, name, description, category, rarity)").eq("userId", userId as string).order("earnedAt", { ascending: false });
-      setEarnedBadges((badgesData || []) as EarnedBadge[]);
+      setEarnedBadges((badgesData || []) as unknown as EarnedBadge[]);
 
       setLoading(false);
     }
