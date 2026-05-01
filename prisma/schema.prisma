@@ -105,6 +105,36 @@ enum FollowStatus {
   BLOCKED
 }
 
+enum RankTier {
+  CADDIE
+  LOCAL
+  MARSHAL
+  COURSE_PRO
+  TOUR_PRO
+  LEGEND
+}
+
+enum BadgeCategory {
+  CONTRIBUTION
+  SOCIAL
+  EXPLORER
+  ACHIEVEMENT
+}
+
+enum BadgeRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum LeaderboardPeriod {
+  WEEKLY
+  MONTHLY
+  ALL_TIME
+}
+
 // ============================================================
 // USER
 // ============================================================
@@ -143,6 +173,10 @@ model User {
   tripMemberships  GolfTripMember[]   @relation("TripMemberships")
   notifications    Notification[]
   uploadTags       UploadTag[]
+  progression      UserProgression?
+  pointsLedger     UserPointsLedger[]
+  badges           UserBadge[]
+  courseContributions CourseContribution[]
 
   @@index([username])
   @@index([email])
@@ -618,4 +652,114 @@ model UploadTag {
   @@unique([uploadId, userId])
   @@index([uploadId])
   @@index([userId])
+}
+
+// ============================================================
+// PROGRESSION SYSTEM
+// ============================================================
+
+model UserProgression {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  totalPoints   Int       @default(0)
+  level         Int       @default(1)
+  rank          RankTier  @default(CADDIE)
+  weeklyPoints  Int       @default(0)
+  monthlyPoints Int       @default(0)
+  weekReset     DateTime?
+  monthReset    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([totalPoints(sort: Desc)])
+  @@index([weeklyPoints(sort: Desc)])
+  @@index([monthlyPoints(sort: Desc)])
+}
+
+model UserPointsLedger {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String
+  points      Int
+  referenceId String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([action])
+}
+
+model Badge {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String
+  iconUrl     String?
+  category    BadgeCategory
+  rarity      BadgeRarity
+  pointValue  Int           @default(0)
+  requirement Json
+  createdAt   DateTime      @default(now())
+
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+}
+
+model CourseContribution {
+  id            String    @id @default(cuid())
+  userId        String
+  courseId      String
+  uploadCount   Int       @default(0)
+  firstUploadAt DateTime?
+  lastUploadAt  DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId, uploadCount(sort: Desc)])
+  @@index([userId])
+}
+
+model LeaderboardSnapshot {
+  id          String            @id @default(cuid())
+  period      LeaderboardPeriod
+  periodStart DateTime
+  periodEnd   DateTime
+  userId      String
+  rank        Int
+  points      Int
+  level       Int
+  createdAt   DateTime          @default(now())
+
+  @@index([period, periodStart])
+  @@index([userId])
+}
+
+model RewardsWaitlist {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  email     String
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
 }
