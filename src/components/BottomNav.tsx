@@ -43,7 +43,13 @@ export default function BottomNav() {
     {
       label: "Home",
       active: isHome,
-      onClick: () => router.push("/"),
+      onClick: () => {
+        if (isHome) {
+          document.querySelector<HTMLElement>(".feed")?.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          router.push("/");
+        }
+      },
       icon: (active: boolean) => (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
