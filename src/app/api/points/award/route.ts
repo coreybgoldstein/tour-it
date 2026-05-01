@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { awardPoints } from "@/lib/awardPoints";
 import { PointAction, type PointActionKey } from "@/config/points-system";
+import { checkBadgesForAction } from "@/lib/checkBadges";
 
 // Actions where the caller is the recipient
 const SELF_ACTIONS = new Set<PointActionKey>([
@@ -35,6 +36,9 @@ export async function POST(req: NextRequest) {
     referenceId,
     metadata,
   });
+
+  // Badge checks run async — don't block the response
+  checkBadgesForAction(targetUserId, action as PointActionKey, referenceId).catch(() => {});
 
   return NextResponse.json({ ok: true, result });
 }
