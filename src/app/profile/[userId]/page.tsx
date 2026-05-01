@@ -14,6 +14,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import ProgressionTracker from "@/components/ProgressionTracker";
 import { rateLimit } from "@/lib/rateLimit";
+import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -31,7 +32,7 @@ function ProfileFeedCard({
   onClose: () => void;
   onOptions?: () => void;
   onReport?: () => void;
-  uploaderInfo: { id: string; username: string; avatarUrl: string | null; handicapIndex?: number | null };
+  uploaderInfo: { id: string; username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null };
   onComment: () => void;
   isOwner: boolean;
   currentUserId?: string | null;
@@ -119,7 +120,7 @@ function ProfileFeedCard({
         {/* Uploader avatar — directly below Intel */}
         <button onClick={() => router.push(`/profile/${uploaderInfo.id}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ position: "relative", width: 40, height: 40 }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className={isLegend(uploaderInfo.rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaderInfo.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {uploaderInfo.avatarUrl ? <img src={uploaderInfo.avatarUrl} alt={uploaderInfo.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
             </div>
             {clip.isTagged && (
@@ -275,6 +276,7 @@ export default function ProfilePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserMeta, setCurrentUserMeta] = useState<{ username: string; avatarUrl: string | null } | null>(null);
+  const [profileRank, setProfileRank] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
@@ -311,7 +313,7 @@ export default function ProfilePage() {
 
   // Comments
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
-  const [commentItems, setCommentItems] = useState<{ id: string; body: string; username: string; avatarUrl: string | null; createdAt: string }[]>([]);
+  const [commentItems, setCommentItems] = useState<{ id: string; body: string; username: string; avatarUrl: string | null; createdAt: string; rank?: string | null }[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -371,9 +373,13 @@ export default function ProfilePage() {
         if (me) setCurrentUserMeta({ username: me.username, avatarUrl: me.avatarUrl });
       }
 
-      const { data: profileData, error } = await supabase.from("User").select("id, username, displayName, avatarUrl, handicapIndex, homeCourseId, uploadCount, bio").eq("id", userId).single();
+      const [{ data: profileData, error }, { data: progData }] = await Promise.all([
+        supabase.from("User").select("id, username, displayName, avatarUrl, handicapIndex, homeCourseId, uploadCount, bio").eq("id", userId).single(),
+        supabase.from("UserProgression").select("rank").eq("userId", userId).single(),
+      ]);
       if (error || !profileData) { setNotFound(true); setLoading(false); return; }
       setProfile(profileData);
+      if (progData?.rank) setProfileRank(progData.rank);
       if (owner) {
         setEditHandicap(profileData.handicapIndex?.toString() || "");
         setEditDisplayName(profileData.displayName || "");
@@ -465,9 +471,9 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!commentUploadId) { setCommentItems([]); return; }
     setLoadingComments(true);
-    createClient().from("Comment").select("id, body, createdAt, userId, User:userId(username, avatarUrl)").eq("uploadId", commentUploadId).order("createdAt", { ascending: true })
+    createClient().from("Comment").select("id, body, createdAt, userId, User:userId(username, avatarUrl, UserProgression(rank))").eq("uploadId", commentUploadId).order("createdAt", { ascending: true })
       .then(({ data }) => {
-        if (data) setCommentItems(data.map((c: any) => ({ id: c.id, body: c.body, createdAt: c.createdAt, username: c.User?.username || "golfer", avatarUrl: c.User?.avatarUrl || null })));
+        if (data) setCommentItems(data.map((c: any) => ({ id: c.id, body: c.body, createdAt: c.createdAt, username: c.User?.username || "golfer", avatarUrl: c.User?.avatarUrl || null, rank: (c.User?.UserProgression as any[])?.[0]?.rank || null })));
         setLoadingComments(false);
       });
   }, [commentUploadId]);
@@ -708,7 +714,7 @@ export default function ProfilePage() {
                 onClose={() => setFeedOpen(false)}
                 onOptions={isOwner ? () => { setFeedOpen(false); setSelectedClip(clip); } : undefined}
                 onReport={!isOwner && currentUserId ? () => { setFeedOpen(false); setReportClipId(clip.id); } : undefined}
-                uploaderInfo={{ id: profile.id, username: profile.username, avatarUrl: profile.avatarUrl, handicapIndex: profile.handicapIndex }}
+                uploaderInfo={{ id: profile.id, username: profile.username, avatarUrl: profile.avatarUrl, handicapIndex: profile.handicapIndex, rank: profileRank }}
                 onComment={() => setCommentUploadId(clip.id)}
                 isOwner={isOwner}
                 currentUserId={currentUserId}
@@ -1243,11 +1249,11 @@ export default function ProfilePage() {
                 : commentItems.length === 0 ? <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
                 : commentItems.map(c => (
                   <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: `1px solid ${getRankColor(c.rank)}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {c.avatarUrl ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                     </div>
                     <div>
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42" }}>@{c.username} </span>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
                       <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{c.body}</span>
                     </div>
                   </div>

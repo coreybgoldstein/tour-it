@@ -1,0 +1,3368 @@
+[
+  {
+    "id": "7bc26609-e536-4ed2-9285-5863e15fa629",
+    "name": "River Hall Country Club",
+    "city": "Alva",
+    "state": "FL"
+  },
+  {
+    "id": "22856207-5e4a-46b3-a5f6-99d1b8b0af9e",
+    "name": "Origins Golf Club",
+    "city": "Alys Beach",
+    "state": "FL"
+  },
+  {
+    "id": "997132a3-61ec-4563-bf1c-60f1ba504f61",
+    "name": "Tampa Palms Country Club",
+    "city": "ampa Palms Blvd",
+    "state": "FL"
+  },
+  {
+    "id": "bba7d585-5eea-4ff1-bd62-0e7060c8e7b5",
+    "name": "Errol Estate Golf & Country Club",
+    "city": "Apopka",
+    "state": "FL"
+  },
+  {
+    "id": "8573caa1-8e97-4f0c-a254-4c9bac763dcf",
+    "name": "Sunnybreeze Golf Course",
+    "city": "Arcadia",
+    "state": "FL"
+  },
+  {
+    "id": "700b8c07-e4d0-4e27-ad6f-42155e5083ea",
+    "name": "Arcadia Municipal Golf Course",
+    "city": "Arcadia",
+    "state": "FL"
+  },
+  {
+    "id": "5f171842-e6fb-4743-bece-3bc0fa82eff5",
+    "name": "Atlantis Golf Club",
+    "city": "Atlantis",
+    "state": "FL"
+  },
+  {
+    "id": "1b1aaec5-a1f7-4d8e-baad-2f8852186ffa",
+    "name": "Atlantis Country Club",
+    "city": "Atlantis",
+    "state": "FL"
+  },
+  {
+    "id": "af0faf9f-1aaf-49f8-b970-094b7f02aac4",
+    "name": "Panther Run Golf Club",
+    "city": "Ave Maria",
+    "state": "FL"
+  },
+  {
+    "id": "250ce875-0dd9-4fd3-a23f-2d428f3256ff",
+    "name": "Pinecrest on Lotela Golf Club",
+    "city": "Avon Park",
+    "state": "FL"
+  },
+  {
+    "id": "a6c5e19d-0947-4d73-91e1-abf277eedb19",
+    "name": "River Greens Golf Course",
+    "city": "Avon Park",
+    "state": "FL"
+  },
+  {
+    "id": "98df3a90-c728-4664-93f5-ba0681314787",
+    "name": "Babcock National",
+    "city": "Babcock Ranch",
+    "state": "FL"
+  },
+  {
+    "id": "ad04f16c-ea23-4e65-be95-b60d1b3b0ad6",
+    "name": "Barefoot Bay Golf Course",
+    "city": "Barefoot Bay",
+    "state": "FL"
+  },
+  {
+    "id": "2fde9602-3886-4db8-9ff6-8685fe103584",
+    "name": "Pelican Club",
+    "city": "Belleair",
+    "state": "FL"
+  },
+  {
+    "id": "6e47de77-9df3-43dd-a7d4-e5b3c1976b06",
+    "name": "Twisted Oaks Golf Club",
+    "city": "Beverly Hills",
+    "state": "FL"
+  },
+  {
+    "id": "1acc545a-f5fc-4148-be68-c25144b6a649",
+    "name": "Brentwood",
+    "city": "Beverly Hills",
+    "state": "FL"
+  },
+  {
+    "id": "4472beeb-7d06-434c-a164-60f9a5ea8276",
+    "name": "Quarry Course",
+    "city": "Black Diamond",
+    "state": "FL"
+  },
+  {
+    "id": "a8bc2a6c-1a0e-4a3e-bade-588745b2dea0",
+    "name": "Ranch Course",
+    "city": "Black Diamond",
+    "state": "FL"
+  },
+  {
+    "id": "8eba2cd9-db6c-4b50-b027-4ab6bcc0d5ae",
+    "name": "Gasparilla Golf Club",
+    "city": "Boca Grande",
+    "state": "FL"
+  },
+  {
+    "id": "f7a461c6-7240-4b9d-a112-d4d9c185aa40",
+    "name": "Ocean Breeze Golf & Country Club",
+    "city": "Boca Raton",
+    "state": "FL"
+  },
+  {
+    "id": "cd18683c-6310-46e1-9873-9046c97d6fbc",
+    "name": "Hidden Lake Park",
+    "city": "Boca Raton",
+    "state": "FL"
+  },
+  {
+    "id": "f0d97c48-6138-44d8-a94e-0aef94d15204",
+    "name": "Osprey Point Public Golf Course - Hawk / Falcon",
+    "city": "Boca Raton",
+    "state": "FL"
+  },
+  {
+    "id": "b22b543f-89fc-4c30-8ec6-cb78bb119171",
+    "name": "Red Reef Park Executive Golf Course",
+    "city": "Boca Raton",
+    "state": "FL"
+  },
+  {
+    "id": "53657d42-fa85-4740-be58-5e98ca646645",
+    "name": "Bonita Fairways Golf Course",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "39f5ae3b-7431-4975-801b-647c9422f35b",
+    "name": "Shadow Wood Country Club - North Course",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "a2019335-2477-4b0d-803a-49ccefb217bf",
+    "name": "Bonita Bay Club West",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "9cc29e02-1606-4ad5-a7e2-906d8f6991f3",
+    "name": "Congo River Golf",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "1a8698d7-c4e3-4f4e-9460-07d1e53aaf03",
+    "name": "Copperleaf Golf Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "daa17e53-eb0a-455e-b381-1390aab582c9",
+    "name": "The Colony Golf & Country Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "93d05911-3fe3-4ae0-b3c7-60191d8042d5",
+    "name": "Raptor Bay Golf Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "e9687985-438d-4e25-86a8-5d4e1e75b896",
+    "name": "Shadow Wood Country Club - South Course",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "3e9b5fe1-7373-4e16-870a-12e61df7ef14",
+    "name": "Spring Run Golf Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "6f900130-f7c7-4503-ac67-b1fe8c5c11d7",
+    "name": "Highland Woods Golf & Country Club",
+    "city": "Bonita Springs",
+    "state": "FL"
+  },
+  {
+    "id": "51b4afb3-c10e-45f9-8d06-4bcc935ce4b0",
+    "name": "Quail Ridge Country Club - North Course",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "d9412df9-a7b0-412d-bc7c-4d0b48e435d5",
+    "name": "Pine Tree Golf Club",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "d6150e4a-ec0b-4ce2-b8c9-b1045d613b0f",
+    "name": "Hunters Run",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "2d83beea-0f66-4568-beea-1bf68b8b1973",
+    "name": "Quail Ridge Country Club - South Course",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "9590e9e8-c594-44ee-8cbe-efcf3435393d",
+    "name": "The Links at Boynton Beach",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "a921ccaf-98a5-49fd-8ece-6e043da5a5bc",
+    "name": "Delray Dunes Golf and Country Club",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "081ac761-e10f-48a2-9121-85fc51545251",
+    "name": "Palm Beach Leisureville Golf Course",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "53019563-771a-4a48-86d6-4186a255e36e",
+    "name": "Westchester Golf & Country Club",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "818245da-7c77-4e17-b716-cdad2229e76a",
+    "name": "Aberdeen Golf & Country Club",
+    "city": "Boynton Beach",
+    "state": "FL"
+  },
+  {
+    "id": "fbab9bb3-8588-4978-b0c6-1992a0d31044",
+    "name": "Pinebrook Ironwood Golf Club",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "0587781f-cbe2-49d2-856d-bd64ba662342",
+    "name": "Bradenton Country Club",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "a7584a88-4497-4b9e-a848-28044868ae76",
+    "name": "Concession",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "516aa043-4541-469d-8dc2-a3e0bc9eb7c0",
+    "name": "Manatee Golf Course",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "8fc410a1-7eb5-44ff-b36e-a3146ebc696e",
+    "name": "Esplanade Golf & Country Club",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "ccd07239-b4a7-4824-b684-73ca343765b6",
+    "name": "River Strand Golf & Country Club",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "c177ceed-af7c-419e-96f6-4a5c6a49a22a",
+    "name": "Waterlefe Golf Club",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "b504d571-c2ae-4257-be61-6782c6a0bbbe",
+    "name": "The Preserve Golf Club",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "3d65389c-2410-46fb-9f46-f38dafac173f",
+    "name": "Tara Golf & Country Club",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "0f765758-5e5e-4274-92c2-84deb6fd5bb3",
+    "name": "River Isles Golf Course",
+    "city": "Bradenton",
+    "state": "FL"
+  },
+  {
+    "id": "57454cd3-f866-4fcb-a811-4536b6c2a312",
+    "name": "Brooksville Country Club",
+    "city": "Brooksville",
+    "state": "FL"
+  },
+  {
+    "id": "dc7b145e-5588-4520-8cb3-c80f0f8d9c0f",
+    "name": "Coral Oaks Golf Course",
+    "city": "Cape Coral",
+    "state": "FL"
+  },
+  {
+    "id": "79a489ca-cc22-4281-911b-59d8e1e49639",
+    "name": "Carrollwood Country Club",
+    "city": "Carrollwood",
+    "state": "FL"
+  },
+  {
+    "id": "2d1314e9-4b47-4413-aa86-98f9e710f672",
+    "name": "Celebration Golf Club",
+    "city": "Celebration",
+    "state": "FL"
+  },
+  {
+    "id": "7b048e87-41f2-46fa-b1c3-ff8161ad93c7",
+    "name": "Champions Gate Country Club",
+    "city": "Champions Gate",
+    "state": "FL"
+  },
+  {
+    "id": "84ea7990-9488-4f11-a7fc-f41eb4a8208c",
+    "name": "Cheval Golf & Country Club",
+    "city": "Cheval",
+    "state": "FL"
+  },
+  {
+    "id": "cee2ff50-7018-4dd5-ad6d-2bb35a139bd2",
+    "name": "Grande Oaks Golf Club",
+    "city": "Circle Davie",
+    "state": "FL"
+  },
+  {
+    "id": "a8c013f5-2524-4275-bbdb-64dd496213c7",
+    "name": "Citrus Hills Golf & Country Club",
+    "city": "Citrus Hills",
+    "state": "FL"
+  },
+  {
+    "id": "f35ce8e5-30ac-4c6c-a5eb-89c259904ae9",
+    "name": "Citrus Springs Golf & Country Club",
+    "city": "Citrus Springs",
+    "state": "FL"
+  },
+  {
+    "id": "499a289b-0142-4c47-b7c6-33b8e427141b",
+    "name": "The Landings Golf Club",
+    "city": "Clearwater",
+    "state": "FL"
+  },
+  {
+    "id": "fd155a2a-8edc-4dc9-b05f-fc1d46b48270",
+    "name": "Countryside Country Club",
+    "city": "Clearwater",
+    "state": "FL"
+  },
+  {
+    "id": "82799c30-40df-4631-a40e-9109a6a0c07e",
+    "name": "Feather Sound Country Club",
+    "city": "Clearwater",
+    "state": "FL"
+  },
+  {
+    "id": "98a845bd-02ac-42f2-876f-f569ea504a9c",
+    "name": "Chi Chi Rodriguez Golf Course",
+    "city": "Clearwater",
+    "state": "FL"
+  },
+  {
+    "id": "5536a936-6399-42b0-8b8d-3b2ae174d3f5",
+    "name": "Kings Ridge Golf Club - Ridge Course",
+    "city": "Clermont",
+    "state": "FL"
+  },
+  {
+    "id": "8b39f80a-e058-457d-bc18-4a9460ed1144",
+    "name": "Clermont National",
+    "city": "Clermont",
+    "state": "FL"
+  },
+  {
+    "id": "b152a06c-9de7-4bb0-b1f2-6edfc5ba0a23",
+    "name": "Swiss Fairways Golf Club",
+    "city": "Clermont",
+    "state": "FL"
+  },
+  {
+    "id": "e1e72089-453b-4dee-928e-b06d0cce1e41",
+    "name": "Kings Ridge Golf Club",
+    "city": "Clermont",
+    "state": "FL"
+  },
+  {
+    "id": "d4797719-fc82-499e-a7ae-0d92af776d66",
+    "name": "Clewiston Golf Course",
+    "city": "Clewiston",
+    "state": "FL"
+  },
+  {
+    "id": "24dc5242-d266-46b0-9664-f2ca6483f4bd",
+    "name": "Fred Gay Golf Academy Driving Range",
+    "city": "Cocoa",
+    "state": "FL"
+  },
+  {
+    "id": "8a2c0e91-d27d-4448-badb-395cee9ffa0b",
+    "name": "Cocoa Beach Country Club",
+    "city": "Cocoa Beach",
+    "state": "FL"
+  },
+  {
+    "id": "80f18fd8-3e2f-42c6-90a7-cb54213fcdc7",
+    "name": "Wynmoor Golf Course",
+    "city": "Coconut Creek",
+    "state": "FL"
+  },
+  {
+    "id": "4bc690f3-c272-469e-af41-ed9816d5588d",
+    "name": "Esplanade Golf",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "5763e903-03c6-4288-9ca4-6200da500351",
+    "name": "Country Club of Naples",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "03360211-c0a4-4722-8f8b-45c081e469dd",
+    "name": "Vineyards Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "91802951-6d2e-4590-9d1a-7002ef8eba80",
+    "name": "Cedar Hammock Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "e73fa0b7-0447-4cfe-af7c-1fc89654460a",
+    "name": "Bentley Village Golf Course",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "f6ff4a04-2fe5-40a5-afca-f006a778a418",
+    "name": "Eagle Creek Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "b9efdda2-4533-43c5-9975-638bb6377847",
+    "name": "Naples Lakes Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "6b147906-ac6c-4cd0-ad35-791c8dcac426",
+    "name": "Naples Grande Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "23bb4747-b289-47a4-87aa-33c897c8143c",
+    "name": "Quality Inn & Suites Golf Resort",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "b0336a32-84b2-44d9-a8af-47dc1ad63f0e",
+    "name": "Naples National Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "e786afe1-bbe9-4234-a556-7c3f75dd26b1",
+    "name": "Twin Eagles Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "aa3764b6-0630-4bf8-aa01-519ff1187a21",
+    "name": "Quail Run Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "44b766f7-6bf7-4353-9651-a7b816619228",
+    "name": "Pelican Marsh Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "416fcbea-0fe1-4636-9799-af2cfa5ab9bc",
+    "name": "Kensington Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "245c534c-b53c-4115-975b-b2c7180a6a98",
+    "name": "Bay Colony Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "52204396-5d45-49e9-b464-24fdf22e8767",
+    "name": "Hideout Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "e33485f3-53cf-438f-af50-5ca7fcd8b0ef",
+    "name": "Grey Oaks Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "569fc381-e542-4bf2-806a-98869f776207",
+    "name": "Wyndemere Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "00b281fd-1fb4-4df1-b170-0d24c4682d79",
+    "name": "Valencia Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "462f0967-3224-4e70-a04d-402ca4b6d16f",
+    "name": "TPC Treviso Bay",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "8857a978-1990-4585-a350-8a249115fde7",
+    "name": "Tiburón Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "d0081948-352f-42d7-ac63-c4c922255205",
+    "name": "The Golf Lodge at the Quarry",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "ad230422-49e6-44e9-b021-f25d2fefd819",
+    "name": "Quail West Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "c9fd2a09-a6e6-48cb-8298-4018f185f278",
+    "name": "Bonita Bay East",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "c4e09f7e-f28b-4e32-8b8a-f3e1daa83ae0",
+    "name": "Heritage Bay Golf and Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "45cb6be0-257e-4c0e-afa3-3dea01631e97",
+    "name": "Glen Eagle Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "ac27f530-e99b-45b7-95f2-2b6fddf1f0d0",
+    "name": "Talis Park Golf Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "1265825f-fa6d-4da2-92ae-81ec1056183e",
+    "name": "Naples Heritage Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "cf06817d-ffc5-40cd-a33e-d1838cde2094",
+    "name": "Forest Glen Golf & Country Club",
+    "city": "Collier County",
+    "state": "FL"
+  },
+  {
+    "id": "180dd596-ae5a-4630-9e7c-3185703e9da5",
+    "name": "Granada Golf Course",
+    "city": "Coral Gables",
+    "state": "FL"
+  },
+  {
+    "id": "af377239-0a84-498b-a154-626a99338881",
+    "name": "Biltmore Golf Course",
+    "city": "Coral Gables",
+    "state": "FL"
+  },
+  {
+    "id": "f039fc48-eebe-4a78-958c-95a40815b47a",
+    "name": "Belleair Country Club",
+    "city": "Country Club Ln",
+    "state": "FL"
+  },
+  {
+    "id": "a9cbf9a4-3a6d-4492-82fa-a943248d13b1",
+    "name": "Card Sound Golf Club",
+    "city": "Country Club Rd",
+    "state": "FL"
+  },
+  {
+    "id": "abbe6c43-d226-4f91-bc2f-3a7606d12396",
+    "name": "Highlands Reserve",
+    "city": "Davenport",
+    "state": "FL"
+  },
+  {
+    "id": "c2c5146e-e3a9-4a89-be45-cf04c5110b17",
+    "name": "Pine Island Ridge Golf Course",
+    "city": "Davie",
+    "state": "FL"
+  },
+  {
+    "id": "bf8eab84-b170-48a1-89ae-c1fa81979f0b",
+    "name": "Davie Golf and Country Club",
+    "city": "Davie",
+    "state": "FL"
+  },
+  {
+    "id": "7277e5fb-88cb-4ea9-9692-b7bd9f316a33",
+    "name": "Crystal Lake Country Club - Tam O'Shanter Golf Course (closed)",
+    "city": "Deerfield Beach",
+    "state": "FL"
+  },
+  {
+    "id": "6e952ec0-c969-4bf9-bcd2-315c353794b7",
+    "name": "Hillsboro Pines Golf Course",
+    "city": "Deerfield Beach",
+    "state": "FL"
+  },
+  {
+    "id": "315cce07-4fa9-48ee-ba74-082508fdc65d",
+    "name": "Costa Del Sol Golf Club",
+    "city": "Doral",
+    "state": "FL"
+  },
+  {
+    "id": "57029c92-e002-42fd-9ac8-4b3dd9809296",
+    "name": "Diamond Hill Golf Club",
+    "city": "Dover",
+    "state": "FL"
+  },
+  {
+    "id": "ab9c52de-dc0f-44ac-8a5c-9efbacfe9b97",
+    "name": "Dunedin Stirling Links",
+    "city": "Dunedin",
+    "state": "FL"
+  },
+  {
+    "id": "fd06e85c-10d8-4b31-8b25-550cfe56256e",
+    "name": "Dunedin Golf Club",
+    "city": "Dunedin",
+    "state": "FL"
+  },
+  {
+    "id": "ec610196-636d-4229-8c48-b7ef3ef5a2c6",
+    "name": "Rainbow's End Golf Club",
+    "city": "Dunnellon",
+    "state": "FL"
+  },
+  {
+    "id": "ae55d4e4-1cb7-4349-9813-d832210d1288",
+    "name": "Juliette Falls Golf Club",
+    "city": "Dunnellon",
+    "state": "FL"
+  },
+  {
+    "id": "5966e2dc-71eb-41cd-b43f-442a2b0a8d81",
+    "name": "Windstar on Naples Bay",
+    "city": "East Naples",
+    "state": "FL"
+  },
+  {
+    "id": "0f7acfc9-07d5-478a-909c-a854754a14fc",
+    "name": "Lakewood Country Club of Naples",
+    "city": "East Naples",
+    "state": "FL"
+  },
+  {
+    "id": "68ac44d8-f126-48b9-94c0-51f827b10ae2",
+    "name": "Foxfire Country Club",
+    "city": "East Naples",
+    "state": "FL"
+  },
+  {
+    "id": "d163e00d-a428-41db-9d8e-7c60318f01bf",
+    "name": "Myakka Pines Golf Course",
+    "city": "Englewood",
+    "state": "FL"
+  },
+  {
+    "id": "1c60cb5a-776c-4b46-91d1-6e1903e3b310",
+    "name": "Lemon Bay Golf Club",
+    "city": "Englewood",
+    "state": "FL"
+  },
+  {
+    "id": "18f21343-3125-486c-97aa-935584a064be",
+    "name": "Oyster Creek Golf Club",
+    "city": "Englewood",
+    "state": "FL"
+  },
+  {
+    "id": "a7293162-7664-4ab6-a80d-eb7ece349f15",
+    "name": "Stoneybrook Golf Club-Estero",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "27d809c1-b67c-4e54-ae6e-4711635a7a17",
+    "name": "Old Corkscrew Golf Club",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "3b53ce87-d1cc-4408-85e2-ece916126c42",
+    "name": "Wildcat Run Golf and Country Club",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "3b2ccdb7-656e-4ace-8f2e-246870531038",
+    "name": "The Club at Grandezza",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "538c3efe-6400-4b17-85bc-bf20a2284e36",
+    "name": "Stoneybrook Golf Course",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "c567a38b-67df-432c-8c20-4902465b5eef",
+    "name": "Villages at Country Creek",
+    "city": "Estero",
+    "state": "FL"
+  },
+  {
+    "id": "b812ff8c-d7fa-4691-afeb-2649c52a4031",
+    "name": "The Links at Fisher Island",
+    "city": "Fisher Island",
+    "state": "FL"
+  },
+  {
+    "id": "ed3a80da-04ec-4bb8-81b8-d5210c070824",
+    "name": "Lago Mar Country Club",
+    "city": "Fort Lauderdale",
+    "state": "FL"
+  },
+  {
+    "id": "df1421d0-68da-46de-805d-b36d8c136391",
+    "name": "Fort Lauderdale Country Club",
+    "city": "Fort Lauderdale",
+    "state": "FL"
+  },
+  {
+    "id": "89d3e639-a097-486f-9091-5b3918e30af4",
+    "name": "Lauderhill Golf Course",
+    "city": "Fort Lauderdale",
+    "state": "FL"
+  },
+  {
+    "id": "35961f1f-4e13-40ef-87d5-17d38d79ed2c",
+    "name": "Coral Ridge Country Club",
+    "city": "Fort Lauderdale",
+    "state": "FL"
+  },
+  {
+    "id": "5358131a-e54a-43f6-be2d-1bdcb0d2953d",
+    "name": "Cypress Lake Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "3417b1bb-2e16-49b7-a628-3dee5480812c",
+    "name": "Cross Creek Golf & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "b2c830d5-2f6d-4136-8cda-9a57b11488b3",
+    "name": "Legends Golf and Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "10339a95-f701-4643-ad09-9c5677a448dd",
+    "name": "Pelican Preserve Golf Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "f325ec4a-f2d3-4801-a0f5-29bee3c9382f",
+    "name": "Crown Colony Golf & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "a1a40eac-123e-4730-a9e8-0e1a7c79e0eb",
+    "name": "San Carlos Golf Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "4c4d1cdd-af0a-4080-abb7-aee6d29a88f8",
+    "name": "Whiskey Creek Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "e6f15035-96bc-4b04-b758-d3b872c281b3",
+    "name": "Estero Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "bd2a074e-4ec9-4e50-b273-286d2b171bca",
+    "name": "Myerlee Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "fba63012-c789-47f0-bfcf-aebd236879a2",
+    "name": "Gateway Golf & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "64e0836a-9c53-4234-a845-2d6f9e93ae98",
+    "name": "Fort Myers Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "cbb99bb9-c879-4950-af0e-2573c18d36f0",
+    "name": "Gulf Harbour Yacht & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "796c08f4-8d8d-4117-94fc-1254cbb5fa35",
+    "name": "Shell Point Golf Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "b6bd08b8-623a-43b8-88a2-a2cf5d0b46a3",
+    "name": "Legends Golf & Country Club",
+    "city": "Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "2f4ef20a-d352-4ea1-a189-be6e3fd24c48",
+    "name": "Fairwinds Golf Course",
+    "city": "Fort Pierce",
+    "state": "FL"
+  },
+  {
+    "id": "574cd586-3af4-4949-9e28-c0b5ebc46ae2",
+    "name": "Gator Trace Golf & Country Club",
+    "city": "Fort Pierce",
+    "state": "FL"
+  },
+  {
+    "id": "2f9f8b68-b69b-491e-a85d-c0911b17613e",
+    "name": "Island Pines Golf Club",
+    "city": "Fort Pierce",
+    "state": "FL"
+  },
+  {
+    "id": "a303be1a-1c92-45e7-8151-a3faefba7237",
+    "name": "Indian Hills Golf Course",
+    "city": "Fort Pierce",
+    "state": "FL"
+  },
+  {
+    "id": "9ced82e6-42af-455f-b0a0-4d30390d0a08",
+    "name": "5 holes",
+    "city": "Four Corners",
+    "state": "FL"
+  },
+  {
+    "id": "59ccd28c-506d-48e1-8b0d-c971c549a4bc",
+    "name": "16 holes",
+    "city": "Four Corners",
+    "state": "FL"
+  },
+  {
+    "id": "5ef66d3b-3e0b-4efc-9339-26a0a6236a22",
+    "name": "Crane's Bend",
+    "city": "Four Corners",
+    "state": "FL"
+  },
+  {
+    "id": "e8fc1153-c522-4198-8cd0-f6832a35c85c",
+    "name": "Legends Walk",
+    "city": "Four Corners",
+    "state": "FL"
+  },
+  {
+    "id": "f237b02c-8dd3-4220-a91d-1321cc0c3e55",
+    "name": "Grand Harbor - Harbor Course",
+    "city": "Gifford",
+    "state": "FL"
+  },
+  {
+    "id": "25852e8a-92fe-4790-9e35-9e26bd25d11e",
+    "name": "Tranquilo Golf Course",
+    "city": "Golden Oak",
+    "state": "FL"
+  },
+  {
+    "id": "b2346712-23a6-4bc6-b939-a35bed640730",
+    "name": "Pasadena Yacht & Country Club Golf",
+    "city": "Gulfport",
+    "state": "FL"
+  },
+  {
+    "id": "fd7a0cc6-3f54-44b8-bf80-91b9231223c7",
+    "name": "Ocean Course",
+    "city": "Hammock Beach",
+    "state": "FL"
+  },
+  {
+    "id": "8d332356-9ab1-4f24-807c-5e730cd94829",
+    "name": "Heathrow Country club",
+    "city": "Heathrow",
+    "state": "FL"
+  },
+  {
+    "id": "801111c0-51fc-4afe-b3f9-2ac0000c9630",
+    "name": "Sweetgum Golf Course (The Villages)",
+    "city": "Hendry Dr",
+    "state": "FL"
+  },
+  {
+    "id": "febc528c-a8c1-43dd-bdb0-d8dd1789a80f",
+    "name": "Skyview at Terra Vista",
+    "city": "Hernando",
+    "state": "FL"
+  },
+  {
+    "id": "2f0d8dcb-7e12-4745-9888-1be377eba70d",
+    "name": "Camp Phosphate Co #1",
+    "city": "Hernando",
+    "state": "FL"
+  },
+  {
+    "id": "23cae696-8cbe-4c33-9ee1-4b0517dc39da",
+    "name": "Rivard Golf Club",
+    "city": "Hernando County",
+    "state": "FL"
+  },
+  {
+    "id": "9bda42e4-20f5-47ea-afed-c50cf1b654ab",
+    "name": "Timber Pines Country Club",
+    "city": "Hernando County",
+    "state": "FL"
+  },
+  {
+    "id": "1491d095-d802-4a6a-aaaf-b2fa34473c3f",
+    "name": "Medalist Golf Club",
+    "city": "Hobe Sound",
+    "state": "FL"
+  },
+  {
+    "id": "f2898bb4-691c-489c-b535-d242fb9d1573",
+    "name": "Lost Lake Golf Club",
+    "city": "Hobe Sound",
+    "state": "FL"
+  },
+  {
+    "id": "5010fcfc-ef13-4c9f-9d50-bd6df19e4245",
+    "name": "Grove XXIII",
+    "city": "Hobe Sound",
+    "state": "FL"
+  },
+  {
+    "id": "024a45c8-a98b-41b5-b631-d92205e88315",
+    "name": "Loblolly",
+    "city": "Hobe Sound",
+    "state": "FL"
+  },
+  {
+    "id": "759728be-87bc-45ce-99f7-8d60caedbaf0",
+    "name": "McArthur Golf Club",
+    "city": "Hobe Sound",
+    "state": "FL"
+  },
+  {
+    "id": "1877f122-709f-407f-bd16-3e13fc31f1d4",
+    "name": "Hobe Sound Golf Club",
+    "city": "Hobe Sound",
+    "state": "FL"
+  },
+  {
+    "id": "b305937c-a24b-4d75-a789-223794546e6f",
+    "name": "The Diplomat Golf Resort & Spa",
+    "city": "Hollywood",
+    "state": "FL"
+  },
+  {
+    "id": "36d89e60-745b-4786-b84c-0adac7b552a2",
+    "name": "Eco Golf Club",
+    "city": "Hollywood",
+    "state": "FL"
+  },
+  {
+    "id": "9c27acbe-e0b3-488b-b079-c8727d86d08b",
+    "name": "Orangebrook Golf & Country Club",
+    "city": "Hollywood",
+    "state": "FL"
+  },
+  {
+    "id": "c983d16a-8982-437a-a278-7a11aadd7ef1",
+    "name": "Key Royale Golf Club",
+    "city": "Holmes Beach",
+    "state": "FL"
+  },
+  {
+    "id": "ad421ef8-8aba-4624-a7cc-16cc41aad42b",
+    "name": "Redland Golf & Country Club",
+    "city": "Homestead",
+    "state": "FL"
+  },
+  {
+    "id": "254d8380-1575-4b59-bd0b-1e572afd74ba",
+    "name": "Sweet Swing driving range",
+    "city": "Homosassa",
+    "state": "FL"
+  },
+  {
+    "id": "3fa60f43-47c7-4d8f-9322-6a798795220b",
+    "name": "Bishops Gate Golf and Lakeside Community",
+    "city": "Howey-in-the-Hills",
+    "state": "FL"
+  },
+  {
+    "id": "d627f11b-a74c-4a68-b3a0-c53c73246c05",
+    "name": "El Campéon",
+    "city": "Howey-in-the-Hills",
+    "state": "FL"
+  },
+  {
+    "id": "ff964c71-fc86-40b6-ae11-bdb9eb708f78",
+    "name": "The Ritz-Carlton Golf Club",
+    "city": "Hunters Creek",
+    "state": "FL"
+  },
+  {
+    "id": "83380bab-d1ab-4c02-8354-6985ed60e775",
+    "name": "Pointe West Country Club",
+    "city": "Indian River County",
+    "state": "FL"
+  },
+  {
+    "id": "9fc6dd84-84cb-4cf8-91bd-503fdafae114",
+    "name": "Indianwood Golf & Country Club",
+    "city": "Indiantown",
+    "state": "FL"
+  },
+  {
+    "id": "5669d1e9-874c-4467-bbbe-a703d970ff3b",
+    "name": "Temple Terrace Golf & Country Club",
+    "city": "Inverness Ave",
+    "state": "FL"
+  },
+  {
+    "id": "e908bd96-5cb1-4af5-8105-bf7b186188d6",
+    "name": "Seminole Golf Club",
+    "city": "Juno Beach",
+    "state": "FL"
+  },
+  {
+    "id": "6758c1e0-3730-47f8-a3bf-2bd44a8fd2f5",
+    "name": "The Bears Club",
+    "city": "Jupiter",
+    "state": "FL"
+  },
+  {
+    "id": "d467f173-f5a4-4e51-80ba-55b12a6a3605",
+    "name": "Abacoa Golf Club",
+    "city": "Jupiter",
+    "state": "FL"
+  },
+  {
+    "id": "52f4a706-ee22-401e-9505-1272c4c20088",
+    "name": "Jonathan's Landing Golf Club",
+    "city": "Jupiter",
+    "state": "FL"
+  },
+  {
+    "id": "57adb23f-5b74-459a-a15c-2d56efe9a8d0",
+    "name": "Jupiter Dunes",
+    "city": "Jupiter",
+    "state": "FL"
+  },
+  {
+    "id": "894e783c-ea7a-45ee-8cea-81ee1cb68862",
+    "name": "Jupiter Country Club",
+    "city": "Jupiter",
+    "state": "FL"
+  },
+  {
+    "id": "3288c35f-1f27-4aca-8c94-867ec2b10b05",
+    "name": "Trump National Jupiter",
+    "city": "Jupiter",
+    "state": "FL"
+  },
+  {
+    "id": "7616a8a2-a515-427f-abf7-5e9abf11b4fc",
+    "name": "The Dye Preserve",
+    "city": "Jupiter",
+    "state": "FL"
+  },
+  {
+    "id": "944500b2-1f70-4403-ac1c-626921e66e8d",
+    "name": "Golf Club of Jupiter",
+    "city": "Jupiter",
+    "state": "FL"
+  },
+  {
+    "id": "08dab69e-0d9b-4fb9-85be-5754b177b549",
+    "name": "Crandon Park Golf Course",
+    "city": "Key Biscayne",
+    "state": "FL"
+  },
+  {
+    "id": "318fe4a8-b22f-49b3-804b-c910a3ae6bdf",
+    "name": "Ocean Reef - Hammock Course",
+    "city": "Key Largo",
+    "state": "FL"
+  },
+  {
+    "id": "1ccd4664-8914-4397-939b-0530a43c0ab9",
+    "name": "Key West City Golf Club",
+    "city": "Key West",
+    "state": "FL"
+  },
+  {
+    "id": "a4424609-9b1d-4dcb-9bb6-9056f2188680",
+    "name": "Remington Golf Club",
+    "city": "Kissimmee",
+    "state": "FL"
+  },
+  {
+    "id": "9d9746ed-e0b0-45e2-9a58-e84156e7642a",
+    "name": "Kissimmee Bay Country Club",
+    "city": "Kissimmee",
+    "state": "FL"
+  },
+  {
+    "id": "07f1736e-8617-43e5-9ca2-d9a1988b0d97",
+    "name": "Kissimmee Oaks Golf Club",
+    "city": "Kissimmee",
+    "state": "FL"
+  },
+  {
+    "id": "3a4cae0c-280d-4ceb-a897-3aa5b40f9658",
+    "name": "Stonegate Golf Club - Cypress Course",
+    "city": "Kissimmee",
+    "state": "FL"
+  },
+  {
+    "id": "9d032d3e-f9a6-4f9e-bea8-2b7ab1d801c8",
+    "name": "Kissimmee Golf Club, FL",
+    "city": "Kissimmee",
+    "state": "FL"
+  },
+  {
+    "id": "863c0587-a3c3-41aa-9542-45bc7534f30f",
+    "name": "Reunion Resort Golf Course",
+    "city": "Kissimmee",
+    "state": "FL"
+  },
+  {
+    "id": "8ef30fc7-41c6-4487-8df9-4946c37c9bb8",
+    "name": "Stonegate Golf Club - Oaks Course",
+    "city": "Kissimmee",
+    "state": "FL"
+  },
+  {
+    "id": "3cad2d66-0667-4bab-a3fc-1187569b0f4b",
+    "name": "Falcon's Fire Golf Club",
+    "city": "Kissimmee",
+    "state": "FL"
+  },
+  {
+    "id": "9c17b6b2-221d-4ed9-9b4b-07d7502b3040",
+    "name": "Lakes of Lady Lake Golf Course",
+    "city": "Lady Lake",
+    "state": "FL"
+  },
+  {
+    "id": "2d33f45c-276e-4a4a-8da4-9e34f3d69f5a",
+    "name": "Disney's Magnolia Golf Course",
+    "city": "Lake Buena Vista",
+    "state": "FL"
+  },
+  {
+    "id": "9d865b4f-0386-40f4-a49d-2a1f759fd379",
+    "name": "Disney's Lake Buena Vista Golf Course",
+    "city": "Lake Buena Vista",
+    "state": "FL"
+  },
+  {
+    "id": "ebf03f44-1a3e-40a4-9a70-4b15a1f53e3d",
+    "name": "West Orange Country Club",
+    "city": "Lake Butler",
+    "state": "FL"
+  },
+  {
+    "id": "cb28ec31-7929-4f65-ab72-1fb29a0e737b",
+    "name": "The Country Club of Mount Dora",
+    "city": "Lake County",
+    "state": "FL"
+  },
+  {
+    "id": "5f3a187b-27e3-49b6-be84-668b907d18ad",
+    "name": "East Lake Community Church",
+    "city": "Lake County",
+    "state": "FL"
+  },
+  {
+    "id": "38884e18-8822-426a-8350-373e092abc96",
+    "name": "Timacuan Golf Course",
+    "city": "Lake Mary",
+    "state": "FL"
+  },
+  {
+    "id": "2b9eb358-db55-4986-b772-386ed2f2f844",
+    "name": "Placid Lakes Country Club",
+    "city": "Lake Placid",
+    "state": "FL"
+  },
+  {
+    "id": "2b248f93-2467-486a-a9ee-4e51dd34a2b1",
+    "name": "Lake Wales Country Club",
+    "city": "Lake Wales",
+    "state": "FL"
+  },
+  {
+    "id": "848909c2-d98c-4ef5-bb58-f1951b684a95",
+    "name": "Fountains Country Club",
+    "city": "Lake Worth",
+    "state": "FL"
+  },
+  {
+    "id": "0c443458-9467-4a2d-b6c0-1e78bb2ce62d",
+    "name": "Park Ridge Golf Course",
+    "city": "Lake Worth",
+    "state": "FL"
+  },
+  {
+    "id": "386621d1-2acf-414a-bbee-51c634bca070",
+    "name": "Forest Oaks Golf Club",
+    "city": "Lake Worth",
+    "state": "FL"
+  },
+  {
+    "id": "c589fc68-e9a5-4968-bea4-6c462c327539",
+    "name": "Winston Trails Golf Club",
+    "city": "Lake Worth",
+    "state": "FL"
+  },
+  {
+    "id": "1e2a2a6f-0735-40a9-ac05-349c079b6af3",
+    "name": "Lake Worth Municipal Golf Course",
+    "city": "Lake Worth",
+    "state": "FL"
+  },
+  {
+    "id": "8ef63803-a3e5-48e4-a8ae-5aad4e581382",
+    "name": "Palm Beach National Golf and Country Club",
+    "city": "Lake Worth",
+    "state": "FL"
+  },
+  {
+    "id": "958e59de-c39e-4d29-847a-b03ccce9cf43",
+    "name": "The Falls Club of the Palm Beaches",
+    "city": "Lake Worth",
+    "state": "FL"
+  },
+  {
+    "id": "ba44f7ae-8f8b-46b8-ac38-4175a878c341",
+    "name": "Poinciana Country Club",
+    "city": "Lake Worth",
+    "state": "FL"
+  },
+  {
+    "id": "8b78ce01-127c-4dd4-84e2-7f21b69173d9",
+    "name": "Grasslands Golf & Country Club",
+    "city": "Lakeland",
+    "state": "FL"
+  },
+  {
+    "id": "fc06c2e9-17b0-4149-9bd8-188d752f1815",
+    "name": "Cleveland Heights Golf Course",
+    "city": "Lakeland",
+    "state": "FL"
+  },
+  {
+    "id": "33e274d2-34aa-4e5f-8237-c649d79a553a",
+    "name": "Links of Sandpiper",
+    "city": "Lakeland",
+    "state": "FL"
+  },
+  {
+    "id": "15dda008-4ecf-4cb3-9870-f8abf6c2adcc",
+    "name": "King's Dunes Course",
+    "city": "Lakewood Ranch",
+    "state": "FL"
+  },
+  {
+    "id": "e813feb8-8477-4c57-b5b4-dc7a11c6e8a0",
+    "name": "Lakewood National Golf Club",
+    "city": "Lakewood Ranch",
+    "state": "FL"
+  },
+  {
+    "id": "ea560d77-b640-4826-97bd-f553cca45747",
+    "name": "Ritz-Carlton Members Golf Club",
+    "city": "Lakewood Ranch",
+    "state": "FL"
+  },
+  {
+    "id": "8087cda6-0ec3-474a-985e-c1c854141894",
+    "name": "Cypress Links Course",
+    "city": "Lakewood Ranch",
+    "state": "FL"
+  },
+  {
+    "id": "108ebb8a-4be8-4aeb-9a4e-cbae0b3df308",
+    "name": "Lakewood Ranch Golf and Country Club",
+    "city": "Lakewood Ranch",
+    "state": "FL"
+  },
+  {
+    "id": "a5144f3e-2334-4185-a52b-18ae1abd1709",
+    "name": "The Lake Club Amenity Center",
+    "city": "Lakewood Ranch",
+    "state": "FL"
+  },
+  {
+    "id": "ca0b4f87-72f1-4c81-abbd-141d8453acb1",
+    "name": "Esplanade at Azario",
+    "city": "Lakewood Ranch",
+    "state": "FL"
+  },
+  {
+    "id": "81525669-b4a3-418a-85a2-d77aee23e07c",
+    "name": "East Bay Golf Club",
+    "city": "Largo",
+    "state": "FL"
+  },
+  {
+    "id": "3560f882-3de3-480b-8788-e8ee837967a6",
+    "name": "Cove Cay Country Club",
+    "city": "Largo",
+    "state": "FL"
+  },
+  {
+    "id": "58e01427-65fb-43a4-9736-2dc6bb3bed5c",
+    "name": "Inverrary Country Club",
+    "city": "Lauderhill",
+    "state": "FL"
+  },
+  {
+    "id": "25bc7a5e-b998-4393-ba1a-4a8c738a5532",
+    "name": "The Clutch",
+    "city": "Lee County",
+    "state": "FL"
+  },
+  {
+    "id": "9f51553e-844c-47c1-b665-d7041624628b",
+    "name": "The Club at Renaissance",
+    "city": "Lee County",
+    "state": "FL"
+  },
+  {
+    "id": "7fdcebbc-bd60-4cb2-8396-045fcd35ab38",
+    "name": "Burnt Store Golf Course",
+    "city": "Lee County",
+    "state": "FL"
+  },
+  {
+    "id": "d0652448-9dda-4fe5-897c-94f86afe7a84",
+    "name": "Royal Tee Golf Club",
+    "city": "Lee County",
+    "state": "FL"
+  },
+  {
+    "id": "adf11b61-087a-4dd6-a144-dff302437297",
+    "name": "The Plantation Golf Club - Otter Creek",
+    "city": "Leesburg",
+    "state": "FL"
+  },
+  {
+    "id": "8ffe3367-91a5-4de1-be89-df752bf78dac",
+    "name": "Arlington Ridge Golf Club",
+    "city": "Leesburg",
+    "state": "FL"
+  },
+  {
+    "id": "724b9b34-7f50-4879-ab8d-6ba2c690b0d3",
+    "name": "The Club at Westminster",
+    "city": "Lehigh Acres",
+    "state": "FL"
+  },
+  {
+    "id": "dc09b0e6-a78e-4882-86e0-d157b105e765",
+    "name": "Mirror Lakes Golf Club",
+    "city": "Lehigh Acres",
+    "state": "FL"
+  },
+  {
+    "id": "1e2d079c-c564-48a4-b397-80e1a47a7de8",
+    "name": "Majestic Golf Club",
+    "city": "Lehigh Acres",
+    "state": "FL"
+  },
+  {
+    "id": "660750ed-767d-4d8f-b719-1e0eeb729099",
+    "name": "Hibiscus Golf Club",
+    "city": "Lely",
+    "state": "FL"
+  },
+  {
+    "id": "b5720c68-753a-46b8-9129-3477ee875664",
+    "name": "Royal Palm Country Club",
+    "city": "Lely",
+    "state": "FL"
+  },
+  {
+    "id": "d6fcf2f8-84d1-41d2-b392-4c2da26d9470",
+    "name": "Harbourside Golf Course (Longboat Key Club)",
+    "city": "Longboat Key",
+    "state": "FL"
+  },
+  {
+    "id": "b54a079d-55aa-4bda-82b8-ae029985a449",
+    "name": "Alaqua Country Club",
+    "city": "Longwood",
+    "state": "FL"
+  },
+  {
+    "id": "738717e9-6c5a-4c38-a328-b4635f39b347",
+    "name": "Wekiva Golf Club",
+    "city": "Longwood",
+    "state": "FL"
+  },
+  {
+    "id": "bd61979a-733b-46c5-b7be-57062257ccba",
+    "name": "Lutz Executive Golf Center",
+    "city": "Lutz",
+    "state": "FL"
+  },
+  {
+    "id": "2e1399ba-78d7-4e3e-9b11-ff28c0ee18ad",
+    "name": "TPC Tampa Bay",
+    "city": "Lutz",
+    "state": "FL"
+  },
+  {
+    "id": "ee7c2ca2-8b4f-40c9-849e-7bc58cc15c15",
+    "name": "Nature Walk Golf Course",
+    "city": "Lynn Haven",
+    "state": "FL"
+  },
+  {
+    "id": "631429c8-5496-47da-aeed-253836be9c4f",
+    "name": "Lynn Haven Golf Course",
+    "city": "Lynn Haven",
+    "state": "FL"
+  },
+  {
+    "id": "5b1a9f27-e13a-4fc8-984b-f585dbec6601",
+    "name": "IMG Academy Golf Club",
+    "city": "Manatee County",
+    "state": "FL"
+  },
+  {
+    "id": "f26f891c-1778-40fb-97a1-03252dd2dd04",
+    "name": "Buffalo Creek Golf Course",
+    "city": "Manatee County",
+    "state": "FL"
+  },
+  {
+    "id": "ff49e794-78f3-401e-8df5-eaa7d3c5a24b",
+    "name": "River Run Golf Links",
+    "city": "Manatee County",
+    "state": "FL"
+  },
+  {
+    "id": "8b7cc7ad-2064-4399-b011-01412048dd67",
+    "name": "Sombrero Country Club",
+    "city": "Marathon",
+    "state": "FL"
+  },
+  {
+    "id": "62dbd5b6-448a-4aee-8854-3d0c131a8ecc",
+    "name": "Island Country Club",
+    "city": "Marco Island",
+    "state": "FL"
+  },
+  {
+    "id": "c671000e-5706-485c-9341-c7c76fb26ffa",
+    "name": "Hideaway Beach Golf Course",
+    "city": "Marco Island",
+    "state": "FL"
+  },
+  {
+    "id": "4ec4c7d2-60b3-41c8-91fd-25eac14da4e2",
+    "name": "Margate Executive Golf Course",
+    "city": "Margate",
+    "state": "FL"
+  },
+  {
+    "id": "10d15e8a-b366-4c53-8c6e-fd14b622f82e",
+    "name": "Oriole Golf Club",
+    "city": "Margate",
+    "state": "FL"
+  },
+  {
+    "id": "12cb9335-6681-4edd-b32c-1d540961d089",
+    "name": "Candler Hills Hole 4",
+    "city": "Marion County",
+    "state": "FL"
+  },
+  {
+    "id": "f5ea5634-c412-45d3-a181-52fd049858c3",
+    "name": "Candler Hills Hole 1",
+    "city": "Marion County",
+    "state": "FL"
+  },
+  {
+    "id": "54ad3621-7048-43e0-81f8-ddf94189f850",
+    "name": "Ocala Palms Golf & Country Club",
+    "city": "Marion County",
+    "state": "FL"
+  },
+  {
+    "id": "8485310a-23d5-452a-aba3-a494e31ea356",
+    "name": "Links at Spruce Creek",
+    "city": "Marion County",
+    "state": "FL"
+  },
+  {
+    "id": "7fa6ea0a-7626-415f-a523-51998db1ca86",
+    "name": "Candler Hills Hole 3",
+    "city": "Marion County",
+    "state": "FL"
+  },
+  {
+    "id": "f2adff68-195a-4edb-b0ab-bf9a6a819838",
+    "name": "Candler Hills Hole 2",
+    "city": "Marion County",
+    "state": "FL"
+  },
+  {
+    "id": "dd78ff2b-a3a8-4ec4-8e7b-00deb00f7dba",
+    "name": "The Ocean Club at Hutchinson Island Marriott Beach Resort",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "b95c936f-f1e5-40fd-808a-29a3ba769440",
+    "name": "YCS",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "f60ee92c-c936-4a98-a66f-fab803d044fb",
+    "name": "Martin Downs Country Club",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "277feba7-6439-4538-8b3a-ca40534188c6",
+    "name": "Heritage Ridge Golf Club",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "94c77b2e-5664-4b23-b8e6-c2156cf9b7b8",
+    "name": "Sailfish Sands Golf Course",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "4d8c069f-c31a-4490-8317-4262a2796a2f",
+    "name": "The Champions Club",
+    "city": "Martin County",
+    "state": "FL"
+  },
+  {
+    "id": "407b1841-65af-49fb-ad9e-390e594e44ea",
+    "name": "Crane Creek Reserve Golf Course",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "8142131c-0e2e-4812-b9f3-32f830231fb5",
+    "name": "Harbor City Golf Course",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "3701491e-c161-4911-91a5-f38819b333ee",
+    "name": "Indian River Colony Club",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "ef61cf51-df81-4a27-aa59-6d69e1581c8f",
+    "name": "Duran Golf Club",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "4efc21f3-b5ab-4284-985f-fed28417bec5",
+    "name": "Suntree Country Club",
+    "city": "Melbourne",
+    "state": "FL"
+  },
+  {
+    "id": "7c91b93b-1392-426b-bc4e-e2eb3ad6082d",
+    "name": "Aquarina Country Club",
+    "city": "Melbourne Beach",
+    "state": "FL"
+  },
+  {
+    "id": "a91ecca7-93a1-4ccf-9011-b8ec340a9461",
+    "name": "Spessard Holland Golf Course",
+    "city": "Melbourne Beach",
+    "state": "FL"
+  },
+  {
+    "id": "1b45702b-a39d-450f-a29b-75dfc6958f5e",
+    "name": "The Habitat",
+    "city": "Melbourne Beach",
+    "state": "FL"
+  },
+  {
+    "id": "c18ea2bc-dc83-4cc1-9f9a-7db4c03d97e0",
+    "name": "The Savannahs Golf Course",
+    "city": "Merritt Island",
+    "state": "FL"
+  },
+  {
+    "id": "98dfb619-8bb7-4b73-8322-2ba0eca4639e",
+    "name": "Miami Beach Golf Club",
+    "city": "Miami Beach",
+    "state": "FL"
+  },
+  {
+    "id": "274f3122-aa77-48eb-9957-acc572adc089",
+    "name": "La Gorce Country Club",
+    "city": "Miami Beach",
+    "state": "FL"
+  },
+  {
+    "id": "bf039378-b216-415f-ba96-4472e638231c",
+    "name": "Normandy Shores Golf Club",
+    "city": "Miami Beach",
+    "state": "FL"
+  },
+  {
+    "id": "2be01c5c-595e-4824-8d2c-971bc9b07b33",
+    "name": "Topgolf Miami Gardens",
+    "city": "Miami Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "407c4986-c663-4140-a1a4-15ee6a5b0c14",
+    "name": "Shula's Golf Club",
+    "city": "Miami Lakes",
+    "state": "FL"
+  },
+  {
+    "id": "75bdb22f-0a08-4248-b3a7-f02a4dc8af94",
+    "name": "Miami Shores Country Club",
+    "city": "Miami Shores",
+    "state": "FL"
+  },
+  {
+    "id": "0d52437b-c69f-4450-b58b-f861fbaa488c",
+    "name": "West",
+    "city": "Miami-Dade County",
+    "state": "FL"
+  },
+  {
+    "id": "8b27ce56-51fe-44ac-b153-314a0649410c",
+    "name": "East",
+    "city": "Miami-Dade County",
+    "state": "FL"
+  },
+  {
+    "id": "2f30679e-44a1-4450-9649-00cba8cfde74",
+    "name": "Indian River Preserve Golf Club",
+    "city": "Mims",
+    "state": "FL"
+  },
+  {
+    "id": "6df96435-6b01-423f-9b18-76b918b3aac8",
+    "name": "Key Colony Beach Golf",
+    "city": "Monroe County",
+    "state": "FL"
+  },
+  {
+    "id": "22e4e6f4-00fa-4846-ae8f-5b610011cabd",
+    "name": "Ocean Reef - Dolphone Course",
+    "city": "Monroe County",
+    "state": "FL"
+  },
+  {
+    "id": "efa92b28-cc06-43f4-b337-d6858c568fdb",
+    "name": "Mount Dora Golf Club",
+    "city": "Mount Dora",
+    "state": "FL"
+  },
+  {
+    "id": "0af3d112-03e4-4820-b93a-195bf9b43ff1",
+    "name": "Club Pelican Bay",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "60c32879-8c73-405d-bd84-4ecb31cbca9a",
+    "name": "The Glades Golf & Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "9615bee5-0197-4f3c-b189-cea311af9070",
+    "name": "Calusa Pines Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "7c7a9b7d-798d-48c7-922a-cabf2ab127dd",
+    "name": "Cypress Woods Golf and Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "b1f5f73d-b877-44e9-9467-331e504209e9",
+    "name": "Quail Creek Village Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "6d4f1795-34ae-46eb-bea0-47dd61f9bbdf",
+    "name": "The Club at Olde Cypress",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "64d32ac1-2296-47b7-9f1b-7c7c2d763c7a",
+    "name": "The Club at the Strand",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "d32ff059-25a6-4795-aa9a-9ceb3315f192",
+    "name": "Eagle Lakes Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "66ebfea1-9b1e-4dc3-958b-d3531a3226d8",
+    "name": "The Classics Course at Lely Resort",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "d12869b6-7085-4f7e-b53e-513bac121195",
+    "name": "Royal Wood Golf & Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "1e035b29-2668-4552-ad93-8044c8bb3330",
+    "name": "Moorings Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "27a4f33f-b42a-4b6f-b654-496769add362",
+    "name": "Collier’s Reserve Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "3e4845ee-be00-4d34-950a-21d992133e37",
+    "name": "Hammock Bay Golf & Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "33fa8189-c63f-4d09-aff8-8d71504516c8",
+    "name": "The Rookery",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "79b3c0d2-90f0-49be-8f56-369b2854a17b",
+    "name": "Olde Florida Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "6c44908f-c0f3-412d-bfe1-2a89d4319982",
+    "name": "The Old Collier Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "2fe8c931-0a32-4412-a0c1-e72980b93de8",
+    "name": "Riviera Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "be7734ab-c037-46d9-98c8-64df8f095209",
+    "name": "Mustang Course at Lely Resort",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "c1eff3eb-546f-43bd-bce7-946741609331",
+    "name": "Vanderbilt Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "b06d3113-1a31-4d97-80fb-d45e48fcd6d7",
+    "name": "Golf Club of the Everglades",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "2dd4da61-c077-4139-a679-5b3772b94ab2",
+    "name": "Royal Poinciana Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "c83a0022-9506-401d-8ce4-5aff2355d8ae",
+    "name": "Mediterra Golf Course",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "650988fc-ebdb-4789-ad5a-9ae7868a2ae7",
+    "name": "Stonebridge Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "1ded41ab-eb31-4321-913e-a1ee3ca49c74",
+    "name": "Naples Beach Hotel and Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "06d6ee5a-9ea4-49c6-9485-97097ed9a7bf",
+    "name": "Quail Creek Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "19bd6fd6-75f8-4d8a-8eb5-5d19eb99c143",
+    "name": "Wilderness Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "81231001-5a74-4db5-9ee6-e612241ff0da",
+    "name": "Bear's Paw Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "a3fe7412-fc7b-4081-82d2-26cc55ba6a67",
+    "name": "Countryside Golf & Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "390f3abc-cd2d-4e73-bdbe-39f69ceeb660",
+    "name": "Hole In the Wall Golf Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "034d5702-f236-4e1b-802b-43c4225e37ca",
+    "name": "Lely Resort Golf And Country Club",
+    "city": "Naples",
+    "state": "FL"
+  },
+  {
+    "id": "933a6494-faf1-4649-a0bb-5fd457cc5d2b",
+    "name": "Calusa Lakes Golf Club",
+    "city": "Nokomis",
+    "state": "FL"
+  },
+  {
+    "id": "cb9cfb96-8dad-4ada-9e55-8705fc24fd44",
+    "name": "Mission Valley Golf & Country Club",
+    "city": "Nokomis",
+    "state": "FL"
+  },
+  {
+    "id": "d1b1c9e6-006a-49f5-9e2c-bb84576c2e8f",
+    "name": "Del Tura Golf Club",
+    "city": "North Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "33f2378d-cf58-486a-9ee1-9734f2b7b771",
+    "name": "Six Lakes Country Club",
+    "city": "North Fort Myers",
+    "state": "FL"
+  },
+  {
+    "id": "268508dc-db26-4a00-a606-763808210339",
+    "name": "Greynolds Golf Course",
+    "city": "North Miami Beach",
+    "state": "FL"
+  },
+  {
+    "id": "d3ab19ba-314d-4d7e-928d-a66dfe0e31d1",
+    "name": "North Palm Beach Country Club Golf Course",
+    "city": "North Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "263b93b1-49bf-40df-8d5d-15e3c7949d4b",
+    "name": "Lost Tree Club",
+    "city": "North Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "5b46f016-f4db-4f35-8a42-1651c9b836ad",
+    "name": "Wellen Park Golf & Country Club",
+    "city": "North Port",
+    "state": "FL"
+  },
+  {
+    "id": "3e195c18-15cc-4b3d-94b4-4e14b119a1fb",
+    "name": "Northdale Golf & Tennis Club",
+    "city": "Northdale",
+    "state": "FL"
+  },
+  {
+    "id": "42a49bc1-e425-40ba-8630-b28047512b62",
+    "name": "Driving Range Tee off",
+    "city": "Oakleaf",
+    "state": "FL"
+  },
+  {
+    "id": "d0f36873-9aa1-4d2a-a98b-ffad008283ed",
+    "name": "Palms Course",
+    "city": "Oaks Clubhouse Drive",
+    "state": "FL"
+  },
+  {
+    "id": "b704dedd-c738-4994-bfd9-7876a67c9c81",
+    "name": "Ocala Golf Club",
+    "city": "Ocala",
+    "state": "FL"
+  },
+  {
+    "id": "751cae56-6131-4a97-a6d9-ad10beb533f9",
+    "name": "Golden Ocala Golf & Equestrian Club",
+    "city": "Ocala",
+    "state": "FL"
+  },
+  {
+    "id": "4b9d434c-c817-47f9-a17a-9b45daf5bcda",
+    "name": "Lake Diamond Golf and Country Club",
+    "city": "Ocala",
+    "state": "FL"
+  },
+  {
+    "id": "95fe8a52-61b8-4177-8950-e0adc580798d",
+    "name": "Ocala National Golf Club",
+    "city": "Ocala",
+    "state": "FL"
+  },
+  {
+    "id": "c2aa5520-87a8-40d5-8872-1b5579c30289",
+    "name": "SummerGlen Golf Club",
+    "city": "Ocala",
+    "state": "FL"
+  },
+  {
+    "id": "ac349939-479e-49ef-a120-cca1a8ec5765",
+    "name": "Baseline Golf Course",
+    "city": "Ocala",
+    "state": "FL"
+  },
+  {
+    "id": "7710ea28-ab4a-4dc9-8380-6a3a7ee4daf8",
+    "name": "Forest Lake Golf Club",
+    "city": "Ocoee",
+    "state": "FL"
+  },
+  {
+    "id": "8ed15baf-30ff-46fc-a577-152401461a97",
+    "name": "The Eagles Golf Club",
+    "city": "Odessa",
+    "state": "FL"
+  },
+  {
+    "id": "0f91eaf8-39e9-400e-8b6d-c9e25f5258eb",
+    "name": "The Legends",
+    "city": "Orange County",
+    "state": "FL"
+  },
+  {
+    "id": "1fc295ef-5c3d-4ff9-bd87-7679402ca642",
+    "name": "Cypress Golf Course",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "591b9597-ea6a-4aad-a043-410093bdf63b",
+    "name": "Shingle Creek Golf Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "12431df6-3a66-4793-83c5-ea268c56837f",
+    "name": "MetroWest Golf Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "221690eb-d535-41b4-9367-36b5ffa2fe1e",
+    "name": "Bay Hill Golf Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "736fa4b6-b43a-4856-bd46-ec4110c7e935",
+    "name": "Rio Pinar Country Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "3661c82e-11f5-4962-a06d-d9684febe1c7",
+    "name": "The Country Club Of Orlando",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "428f1152-7394-461f-841c-afc53943a0b7",
+    "name": "Dubsdread Golf Course",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "724bc8d4-a4b9-4287-8c8c-6c37875fe429",
+    "name": "Orange Tree Golf Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "2a5b9d9c-98ac-4955-995a-c449c7725c95",
+    "name": "Grande Vista Golf Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "8a2687f9-e3d0-42a4-b9da-d545b6a0b2c5",
+    "name": "Waldorf Astoria Golf Course",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "ba63b270-40f6-47f1-908f-130309c70a01",
+    "name": "Hunter's Creek Golf Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "e3093b0f-c79a-401f-a0b2-d8ca8bf2349e",
+    "name": "Disney's Palm Golf Course",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "66bbc289-2d33-485a-9de4-12a8797900a8",
+    "name": "Wedgefield Golf Club",
+    "city": "Orlando",
+    "state": "FL"
+  },
+  {
+    "id": "1e784789-2cfa-4245-8e91-0cc7418eca4a",
+    "name": "Twin Rivers Golf Club",
+    "city": "Oviedo",
+    "state": "FL"
+  },
+  {
+    "id": "bee65f83-d913-4332-a209-688e17afc7ec",
+    "name": "Everglades Golf Course",
+    "city": "Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "3ae37aa9-b437-41ec-826b-58b56ea0e312",
+    "name": "Palm Beach Club",
+    "city": "Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "27a36135-81d2-4e2b-9a67-d5141e587e64",
+    "name": "Ocean Course at The Breakers",
+    "city": "Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "3a037da1-d2cb-47c7-a0a2-f49174815f8b",
+    "name": "Palm Beach Par 3 Golf Course",
+    "city": "Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "11016cb0-2d23-452b-8439-b9c7db7403b8",
+    "name": "PGA The Estates",
+    "city": "Palm Beach County",
+    "state": "FL"
+  },
+  {
+    "id": "60423d59-3e0e-4c3e-a3bf-51d2f9184022",
+    "name": "Kings Point Par 3 Course",
+    "city": "Palm Beach County",
+    "state": "FL"
+  },
+  {
+    "id": "c974ea3a-9525-44d4-82b5-ba03d90bd75e",
+    "name": "Boca Delray Golf & Country Club",
+    "city": "Palm Beach County",
+    "state": "FL"
+  },
+  {
+    "id": "8f6ec8f0-eeee-4ae0-a99a-8530c4f5c662",
+    "name": "Kings Point Executive Golf Course",
+    "city": "Palm Beach County",
+    "state": "FL"
+  },
+  {
+    "id": "caa55130-c364-4300-bb37-61217faea802",
+    "name": "Bocaire Country Club",
+    "city": "Palm Beach County",
+    "state": "FL"
+  },
+  {
+    "id": "e1e7903f-73a0-4329-9649-49d47dfbaf40",
+    "name": "Eastpointe Country Club",
+    "city": "Palm Beach County",
+    "state": "FL"
+  },
+  {
+    "id": "07f42474-a761-4509-ba8b-542b924ac5f4",
+    "name": "BallenIsles",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "dc9d26f9-45ef-4a9d-8856-73a6b6ace6ed",
+    "name": "The Nest Par 3 Golf Course",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "1e7f581d-4b11-4381-9a39-401988c07e34",
+    "name": "PGA National Resort Fazio course",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "26104208-2cd9-4347-a5f9-e2132b238a48",
+    "name": "Frenchman's Creek Beach and Country Club",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "d36c35b3-3887-438e-98b8-dd49b88ed6a5",
+    "name": "PGA National Resort Palmer course",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "6953bf83-fa3f-4608-ac31-096f10cbf1d4",
+    "name": "Frenchman's Reserve",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "58c51a6d-da5c-44f3-a175-6aa0a1645a82",
+    "name": "Sandhill Crane Golf Club",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "7074f8f4-6c39-402b-9f46-9a09d6b02bed",
+    "name": "PGA National Resort The Squire",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "ff36432d-6fb9-41bb-bf9c-451f2d1c0bc5",
+    "name": "PGA National Resort",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "97fa6a69-49c0-4bd2-85b8-2acb4e22d9c1",
+    "name": "Old Palm Golf Club",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "8bb54615-b3f4-4467-ba3e-6cf8ce4bf8de",
+    "name": "Panther National",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "ce6af90d-e09a-4068-9678-bd9652cd32e8",
+    "name": "Country Club at Mirasol",
+    "city": "Palm Beach Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "42351c57-2826-470f-ac2e-437ea32865f1",
+    "name": "Hammock Creek Golf Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "4cec6cc6-9eb6-4cc4-b8a2-5a45b7773f79",
+    "name": "The Golden Marsh",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "649c78bb-595f-4210-8146-15478c7cca64",
+    "name": "The River Ridge Course",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "d61012e7-17c7-4f4e-9a4a-5428390b4b18",
+    "name": "Piper’s Landing Yacht and Country Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "9383b7f6-4370-4fbb-adf3-2ba498ebf29d",
+    "name": "The Evergreen Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "6cee82db-cc1d-4000-86ef-79e93cdfde8e",
+    "name": "Monarch Country Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "af1a19b8-86ab-4c55-8aa2-b8e5f0927a4f",
+    "name": "The Fox Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "a730650b-c242-4ab5-bb05-f58d718fbac1",
+    "name": "Floridian Golf Club",
+    "city": "Palm City",
+    "state": "FL"
+  },
+  {
+    "id": "372c3138-729d-44cb-957c-7227a4a7548b",
+    "name": "Lansbrook Golf Club",
+    "city": "Palm Harbor",
+    "state": "FL"
+  },
+  {
+    "id": "2ecaef68-0515-4807-95c1-52b31bce3917",
+    "name": "Innisbrook Golf Resort",
+    "city": "Palm Harbor",
+    "state": "FL"
+  },
+  {
+    "id": "d70c4f6b-b3f5-4864-bd7c-25796976c76b",
+    "name": "Trump International Golf Club",
+    "city": "Palm Springs",
+    "state": "FL"
+  },
+  {
+    "id": "3675f3cc-00d3-4e37-b7cf-43d48303f0b5",
+    "name": "Parkland Golf & Country",
+    "city": "Parkland",
+    "state": "FL"
+  },
+  {
+    "id": "e8a8705e-dd28-449f-8f33-0ac6cf2de3c1",
+    "name": "Lexington Oaks Golf Club",
+    "city": "Pasco County",
+    "state": "FL"
+  },
+  {
+    "id": "2f754e22-3f35-4479-ab94-a68e0417a916",
+    "name": "Manatee Cove Golf Club",
+    "city": "Patrick Space Force Base",
+    "state": "FL"
+  },
+  {
+    "id": "82508898-f645-4839-afc7-2143a3f61b3d",
+    "name": "Hollybrook Golf and Tennis Club",
+    "city": "Pembroke Pines",
+    "state": "FL"
+  },
+  {
+    "id": "07962e4f-c633-4fd5-b198-fe892ce954f3",
+    "name": "Hollybrook Golf and Tennis Club - Executive Course",
+    "city": "Pembroke Pines",
+    "state": "FL"
+  },
+  {
+    "id": "0c9983e3-2bc4-4103-bdc5-745d0718f369",
+    "name": "Pembroke Lakes Golf",
+    "city": "Pembroke Pines",
+    "state": "FL"
+  },
+  {
+    "id": "7b48029a-1e5a-47da-b0f1-9c21b02c429d",
+    "name": "Mainlands Golf Course",
+    "city": "Pinellas Park",
+    "state": "FL"
+  },
+  {
+    "id": "688d9d25-e3ac-481c-8bfc-5a60af47ee47",
+    "name": "Jacararanda Golf Course",
+    "city": "Plantation",
+    "state": "FL"
+  },
+  {
+    "id": "22f3e18e-53f9-475f-a7ec-9275a9f03d85",
+    "name": "Plantation Preserve Golf Course & Club",
+    "city": "Plantation",
+    "state": "FL"
+  },
+  {
+    "id": "d3870347-8394-4918-b022-586c3a5c52b1",
+    "name": "Indian Lake Estates Golf & Country Club",
+    "city": "Polk County",
+    "state": "FL"
+  },
+  {
+    "id": "9a70e418-46ee-478a-8e6e-e32b6a2317b4",
+    "name": "Lily Lake Golf Resort",
+    "city": "Polk County",
+    "state": "FL"
+  },
+  {
+    "id": "f0aaa389-7d59-4467-9841-476c5368b5a9",
+    "name": "Skyview golf course",
+    "city": "Polk County",
+    "state": "FL"
+  },
+  {
+    "id": "ad810242-4064-4af9-b4ab-8e4d0d67828a",
+    "name": "The Hamptons Golf Club",
+    "city": "Polk County",
+    "state": "FL"
+  },
+  {
+    "id": "85d5d80b-2686-4195-ad5f-fe746c42673b",
+    "name": "Streamsong Resort - Red and Blue Courses",
+    "city": "Polk County",
+    "state": "FL"
+  },
+  {
+    "id": "3af1f0ca-7343-4300-bb54-2df13d62d8b1",
+    "name": "Streamsong Resort - Black Course",
+    "city": "Polk County",
+    "state": "FL"
+  },
+  {
+    "id": "18f0f9aa-4826-4018-a50f-38306cd4f136",
+    "name": "River Ranch Golf Course",
+    "city": "Polk County",
+    "state": "FL"
+  },
+  {
+    "id": "79fcf458-0e28-4be8-92eb-93d5b53bf84d",
+    "name": "Oaks Course",
+    "city": "Pompano Beach",
+    "state": "FL"
+  },
+  {
+    "id": "43964196-a0d6-4f48-9c77-116b2dd25c05",
+    "name": "The Cove of Rotonda Golf Center",
+    "city": "Port Charlotte",
+    "state": "FL"
+  },
+  {
+    "id": "3df6f048-64d4-4312-818a-052676adab0c",
+    "name": "Maple Leaf Golf and Country Club",
+    "city": "Port Charlotte",
+    "state": "FL"
+  },
+  {
+    "id": "055da0b8-fd8e-40db-b223-805c7ed5acd1",
+    "name": "Kings Gate Golf Club",
+    "city": "Port Charlotte",
+    "state": "FL"
+  },
+  {
+    "id": "efac01ac-6d53-4af4-b318-1d86ddfcf345",
+    "name": "Trident Golf Club",
+    "city": "Port Saint Lucie",
+    "state": "FL"
+  },
+  {
+    "id": "52c25a1f-cb69-4171-85ff-40b9f39a998b",
+    "name": "Miles Grant Country Club",
+    "city": "Port Salerno",
+    "state": "FL"
+  },
+  {
+    "id": "0f48996f-3661-414b-9114-22ea4b44448a",
+    "name": "Mariner Sands Golf & Country Club",
+    "city": "Port Salerno",
+    "state": "FL"
+  },
+  {
+    "id": "a6452527-0f21-483f-bd37-f9dbb028055b",
+    "name": "The Saints at Port Saint Lucie Golf Course",
+    "city": "Port St. Lucie",
+    "state": "FL"
+  },
+  {
+    "id": "862a4b96-4a13-4946-bf02-22b8cfdf99bb",
+    "name": "Saint Lucie Trail Golf Club",
+    "city": "Port St. Lucie",
+    "state": "FL"
+  },
+  {
+    "id": "ba39f646-0438-4bcb-bb09-4e0b325b951f",
+    "name": "PGA Golf Club",
+    "city": "Port St. Lucie",
+    "state": "FL"
+  },
+  {
+    "id": "d05ed7d7-2c71-44d3-9ac3-e684c6926655",
+    "name": "Tesero Golf Club",
+    "city": "PORT ST. LUCIE",
+    "state": "FL"
+  },
+  {
+    "id": "ca0dd505-c6c0-4c75-a39c-234b0a1aee80",
+    "name": "Twin Isles Country Club",
+    "city": "Punta Gorda",
+    "state": "FL"
+  },
+  {
+    "id": "70604673-5135-4ddb-b5fb-d02416fa3393",
+    "name": "Seminole Lakes",
+    "city": "Punta Gorda",
+    "state": "FL"
+  },
+  {
+    "id": "edc5a562-1cd1-4c5a-8ae4-cdaf69c314fa",
+    "name": "Deep Creek Golf Club",
+    "city": "Punta Gorda",
+    "state": "FL"
+  },
+  {
+    "id": "a03d2a67-69ca-430f-a6ab-31f6097dc73c",
+    "name": "Seminole Lakes Golf Course",
+    "city": "Punta Gorda",
+    "state": "FL"
+  },
+  {
+    "id": "db28be3d-399a-4edc-91fd-9fd95839b46d",
+    "name": "Blue Heron Pines",
+    "city": "Punta Gorda",
+    "state": "FL"
+  },
+  {
+    "id": "575c3108-e153-446a-b603-2fe0724ba74c",
+    "name": "Timber Greens Golf and Country Club",
+    "city": "River Ridge",
+    "state": "FL"
+  },
+  {
+    "id": "0d93a34c-c7fd-45f5-bf05-661c77d0975c",
+    "name": "River Ridge Golf and Country Club",
+    "city": "River Ridge",
+    "state": "FL"
+  },
+  {
+    "id": "a0b50d4f-9d10-48f8-ad5c-55f6c36de391",
+    "name": "Rockledge Country Club",
+    "city": "Rockledge",
+    "state": "FL"
+  },
+  {
+    "id": "defdc000-17c6-4a5b-9b9f-b662883d6ebe",
+    "name": "Turtle Creek Golf Club",
+    "city": "Rockledge",
+    "state": "FL"
+  },
+  {
+    "id": "c46061a3-b7bf-46b3-b49b-6cc316aae572",
+    "name": "Viera East Golf Club",
+    "city": "Rockledge",
+    "state": "FL"
+  },
+  {
+    "id": "8f5f045f-f735-4175-ab6b-6cdc23cf2cad",
+    "name": "The Hills",
+    "city": "Rotonda",
+    "state": "FL"
+  },
+  {
+    "id": "e9bdde2c-a178-4a84-a72e-661e35949c8e",
+    "name": "The Palms",
+    "city": "Rotonda",
+    "state": "FL"
+  },
+  {
+    "id": "f5ae7c14-d79e-46f2-821e-02512a5721d9",
+    "name": "Long Marsh",
+    "city": "Rotonda",
+    "state": "FL"
+  },
+  {
+    "id": "dcae56da-f8ac-4faf-b62b-79b4e97a157a",
+    "name": "Cypress Course",
+    "city": "Ruskin",
+    "state": "FL"
+  },
+  {
+    "id": "491bf80f-5aba-4cf6-9c28-9c69e7672428",
+    "name": "Saint Petersburg Country Club",
+    "city": "Saint Petersburg",
+    "state": "FL"
+  },
+  {
+    "id": "e1113e6c-94de-4904-a2a8-16e67b8437c9",
+    "name": "Twin Brooks Golf Course and Driving Range",
+    "city": "Saint Petersburg",
+    "state": "FL"
+  },
+  {
+    "id": "bad43319-7f9b-49ed-b81c-f88d821ac7f4",
+    "name": "Isla Del Sol",
+    "city": "Saint Petersburg",
+    "state": "FL"
+  },
+  {
+    "id": "bd2de7da-0d62-4c74-aab0-c89fc1865c75",
+    "name": "Bent Tree Country Club",
+    "city": "Sarasota",
+    "state": "FL"
+  },
+  {
+    "id": "1673cff2-8463-4fa6-8510-53981d8cee23",
+    "name": "Palm Aire Country Club",
+    "city": "Sarasota",
+    "state": "FL"
+  },
+  {
+    "id": "c1fd855c-40f2-44f7-924d-5d8b9ee89b47",
+    "name": "Tatum Ridge Golf Links",
+    "city": "Sarasota",
+    "state": "FL"
+  },
+  {
+    "id": "c3c3c585-9d78-471e-ba91-8f90e9799329",
+    "name": "Village Green",
+    "city": "Sarasota County",
+    "state": "FL"
+  },
+  {
+    "id": "78c3136c-82e9-450a-9c70-26a63c44ed95",
+    "name": "Boca Royale Club",
+    "city": "Sarasota County",
+    "state": "FL"
+  },
+  {
+    "id": "6e7f1c7b-63cd-4b7a-8751-be80adfa1ee6",
+    "name": "Red Stick Golf Club",
+    "city": "Sebastian",
+    "state": "FL"
+  },
+  {
+    "id": "f1da753d-bf26-4be5-b860-61971895e02f",
+    "name": "The West Course at John's Island Club",
+    "city": "Sebastian",
+    "state": "FL"
+  },
+  {
+    "id": "ad9d6958-4b39-4179-b9ce-03653d4420a2",
+    "name": "Sebastian Municipal Golf Course",
+    "city": "Sebastian",
+    "state": "FL"
+  },
+  {
+    "id": "585c3a20-4a90-4ee2-afdd-c91f337218d3",
+    "name": "The Country Club of Sebring",
+    "city": "Sebring",
+    "state": "FL"
+  },
+  {
+    "id": "f5bc82a4-efe8-4565-baa2-512793b31a10",
+    "name": "Turtle Run Course",
+    "city": "Sebring",
+    "state": "FL"
+  },
+  {
+    "id": "ed667756-1bdd-4965-818d-3bcc25b6f0f8",
+    "name": "Deer Run Course",
+    "city": "Sebring",
+    "state": "FL"
+  },
+  {
+    "id": "0c4c2e5d-680a-422b-899e-918b896dd23a",
+    "name": "Sebring Golf Links",
+    "city": "Sebring",
+    "state": "FL"
+  },
+  {
+    "id": "ed539de6-e8e2-4ea0-bf60-b791b526c54d",
+    "name": "Sun 'n Lake Golf Course",
+    "city": "Sebring",
+    "state": "FL"
+  },
+  {
+    "id": "5aef2a7c-fe0b-41d6-80f7-518bf6318ede",
+    "name": "Crystal Lake Club",
+    "city": "Sebring",
+    "state": "FL"
+  },
+  {
+    "id": "75919c8c-743f-477e-97ef-5c4a26dcc887",
+    "name": "Baypointe Golf Course",
+    "city": "Seminole",
+    "state": "FL"
+  },
+  {
+    "id": "dc6c4ffe-209f-4e25-8dfe-c3c807d0977f",
+    "name": "Bardmoor Country Club",
+    "city": "Seminole",
+    "state": "FL"
+  },
+  {
+    "id": "50afef61-84eb-4934-b565-8e64ef6a28bd",
+    "name": "Seven Hills Golfers Club",
+    "city": "Spring Hill",
+    "state": "FL"
+  },
+  {
+    "id": "b73fddbc-81f4-4aa5-9c93-fd0950d63f2d",
+    "name": "High Point Golf Club",
+    "city": "Spring Hill",
+    "state": "FL"
+  },
+  {
+    "id": "cccdbf72-d59c-4c0d-a2a4-971dd0c96a18",
+    "name": "Mangrove Bay Municipal Golf Course",
+    "city": "St. Petersburg",
+    "state": "FL"
+  },
+  {
+    "id": "aff200a9-7cd8-4836-ac7a-c684c44296a1",
+    "name": "Willoughby Golf Club",
+    "city": "Stuart",
+    "state": "FL"
+  },
+  {
+    "id": "90bf2564-d5b2-4777-b95c-4b4cc824b881",
+    "name": "Sailfish Pointe",
+    "city": "Stuart",
+    "state": "FL"
+  },
+  {
+    "id": "8f81147b-68f2-4b94-822c-72866ad9ef21",
+    "name": "The Florida Club",
+    "city": "Stuart",
+    "state": "FL"
+  },
+  {
+    "id": "d628275e-2ead-4b1d-86d2-2cc391e20cca",
+    "name": "Monterey Yacht & Country Club",
+    "city": "Stuart",
+    "state": "FL"
+  },
+  {
+    "id": "c1b70a77-9f52-416d-bcbc-892a67b12bef",
+    "name": "Stonecrest Golf Club",
+    "city": "Summerfield",
+    "state": "FL"
+  },
+  {
+    "id": "f603efdb-490b-492b-8d5d-d129772c1536",
+    "name": "Miona Lake Golf Club",
+    "city": "Sumter County",
+    "state": "FL"
+  },
+  {
+    "id": "13c0d11a-ad6b-4c31-ab67-bad72dfe5545",
+    "name": "Scepter Golf Club",
+    "city": "Sun City Center",
+    "state": "FL"
+  },
+  {
+    "id": "064aa3ee-dc26-4a7e-b032-9e0a57691f74",
+    "name": "Club Renaissance",
+    "city": "Sun City Center",
+    "state": "FL"
+  },
+  {
+    "id": "2017a2be-2d97-4218-a486-037d13bea4c3",
+    "name": "Caloosa Golf & Country Club",
+    "city": "Sun City Center",
+    "state": "FL"
+  },
+  {
+    "id": "bfed011d-e0a1-4dd4-934a-271ecb9e00c1",
+    "name": "Freedom Fairways",
+    "city": "Sun City Center",
+    "state": "FL"
+  },
+  {
+    "id": "5564aa5d-b363-4d54-aba9-3daf6f89779f",
+    "name": "Seven Bridges at Springtree",
+    "city": "Sunrise",
+    "state": "FL"
+  },
+  {
+    "id": "0006c8b4-28b2-4683-b078-cca5fa2ff09e",
+    "name": "Sunrise Country Club",
+    "city": "Sunrise",
+    "state": "FL"
+  },
+  {
+    "id": "0e0b76ff-e795-4445-ad71-378ff59bfc2c",
+    "name": "Colony West Golf Club - Glades Course",
+    "city": "Tamarac",
+    "state": "FL"
+  },
+  {
+    "id": "a5c399df-884b-4a92-a8ab-730ebddcb120",
+    "name": "Colony West Golf Club - Championship Course",
+    "city": "Tamarac",
+    "state": "FL"
+  },
+  {
+    "id": "2dc9fac2-1801-473e-a3c7-7f9dae6445e2",
+    "name": "Woodmont Country Club- Pines 9",
+    "city": "Tamarac",
+    "state": "FL"
+  },
+  {
+    "id": "5da6052c-92a9-4ab3-a6c1-5fec4b902a09",
+    "name": "USF The Claw Golf Course",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "d5a7294e-485e-4f1a-a069-f60279daff95",
+    "name": "Westchase Golf Club",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "21fbe815-f6fe-4a42-8fb0-f290a4664ff0",
+    "name": "Avila Golf & Country Club",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "a0e824f7-4ea2-4223-b3cc-2dd73b44ea0d",
+    "name": "Countryway Golf Club",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "c42131ac-9c1c-4f6b-8323-33623171eb6b",
+    "name": "Babe Zaharias Golf Course",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "2df5388f-5c3e-4cec-aacd-091b93bf062d",
+    "name": "Hunter’s Green Country Club",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "9e4610f5-1c09-4e86-b6bf-785f284c9dfc",
+    "name": "Heritage Isles",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "bf5a181d-e2cf-4af8-8f41-2eeb56c6be78",
+    "name": "North Course",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "33f52471-b4cb-4c82-b6b5-4c8dd8861e58",
+    "name": "Rocky Point Golf Course",
+    "city": "Tampa",
+    "state": "FL"
+  },
+  {
+    "id": "a4b9c2aa-4099-4a84-a13c-b3a674666e13",
+    "name": "Topgolf Orlando",
+    "city": "Tangelo Park",
+    "state": "FL"
+  },
+  {
+    "id": "a1426f1b-a40b-4fbc-ae6e-c76fd0ab2ae6",
+    "name": "Tarpon Springs Golf Course",
+    "city": "Tarpon Springs",
+    "state": "FL"
+  },
+  {
+    "id": "d102711b-feb2-460d-83ff-671cd42a2b0e",
+    "name": "Tequesta Country Club",
+    "city": "Tequesta",
+    "state": "FL"
+  },
+  {
+    "id": "cc54acc1-cd80-4114-b28a-17b2cf67ed2c",
+    "name": "Riverbend Golf Club",
+    "city": "Tequesta",
+    "state": "FL"
+  },
+  {
+    "id": "324ce484-0cc2-4c9c-aff2-114fef968617",
+    "name": "Turtle Creek Club",
+    "city": "Tequesta",
+    "state": "FL"
+  },
+  {
+    "id": "91cbb8c0-a444-4da3-872d-6ee94a670b23",
+    "name": "Palmer Legends Country Club (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "87e9ef75-d0d2-4ba8-8600-95b9187dd85d",
+    "name": "El Diablo & El Santiago Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "68a97f52-fc60-476d-b1ca-b43b81ecf64a",
+    "name": "Roosevelt Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "a9de75f0-9194-4745-bb39-b6d7f7a4ad33",
+    "name": "Sandhill Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "960f1ce4-a440-497a-87c3-114a19fbd647",
+    "name": "Turtle Mound Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "dc45a03c-7627-46ca-8cac-2176fdabde8d",
+    "name": "Amberwood Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "e0cffcc8-3b58-4099-84a1-ad16f89bc4b8",
+    "name": "Belmont Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "6d24aa2c-0a10-4f29-9bce-536ad3438db2",
+    "name": "Pimlico Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "2d6d9c38-91f8-425e-8533-c9981a160796",
+    "name": "Pelican Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "a10d2e6a-8129-4d0e-98e4-dd471f41bd24",
+    "name": "Yankee Clipper Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "e968d32c-da66-4423-b50b-c12396deb113",
+    "name": "Evans Prairie Country Club (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "8423da57-e90a-416a-86c3-3f351af4f477",
+    "name": "Mangrove Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "930755c5-2bcb-473b-9bda-ca1df49ae940",
+    "name": "Truman Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "dc48f2c0-443c-4cad-8f9b-678eb2ac0048",
+    "name": "Hilltop Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "9cfc1274-3b9b-4248-b73c-8969d48dee31",
+    "name": "Bonifay Country Club (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "a8c67648-0186-4337-8cf1-6052686a8e55",
+    "name": "Orange Blossom Hills Golf & Country Club (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "f7cf168f-58d6-4b00-a181-97e5ba54f286",
+    "name": "Silver Lake Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "fd2fe983-89ab-43f1-b8fb-c823e4a9ad15",
+    "name": "Redfish Run Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "599535a0-849e-432f-9761-56aad89bf554",
+    "name": "Bonita Pass Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "bad0144b-eb8f-42cd-b198-24088580787d",
+    "name": "Briarwood & Walnut Grove Courses (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "d863574d-1f9e-41bf-8039-4dcfc0d805f3",
+    "name": "Mallory Hill Country Club (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "fb53f132-8588-4d7c-96d1-176167d09d9b",
+    "name": "Bogart Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "677bcd71-2ece-448f-a479-10b02dca2407",
+    "name": "Bacall Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "76ae542a-386d-41d1-b07a-1819cfa5dc30",
+    "name": "Cane Garden Country Club (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "5e93d434-4e4f-4e04-8b2b-2d4d9525ba4b",
+    "name": "Southern Star Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "879eb2e6-cacc-459d-a4aa-ea8beb889e4a",
+    "name": "Tarpon Boil Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "9705634f-f8d1-49aa-8cd6-fda536abca8a",
+    "name": "Hawkes Bay Golf course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "aa054895-c897-49f7-bfde-59e40451ec86",
+    "name": "Havana Country Club (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "a4f12abe-86c5-45e0-ba11-8203b8a7b83e",
+    "name": "Saddlebrook Golf course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "54e81077-9d25-4027-a0ac-b5e62f8f9eab",
+    "name": "Oakleigh Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "7ce6e0cb-de9e-4e1a-bac0-5cb1df441d53",
+    "name": "Palmetto Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "5eada25f-e6c2-4a18-b1dc-95ab7ff40b84",
+    "name": "Heron Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "2d7cdb09-6739-4f8f-8d44-29cc6cea577b",
+    "name": "Nancy Lopez Legacy Golf Course",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "fb2be6c8-6234-405f-b3ff-d5ece067f096",
+    "name": "Churchill Greens Golf Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "c1be669b-8928-4306-87ac-a0114d71c52d",
+    "name": "Mira Mesa Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "c2ca265d-9e46-4025-aeb2-ce748f8750a2",
+    "name": "Hacienda Hills Golf & Country Club",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "510ca107-1b2b-4e0d-ae15-17c2df974a0c",
+    "name": "Chula Vista Course (The Villages)",
+    "city": "The Villages",
+    "state": "FL"
+  },
+  {
+    "id": "770c67ae-778c-4864-9242-37a8a749079f",
+    "name": "Sherwood Golf Club",
+    "city": "Titusville",
+    "state": "FL"
+  },
+  {
+    "id": "55ee0622-0f3a-47cb-9183-9f792bc90bc2",
+    "name": "Heritage Springs Golf Course",
+    "city": "Trinity",
+    "state": "FL"
+  },
+  {
+    "id": "048d02f0-9be6-4111-82bc-bb0947734c88",
+    "name": "Fox Hollow Golf Club",
+    "city": "Trinity",
+    "state": "FL"
+  },
+  {
+    "id": "894dde27-ecf7-4644-a886-fb0c0a4f6d89",
+    "name": "River Hills golf course and country club",
+    "city": "Valrico",
+    "state": "FL"
+  },
+  {
+    "id": "f6ccb0f9-b159-45b6-8ce6-bc51e3ceedb6",
+    "name": "Jacaranda West Country Club",
+    "city": "Venice",
+    "state": "FL"
+  },
+  {
+    "id": "fb40aecc-ef44-4d50-bb41-af6a88f0b802",
+    "name": "Lake Venice Golf Club",
+    "city": "Venice",
+    "state": "FL"
+  },
+  {
+    "id": "0d79dbe4-0641-4dfb-921d-8d223d6c95e0",
+    "name": "Pelican Pointe Golf & Country Club",
+    "city": "Venice",
+    "state": "FL"
+  },
+  {
+    "id": "56d83f98-332f-411e-81ac-db28e72d30e9",
+    "name": "Sarasota National Golf Club",
+    "city": "Venice",
+    "state": "FL"
+  },
+  {
+    "id": "87ad940f-e81f-464e-b7e9-3fbe4f8e8447",
+    "name": "Vista Plantation Golf Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "a2f5feac-dce8-42ec-8a2b-eb3eb4cf2afc",
+    "name": "Hawk's Nest Golf Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "3df588eb-396c-44d9-8000-d8311d29f4f1",
+    "name": "Indian River Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "6f737ed3-86b2-432b-a08c-8087fe32f3e3",
+    "name": "Vero Beach Country Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "e18ec6b5-807e-43f8-a564-46ea559d4851",
+    "name": "American Golf Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "3dc6ca6d-e668-4394-b924-5eed6aaeb391",
+    "name": "Orchid Island Golf & Beach Club",
+    "city": "Vero Beach",
+    "state": "FL"
+  },
+  {
+    "id": "02457082-610f-4d28-ba7e-fcb9f0c0524d",
+    "name": "Baytree National",
+    "city": "Viera",
+    "state": "FL"
+  },
+  {
+    "id": "2e537936-eff6-4a4e-af59-58b81c95c050",
+    "name": "The Country Club of Florida",
+    "city": "Village of Golf",
+    "state": "FL"
+  },
+  {
+    "id": "a8cd1f6b-5d9c-4057-b846-80554dabc59a",
+    "name": "Miami Springs Golf Course",
+    "city": "Virginia Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "0221d362-fdca-47b7-8e40-bab1984f70b3",
+    "name": "Wycliffe Golf & Country Club",
+    "city": "Wellington",
+    "state": "FL"
+  },
+  {
+    "id": "077403b3-72fc-4986-a1b2-fa2dcbe60e06",
+    "name": "Binks Forest Golf Club",
+    "city": "Wellington",
+    "state": "FL"
+  },
+  {
+    "id": "b1a85cd3-35d5-45f8-a2e9-5671dab515ac",
+    "name": "The Wanderers Club",
+    "city": "Wellington",
+    "state": "FL"
+  },
+  {
+    "id": "8d63858e-cc6e-4f65-9b3d-b3dae04b3225",
+    "name": "Saddlebrook",
+    "city": "Wesley Chapel",
+    "state": "FL"
+  },
+  {
+    "id": "1c7e861a-42d2-42a8-ac97-eefa0c739665",
+    "name": "Banyan Golf Club",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "3fe081c0-b798-468a-bcbf-140552a7f257",
+    "name": "The Breakers Rees Jones Course",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "2cd29e0f-be44-451b-b319-fdffd153f19c",
+    "name": "Mayacoo Lakes Country Club",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "da8081c6-ba80-47dc-bf68-40263cd2ac65",
+    "name": "Okeeheelee Golf Course",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "aa05f219-e310-43c3-b318-523b57426f7a",
+    "name": "Bear Lakes Country Club",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "e167da3f-e7ef-49ee-9975-3b73bd75d182",
+    "name": "The Preserve at Ironhorse",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "88c89aa2-7297-4662-a04d-108700e3ca2a",
+    "name": "Long Pine Country Club",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "314c4f27-aba0-44e4-bfcb-fb2dfbe5b523",
+    "name": "The Park West Palm",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "d3e20ec8-bcd0-4126-b192-c17bf8888534",
+    "name": "The Club at Ibis",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "88b0a129-b98c-48b8-a197-bb7607b70923",
+    "name": "Madison Green Golf Club",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "a8831c23-de13-4d4a-8f07-8bbe477108a6",
+    "name": "Banyan Cay",
+    "city": "West Palm Beach",
+    "state": "FL"
+  },
+  {
+    "id": "d3ff1c2f-6390-41a3-ada8-537bc532b90d",
+    "name": "Bonaventure Country Club",
+    "city": "Weston",
+    "state": "FL"
+  },
+  {
+    "id": "9a4e90c2-8e37-4844-b4a6-8585c8001ced",
+    "name": "Weston Hills Country Club Golf Course",
+    "city": "Weston",
+    "state": "FL"
+  },
+  {
+    "id": "a86cc933-f96d-47fe-a181-d79f06240a12",
+    "name": "Weston Hills Golf Course",
+    "city": "Weston",
+    "state": "FL"
+  },
+  {
+    "id": "2657d175-cf8b-432c-99af-a061e1f80b15",
+    "name": "Windsor Club",
+    "city": "Windsor",
+    "state": "FL"
+  },
+  {
+    "id": "4ab790c2-f0c0-4df0-925b-921645485f04",
+    "name": "Orange County National Golf Center & Lodge",
+    "city": "Winter Garden",
+    "state": "FL"
+  },
+  {
+    "id": "57469c61-2b77-42c0-8b1b-3778ce9dcde7",
+    "name": "Country Club of Winter Haven",
+    "city": "Winter Haven",
+    "state": "FL"
+  },
+  {
+    "id": "3cf45d48-7310-4efe-aa08-4e9f664d6c41",
+    "name": "Cypresswood Golf & Country Club",
+    "city": "Winter Haven",
+    "state": "FL"
+  },
+  {
+    "id": "35b6237a-ad68-4b29-af2f-1078f3f9f353",
+    "name": "Winter Park Country Club Golf Course",
+    "city": "Winter Park",
+    "state": "FL"
+  },
+  {
+    "id": "88018182-8de3-4c88-8b4d-ca0a6b374fbb",
+    "name": "Tuscawilla Country Club",
+    "city": "Winter Springs",
+    "state": "FL"
+  },
+  {
+    "id": "20024519-7108-487e-8a81-74ad5684e098",
+    "name": "Ventura Country Club",
+    "city": "Woodgate Blvd",
+    "state": "FL"
+  }
+]

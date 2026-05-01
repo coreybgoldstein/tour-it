@@ -3,27 +3,34 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
 
 export default function UserAvatarButton({ style }: { style?: React.CSSProperties }) {
   const router = useRouter();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [rank, setRank] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
-      const { data } = await supabase.from("User").select("avatarUrl").eq("id", user.id).single();
-      if (data?.avatarUrl) setAvatarUrl(data.avatarUrl);
+      const [{ data: userData }, { data: prog }] = await Promise.all([
+        supabase.from("User").select("avatarUrl").eq("id", user.id).single(),
+        supabase.from("UserProgression").select("rank").eq("userId", user.id).single(),
+      ]);
+      if (userData?.avatarUrl) setAvatarUrl(userData.avatarUrl);
+      if (prog?.rank) setRank(prog.rank);
     });
   }, []);
 
   return (
     <button
       onClick={() => router.push("/profile")}
+      className={isLegend(rank) ? "legend-ring" : undefined}
       style={{
         width: 34, height: 34, borderRadius: "50%",
         background: avatarUrl ? "transparent" : "rgba(77,168,98,0.18)",
-        border: "1.5px solid rgba(77,168,98,0.45)",
+        border: getRankRingBorder(rank),
         display: "flex", alignItems: "center", justifyContent: "center",
         cursor: "pointer", overflow: "hidden", padding: 0, flexShrink: 0,
         ...style,

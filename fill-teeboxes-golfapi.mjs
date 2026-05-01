@@ -184,12 +184,14 @@ async function main() {
             if (!holeId || !apiHole.yardage || apiHole.yardage <= 0) continue;
 
             records.push({
+              id: crypto.randomUUID(),
               courseId: course.id,
               holeId,
               color,
               yardage: apiHole.yardage,
               ...(tee.course_rating ? { rating: tee.course_rating } : {}),
               ...(tee.slope_rating ? { slope: tee.slope_rating } : {}),
+              updatedAt: new Date().toISOString(),
             });
           }
 

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "180dd596-ae5a-4630-9e7c-3185703e9da5",
+    "name": "Granada Golf Course",
+    "city": "Coral Gables",
+    "state": "FL"
+  },
+  {
+    "id": "af377239-0a84-498b-a154-626a99338881",
+    "name": "Biltmore Golf Course",
+    "city": "Coral Gables",
+    "state": "FL"
+  },
+  {
+    "id": "315cce07-4fa9-48ee-ba74-082508fdc65d",
+    "name": "Costa Del Sol Golf Club",
+    "city": "Doral",
+    "state": "FL"
+  },
+  {
+    "id": "b812ff8c-d7fa-4691-afeb-2649c52a4031",
+    "name": "The Links at Fisher Island",
+    "city": "Fisher Island",
+    "state": "FL"
+  },
+  {
+    "id": "ad421ef8-8aba-4624-a7cc-16cc41aad42b",
+    "name": "Redland Golf & Country Club",
+    "city": "Homestead",
+    "state": "FL"
+  },
+  {
+    "id": "08dab69e-0d9b-4fb9-85be-5754b177b549",
+    "name": "Crandon Park Golf Course",
+    "city": "Key Biscayne",
+    "state": "FL"
+  },
+  {
+    "id": "318fe4a8-b22f-49b3-804b-c910a3ae6bdf",
+    "name": "Ocean Reef - Hammock Course",
+    "city": "Key Largo",
+    "state": "FL"
+  },
+  {
+    "id": "1ccd4664-8914-4397-939b-0530a43c0ab9",
+    "name": "Key West City Golf Club",
+    "city": "Key West",
+    "state": "FL"
+  },
+  {
+    "id": "8b7cc7ad-2064-4399-b011-01412048dd67",
+    "name": "Sombrero Country Club",
+    "city": "Marathon",
+    "state": "FL"
+  },
+  {
+    "id": "98dfb619-8bb7-4b73-8322-2ba0eca4639e",
+    "name": "Miami Beach Golf Club",
+    "city": "Miami Beach",
+    "state": "FL"
+  },
+  {
+    "id": "274f3122-aa77-48eb-9957-acc572adc089",
+    "name": "La Gorce Country Club",
+    "city": "Miami Beach",
+    "state": "FL"
+  },
+  {
+    "id": "bf039378-b216-415f-ba96-4472e638231c",
+    "name": "Normandy Shores Golf Club",
+    "city": "Miami Beach",
+    "state": "FL"
+  },
+  {
+    "id": "2be01c5c-595e-4824-8d2c-971bc9b07b33",
+    "name": "Topgolf Miami Gardens",
+    "city": "Miami Gardens",
+    "state": "FL"
+  },
+  {
+    "id": "407c4986-c663-4140-a1a4-15ee6a5b0c14",
+    "name": "Shula's Golf Club",
+    "city": "Miami Lakes",
+    "state": "FL"
+  },
+  {
+    "id": "75bdb22f-0a08-4248-b3a7-f02a4dc8af94",
+    "name": "Miami Shores Country Club",
+    "city": "Miami Shores",
+    "state": "FL"
+  },
+  {
+    "id": "0d52437b-c69f-4450-b58b-f861fbaa488c",
+    "name": "West",
+    "city": "Miami-Dade County",
+    "state": "FL"
+  },
+  {
+    "id": "8b27ce56-51fe-44ac-b153-314a0649410c",
+    "name": "East",
+    "city": "Miami-Dade County",
+    "state": "FL"
+  },
+  {
+    "id": "6df96435-6b01-423f-9b18-76b918b3aac8",
+    "name": "Key Colony Beach Golf",
+    "city": "Monroe County",
+    "state": "FL"
+  },
+  {
+    "id": "22e4e6f4-00fa-4846-ae8f-5b610011cabd",
+    "name": "Ocean Reef - Dolphone Course",
+    "city": "Monroe County",
+    "state": "FL"
+  },
+  {
+    "id": "268508dc-db26-4a00-a606-763808210339",
+    "name": "Greynolds Golf Course",
+    "city": "North Miami Beach",
+    "state": "FL"
+  },
+  {
+    "id": "a8cd1f6b-5d9c-4057-b846-80554dabc59a",
+    "name": "Miami Springs Golf Course",
+    "city": "Virginia Gardens",
+    "state": "FL"
+  }
+]

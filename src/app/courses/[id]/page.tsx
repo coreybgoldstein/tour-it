@@ -17,6 +17,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { sendPushToUser } from "@/lib/sendPush";
 import { formatClipDate } from "@/lib/formatClipDate";
+import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 type Course = {
   id: string;
   name: string;
@@ -129,7 +130,7 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
 
 function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
-  course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }>;
+  course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }>;
   clipIndex: number; totalClips: number;
   holeNumber?: number | null;
   holePar?: number | null; holeYardage?: number | null;
@@ -233,7 +234,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         )}
         {/* Avatar — directly below Intel */}
         <button onClick={() => router.push(`/profile/${clip.userId}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className={isLegend(uploader?.rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploader?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {uploader?.avatarUrl
               ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -318,7 +319,7 @@ export default function CourseProfilePage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
   const [suggestedCourses, setSuggestedCourses] = useState<SuggestedCourse[]>([]);
-  const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }>>({});
+  const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [feedOpen, setFeedOpen] = useState(false);
   const [showFeedHint, setShowFeedHint] = useState(false);
@@ -368,7 +369,7 @@ export default function CourseProfilePage() {
   const [submittingReport, setSubmittingReport] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
-  const [commentItems, setCommentItems] = useState<{ id: string; body: string; username: string; avatarUrl: string | null; createdAt: string }[]>([]);
+  const [commentItems, setCommentItems] = useState<{ id: string; body: string; username: string; avatarUrl: string | null; createdAt: string; rank?: string | null }[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -401,7 +402,7 @@ export default function CourseProfilePage() {
     setLoadingComments(true);
     createClient()
       .from("Comment")
-      .select("id, body, createdAt, userId, User:userId(username, avatarUrl)")
+      .select("id, body, createdAt, userId, User:userId(username, avatarUrl, UserProgression(rank))")
       .eq("uploadId", commentUploadId)
       .order("createdAt", { ascending: true })
       .then(({ data }) => {
@@ -409,6 +410,7 @@ export default function CourseProfilePage() {
           id: c.id, body: c.body, createdAt: c.createdAt,
           username: c.User?.username || "golfer",
           avatarUrl: c.User?.avatarUrl || null,
+          rank: (c.User?.UserProgression as any[])?.[0]?.rank || null,
         })));
         setLoadingComments(false);
       });
@@ -563,10 +565,15 @@ export default function CourseProfilePage() {
       // Fetch uploader info
       if (clips.length > 0) {
         const userIds = [...new Set(clips.map((c: any) => c.userId).filter(Boolean))];
-        const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds);
+        const [{ data: users }, { data: progressions }] = await Promise.all([
+          supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
+          supabase.from("UserProgression").select("userId, rank").in("userId", userIds),
+        ]);
         if (users) {
-          const map: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }> = {};
-          users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null }; });
+          const rankMap: Record<string, string> = {};
+          progressions?.forEach((p: any) => { rankMap[p.userId] = p.rank; });
+          const map: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }> = {};
+          users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null, rank: rankMap[u.id] || null }; });
           setUploaders(map);
         }
       }
@@ -619,10 +626,15 @@ export default function CourseProfilePage() {
       // Fetch uploaders for new clips
       const newUserIds = [...new Set(newClips.map((c) => c.userId).filter(Boolean))];
       if (newUserIds.length > 0) {
-        const { data: users } = await supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", newUserIds);
+        const [{ data: users }, { data: progressions }] = await Promise.all([
+          supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", newUserIds),
+          supabase.from("UserProgression").select("userId, rank").in("userId", newUserIds),
+        ]);
         if (users) {
-          const newMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null }> = {};
-          users.forEach((u: any) => { newMap[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null }; });
+          const rankMap: Record<string, string> = {};
+          progressions?.forEach((p: any) => { rankMap[p.userId] = p.rank; });
+          const newMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }> = {};
+          users.forEach((u: any) => { newMap[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null, rank: rankMap[u.id] || null }; });
           setUploaders(prev => ({ ...prev, ...newMap }));
         }
       }
@@ -1787,14 +1799,14 @@ export default function CourseProfilePage() {
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
                 <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: `1px solid ${getRankColor(c.rank)}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {c.avatarUrl
                       ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
                       : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     }
                   </div>
                   <div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42" }}>@{c.username} </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{c.body}</span>
                   </div>
                 </div>
