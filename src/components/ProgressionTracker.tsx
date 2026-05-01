@@ -17,8 +17,8 @@ const RANK_STYLE: Record<string, { bg: string; color: string; border: string }> 
   LOCAL:      { bg: "rgba(77,168,98,0.12)",   color: "#4da862",                border: "rgba(77,168,98,0.35)" },
   MARSHAL:    { bg: "rgba(59,130,246,0.12)",  color: "#60a5fa",                border: "rgba(59,130,246,0.35)" },
   COURSE_PRO: { bg: "rgba(139,92,246,0.12)",  color: "#a78bfa",                border: "rgba(139,92,246,0.35)" },
-  TOUR_PRO:   { bg: "rgba(245,158,11,0.12)",  color: "#fbbf24",                border: "rgba(245,158,11,0.35)" },
-  LEGEND:     { bg: "rgba(239,68,68,0.12)",   color: "#f87171",                border: "rgba(239,68,68,0.35)" },
+  TOUR_PRO:   { bg: "rgba(249,115,22,0.12)",  color: "#f97316",                border: "rgba(249,115,22,0.35)" },
+  LEGEND:     { bg: "rgba(251,191,36,0.12)",  color: "#fbbf24",                border: "rgba(251,191,36,0.35)" },
 };
 
 export default function ProgressionTracker({ userId, isOwner }: { userId: string; isOwner: boolean }) {
@@ -51,8 +51,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
         <div style={{ height: 5, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 5 }}>
           <div style={{ height: "100%", width: "0%", borderRadius: 99, background: "rgba(210,210,210,0.5)" }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)" }}>Upload clips, get likes, and earn followers</div>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <button onClick={() => router.push("/leaderboards")} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(77,168,98,0.8)", letterSpacing: "0.03em" }}>Leaderboard →</button>
         </div>
       </div>
