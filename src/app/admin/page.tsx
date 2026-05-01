@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Tab = "overview" | "clips" | "reports";
+type Tab = "overview" | "clips" | "reports" | "requests";
 
 type ClipRow = {
   id: string;
@@ -35,12 +35,27 @@ type ReportRow = {
   clipUser?: string | null;
 };
 
+type CourseRequestRow = {
+  id: string;
+  userId: string;
+  name: string;
+  city: string;
+  state: string;
+  courseType: string | null;
+  websiteUrl: string | null;
+  notes: string | null;
+  status: string;
+  createdAt: string;
+  username?: string;
+};
+
 type Stats = {
   totalClips: number;
   totalUsers: number;
   totalCourses: number;
   clipsToday: number;
   pendingReports: number;
+  pendingRequests: number;
   rejectedClips: number;
 };
 
@@ -65,6 +80,7 @@ export default function AdminPage() {
   const [clipsFilter, setClipsFilter] = useState<"ALL" | "APPROVED" | "REJECTED">("ALL");
   const [actioning, setActioning] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [requests, setRequests] = useState<CourseRequestRow[]>([]);
   const [clipsHasMore, setClipsHasMore] = useState(false);
   const [reportsHasMore, setReportsHasMore] = useState(false);
   const [clipsLoadingMore, setClipsLoadingMore] = useState(false);
@@ -87,6 +103,7 @@ export default function AdminPage() {
         { count: clipsToday },
         { count: pendingReports },
         { count: rejectedClips },
+        { count: pendingRequests },
       ] = await Promise.all([
         supabase.from("Upload").select("*", { count: "exact", head: true }),
         supabase.from("User").select("*", { count: "exact", head: true }),
@@ -94,6 +111,7 @@ export default function AdminPage() {
         supabase.from("Upload").select("*", { count: "exact", head: true }).gte("createdAt", today.toISOString()),
         supabase.from("ModerationReport").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
         supabase.from("Upload").select("*", { count: "exact", head: true }).eq("moderationStatus", "REJECTED"),
+        supabase.from("CourseRequest").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
       ]);
       setStats({
         totalClips: totalClips || 0,
@@ -101,6 +119,7 @@ export default function AdminPage() {
         totalCourses: totalCourses || 0,
         clipsToday: clipsToday || 0,
         pendingReports: pendingReports || 0,
+        pendingRequests: pendingRequests || 0,
         rejectedClips: rejectedClips || 0,
       });
 
@@ -109,6 +128,9 @@ export default function AdminPage() {
 
       // Load reports
       await loadReports(supabase);
+
+      // Load course requests
+      await loadRequests(supabase);
 
       setLoading(false);
     });
@@ -213,6 +235,49 @@ export default function AdminPage() {
     setActioning(null);
   }
 
+  async function loadRequests(supabase: any) {
+    const { data } = await supabase
+      .from("CourseRequest")
+      .select("id, userId, name, city, state, courseType, websiteUrl, notes, status, createdAt")
+      .order("createdAt", { ascending: false })
+      .limit(50);
+    if (!data) return;
+    const userIds = [...new Set(data.map((r: any) => r.userId))];
+    const { data: users } = await supabase.from("User").select("id, username").in("id", userIds);
+    setRequests(data.map((r: any) => ({
+      ...r,
+      username: users?.find((u: any) => u.id === r.userId)?.username || "unknown",
+    })));
+  }
+
+  async function approveRequest(req: CourseRequestRow) {
+    setActioning(req.id);
+    const supabase = createClient();
+    await supabase.from("CourseRequest").update({ status: "APPROVED" }).eq("id", req.id);
+    await supabase.from("Notification").insert({
+      userId: req.userId,
+      type: "course_request",
+      title: "Course request approved",
+      body: `Your request to add ${req.name} has been approved. It will appear in search soon.`,
+      linkUrl: "/search",
+      read: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: "APPROVED" } : r));
+    setStats(prev => prev ? { ...prev, pendingRequests: Math.max(0, prev.pendingRequests - 1) } : prev);
+    setActioning(null);
+  }
+
+  async function denyRequest(reqId: string) {
+    setActioning(reqId);
+    const supabase = createClient();
+    await supabase.from("CourseRequest").update({ status: "DENIED" }).eq("id", reqId);
+    setRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: "DENIED" } : r));
+    setStats(prev => prev ? { ...prev, pendingRequests: Math.max(0, prev.pendingRequests - 1) } : prev);
+    setActioning(null);
+  }
+
   if (loading) return (
     <div style={{ minHeight: "100dvh", background: "#07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ fontFamily: "'Outfit', sans-serif", color: "rgba(255,255,255,0.4)", fontSize: 14 }}>Loading…</div>
@@ -254,11 +319,14 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 8, padding: "16px 16px 0", overflowX: "auto" }}>
-        {(["overview", "clips", "reports"] as Tab[]).map(t => (
+        {(["overview", "clips", "reports", "requests"] as Tab[]).map(t => (
           <button key={t} className={`admin-tab ${tab === t ? "admin-tab-active" : "admin-tab-inactive"}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
             {t === "reports" && (stats?.pendingReports ?? 0) > 0 && (
               <span style={{ marginLeft: 6, background: "rgba(255,80,80,0.9)", color: "#fff", borderRadius: 99, padding: "1px 6px", fontSize: 10 }}>{stats!.pendingReports}</span>
+            )}
+            {t === "requests" && (stats?.pendingRequests ?? 0) > 0 && (
+              <span style={{ marginLeft: 6, background: "rgba(255,160,30,0.9)", color: "#fff", borderRadius: 99, padding: "1px 6px", fontSize: 10 }}>{stats!.pendingRequests}</span>
             )}
           </button>
         ))}
@@ -395,6 +463,43 @@ export default function AdminPage() {
                 {reportsLoadingMore ? "Loading…" : "Load more"}
               </button>
             )}
+          </div>
+        )}
+
+        {/* ── Requests ── */}
+        {tab === "requests" && (
+          <div>
+            {requests.map(req => (
+              <div key={req.id} style={{ padding: "14px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 2 }}>{req.name}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)" }}>{req.city}, {req.state}{req.courseType ? ` · ${req.courseType.replace("_", "-")}` : ""}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+                      @{req.username} · {new Date(req.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </div>
+                    {req.notes && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 4, fontStyle: "italic" }}>"{req.notes}"</div>}
+                    {req.websiteUrl && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.7)", marginTop: 4 }}>{req.websiteUrl}</div>}
+                  </div>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, flexShrink: 0, background: req.status === "APPROVED" ? "rgba(26,158,66,0.15)" : req.status === "DENIED" ? "rgba(200,50,50,0.15)" : "rgba(255,200,50,0.15)", color: req.status === "APPROVED" ? "#4da862" : req.status === "DENIED" ? "rgba(255,100,100,0.9)" : "rgba(255,200,80,0.9)" }}>
+                    {req.status}
+                  </span>
+                </div>
+                {req.status === "PENDING" && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                    <button disabled={actioning === req.id} onClick={() => approveRequest(req)}
+                      className="action-pill" style={{ background: "rgba(26,158,66,0.15)", color: "#4da862", opacity: actioning === req.id ? 0.5 : 1 }}>
+                      Approve
+                    </button>
+                    <button disabled={actioning === req.id} onClick={() => denyRequest(req.id)}
+                      className="action-pill" style={{ background: "rgba(200,50,50,0.15)", color: "rgba(255,100,100,0.9)", opacity: actioning === req.id ? 0.5 : 1 }}>
+                      Deny
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+            {requests.length === 0 && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", paddingTop: 40 }}>No course requests</div>}
           </div>
         )}
 

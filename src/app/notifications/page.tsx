@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
+import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 interface Notification {
   id: string;
@@ -56,17 +57,6 @@ function NotifIcon({ type }: { type: string }) {
   );
 }
 
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -124,20 +114,19 @@ export default function NotificationsPage() {
     if (!userId || acting) return;
     setActing(notifId);
     const supabase = createClient();
-    await supabase.from("UploadTag").update({ approved: approve }).eq("userId", userId).eq("uploadId", uploadId);
-    setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: approve ? "approved" : "denied" } : n));
+    const { count } = await supabase.from("UploadTag").update({ approved: approve }).eq("userId", userId).eq("uploadId", uploadId).select("*", { count: "exact", head: true });
+    if ((count ?? 0) === 0) {
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: "denied" } : n));
+    } else {
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: approve ? "approved" : "denied" } : n));
+    }
     setActing(null);
   }
 
   return (
     <div style={{ minHeight: "100vh", background: "#07100a", paddingBottom: 100, paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 680 : undefined }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "52px 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)" }}>
-        <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-        </button>
+      <div style={{ padding: "52px 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)" }}>
         <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff", margin: 0 }}>
           Notifications
         </h1>
@@ -181,7 +170,7 @@ export default function NotificationsPage() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{n.title}</span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>{timeAgo(n.createdAt)}</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>{formatTimeAgo(n.createdAt)}</span>
                   </div>
                   <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", margin: "4px 0 0", lineHeight: 1.4 }}>
                     {n.body}

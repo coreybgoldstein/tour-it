@@ -140,7 +140,7 @@ function SearchPageInner() {
   useEffect(() => {
     if (searchTab !== "people") return;
     if (peopleDebounceRef.current) clearTimeout(peopleDebounceRef.current);
-    if (!query.trim()) { setPeopleResults([]); return; }
+    if (query.trim().length < 2) { setPeopleResults([]); return; }
     setPeopleLoading(true);
     peopleDebounceRef.current = setTimeout(async () => {
       const supabase = createClient();
@@ -174,7 +174,7 @@ function SearchPageInner() {
   const search = useCallback((q: string, coords: { lat: number; lng: number } | null, state: string, city: string, holes: string, courseType: string, radius: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    const hasQuery = q.trim().length >= 1;
+    const hasQuery = q.trim().length >= 2;
     const hasAnyFilter = state || city || coords || holes !== "all" || courseType;
 
     if (!hasQuery && !hasAnyFilter) {

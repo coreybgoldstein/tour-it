@@ -870,7 +870,7 @@ export default function CourseProfilePage() {
           <div style={{ position: "absolute", inset: 0, background: hero.gradient }} />
         )}
         <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(7,16,10,1) 0%, rgba(7,16,10,0.5) 45%, rgba(0,0,0,0.15) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(7,16,10,0.85) 0%, rgba(7,16,10,0.35) 45%, rgba(0,0,0,0.08) 100%)" }} />
 
         {/* Add cover photo prompt — only when no cover image */}
         {!course.coverImageUrl && (

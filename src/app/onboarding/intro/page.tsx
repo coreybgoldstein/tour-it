@@ -98,7 +98,7 @@ export default function OnboardingIntroPage() {
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "52px 24px 0" }}>
         <button
           onClick={() => router.push("/onboarding/profile")}
-          style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: 4 }}
+          style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", padding: 4 }}
         >
           Skip
         </button>
