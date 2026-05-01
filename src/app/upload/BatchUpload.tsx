@@ -338,6 +338,31 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
       }
     }
 
+    // Notify followers once after all clips done (fire-and-forget)
+    ;(async () => {
+      const { data: followers } = await supabase.from("Follow").select("followerId").eq("followingId", user.id).eq("status", "ACTIVE");
+      if (!followers?.length) return;
+      const uploaderName = taggerName;
+      const clipCount = done;
+      const courseLink = `/courses/${selectedCourse.id}`;
+      const body = `${uploaderName} posted ${clipCount} clip${clipCount > 1 ? "s" : ""} at ${selectedCourse.name}`;
+      const now = new Date().toISOString();
+      await supabase.from("Notification").insert(
+        followers.map((f: { followerId: string }) => ({
+          id: crypto.randomUUID(),
+          userId: f.followerId,
+          type: "new_clip",
+          title: "New clips",
+          body,
+          linkUrl: courseLink,
+          read: false,
+          createdAt: now,
+          updatedAt: now,
+        }))
+      );
+      followers.forEach((f: { followerId: string }) => sendPushToUser(f.followerId, "New clips", body, courseLink));
+    })();
+
     setUploading(false);
     setAllDone(true);
   }
