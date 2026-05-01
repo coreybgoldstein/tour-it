@@ -76,62 +76,41 @@ export default function AboutPage() {
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>About Tour It</span>
       </div>
 
-      {/* Hero */}
+      {/* Hero — compact */}
       <div style={{
         position: "relative", width: "100%",
-        height: isDesktop ? 340 : 260,
-        overflow: "hidden",
-        // TODO: swap this gradient for a real early-light course photograph
-        // background: "url(/images/about-hero.jpg) center/cover no-repeat",
-        background: "linear-gradient(175deg, #020c04 0%, #07180d 30%, #0d2e18 55%, #1a4d26 80%, #256936 100%)",
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end",
-        padding: isDesktop ? "0 24px 48px" : "0 24px 36px",
+        background: "linear-gradient(175deg, #020c04 0%, #07180d 40%, #0d2e18 100%)",
+        borderBottom: "1px solid rgba(77,168,98,0.12)",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        padding: isDesktop ? "36px 24px 32px" : "28px 24px 24px",
+        gap: 10,
       }}>
-        {/* Subtle grain texture overlay */}
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "radial-gradient(ellipse at 50% 120%, rgba(45,122,66,0.18) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-        {/* Subtle horizontal light line near horizon */}
-        <div style={{
-          position: "absolute", bottom: "38%", left: "10%", right: "10%",
-          height: 1, background: "linear-gradient(90deg, transparent, rgba(77,168,98,0.12), transparent)",
-          pointerEvents: "none",
-        }} />
-        <div style={{ position: "relative", textAlign: "center", maxWidth: 480 }}>
-          <h1 style={{
-            fontFamily: "'Playfair Display', serif", fontSize: isDesktop ? 52 : 40,
-            fontWeight: 700, color: "#fff", margin: "0 0 12px", letterSpacing: "-0.01em", lineHeight: 1.1,
-          }}>Tour It</h1>
-          <p style={{
-            fontFamily: "'Playfair Display', serif", fontStyle: "italic",
-            fontSize: isDesktop ? 18 : 16, color: "#4da862",
-            margin: 0, lineHeight: 1.4, letterSpacing: "0.01em",
-          }}>
-            Built for those who golf.<br />By those who golf.
-          </p>
-        </div>
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 100%, rgba(45,122,66,0.14) 0%, transparent 65%)", pointerEvents: "none" }} />
+        <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 48 : 38, width: "auto", position: "relative" }} />
+        <p style={{
+          fontFamily: "'Playfair Display', serif", fontStyle: "italic",
+          fontSize: isDesktop ? 16 : 14, color: "#4da862",
+          margin: 0, lineHeight: 1.4, letterSpacing: "0.01em", textAlign: "center", position: "relative",
+        }}>
+          Built for those who golf. By those who golf.
+        </p>
       </div>
 
       {/* Reading column */}
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: isDesktop ? "52px 32px 0" : "40px 24px 0" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: isDesktop ? "44px 32px 0" : "32px 24px 0" }}>
 
         {/* Opening manifesto */}
         <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
-          Every golfer has had the moment. You&apos;re standing on a tee box you&apos;ve never played, looking at a hole you can&apos;t read, with a club in your hand and no idea if it&apos;s the right one. You guess. You usually guess wrong.
-        </p>
-        <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
-          Golf has always had a culture built on knowledge passed between players — the local member who knows every slope, the regular who&apos;s birdied 7 four times, the grinder who&apos;s cracked the code on that brutal par-3 into the wind. The intel exists. It&apos;s just never been in the right place at the right time.
+          Golf is better when you know what&apos;s coming. The local member who&apos;s played the course a thousand times. The buddy who tells you to take one less club into 14. The regular who knows exactly where the green falls off. That kind of knowledge has always lived in the conversation between players — passed around the cart, shared over a beer after the round, dropped casually on the range.
         </p>
         <p style={{ fontSize: isDesktop ? 18 : 17, lineHeight: 1.7, color: "#fff", fontWeight: 600, marginBottom: 22 }}>
-          Tour It is where it lives now.
+          Tour It is where that conversation lives now.
         </p>
         <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
-          Search any course. Open any hole. See what real golfers saw — clips of the tee shot, the approach, the green, with notes on wind, lines, and where not to miss. The kind of intel you&apos;d get from a buddy who played there last week, except the buddy is the entire community, and the course is anywhere.
+          Search any course. Open any hole. See what real golfers saw — clips of the tee shot, the approach, the green, with notes on wind, lines, and what to know before you play. The kind of intel you&apos;d get from a buddy who played there last week, except the buddy is the entire community, and the course is anywhere.
         </p>
         <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 0 }}>
-          Scroll through tracks you&apos;ve never played. Fall down a rabbit hole on a course three states away. Screenshot something and text it to the group chat at 11pm. Build a trip with your crew, map out the courses, settle the debate. The best golf trips don&apos;t happen by accident. They happen because someone did their homework.
+          We&apos;re what happens when you ask your buddy &ldquo;what club did you hit there?&rdquo; — except now you can ask anyone, about any hole, on any course. Scroll through tracks you&apos;ve never played. Fall down a rabbit hole on a course three states away. Screenshot something and text it to the group chat at 11pm. Build a trip with your crew, map out the courses, settle the debate. The best golf trips don&apos;t happen by accident. They happen because someone did their homework.
         </p>
 
         <SectionDivider />
