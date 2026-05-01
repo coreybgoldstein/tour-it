@@ -88,7 +88,7 @@ export default function AddCoursePage() {
           <div style={{ fontSize: 40, marginBottom: 16 }}>✅</div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Request submitted</div>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 28, lineHeight: 1.5 }}>We'll review and add the course shortly. You'll be able to upload clips once it's live.</div>
-          <button onClick={() => router.push("/search")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
+          <button onClick={() => router.replace("/search")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
             Back to Search
           </button>
         </div>

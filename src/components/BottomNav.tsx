@@ -67,6 +67,8 @@ export default function BottomNav() {
           // The search page's useEffect then transfers focus to the real input.
           const ghost = document.createElement("input");
           ghost.setAttribute("type", "text");
+          ghost.setAttribute("aria-hidden", "true");
+          ghost.setAttribute("tabindex", "-1");
           Object.assign(ghost.style, { position: "fixed", top: "0", left: "0", width: "1px", height: "1px", opacity: "0", fontSize: "16px" });
           document.body.appendChild(ghost);
           ghost.focus();

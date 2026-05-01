@@ -155,17 +155,21 @@ function SearchPageInner() {
     }, 280);
   }, [query, searchTab, currentUserId]);
 
-  // Geocode zip → lat/lng via zippopotam.us
+  // Geocode zip → lat/lng via zippopotam.us (4s timeout)
   async function geocodeZip(zip: string): Promise<{ lat: number; lng: number } | null> {
     if (zip.length !== 5) return null;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
     try {
-      const res = await fetch(`https://api.zippopotam.us/us/${zip}`);
+      const res = await fetch(`https://api.zippopotam.us/us/${zip}`, { signal: controller.signal });
+      clearTimeout(timeout);
       if (!res.ok) return null;
       const data = await res.json();
       const place = data.places?.[0];
       if (!place) return null;
       return { lat: parseFloat(place.latitude), lng: parseFloat(place.longitude) };
     } catch {
+      clearTimeout(timeout);
       return null;
     }
   }
@@ -227,7 +231,7 @@ function SearchPageInner() {
         setZipLoading(true);
         coords = await geocodeZip(draftZip);
         setZipLoading(false);
-        if (!coords) { setZipError("Zip code not found"); return; }
+        if (!coords) { setZipError("Zip not recognized — try a state or city filter instead"); return; }
       } else if (draftZip === "") {
         coords = null;
       } else {
