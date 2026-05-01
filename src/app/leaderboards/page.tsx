@@ -76,6 +76,7 @@ export default function LeaderboardsPage() {
       .then(async ({ data: myProg }) => {
         if (!myProg) { setMyRank(null); return; }
         const myPts = (myProg as Record<string, number>)[sortField] ?? 0;
+        if (myPts === 0) { setMyRank(null); return; }
         const { count } = await supabase
           .from("UserProgression")
           .select("*", { count: "exact", head: true })
@@ -112,7 +113,10 @@ export default function LeaderboardsPage() {
 
       {/* List */}
       {loading ? (
-        <div style={{ padding: "60px 20px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>Loading...</div>
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
       ) : entries.length === 0 ? (
         <div style={{ padding: "60px 20px", textAlign: "center" }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>No rankings yet</div>
@@ -163,7 +167,7 @@ export default function LeaderboardsPage() {
           })}
 
           {/* Current user rank if outside top 50 */}
-          {myRank !== null && myRank > 50 && (
+          {myRank !== null && !entries.some(e => e.userId === currentUserId) && (
             <div style={{ marginTop: 12, padding: "11px 12px", borderRadius: 12, background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Your rank</div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>#{myRank.toLocaleString()}</div>

@@ -14,6 +14,7 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { rateLimit } from "@/lib/rateLimit";
+import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 type TrendingCourse = {
   id: string;
@@ -77,15 +78,6 @@ type CommentItem = {
   avatarUrl: string | null;
 };
 
-function formatTimeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
-}
 
 function TourItLogo({ size = 26 }: { size?: number }) {
   const w = Math.round(size * 0.8);

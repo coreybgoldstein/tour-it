@@ -232,7 +232,7 @@ export default function OnboardingProfilePage() {
             <label className="ob-label" style={{ marginBottom: 12 }}>Skill Level</label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 20 }}>
               {HANDICAP_BUCKETS.map(b => (
-                <button key={b.value} onClick={() => { setHandicapBucket(b.value); setUseCustom(false); }} style={{ padding: "12px 4px", borderRadius: 12, border: `1.5px solid ${!useCustom && handicapBucket === b.value ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: !useCustom && handicapBucket === b.value ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                <button key={b.value} onClick={() => { setHandicapBucket(b.value); setUseCustom(false); }} style={{ padding: "12px 4px", borderRadius: 12, border: `1.5px solid ${!useCustom && handicapBucket === b.value ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: !useCustom && handicapBucket === b.value ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minHeight: 44 }}>
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: !useCustom && handicapBucket === b.value ? "#4da862" : "#fff" }}>{b.label}</span>
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#4da862" }}>{b.sublabel}</span>
                 </button>

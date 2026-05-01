@@ -122,7 +122,7 @@ export default function AddCoursePage() {
                   onClick={() => setCourseType(courseType === t ? "" : t)}
                   style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${courseType === t ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`, background: courseType === t ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.03)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: courseType === t ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer" }}
                 >
-                  {t === "SEMI_PRIVATE" ? "Semi" : t === "PUBLIC" ? "Public" : "Private"}
+                  {t === "SEMI_PRIVATE" ? "Semi-Private" : t === "PUBLIC" ? "Public" : "Private"}
                 </button>
               ))}
             </div>
