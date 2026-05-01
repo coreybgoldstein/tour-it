@@ -461,6 +461,8 @@ function SearchPageInner() {
             <div className="empty-hint">
               No courses found<br/>
               <span style={{ fontSize: 12 }}>Try adjusting your search or filters</span>
+              <br />
+              <a href="/add-course" style={{ display: "inline-block", marginTop: 12, fontSize: 12, color: "#4da862", textDecoration: "none" }}>+ Request a missing course</a>
             </div>
           )}
 
