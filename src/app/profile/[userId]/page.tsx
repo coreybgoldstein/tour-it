@@ -203,6 +203,7 @@ type CoursePlayed = { id: string; name: string; city: string; state: string; log
 type HomeCourse = { id: string; name: string };
 type SavedCourse = { id: string; courseId: string; saveType: "PLAYED" | "BUCKET_LIST"; course: { id: string; name: string; city: string; state: string } };
 type Round = { id: string; courseId: string; date: string; totalScore: number | null; fairwaysHit: number | null; putts: number | null; notes: string | null; createdAt: string };
+type EarnedBadge = { id: string; earnedAt: string; badge: { slug: string; name: string; description: string; category: string; rarity: string } };
 type EditTagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 type FollowUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 
@@ -217,7 +218,9 @@ export default function ProfilePage() {
   const [coursesPlayed, setCoursesPlayed] = useState<CoursePlayed[]>([]);
   const [homeCourse, setHomeCourse] = useState<HomeCourse | null>(null);
   const [rounds, setRounds] = useState<Round[]>([]);
-  const [profileTab, setProfileTab] = useState<"clips" | "rounds">("clips");
+  const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
+  const [selectedBadge, setSelectedBadge] = useState<EarnedBadge | null>(null);
+  const [profileTab, setProfileTab] = useState<"clips" | "rounds" | "badges">("clips");
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -390,6 +393,9 @@ export default function ProfilePage() {
 
       const { data: roundsData } = await supabase.from("Round").select("id, courseId, date, totalScore, fairwaysHit, putts, notes, createdAt").eq("userId", userId as string).order("date", { ascending: false });
       setRounds(roundsData || []);
+
+      const { data: badgesData } = await supabase.from("UserBadge").select("id, earnedAt, badge:badgeId(slug, name, description, category, rarity)").eq("userId", userId as string).order("earnedAt", { ascending: false });
+      setEarnedBadges((badgesData || []) as EarnedBadge[]);
 
       setLoading(false);
     }
@@ -1011,11 +1017,11 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Clips / Rounds tabs */}
+      {/* Clips / Rounds / Badges tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
-        {(["clips", "rounds"] as const).map(tab => (
+        {(["clips", "rounds", "badges"] as const).map(tab => (
           <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${profileTab === tab ? "#4da862" : "transparent"}`, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: profileTab === tab ? "#fff" : "rgba(255,255,255,0.35)", cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: -1 }}>
-            {tab === "clips" ? "Clips" : "Rounds"}
+            {tab === "clips" ? "Clips" : tab === "rounds" ? "Rounds" : `Badges${earnedBadges.length > 0 ? ` (${earnedBadges.length})` : ""}`}
           </button>
         ))}
       </div>
@@ -1024,9 +1030,13 @@ export default function ProfilePage() {
       {profileTab === "clips" && (
         <div style={{ paddingTop: 12 }}>
           {allClips.length === 0 ? (
-            <div style={{ padding: "32px 20px", textAlign: "center" }}>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>No clips yet</div>
-              {isOwner && <button onClick={() => router.push("/upload")} style={{ background: "#1a9e42", border: "none", borderRadius: 10, padding: "10px 24px", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", marginTop: 8 }}>Upload a clip</button>}
+            <div style={{ padding: "48px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(26,158,66,0.07)", border: "1px solid rgba(26,158,66,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+              </div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>{isOwner ? "You haven't uploaded any clips yet" : "No clips yet"}</div>
+              {isOwner && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", lineHeight: 1.5, maxWidth: 220 }}>Upload hole footage to start building your scouting profile.</div>}
+              {isOwner && <button onClick={() => router.push("/upload")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "11px 28px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: "'Outfit', sans-serif" }}>Upload a clip</button>}
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
@@ -1092,6 +1102,58 @@ export default function ProfilePage() {
           )}
         </div>
       )}
+
+      {/* Badges grid */}
+      {profileTab === "badges" && (() => {
+        const BADGE_EMOJI: Record<string, string> = { first_clip: "🎬", "5_clips": "📹", "10_clips": "🎯", "25_clips": "⭐", "50_clips": "🏅", "100_clips": "👑", course_pioneer: "🚩", hole_trailblazer: "🕳️", "5_courses": "🗺️", "10_courses": "🚗", "25_courses": "✈️", popular_clip: "🔥", viral_clip: "💫", legendary_clip: "⚡", "10_followers": "👥", "100_followers": "🌟" };
+        const RARITY_COLOR: Record<string, string> = { COMMON: "rgba(200,200,200,0.5)", UNCOMMON: "#4da862", RARE: "#60a5fa", EPIC: "#a78bfa", LEGENDARY: "#fbbf24" };
+        return (
+          <div style={{ padding: "16px 20px 32px" }}>
+            {earnedBadges.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "48px 0" }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>🏅</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>No badges yet</div>
+                {isOwner && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", lineHeight: 1.5 }}>Upload clips, get likes, and earn followers<br />to unlock badges.</div>}
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+                {earnedBadges.map(eb => {
+                  const color = RARITY_COLOR[eb.badge.rarity] || "rgba(200,200,200,0.5)";
+                  const emoji = BADGE_EMOJI[eb.badge.slug] || "🏆";
+                  return (
+                    <div key={eb.id} onClick={() => setSelectedBadge(eb)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "rgba(255,255,255,0.03)", border: `1px solid ${color}40`, borderRadius: 14, cursor: "pointer", transition: "background 0.15s" }}>
+                      <div style={{ width: 44, height: 44, borderRadius: "50%", background: `${color}20`, border: `2px solid ${color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{emoji}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#fff", textAlign: "center", lineHeight: 1.3 }}>{eb.badge.name}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: color, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>{eb.badge.rarity}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Badge detail sheet */}
+      {selectedBadge && (() => {
+        const BADGE_EMOJI: Record<string, string> = { first_clip: "🎬", "5_clips": "📹", "10_clips": "🎯", "25_clips": "⭐", "50_clips": "🏅", "100_clips": "👑", course_pioneer: "🚩", hole_trailblazer: "🕳️", "5_courses": "🗺️", "10_courses": "🚗", "25_courses": "✈️", popular_clip: "🔥", viral_clip: "💫", legendary_clip: "⚡", "10_followers": "👥", "100_followers": "🌟" };
+        const RARITY_COLOR: Record<string, string> = { COMMON: "rgba(200,200,200,0.5)", UNCOMMON: "#4da862", RARE: "#60a5fa", EPIC: "#a78bfa", LEGENDARY: "#fbbf24" };
+        const color = RARITY_COLOR[selectedBadge.badge.rarity] || "rgba(200,200,200,0.5)";
+        const emoji = BADGE_EMOJI[selectedBadge.badge.slug] || "🏆";
+        const earnedDate = new Date(selectedBadge.earnedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+        return (
+          <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={() => setSelectedBadge(null)}>
+            <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2318", borderRadius: "24px 24px 0 0", padding: "24px 24px 48px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, marginBottom: 8 }} />
+              <div style={{ width: 80, height: 80, borderRadius: "50%", background: `${color}20`, border: `3px solid ${color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>{emoji}</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff", textAlign: "center" }}>{selectedBadge.badge.name}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: "0.1em" }}>{selectedBadge.badge.rarity} · {selectedBadge.badge.category}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.65)", textAlign: "center", lineHeight: 1.6, maxWidth: 280 }}>{selectedBadge.badge.description}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>Earned {earnedDate}</div>
+            </div>
+          </div>
+        );
+      })()}
 
       <BottomNav />
 
