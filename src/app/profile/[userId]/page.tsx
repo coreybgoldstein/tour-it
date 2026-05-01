@@ -12,6 +12,7 @@ import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
+import ProgressionTracker from "@/components/ProgressionTracker";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -991,6 +992,9 @@ export default function ProfilePage() {
           <button onClick={() => router.push("/login")} style={{ marginTop: 10, padding: "10px 32px", borderRadius: 10, background: "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Log in to follow</button>
         )}
       </div>
+
+      {/* Progression tracker */}
+      <ProgressionTracker userId={userId as string} isOwner={isOwner} />
 
       {/* Stats bar */}
       <div style={{ display: "flex", justifyContent: "space-around", padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 12 }}>

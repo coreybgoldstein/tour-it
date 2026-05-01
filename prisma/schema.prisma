@@ -763,3 +763,19 @@ model RewardsWaitlist {
 
   @@index([createdAt(sort: Desc)])
 }
+
+model CourseRequest {
+  id          String      @id @default(cuid())
+  userId      String
+  name        String
+  city        String
+  state       String
+  courseType  CourseType?
+  websiteUrl  String?
+  notes       String?
+  status      String      @default("PENDING")
+  createdAt   DateTime    @default(now())
+
+  @@index([userId])
+  @@index([status, createdAt(sort: Desc)])
+}
