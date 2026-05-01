@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
@@ -268,6 +268,7 @@ function ClipActions({ upload }: { upload: Upload }) {
 export default function HolePage() {
   const { id, number } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isDesktop = useIsDesktop();
   const [course, setCourse] = useState<Course | null>(null);
   const [hole, setHole] = useState<Hole | null>(null);
@@ -465,6 +466,15 @@ export default function HolePage() {
     });
   }, [id, number]);
 
+  // Jump to linked clip when ?clip= param is present
+  useEffect(() => {
+    if (!uploads.length) return;
+    const clipId = searchParams.get("clip");
+    if (!clipId) return;
+    const idx = uploads.findIndex(u => u.id === clipId);
+    if (idx > 0) setActiveIndex(idx);
+  }, [uploads]);
+
   // Manage video playback for single clips
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([clipId, videoEl]) => {
@@ -525,7 +535,9 @@ export default function HolePage() {
   }
 
   const handleShare = async () => {
-    const url = window.location.href;
+    const activeClipId = uploads[activeIndex]?.id;
+    const base = `${window.location.origin}/courses/${id}/holes/${number}`;
+    const url = activeClipId ? `${base}?clip=${activeClipId}` : base;
     const shareText = `Tour It — ${course?.name} — ${pageTitle}`;
     try {
       if (navigator.share) {
