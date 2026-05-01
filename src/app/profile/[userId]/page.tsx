@@ -629,6 +629,7 @@ export default function ProfilePage() {
       const bucketIndex = url.indexOf(`/${bucket}/`);
       if (bucketIndex !== -1) await supabase.storage.from(bucket).remove([url.substring(bucketIndex + bucket.length + 2)]);
       await supabase.from("Upload").delete().eq("id", selectedClip.id).eq("userId", currentUserId);
+      fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "upload_deleted", referenceId: selectedClip.id }) }).catch(() => {});
       setUploads(prev => prev.filter(u => u.id !== selectedClip.id));
     } catch {}
     setDeleting(false); setSelectedClip(null); setConfirmDelete(false);
