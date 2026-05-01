@@ -805,14 +805,13 @@ export default function Home() {
       }
     }
 
-    // Auto-load near me if previously granted
-    if (localStorage.getItem("tour-it-location-denied")) {
-      setLocationStatus("denied");
-      return;
-    }
+    // Auto-load near me if previously granted (fresh cache only)
     try {
       const raw = localStorage.getItem("tour-it-location");
-      if (raw) fetchNearMe(); // fetchNearMe always refreshes coords in background
+      if (raw) {
+        const { ts } = JSON.parse(raw);
+        if (Date.now() - ts < 3600000) fetchNearMe(); // only auto-call with fresh cache
+      }
     } catch {}
   }, []);
 
@@ -919,10 +918,7 @@ export default function Home() {
         if (!usedCache) doFetch(lat, lng);
       },
       () => {
-        if (!usedCache) {
-          localStorage.setItem("tour-it-location-denied", "1");
-          setLocationStatus("denied");
-        }
+        if (!usedCache) setLocationStatus("idle");
       }
     );
   }
