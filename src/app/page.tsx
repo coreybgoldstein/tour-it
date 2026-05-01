@@ -554,6 +554,7 @@ export default function Home() {
   const [user, setUser] = useState<any>(undefined); // undefined = auth not yet checked, null = confirmed logged out
   const [userProfile, setUserProfile] = useState<any>(null);
   const [trendingCourses, setTrendingCourses] = useState<TrendingCourse[]>([]);
+  const [trendingGolfers, setTrendingGolfers] = useState<{ id: string; username: string; displayName: string; avatarUrl: string | null; uploadCount: number }[]>([]);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [loading, setLoading] = useState(true);
@@ -602,6 +603,14 @@ export default function Home() {
       .order("uploadCount", { ascending: false })
       .limit(10)
       .then(({ data }) => { if (data) setTrendingCourses(data); });
+
+    supabase
+      .from("User")
+      .select("id, username, displayName, avatarUrl, uploadCount")
+      .gt("uploadCount", 0)
+      .order("uploadCount", { ascending: false })
+      .limit(10)
+      .then(({ data }) => { if (data) setTrendingGolfers(data); });
 
 
     async function loadFeed() {
@@ -1079,6 +1088,32 @@ export default function Home() {
             );
           })()}
 
+          {/* Trending Golfers */}
+          {trendingGolfers.length > 0 && (
+            <div style={{ flexShrink: 0, marginTop: 10 }}>
+              <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>
+                Top Golfers
+              </div>
+              <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 20px 4px", scrollbarWidth: "none" }}>
+                {trendingGolfers.map(g => (
+                  <button key={g.id} onClick={() => router.push(`/profile/${g.id}`)}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "12px 10px", cursor: "pointer", flexShrink: 0, width: 84, minWidth: 84 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(26,158,66,0.15)", border: "1.5px solid rgba(26,158,66,0.25)", overflow: "hidden", flexShrink: 0 }}>
+                      {g.avatarUrl
+                        ? <img src={g.avatarUrl} alt={g.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          </div>
+                      }
+                    </div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#fff", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%", maxWidth: 72 }}>{g.displayName || g.username}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>{g.uploadCount} clip{g.uploadCount !== 1 ? "s" : ""}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Courses Near Me */}
           {locationStatus !== "denied" && (
             <div style={{ flexShrink: 0, marginTop: 10 }}>
@@ -1190,9 +1225,16 @@ export default function Home() {
         ))}
 
         {!loading && feedItems.length === 0 && (
-          <div className="feed-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 20 }}>
-            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.3)", textAlign: "center", fontFamily: "'Outfit', sans-serif" }}>No clips yet — be the first to upload</div>
-            <button onClick={() => router.push("/upload")} style={{ background: "#1a9e42", border: "none", borderRadius: 10, padding: "12px 28px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>Upload the first clip</button>
+          <div className="feed-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: 32, textAlign: "center" }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(26,158,66,0.08)", border: "1px solid rgba(26,158,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+            </div>
+            <div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>Be the first to scout</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, maxWidth: 260 }}>No clips yet. Upload hole footage and help golfers scout before they play.</div>
+            </div>
+            {user && <button onClick={() => router.push("/upload")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px 32px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>Upload a clip</button>}
+            {!user && <a href="/signup" style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px 32px", color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none", fontFamily: "'Outfit', sans-serif" }}>Join Tour It</a>}
           </div>
         )}
       </div>
