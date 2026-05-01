@@ -310,6 +310,9 @@ function SeriesCard({
       setIntelOpen(false);
       return;
     }
+    const currentMuted = sessionMute.get();
+    setMuted(currentMuted);
+    Object.values(videoRefs.current).forEach(v => { if (v) v.muted = currentMuted; });
     item.shots.forEach((shot, i) => {
       const el = videoRefs.current[shot.id];
       if (!el) return;
@@ -450,8 +453,17 @@ function VideoCard({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (isActive) { video.play().catch(() => {}); setVideoPaused(false); }
-    else { video.pause(); video.currentTime = 0; setIntelOpen(false); }
+    if (isActive) {
+      const currentMuted = sessionMute.get();
+      setMuted(currentMuted);
+      video.muted = currentMuted;
+      video.play().catch(() => {});
+      setVideoPaused(false);
+    } else {
+      video.pause();
+      video.currentTime = 0;
+      setIntelOpen(false);
+    }
   }, [isActive]);
 
   useEffect(() => {
