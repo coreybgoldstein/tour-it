@@ -300,10 +300,21 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
         const { data: uRow } = await supabase.from("User").select("uploadCount").eq("id", user.id).single();
         await supabase.from("User").update({ uploadCount: (uRow?.uploadCount || 0) + 1 }).eq("id", user.id);
+        let isFirstForHole = false;
         if (holeId) {
           const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
           await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);
+          isFirstForHole = (hRow?.uploadCount || 0) === 0;
         }
+
+        // Award points (fire-and-forget — don't block the upload flow)
+        const awardFetch = (action: string) => fetch("/api/points/award", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, referenceId: uploadId }),
+        }).catch(() => {});
+        awardFetch("upload_clip");
+        if ((cRow?.uploadCount || 0) === 0) awardFetch("upload_first_for_course");
+        if (isFirstForHole) awardFetch("upload_first_for_hole");
 
         // Tags + notifications
         if (clip.taggedUsers.length > 0) {
