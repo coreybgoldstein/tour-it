@@ -12,6 +12,7 @@ const SELF_ACTIONS = new Set<PointActionKey>([
   PointAction.UPLOAD_CLIP,
   PointAction.UPLOAD_FIRST_FOR_HOLE,
   PointAction.UPLOAD_FIRST_FOR_COURSE,
+  PointAction.UPLOAD_DELETED,
 ]);
 
 export async function POST(req: NextRequest) {

@@ -356,8 +356,11 @@ export default function HolePage() {
       userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
     });
     if (!error) {
-      const { data: uploadData } = await supabase.from("Upload").select("commentCount").eq("id", commentUploadId).single();
+      const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId").eq("id", commentUploadId).single();
       await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
+      if (uploadData?.userId && uploadData.userId !== user.id) {
+        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
+      }
       setCommentItems(prev => [...prev, {
         id: Date.now().toString(), body: commentText.trim(), createdAt: new Date().toISOString(),
         username: user.user_metadata?.username || "you", avatarUrl: null,

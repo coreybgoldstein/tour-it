@@ -894,11 +894,14 @@ export default function Home() {
       updatedAt: new Date().toISOString(),
     });
     if (!error) {
-      const { data: uploadData } = await supabase.from("Upload").select("commentCount, likeCount, createdAt").eq("id", commentUploadId).single();
+      const { data: uploadData } = await supabase.from("Upload").select("commentCount, likeCount, createdAt, userId").eq("id", commentUploadId).single();
       const newCommentCount = (uploadData?.commentCount || 0) + 1;
       const { computeRankScore } = await import("@/lib/rankScore");
       const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
       await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+      if (uploadData?.userId && uploadData.userId !== user.id) {
+        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
+      }
       setCommentItems(prev => [...prev, {
         id,
         body: commentText.trim(),
