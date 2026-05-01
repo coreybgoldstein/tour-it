@@ -899,7 +899,7 @@ export default function CourseProfilePage() {
 
         <div style={{ position: "relative", padding: "0 20px 18px", zIndex: 10, marginTop: 100 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.45)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 6 }}>
-            <span>{[course.city, course.state].filter(s => s?.trim()).join(", ")}{course.city || course.state ? " · " : ""}{course.isPublic ? "Public" : "Private"}</span>
+            <span>{[course.city, course.state].filter(s => s?.trim()).join(", ")}{course.city || course.state ? " · " : ""}{course.courseType === "SEMI_PRIVATE" ? "Semi-Private" : course.courseType === "PRIVATE" ? "Private" : "Public"}</span>
             {(course.description || hero.description) && (
               <button onClick={() => setAboutOpen(true)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><circle cx="12" cy="12.01" r="0.1" fill="rgba(255,255,255,0.85)" stroke="rgba(255,255,255,0.85)" strokeWidth="3"/></svg>

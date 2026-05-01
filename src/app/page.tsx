@@ -574,6 +574,7 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [splashVisible, setSplashVisible] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
+  const [showScrollHint, setShowScrollHint] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
@@ -795,14 +796,24 @@ export default function Home() {
   }, [activeIndex, feedItems.length, loadMoreFeed]);
 
   useEffect(() => {
+    if (activeIndex > 0 && showScrollHint) {
+      setShowScrollHint(false);
+      localStorage.setItem("tour-it-hint-dismissed", new Date().toDateString());
+    }
+  }, [activeIndex, showScrollHint]);
+
+  useEffect(() => {
     const today = new Date().toDateString();
     const lastSplash = localStorage.getItem("tour-it-splash-date");
-    if (lastSplash === today) return;
-    localStorage.setItem("tour-it-splash-date", today);
-    setSplashVisible(true);
-    const fadeTimer = setTimeout(() => setSplashFading(true), 2000);
-    const hideTimer = setTimeout(() => setSplashVisible(false), 2600);
-    return () => { clearTimeout(fadeTimer); clearTimeout(hideTimer); };
+    if (lastSplash !== today) {
+      localStorage.setItem("tour-it-splash-date", today);
+      setSplashVisible(true);
+      const fadeTimer = setTimeout(() => setSplashFading(true), 2000);
+      const hideTimer = setTimeout(() => setSplashVisible(false), 2600);
+      setTimeout(() => { clearTimeout(fadeTimer); clearTimeout(hideTimer); }, 2700);
+    }
+    const hintDismissed = localStorage.getItem("tour-it-hint-dismissed");
+    setShowScrollHint(hintDismissed !== today);
   }, []);
 
   useEffect(() => {
@@ -899,7 +910,8 @@ export default function Home() {
     const onlyPublic = publicOnlyOverride ?? publicOnly;
 
     async function doFetch(lat: number, lng: number) {
-      const RANGE = radius / 69; // degrees ≈ miles / 69
+      const MILES_PER_DEGREE = 69;
+      const RANGE = radius / MILES_PER_DEGREE;
       let query = createClient()
         .from("Course")
         .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl, isPublic")
@@ -1165,26 +1177,28 @@ export default function Home() {
           )}
 
           {/* Bridge to feed */}
-          <button
-            onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-            style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "flex-end", justifyContent: "center", paddingBottom: 96, background: "none", border: "none", cursor: "pointer", width: "100%", gap: 28 }}
-          >
-            <div className="bounce-arrow" style={{ animationDelay: "0s" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, paddingBottom: 4 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "2.8px", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>
-                Tour the feed
+          {showScrollHint && (
+            <button
+              onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
+              style={{ flex: 1, display: "flex", flexDirection: "row", alignItems: "flex-end", justifyContent: "center", paddingBottom: 96, background: "none", border: "none", cursor: "pointer", width: "100%", gap: 28 }}
+            >
+              <div className="bounce-arrow" style={{ animationDelay: "0s" }}>
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
               </div>
-            </div>
-            <div className="bounce-arrow" style={{ animationDelay: "0.2s" }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </div>
-          </button>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, paddingBottom: 4 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "2.8px", textTransform: "uppercase", color: "rgba(255,255,255,0.72)" }}>
+                  Tour the feed
+                </div>
+              </div>
+              <div className="bounce-arrow" style={{ animationDelay: "0.2s" }}>
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+            </button>
+          )}
 
         </div>
 
