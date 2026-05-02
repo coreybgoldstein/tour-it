@@ -21,11 +21,11 @@ const BADGE_EMOJI: Record<string, string> = {
 };
 
 const RARITY_GLOW: Record<string, string> = {
-  COMMON:    "rgba(200,200,200,0.25)",
-  UNCOMMON:  "rgba(77,168,98,0.45)",
-  RARE:      "rgba(96,165,250,0.45)",
-  EPIC:      "rgba(167,139,250,0.5)",
-  LEGENDARY: "rgba(251,191,36,0.65)",
+  COMMON:    "rgba(200,200,200,0.2)",
+  UNCOMMON:  "rgba(77,168,98,0.4)",
+  RARE:      "rgba(96,165,250,0.4)",
+  EPIC:      "rgba(167,139,250,0.45)",
+  LEGENDARY: "rgba(251,191,36,0.6)",
 };
 
 type CatalogBadge = { id: string; slug: string; name: string; description: string; category: string; rarity: string };
@@ -37,77 +37,44 @@ function Nameplate({ badge, earnedBadge, onClick }: {
 }) {
   const earned = !!earnedBadge;
   const emoji  = BADGE_EMOJI[badge.slug] || "🏆";
-  const glow   = RARITY_GLOW[badge.rarity] || "rgba(218,165,32,0.3)";
+  const glow   = RARITY_GLOW[badge.rarity] || "rgba(218,165,32,0.25)";
 
   return (
     <div
       onClick={earned ? onClick : undefined}
       style={{
-        height: 38,
-        borderRadius: 3,
+        aspectRatio: "1.4 / 1",
+        borderRadius: 5,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        gap: 5,
         cursor: earned ? "pointer" : "default",
         background: earned
-          ? "linear-gradient(135deg, #9a6e0a 0%, #c8962e 25%, #e8c55a 50%, #c8962e 75%, #9a6e0a 100%)"
-          : "linear-gradient(135deg, #1a1008 0%, #221609 60%, #1a1008 100%)",
+          ? "linear-gradient(145deg, #7a5008 0%, #b07818 20%, #d4a030 45%, #b07818 70%, #7a5008 100%)"
+          : "linear-gradient(145deg, #150c04 0%, #1e1208 55%, #150c04 100%)",
         border: earned
-          ? "1px solid rgba(255,215,0,0.65)"
-          : "1px solid rgba(90,50,15,0.35)",
+          ? "1px solid rgba(218,168,30,0.7)"
+          : "1px solid rgba(70,40,10,0.5)",
         boxShadow: earned
-          ? `0 0 8px ${glow}, inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.2)`
-          : "inset 0 1px 0 rgba(0,0,0,0.4), inset 0 -1px 0 rgba(255,255,255,0.02)",
-        padding: "0 6px",
-        flexShrink: 0,
-        userSelect: "none",
+          ? `0 2px 8px rgba(0,0,0,0.5), 0 0 10px ${glow}, inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(0,0,0,0.25)`
+          : "inset 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03)",
       }}
     >
-      {earned ? (
-        <>
-          <span style={{ fontSize: 13, lineHeight: 1, flexShrink: 0 }}>{emoji}</span>
-          <span style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: 8,
-            fontWeight: 800,
-            color: "#1e0e00",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            lineHeight: 1.2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            maxWidth: 90,
-          }}>
-            {badge.name}
-          </span>
-        </>
-      ) : (
-        <span style={{
-          fontFamily: "'Outfit', sans-serif",
-          fontSize: 9,
-          color: "rgba(120,75,25,0.35)",
-          letterSpacing: "0.12em",
-        }}>
-          ─ ─ ─
+      {earned && (
+        <span style={{ fontSize: 22, lineHeight: 1, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.5))" }}>
+          {emoji}
         </span>
       )}
     </div>
   );
 }
 
+// Badge grid only — no background, no avatar. Profile page wraps this in the wood section.
 export default function TrophyPlaque({
   earnedBadges,
-  avatarUrl,
-  username,
-  profileRank,
   onBadgePress,
 }: {
   earnedBadges: EarnedBadge[];
-  avatarUrl: string | null;
-  username: string;
-  profileRank: string | null;
   onBadgePress: (eb: EarnedBadge) => void;
 }) {
   const [catalog, setCatalog] = useState<CatalogBadge[]>([]);
@@ -127,98 +94,29 @@ export default function TrophyPlaque({
       });
   }, []);
 
-  const earnedBySlug = new Map(earnedBadges.map(eb => [eb.badge.slug, eb]));
-
-  // Split around center: avatar divides top half from bottom half
-  const half       = Math.ceil(catalog.length / 2);
-  const topBadges  = catalog.slice(0, half);
-  const botBadges  = catalog.slice(half);
-
   if (catalog.length === 0) return null;
 
-  const initials = username?.[0]?.toUpperCase() || "?";
+  const earnedBySlug = new Map(earnedBadges.map(eb => [eb.badge.slug, eb]));
 
   return (
-    <div style={{
-      margin: "0 16px 16px",
-      borderRadius: 8,
-      overflow: "hidden",
-      border: "2px solid rgba(184,134,11,0.5)",
-      boxShadow: "0 6px 28px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.3)",
-      // Oak wood background: subtle grain via overlapping gradients
-      background: `
-        repeating-linear-gradient(88deg,
-          transparent 0px, transparent 22px,
-          rgba(0,0,0,0.07) 22px, rgba(0,0,0,0.07) 23px
-        ),
-        repeating-linear-gradient(178deg,
-          transparent 0px, transparent 14px,
-          rgba(255,255,255,0.025) 14px, rgba(255,255,255,0.025) 15px
-        ),
-        linear-gradient(162deg,
-          #5c2b0c 0%, #7a3e1a 7%,
-          #66321200 15%, #8b4a22 22%,
-          #6b3412 32%, #7e3f19 42%,
-          #5a2a0b 52%, #7a3e1a 62%,
-          #8b4a22 72%, #66341200 80%,
-          #7a3e1a 90%, #5c2b0c 100%
-        )
-      `,
-    }}>
-      <div style={{ padding: "12px 10px" }}>
-
-        {/* Top nameplates grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 11 }}>
-          {topBadges.map(badge => (
-            <Nameplate
-              key={badge.slug}
-              badge={badge}
-              earnedBadge={earnedBySlug.get(badge.slug)}
-              onClick={() => { const eb = earnedBySlug.get(badge.slug); if (eb) onBadgePress(eb); }}
-            />
-          ))}
-        </div>
-
-        {/* Avatar divider row */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 11 }}>
-          <div style={{ flex: 1, height: 1, background: "linear-gradient(to right, transparent, rgba(218,165,32,0.45))" }} />
-          <div style={{
-            width: 68,
-            height: 68,
-            borderRadius: "50%",
-            border: "2.5px solid rgba(218,165,32,0.8)",
-            boxShadow: "0 0 14px rgba(218,165,32,0.35), 0 0 0 1px rgba(0,0,0,0.6)",
-            overflow: "hidden",
-            flexShrink: 0,
-            background: "#2a1a08",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
-            {avatarUrl
-              ? <img src={avatarUrl} alt={username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "rgba(218,165,32,0.7)" }}>{initials}</span>
-            }
-          </div>
-          <div style={{ flex: 1, height: 1, background: "linear-gradient(to left, transparent, rgba(218,165,32,0.45))" }} />
-        </div>
-
-        {/* Bottom nameplates grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-          {botBadges.map(badge => (
-            <Nameplate
-              key={badge.slug}
-              badge={badge}
-              earnedBadge={earnedBySlug.get(badge.slug)}
-              onClick={() => { const eb = earnedBySlug.get(badge.slug); if (eb) onBadgePress(eb); }}
-            />
-          ))}
-          {/* Pad to even columns if needed */}
-          {botBadges.length % 2 !== 0 && (
-            <div style={{ height: 38, borderRadius: 3, background: "linear-gradient(135deg, #1a1008 0%, #221609 100%)", border: "1px solid rgba(90,50,15,0.25)", opacity: 0.5 }} />
-          )}
-        </div>
-
+    <div style={{ padding: "4px 14px 18px" }}>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        gap: 10,
+      }}>
+        {catalog.map(badge => (
+          <Nameplate
+            key={badge.slug}
+            badge={badge}
+            earnedBadge={earnedBySlug.get(badge.slug)}
+            onClick={() => { const eb = earnedBySlug.get(badge.slug); if (eb) onBadgePress(eb); }}
+          />
+        ))}
+        {/* Pad to full row if needed */}
+        {catalog.length % 4 !== 0 && Array.from({ length: 4 - (catalog.length % 4) }).map((_, i) => (
+          <div key={`pad-${i}`} style={{ aspectRatio: "1.4 / 1", borderRadius: 5, background: "linear-gradient(145deg, #150c04 0%, #1e1208 55%, #150c04 100%)", border: "1px solid rgba(70,40,10,0.4)", boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }} />
+        ))}
       </div>
     </div>
   );

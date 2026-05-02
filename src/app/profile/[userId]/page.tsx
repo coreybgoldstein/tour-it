@@ -1049,64 +1049,84 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Avatar + identity */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 14 }}>
-        <div style={{ marginBottom: 10 }}>
-          <div
-            className={isLegend(profileRank) ? "legend-ring" : undefined}
-            onClick={isOwner ? () => fileInputRef.current?.click() : undefined}
-            style={{ width: 88, height: 88, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: isOwner ? "pointer" : "default" }}
-          >
-            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials)}
+      {/* ── Mahogany plaque section ─────────────────────────── */}
+      <div style={{
+        borderTop: "1.5px solid rgba(184,134,11,0.45)",
+        borderBottom: "1.5px solid rgba(184,134,11,0.45)",
+        background: `
+          repeating-linear-gradient(88deg,
+            transparent 0px, transparent 20px,
+            rgba(0,0,0,0.06) 20px, rgba(0,0,0,0.06) 21px
+          ),
+          repeating-linear-gradient(176deg,
+            transparent 0px, transparent 12px,
+            rgba(255,255,255,0.022) 12px, rgba(255,255,255,0.022) 13px
+          ),
+          linear-gradient(162deg,
+            #3a1206 0%, #58200f 7%,
+            #3a1206 16%, #4d1c0c 26%,
+            #66281a 36%, #3a1206 48%,
+            #58200f 60%, #4d1c0c 72%,
+            #3a1206 82%, #58200f 92%,
+            #3a1206 100%
+          )
+        `,
+      }}>
+
+        {/* Avatar + identity — sits on the wood */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 18, paddingBottom: 12 }}>
+          <div style={{ marginBottom: 10 }}>
+            <div
+              className={isLegend(profileRank) ? "legend-ring" : undefined}
+              onClick={isOwner ? () => fileInputRef.current?.click() : undefined}
+              style={{ width: 88, height: 88, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#2a0e08", border: "3px solid rgba(0,0,0,0.5)", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: isOwner ? "pointer" : "default" }}
+            >
+              {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials)}
+            </div>
           </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: getRankColor(profileRank), lineHeight: 1.2 }}>@{profile.username}</div>
-          {isOwner && (
-            <button onClick={() => setShowEdit(true)} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: getRankColor(profileRank), lineHeight: 1.2 }}>@{profile.username}</div>
+            {isOwner && (
+              <button onClick={() => setShowEdit(true)} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+            )}
+          </div>
+          {(profile.handicapIndex !== null || homeCourse) && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginBottom: 6 }}>
+              {profile.handicapIndex !== null && <div style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(184,134,11,0.3)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.65)" }}>{profile.handicapIndex} hcp</div>}
+              {homeCourse && <div style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(184,134,11,0.3)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.65)" }}>{homeCourse.name}</div>}
+            </div>
+          )}
+          {/* Quiet secondary stats line */}
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: (!isOwner && currentUserId) || (!isOwner && !currentUserId) ? 0 : 4, display: "flex", alignItems: "center" }}>
+            <span>{courseCount} courses</span>
+            <span style={{ margin: "0 5px" }}>·</span>
+            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.35)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>{followerCount} followers</button>
+            <span style={{ margin: "0 5px" }}>·</span>
+            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.35)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>{followingCount} following</button>
+          </div>
+          {!isOwner && currentUserId && (
+            <button onClick={handleFollow} disabled={followLoading} style={{ marginTop: 10, padding: "10px 32px", borderRadius: 10, border: isFollowing ? "1px solid rgba(255,255,255,0.2)" : "none", background: isFollowing ? "rgba(255,255,255,0.08)" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: isFollowing ? "rgba(255,255,255,0.6)" : "#fff", cursor: "pointer", opacity: followLoading ? 0.6 : 1 }}>
+              {followLoading ? "..." : isFollowing ? "Following" : "Follow"}
             </button>
           )}
+          {!isOwner && !currentUserId && (
+            <button onClick={() => router.push("/login")} style={{ marginTop: 10, padding: "10px 32px", borderRadius: 10, background: "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Log in to follow</button>
+          )}
         </div>
-        {(profile.handicapIndex !== null || homeCourse) && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginBottom: 6 }}>
-            {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{profile.handicapIndex} hcp</div>}
-            {homeCourse && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{homeCourse.name}</div>}
-          </div>
-        )}
-        {/* Quiet secondary stats line */}
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.28)", marginBottom: (!isOwner && currentUserId) || (!isOwner && !currentUserId) ? 0 : 8, display: "flex", alignItems: "center", gap: 0 }}>
-          <span>{courseCount} courses</span>
-          <span style={{ margin: "0 5px" }}>·</span>
-          <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>
-            {followerCount} followers
-          </button>
-          <span style={{ margin: "0 5px" }}>·</span>
-          <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>
-            {followingCount} following
-          </button>
-        </div>
-        {!isOwner && currentUserId && (
-          <button onClick={handleFollow} disabled={followLoading} style={{ marginTop: 10, padding: "10px 32px", borderRadius: 10, border: isFollowing ? "1px solid rgba(255,255,255,0.15)" : "none", background: isFollowing ? "rgba(255,255,255,0.06)" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: isFollowing ? "rgba(255,255,255,0.6)" : "#fff", cursor: "pointer", opacity: followLoading ? 0.6 : 1 }}>
-            {followLoading ? "..." : isFollowing ? "Following" : "Follow"}
-          </button>
-        )}
-        {!isOwner && !currentUserId && (
-          <button onClick={() => router.push("/login")} style={{ marginTop: 10, padding: "10px 32px", borderRadius: 10, background: "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Log in to follow</button>
-        )}
+
+        {/* Progression tracker — card sits on wood */}
+        <ProgressionTracker userId={userId as string} isOwner={isOwner} />
+
+        {/* Thin gold divider before badge grid */}
+        <div style={{ height: 1, background: "linear-gradient(90deg, transparent 0%, rgba(184,134,11,0.35) 20%, rgba(184,134,11,0.35) 80%, transparent 100%)", margin: "0 16px 14px" }} />
+
+        {/* Badge icon grid */}
+        <TrophyPlaque earnedBadges={earnedBadges} onBadgePress={setSelectedBadge} />
+
       </div>
-
-      {/* Progression tracker */}
-      <ProgressionTracker userId={userId as string} isOwner={isOwner} />
-
-      {/* Trophy plaque */}
-      <TrophyPlaque
-        earnedBadges={earnedBadges}
-        avatarUrl={profile.avatarUrl}
-        username={profile.username}
-        profileRank={profileRank}
-        onBadgePress={setSelectedBadge}
-      />
+      {/* ── End plaque section ──────────────────────────────── */}
 
       {/* Clips / Rounds tabs with counts */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
