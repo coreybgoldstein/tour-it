@@ -151,7 +151,7 @@ export type RankTierKey = typeof RANK_TIERS[number]["rank"];
 
 export const RANK_COLORS: Record<RankTierKey, string> = {
   CADDIE:     "rgba(190,190,190,0.75)",
-  LOCAL:      "#4da862",
+  LOCAL:      "#2dd4bf",
   MARSHAL:    "#60a5fa",
   COURSE_PRO: "#a78bfa",
   TOUR_PRO:   "#f97316",
