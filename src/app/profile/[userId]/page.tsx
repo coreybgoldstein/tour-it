@@ -250,7 +250,7 @@ type CoursePlayed = { id: string; name: string; city: string; state: string; log
 type HomeCourse = { id: string; name: string };
 type SavedCourse = { id: string; courseId: string; saveType: "PLAYED" | "BUCKET_LIST"; course: { id: string; name: string; city: string; state: string } };
 type Round = { id: string; courseId: string; date: string; totalScore: number | null; fairwaysHit: number | null; putts: number | null; notes: string | null; createdAt: string };
-type EarnedBadge = { id: string; earnedAt: string; badge: { slug: string; name: string; description: string; category: string; rarity: string } };
+type EarnedBadge = { id: string; awardedAt: string; badge: { slug: string; name: string; description: string; category: string; rarity: string } };
 type EditTagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 type FollowUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 
@@ -453,7 +453,7 @@ export default function ProfilePage() {
         }
       }
 
-      const { data: badgesData } = await supabase.from("UserBadge").select("id, earnedAt, badge:badgeId(slug, name, description, category, rarity)").eq("userId", userId as string).order("earnedAt", { ascending: false });
+      const { data: badgesData } = await supabase.from("UserBadge").select("id, awardedAt, badge:badgeId(slug, name, description, category, rarity)").eq("userId", userId as string).order("awardedAt", { ascending: false });
       setEarnedBadges((badgesData || []) as unknown as EarnedBadge[]);
 
       setLoading(false);
@@ -1221,7 +1221,7 @@ export default function ProfilePage() {
       {selectedBadge && (() => {
         const color = RARITY_COLOR[selectedBadge.badge.rarity] || "rgba(210,210,210,0.6)";
         const emoji = BADGE_EMOJI[selectedBadge.badge.slug] || "🏆";
-        const earnedDate = new Date(selectedBadge.earnedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+        const earnedDate = new Date(selectedBadge.awardedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
         return (
           <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} onClick={() => setSelectedBadge(null)}>
             <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2318", borderRadius: "24px 24px 0 0", padding: "24px 24px 48px", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
