@@ -666,6 +666,7 @@ model UserProgression {
   rank          RankTier  @default(CADDIE)
   weeklyPoints  Int       @default(0)
   monthlyPoints Int       @default(0)
+  streakWeeks   Int       @default(0)
   weekReset     DateTime?
   monthReset    DateTime?
   createdAt     DateTime  @default(now())
@@ -737,6 +738,18 @@ model CourseContribution {
   @@unique([userId, courseId])
   @@index([courseId, uploadCount(sort: Desc)])
   @@index([userId])
+}
+
+model CourseFieldContribution {
+  id        String   @id @default(cuid())
+  courseId  String
+  fieldName String
+  userId    String
+  awardedAt DateTime @default(now())
+
+  @@unique([courseId, fieldName])
+  @@index([userId])
+  @@index([courseId])
 }
 
 model LeaderboardSnapshot {

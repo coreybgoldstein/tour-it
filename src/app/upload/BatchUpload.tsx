@@ -20,14 +20,29 @@ const SHOT_TYPES = [
   { label: "Full Hole", value: "FULL_HOLE" },
 ];
 
+const WIND_OPTIONS = [
+  { label: "Calm", value: "CALM" },
+  { label: "Light", value: "LIGHT" },
+  { label: "Moderate", value: "MODERATE" },
+  { label: "Strong", value: "STRONG" },
+  { label: "Into", value: "INTO" },
+  { label: "Downwind", value: "DOWNWIND" },
+  { label: "L→R", value: "LEFT_TO_RIGHT" },
+  { label: "R→L", value: "RIGHT_TO_LEFT" },
+];
+
 type ClipStatus = "pending" | "compressing" | "uploading" | "done" | "error";
 
 type BatchClip = {
   id: string;
   file: File;
-  thumbnail: string; // canvas-generated static image
+  thumbnail: string;
   holeNumber: number | null;
   shotType: string;
+  clubUsed: string;
+  windCondition: string;
+  strategyNote: string;
+  showIntel: boolean;
   compressPct: number;
   compressStage: string;
   compressedFile: File | null;
@@ -115,6 +130,10 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
       thumbnail: "",
       holeNumber: null,
       shotType: "TEE_SHOT",
+      clubUsed: "",
+      windCondition: "",
+      strategyNote: "",
+      showIntel: false,
       compressPct: 0,
       compressStage: "",
       compressedFile: null,
@@ -276,7 +295,9 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           id: uploadId, userId: user.id, courseId: selectedCourse.id, holeId,
           mediaType: isVideo ? "VIDEO" : "PHOTO", mediaUrl, cloudflareVideoId,
           teeBoxId: null, shotType: clip.shotType, yardageOverlay: null,
-          clubUsed: null, windCondition: null, strategyNote: null,
+          clubUsed: clip.clubUsed.trim() || null,
+          windCondition: clip.windCondition || null,
+          strategyNote: clip.strategyNote.trim() || null,
           landingZoneNote: null, whatCameraDoesntShow: null, handicapRange: null,
           datePlayedAt: new Date(clip.file.lastModified).toISOString(),
           rankScore: 0, tripId: null, tripPublic: true,
@@ -308,13 +329,21 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         }
 
         // Award points (fire-and-forget — don't block the upload flow)
-        const awardFetch = (action: string) => fetch("/api/points/award", {
+        const awardFetch = (action: string, refId = uploadId) => fetch("/api/points/award", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, referenceId: uploadId }),
+          body: JSON.stringify({ action, referenceId: refId }),
         }).catch(() => {});
         awardFetch("upload_clip");
         if ((cRow?.uploadCount || 0) === 0) awardFetch("upload_first_for_course");
         if (isFirstForHole) awardFetch("upload_first_for_hole");
+        // Intel awards
+        const hasClub  = !!clip.clubUsed.trim();
+        const hasWind  = !!clip.windCondition;
+        const hasNote  = clip.strategyNote.trim().length >= 30;
+        if (hasClub) awardFetch("add_club_to_clip");
+        if (hasWind) awardFetch("add_wind_to_clip");
+        if (hasNote) awardFetch("add_strategy_note");
+        if (hasClub && hasWind && hasNote) awardFetch("intel_complete_bonus");
 
         // Tags + notifications
         if (clip.taggedUsers.length > 0) {
@@ -567,6 +596,52 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
                 </div>
               </div>
             </div>
+
+            {/* Intel fields */}
+            {clip.status !== "done" && (
+              <div style={{ padding: "0 14px 10px" }}>
+                {clip.showIntel ? (
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(77,168,98,0.7)" }}>Intel +pts</span>
+                      <button onClick={() => updateClip(clip.id, { showIntel: false })} style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", cursor: "pointer", padding: 0 }}>Done</button>
+                    </div>
+                    <input
+                      value={clip.clubUsed}
+                      onChange={e => updateClip(clip.id, { clubUsed: e.target.value })}
+                      placeholder="Club used (e.g. 7 iron)"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", outline: "none", boxSizing: "border-box", marginBottom: 6 }}
+                    />
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 6 }}>
+                      {WIND_OPTIONS.map(w => (
+                        <button key={w.value} onClick={() => updateClip(clip.id, { windCondition: clip.windCondition === w.value ? "" : w.value })}
+                          style={{ padding: "4px 9px", borderRadius: 99, border: `1px solid ${clip.windCondition === w.value ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: clip.windCondition === w.value ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: clip.windCondition === w.value ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer" }}>
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={clip.strategyNote}
+                      onChange={e => updateClip(clip.id, { strategyNote: e.target.value })}
+                      placeholder="Strategy note (30+ chars for bonus)"
+                      rows={2}
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", outline: "none", boxSizing: "border-box", resize: "none" }}
+                    />
+                    {clip.strategyNote.trim().length > 0 && clip.strategyNote.trim().length < 30 && (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 3 }}>
+                        {30 - clip.strategyNote.trim().length} more chars for +5 pts
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button onClick={() => updateClip(clip.id, { showIntel: true })}
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: "6px 0 0" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.5)" }}>Add intel (+20 pts)</span>
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Compression progress bar */}
             {clip.status === "compressing" && (
