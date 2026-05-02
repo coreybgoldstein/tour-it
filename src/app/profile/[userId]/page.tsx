@@ -1099,28 +1099,22 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Stats bar */}
-      <div style={{ display: "flex", justifyContent: "space-around", padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 12 }}>
-        {[
-          { num: allClips.length, label: "Clips", onClick: undefined as (() => void) | undefined },
-          { num: rounds.length, label: "Rounds", onClick: undefined as (() => void) | undefined },
-          { num: followerCount, label: "Followers", onClick: () => openFollowSheet("followers") },
-          { num: followingCount, label: "Following", onClick: () => openFollowSheet("following") },
-        ].map(s => (
-          <div key={s.label} onClick={s.onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: s.onClick ? "pointer" : "default" }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff" }}>{s.num}</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: s.onClick ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.07em", textDecoration: s.onClick ? "underline" : "none", textDecorationColor: "rgba(255,255,255,0.15)" }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
       {/* Clips / Rounds tabs with counts */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
-        {(["clips", "rounds"] as const).map(tab => (
-          <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${profileTab === tab ? "#4da862" : "transparent"}`, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: profileTab === tab ? "#fff" : "rgba(255,255,255,0.35)", cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: -1 }}>
-            {tab === "clips" ? `Clips  ${allClips.length}` : `Rounds  ${rounds.length}`}
-          </button>
-        ))}
+        {(["clips", "rounds"] as const).map(tab => {
+          const count = tab === "clips" ? allClips.length : rounds.length;
+          const active = profileTab === tab;
+          return (
+            <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${active ? "#4da862" : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: active ? "#fff" : "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                {tab === "clips" ? "Clips" : "Rounds"}
+              </span>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.2)", background: active ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px", letterSpacing: 0 }}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Clips grid */}
