@@ -13,6 +13,8 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import ProgressionTracker from "@/components/ProgressionTracker";
+import HeroBadgeWings from "@/components/HeroBadgeWings";
+import TrophyShelf from "@/components/TrophyShelf";
 import { rateLimit } from "@/lib/rateLimit";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 
@@ -220,29 +222,6 @@ const BADGE_EMOJI: Record<string, string> = {
   legendary_clip: "⚡", "10_followers": "👥", "100_followers": "🌟",
 };
 
-function HangingBanner({ eb, onClick }: { eb: EarnedBadge; onClick: () => void }) {
-  const color = RARITY_COLOR[eb.badge.rarity] || "rgba(210,210,210,0.6)";
-  const emoji = BADGE_EMOJI[eb.badge.slug] || "🏆";
-  return (
-    <div onClick={onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", flexShrink: 0 }}>
-      <div style={{ width: 1, height: 8, background: "rgba(255,255,255,0.2)" }} />
-      <div style={{
-        width: 38, background: `linear-gradient(180deg, ${color}26 0%, ${color}14 100%)`,
-        border: `1px solid ${color}65`, borderBottom: "none", borderRadius: "3px 3px 0 0",
-        display: "flex", flexDirection: "column", alignItems: "center",
-        padding: "7px 2px 6px", gap: 3,
-      }}>
-        <span style={{ fontSize: 16, lineHeight: 1 }}>{emoji}</span>
-        <span style={{
-          fontFamily: "'Outfit', sans-serif", fontSize: 6.5, fontWeight: 700, letterSpacing: "0.04em",
-          color: "rgba(255,255,255,0.72)", textAlign: "center", lineHeight: 1.25,
-          maxWidth: 34, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block",
-        }}>{eb.badge.name.toUpperCase()}</span>
-      </div>
-      <div style={{ width: 0, height: 0, borderLeft: "19px solid transparent", borderRight: "19px solid transparent", borderTop: `10px solid ${color}65` }} />
-    </div>
-  );
-}
 
 type UserProfile = { id: string; username: string; displayName: string; avatarUrl: string | null; handicapIndex: number | null; homeCourseId: string | null; uploadCount: number; bio: string | null };
 type Upload = { id: string; mediaUrl: string; cloudflareVideoId?: string | null; mediaType: string; courseId: string; holeId: string; holeNumber?: number | null; createdAt: string; userId: string; likeCount?: number; commentCount?: number; shotType?: string | null; clubUsed?: string | null; windCondition?: string | null; strategyNote?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; isTagged?: boolean };
@@ -250,7 +229,7 @@ type CoursePlayed = { id: string; name: string; city: string; state: string; log
 type HomeCourse = { id: string; name: string };
 type SavedCourse = { id: string; courseId: string; saveType: "PLAYED" | "BUCKET_LIST"; course: { id: string; name: string; city: string; state: string } };
 type Round = { id: string; courseId: string; date: string; totalScore: number | null; fairwaysHit: number | null; putts: number | null; notes: string | null; createdAt: string };
-type EarnedBadge = { id: string; awardedAt: string; badge: { slug: string; name: string; description: string; category: string; rarity: string } };
+type EarnedBadge = import("@/types/badges").EarnedBadge;
 type EditTagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 type FollowUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 
@@ -266,6 +245,8 @@ export default function ProfilePage() {
   const [homeCourse, setHomeCourse] = useState<HomeCourse | null>(null);
   const [rounds, setRounds] = useState<Round[]>([]);
   const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
+  const [heroBadgeIds, setHeroBadgeIds] = useState<string[] | null>(null);
+  const [courseCount, setCourseCount] = useState(0);
   const [selectedBadge, setSelectedBadge] = useState<EarnedBadge | null>(null);
   const [profileTab, setProfileTab] = useState<"clips" | "rounds">("clips");
   const [followerCount, setFollowerCount] = useState(0);
@@ -373,13 +354,16 @@ export default function ProfilePage() {
         if (me) setCurrentUserMeta({ username: me.username, avatarUrl: me.avatarUrl });
       }
 
-      const [{ data: profileData, error }, { data: progData }] = await Promise.all([
+      const [{ data: profileData, error }, { data: progData }, { count: courseContribCount }] = await Promise.all([
         supabase.from("User").select("id, username, displayName, avatarUrl, handicapIndex, homeCourseId, uploadCount, bio").eq("id", userId).single(),
-        supabase.from("UserProgression").select("rank").eq("userId", userId).single(),
+        supabase.from("UserProgression").select("rank, heroBadgeIds").eq("userId", userId).single(),
+        supabase.from("CourseContribution").select("*", { count: "exact", head: true }).eq("userId", userId as string),
       ]);
       if (error || !profileData) { setNotFound(true); setLoading(false); return; }
       setProfile(profileData);
       if (progData?.rank) setProfileRank(progData.rank);
+      if (progData?.heroBadgeIds) setHeroBadgeIds(progData.heroBadgeIds as string[]);
+      setCourseCount(courseContribCount || 0);
       if (owner) {
         setEditHandicap(profileData.handicapIndex?.toString() || "");
         setEditDisplayName(profileData.displayName || "");
@@ -1066,28 +1050,21 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Rafters — hanging banners above avatar */}
-      {earnedBadges.length > 0 && (
-        <div style={{ paddingTop: 12 }}>
-          <div style={{ height: 2, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.13) 18%, rgba(255,255,255,0.13) 82%, transparent 100%)" }} />
-          <div style={{ overflowX: "auto", scrollbarWidth: "none" }}>
-            <div style={{ display: "flex", gap: 8, width: "fit-content", margin: "0 auto", paddingLeft: 20, paddingRight: 20 }}>
-              {earnedBadges.map(eb => (
-                <HangingBanner key={eb.id} eb={eb} onClick={() => setSelectedBadge(eb)} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Avatar + identity */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: earnedBadges.length > 0 ? 8 : 10, paddingBottom: 14 }}>
-        <div style={{ marginBottom: 10 }}>
-          <div className={isLegend(profileRank) ? "legend-ring" : undefined} style={{ width: 88, height: 88, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden" }}>
-            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials)}
-          </div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 14 }}>
+        {/* Avatar wrapped in hero badge wings */}
+        <div style={{ marginBottom: 12 }}>
+          <HeroBadgeWings badges={earnedBadges} heroBadgeIds={heroBadgeIds} onBadgePress={setSelectedBadge}>
+            <div
+              className={isLegend(profileRank) ? "legend-ring" : undefined}
+              onClick={isOwner ? () => fileInputRef.current?.click() : undefined}
+              style={{ width: 88, height: 88, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: isOwner ? "pointer" : "default" }}
+            >
+              {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials)}
+            </div>
+          </HeroBadgeWings>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: getRankColor(profileRank), lineHeight: 1.2 }}>@{profile.username}</div>
           {isOwner && (
             <button onClick={() => setShowEdit(true)} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
@@ -1096,11 +1073,21 @@ export default function ProfilePage() {
           )}
         </div>
         {(profile.handicapIndex !== null || homeCourse) && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginBottom: isOwner ? 0 : 12 }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginBottom: 6 }}>
             {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{profile.handicapIndex} hcp</div>}
             {homeCourse && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{homeCourse.name}</div>}
           </div>
         )}
+        {/* Quiet followers/following line */}
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.28)", marginBottom: (!isOwner && currentUserId) || (!isOwner && !currentUserId) ? 0 : 8 }}>
+          <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>
+            {followerCount} followers
+          </button>
+          <span style={{ margin: "0 5px" }}>·</span>
+          <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>
+            {followingCount} following
+          </button>
+        </div>
         {!isOwner && currentUserId && (
           <button onClick={handleFollow} disabled={followLoading} style={{ marginTop: 10, padding: "10px 32px", borderRadius: 10, border: isFollowing ? "1px solid rgba(255,255,255,0.15)" : "none", background: isFollowing ? "rgba(255,255,255,0.06)" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: isFollowing ? "rgba(255,255,255,0.6)" : "#fff", cursor: "pointer", opacity: followLoading ? 0.6 : 1 }}>
             {followLoading ? "..." : isFollowing ? "Following" : "Follow"}
@@ -1114,13 +1101,20 @@ export default function ProfilePage() {
       {/* Progression tracker */}
       <ProgressionTracker userId={userId as string} isOwner={isOwner} />
 
+      {/* Trophy shelf */}
+      <TrophyShelf
+        badges={earnedBadges}
+        isOwner={isOwner}
+        onEditPress={() => {}}
+        onBadgePress={setSelectedBadge}
+      />
+
       {/* Stats bar */}
       <div style={{ display: "flex", justifyContent: "space-around", padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 12 }}>
         {[
           { num: allClips.length, label: "Clips", onClick: undefined as (() => void) | undefined },
           { num: rounds.length, label: "Rounds", onClick: undefined as (() => void) | undefined },
-          { num: followerCount, label: "Followers", onClick: () => openFollowSheet("followers") },
-          { num: followingCount, label: "Following", onClick: () => openFollowSheet("following") },
+          { num: courseCount, label: "Courses", onClick: undefined as (() => void) | undefined },
         ].map(s => (
           <div key={s.label} onClick={s.onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: s.onClick ? "pointer" : "default" }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff" }}>{s.num}</div>

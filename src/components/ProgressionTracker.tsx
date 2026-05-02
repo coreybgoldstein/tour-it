@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { levelProgress, rankLabel } from "@/lib/progression";
-import { MAX_LEVEL } from "@/config/points-system";
+import { MAX_LEVEL, RANK_TIERS, pointsForLevel } from "@/config/points-system";
 
 type Prog = {
   totalPoints: number;
@@ -63,6 +63,13 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
   const { current, required, pct } = levelProgress(prog.totalPoints);
   const atMax = prog.level >= MAX_LEVEL;
 
+  const nextRankTier = prog.rank !== "LEGEND"
+    ? RANK_TIERS.find(t => t.minLevel > prog.level)
+    : null;
+  const ptsToNextRank = nextRankTier
+    ? Math.max(0, pointsForLevel(nextRankTier.minLevel) - prog.totalPoints)
+    : null;
+
   const STREAK_MILESTONES = [4, 8, 12, 26, 52];
   const nextStreakMilestone = STREAK_MILESTONES.find(m => m > prog.streakWeeks) ?? null;
 
@@ -114,6 +121,16 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
               Leaderboard →
             </button>
           )}
+        </div>
+      )}
+
+      {/* Next rank info */}
+      {nextRankTier && ptsToNextRank !== null && ptsToNextRank > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: prog.streakWeeks > 0 ? 5 : 0, marginTop: atMax ? 0 : -2 }}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>
+            {rankLabel(nextRankTier.rank as Parameters<typeof rankLabel>[0])} in {ptsToNextRank.toLocaleString()} pts
+          </span>
         </div>
       )}
 
