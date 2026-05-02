@@ -1083,7 +1083,7 @@ export default function ProfilePage() {
       {/* Avatar + identity */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: earnedBadges.length > 0 ? 8 : 10, paddingBottom: 14 }}>
         <div style={{ marginBottom: 10 }}>
-          <div style={{ width: 88, height: 88, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: "2.5px solid rgba(26,158,66,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden" }}>
+          <div className={isLegend(profileRank) ? "legend-ring" : undefined} style={{ width: 88, height: 88, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden" }}>
             {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials)}
           </div>
         </div>
