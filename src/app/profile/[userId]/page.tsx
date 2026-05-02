@@ -13,8 +13,7 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import ProgressionTracker from "@/components/ProgressionTracker";
-import HeroBadgeWings from "@/components/HeroBadgeWings";
-import TrophyShelf from "@/components/TrophyShelf";
+import TrophyPlaque from "@/components/TrophyPlaque";
 import { rateLimit } from "@/lib/rateLimit";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 
@@ -1052,17 +1051,14 @@ export default function ProfilePage() {
 
       {/* Avatar + identity */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 16, paddingBottom: 14 }}>
-        {/* Avatar wrapped in hero badge wings */}
-        <div style={{ marginBottom: 12 }}>
-          <HeroBadgeWings badges={earnedBadges} heroBadgeIds={heroBadgeIds} onBadgePress={setSelectedBadge}>
-            <div
-              className={isLegend(profileRank) ? "legend-ring" : undefined}
-              onClick={isOwner ? () => fileInputRef.current?.click() : undefined}
-              style={{ width: 88, height: 88, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: isOwner ? "pointer" : "default" }}
-            >
-              {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials)}
-            </div>
-          </HeroBadgeWings>
+        <div style={{ marginBottom: 10 }}>
+          <div
+            className={isLegend(profileRank) ? "legend-ring" : undefined}
+            onClick={isOwner ? () => fileInputRef.current?.click() : undefined}
+            style={{ width: 88, height: 88, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: isOwner ? "pointer" : "default" }}
+          >
+            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 12 }}>…</span> : initials)}
+          </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 700, color: getRankColor(profileRank), lineHeight: 1.2 }}>@{profile.username}</div>
@@ -1078,8 +1074,10 @@ export default function ProfilePage() {
             {homeCourse && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "rgba(255,255,255,0.55)" }}>{homeCourse.name}</div>}
           </div>
         )}
-        {/* Quiet followers/following line */}
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.28)", marginBottom: (!isOwner && currentUserId) || (!isOwner && !currentUserId) ? 0 : 8 }}>
+        {/* Quiet secondary stats line */}
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.28)", marginBottom: (!isOwner && currentUserId) || (!isOwner && !currentUserId) ? 0 : 8, display: "flex", alignItems: "center", gap: 0 }}>
+          <span>{courseCount} courses</span>
+          <span style={{ margin: "0 5px" }}>·</span>
           <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>
             {followerCount} followers
           </button>
@@ -1101,33 +1099,20 @@ export default function ProfilePage() {
       {/* Progression tracker */}
       <ProgressionTracker userId={userId as string} isOwner={isOwner} />
 
-      {/* Trophy shelf */}
-      <TrophyShelf
-        badges={earnedBadges}
-        isOwner={isOwner}
-        onEditPress={() => {}}
+      {/* Trophy plaque */}
+      <TrophyPlaque
+        earnedBadges={earnedBadges}
+        avatarUrl={profile.avatarUrl}
+        username={profile.username}
+        profileRank={profileRank}
         onBadgePress={setSelectedBadge}
       />
 
-      {/* Stats bar */}
-      <div style={{ display: "flex", justifyContent: "space-around", padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 12 }}>
-        {[
-          { num: allClips.length, label: "Clips", onClick: undefined as (() => void) | undefined },
-          { num: rounds.length, label: "Rounds", onClick: undefined as (() => void) | undefined },
-          { num: courseCount, label: "Courses", onClick: undefined as (() => void) | undefined },
-        ].map(s => (
-          <div key={s.label} onClick={s.onClick} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: s.onClick ? "pointer" : "default" }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff" }}>{s.num}</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: s.onClick ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.07em", textDecoration: s.onClick ? "underline" : "none", textDecorationColor: "rgba(255,255,255,0.15)" }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Clips / Rounds tabs */}
+      {/* Clips / Rounds tabs with counts */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
         {(["clips", "rounds"] as const).map(tab => (
           <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${profileTab === tab ? "#4da862" : "transparent"}`, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: profileTab === tab ? "#fff" : "rgba(255,255,255,0.35)", cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: -1 }}>
-            {tab === "clips" ? "Clips" : "Rounds"}
+            {tab === "clips" ? `Clips  ${allClips.length}` : `Rounds  ${rounds.length}`}
           </button>
         ))}
       </div>
