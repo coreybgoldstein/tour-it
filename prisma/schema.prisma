@@ -667,6 +667,7 @@ model UserProgression {
   weeklyPoints  Int       @default(0)
   monthlyPoints Int       @default(0)
   streakWeeks   Int       @default(0)
+  heroBadgeIds  Json?
   weekReset     DateTime?
   monthReset    DateTime?
   createdAt     DateTime  @default(now())
