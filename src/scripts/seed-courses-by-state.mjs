@@ -165,7 +165,11 @@ async function enrichCourse(dbRecord, research, dryRun) {
 
   if (!dbRecord.description   && research.description)    updates.description    = research.description;
   if (!dbRecord.yearEstablished && research.yearEstablished) updates.yearEstablished = research.yearEstablished;
-  if (!dbRecord.courseType    && research.access)          updates.courseType     = research.access;
+  if (!dbRecord.courseType    && research.access) {
+    const accessMap = { "Public": "PUBLIC", "Private": "PRIVATE", "Semi-Private": "SEMI_PRIVATE" };
+    const mapped = accessMap[research.access];
+    if (mapped) updates.courseType = mapped;
+  }
   if (research.access && dbRecord.isPublic === null) {
     updates.isPublic = research.access !== "Private";
   }
