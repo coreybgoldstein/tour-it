@@ -15,7 +15,7 @@ type Prog = {
 
 const RANK_STYLE: Record<string, { bg: string; color: string; border: string }> = {
   CADDIE:     { bg: "rgba(150,150,150,0.12)", color: "rgba(210,210,210,0.85)", border: "rgba(180,180,180,0.25)" },
-  LOCAL:      { bg: "rgba(77,168,98,0.12)",   color: "#4da862",                border: "rgba(77,168,98,0.35)" },
+  LOCAL:      { bg: "rgba(45,212,191,0.12)",   color: "#2dd4bf",                border: "rgba(45,212,191,0.35)" },
   MARSHAL:    { bg: "rgba(59,130,246,0.12)",  color: "#60a5fa",                border: "rgba(59,130,246,0.35)" },
   COURSE_PRO: { bg: "rgba(139,92,246,0.12)",  color: "#a78bfa",                border: "rgba(139,92,246,0.35)" },
   TOUR_PRO:   { bg: "rgba(249,115,22,0.12)",  color: "#f97316",                border: "rgba(249,115,22,0.35)" },
