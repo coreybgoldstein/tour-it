@@ -10,6 +10,7 @@ type Prog = {
   totalPoints: number;
   level: number;
   rank: string;
+  streakWeeks: number;
 };
 
 const RANK_STYLE: Record<string, { bg: string; color: string; border: string }> = {
@@ -29,7 +30,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
     const supabase = createClient();
     supabase
       .from("UserProgression")
-      .select("totalPoints, level, rank")
+      .select("totalPoints, level, rank, streakWeeks")
       .eq("userId", userId)
       .maybeSingle()
       .then(({ data }) => { if (data) setProg(data); });
@@ -62,6 +63,9 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
   const { current, required, pct } = levelProgress(prog.totalPoints);
   const atMax = prog.level >= MAX_LEVEL;
 
+  const STREAK_MILESTONES = [4, 8, 12, 26, 52];
+  const nextStreakMilestone = STREAK_MILESTONES.find(m => m > prog.streakWeeks) ?? null;
+
   return (
     <div style={{ margin: "0 16px 12px", padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
       {/* Top row: rank badge + level + points */}
@@ -85,7 +89,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
           <div style={{ height: 5, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", marginBottom: 5 }}>
             <div style={{ height: "100%", width: `${pct}%`, borderRadius: 99, background: style.color, transition: "width 0.6s ease" }} />
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: prog.streakWeeks > 0 ? 6 : 0 }}>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
               {current.toLocaleString()} / {required.toLocaleString()} pts to Level {prog.level + 1}
             </div>
@@ -100,7 +104,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
           </div>
         </>
       ) : (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: prog.streakWeeks > 0 ? 6 : 0 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: style.color, fontWeight: 600 }}>MAX LEVEL</div>
           {isOwner && (
             <button
@@ -109,6 +113,21 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
             >
               Leaderboard →
             </button>
+          )}
+        </div>
+      )}
+
+      {/* Streak row */}
+      {prog.streakWeeks > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ fontSize: 12 }}>🔥</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#f97316" }}>
+            {prog.streakWeeks}-week streak
+          </span>
+          {nextStreakMilestone && (
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>
+              · {nextStreakMilestone - prog.streakWeeks}w to milestone
+            </span>
           )}
         </div>
       )}
