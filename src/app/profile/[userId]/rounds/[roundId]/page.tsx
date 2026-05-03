@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
+import { ClipTopPill } from "@/components/clip/ClipTopPill";
 
 type Round = {
   id: string; userId: string; courseId: string; date: string;
@@ -14,7 +15,9 @@ type Round = {
 };
 type Clip = {
   id: string; mediaUrl: string; cloudflareVideoId?: string | null; mediaType: string; courseId: string;
-  holeNumber?: number | null; shotType?: string | null; likeCount?: number;
+  holeNumber?: number | null; shotType?: string | null;
+  likeCount: number; commentCount: number;
+  uploaderId: string; uploaderUsername: string; uploaderAvatarUrl: string | null;
 };
 type Course = { id: string; name: string; city: string; state: string; logoUrl: string | null };
 
@@ -29,6 +32,9 @@ export default function RoundDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   // Edit state
   // Feed overlay state
@@ -57,6 +63,7 @@ export default function RoundDetailPage() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       const owner = authUser?.id === userId;
       setIsOwner(owner);
+      setCurrentUserId(authUser?.id ?? null);
 
       const { data: roundData, error } = await supabase.from("Round")
         .select("id, userId, courseId, date, totalScore, fairwaysHit, putts, notes")
@@ -76,17 +83,39 @@ export default function RoundDetailPage() {
       setCourse(courseData);
 
       const { data: clipsData } = await supabase.from("Upload")
-        .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, shotType, likeCount")
+        .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, shotType, likeCount, commentCount, userId")
         .eq("roundId", roundId as string).order("createdAt", { ascending: true });
 
       if (clipsData && clipsData.length > 0) {
+        // Resolve hole numbers
         const holeIds = [...new Set(clipsData.map((c: any) => c.holeId).filter(Boolean))];
+        const holeMap = new Map<string, number>();
         if (holeIds.length > 0) {
           const { data: holes } = await supabase.from("Hole").select("id, holeNumber").in("id", holeIds);
-          const holeMap = new Map(holes?.map((h: any) => [h.id, h.holeNumber]) || []);
-          setClips(clipsData.map((c: any) => ({ ...c, holeNumber: holeMap.get(c.holeId) ?? null })));
-        } else {
-          setClips(clipsData);
+          holes?.forEach((h: any) => holeMap.set(h.id, h.holeNumber));
+        }
+        // Resolve uploaders
+        const uploaderIds = [...new Set(clipsData.map((c: any) => c.userId).filter(Boolean))];
+        const uploaderMap = new Map<string, { username: string; avatarUrl: string | null }>();
+        if (uploaderIds.length > 0) {
+          const { data: users } = await supabase.from("User").select("id, username, avatarUrl").in("id", uploaderIds);
+          users?.forEach((u: any) => uploaderMap.set(u.id, { username: u.username, avatarUrl: u.avatarUrl }));
+        }
+        const resolved: Clip[] = clipsData.map((c: any) => ({
+          ...c,
+          holeNumber: holeMap.get(c.holeId) ?? null,
+          likeCount: c.likeCount ?? 0,
+          commentCount: c.commentCount ?? 0,
+          uploaderId: c.userId,
+          uploaderUsername: uploaderMap.get(c.userId)?.username ?? "",
+          uploaderAvatarUrl: uploaderMap.get(c.userId)?.avatarUrl ?? null,
+        }));
+        setClips(resolved);
+        setLikeCounts(Object.fromEntries(resolved.map(c => [c.id, c.likeCount])));
+        // Fetch liked status for current user
+        if (authUser?.id) {
+          const { data: liked } = await supabase.from("Like").select("uploadId").eq("userId", authUser.id).in("uploadId", resolved.map(c => c.id));
+          setLikedIds(new Set((liked || []).map((l: any) => l.uploadId)));
         }
       }
 
@@ -111,6 +140,19 @@ export default function RoundDetailPage() {
     setRound(r => r ? { ...r, ...updates } : r);
     setEditOpen(false);
     setSaving(false);
+  }
+
+  async function toggleLike(clipId: string) {
+    if (!currentUserId) return;
+    const supabase = createClient();
+    const isLiked = likedIds.has(clipId);
+    setLikedIds(prev => { const s = new Set(prev); isLiked ? s.delete(clipId) : s.add(clipId); return s; });
+    setLikeCounts(prev => ({ ...prev, [clipId]: (prev[clipId] ?? 0) + (isLiked ? -1 : 1) }));
+    if (isLiked) {
+      await supabase.from("Like").delete().eq("userId", currentUserId).eq("uploadId", clipId);
+    } else {
+      await supabase.from("Like").upsert({ id: crypto.randomUUID(), userId: currentUserId, uploadId: clipId, createdAt: new Date().toISOString() }, { onConflict: "userId,uploadId" });
+    }
   }
 
   const [y, m, d] = (round?.date || "2000-01-01").split("-").map(Number);
@@ -230,34 +272,84 @@ export default function RoundDetailPage() {
           >
             {clips.map((clip, i) => (
               <div key={clip.id} style={{ height: "100svh", scrollSnapAlign: "start", position: "relative", flexShrink: 0, background: "#000" }}>
+                {/* Media */}
                 {i === feedVisible ? (
                   clip.mediaType === "PHOTO"
                     ? <img src={clip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <HlsVideo
-                        src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId ?? undefined)}
-                        autoPlay muted={muted} loop playsInline
-                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                      />
+                    : <HlsVideo src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId ?? undefined)} autoPlay muted={muted} loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <img
-                    src={clip.cloudflareVideoId ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400` : clip.mediaUrl}
-                    alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                  />
+                  <img src={clip.cloudflareVideoId ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400` : clip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 25%)", pointerEvents: "none" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 28%)", pointerEvents: "none" }} />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 40%)", pointerEvents: "none" }} />
 
-                {/* Back button */}
+                {/* Top bar: course pill + mute */}
+                <ClipTopPill
+                  courseLogoUrl={course?.logoUrl ?? null}
+                  courseName={course?.name ?? ""}
+                  courseLocation={[course?.city, course?.state].filter(Boolean).join(", ") || null}
+                  holeNumber={clip.holeNumber}
+                  muted={muted}
+                  onMuteToggle={() => setMuted(m => !m)}
+                  onTapCourse={() => router.push(`/courses/${clip.courseId}`)}
+                  visible={true}
+                />
+
+                {/* Back button — sits below the course pill */}
                 <button
                   onClick={() => setFeedIndex(null)}
-                  style={{ position: "absolute", top: 52, left: 16, zIndex: 10, display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20, padding: "7px 12px 7px 8px", cursor: "pointer" }}
+                  style={{ position: "absolute", top: 68, left: 16, zIndex: 20, display: "flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 20, padding: "5px 10px 5px 7px", cursor: "pointer" }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>Round</span>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>Round</span>
                 </button>
 
-                {/* Clip counter */}
-                <div style={{ position: "absolute", top: 56, right: 16, zIndex: 10, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>{i + 1} / {clips.length}</div>
+                {/* Vertical dot indicator — left side, centered */}
+                {clips.length > 1 && (
+                  <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, zIndex: 10, pointerEvents: "none" }}>
+                    {clips.map((_, di) => (
+                      <div key={di} style={{ width: 3, height: di === i ? 20 : 5, borderRadius: 99, background: di === i ? "#fff" : "rgba(255,255,255,0.3)", transition: "all 0.2s ease" }} />
+                    ))}
+                  </div>
+                )}
+
+                {/* Right panel */}
+                <div style={{ position: "absolute", right: 12, bottom: 110, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+                  {/* Uploader avatar */}
+                  <button onClick={() => router.push(`/profile/${clip.uploaderId}`)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.5)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {clip.uploaderAvatarUrl
+                        ? <img src={clip.uploaderAvatarUrl} alt={clip.uploaderUsername} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      }
+                    </div>
+                  </button>
+                  {/* Like */}
+                  <button onClick={() => toggleLike(clip.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: likedIds.has(clip.id) ? "rgba(26,158,66,0.15)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${likedIds.has(clip.id) ? "rgba(26,158,66,0.7)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill={likedIds.has(clip.id) ? "#1a9e42" : "none"} stroke={likedIds.has(clip.id) ? "#1a9e42" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCounts[clip.id] ?? 0}</span>
+                  </button>
+                  {/* Comment */}
+                  <button onClick={() => router.push(`/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{clip.commentCount}</span>
+                  </button>
+                  {/* Share */}
+                  <button onClick={() => { const url = `${window.location.origin}/courses/${clip.courseId}`; if (navigator.share) navigator.share({ title: course?.name ?? "", url }).catch(() => {}); else navigator.clipboard.writeText(url).catch(() => {}); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 3 }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em" }}>SEND</span>
+                        <div style={{ width: 20, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} />
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em" }}>IT</span>
+                      </div>
+                    </div>
+                    <span style={{ height: 13, display: "block" }} />
+                  </button>
+                </div>
 
                 {/* Hole # badge */}
                 {clip.holeNumber && (
@@ -268,6 +360,7 @@ export default function RoundDetailPage() {
               </div>
             ))}
           </div>
+          <BottomNav />
         </div>
       )}
 
