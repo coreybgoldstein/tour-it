@@ -8,6 +8,7 @@ import { useLike } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
+import { ClipNoteCaption } from "@/components/clip/ClipNoteCaption";
 import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
@@ -160,6 +161,8 @@ function ProfileFeedCard({
           <span style={{ height: 13, display: "block" }} />
         </button>
       </div>
+
+      <ClipNoteCaption note={clip.strategyNote} holeNumber={clip.holeNumber} />
 
       <IntelPanel
         open={intelOpen}
