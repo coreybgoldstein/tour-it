@@ -79,6 +79,9 @@ function SearchPageInner() {
   const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
   const [topGolfers, setTopGolfers] = useState<Person[]>([]);
   const peopleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const lastQueryRef = useRef<{ q: string; coords: { lat: number; lng: number } | null; state: string; city: string; holes: string; courseType: string; radius: string } | null>(null);
 
   const activeFilterCount = [filterState, filterCity, filterZip, filterHoles !== "all", filterCourseType].filter(Boolean).length;
   const hasFilters = activeFilterCount > 0;
@@ -195,11 +198,12 @@ function SearchPageInner() {
     }
 
     setLoading(true);
+    setTotalCount(null);
     debounceRef.current = setTimeout(async () => {
       const supabase = createClient();
       let qb = supabase
         .from("Course")
-        .select("id, name, city, state, holeCount, isPublic, courseType, uploadCount, logoUrl");
+        .select("id, name, city, state, holeCount, isPublic, courseType, uploadCount, logoUrl", { count: "exact" });
 
       if (hasQuery) {
         const safeQ = q.replace(/[(),]/g, "");
@@ -218,8 +222,10 @@ function SearchPageInner() {
           .lte("longitude", coords.lng + delta);
       }
 
-      const { data } = await qb.order("uploadCount", { ascending: false }).limit(50);
+      const { data, count } = await qb.order("uploadCount", { ascending: false }).limit(50);
       setResults(data || []);
+      setTotalCount(count ?? 0);
+      lastQueryRef.current = { q, coords, state, city, holes, courseType, radius };
       setLoading(false);
     }, 280);
   }, []);
@@ -278,6 +284,27 @@ function SearchPageInner() {
     router.replace(`/search?${params.toString()}`, { scroll: false });
   }
 
+  async function loadMore() {
+    if (!lastQueryRef.current) return;
+    const { q, coords, state, city, holes, courseType, radius } = lastQueryRef.current;
+    const offset = results.length;
+    setLoadingMore(true);
+    const supabase = createClient();
+    let qb = supabase.from("Course").select("id, name, city, state, holeCount, isPublic, courseType, uploadCount, logoUrl");
+    if (q) { const safeQ = q.replace(/[(),]/g, ""); qb = qb.or(`name.ilike.%${safeQ}%,city.ilike.%${safeQ}%,state.ilike.%${safeQ}%`); }
+    if (state) qb = qb.eq("state", state);
+    if (city) qb = qb.ilike("city", `%${city}%`);
+    if (holes !== "all") qb = qb.eq("holeCount", parseInt(holes));
+    if (courseType) qb = qb.eq("courseType", courseType);
+    if (coords) {
+      const delta = ({ "10": 0.145, "25": 0.362, "50": 0.724 } as Record<string, number>)[radius] ?? 0.362;
+      qb = qb.gte("latitude", coords.lat - delta).lte("latitude", coords.lat + delta).gte("longitude", coords.lng - delta).lte("longitude", coords.lng + delta);
+    }
+    const { data } = await qb.order("uploadCount", { ascending: false }).range(offset, offset + 49);
+    setResults(r => [...r, ...(data || [])]);
+    setLoadingMore(false);
+  }
+
   function openFilterSheet() {
     setDraftState(filterState);
     setDraftCity(filterCity);
@@ -288,6 +315,12 @@ function SearchPageInner() {
     setZipError("");
     setFilterOpen(true);
   }
+
+  // Attempt keyboard focus on mount (works on Android/desktop; iOS restricts programmatic focus after navigation)
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, []);
 
   const showResults = query.trim().length >= 1 || hasFilters;
   const displayList = showResults ? results : [];
@@ -446,7 +479,6 @@ function SearchPageInner() {
             )}
             {!peopleLoading && !query.trim() && (
               <>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", padding: "4px 0 12px" }}>Top Golfers</div>
                 {topGolfers.map(person => (
                   <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <div onClick={() => router.push(`/profile/${person.id}`)} style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
@@ -454,7 +486,7 @@ function SearchPageInner() {
                     </div>
                     <div onClick={() => router.push(`/profile/${person.id}`)} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{person.displayName || person.username}</div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>@{person.username} · {person.uploadCount} clip{person.uploadCount !== 1 ? "s" : ""}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>@{person.username}</div>
                     </div>
                     {person.id !== currentUserId && (
                       <button
@@ -488,7 +520,7 @@ function SearchPageInner() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => router.push(`/profile/${person.id}`)}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{person.displayName}</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>@{person.username}{person.uploadCount > 0 ? ` · ${person.uploadCount} clips` : ""}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>@{person.username}</div>
                 </div>
                 {currentUserId && (
                   <button onClick={() => toggleFollow(person.id)} disabled={followingInProgress.has(person.id)} style={{ flexShrink: 0, padding: "7px 16px", borderRadius: 99, border: followingIds.has(person.id) ? "1px solid rgba(255,255,255,0.15)" : "none", background: followingIds.has(person.id) ? "transparent" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: followingIds.has(person.id) ? "rgba(255,255,255,0.5)" : "#fff", cursor: "pointer", opacity: followingInProgress.has(person.id) ? 0.5 : 1 }}>
@@ -523,9 +555,11 @@ function SearchPageInner() {
                 const q = query.trim().toLowerCase();
                 const byName = q ? displayList.filter(c => c.name.toLowerCase().includes(q)).length : 0;
                 const byCity = q ? displayList.filter(c => c.city?.toLowerCase().includes(q)).length : 0;
+                const total = totalCount ?? displayList.length;
+                const label = total > displayList.length ? `Showing ${displayList.length} of ${total}` : `${total}`;
                 return (
                   <p className="section-label">
-                    {displayList.length} course{displayList.length !== 1 ? "s" : ""}
+                    {label} course{total !== 1 ? "s" : ""}
                     {byName > 0 && ` · ${byName} by name`}
                     {byCity > 0 && ` · ${byCity} by city`}
                   </p>
@@ -613,6 +647,16 @@ function SearchPageInner() {
               Search from 11,000+ courses across the US<br/>
               <span style={{ fontSize: 12 }}>Start typing to search</span>
             </div>
+          )}
+
+          {!loading && totalCount !== null && results.length < totalCount && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              style={{ width: "100%", marginTop: 16, padding: "12px", borderRadius: 12, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", cursor: loadingMore ? "default" : "pointer", opacity: loadingMore ? 0.6 : 1 }}
+            >
+              {loadingMore ? "Loading…" : `Load more · ${totalCount - results.length} remaining`}
+            </button>
           )}
 
           {showResults && !loading && (
