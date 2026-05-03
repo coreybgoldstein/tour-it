@@ -1061,7 +1061,11 @@ export default function ProfilePage() {
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: getRankColor(profileRank), lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{profile.username}</div>
             {isOwner && (
               <button onClick={() => setShowEdit(true)} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                {/* Scorecard pencil — thin diagonal pencil, no document square */}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                  <path d="m15 5 4 4"/>
+                </svg>
               </button>
             )}
           </div>
@@ -1069,16 +1073,16 @@ export default function ProfilePage() {
           {/* Row 2: hcp + home course pills */}
           {(profile.handicapIndex !== null || homeCourse) && (
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 4 }}>
-              {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "rgba(255,255,255,0.55)" }}>{profile.handicapIndex} hcp</div>}
-              {homeCourse && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "rgba(255,255,255,0.55)" }}>{homeCourse.name}</div>}
+              {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "rgba(255,255,255,0.82)" }}>{profile.handicapIndex} hcp</div>}
+              {homeCourse && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "rgba(255,255,255,0.82)" }}>{homeCourse.name}</div>}
             </div>
           )}
 
           {/* Row 3: followers · following */}
           <div style={{ display: "flex", alignItems: "center" }}>
-            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>{followerCount} followers</button>
-            <span style={{ margin: "0 4px", color: "rgba(255,255,255,0.18)", fontSize: 11 }}>·</span>
-            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>{followingCount} following</button>
+            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.62)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>{followerCount} followers</button>
+            <span style={{ margin: "0 4px", color: "rgba(255,255,255,0.3)", fontSize: 11 }}>·</span>
+            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.62)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>{followingCount} following</button>
           </div>
         </div>
 
