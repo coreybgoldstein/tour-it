@@ -54,7 +54,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
   return (
     <div
       onClick={() => router.push("/leaderboards")}
-      style={{ margin: "0 16px 6px", padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}
+      style={{ margin: "0 16px 6px", padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer", position: "relative" }}
     >
       {/* Level + total pts inline */}
       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 2 }}>
@@ -68,23 +68,21 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
       {!atMax ? (
         <>
           <LevelTracker pct={pct} rankColor={rankColor} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4, marginBottom: prog.streakWeeks > 0 ? 4 : 0 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.55)" }}>
-              {current.toLocaleString()} / {required.toLocaleString()} pts to Level {prog.level + 1}
-            </div>
-            {/* Info button — stops propagation so it doesn't also fire leaderboard nav */}
-            <button
-              onClick={e => { e.stopPropagation(); router.push("/about"); }}
-              style={{ background: "none", border: "none", padding: "2px 0 2px 8px", cursor: "pointer", display: "flex", alignItems: "center", color: "rgba(255,255,255,0.22)", lineHeight: 1 }}
-              aria-label="About levels"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="16" x2="12" y2="12"/>
-                <line x1="12" y1="8" x2="12.01" y2="8"/>
-              </svg>
-            </button>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.55)", marginTop: 4, marginBottom: prog.streakWeeks > 0 ? 4 : 0 }}>
+            {current.toLocaleString()} / {required.toLocaleString()} pts to Level {prog.level + 1}
           </div>
+          {/* Info button — absolute bottom-right of card */}
+          <button
+            onClick={e => { e.stopPropagation(); router.push("/about"); }}
+            style={{ position: "absolute", bottom: 8, right: 10, background: "none", border: "none", padding: 4, cursor: "pointer", display: "flex", alignItems: "center", color: "rgba(255,255,255,0.22)", lineHeight: 1 }}
+            aria-label="About levels"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </button>
         </>
       ) : (
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: rankColor, fontWeight: 600, marginTop: 6, marginBottom: prog.streakWeeks > 0 ? 6 : 0 }}>

@@ -1082,11 +1082,16 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Row 2: hcp + home course pills */}
-          {(profile.handicapIndex !== null || homeCourse) && (
+          {/* Row 2: hcp + home course + badges pills */}
+          {(profile.handicapIndex !== null || homeCourse || earnedBadges.length > 0) && (
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 4 }}>
               {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)" }}>{profile.handicapIndex} hcp</div>}
-              {homeCourse && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)" }}>{homeCourse.name}</div>}
+              {homeCourse && (
+                <div onClick={() => router.push(`/courses/${homeCourse.id}`)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)", cursor: "pointer" }}>{homeCourse.name}</div>
+              )}
+              {earnedBadges.length > 0 && (
+                <div onClick={() => router.push(`/profile/${userId}/badges`)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)", cursor: "pointer" }}>🏅 {earnedBadges.length} badges</div>
+              )}
             </div>
           )}
 
