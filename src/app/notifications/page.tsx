@@ -170,7 +170,7 @@ export default function NotificationsPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{n.title}</span>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>
-                      {new Date(n.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {new Date(n.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                      {(() => { const d = new Date(/[Z+]/.test(n.createdAt) ? n.createdAt : n.createdAt + "Z"); return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`; })()}
                     </span>
                   </div>
                   <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", margin: "4px 0 0", lineHeight: 1.4 }}>

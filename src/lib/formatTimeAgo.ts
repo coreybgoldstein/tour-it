@@ -1,5 +1,9 @@
+function parseUtc(dateStr: string): Date {
+  return new Date(/[Z+]/.test(dateStr) ? dateStr : dateStr + "Z");
+}
+
 export function formatTimeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const diff = Date.now() - parseUtc(dateStr).getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return "just now";
   if (m < 60) return `${m}m ago`;
@@ -7,5 +11,5 @@ export function formatTimeAgo(dateStr: string): string {
   if (h < 24) return `${h}h ago`;
   const d = Math.floor(h / 24);
   if (d < 7) return `${d}d ago`;
-  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return parseUtc(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
