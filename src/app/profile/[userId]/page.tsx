@@ -1190,6 +1190,12 @@ export default function ProfilePage() {
               return (
                 <div key={r.id} onClick={() => router.push(`/profile/${userId}/rounds/${r.id}`)}
                   style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, marginBottom: 8, cursor: "pointer" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, marginRight: 12, overflow: "hidden", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {course?.logoUrl
+                      ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(77,168,98,0.7)" }}>{course?.name?.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?"}</span>
+                    }
+                  </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course?.name || "Unknown Course"}</div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{dateStr}</div>
