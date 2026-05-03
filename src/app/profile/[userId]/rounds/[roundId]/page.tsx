@@ -15,7 +15,7 @@ type Round = {
 };
 type Clip = {
   id: string; mediaUrl: string; cloudflareVideoId?: string | null; mediaType: string; courseId: string;
-  holeNumber?: number | null; shotType?: string | null;
+  holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null;
   likeCount: number; commentCount: number;
   uploaderId: string; uploaderUsername: string; uploaderAvatarUrl: string | null;
 };
@@ -89,10 +89,10 @@ export default function RoundDetailPage() {
       if (clipsData && clipsData.length > 0) {
         // Resolve hole numbers
         const holeIds = [...new Set(clipsData.map((c: any) => c.holeId).filter(Boolean))];
-        const holeMap = new Map<string, number>();
+        const holeMap = new Map<string, { holeNumber: number; par: number | null; yardage: number | null }>();
         if (holeIds.length > 0) {
-          const { data: holes } = await supabase.from("Hole").select("id, holeNumber").in("id", holeIds);
-          holes?.forEach((h: any) => holeMap.set(h.id, h.holeNumber));
+          const { data: holes } = await supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds);
+          holes?.forEach((h: any) => holeMap.set(h.id, { holeNumber: h.holeNumber, par: h.par ?? null, yardage: h.yardage ?? null }));
         }
         // Resolve uploaders
         const uploaderIds = [...new Set(clipsData.map((c: any) => c.userId).filter(Boolean))];
@@ -103,7 +103,9 @@ export default function RoundDetailPage() {
         }
         const resolved: Clip[] = clipsData.map((c: any) => ({
           ...c,
-          holeNumber: holeMap.get(c.holeId) ?? null,
+          holeNumber: holeMap.get(c.holeId)?.holeNumber ?? null,
+          holePar: holeMap.get(c.holeId)?.par ?? null,
+          holeYardage: holeMap.get(c.holeId)?.yardage ?? null,
           likeCount: c.likeCount ?? 0,
           commentCount: c.commentCount ?? 0,
           uploaderId: c.userId,
@@ -289,6 +291,8 @@ export default function RoundDetailPage() {
                   courseName={course?.name ?? ""}
                   courseLocation={[course?.city, course?.state].filter(Boolean).join(", ") || null}
                   holeNumber={clip.holeNumber}
+                  holePar={clip.holePar}
+                  holeYardage={clip.holeYardage}
                   muted={muted}
                   onMuteToggle={() => setMuted(m => !m)}
                   onTapCourse={() => router.push(`/courses/${clip.courseId}`)}
@@ -308,7 +312,7 @@ export default function RoundDetailPage() {
                 {clips.length > 1 && (
                   <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, zIndex: 10, pointerEvents: "none" }}>
                     {clips.map((_, di) => (
-                      <div key={di} style={{ width: 3, height: di === i ? 20 : 5, borderRadius: 99, background: di === i ? "#fff" : "rgba(255,255,255,0.3)", transition: "all 0.2s ease" }} />
+                      <div key={di} style={{ width: di === i ? 4 : 3, height: di === i ? 20 : 5, borderRadius: 99, background: di === i ? "#4da862" : "rgba(255,255,255,0.3)", boxShadow: di === i ? "0 0 6px rgba(77,168,98,0.7)" : "none", transition: "all 0.2s ease" }} />
                     ))}
                   </div>
                 )}
@@ -353,7 +357,7 @@ export default function RoundDetailPage() {
 
                 {/* Hole # badge */}
                 {clip.holeNumber && (
-                  <div style={{ position: "absolute", bottom: 100, left: 0, zIndex: 10, background: "rgba(7,16,10,0.82)", backdropFilter: "blur(10px)", borderRadius: "0 16px 0 0", borderTop: "1px solid rgba(77,168,98,0.2)", borderRight: "1px solid rgba(77,168,98,0.2)", padding: "12px 16px 16px 14px", pointerEvents: "none" }}>
+                  <div style={{ position: "absolute", bottom: 66, left: 0, zIndex: 10, background: "rgba(7,16,10,0.82)", backdropFilter: "blur(10px)", borderRadius: "0 16px 0 0", borderTop: "1px solid rgba(77,168,98,0.2)", borderRight: "1px solid rgba(77,168,98,0.2)", padding: "12px 16px 16px 14px", pointerEvents: "none" }}>
                     <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 52, fontWeight: 400, color: "#fff", lineHeight: 1, letterSpacing: "-1px" }}>{clip.holeNumber}</div>
                   </div>
                 )}
