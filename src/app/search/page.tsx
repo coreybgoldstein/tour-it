@@ -132,15 +132,22 @@ function SearchPageInner() {
       const { data } = await supabase.from("Follow").select("followingId").eq("followerId", user.id).eq("status", "ACTIVE");
       setFollowingIds(new Set((data || []).map((r: any) => r.followingId)));
     });
-    supabase.from("User").select("id, username, displayName, avatarUrl, uploadCount").gt("uploadCount", 0).order("uploadCount", { ascending: false }).limit(12)
-      .then(({ data }) => { if (data) setTopGolfers(data as Person[]); });
+    supabase.from("UserProgression").select("userId, totalPoints").order("totalPoints", { ascending: false }).limit(12)
+      .then(async ({ data: progRows }) => {
+        if (!progRows?.length) return;
+        const ids = progRows.map(r => r.userId);
+        const { data: users } = await supabase.from("User").select("id, username, displayName, avatarUrl, uploadCount").in("id", ids);
+        if (!users) return;
+        const ordered = ids.map(id => users.find(u => u.id === id)).filter(Boolean) as Person[];
+        setTopGolfers(ordered);
+      });
   }, []);
 
   // People search
   useEffect(() => {
     if (searchTab !== "people") return;
     if (peopleDebounceRef.current) clearTimeout(peopleDebounceRef.current);
-    if (query.trim().length < 2) { setPeopleResults([]); return; }
+    if (query.trim().length < 1) { setPeopleResults([]); return; }
     setPeopleLoading(true);
     peopleDebounceRef.current = setTimeout(async () => {
       const supabase = createClient();
@@ -178,7 +185,7 @@ function SearchPageInner() {
   const search = useCallback((q: string, coords: { lat: number; lng: number } | null, state: string, city: string, holes: string, courseType: string, radius: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    const hasQuery = q.trim().length >= 2;
+    const hasQuery = q.trim().length >= 1;
     const hasAnyFilter = state || city || coords || holes !== "all" || courseType;
 
     if (!hasQuery && !hasAnyFilter) {
@@ -376,6 +383,7 @@ function SearchPageInner() {
               onBlur={() => setFocused(false)}
               placeholder={searchTab === "courses" ? "Search courses…" : "Name or @username"}
               autoComplete="off"
+              autoFocus
             />
             {query && (
               <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
@@ -511,7 +519,18 @@ function SearchPageInner() {
 
           {!loading && showResults && displayList.length > 0 && (
             <>
-              <p className="section-label">{displayList.length} result{displayList.length !== 1 ? "s" : ""}</p>
+              {(() => {
+                const q = query.trim().toLowerCase();
+                const byName = q ? displayList.filter(c => c.name.toLowerCase().includes(q)).length : 0;
+                const byCity = q ? displayList.filter(c => c.city?.toLowerCase().includes(q)).length : 0;
+                return (
+                  <p className="section-label">
+                    {displayList.length} course{displayList.length !== 1 ? "s" : ""}
+                    {byName > 0 && ` · ${byName} by name`}
+                    {byCity > 0 && ` · ${byCity} by city`}
+                  </p>
+                );
+              })()}
               {displayList.map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (

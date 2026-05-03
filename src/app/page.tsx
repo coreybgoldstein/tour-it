@@ -967,8 +967,6 @@ export default function Home() {
         .feed-item { scroll-snap-align: start; scroll-snap-stop: always; }
         .courses-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; }
         .courses-row::-webkit-scrollbar { display: none; }
-        @keyframes bounce-down { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
-        .bounce-arrow { animation: bounce-down 1.6s ease-in-out infinite; display: inline-block; }
         @keyframes splash-logo-in { 0% { opacity: 0; transform: scale(0.82); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes splash-tagline-in { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes splash-fade-out { 0% { opacity: 1; } 100% { opacity: 0; } }
@@ -1187,23 +1185,17 @@ export default function Home() {
           {showScrollHint && (
             <button
               onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-              style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", paddingBottom: 96, paddingTop: 24, background: "linear-gradient(to top, rgba(7,16,10,0.95) 0%, transparent 100%)", border: "none", cursor: "pointer", gap: 28, zIndex: 5 }}
+              style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", paddingBottom: 76, paddingTop: 24, background: "linear-gradient(to top, rgba(7,16,10,0.95) 0%, transparent 100%)", border: "none", cursor: "pointer", gap: 8, zIndex: 5 }}
             >
-              <div className="bounce-arrow" style={{ animationDelay: "0s" }}>
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "2.8px", textTransform: "uppercase", color: "rgba(255,255,255,0.72)" }}>
+                Tour the feed
               </div>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, paddingBottom: 4 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "2.8px", textTransform: "uppercase", color: "rgba(255,255,255,0.72)" }}>
-                  Tour the feed
-                </div>
-              </div>
-              <div className="bounce-arrow" style={{ animationDelay: "0.2s" }}>
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </button>
           )}
 
