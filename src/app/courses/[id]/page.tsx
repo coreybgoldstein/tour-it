@@ -300,7 +300,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       />
 
       {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
-        <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", ...(holeNumber ? { right: 60, bottom: 76 } : { left: 16, bottom: 108 }), zIndex: 10, pointerEvents: "none" }}>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
             {formatClipDate(clip.datePlayedAt, clip.createdAt)}
           </span>
@@ -849,9 +849,9 @@ const [editDescription, setEditDescription] = useState("");
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
-        .feed-modal { position: fixed; inset: 0; z-index: 100; background: #000; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+        .feed-modal { position: fixed; inset: 0; z-index: 100; background: #000; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; touch-action: pan-y; }
         .feed-modal::-webkit-scrollbar { display: none; }
-        .feed-hole-page { scroll-snap-align: start; scroll-snap-stop: always; height: 100svh; width: 100vw; display: flex; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior: contain; }
+        .feed-hole-page { scroll-snap-align: start; scroll-snap-stop: always; height: 100svh; width: 100vw; display: flex; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior: contain; touch-action: pan-x; }
         .feed-hole-page::-webkit-scrollbar { display: none; }
         .feed-clip-page { width: 100vw; height: 100svh; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
         .feed-end-snap { scroll-snap-align: start; scroll-snap-stop: always; }
