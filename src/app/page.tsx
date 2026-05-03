@@ -531,7 +531,7 @@ function VideoCard({
 
       {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
         <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
             {formatClipDate(clip.datePlayedAt, clip.createdAt)}
           </span>
         </div>
@@ -577,7 +577,7 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [splashVisible, setSplashVisible] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
-  const [showScrollHint, setShowScrollHint] = useState(false);
+  const [showScrollHint] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
@@ -809,13 +809,6 @@ export default function Home() {
   }, [activeIndex, feedItems.length, loadMoreFeed]);
 
   useEffect(() => {
-    if (activeIndex > 0 && showScrollHint) {
-      setShowScrollHint(false);
-      localStorage.setItem("tour-it-hint-dismissed", new Date().toDateString());
-    }
-  }, [activeIndex, showScrollHint]);
-
-  useEffect(() => {
     const today = new Date().toDateString();
     const lastSplash = localStorage.getItem("tour-it-splash-date");
     if (lastSplash !== today) {
@@ -825,8 +818,6 @@ export default function Home() {
       const hideTimer = setTimeout(() => setSplashVisible(false), 2600);
       setTimeout(() => { clearTimeout(fadeTimer); clearTimeout(hideTimer); }, 2700);
     }
-    const hintDismissed = localStorage.getItem("tour-it-hint-dismissed");
-    setShowScrollHint(hintDismissed !== today);
   }, []);
 
   useEffect(() => {
