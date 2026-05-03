@@ -269,6 +269,7 @@ export default function ProfilePage() {
   const editHomeCourseDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Owner: clip edit/delete
@@ -814,6 +815,18 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Avatar lightbox */}
+      {showAvatarModal && profile.avatarUrl && (
+        <div onClick={() => setShowAvatarModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 300, gap: 20 }}>
+          <img src={profile.avatarUrl} alt="avatar" style={{ width: 240, height: 240, borderRadius: "50%", objectFit: "cover", outline: `3px solid ${getRankColor(profileRank)}` }} onClick={e => e.stopPropagation()} />
+          {isOwner && (
+            <button onClick={e => { e.stopPropagation(); setShowAvatarModal(false); fileInputRef.current?.click(); }} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "9px 22px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
+              Change photo
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Owner: confirm delete */}
       {isOwner && selectedClip && confirmDelete && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }}>
@@ -1048,8 +1061,8 @@ export default function ProfilePage() {
         {/* Avatar — 64px, rank-colored ring */}
         <div
           className={isLegend(profileRank) ? "legend-ring" : undefined}
-          onClick={isOwner ? () => fileInputRef.current?.click() : undefined}
-          style={{ width: 64, height: 64, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: isOwner ? "pointer" : "default", flexShrink: 0 }}
+          onClick={() => setShowAvatarModal(true)}
+          style={{ width: 72, height: 72, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}
         >
           {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 11 }}>…</span> : initials)}
         </div>
@@ -1058,11 +1071,10 @@ export default function ProfilePage() {
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Row 1: @username + edit pencil */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: getRankColor(profileRank), lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{profile.username}</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: getRankColor(profileRank), lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{profile.username}</div>
             {isOwner && (
-              <button onClick={() => setShowEdit(true)} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                {/* Scorecard pencil — thin diagonal pencil, no document square */}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.75)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <button onClick={() => setShowEdit(true)} style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
                   <path d="m15 5 4 4"/>
                 </svg>
@@ -1073,16 +1085,16 @@ export default function ProfilePage() {
           {/* Row 2: hcp + home course pills */}
           {(profile.handicapIndex !== null || homeCourse) && (
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 4 }}>
-              {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "rgba(255,255,255,0.82)" }}>{profile.handicapIndex} hcp</div>}
-              {homeCourse && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 10, color: "rgba(255,255,255,0.82)" }}>{homeCourse.name}</div>}
+              {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)" }}>{profile.handicapIndex} hcp</div>}
+              {homeCourse && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)" }}>{homeCourse.name}</div>}
             </div>
           )}
 
           {/* Row 3: followers · following */}
           <div style={{ display: "flex", alignItems: "center" }}>
-            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.62)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>{followerCount} followers</button>
-            <span style={{ margin: "0 4px", color: "rgba(255,255,255,0.3)", fontSize: 11 }}>·</span>
-            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.62)", fontFamily: "'Outfit', sans-serif", fontSize: 11 }}>{followingCount} following</button>
+            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.62)", fontFamily: "'Outfit', sans-serif", fontSize: 13 }}><span style={{ fontWeight: 700 }}>{followerCount}</span> followers</button>
+            <span style={{ margin: "0 4px", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>·</span>
+            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.62)", fontFamily: "'Outfit', sans-serif", fontSize: 13 }}><span style={{ fontWeight: 700 }}>{followingCount}</span> following</button>
           </div>
         </div>
 
