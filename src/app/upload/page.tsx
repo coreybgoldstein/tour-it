@@ -64,7 +64,7 @@ const CLUBS = [
   { group: "Other", options: ["Putter", "Chipper"] },
 ];
 
-const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "notes", "handicap"];
+const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "notes"];
 
 function UploadPageInner() {
   const router = useRouter();
@@ -110,7 +110,6 @@ function UploadPageInner() {
     club: "",
     wind: "",
     notes: "",
-    handicap: "",
   });
 
   const [uploadStage, setUploadStage] = useState<"idle" | "compressing" | "uploading">("idle");
@@ -616,7 +615,7 @@ function UploadPageInner() {
         clubUsed: intel.club || null,
         windCondition: intel.wind || null,
         strategyNote: intel.notes || null,
-        handicapRange: intel.handicap || null,
+        handicapRange: null,
         datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
         rankScore: 1 / Math.pow(2, 1.3), // base score for new clip, ~0.41
         clipLat: gpsCoords?.lat ?? null,
@@ -791,7 +790,7 @@ function UploadPageInner() {
                 setSelectedGroup("");
                 setMediaFile(null);
                 setMediaPreview(null);
-                setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", notes: "", handicap: "" });
+                setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", notes: "" });
                 setSubmitted(false);
               }}
               style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.55)", cursor: "pointer" }}>
@@ -1307,16 +1306,6 @@ function UploadPageInner() {
                 ))}
               </div>
             </div>
-            <div className="field">
-              <label className="field-label">Your Handicap Range <span className="optional-tag">OPTIONAL</span></label>
-              <div className="pill-row">
-                {HANDICAP_RANGES.map(h => (
-                  <button key={h.value} className={`pill-option ${intel.handicap === h.value ? "selected" : ""}`} onClick={() => setIntel({ ...intel, handicap: intel.handicap === h.value ? "" : h.value })}>
-                    {h.label}
-                  </button>
-                ))}
-              </div>
-            </div>
             <div className="divider" />
             <div className="field">
               <label className="field-label" style={{ color: "#4da862" }}>Notes <span className="optional-tag">OPTIONAL</span></label>
@@ -1365,14 +1354,13 @@ function UploadPageInner() {
               <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 99 }}>
                 <div style={{ height: 3, borderRadius: 99, background: intelColor, width: `${intelPct}%` }} />
               </div>
-              {(intel.tee || intel.datePlayed || intel.club || intel.wind || intel.shotType || intel.handicap) && (
+              {(intel.tee || intel.datePlayed || intel.club || intel.wind || intel.shotType) && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 12 }}>
                   {intel.datePlayed && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.datePlayed}</span>}
                   {intel.tee && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.tee} tees</span>}
                   {intel.club && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{intel.club}</span>}
                   {intel.wind && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{WIND_OPTIONS.find(w => w.value === intel.wind)?.label} wind</span>}
                   {intel.shotType && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{SHOT_TYPES.find(s => s.value === intel.shotType)?.label}</span>}
-                  {intel.handicap && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)", border: "1px solid rgba(255,255,255,0.08)" }}>{HANDICAP_RANGES.find(h => h.value === intel.handicap)?.label}</span>}
                 </div>
               )}
             </div>
