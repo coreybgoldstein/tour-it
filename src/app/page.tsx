@@ -1185,7 +1185,7 @@ export default function Home() {
           {showScrollHint && (
             <button
               onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-              style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", paddingBottom: 76, paddingTop: 24, background: "linear-gradient(to top, rgba(7,16,10,0.95) 0%, transparent 100%)", border: "none", cursor: "pointer", gap: 8, zIndex: 5 }}
+              style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", paddingBottom: 100, paddingTop: 24, background: "linear-gradient(to top, rgba(7,16,10,0.95) 0%, transparent 100%)", border: "none", cursor: "pointer", gap: 8, zIndex: 5 }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"/>

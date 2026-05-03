@@ -18,7 +18,6 @@ import { getVideoSrc } from "@/lib/getVideoSrc";
 import { sendPushToUser } from "@/lib/sendPush";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
-import { CropModal } from "@/components/CropModal";
 type Course = {
   id: string;
   name: string;
@@ -352,9 +351,7 @@ export default function CourseProfilePage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [cropTarget, setCropTarget] = useState<"cover" | "logo" | null>(null);
-  const [cropFile, setCropFile] = useState<File | null>(null);
-  const [editDescription, setEditDescription] = useState("");
+const [editDescription, setEditDescription] = useState("");
   const [aboutOpen, setAboutOpen] = useState(false);
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
@@ -685,23 +682,17 @@ export default function CourseProfilePage() {
   const handleCoverPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setCropFile(file); setCropTarget("cover");
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
     e.target.value = "";
   };
 
   const handleLogoPick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setCropFile(file); setCropTarget("logo");
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
     e.target.value = "";
-  };
-
-  const handleCropDone = (blob: Blob, target: "cover" | "logo") => {
-    const f = new File([blob], "image.jpg", { type: "image/jpeg" });
-    const url = URL.createObjectURL(blob);
-    if (target === "cover") { setCoverFile(f); setCoverPreview(url); }
-    else { setLogoFile(f); setLogoPreview(url); }
-    setCropFile(null); setCropTarget(null);
   };
 
   const handleContributeSubmit = async () => {
@@ -2008,15 +1999,6 @@ export default function CourseProfilePage() {
 
       <BottomNav />
 
-      {cropFile && cropTarget && (
-        <CropModal
-          file={cropFile}
-          aspect={cropTarget === "cover" ? 16 / 9 : 1}
-          label={cropTarget === "cover" ? "Cover Photo" : "Logo"}
-          onDone={blob => handleCropDone(blob, cropTarget)}
-          onClose={() => { setCropFile(null); setCropTarget(null); }}
-        />
-      )}
     </main>
   );
 }
