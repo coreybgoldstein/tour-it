@@ -26,7 +26,7 @@ export function HoleIdentityCard({
     <div
       style={{
         position: "absolute",
-        bottom: 64,
+        bottom: 100,
         left: 0,
         zIndex: 101,
         background: "rgba(7,16,10,0.82)",

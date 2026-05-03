@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
+import { HlsVideo } from "@/components/HlsVideo";
+import { getVideoSrc } from "@/lib/getVideoSrc";
 
 type Round = {
   id: string; userId: string; courseId: string; date: string;
@@ -29,6 +31,18 @@ export default function RoundDetailPage() {
   const [isOwner, setIsOwner] = useState(false);
 
   // Edit state
+  // Feed overlay state
+  const [feedIndex, setFeedIndex] = useState<number | null>(null);
+  const [feedVisible, setFeedVisible] = useState(0);
+  const [muted, setMuted] = useState(true);
+  const feedRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (feedIndex === null || !feedRef.current) return;
+    feedRef.current.scrollTop = feedIndex * feedRef.current.clientHeight;
+    setFeedVisible(feedIndex);
+  }, [feedIndex]);
+
   const [editOpen, setEditOpen] = useState(false);
   const [editScore, setEditScore] = useState("");
   const [editFairways, setEditFairways] = useState("");
@@ -182,7 +196,7 @@ export default function RoundDetailPage() {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px" }}>
             {clips.map((clip, i) => (
-              <div key={clip.id} onClick={() => router.push(`/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`)}
+              <div key={clip.id} onClick={() => setFeedIndex(i)}
                 style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)" }}>
                 {clip.mediaType === "PHOTO"
                   ? <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -201,6 +215,61 @@ export default function RoundDetailPage() {
       </div>
 
       <BottomNav />
+
+      {/* Full-screen clip feed overlay */}
+      {feedIndex !== null && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "#000" }}>
+          <div
+            ref={feedRef}
+            onScroll={e => {
+              const el = e.currentTarget;
+              const idx = Math.round(el.scrollTop / el.clientHeight);
+              if (idx !== feedVisible) setFeedVisible(idx);
+            }}
+            style={{ height: "100%", overflowY: "scroll", scrollSnapType: "y mandatory" }}
+          >
+            {clips.map((clip, i) => (
+              <div key={clip.id} style={{ height: "100svh", scrollSnapAlign: "start", position: "relative", flexShrink: 0, background: "#000" }}>
+                {i === feedVisible ? (
+                  clip.mediaType === "PHOTO"
+                    ? <img src={clip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <HlsVideo
+                        src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId ?? undefined)}
+                        autoPlay muted={muted} loop playsInline
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                ) : (
+                  <img
+                    src={clip.cloudflareVideoId ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400` : clip.mediaUrl}
+                    alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                )}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 25%)", pointerEvents: "none" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 40%)", pointerEvents: "none" }} />
+
+                {/* Back button */}
+                <button
+                  onClick={() => setFeedIndex(null)}
+                  style={{ position: "absolute", top: 52, left: 16, zIndex: 10, display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20, padding: "7px 12px 7px 8px", cursor: "pointer" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>Round</span>
+                </button>
+
+                {/* Clip counter */}
+                <div style={{ position: "absolute", top: 56, right: 16, zIndex: 10, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.5)" }}>{i + 1} / {clips.length}</div>
+
+                {/* Hole # badge */}
+                {clip.holeNumber && (
+                  <div style={{ position: "absolute", bottom: 100, left: 0, zIndex: 10, background: "rgba(7,16,10,0.82)", backdropFilter: "blur(10px)", borderRadius: "0 16px 0 0", borderTop: "1px solid rgba(77,168,98,0.2)", borderRight: "1px solid rgba(77,168,98,0.2)", padding: "12px 16px 16px 14px", pointerEvents: "none" }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 52, fontWeight: 400, color: "#fff", lineHeight: 1, letterSpacing: "-1px" }}>{clip.holeNumber}</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Edit sheet */}
       {editOpen && (
