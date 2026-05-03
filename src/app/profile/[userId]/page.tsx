@@ -81,10 +81,6 @@ function ProfileFeedCard({
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.65) 100%)", pointerEvents: "none", zIndex: 5 }} />
 
-      {/* Close button */}
-      <button onClick={onClose} style={{ position: "absolute", top: 52, left: 16, zIndex: 30, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      </button>
 
       {videoPaused && (
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 15, pointerEvents: "none", opacity: 0.7 }}>
@@ -186,7 +182,7 @@ function ProfileFeedCard({
       />
       {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
         <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
             {formatClipDate(clip.datePlayedAt, clip.createdAt)}
           </span>
         </div>
@@ -1117,18 +1113,6 @@ export default function ProfilePage() {
       {/* Progression tracker */}
       <ProgressionTracker userId={userId as string} isOwner={isOwner} />
 
-      {/* Quiet badge entry point */}
-      {earnedBadges.length > 0 && (
-        <div style={{ paddingLeft: 16, marginBottom: 8 }}>
-          <button
-            onClick={() => router.push(`/profile/${userId}/badges`)}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.32)", letterSpacing: "0.01em" }}
-          >
-            🏅 {earnedBadges.length} badge{earnedBadges.length !== 1 ? "s" : ""} earned →
-          </button>
-        </div>
-      )}
-
       {/* Clips / Rounds tabs with counts */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
         {(["clips", "rounds"] as const).map(tab => {
@@ -1136,7 +1120,7 @@ export default function ProfilePage() {
           const active = profileTab === tab;
           return (
             <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${active ? "#4da862" : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: active ? "#fff" : "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: active ? "#fff" : "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                 {tab === "clips" ? "Clips" : "Rounds"}
               </span>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.2)", background: active ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px", letterSpacing: 0 }}>

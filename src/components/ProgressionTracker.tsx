@@ -74,7 +74,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
           {/* Info button — absolute bottom-right of card */}
           <button
             onClick={e => { e.stopPropagation(); router.push("/about"); }}
-            style={{ position: "absolute", bottom: 8, right: 10, background: "none", border: "none", padding: 4, cursor: "pointer", display: "flex", alignItems: "center", color: "rgba(255,255,255,0.22)", lineHeight: 1 }}
+            style={{ position: "absolute", bottom: 4, right: 6, background: "none", border: "none", padding: 2, cursor: "pointer", display: "flex", alignItems: "center", color: "rgba(255,255,255,0.22)", lineHeight: 1 }}
             aria-label="About levels"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
