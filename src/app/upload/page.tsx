@@ -86,6 +86,7 @@ function UploadPageInner() {
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState<"idle" | "scanning" | "found" | "no_nearby" | "no_gps" | "device">("idle");
   const [gpsSuggestedHole, setGpsSuggestedHole] = useState<number | null>(null);
+  const [holePars, setHolePars] = useState<Record<number, number>>({});
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
   const [contentFormat, setContentFormat] = useState<string>("");
@@ -441,6 +442,19 @@ function UploadPageInner() {
     return null;
   }
 
+
+  // Fetch par for each hole when a course is selected
+  useEffect(() => {
+    if (!selectedCourse) { setHolePars({}); return; }
+    const supabase = createClient();
+    supabase.from("Hole").select("holeNumber, par").eq("courseId", selectedCourse.id).gt("par", 0)
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<number, number> = {};
+        for (const h of data) map[h.holeNumber] = h.par;
+        setHolePars(map);
+      });
+  }, [selectedCourse]);
 
   // When hole picker opens and we have GPS, find the closest hole by tee coords
   useEffect(() => {
@@ -1204,7 +1218,8 @@ function UploadPageInner() {
                   {frontNine.map(n => (
                     <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }} style={gpsSuggestedHole === n && selectedHole !== n ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.1)" } : {}}>
                       <div className="hole-btn-num">{n}</div>
-                      {gpsSuggestedHole === n && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862", letterSpacing: "0.05em", marginTop: 3 }}>📍 GPS</div>}
+                      {holePars[n] ? <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>Par {holePars[n]}</div> : null}
+                      {gpsSuggestedHole === n && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862", letterSpacing: "0.05em", marginTop: 2 }}>📍 GPS</div>}
                     </button>
                   ))}
                 </div>
@@ -1213,7 +1228,8 @@ function UploadPageInner() {
                   {backNine.map(n => (
                     <button key={n} className={`hole-btn ${selectedHole === n ? "selected" : ""}`} onClick={() => { setSelectedHole(n); setStep(4); }} style={gpsSuggestedHole === n && selectedHole !== n ? { borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.1)" } : {}}>
                       <div className="hole-btn-num">{n}</div>
-                      {gpsSuggestedHole === n && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862", letterSpacing: "0.05em", marginTop: 3 }}>📍 GPS</div>}
+                      {holePars[n] ? <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>Par {holePars[n]}</div> : null}
+                      {gpsSuggestedHole === n && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862", letterSpacing: "0.05em", marginTop: 2 }}>📍 GPS</div>}
                     </button>
                   ))}
                 </div>
