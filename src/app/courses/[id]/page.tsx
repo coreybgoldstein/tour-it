@@ -734,6 +734,8 @@ const [editDescription, setEditDescription] = useState("");
     }
 
     if (editDescription.trim()) payload.description = editDescription.trim();
+    if (editCity.trim()) payload.city = editCity.trim();
+    if (editState.trim()) payload.state = editState.trim();
     payload.zipCode = editZip.trim() || null;
     payload.yearEstablished = editYearEstablished ? parseInt(editYearEstablished) : null;
     if (editCourseType) payload.courseType = editCourseType;
@@ -1469,6 +1471,20 @@ const [editDescription, setEditDescription] = useState("");
                 {/* Course Info fields */}
                 <div style={{ marginBottom: 20, display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Info</div>
+
+                  {/* City / State */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>City</label>
+                      <input value={editCity} onChange={e => setEditCity(e.target.value)} placeholder="Augusta"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                      <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>State</label>
+                      <input value={editState} onChange={e => setEditState(e.target.value)} placeholder="GA"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                    </div>
+                  </div>
 
                   {/* Zip / Year */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>

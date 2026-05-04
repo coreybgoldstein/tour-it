@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rateLimit";
 
-const ALLOWED_FIELDS = new Set(["description", "coverImageUrl", "logoUrl", "zipCode", "yearEstablished", "courseType"]);
+const ALLOWED_FIELDS = new Set(["description", "coverImageUrl", "logoUrl", "city", "state", "zipCode", "yearEstablished", "courseType"]);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const body = await req.json();
 
-  // Strip any fields not in the allowed list (name, city, state are admin-only)
+  // Strip any fields not in the allowed list (name is admin-only)
   const updates: Record<string, unknown> = {};
   for (const key of Object.keys(body)) {
     if (ALLOWED_FIELDS.has(key)) updates[key] = body[key];
@@ -43,6 +43,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   if ("description" in updates && typeof updates.description === "string") {
     updates.description = updates.description.trim().slice(0, 2000);
+  }
+  if ("city" in updates && typeof updates.city === "string") {
+    updates.city = updates.city.trim().slice(0, 100) || null;
+  }
+  if ("state" in updates && typeof updates.state === "string") {
+    updates.state = updates.state.trim().slice(0, 50) || null;
   }
   if ("zipCode" in updates && typeof updates.zipCode === "string") {
     updates.zipCode = updates.zipCode.trim().slice(0, 10) || null;
