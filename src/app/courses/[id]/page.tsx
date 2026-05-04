@@ -10,7 +10,6 @@ import { useSave } from "@/hooks/useSave";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { HoleSideBar } from "@/components/clip/HoleSideBar";
 import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
-import { ClipNoteCaption } from "@/components/clip/ClipNoteCaption";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
@@ -280,8 +279,6 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
           </button>
         )}
       </div>
-
-      <ClipNoteCaption note={clip.strategyNote} holeNumber={holeNumber} />
 
       <IntelPanel
         open={intelOpen}

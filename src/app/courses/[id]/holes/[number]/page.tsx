@@ -10,7 +10,6 @@ import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { HoleSideBar } from "@/components/clip/HoleSideBar";
 import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
-import { ClipNoteCaption } from "@/components/clip/ClipNoteCaption";
 import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
@@ -924,8 +923,6 @@ export default function HolePage() {
           </div>
         </div>
       )}
-
-      {activeUpload && <ClipNoteCaption note={activeUpload.strategyNote} holeNumber={holeNum} />}
 
       {activeUpload && (
         <IntelPanel
