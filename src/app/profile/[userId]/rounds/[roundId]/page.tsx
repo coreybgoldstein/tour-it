@@ -248,7 +248,7 @@ export default function RoundDetailPage() {
                 }
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
                 {clip.holeNumber && (
-                  <div style={{ position: "absolute", bottom: 6, left: 6, background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px" }}>
+                  <div style={{ position: "absolute", bottom: 6, right: 6, background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, color: "#fff" }}>{clip.holeNumber}</span>
                   </div>
                 )}
