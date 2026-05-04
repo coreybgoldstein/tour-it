@@ -7,7 +7,6 @@ import { useLike } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import BottomNav from "@/components/BottomNav";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
-import { ClipNoteCaption } from "@/components/clip/ClipNoteCaption";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
@@ -537,8 +536,6 @@ function VideoCard({
           </span>
         </div>
       )}
-
-      <ClipNoteCaption note={clip.strategyNote} holeNumber={clip.holeNumber} />
 
       <IntelPanel
         open={intelOpen}
