@@ -70,6 +70,8 @@ type SuggestedCourse = {
   coverImageUrl: string | null;
 };
 
+const US_STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
+
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", LAY_UP: "Layup",
   CHIP: "Chip", PITCH: "Pitch", PUTT: "Putt",
@@ -1481,8 +1483,11 @@ const [editDescription, setEditDescription] = useState("");
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                       <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>State</label>
-                      <input value={editState} onChange={e => setEditState(e.target.value)} placeholder="GA"
-                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                      <select value={editState} onChange={e => setEditState(e.target.value)}
+                        style={{ width: "100%", background: "rgba(30,50,35,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: editState ? "#fff" : "rgba(255,255,255,0.35)", outline: "none", appearance: "none" }}>
+                        <option value="" style={{ background: "#0d1f12" }}>—</option>
+                        {US_STATES.map(s => <option key={s} value={s} style={{ background: "#0d1f12" }}>{s}</option>)}
+                      </select>
                     </div>
                   </div>
 
