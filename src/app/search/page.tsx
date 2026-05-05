@@ -359,6 +359,17 @@ function SearchPageInner() {
     }).select("id").single();
     setCreating(false);
     if (error) { setCreateError(error.message); return; }
+    const holeTotal = parseInt(newHoles) || 18;
+    const holes = Array.from({ length: holeTotal }, (_, i) => ({
+      id: crypto.randomUUID(),
+      courseId: data.id,
+      holeNumber: i + 1,
+      par: 4,
+      uploadCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    }));
+    await supabase.from("Hole").insert(holes);
     router.push(`/courses/${data.id}`);
   };
 
