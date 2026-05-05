@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rateLimit";
 
-const ALLOWED_FIELDS = new Set(["description", "coverImageUrl", "logoUrl", "city", "state", "zipCode", "yearEstablished", "courseType"]);
+const ALLOWED_FIELDS = new Set(["name", "description", "coverImageUrl", "logoUrl", "city", "state", "zipCode", "yearEstablished", "courseType"]);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const body = await req.json();
 
-  // Strip any fields not in the allowed list (name is admin-only)
+  // Strip any fields not in the allowed list
   const updates: Record<string, unknown> = {};
   for (const key of Object.keys(body)) {
     if (ALLOWED_FIELDS.has(key)) updates[key] = body[key];
@@ -43,6 +43,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   if ("description" in updates && typeof updates.description === "string") {
     updates.description = updates.description.trim().slice(0, 2000);
+  }
+  if ("name" in updates && typeof updates.name === "string") {
+    updates.name = updates.name.trim().slice(0, 200) || null;
+    if (!updates.name) delete updates.name;
   }
   if ("city" in updates && typeof updates.city === "string") {
     updates.city = updates.city.trim().slice(0, 100) || null;
