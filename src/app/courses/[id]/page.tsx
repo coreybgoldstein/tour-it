@@ -736,6 +736,7 @@ const [editDescription, setEditDescription] = useState("");
       payload.logoUrl = supabase.storage.from("tour-it-photos").getPublicUrl(path).data.publicUrl;
     }
 
+    if (editCourseName.trim()) payload.name = editCourseName.trim();
     if (editDescription.trim()) payload.description = editDescription.trim();
     if (editCity.trim()) payload.city = editCity.trim();
     if (editState.trim()) payload.state = editState.trim();
@@ -1498,6 +1499,13 @@ const [editDescription, setEditDescription] = useState("");
                 {/* Course Info fields */}
                 <div style={{ marginBottom: 20, display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Info</div>
+
+                  {/* Course Name */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                    <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Name</label>
+                    <input value={editCourseName} onChange={e => setEditCourseName(e.target.value)} placeholder={course.name}
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                  </div>
 
                   {/* City / State */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
