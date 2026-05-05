@@ -617,21 +617,56 @@ export default function Home() {
       .then(({ data }) => { if (data) setTrendingCourses(data); });
 
     async function loadFeed() {
-      const { data: rawUploads } = await supabase
-        .from("Upload")
-        .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt, rankScore")
-        .eq("moderationStatus", "APPROVED")
-        .order("rankScore", { ascending: false, nullsFirst: false })
-        .limit(30);
+      // Clips seen this session are heavily deprioritized (not excluded — pool may be small)
+      const seenIds = new Set<string>(JSON.parse(sessionStorage.getItem("tour_feed_seen") || "[]"));
 
-      // Apply ±20% random jitter so new clips with similar scores shuffle each load
-      const uploads = rawUploads
-        ? [...rawUploads]
-            .map(u => ({ ...u, _jittered: (u.rankScore ?? 0) * (0.8 + Math.random() * 0.4) }))
-            .sort((a, b) => b._jittered - a._jittered)
-            .slice(0, 15)
-        : [];
+      // Fetch top-scored pool + guaranteed freshest clips in parallel
+      const SELECT = "id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt, rankScore";
+      const [{ data: topUploads }, { data: freshUploads }] = await Promise.all([
+        supabase.from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
+          .order("rankScore", { ascending: false, nullsFirst: false }).limit(50),
+        supabase.from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
+          .order("createdAt", { ascending: false }).limit(5),
+      ]);
 
+      // Merge pools, deduplicate
+      const poolMap = new Map<string, any>();
+      [...(topUploads || []), ...(freshUploads || [])].forEach(u => {
+        if (!poolMap.has(u.id)) poolMap.set(u.id, u);
+      });
+      const pool = Array.from(poolMap.values());
+
+      if (pool.length === 0) { setLoading(false); return; }
+
+      // Score = rankScore × quality × seen-penalty × jitter
+      const scored = pool
+        .map(u => ({
+          ...u,
+          _score: (u.rankScore ?? 0)
+            * (u.cloudflareVideoId ? 1.15 : 0.85)  // CF-processed = higher quality
+            * (seenIds.has(u.id) ? 0.15 : 1.0)      // seen this session → sink to back
+            * (0.5 + Math.random() * 1.0),            // ±50% jitter for variety
+        }))
+        .sort((a, b) => b._score - a._score);
+
+      // Course diversity cap: max 2 clips per course per load
+      const courseCounts: Record<string, number> = {};
+      const diverse = scored.filter(u => {
+        const n = courseCounts[u.courseId] ?? 0;
+        if (n >= 2) return false;
+        courseCounts[u.courseId] = n + 1;
+        return true;
+      });
+
+      const uploads = diverse.slice(0, 15);
+
+      // Persist seen IDs for this session (cap at 100)
+      sessionStorage.setItem(
+        "tour_feed_seen",
+        JSON.stringify([...seenIds, ...uploads.map(u => u.id)].slice(-100))
+      );
+
+      const rawUploads = topUploads; // used for cursor + hasMore below
       if (!rawUploads || uploads.length === 0) { setLoading(false); return; }
 
       const courseIds = [...new Set(uploads.map((u: any) => u.courseId))];
@@ -703,7 +738,7 @@ export default function Home() {
       while (si < singleItems.length) interleaved.push(singleItems[si++]);
       setFeedItems(interleaved);
       feedCursorRef.current = rawUploads[rawUploads.length - 1].createdAt;
-      hasMoreRef.current = rawUploads.length >= 30;
+      hasMoreRef.current = rawUploads.length >= 50;
       setLoading(false);
     }
 
