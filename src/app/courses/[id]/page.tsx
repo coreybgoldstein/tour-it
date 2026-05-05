@@ -362,6 +362,7 @@ const [editDescription, setEditDescription] = useState("");
   const [editCity, setEditCity] = useState("");
   const [editState, setEditState] = useState("");
   const [editZip, setEditZip] = useState("");
+  const [logoLightboxOpen, setLogoLightboxOpen] = useState(false);
   const [editYearEstablished, setEditYearEstablished] = useState("");
   const [editCourseType, setEditCourseType] = useState<"PUBLIC" | "PRIVATE" | "SEMI_PRIVATE" | "">("");
   const [generatingDesc, setGeneratingDesc] = useState(false);
@@ -901,8 +902,11 @@ const [editDescription, setEditDescription] = useState("");
           </button>
         )}
 
-        {/* Top left: course logo badge (tap to go back) */}
-        <button onClick={() => router.back()} style={{ position: "absolute", top: 52, left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}>
+        {/* Top left: course logo badge — tap to expand if logo exists, else go back */}
+        <button
+          onClick={() => course.logoUrl ? setLogoLightboxOpen(true) : router.back()}
+          style={{ position: "absolute", top: 52, left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
+        >
           {course.logoUrl ? (
             <img
               src={course.logoUrl}
@@ -913,6 +917,27 @@ const [editDescription, setEditDescription] = useState("");
           ) : null}
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", display: course.logoUrl ? "none" : "inline" }}>{abbr}</span>
         </button>
+
+        {/* Logo lightbox */}
+        {logoLightboxOpen && course.logoUrl && (
+          <div
+            onClick={() => setLogoLightboxOpen(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <img
+              src={course.logoUrl}
+              alt={course.name}
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: "80vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 16, backgroundColor: "#fff", padding: 16, boxShadow: "0 8px 48px rgba(0,0,0,0.6)" }}
+            />
+            <button
+              onClick={() => setLogoLightboxOpen(false)}
+              style={{ position: "absolute", top: 56, right: 20, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        )}
 
 
         <div style={{ position: "relative", padding: "0 20px 18px", zIndex: 10, marginTop: 100 }}>
