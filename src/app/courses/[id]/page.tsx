@@ -1575,26 +1575,7 @@ const [editDescription, setEditDescription] = useState("");
 
                 {/* Description */}
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Description</div>
-                    <button
-                      onClick={generateDescription}
-                      disabled={generatingDesc}
-                      style={{ background: "none", border: "none", cursor: generatingDesc ? "default" : "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: generatingDesc ? "rgba(26,158,66,0.4)" : "#1a9e42", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
-                    >
-                      {generatingDesc ? (
-                        <>
-                          <div style={{ width: 10, height: 10, borderRadius: "50%", border: "1.5px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.6s linear infinite" }} />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/></svg>
-                          Generate a draft
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Course Description</div>
                   <textarea
                     value={editDescription}
                     onChange={e => setEditDescription(e.target.value)}
@@ -1602,9 +1583,6 @@ const [editDescription, setEditDescription] = useState("");
                     rows={4}
                     style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", resize: "none", outline: "none" }}
                   />
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 5 }}>
-                    Generate a draft then edit it — you know this course better than any AI.
-                  </div>
                 </div>
 
                 {/* Course Logo upload */}
