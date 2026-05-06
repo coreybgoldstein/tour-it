@@ -2,12 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CAPACITOR_DEBUG</key>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Tour It accesses your photos so you can upload course images.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Tour It uses your location to show nearby golf courses.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Tour It uses your location to show nearby golf courses.</string>
+	<key>LSApplicationCategoryType</key>
+	<string></string>
+	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Tour It</string>
+	<string>Tour It</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
