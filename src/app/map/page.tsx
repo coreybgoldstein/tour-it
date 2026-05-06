@@ -97,20 +97,31 @@ export default function MapPage() {
     markersRef.current = [];
 
     data.forEach(course => {
-      // Teardrop pin: 44×56, circle top (r≈19) with logo inside, point at bottom
-      const logoInner = course.logoUrl
-        ? `<img src="${course.logoUrl}" style="width:26px;height:26px;border-radius:5px;object-fit:cover" />`
+      // Single SVG pin — logo rendered as <image> inside the SVG so there
+      // are no z-index/stacking issues between the fill and the logo.
+      // clipPath id is unique per course to avoid conflicts across pins.
+      const clipId = `lc-${course.id.slice(0, 8)}`;
+      // Teardrop path shared by fill + stroke layers
+      const tearPath = `M22 54 C22 54 3 36 3 21 C3 11 11 3 22 3 C33 3 41 11 41 21 C41 36 22 54 22 54Z`;
+
+      // Logo: rendered as SVG <image> between the fill and the stroke border
+      const logoLayer = course.logoUrl
+        ? `<defs>
+             <clipPath id="${clipId}">
+               <rect x="9" y="8" width="26" height="26" rx="5"/>
+             </clipPath>
+           </defs>
+           <image href="${course.logoUrl}" x="9" y="8" width="26" height="26"
+             clip-path="url(#${clipId})" preserveAspectRatio="xMidYMid slice"/>`
         : "";
 
       const pinHtml = `
-        <div style="position:relative;width:44px;height:56px;cursor:pointer;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6))">
-          <svg width="44" height="56" viewBox="0 0 44 56" style="position:absolute;top:0;left:0;pointer-events:none">
-            <path d="M22 54 C22 54 3 36 3 21 C3 11 11 3 22 3 C33 3 41 11 41 21 C41 36 22 54 22 54Z"
-              fill="#1e5c2e" stroke="#4da862" stroke-width="2"/>
+        <div style="cursor:pointer;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6))">
+          <svg width="44" height="56" viewBox="0 0 44 56" xmlns="http://www.w3.org/2000/svg">
+            <path d="${tearPath}" fill="#1e5c2e" stroke="none"/>
+            ${logoLayer}
+            <path d="${tearPath}" fill="none" stroke="#4da862" stroke-width="2"/>
           </svg>
-          <div style="position:absolute;top:8px;left:9px;width:26px;height:26px;border-radius:5px;overflow:hidden;display:flex;align-items:center;justify-content:center">
-            ${logoInner}
-          </div>
         </div>`;
 
       const icon = L.divIcon({
