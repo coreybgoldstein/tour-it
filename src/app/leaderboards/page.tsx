@@ -8,12 +8,11 @@ import { rankLabel } from "@/lib/progression";
 import { RANK_COLORS } from "@/config/points-system";
 import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
 
-type Period = "all" | "monthly" | "weekly";
+type Period = "all" | "monthly";
 
 type Entry = {
   userId: string;
   totalPoints: number;
-  weeklyPoints: number;
   monthlyPoints: number;
   level: number;
   rank: string;
@@ -40,11 +39,11 @@ export default function LeaderboardsPage() {
   useEffect(() => {
     setLoading(true);
     const supabase = createClient();
-    const sortField = period === "all" ? "totalPoints" : period === "monthly" ? "monthlyPoints" : "weeklyPoints";
+    const sortField = period === "all" ? "totalPoints" : "monthlyPoints";
 
     supabase
       .from("UserProgression")
-      .select("userId, totalPoints, weeklyPoints, monthlyPoints, level, rank, user:userId(displayName, username, avatarUrl)")
+      .select("userId, totalPoints, monthlyPoints, level, rank, user:userId(displayName, username, avatarUrl)")
       .order(sortField, { ascending: false })
       .limit(50)
       .then(({ data }) => {
@@ -60,7 +59,7 @@ export default function LeaderboardsPage() {
     if (idx >= 0) { setMyRank(idx + 1); return; }
 
     const supabase = createClient();
-    const sortField = period === "all" ? "totalPoints" : period === "monthly" ? "monthlyPoints" : "weeklyPoints";
+    const sortField = period === "all" ? "totalPoints" : "monthlyPoints";
     supabase
       .from("UserProgression")
       .select(sortField)
@@ -79,7 +78,7 @@ export default function LeaderboardsPage() {
   }, [currentUserId, entries, period]);
 
   const pts = (e: Entry) =>
-    period === "all" ? e.totalPoints : period === "monthly" ? e.monthlyPoints : e.weeklyPoints;
+    period === "all" ? e.totalPoints : e.monthlyPoints;
 
   return (
     <main style={{ minHeight: "100svh", background: "#07100a", paddingBottom: 90, color: "#fff" }}>
@@ -93,13 +92,13 @@ export default function LeaderboardsPage() {
 
       {/* Period tabs */}
       <div style={{ display: "flex", gap: 8, padding: "0 20px", marginBottom: 20 }}>
-        {(["all", "monthly", "weekly"] as Period[]).map(p => (
+        {(["all", "monthly"] as Period[]).map(p => (
           <button
             key={p}
             onClick={() => setPeriod(p)}
             style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${period === p ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.08)"}`, background: period === p ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.03)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: period === p ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "capitalize" }}
           >
-            {p === "all" ? "All Time" : p === "monthly" ? "Monthly" : "Weekly"}
+            {p === "all" ? "All Time" : "Monthly"}
           </button>
         ))}
       </div>
