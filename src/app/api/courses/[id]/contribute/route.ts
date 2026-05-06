@@ -58,27 +58,33 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     updates.zipCode = updates.zipCode.trim().slice(0, 10) || null;
   }
 
-  // If city or state changed, re-geocode so the course stays on the map
+  // If city or state changed, re-geocode using course name for precision
   const cityChanged = "city" in updates && updates.city;
   const stateChanged = "state" in updates && updates.state;
   if (cityChanged || stateChanged) {
     const { data: existing } = await supabase
       .from("Course")
-      .select("city, state")
+      .select("name, city, state")
       .eq("id", id)
       .single();
+    const name = existing?.name ?? "";
     const city = (updates.city as string | null) ?? existing?.city ?? "";
     const state = (updates.state as string | null) ?? existing?.state ?? "";
     if (city && state) {
       try {
-        const geoRes = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`${city}, ${state}, US`)}&format=json&limit=1`,
-          { headers: { "Accept-Language": "en", "User-Agent": "TourIt/1.0" } }
-        );
-        const geoData = await geoRes.json();
-        if (geoData?.[0]) {
-          updates.latitude = parseFloat(geoData[0].lat);
-          updates.longitude = parseFloat(geoData[0].lon);
+        const tryGeo = async (q: string) => {
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,
+            { headers: { "Accept-Language": "en", "User-Agent": "TourIt/1.0" } }
+          );
+          const d = await r.json();
+          return d?.[0] ? { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) } : null;
+        };
+        const exact = name ? await tryGeo(`${name}, ${city}, ${state}, US`) : null;
+        const result = exact ?? await tryGeo(`${city}, ${state}, US`);
+        if (result) {
+          updates.latitude = result.lat;
+          updates.longitude = result.lon;
         }
       } catch {}
     }
