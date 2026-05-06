@@ -43,7 +43,6 @@ const FALLBACK_CENTER: [number, number] = [39.5, -98.35];
 const FALLBACK_ZOOM = 4;
 const USER_ZOOM = 12;
 
-const flagSvg = `<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="5" y1="2" x2="5" y2="20" stroke="#4da862" stroke-width="1.8" stroke-linecap="round"/><path d="M5 2 L15 6 L5 10Z" fill="#4da862"/><ellipse cx="5" cy="20" rx="3.5" ry="1.5" fill="rgba(77,168,98,0.25)"/></svg>`;
 
 export default function MapPage() {
   const router = useRouter();
@@ -98,36 +97,27 @@ export default function MapPage() {
     markersRef.current = [];
 
     data.forEach(course => {
-      const hasClips = course.uploadCount > 0;
-      const count = course.uploadCount > 99 ? "99+" : String(course.uploadCount);
-      const borderColor = hasClips ? "#4da862" : "rgba(77,168,98,0.45)";
-      const fillColor = hasClips ? "#1e5c2e" : "#162b1e";
-
-      const badgeHtml = hasClips
-        ? `<div style="position:absolute;top:-5px;right:-7px;background:#4da862;color:#fff;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;border-radius:99px;padding:1px 5px;min-width:17px;text-align:center;line-height:15px;border:1.5px solid #07100a;z-index:2">${count}</div>`
+      // Teardrop pin: 44×56, circle top (r≈19) with logo inside, point at bottom
+      const logoInner = course.logoUrl
+        ? `<img src="${course.logoUrl}" style="width:26px;height:26px;border-radius:5px;object-fit:cover" />`
         : "";
 
-      const logoInner = course.logoUrl
-        ? `<img src="${course.logoUrl}" style="width:34px;height:34px;border-radius:7px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.15)" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div style="display:none;width:34px;height:34px;align-items:center;justify-content:center">${flagSvg}</div>`
-        : `<div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center">${flagSvg}</div>`;
-
       const pinHtml = `
-        <div style="position:relative;width:54px;height:68px;cursor:pointer;filter:drop-shadow(0 3px 10px rgba(0,0,0,0.65))">
-          <svg width="54" height="68" viewBox="0 0 54 68" style="position:absolute;top:0;left:0;pointer-events:none">
-            <path d="M27 66 C27 66 3 44 3 26 C3 13.3 13.3 3 27 3 C40.7 3 51 13.3 51 26 C51 44 27 66 27 66Z"
-              fill="${fillColor}" stroke="${borderColor}" stroke-width="2.5"/>
+        <div style="position:relative;width:44px;height:56px;cursor:pointer;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6))">
+          <svg width="44" height="56" viewBox="0 0 44 56" style="position:absolute;top:0;left:0;pointer-events:none">
+            <path d="M22 54 C22 54 3 36 3 21 C3 11 11 3 22 3 C33 3 41 11 41 21 C41 36 22 54 22 54Z"
+              fill="#1e5c2e" stroke="#4da862" stroke-width="2"/>
           </svg>
-          <div style="position:absolute;top:9px;left:10px;width:34px;height:34px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center">
+          <div style="position:absolute;top:8px;left:9px;width:26px;height:26px;border-radius:5px;overflow:hidden;display:flex;align-items:center;justify-content:center">
             ${logoInner}
           </div>
-          ${badgeHtml}
         </div>`;
 
       const icon = L.divIcon({
         html: pinHtml,
         className: "",
-        iconSize: [54, 68],
-        iconAnchor: [27, 68],
+        iconSize: [44, 56],
+        iconAnchor: [22, 56],
       });
 
       const marker = L.marker([course.latitude, course.longitude], { icon })
