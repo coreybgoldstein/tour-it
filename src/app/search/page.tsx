@@ -348,6 +348,22 @@ function SearchPageInner() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setCreateError("You must be logged in."); setCreating(false); return; }
+
+    // Geocode city + state so the course appears on the map immediately
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    try {
+      const geoRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`${newCity.trim()}, ${newState.trim()}, US`)}&format=json&limit=1`,
+        { headers: { "Accept-Language": "en" } }
+      );
+      const geoData = await geoRes.json();
+      if (geoData?.[0]) {
+        latitude = parseFloat(geoData[0].lat);
+        longitude = parseFloat(geoData[0].lon);
+      }
+    } catch {}
+
     const slug = `${newName}-${newCity}-${newState}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
     const now = new Date().toISOString();
     const { data, error } = await supabase.from("Course").insert({
@@ -355,6 +371,7 @@ function SearchPageInner() {
       name: newName.trim(), city: newCity.trim(), state: newState.trim().toUpperCase(),
       country: "US", holeCount: parseInt(newHoles) || 18, isPublic: newPublic,
       slug, uploadCount: 0, saveCount: 0, viewCount: 0,
+      ...(latitude != null && longitude != null ? { latitude, longitude } : {}),
       createdAt: now, updatedAt: now,
     }).select("id").single();
     setCreating(false);

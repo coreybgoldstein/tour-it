@@ -58,6 +58,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     updates.zipCode = updates.zipCode.trim().slice(0, 10) || null;
   }
 
+  // If city or state changed, re-geocode so the course stays on the map
+  const cityChanged = "city" in updates && updates.city;
+  const stateChanged = "state" in updates && updates.state;
+  if (cityChanged || stateChanged) {
+    const { data: existing } = await supabase
+      .from("Course")
+      .select("city, state")
+      .eq("id", id)
+      .single();
+    const city = (updates.city as string | null) ?? existing?.city ?? "";
+    const state = (updates.state as string | null) ?? existing?.state ?? "";
+    if (city && state) {
+      try {
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`${city}, ${state}, US`)}&format=json&limit=1`,
+          { headers: { "Accept-Language": "en", "User-Agent": "TourIt/1.0" } }
+        );
+        const geoData = await geoRes.json();
+        if (geoData?.[0]) {
+          updates.latitude = parseFloat(geoData[0].lat);
+          updates.longitude = parseFloat(geoData[0].lon);
+        }
+      } catch {}
+    }
+  }
+
   const { error } = await supabase.from("Course").update(updates).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
