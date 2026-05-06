@@ -1267,7 +1267,12 @@ const [editDescription, setEditDescription] = useState("");
               </div>
               {scorecardView === "digital" && !scorecardEditMode && (
                 <button
-                  onClick={() => { setEditedHoles([...holes]); setScorecardEditMode(true); }}
+                  onClick={() => {
+                    const template = holes.length > 0 ? [...holes] :
+                      Array.from({ length: 18 }, (_, i) => ({ id: `new-${i + 1}`, holeNumber: i + 1, par: 4, handicapRank: i + 1, yardage: null }));
+                    setEditedHoles(template);
+                    setScorecardEditMode(true);
+                  }}
                   style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "7px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -1284,10 +1289,19 @@ const [editDescription, setEditDescription] = useState("");
                     onClick={async () => {
                       setSavingScorecard(true);
                       const supabase = createClient();
-                      await Promise.all(editedHoles.map(h =>
-                        supabase.from("Hole").update({ par: h.par, yardage: h.yardage, handicapRank: h.handicapRank }).eq("id", h.id)
-                      ));
-                      setHoles([...editedHoles]);
+                      const saved: typeof editedHoles = [];
+                      for (const h of editedHoles) {
+                        if (h.id.startsWith("new-")) {
+                          const now = new Date().toISOString();
+                          const { data } = await supabase.from("Hole").insert({ courseId: id, holeNumber: h.holeNumber, par: h.par, yardage: h.yardage, handicapRank: h.handicapRank, createdAt: now, updatedAt: now }).select("id").single();
+                          saved.push(data ? { ...h, id: data.id } : h);
+                        } else {
+                          await supabase.from("Hole").update({ par: h.par, yardage: h.yardage, handicapRank: h.handicapRank }).eq("id", h.id);
+                          saved.push(h);
+                        }
+                      }
+                      setHoles(saved);
+                      setEditedHoles(saved);
                       setScorecardEditMode(false);
                       setSavingScorecard(false);
                     }}
