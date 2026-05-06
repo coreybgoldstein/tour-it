@@ -21,6 +21,9 @@ const FALLBACK_CENTER: [number, number] = [39.5, -98.35];
 const FALLBACK_ZOOM = 4;
 const USER_ZOOM = 12;
 
+// Golf flag icon used as pin fallback when no course logo
+const flagSvg = `<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="5" y1="2" x2="5" y2="20" stroke="#4da862" stroke-width="1.8" stroke-linecap="round"/><path d="M5 2 L15 6 L5 10Z" fill="#4da862"/><ellipse cx="5" cy="20" rx="3.5" ry="1.5" fill="rgba(77,168,98,0.25)"/></svg>`;
+
 export default function MapPage() {
   const router = useRouter();
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -61,20 +64,38 @@ export default function MapPage() {
     data.forEach(course => {
       const hasClips = course.uploadCount > 0;
       const count = course.uploadCount > 99 ? "99+" : String(course.uploadCount);
+      const borderColor = hasClips ? "#4da862" : "rgba(77,168,98,0.45)";
+      const fillColor = hasClips ? "#1e5c2e" : "#162b1e";
 
+      // Clip count badge top-right of the pin
       const badgeHtml = hasClips
-        ? `<div style="position:absolute;top:-6px;right:-6px;background:#4da862;color:#fff;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;border-radius:99px;padding:1px 4px;min-width:16px;text-align:center;line-height:14px;border:1.5px solid #07100a">${count}</div>`
+        ? `<div style="position:absolute;top:-5px;right:-7px;background:#4da862;color:#fff;font-family:'Outfit',sans-serif;font-size:9px;font-weight:700;border-radius:99px;padding:1px 5px;min-width:17px;text-align:center;line-height:15px;border:1.5px solid #07100a;z-index:2">${count}</div>`
         : "";
 
-      const logoHtml = course.logoUrl
-        ? `<img src="${course.logoUrl}" style="width:22px;height:22px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'" />`
-        : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`;
+      // Square logo with rounded corners inside the pin — or a golf flag fallback
+      const logoInner = course.logoUrl
+        ? `<img src="${course.logoUrl}" style="width:34px;height:34px;border-radius:7px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.15)" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div style="display:none;width:34px;height:34px;align-items:center;justify-content:center">${flagSvg}</div>`
+        : `<div style="width:34px;height:34px;display:flex;align-items:center;justify-content:center">${flagSvg}</div>`;
+
+      // Teardrop pin shape matching Tour It logo style
+      // 54×68px total: 48px circle on top, 20px tail pointing down
+      const pinHtml = `
+        <div style="position:relative;width:54px;height:68px;cursor:pointer;filter:drop-shadow(0 3px 10px rgba(0,0,0,0.65))">
+          <svg width="54" height="68" viewBox="0 0 54 68" style="position:absolute;top:0;left:0;pointer-events:none">
+            <path d="M27 66 C27 66 3 44 3 26 C3 13.3 13.3 3 27 3 C40.7 3 51 13.3 51 26 C51 44 27 66 27 66Z"
+              fill="${fillColor}" stroke="${borderColor}" stroke-width="2.5"/>
+          </svg>
+          <div style="position:absolute;top:9px;left:10px;width:34px;height:34px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center">
+            ${logoInner}
+          </div>
+          ${badgeHtml}
+        </div>`;
 
       const icon = L.divIcon({
-        html: `<div style="width:34px;height:34px;border-radius:50%;background:${hasClips ? "#2d7a42" : "#1a3d22"};border:2px solid ${hasClips ? "#4da862" : "rgba(77,168,98,0.35)"};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.6);position:relative;cursor:pointer">${logoHtml}${badgeHtml}</div>`,
+        html: pinHtml,
         className: "",
-        iconSize: [34, 34],
-        iconAnchor: [17, 17],
+        iconSize: [54, 68],
+        iconAnchor: [27, 68],
       });
 
       const marker = L.marker([course.latitude, course.longitude], { icon })
