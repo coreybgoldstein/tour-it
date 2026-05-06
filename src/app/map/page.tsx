@@ -26,13 +26,15 @@ export default function MapPage() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
-  const userMarkerRef = useRef<any>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipNextMoveRef = useRef(false);
 
   const [courses, setCourses] = useState<MapCourse[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [courseCount, setCourseCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const cardStripRef = useRef<HTMLDivElement>(null);
 
   const fetchByBounds = useCallback(async (map: any) => {
@@ -87,6 +89,37 @@ export default function MapPage() {
     });
   }, []);
 
+  const handleSearch = useCallback(async () => {
+    const q = searchQuery.trim();
+    if (!q || !mapRef.current) return;
+    setSearching(true);
+    setSearchError("");
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=us`;
+      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+      const results = await res.json();
+      if (!results?.length) {
+        setSearchError("Location not found");
+        return;
+      }
+      const { lat, lon, boundingbox } = results[0];
+      if (boundingbox) {
+        skipNextMoveRef.current = true;
+        mapRef.current.fitBounds(
+          [[parseFloat(boundingbox[0]), parseFloat(boundingbox[2])], [parseFloat(boundingbox[1]), parseFloat(boundingbox[3])]],
+          { maxZoom: 12, duration: 1.2 }
+        );
+      } else {
+        skipNextMoveRef.current = true;
+        mapRef.current.flyTo([parseFloat(lat), parseFloat(lon)], 12, { duration: 1.2 });
+      }
+    } catch {
+      setSearchError("Search failed — try again");
+    } finally {
+      setSearching(false);
+    }
+  }, [searchQuery]);
+
   useEffect(() => {
     let cancelled = false;
     let L: any = null;
@@ -112,13 +145,11 @@ export default function MapPage() {
 
       L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-        {
-          subdomains: "abcd",
-          maxZoom: 19,
-        }
+        { subdomains: "abcd", maxZoom: 19 }
       ).addTo(map);
 
-      L.control.zoom({ position: "topright" }).addTo(map);
+      // Zoom controls bottom-right, above the card strip
+      L.control.zoom({ position: "bottomright" }).addTo(map);
 
       L.control
         .attribution({ position: "bottomleft", prefix: "© OpenStreetMap © CARTO" })
@@ -139,7 +170,7 @@ export default function MapPage() {
             iconSize: [14, 14],
             iconAnchor: [7, 7],
           });
-          userMarkerRef.current = L.marker([latitude, longitude], { icon: dot, zIndexOffset: 1000 }).addTo(map);
+          L.marker([latitude, longitude], { icon: dot, zIndexOffset: 1000 }).addTo(map);
         },
         () => {},
         { enableHighAccuracy: false, timeout: 8000 }
@@ -177,41 +208,81 @@ export default function MapPage() {
     <>
       <style>{`
         .leaflet-container { background: #07100a !important; }
-        .leaflet-control-zoom a { background: rgba(15,30,18,0.9) !important; border-color: rgba(255,255,255,0.12) !important; color: #fff !important; }
+        .leaflet-control-zoom { margin-bottom: 160px !important; margin-right: 12px !important; }
+        .leaflet-control-zoom a { background: rgba(15,30,18,0.92) !important; border-color: rgba(255,255,255,0.12) !important; color: #fff !important; width: 32px !important; height: 32px !important; line-height: 32px !important; font-size: 16px !important; }
         .leaflet-control-zoom a:hover { background: rgba(45,122,66,0.4) !important; }
-        .leaflet-control-attribution { background: rgba(7,16,10,0.7) !important; color: rgba(255,255,255,0.3) !important; font-size: 9px !important; }
+        .leaflet-control-attribution { background: rgba(7,16,10,0.7) !important; color: rgba(255,255,255,0.3) !important; font-size: 9px !important; margin-bottom: 80px !important; }
         .leaflet-control-attribution a { color: rgba(255,255,255,0.4) !important; }
         .card-strip::-webkit-scrollbar { display: none; }
+        .map-search-input::placeholder { color: rgba(255,255,255,0.3); }
+        .map-search-input { background: none; border: none; outline: none; font-family: 'Outfit', sans-serif; font-size: 14px; color: #fff; flex: 1; min-width: 0; }
       `}</style>
 
       <div style={{ position: "fixed", inset: 0, background: "#07100a", display: "flex", flexDirection: "column" }}>
         {/* Header */}
         <div style={{
           position: "absolute", top: 0, left: 0, right: 0, zIndex: 500,
-          display: "flex", alignItems: "center", gap: 12,
           paddingTop: "max(env(safe-area-inset-top, 0px), 12px)",
-          paddingBottom: 12,
+          paddingBottom: 10,
           paddingLeft: 16,
           paddingRight: 16,
-          background: "linear-gradient(to bottom, rgba(7,16,10,0.92) 0%, transparent 100%)",
+          background: "linear-gradient(to bottom, rgba(7,16,10,0.95) 60%, transparent 100%)",
           pointerEvents: "none",
         }}>
-          <button
-            onClick={() => router.back()}
-            style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, pointerEvents: "all" }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <div style={{ flex: 1, pointerEvents: "none" }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#fff", lineHeight: 1 }}>Courses Near Me</div>
-            {courseCount > 0 && (
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
-                {courseCount} course{courseCount !== 1 ? "s" : ""} in view
-              </div>
-            )}
+          {/* Back + title row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+            <button
+              onClick={() => router.back()}
+              style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, pointerEvents: "all" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <div style={{ flex: 1, pointerEvents: "none" }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#fff", lineHeight: 1 }}>Courses Near Me</div>
+              {courseCount > 0 && (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+                  {courseCount} course{courseCount !== 1 ? "s" : ""} in view
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Search bar */}
+          <form
+            onSubmit={e => { e.preventDefault(); handleSearch(); }}
+            style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "9px 12px", pointerEvents: "all" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              className="map-search-input"
+              type="text"
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setSearchError(""); }}
+              placeholder="Search city or zip code…"
+              autoComplete="off"
+            />
+            {searchQuery.length > 0 && (
+              <button type="button" onClick={() => { setSearchQuery(""); setSearchError(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "flex", alignItems: "center" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={searching || searchQuery.trim().length === 0}
+              style={{ background: searching || searchQuery.trim().length === 0 ? "rgba(255,255,255,0.06)" : "#2d7a42", border: "none", borderRadius: 8, padding: "5px 10px", cursor: searching || searchQuery.trim().length === 0 ? "default" : "pointer", transition: "background 0.2s", flexShrink: 0 }}
+            >
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: searching || searchQuery.trim().length === 0 ? "rgba(255,255,255,0.3)" : "#fff" }}>
+                {searching ? "…" : "Go"}
+              </span>
+            </button>
+          </form>
+          {searchError && (
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "#e8353a", marginTop: 6, paddingLeft: 4, pointerEvents: "none" }}>{searchError}</div>
+          )}
         </div>
 
         {/* Map */}
@@ -238,7 +309,7 @@ export default function MapPage() {
                   key={course.id}
                   onClick={() => {
                     if (selectedId === course.id) {
-                      router.push(`/courses/${course.id}`);
+                      router.push(`/courses/${course.id}?from=map`);
                     } else {
                       setSelectedId(course.id);
                       if (mapRef.current) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useLike } from "@/hooks/useLike";
@@ -317,6 +317,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
 export default function CourseProfilePage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromMap = searchParams.get("from") === "map";
   const isDesktop = useIsDesktop();
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
@@ -900,6 +902,17 @@ const [editDescription, setEditDescription] = useState("");
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Add cover photo</span>
+          </button>
+        )}
+
+        {/* Back to map button — only shown when navigated from /map */}
+        {fromMap && (
+          <button
+            onClick={() => router.back()}
+            style={{ position: "absolute", top: 8, left: 16, zIndex: 11, display: "flex", alignItems: "center", gap: 6, background: "rgba(7,16,10,0.75)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "6px 12px 6px 8px", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>Map</span>
           </button>
         )}
 

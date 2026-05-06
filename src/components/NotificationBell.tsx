@@ -18,6 +18,7 @@ export default function NotificationBell() {
     pathname === "/onboarding" ||
     pathname === "/upload" ||
     pathname === "/notifications" || // already on notifications page
+    pathname === "/map" || // map has its own controls
     pathname.startsWith("/admin") ||
     pathname.startsWith("/courses/"); // clips are inside course pages
 
