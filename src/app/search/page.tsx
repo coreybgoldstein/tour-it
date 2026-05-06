@@ -349,19 +349,24 @@ function SearchPageInner() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setCreateError("You must be logged in."); setCreating(false); return; }
 
-    // Geocode city + state so the course appears on the map immediately
+    // Geocode the actual course by name+city+state (OSM has most golf courses indexed)
+    // Falls back to city+state center if the named search misses
     let latitude: number | null = null;
     let longitude: number | null = null;
     try {
-      const geoRes = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`${newCity.trim()}, ${newState.trim()}, US`)}&format=json&limit=1`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const geoData = await geoRes.json();
-      if (geoData?.[0]) {
-        latitude = parseFloat(geoData[0].lat);
-        longitude = parseFloat(geoData[0].lon);
-      }
+      const tryGeo = async (q: string) => {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,
+          { headers: { "Accept-Language": "en" } }
+        );
+        const d = await r.json();
+        return d?.[0] ? { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) } : null;
+      };
+      // First try: exact course name in that city/state
+      const exact = await tryGeo(`${newName.trim()}, ${newCity.trim()}, ${newState.trim()}, US`);
+      // Fallback: city center if the course name isn't in OSM yet
+      const result = exact ?? await tryGeo(`${newCity.trim()}, ${newState.trim()}, US`);
+      if (result) { latitude = result.lat; longitude = result.lon; }
     } catch {}
 
     const slug = `${newName}-${newCity}-${newState}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
