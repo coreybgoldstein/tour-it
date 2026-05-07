@@ -2,14 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Tour It uses your camera to record hole-by-hole golf course videos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Tour It records audio with your videos to capture the course experience.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Tour It accesses your photos so you can upload course images.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Tour It uses your location to show nearby golf courses.</string>
+	<string>Tour It accesses your photo library so you can upload golf course videos and images.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Tour It saves clips to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Tour It uses your location to show nearby golf courses.</string>
+	<string>Tour It uses your location to show nearby golf courses and tag your clips.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Tour It uses your location to show nearby golf courses and tag your clips.</string>
 	<key>LSApplicationCategoryType</key>
-	<string></string>
+	<string>public.app-category.sports</string>
 	<key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
@@ -43,16 +49,14 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
