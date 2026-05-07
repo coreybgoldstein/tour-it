@@ -596,6 +596,24 @@ export default function Home() {
   const hasMoreRef = useRef(true);
   const loadingMoreRef = useRef(false);
 
+  // Auto-fetch near-me if geolocation permission already granted (no prompt)
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.permissions?.query({ name: "geolocation" as PermissionName })
+      .then(result => {
+        if (result.state === "granted") fetchNearMe();
+        else if (result.state === "denied") setLocationStatus("denied");
+      })
+      .catch(() => {
+        // Permissions API unavailable — auto-fetch if we have cached coords
+        try {
+          const raw = localStorage.getItem("tour-it-location");
+          if (raw) { const { ts } = JSON.parse(raw); if (Date.now() - ts < 86400000 * 7) fetchNearMe(); }
+        } catch {}
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const supabase = createClient();
 
