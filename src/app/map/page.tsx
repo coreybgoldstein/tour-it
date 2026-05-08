@@ -143,7 +143,7 @@ export default function MapPage() {
     });
   }, []);
 
-  // Fetch suggestions: courses from DB + locations from Nominatim
+  // Fetch suggestions: courses from DB + locations from Nominatim (+ fast ZIP via zippopotam.us)
   const fetchSuggestions = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
       setSuggestions([]);
@@ -151,6 +151,7 @@ export default function MapPage() {
       return;
     }
     setLoadingSuggestions(true);
+    const isZip = /^\d{5}$/.test(q.trim());
     try {
       const [dbRes, nominatimRes] = await Promise.allSettled([
         supabase
@@ -159,10 +160,18 @@ export default function MapPage() {
           .or(`name.ilike.%${q}%,city.ilike.%${q}%`)
           .order("uploadCount", { ascending: false })
           .limit(6),
-        fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=us&addressdetails=1`,
-          { headers: { "Accept-Language": "en" } }
-        ).then(r => r.json()),
+        isZip
+          ? fetch(`https://api.zippopotam.us/us/${q.trim()}`).then(async r => {
+              if (!r.ok) throw new Error("zip not found");
+              const d = await r.json();
+              const place = d.places?.[0];
+              if (!place) throw new Error("no place");
+              return [{ lat: place.latitude, lon: place.longitude, display_name: `${q.trim()} — ${place["place name"]}, ${d["state abbreviation"]}`, type: "postcode", address: { postcode: q.trim(), city: place["place name"], ISO3166_2_lvl4: `US-${d["state abbreviation"]}` } }];
+            })
+          : fetch(
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=us&addressdetails=1`,
+              { headers: { "Accept-Language": "en" } }
+            ).then(r => r.json()),
       ]);
 
       const courseSuggestions: CourseSuggestion[] =
