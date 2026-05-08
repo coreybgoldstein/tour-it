@@ -29,7 +29,6 @@ const POINTS_EXAMPLES = [
   { label: "4-week upload streak",             pts: 150 },
 ];
 
-const COURSE_BG = `${SUPABASE_STORAGE}/course-images/ceb95a05-d039-4f2d-ae01-6bdd954d00c1-cover.jpg`;
 
 type Course = { id: string; name: string; city: string; state: string };
 
@@ -56,6 +55,7 @@ export default function OnboardingProfilePage() {
   const [courseSearched, setCourseSearched] = useState(false);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [courseBgUrl, setCourseBgUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -77,6 +77,14 @@ export default function OnboardingProfilePage() {
         if (profile.avatarUrl) setAvatarPreview(profile.avatarUrl);
       }
     });
+    createClient()
+      .from("Course")
+      .select("coverImageUrl")
+      .not("coverImageUrl", "is", null)
+      .order("uploadCount", { ascending: false })
+      .limit(1)
+      .single()
+      .then(({ data }) => { if (data?.coverImageUrl) setCourseBgUrl(data.coverImageUrl); });
   }, [router]);
 
   useEffect(() => {
@@ -198,9 +206,9 @@ export default function OnboardingProfilePage() {
       `}</style>
 
       {/* Step 4 full-bleed background */}
-      {step === 4 && (
+      {step === 4 && courseBgUrl && (
         <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
-          <img src={COURSE_BG} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+          <img src={courseBgUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.55) 0%, rgba(7,16,10,0.78) 40%, rgba(7,16,10,0.94) 75%, #07100a 100%)" }} />
         </div>
       )}
@@ -231,37 +239,37 @@ export default function OnboardingProfilePage() {
           {step === 1 && (
             <div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, lineHeight: 1.15, marginBottom: 6 }}>Let&apos;s set up<br />your profile</div>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 28, lineHeight: 1.6 }}>{username ? `Welcome, @${username}. ` : ""}Tell the golf community who you are.</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 24, lineHeight: 1.6 }}>{username ? `Welcome, @${username}. ` : ""}Tell the golf community who you are.</div>
+
+              {/* Display name — first */}
+              <div style={{ marginBottom: 24 }}>
+                <label className="ob-label">Display Name *</label>
+                <input className="ob-input" placeholder="Your name or nickname" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(""); }} autoFocus />
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>This is what other golfers see — can be your real name or a nickname.</div>
+              </div>
 
               {/* Avatar */}
-              <div style={{ marginBottom: 28 }}>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-                  <div style={{ position: "relative", width: 88, height: 88, borderRadius: "50%", background: avatarPreview ? "transparent" : "rgba(77,168,98,0.08)", border: avatarPreview ? "none" : "2px dashed rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                    {avatarPreview
-                      ? <img src={avatarPreview} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-                  </div>
-                </div>
-                <button onClick={() => avatarInputRef.current?.click()} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 12, padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginBottom: 16 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                  {avatarFile ? "Photo selected ✓" : "Upload your own photo"}
-                </button>
-                <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarPick} style={{ display: "none" }} />
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", textAlign: "center", marginBottom: 12 }}>Or pick a character</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 12 }}>Choose your avatar</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 14 }}>
                   {DEFAULT_AVATARS.map(url => (
-                    <div key={url} onClick={() => { setSelectedDefault(url); setAvatarPreview(url); setAvatarFile(null); }} style={{ aspectRatio: "1", borderRadius: "50%", overflow: "hidden", cursor: "pointer", border: selectedDefault === url ? "2.5px solid #4da862" : "2.5px solid transparent", boxShadow: selectedDefault === url ? "0 0 0 1px rgba(77,168,98,0.4)" : "none", transition: "border-color 0.15s" }}>
+                    <div key={url} onClick={() => { setSelectedDefault(url); setAvatarPreview(url); setAvatarFile(null); }} style={{ aspectRatio: "1", borderRadius: "50%", overflow: "hidden", cursor: "pointer", border: selectedDefault === url ? "2.5px solid #4da862" : "2.5px solid rgba(255,255,255,0.08)", boxShadow: selectedDefault === url ? "0 0 0 1px rgba(77,168,98,0.4)" : "none", transition: "border-color 0.15s" }}>
                       <img src={url} alt="avatar option" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Display name */}
-              <div style={{ marginBottom: 8 }}>
-                <label className="ob-label">Display Name *</label>
-                <input className="ob-input" placeholder="Your name or nickname" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(""); }} />
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>This is what other golfers see — can be your real name or a nickname.</div>
+                <button onClick={() => avatarInputRef.current?.click()} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 12, padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  {avatarFile ? "Photo selected ✓" : "Or upload your own photo"}
+                </button>
+                <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarPick} style={{ display: "none" }} />
+                {avatarPreview && selectedDefault && (
+                  <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
+                    <div style={{ width: 64, height: 64, borderRadius: "50%", overflow: "hidden", border: "2.5px solid #4da862" }}>
+                      <img src={avatarPreview} alt="selected avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
