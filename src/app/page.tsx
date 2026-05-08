@@ -152,13 +152,14 @@ function NotificationBellInline() {
 }
 
 
-function CourseCard({ course, onClick }: { course: TrendingCourse; onClick: () => void }) {
+function CourseCard({ course, onClick, compact }: { course: TrendingCourse; onClick: () => void; compact?: boolean }) {
+  const h = compact ? 160 : 188;
   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
   return (
     <div
       onClick={onClick}
       style={{
-        width: 148, height: 188, borderRadius: 14, flexShrink: 0, overflow: "hidden",
+        width: 148, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
         cursor: "pointer", position: "relative", background: "rgba(10,28,18,0.95)",
         border: "1px solid rgba(26,158,66,0.12)",
       }}
@@ -582,7 +583,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
-  const [nearMeRadius, setNearMeRadius] = useState(50);
+  const [nearMeRadius, setNearMeRadius] = useState(10);
   const [publicOnly, setPublicOnly] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -1119,14 +1120,14 @@ export default function Home() {
           <MayCompetitionBanner />
 
           {/* Hero text */}
-          <div style={{ padding: "16px 20px 12px", flexShrink: 0 }}>
+          <div style={{ padding: "10px 20px 8px", flexShrink: 0 }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
               Scout your next round
             </div>
           </div>
 
           {/* Search CTA */}
-          <div style={{ padding: "0 20px 18px", flexShrink: 0 }}>
+          <div style={{ padding: "0 20px 12px", flexShrink: 0 }}>
             <button
               onClick={() => router.push("/search")}
               style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "rgba(26,158,66,0.07)", border: "1.5px solid rgba(26,158,66,0.55)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", boxShadow: "0 0 18px rgba(26,158,66,0.2), inset 0 0 10px rgba(26,158,66,0.04)" }}
@@ -1165,9 +1166,9 @@ export default function Home() {
                 </div>
                 <div className="courses-row">
                   {deduped.length > 0 ? deduped.map(course => (
-                    <CourseCard key={course.id} course={course} onClick={() => router.push(`/courses/${course.id}`)} />
+                    <CourseCard key={course.id} course={course} onClick={() => router.push(`/courses/${course.id}`)} compact />
                   )) : [1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 148, height: 188, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} style={{ width: 148, height: 160, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               </div>
@@ -1218,14 +1219,14 @@ export default function Home() {
               {locationStatus === "loading" && (
                 <div className="courses-row">
                   {[1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 148, height: 188, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} style={{ width: 148, height: 160, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               )}
               {locationStatus === "granted" && nearMeCourses.length > 0 && (
                 <div className="courses-row">
                   {nearMeCourses.map(course => (
-                    <CourseCard key={course.id} course={course} onClick={() => router.push(`/courses/${course.id}`)} />
+                    <CourseCard key={course.id} course={course} onClick={() => router.push(`/courses/${course.id}`)} compact />
                   ))}
                 </div>
               )}
