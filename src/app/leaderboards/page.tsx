@@ -7,6 +7,8 @@ import BottomNav from "@/components/BottomNav";
 import { rankLabel } from "@/lib/progression";
 import { RANK_COLORS } from "@/config/points-system";
 import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
+import { isMayActive } from "@/lib/competitions";
+import MayCompetitionModal from "@/components/MayCompetitionModal";
 
 type Period = "all" | "monthly";
 
@@ -28,6 +30,9 @@ export default function LeaderboardsPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myRank, setMyRank] = useState<number | null>(null);
+  const [showCompModal, setShowCompModal] = useState(false);
+
+  const currentMonth = new Date().toLocaleString("default", { month: "long" });
 
   useEffect(() => {
     const supabase = createClient();
@@ -96,9 +101,22 @@ export default function LeaderboardsPage() {
           <button
             key={p}
             onClick={() => setPeriod(p)}
-            style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${period === p ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.08)"}`, background: period === p ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.03)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: period === p ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "capitalize" }}
+            style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${period === p ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.08)"}`, background: period === p ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.03)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: period === p ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "capitalize", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
           >
-            {p === "all" ? "All Time" : "Monthly"}
+            {p === "all" ? "All Time" : currentMonth}
+            {p === "monthly" && isMayActive() && (
+              <span
+                onClick={e => { e.stopPropagation(); setShowCompModal(true); }}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+                title="May Competition rules"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="16" x2="12" y2="12"/>
+                  <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -172,6 +190,8 @@ export default function LeaderboardsPage() {
       )}
 
       <BottomNav />
+
+      {showCompModal && <MayCompetitionModal onClose={() => setShowCompModal(false)} />}
     </main>
   );
 }

@@ -16,6 +16,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { rateLimit } from "@/lib/rateLimit";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
+import MayCompetitionBanner from "@/components/MayCompetitionBanner";
 
 type TrendingCourse = {
   id: string;
@@ -1113,6 +1114,9 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* May Competition banner — only renders in May 2026 */}
+          <MayCompetitionBanner />
 
           {/* Hero text */}
           <div style={{ padding: "16px 20px 12px", flexShrink: 0 }}>
