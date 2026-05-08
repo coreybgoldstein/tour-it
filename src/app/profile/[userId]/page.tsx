@@ -181,9 +181,16 @@ function ProfileFeedCard({
         uploaderHandicap={uploaderInfo.handicapIndex}
       />
       {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
-        <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", left: 16, bottom: 128, zIndex: 10, pointerEvents: "none" }}>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
             {formatClipDate(clip.datePlayedAt, clip.createdAt)}
+          </span>
+        </div>
+      )}
+      {uploaderInfo.username && (
+        <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
+            {uploaderInfo.username}
           </span>
         </div>
       )}
