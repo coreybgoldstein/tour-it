@@ -55,6 +55,13 @@ export default function OnboardingProfilePage() {
   const [courseSearched, setCourseSearched] = useState(false);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [addCourseOpen, setAddCourseOpen] = useState(false);
+  const [newCity, setNewCity] = useState("");
+  const [newState, setNewState] = useState("");
+  const [newHoles, setNewHoles] = useState("18");
+  const [addingCourse, setAddingCourse] = useState(false);
+  const [addCourseError, setAddCourseError] = useState("");
+
   const [courseBgUrl, setCourseBgUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -168,6 +175,39 @@ export default function OnboardingProfilePage() {
     setSaving(false);
     const next = homeCourse ? `/courses/${homeCourse.id}` : null;
     router.push(`/onboarding/notifications${next ? `?next=${encodeURIComponent(next)}` : ""}`);
+  };
+
+  const handleAddCourse = async () => {
+    if (!newCity.trim() || !newState.trim()) { setAddCourseError("City and state are required."); return; }
+    setAddingCourse(true); setAddCourseError("");
+    const supabase = createClient();
+    const name = courseSearch.trim();
+    let latitude: number | null = null, longitude: number | null = null;
+    try {
+      const tryGeo = async (q: string) => {
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`, { headers: { "Accept-Language": "en" } });
+        const d = await r.json();
+        return d?.[0] ? { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) } : null;
+      };
+      const result = await tryGeo(`${name}, ${newCity.trim()}, ${newState.trim()}, US`) ?? await tryGeo(`${newCity.trim()}, ${newState.trim()}, US`);
+      if (result) { latitude = result.lat; longitude = result.lon; }
+    } catch {}
+    const slug = `${name}-${newCity}-${newState}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
+    const now = new Date().toISOString();
+    const courseId = crypto.randomUUID();
+    const { error: cErr } = await supabase.from("Course").insert({
+      id: courseId, name, city: newCity.trim(), state: newState.trim().toUpperCase(),
+      country: "US", holeCount: parseInt(newHoles) || 18, isPublic: true,
+      slug, uploadCount: 0, saveCount: 0, viewCount: 0,
+      ...(latitude != null && longitude != null ? { latitude, longitude } : {}),
+      createdAt: now, updatedAt: now,
+    });
+    if (cErr) { setAddCourseError(cErr.message); setAddingCourse(false); return; }
+    const holeTotal = parseInt(newHoles) || 18;
+    await supabase.from("Hole").insert(Array.from({ length: holeTotal }, (_, i) => ({ id: crypto.randomUUID(), courseId, holeNumber: i + 1, par: 4, uploadCount: 0, createdAt: now, updatedAt: now })));
+    setHomeCourse({ id: courseId, name, city: newCity.trim(), state: newState.trim().toUpperCase() });
+    setAddCourseOpen(false);
+    setAddingCourse(false);
   };
 
   const handleNext = () => {
@@ -408,14 +448,57 @@ export default function OnboardingProfilePage() {
 
                   {courseSearched && courseResults.length === 0 && courseSearch.trim().length > 2 && (
                     <div style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px" }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 8 }}>No courses found for &ldquo;{courseSearch}&rdquo;</div>
-                      <a
-                        href={`mailto:corey@touritgolf.com?subject=Add course: ${encodeURIComponent(courseSearch)}&body=Hi, I'd like to add ${encodeURIComponent(courseSearch)} to Tour It.`}
-                        style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Request this course be added →
-                      </a>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 10 }}>
+                        No courses found for &ldquo;{courseSearch}&rdquo;
+                      </div>
+                      {!addCourseOpen ? (
+                        <button
+                          onClick={() => { setAddCourseOpen(true); setNewCity(""); setNewState(""); setAddCourseError(""); }}
+                          style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          Add &ldquo;{courseSearch}&rdquo; to Tour It →
+                        </button>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 4 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                            {courseSearch}
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <input
+                              value={newCity}
+                              onChange={e => setNewCity(e.target.value)}
+                              placeholder="City"
+                              style={{ flex: 1, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                            />
+                            <input
+                              value={newState}
+                              onChange={e => setNewState(e.target.value.toUpperCase().slice(0, 2))}
+                              placeholder="ST"
+                              maxLength={2}
+                              style={{ width: 56, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", textAlign: "center" }}
+                            />
+                          </div>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            {["9","18"].map(h => (
+                              <button key={h} onClick={() => setNewHoles(h)}
+                                style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${newHoles === h ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`, background: newHoles === h ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: newHoles === h ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer" }}>
+                                {h} holes
+                              </button>
+                            ))}
+                          </div>
+                          {addCourseError && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#ef4444" }}>{addCourseError}</div>}
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button onClick={() => setAddCourseOpen(false)} style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer" }}>
+                              Cancel
+                            </button>
+                            <button onClick={handleAddCourse} disabled={addingCourse}
+                              style={{ flex: 2, padding: "10px 0", borderRadius: 10, border: "none", background: "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", cursor: addingCourse ? "default" : "pointer", opacity: addingCourse ? 0.6 : 1 }}>
+                              {addingCourse ? "Creating…" : "Create & Set as Home Course"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
