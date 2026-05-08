@@ -1,9 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import {
   POINT_VALUES,
+  RANK_UP_BONUSES,
   ONE_TIME_ACTIONS,
   PointAction,
   type PointActionKey,
+  type RankTierKey,
 } from "@/config/points-system";
 import { computeLevel, computeRank } from "@/lib/progression";
 
@@ -124,9 +126,12 @@ export async function awardPoints({
   // active competitions, so this MUST stay in sync with totalPoints.
   const { data: prog } = await supabase
     .from("UserProgression")
-    .select("totalPoints, weeklyPoints, monthlyPoints")
+    .select("totalPoints, weeklyPoints, monthlyPoints, level, rank")
     .eq("userId", userId)
     .maybeSingle();
+
+  const oldLevel = prog?.level ?? 1;
+  const oldRank  = prog?.rank  ?? "CADDIE";
 
   const totalPoints   = Math.max(0, (prog?.totalPoints   ?? 0) + points);
   const weeklyPoints  = Math.max(0, (prog?.weeklyPoints  ?? 0) + points);
@@ -135,15 +140,72 @@ export async function awardPoints({
   const rank          = computeRank(level);
   const now           = new Date().toISOString();
 
+  // Award level-up bonuses for each new level reached
+  let bonusPoints = 0;
+  if (level > oldLevel) {
+    for (let lvl = oldLevel + 1; lvl <= level; lvl++) {
+      const { count } = await supabase
+        .from("UserPointsLedger")
+        .select("id", { count: "exact", head: true })
+        .eq("userId", userId)
+        .eq("action", PointAction.LEVEL_UP)
+        .eq("referenceId", `level_${lvl}`);
+      if ((count ?? 0) === 0) {
+        const bonus = POINT_VALUES[PointAction.LEVEL_UP];
+        bonusPoints += bonus;
+        await supabase.from("UserPointsLedger").insert({
+          id: crypto.randomUUID(),
+          userId,
+          action: PointAction.LEVEL_UP,
+          points: bonus,
+          referenceId: `level_${lvl}`,
+          metadata: null,
+          createdAt: now,
+        });
+      }
+    }
+  }
+
+  // Award rank-up bonus when rank tier changes
+  if (rank !== oldRank) {
+    const { count } = await supabase
+      .from("UserPointsLedger")
+      .select("id", { count: "exact", head: true })
+      .eq("userId", userId)
+      .eq("action", PointAction.RANK_UP)
+      .eq("referenceId", `rank_${rank}`);
+    if ((count ?? 0) === 0) {
+      const bonus = RANK_UP_BONUSES[rank as RankTierKey] ?? 0;
+      if (bonus > 0) {
+        bonusPoints += bonus;
+        await supabase.from("UserPointsLedger").insert({
+          id: crypto.randomUUID(),
+          userId,
+          action: PointAction.RANK_UP,
+          points: bonus,
+          referenceId: `rank_${rank}`,
+          metadata: null,
+          createdAt: now,
+        });
+      }
+    }
+  }
+
+  const finalTotal   = totalPoints + bonusPoints;
+  const finalWeekly  = weeklyPoints + bonusPoints;
+  const finalMonthly = monthlyPoints + bonusPoints;
+  const finalLevel   = computeLevel(finalTotal);
+  const finalRank    = computeRank(finalLevel);
+
   const { error: progErr } = await supabase.from("UserProgression").upsert(
     {
       userId,
-      totalPoints,
-      weeklyPoints,
-      monthlyPoints,
-      level,
-      rank,
-      updatedAt: now,
+      totalPoints:   finalTotal,
+      weeklyPoints:  finalWeekly,
+      monthlyPoints: finalMonthly,
+      level:         finalLevel,
+      rank:          finalRank,
+      updatedAt:     now,
     },
     { onConflict: "userId" }
   );
@@ -153,5 +215,5 @@ export async function awardPoints({
     return null;
   }
 
-  return { totalPoints, level };
+  return { totalPoints: finalTotal, level: finalLevel };
 }

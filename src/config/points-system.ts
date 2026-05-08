@@ -57,6 +57,10 @@ export const PointAction = {
   // Referrals
   REFERRAL_SIGNUP:             "referral_signup",
 
+  // Progression milestones
+  LEVEL_UP:                    "level_up",
+  RANK_UP:                     "rank_up",
+
   // Reversals
   UNLIKE_RECEIVED:             "unlike_received",
   UPLOAD_DELETED:              "upload_deleted",
@@ -112,6 +116,10 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
 
   [PointAction.REFERRAL_SIGNUP]:          100,
 
+  [PointAction.LEVEL_UP]:                  25,
+  // Variable — actual amount comes from RANK_UP_BONUSES, passed via customAmount.
+  [PointAction.RANK_UP]:                    0,
+
   [PointAction.UNLIKE_RECEIVED]:           -2,
   [PointAction.UPLOAD_DELETED]:           -20,
 };
@@ -161,6 +169,15 @@ export const RANK_TIERS = [
 ] as const;
 
 export type RankTierKey = typeof RANK_TIERS[number]["rank"];
+
+// Bonus points awarded upon reaching each rank for the first time
+export const RANK_UP_BONUSES: Partial<Record<RankTierKey, number>> = {
+  LOCAL:      100,
+  MARSHAL:    200,
+  COURSE_PRO: 350,
+  TOUR_PRO:   500,
+  LEGEND:     1000,
+};
 
 export const RANK_COLORS: Record<RankTierKey, string> = {
   CADDIE:     "rgba(190,190,190,0.75)",

@@ -20,6 +20,8 @@ const COMPETITION_POINTS: CompetitionRow[] = [
   { label: "Comment received on your clip",            display: `+${POINT_VALUES[PointAction.COMMENT_RECEIVED]} pts` },
   { label: "New follower",                             display: `+${POINT_VALUES[PointAction.FOLLOW_RECEIVED]} pts` },
   { label: "3-week upload streak",                     display: `+${POINT_VALUES[PointAction.STREAK_3_WEEKS]} pts` },
+  { label: "Level up",                                 display: `+${POINT_VALUES[PointAction.LEVEL_UP]} pts` },
+  { label: "Rank promotion (LOCAL → LEGEND)",          display: "+100 to +1000 pts" },
 ];
 
 export default function MayCompetitionModal({ onClose }: Props) {
