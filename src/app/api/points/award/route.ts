@@ -10,8 +10,10 @@ const SELF_ACTIONS = new Set<PointActionKey>([
   PointAction.COMPLETE_PROFILE,
   PointAction.ENABLE_NOTIFICATIONS,
   PointAction.UPLOAD_CLIP,
-  PointAction.UPLOAD_FIRST_FOR_HOLE,
   PointAction.UPLOAD_FIRST_FOR_COURSE,
+  PointAction.UPLOAD_SERIES,
+  PointAction.INTEL_BONUS,
+  PointAction.ADD_HOLE_PHOTO,
   PointAction.UPLOAD_DELETED,
 ]);
 
@@ -20,7 +22,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { action, recipientUserId, referenceId, metadata } = await req.json();
+  const { action, recipientUserId, referenceId, metadata, customAmount } = await req.json();
   if (!action) return NextResponse.json({ error: "Missing action" }, { status: 400 });
 
   const isSelf = SELF_ACTIONS.has(action as PointActionKey);
@@ -36,6 +38,7 @@ export async function POST(req: NextRequest) {
     action: action as PointActionKey,
     referenceId,
     metadata,
+    customAmount: typeof customAmount === "number" ? customAmount : undefined,
   });
 
   // Badge checks run async — don't block the response

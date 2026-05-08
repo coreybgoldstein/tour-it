@@ -45,10 +45,6 @@ export async function checkBadgesForAction(
       await awardBadge(userId, "course_pioneer");
       break;
 
-    case PointAction.UPLOAD_FIRST_FOR_HOLE:
-      await awardBadge(userId, "hole_trailblazer");
-      break;
-
     case PointAction.LIKE_RECEIVED: {
       if (!referenceId) break;
       const { data: upload } = await supabase

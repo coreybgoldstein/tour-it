@@ -4,7 +4,7 @@ import { awardPoints } from "@/lib/awardPoints";
 import { PointAction } from "@/config/points-system";
 
 const STREAK_MILESTONES: { weeks: number; action: typeof PointAction[keyof typeof PointAction] }[] = [
-  { weeks: 4,  action: PointAction.STREAK_4_WEEKS  },
+  { weeks: 3,  action: PointAction.STREAK_3_WEEKS  },
   { weeks: 8,  action: PointAction.STREAK_8_WEEKS  },
   { weeks: 12, action: PointAction.STREAK_12_WEEKS },
   { weeks: 26, action: PointAction.STREAK_26_WEEKS },

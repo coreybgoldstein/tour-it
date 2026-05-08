@@ -5,23 +5,21 @@ import { POINT_VALUES, PointAction } from "@/config/points-system";
 
 type Props = { onClose: () => void };
 
-const COMPETITION_POINTS = [
-  { label: "Upload a clip",                           pts: POINT_VALUES[PointAction.UPLOAD_CLIP] },
-  { label: "First clip ever at a course (bonus)",     pts: POINT_VALUES[PointAction.UPLOAD_FIRST_FOR_COURSE] },
-  { label: "First clip for a specific hole (bonus)",  pts: POINT_VALUES[PointAction.UPLOAD_FIRST_FOR_HOLE] },
-  { label: "Upload a full-hole series",               pts: POINT_VALUES[PointAction.UPLOAD_SERIES] },
-  { label: "Add club to clip",                        pts: POINT_VALUES[PointAction.ADD_CLUB_TO_CLIP] },
-  { label: "Add wind conditions",                     pts: POINT_VALUES[PointAction.ADD_WIND_TO_CLIP] },
-  { label: "Add strategy note",                       pts: POINT_VALUES[PointAction.ADD_STRATEGY_NOTE] },
-  { label: "Full intel complete bonus",               pts: POINT_VALUES[PointAction.INTEL_COMPLETE_BONUS] },
-  { label: "Like received on your clip",              pts: POINT_VALUES[PointAction.LIKE_RECEIVED] },
-  { label: "Save received on your clip",              pts: POINT_VALUES[PointAction.CLIP_SAVED] },
-  { label: "Comment received on your clip",           pts: POINT_VALUES[PointAction.COMMENT_RECEIVED] },
-  { label: "New follower",                            pts: POINT_VALUES[PointAction.FOLLOW_RECEIVED] },
-  { label: "Add a course cover photo",                pts: POINT_VALUES[PointAction.ADD_COVER_PHOTO] },
-  { label: "Write a course description",              pts: POINT_VALUES[PointAction.ADD_COURSE_DESCRIPTION] },
-  { label: "Complete a course's full profile",        pts: POINT_VALUES[PointAction.COURSE_PROFILE_COMPLETE] },
-  { label: "4-week upload streak",                    pts: POINT_VALUES[PointAction.STREAK_4_WEEKS] },
+type CompetitionRow = { label: string; display: string; negative?: boolean };
+
+const COMPETITION_POINTS: CompetitionRow[] = [
+  { label: "Upload a clip",                            display: `+${POINT_VALUES[PointAction.UPLOAD_CLIP]} pts` },
+  { label: "First clip ever at a course (bonus)",      display: `+${POINT_VALUES[PointAction.UPLOAD_FIRST_FOR_COURSE]} pts` },
+  { label: "Upload a full-hole series",                display: `+${POINT_VALUES[PointAction.UPLOAD_SERIES]} pts` },
+  { label: "Intel quality bonus (club, wind, note)",   display: "+4 to +10 pts" },
+  { label: "Add a hole photo",                         display: `+${POINT_VALUES[PointAction.ADD_HOLE_PHOTO]} pts` },
+  { label: "Add a course cover photo",                 display: `+${POINT_VALUES[PointAction.ADD_COVER_PHOTO]} pts` },
+  { label: "Write a course description",               display: `+${POINT_VALUES[PointAction.ADD_COURSE_DESCRIPTION]} pts` },
+  { label: "Complete a course's full profile",         display: `+${POINT_VALUES[PointAction.COURSE_PROFILE_COMPLETE]} pts` },
+  { label: "Like received on your clip",               display: `+${POINT_VALUES[PointAction.LIKE_RECEIVED]} pts` },
+  { label: "Comment received on your clip",            display: `+${POINT_VALUES[PointAction.COMMENT_RECEIVED]} pts` },
+  { label: "New follower",                             display: `+${POINT_VALUES[PointAction.FOLLOW_RECEIVED]} pts` },
+  { label: "3-week upload streak",                     display: `+${POINT_VALUES[PointAction.STREAK_3_WEEKS]} pts` },
 ];
 
 export default function MayCompetitionModal({ onClose }: Props) {
@@ -123,8 +121,8 @@ export default function MayCompetitionModal({ onClose }: Props) {
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)" }}>
                     {item.label}
                   </div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: item.pts < 0 ? "rgba(240,100,100,0.8)" : "#4da862", flexShrink: 0, marginLeft: 12 }}>
-                    {item.pts > 0 ? "+" : ""}{item.pts} pts
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: item.negative ? "rgba(240,100,100,0.8)" : "#4da862", flexShrink: 0, marginLeft: 12 }}>
+                    {item.display}
                   </div>
                 </div>
               ))}
