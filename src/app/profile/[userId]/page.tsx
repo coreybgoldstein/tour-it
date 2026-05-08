@@ -487,13 +487,24 @@ export default function ProfilePage() {
     setSubmittingComment(true);
     const supabase = createClient();
     const newId = crypto.randomUUID();
-    await supabase.from("Comment").insert({ id: newId, userId: currentUserId, uploadId: commentUploadId, body: commentText.trim() });
-    const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId").eq("id", commentUploadId).single();
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("Comment").insert({
+      id: newId, userId: currentUserId, uploadId: commentUploadId,
+      body: commentText.trim(), createdAt: now, updatedAt: now,
+    });
+    if (error) { setSubmittingComment(false); return; }
+    const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId, holeNumber, courseId").eq("id", commentUploadId).single();
     await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
     if (uploadData?.userId && uploadData.userId !== currentUserId) {
+      const commenterName = currentUserMeta?.username || "Someone";
+      const clipLink = uploadData.holeNumber
+        ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}`
+        : `/courses/${uploadData.courseId}`;
+      supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, read: false, createdAt: now, updatedAt: now }).then(() => {});
+      fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: uploadData.userId, title: "New comment", body: `${commenterName} commented on your clip`, url: clipLink }) }).catch(() => {});
       fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
     }
-    setCommentItems(prev => [...prev, { id: newId, body: commentText.trim(), createdAt: new Date().toISOString(), username: currentUserMeta?.username || "you", avatarUrl: currentUserMeta?.avatarUrl || null }]);
+    setCommentItems(prev => [...prev, { id: newId, body: commentText.trim(), createdAt: now, username: currentUserMeta?.username || "you", avatarUrl: currentUserMeta?.avatarUrl || null }]);
     setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: (u.commentCount || 0) + 1 } : u));
     setCommentText(""); setSubmittingComment(false);
   }
