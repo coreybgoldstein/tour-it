@@ -620,6 +620,9 @@ export default function Home() {
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user ?? null);
       if (data.user) {
+        // Logged-in users never see the onboarding modal, even if Safari cleared localStorage
+        setShowOnboarding(false);
+        localStorage.setItem("tour-it-onboarded", "1");
         const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
         setUserProfile(profile);
         import("@/lib/registerPush").then(({ registerPush }) => registerPush(data.user!.id));
@@ -1376,9 +1379,9 @@ export default function Home() {
       {/* Onboarding */}
       {showOnboarding && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "24px 24px 0 0", padding: "28px 24px 48px" }}>
+          <div style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "24px 24px 0 0", padding: "28px 24px", paddingBottom: "max(96px, calc(env(safe-area-inset-bottom) + 96px))" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <TourItLogo size={48} />
+              <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 40, width: "auto", maxWidth: "80%" }} />
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginTop: 14, marginBottom: 8 }}>Welcome to Tour It</div>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>Scout any golf course before you play — real clips from golfers who&apos;ve already been there.</div>
             </div>
