@@ -8,6 +8,133 @@ type TopCourse = { id: string; name: string; city: string; state: string; upload
 type TopUploader = { id: string; username: string; displayName: string; uploadCount: number; avatarUrl: string | null };
 type RecentUser = { id: string; username: string; displayName: string; avatarUrl: string | null; createdAt: string };
 
+type EventType = "signup" | "upload" | "like" | "comment" | "follow" | "search" | "round";
+type ActivityEvent = {
+  id: string; type: EventType;
+  actorUsername: string; actorAvatar: string | null; actorId: string | null;
+  text: string; time: string;
+};
+
+const EVENT_COLOR: Record<EventType, string> = {
+  signup: "#2dd4bf", upload: "#4da862", like: "#f97316",
+  comment: "#60a5fa", follow: "#a78bfa", search: "#fbbf24", round: "#4ade80",
+};
+const EVENT_LABEL: Record<EventType, string> = {
+  signup: "JOINED", upload: "POSTED", like: "LIKED",
+  comment: "COMMENT", follow: "FOLLOWED", search: "SEARCHED", round: "ROUND",
+};
+
+function timeAgo(iso: string) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
+function ActivityFeed() {
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastFetched, setLastFetched] = useState<Date | null>(null);
+
+  const fetchEvents = useCallback(async () => {
+    const supabase = createClient();
+    const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+
+    const [uploadsRes, likesRes, commentsRes, followsRes, searchesRes, signupsRes, roundsRes] = await Promise.all([
+      supabase.from("Upload").select("id, createdAt, userId, user:userId(username, avatarUrl), course:courseId(name)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(20),
+      supabase.from("Like").select("id, createdAt, userId, user:userId(username, avatarUrl)").not("uploadId", "is", null).gte("createdAt", since).order("createdAt", { ascending: false }).limit(25),
+      supabase.from("Comment").select("id, createdAt, userId, body, user:userId(username, avatarUrl)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
+      supabase.from("Follow").select("id, createdAt, followerId, follower:followerId(username, avatarUrl), following:followingId(username)").eq("status", "ACTIVE").gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
+      supabase.from("SearchLog").select("id, createdAt, userId, query, user:userId(username, avatarUrl)").not("userId", "is", null).gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
+      supabase.from("User").select("id, createdAt, username, avatarUrl").gte("createdAt", since).order("createdAt", { ascending: false }).limit(10),
+      supabase.from("Round").select("id, createdAt, userId, totalScore, user:userId(username, avatarUrl), course:courseId(name)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(10),
+    ]);
+
+    const all: ActivityEvent[] = [];
+
+    for (const u of (uploadsRes.data ?? [])) {
+      const usr = (u as any).user; const crs = (u as any).course;
+      all.push({ id: `up_${u.id}`, type: "upload", actorId: u.userId, actorUsername: usr?.username ?? "user", actorAvatar: usr?.avatarUrl ?? null, text: crs?.name ? `posted a clip at ${crs.name}` : "posted a clip", time: u.createdAt });
+    }
+    for (const l of (likesRes.data ?? [])) {
+      const usr = (l as any).user;
+      all.push({ id: `lk_${l.id}`, type: "like", actorId: l.userId, actorUsername: usr?.username ?? "user", actorAvatar: usr?.avatarUrl ?? null, text: "liked a clip", time: l.createdAt });
+    }
+    for (const c of (commentsRes.data ?? [])) {
+      const usr = (c as any).user; const excerpt = (c.body ?? "").length > 42 ? (c.body ?? "").substring(0, 42) + "…" : (c.body ?? "");
+      all.push({ id: `cm_${c.id}`, type: "comment", actorId: c.userId, actorUsername: usr?.username ?? "user", actorAvatar: usr?.avatarUrl ?? null, text: `commented: "${excerpt}"`, time: c.createdAt });
+    }
+    for (const f of (followsRes.data ?? [])) {
+      const flr = (f as any).follower; const flg = (f as any).following;
+      all.push({ id: `fw_${f.id}`, type: "follow", actorId: f.followerId, actorUsername: flr?.username ?? "user", actorAvatar: flr?.avatarUrl ?? null, text: `followed @${flg?.username ?? "someone"}`, time: f.createdAt });
+    }
+    for (const s of (searchesRes.data ?? [])) {
+      const usr = (s as any).user;
+      all.push({ id: `sr_${s.id}`, type: "search", actorId: s.userId, actorUsername: usr?.username ?? "user", actorAvatar: usr?.avatarUrl ?? null, text: `searched "${s.query}"`, time: s.createdAt });
+    }
+    for (const u of (signupsRes.data ?? [])) {
+      all.push({ id: `sg_${u.id}`, type: "signup", actorId: u.id, actorUsername: u.username ?? "user", actorAvatar: u.avatarUrl ?? null, text: "joined Tour It", time: u.createdAt });
+    }
+    for (const r of (roundsRes.data ?? [])) {
+      const usr = (r as any).user; const crs = (r as any).course; const sc = r.totalScore ? ` (${r.totalScore})` : "";
+      all.push({ id: `rd_${r.id}`, type: "round", actorId: r.userId, actorUsername: usr?.username ?? "user", actorAvatar: usr?.avatarUrl ?? null, text: crs?.name ? `logged a round at ${crs.name}${sc}` : `logged a round${sc}`, time: r.createdAt });
+    }
+
+    all.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    setEvents(all.slice(0, 60));
+    setLastFetched(new Date());
+  }, []);
+
+  useEffect(() => {
+    fetchEvents().finally(() => setLoading(false));
+    const id = setInterval(fetchEvents, 30_000);
+    return () => clearInterval(id);
+  }, [fetchEvents]);
+
+  return (
+    <div>
+      <style>{`@keyframes feed-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 24, marginBottom: 10 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Live Activity</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4da862", boxShadow: "0 0 6px #4da862", animation: "feed-pulse 2s ease-in-out infinite" }} />
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>LIVE</span>
+          {lastFetched && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.22)" }}>· {lastFetched.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" })}</span>}
+        </div>
+      </div>
+      {loading ? (
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", padding: "16px 0" }}>Loading…</div>
+      ) : events.length === 0 ? (
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", padding: "16px 0" }}>No activity in the last 48 hours</div>
+      ) : (
+        <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, overflow: "hidden", maxHeight: 440, overflowY: "auto" }}>
+          {events.map((ev, i) => {
+            const color = EVENT_COLOR[ev.type];
+            return (
+              <div key={ev.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 12px", borderBottom: i < events.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                {ev.actorAvatar
+                  ? <img src={ev.actorAvatar} style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} alt="" />
+                  : <div style={{ width: 26, height: 26, borderRadius: "50%", background: `${color}20`, border: `1px solid ${color}40`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, color }}>{(ev.actorUsername[0] ?? "?").toUpperCase()}</div>
+                }
+                <div style={{ flex: 1, minWidth: 0, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.75)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ color, fontWeight: 700 }}>@{ev.actorUsername}</span> {ev.text}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: "0.07em", color, background: `${color}18`, border: `1px solid ${color}30`, borderRadius: 3, padding: "2px 5px" }}>{EVENT_LABEL[ev.type]}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.22)", minWidth: 26, textAlign: "right" }}>{timeAgo(ev.time)}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type Data = {
   totalUsers: number; usersToday: number; usersThisWeek: number; usersThisMonth: number; activeUsers: number;
   totalUploads: number; approvedUploads: number; pendingUploads: number; rejectedUploads: number;
@@ -177,6 +304,8 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ padding: "0 16px" }}>
+
+        <ActivityFeed />
 
         {/* ── Hero numbers ── */}
         <SectionTitle>At a Glance</SectionTitle>

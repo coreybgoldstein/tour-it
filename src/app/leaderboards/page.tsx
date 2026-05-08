@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -48,8 +48,16 @@ export default function LeaderboardsPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myRank, setMyRank] = useState<number | null>(null);
   const [showCompModal, setShowCompModal] = useState(false);
+  const [pollTick, setPollTick] = useState(0);
+  const prevPeriodRef = useRef<Period | null>(null);
 
   const currentMonth = new Date().toLocaleString("default", { month: "long" });
+
+  // Auto-refresh every 20 seconds
+  useEffect(() => {
+    const id = setInterval(() => setPollTick(t => t + 1), 20_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -59,7 +67,10 @@ export default function LeaderboardsPage() {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
+    const isSilentPoll = prevPeriodRef.current === period && pollTick > 0;
+    if (!isSilentPoll) setLoading(true);
+    prevPeriodRef.current = period;
+
     const supabase = createClient();
     const sortField = period === "all" ? "totalPoints" : "monthlyPoints";
 
@@ -73,7 +84,7 @@ export default function LeaderboardsPage() {
         setEntries((data as unknown as Entry[]) ?? []);
         setLoading(false);
       });
-  }, [period]);
+  }, [period, pollTick]);
 
   // Find current user's rank if not in top 50
   useEffect(() => {
@@ -113,7 +124,15 @@ export default function LeaderboardsPage() {
         <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff" }}>Leaderboard</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff" }}>Leaderboard</div>
+          {period === "monthly" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+              <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4da862", boxShadow: "0 0 6px #4da862", animation: "lb-pulse 2s ease-in-out infinite" }} />
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", letterSpacing: "0.08em" }}>LIVE</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Period tabs */}
@@ -173,7 +192,7 @@ export default function LeaderboardsPage() {
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}>
           <div style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.3)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } } @keyframes lb-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }`}</style>
         </div>
       ) : entries.length === 0 ? (
         <div style={{ padding: "60px 20px", textAlign: "center" }}>
