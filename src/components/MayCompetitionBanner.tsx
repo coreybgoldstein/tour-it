@@ -7,7 +7,7 @@ export default function MayCompetitionBanner() {
   if (!isMayActive()) return null;
 
   return (
-    <Link href="/leaderboards" style={{ display: "block", textDecoration: "none" }}>
+    <Link href="/leaderboards?period=monthly" style={{ display: "block", textDecoration: "none" }}>
       <div style={{
         background: "linear-gradient(90deg, #2d7a42 0%, #4da862 100%)",
         display: "flex",
