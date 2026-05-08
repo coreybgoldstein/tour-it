@@ -31,7 +31,7 @@ export default function MayCompetitionBanner() {
           letterSpacing: "0.02em",
         }}>
           May Competition —{" "}
-          <span style={{ color: "#fde68a", fontWeight: 700 }}>$75 GolfNow gift card</span>
+          <span style={{ color: "#fde68a", fontWeight: 700 }}>$100 GolfNow gift card</span>
           {" "}on the line
         </div>
         <span style={{

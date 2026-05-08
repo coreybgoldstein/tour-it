@@ -97,7 +97,7 @@ export default function MayCompetitionModal({ onClose }: Props) {
           <Section title="The Prize">
             <p style={body}>
               The golfer at the top of the May leaderboard on May 31 wins a{" "}
-              <span style={{ color: "#fff", fontWeight: 600 }}>$75 GolfNow gift card</span>.
+              <span style={{ color: "#fff", fontWeight: 600 }}>$100 GolfNow gift card</span>.
             </p>
           </Section>
 
