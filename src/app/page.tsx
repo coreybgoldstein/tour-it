@@ -1095,7 +1095,7 @@ export default function Home() {
             {/* 3-col row: hamburger | logo | bell */}
             <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: "max(14px, env(safe-area-inset-top))", paddingBottom: 10, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
               {/* Hamburger */}
-              <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: isDesktop ? "none" : "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
+              <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: isDesktop ? "none" : "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
@@ -1231,7 +1231,7 @@ export default function Home() {
           )}
 
           {/* Guest sign-up prompt */}
-          {!user && (
+          {user === null && (
             <div style={{ display: "flex", gap: 8, padding: "0 20px 20px", justifyContent: "center" }}>
               <a href="/signup" style={{ flex: 1, maxWidth: 160, textAlign: "center", background: "#2d7a42", borderRadius: 12, padding: "12px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", textDecoration: "none" }}>Create account</a>
               <a href="/login" style={{ flex: 1, maxWidth: 160, textAlign: "center", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "12px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Sign in</a>
