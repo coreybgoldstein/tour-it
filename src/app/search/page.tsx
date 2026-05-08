@@ -77,7 +77,7 @@ function SearchPageInner() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
-  const [topGolfers, setTopGolfers] = useState<Person[]>([]);
+  const [newGolfers, setNewGolfers] = useState<Person[]>([]);
   const peopleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -135,14 +135,13 @@ function SearchPageInner() {
       const { data } = await supabase.from("Follow").select("followingId").eq("followerId", user.id).eq("status", "ACTIVE");
       setFollowingIds(new Set((data || []).map((r: any) => r.followingId)));
     });
-    supabase.from("UserProgression").select("userId, totalPoints").order("totalPoints", { ascending: false }).limit(12)
-      .then(async ({ data: progRows }) => {
-        if (!progRows?.length) return;
-        const ids = progRows.map(r => r.userId);
-        const { data: users } = await supabase.from("User").select("id, username, displayName, avatarUrl, uploadCount").in("id", ids);
+    supabase.from("User").select("id, username, displayName, avatarUrl, uploadCount, createdAt")
+      .gt("uploadCount", 0)
+      .order("createdAt", { ascending: false })
+      .limit(20)
+      .then(({ data: users }) => {
         if (!users) return;
-        const ordered = ids.map(id => users.find(u => u.id === id)).filter(Boolean) as Person[];
-        setTopGolfers(ordered);
+        setNewGolfers(users as Person[]);
       });
   }, []);
 
@@ -334,7 +333,7 @@ function SearchPageInner() {
       await supabase.from("Follow").delete().eq("followerId", currentUserId).eq("followingId", targetId);
       setFollowingIds(prev => { const s = new Set(prev); s.delete(targetId); return s; });
     } else {
-      await supabase.from("Follow").insert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: targetId, createdAt: new Date().toISOString() });
+      await supabase.from("Follow").upsert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: targetId, status: "ACTIVE", createdAt: new Date().toISOString() }, { onConflict: "followerId,followingId" });
       setFollowingIds(prev => new Set(prev).add(targetId));
     }
     setFollowingInProgress(prev => { const s = new Set(prev); s.delete(targetId); return s; });
@@ -521,7 +520,8 @@ function SearchPageInner() {
             )}
             {!peopleLoading && !query.trim() && (
               <>
-                {topGolfers.map(person => (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", paddingBottom: 8 }}>New to Tour It</div>
+                {newGolfers.map(person => (
                   <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <div onClick={() => router.push(`/profile/${person.id}`)} style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                       {person.avatarUrl ? <img src={person.avatarUrl} alt={person.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>{(person.displayName || person.username)[0].toUpperCase()}</span>}
