@@ -1,14 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { registerPush } from "@/lib/registerPush";
+import { Suspense } from "react";
 
-export default function OnboardingNotificationsPage() {
+function NotificationsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/?welcome=1";
+
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // Parse course name from next param for personalised CTA
+  const isCourseDest = next.startsWith("/courses/");
 
   useEffect(() => {
     const supabase = createClient();
@@ -27,7 +34,7 @@ export default function OnboardingNotificationsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "enable_notifications" }),
     }).catch(() => {});
-    router.push("/?welcome=1");
+    router.push(next);
   }
 
   return (
@@ -49,17 +56,28 @@ export default function OnboardingNotificationsPage() {
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, lineHeight: 1.2, marginBottom: 14 }}>
           Stay in the loop
         </div>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 40 }}>
-          Get notified when someone likes your clips, follows you, or you hit a milestone. You can turn these off any time.
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 32 }}>
+          Get notified when someone likes your clips, follows you, or when you hit a milestone. Turn these off any time.
         </div>
 
         {/* Points nudge */}
-        <div style={{ background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, padding: "12px 16px", marginBottom: 28, display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <span style={{ fontSize: 14 }}>⚡</span>
-          </div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", textAlign: "left" }}>
-            Turn on notifications and earn <span style={{ color: "#4da862", fontWeight: 600 }}>+10 pts</span>
+        <div style={{ background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, padding: "14px 16px", marginBottom: 28, textAlign: "left" }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", marginBottom: 8, letterSpacing: "0.04em" }}>⚡ Points you&apos;re picking up today</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {[
+              { label: "Signed up", pts: 50 },
+              { label: "Completed your profile", pts: 25 },
+              { label: "Turn on notifications", pts: 10 },
+            ].map(({ label, pts }) => (
+              <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)" }}>{label}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>+{pts} pts</div>
+              </div>
+            ))}
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: 4, paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Total today</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff" }}>+85 pts</div>
+            </div>
           </div>
         </div>
 
@@ -68,15 +86,23 @@ export default function OnboardingNotificationsPage() {
           disabled={loading}
           style={{ width: "100%", padding: "15px", borderRadius: 14, background: loading ? "rgba(45,122,66,0.4)" : "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 2px 16px rgba(45,122,66,0.35)", marginBottom: 12 }}
         >
-          {loading ? "Setting up..." : "Turn on notifications"}
+          {loading ? "Setting up..." : "Turn on notifications — +10 pts"}
         </button>
         <button
-          onClick={() => router.push("/?welcome=1")}
+          onClick={() => router.push(next)}
           style={{ width: "100%", padding: "13px", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", cursor: "pointer" }}
         >
-          Maybe later
+          {isCourseDest ? "Skip — take me to my home course" : "Maybe later"}
         </button>
       </div>
     </main>
+  );
+}
+
+export default function OnboardingNotificationsPage() {
+  return (
+    <Suspense>
+      <NotificationsContent />
+    </Suspense>
   );
 }
