@@ -84,12 +84,13 @@ export default function SignUpPage() {
       fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup" }) }).catch(() => {});
     }
 
-    // Only proceed directly if email is already confirmed (handles confirmed re-signups)
-    if (authData.session && authData.user?.email_confirmed_at) {
+    // With email confirmation disabled, session is returned immediately
+    if (authData.session) {
       router.push("/onboarding");
       return;
     }
 
+    // Fallback: email confirmation is on — show check-inbox message
     setSuccess(true);
     setLoading(false);
   };
