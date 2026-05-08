@@ -222,7 +222,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
 
       <HoleSideBar holeIndex={holeIndex} scoutedHoles={scoutedHoles} />
 
-      <HoleIdentityCard holeNumber={holeNumber} holePar={holePar} clipCount={totalClips} />
+      <HoleIdentityCard holeNumber={holeNumber} holePar={holePar} clipCount={totalClips} username={uploader?.username} />
 
       {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
       <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
@@ -302,9 +302,16 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       />
 
       {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
-        <div style={{ position: "absolute", ...(holeNumber ? { right: 60, bottom: 76 } : { left: 16, bottom: 108 }), zIndex: 10, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", ...(holeNumber ? { left: 14, bottom: 170 } : { left: 16, bottom: 128 }), zIndex: 10, pointerEvents: "none" }}>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
             {formatClipDate(clip.datePlayedAt, clip.createdAt)}
+          </span>
+        </div>
+      )}
+      {!holeNumber && uploader?.username && (
+        <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
+            {uploader.username}
           </span>
         </div>
       )}

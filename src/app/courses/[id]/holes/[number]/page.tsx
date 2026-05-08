@@ -703,7 +703,7 @@ export default function HolePage() {
               return (
                 <>
                   <HoleSideBar holeIndex={scoutedHoles.indexOf(holeNum ?? -1)} scoutedHoles={scoutedHoles} />
-                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={uploads.length} />
+                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={uploads.length} username={uploaders[activeUpload.userId]?.username} />
                 </>
               );
             })()}
@@ -782,8 +782,8 @@ export default function HolePage() {
             )}
 
             {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && (
-              <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.45)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
+              <div style={{ position: "absolute", left: 14, bottom: 170, zIndex: 10, pointerEvents: "none" }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
                   {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}
                 </span>
               </div>

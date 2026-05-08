@@ -6,10 +6,12 @@ export function HoleIdentityCard({
   holeNumber,
   holePar,
   clipCount,
+  username,
 }: {
   holeNumber?: number | null;
   holePar?: number | null;
   clipCount: number;
+  username?: string;
 }) {
   const isFirst = useRef(true);
   const [opacity, setOpacity] = useState(1);
@@ -49,15 +51,29 @@ export function HoleIdentityCard({
         </div>
       )}
 
-      <div style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: 52,
-        fontWeight: 400,
-        color: "#fff",
-        lineHeight: 1,
-        letterSpacing: "-1px",
-      }}>
-        {holeNumber}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{
+          fontFamily: "'Playfair Display', serif",
+          fontSize: 52,
+          fontWeight: 400,
+          color: "#fff",
+          lineHeight: 1,
+          letterSpacing: "-1px",
+        }}>
+          {holeNumber}
+        </div>
+        {username && (
+          <div style={{
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: 13,
+            fontWeight: 700,
+            color: "#fff",
+            textShadow: "0 1px 4px rgba(0,0,0,0.9)",
+            letterSpacing: "0.01em",
+          }}>
+            {username}
+          </div>
+        )}
       </div>
 
       {holePar != null && (
