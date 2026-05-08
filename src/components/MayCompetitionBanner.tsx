@@ -13,22 +13,19 @@ export default function MayCompetitionBanner() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 16px",
-        height: 44,
+        padding: "10px 16px",
         cursor: "pointer",
       }}>
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: 500,
           color: "#fff",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          lineHeight: 1.45,
           flex: 1,
           minWidth: 0,
         }}>
-          🏆&nbsp;&nbsp;May Competition — Top the leaderboard, win a $50 GolfNow card
+          🏆&nbsp;&nbsp;May Competition — top the leaderboard, win a $50 GolfNow gift card
         </div>
         <span style={{
           fontFamily: "'Outfit', sans-serif",
