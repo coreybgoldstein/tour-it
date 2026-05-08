@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -48,16 +48,8 @@ export default function LeaderboardsPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myRank, setMyRank] = useState<number | null>(null);
   const [showCompModal, setShowCompModal] = useState(false);
-  const [pollTick, setPollTick] = useState(0);
-  const prevPeriodRef = useRef<Period | null>(null);
 
   const currentMonth = new Date().toLocaleString("default", { month: "long" });
-
-  // Auto-refresh every 20 seconds
-  useEffect(() => {
-    const id = setInterval(() => setPollTick(t => t + 1), 20_000);
-    return () => clearInterval(id);
-  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -66,25 +58,43 @@ export default function LeaderboardsPage() {
     });
   }, []);
 
-  useEffect(() => {
-    const isSilentPoll = prevPeriodRef.current === period && pollTick > 0;
-    if (!isSilentPoll) setLoading(true);
-    prevPeriodRef.current = period;
-
+  // Stable fetch function — call with showLoader=true on tab switch, false for silent refresh
+  const fetchEntries = useCallback(async (p: Period, showLoader = false) => {
+    if (showLoader) setLoading(true);
     const supabase = createClient();
-    const sortField = period === "all" ? "totalPoints" : "monthlyPoints";
-
-    supabase
+    const sortField = p === "all" ? "totalPoints" : "monthlyPoints";
+    const { data } = await supabase
       .from("UserProgression")
       .select("userId, totalPoints, monthlyPoints, level, rank, user:userId(displayName, username, avatarUrl)")
       .neq("userId", OWNER_USER_ID)
       .order(sortField, { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        setEntries((data as unknown as Entry[]) ?? []);
-        setLoading(false);
-      });
-  }, [period, pollTick]);
+      .limit(50);
+    setEntries((data as unknown as Entry[]) ?? []);
+    setLoading(false);
+  }, []);
+
+  // Load on mount and period changes
+  useEffect(() => {
+    fetchEntries(period, true);
+  }, [period, fetchEntries]);
+
+  // Supabase realtime — fires immediately when any UserProgression row changes
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("leaderboard-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "UserProgression" }, () => {
+        fetchEntries(period);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [period, fetchEntries]);
+
+  // Polling fallback every 15s in case realtime misses an event
+  useEffect(() => {
+    const id = setInterval(() => fetchEntries(period), 15_000);
+    return () => clearInterval(id);
+  }, [period, fetchEntries]);
 
   // Find current user's rank if not in top 50
   useEffect(() => {
