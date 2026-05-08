@@ -31,27 +31,34 @@ export function HoleIdentityCard({
         bottom: 66,
         left: 0,
         zIndex: 101,
-        background: "rgba(7,16,10,0.82)",
-        backdropFilter: "blur(10px)",
-        borderRadius: "0 16px 0 0",
-        borderTop: "1px solid rgba(77,168,98,0.2)",
-        borderRight: "1px solid rgba(77,168,98,0.2)",
-        padding: "12px 16px 16px 14px",
+        display: "flex",
+        alignItems: "flex-end",
+        gap: 10,
         opacity,
         transition: "opacity 150ms ease",
         pointerEvents: "none",
       }}
     >
-      {clipCount > 1 && (
-        <div style={{ position: "absolute", top: 8, right: 8, opacity: 0.55, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="7" width="15" height="14" rx="2" />
-            <path d="M7 4h12a2 2 0 0 1 2 2v12" />
-          </svg>
-        </div>
-      )}
-
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      {/* Card box */}
+      <div
+        style={{
+          background: "rgba(7,16,10,0.82)",
+          backdropFilter: "blur(10px)",
+          borderRadius: "0 16px 0 0",
+          borderTop: "1px solid rgba(77,168,98,0.2)",
+          borderRight: "1px solid rgba(77,168,98,0.2)",
+          padding: "12px 16px 16px 14px",
+          position: "relative",
+        }}
+      >
+        {clipCount > 1 && (
+          <div style={{ position: "absolute", top: 8, right: 8, opacity: 0.55, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="15" height="14" rx="2" />
+              <path d="M7 4h12a2 2 0 0 1 2 2v12" />
+            </svg>
+          </div>
+        )}
         <div style={{
           fontFamily: "'Playfair Display', serif",
           fontSize: 52,
@@ -62,30 +69,32 @@ export function HoleIdentityCard({
         }}>
           {holeNumber}
         </div>
-        {username && (
+        {holePar != null && (
           <div style={{
             fontFamily: "'Outfit', sans-serif",
-            fontSize: 13,
-            fontWeight: 700,
-            color: "#fff",
-            textShadow: "0 1px 4px rgba(0,0,0,0.9)",
-            letterSpacing: "0.01em",
+            fontSize: 12,
+            fontWeight: 400,
+            color: "rgba(255,255,255,0.6)",
+            letterSpacing: "0.5px",
+            marginTop: 2,
           }}>
-            {username}
+            Par {holePar}
           </div>
         )}
       </div>
 
-      {holePar != null && (
+      {/* Username outside card, to the right */}
+      {username && (
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 12,
-          fontWeight: 400,
-          color: "rgba(255,255,255,0.6)",
-          letterSpacing: "0.5px",
-          marginTop: 2,
+          fontSize: 13,
+          fontWeight: 700,
+          color: "#fff",
+          textShadow: "0 1px 4px rgba(0,0,0,0.9)",
+          letterSpacing: "0.01em",
+          paddingBottom: 16,
         }}>
-          Par {holePar}
+          {username}
         </div>
       )}
     </div>
