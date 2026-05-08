@@ -9,15 +9,24 @@ const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/ob
 const DEFAULT_AVATARS = [
   "01-coffee", "02-burger-messy", "03-golf-glove", "04-sunscreen", "05-rangefinder",
   "06-hotdog", "07-protein-bar", "08-driver", "09-cheeseburger",
-  "11-hamburger", "12-water-jug", "13-bloody-mary", "14-cocktail", "15-beer-can",
+  "12-water-jug", "13-bloody-mary", "14-cocktail", "15-beer-can",
 ].map(name => `${SUPABASE_STORAGE}/default-avatars/${name}.png`);
 
-const HANDICAP_BUCKETS = [
-  { label: "Scratch", sublabel: "0", value: 0 },
-  { label: "Low", sublabel: "1–9", value: 5 },
-  { label: "Mid", sublabel: "10–18", value: 14 },
-  { label: "High", sublabel: "19–28", value: 23 },
-  { label: "Bogey+", sublabel: "29+", value: 36 },
+const POINTS_EXAMPLES = [
+  { label: "Sign up",                          pts: 50 },
+  { label: "Complete your profile",            pts: 25 },
+  { label: "Turn on notifications",            pts: 10 },
+  { label: "Upload a clip",                    pts: 20 },
+  { label: "First clip ever at a course",      pts: 100 },
+  { label: "First clip for a specific hole",   pts: 50 },
+  { label: "Upload a full-hole series",        pts: 30 },
+  { label: "Add club + wind + strategy note",  pts: 20 },
+  { label: "Add a course cover photo",         pts: 25 },
+  { label: "Write a course description",       pts: 30 },
+  { label: "Complete a course's full profile", pts: 50 },
+  { label: "Like received on your clip",       pts: 2 },
+  { label: "New follower",                     pts: 5 },
+  { label: "4-week upload streak",             pts: 150 },
 ];
 
 type Course = { id: string; name: string; city: string; state: string };
@@ -29,25 +38,26 @@ export default function OnboardingProfilePage() {
   const [username, setUsername] = useState("");
 
   const [displayName, setDisplayName] = useState("");
-  const [bio, setBio] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [selectedDefault, setSelectedDefault] = useState<string | null>(null);
 
-  const [handicapBucket, setHandicapBucket] = useState<number | null>(null);
+  const [handicapMode, setHandicapMode] = useState<"ghin" | "none" | null>(null);
   const [handicapCustom, setHandicapCustom] = useState("");
-  const [useCustom, setUseCustom] = useState(false);
 
   const [courseSearch, setCourseSearch] = useState("");
   const [courseResults, setCourseResults] = useState<Course[]>([]);
   const [courseLoading, setCourseLoading] = useState(false);
   const [homeCourse, setHomeCourse] = useState<Course | null>(null);
+  const [courseSearched, setCourseSearched] = useState(false);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const TOTAL_STEPS = 4;
 
   useEffect(() => {
     const supabase = createClient();
@@ -56,32 +66,34 @@ export default function OnboardingProfilePage() {
       setUserId(data.user.id);
       const { data: profile } = await supabase
         .from("User")
-        .select("username, displayName, bio, avatarUrl")
+        .select("username, displayName, avatarUrl")
         .eq("id", data.user.id)
         .single();
       if (profile) {
         setUsername(profile.username || "");
         setDisplayName(profile.displayName || profile.username || "");
-        setBio(profile.bio || "");
         if (profile.avatarUrl) setAvatarPreview(profile.avatarUrl);
       }
     });
   }, [router]);
 
   useEffect(() => {
-    if (!courseSearch.trim()) { setCourseResults([]); return; }
+    if (!courseSearch.trim()) { setCourseResults([]); setCourseSearched(false); return; }
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
     setCourseLoading(true);
+    setCourseSearched(false);
     searchDebounce.current = setTimeout(async () => {
-      const safeCourseSearch = courseSearch.replace(/[(),]/g, "");
+      const safe = courseSearch.replace(/[(),]/g, "");
       const { data } = await createClient()
         .from("Course")
         .select("id, name, city, state")
-        .or(`name.ilike.%${safeCourseSearch}%,city.ilike.%${safeCourseSearch}%`)
+        .or(`name.ilike.%${safe}%,city.ilike.%${safe}%`)
+        .eq("isPublic", true)
         .order("uploadCount", { ascending: false })
         .limit(10);
       setCourseResults(data || []);
       setCourseLoading(false);
+      setCourseSearched(true);
     }, 280);
   }, [courseSearch]);
 
@@ -90,6 +102,7 @@ export default function OnboardingProfilePage() {
     if (!file) return;
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
+    setSelectedDefault(null);
   };
 
   const saveStep1 = async () => {
@@ -114,9 +127,7 @@ export default function OnboardingProfilePage() {
     }
 
     const updates: Record<string, string> = { displayName: displayName.trim() };
-    if (bio.trim()) updates.bio = bio.trim();
     if (avatarUrl) updates.avatarUrl = avatarUrl;
-
     await supabase.from("User").update(updates).eq("id", userId);
     setSaving(false);
     setStep(2);
@@ -125,18 +136,18 @@ export default function OnboardingProfilePage() {
   const saveStep2 = async () => {
     setSaving(true);
     const supabase = createClient();
-    let hval: number | null = null;
-    if (useCustom && handicapCustom !== "") { const parsed = parseFloat(handicapCustom); if (!isNaN(parsed)) hval = parsed; }
-    else if (handicapBucket !== null) hval = handicapBucket;
-    if (hval !== null) await supabase.from("User").update({ handicapIndex: hval }).eq("id", userId);
+    if (handicapMode === "ghin" && handicapCustom !== "") {
+      const parsed = parseFloat(handicapCustom);
+      if (!isNaN(parsed)) await supabase.from("User").update({ handicapIndex: parsed }).eq("id", userId);
+    }
     setSaving(false);
     setStep(3);
   };
 
-  const finish = async (skip = false) => {
+  const finish = async () => {
     setSaving(true);
     const supabase = createClient();
-    if (!skip && homeCourse) {
+    if (homeCourse) {
       await supabase.from("User").update({ homeCourseId: homeCourse.id }).eq("id", userId);
     }
     fetch("/api/points/award", {
@@ -145,10 +156,11 @@ export default function OnboardingProfilePage() {
       body: JSON.stringify({ action: "complete_profile" }),
     }).catch(() => {});
     setSaving(false);
-    router.push("/onboarding/notifications");
+    const next = homeCourse ? `/courses/${homeCourse.id}` : null;
+    router.push(`/onboarding/notifications${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   };
 
-  const progress = ((step - 1) / 3) * 100;
+  const progress = ((step - 1) / TOTAL_STEPS) * 100;
 
   return (
     <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "0 20px 40px" }}>
@@ -163,17 +175,18 @@ export default function OnboardingProfilePage() {
         .btn-primary { width: 100%; background: #2d7a42; border: none; border-radius: 14px; padding: 15px; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; color: #fff; cursor: pointer; box-shadow: 0 2px 16px rgba(45,122,66,0.35); transition: background 0.15s; }
         .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
         .btn-ghost { width: 100%; background: transparent; border: none; padding: 13px; font-family: 'Outfit', sans-serif; font-size: 13px; color: rgba(255,255,255,0.55); cursor: pointer; }
-        .course-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        .course-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.1s; }
         .course-row:last-child { border-bottom: none; }
-        .course-row:active { opacity: 0.7; }
+        .course-row:active { background: rgba(255,255,255,0.04); }
+        .game-card { width: 100%; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px 18px; cursor: pointer; text-align: left; transition: border-color 0.15s, background 0.15s; }
+        .game-card.selected { border-color: rgba(77,168,98,0.6); background: rgba(77,168,98,0.08); }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
+      {/* Header */}
       <div style={{ width: "100%", maxWidth: 480, paddingTop: 52, paddingBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4da862" }} />
-            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Tour It</span>
-          </div>
+          <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 36, width: "auto" }} />
           {step > 1 && (
             <button onClick={() => setStep(step - 1)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: 4 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -184,103 +197,182 @@ export default function OnboardingProfilePage() {
         <div style={{ height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden", marginBottom: 8 }}>
           <div style={{ height: "100%", width: `${progress}%`, background: "#4da862", borderRadius: 99, transition: "width 0.4s ease" }} />
         </div>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 32 }}>Step {step} of 3</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 32 }}>Step {step} of {TOTAL_STEPS}</div>
       </div>
 
       <div style={{ width: "100%", maxWidth: 480 }}>
 
+        {/* ── Step 1: Profile ── */}
         {step === 1 && (
           <div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 6 }}>Let&apos;s set up<br />your profile</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 32, lineHeight: 1.6 }}>{username ? `Welcome, @${username}. ` : ""}Tell the golf community who you are.</div>
+
+            {/* Avatar */}
             <div style={{ marginBottom: 28 }}>
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
                 <div style={{ position: "relative", width: 88, height: 88, borderRadius: "50%", background: avatarPreview ? "transparent" : "rgba(77,168,98,0.08)", border: avatarPreview ? "none" : "2px dashed rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                  {avatarPreview ? <img src={avatarPreview} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                  {avatarPreview
+                    ? <img src={avatarPreview} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                 </div>
               </div>
               <button onClick={() => avatarInputRef.current?.click()} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.45)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, marginBottom: 16 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                {avatarFile ? "Photo selected ✓" : "Upload your own photo instead"}
+                {avatarFile ? "Photo selected ✓" : "Upload your own photo"}
               </button>
-              <input ref={avatarInputRef} type="file" accept="image/*" onChange={e => { handleAvatarPick(e); setSelectedDefault(null); }} style={{ display: "none" }} />
+              <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarPick} style={{ display: "none" }} />
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.6)", textAlign: "center", marginBottom: 12 }}>Or pick a character</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 0 }}>
-                {DEFAULT_AVATARS.map((url) => (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+                {DEFAULT_AVATARS.map(url => (
                   <div key={url} onClick={() => { setSelectedDefault(url); setAvatarPreview(url); setAvatarFile(null); }} style={{ aspectRatio: "1", borderRadius: "50%", overflow: "hidden", cursor: "pointer", border: selectedDefault === url ? "2.5px solid #4da862" : "2.5px solid transparent", boxShadow: selectedDefault === url ? "0 0 0 1px rgba(77,168,98,0.4)" : "none", transition: "border-color 0.15s" }}>
                     <img src={url} alt="avatar option" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
                 ))}
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 28 }}>
-              <div>
-                <label className="ob-label">Display Name *</label>
-                <input className="ob-input" placeholder="Your name or nickname" value={displayName} onChange={e => setDisplayName(e.target.value)} />
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 5 }}>This is what other golfers see — can be your real name or a nickname.</div>
-              </div>
+
+            {/* Display name */}
+            <div style={{ marginBottom: 28 }}>
+              <label className="ob-label">Display Name *</label>
+              <input className="ob-input" placeholder="Your name or nickname" value={displayName} onChange={e => setDisplayName(e.target.value)} />
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 5 }}>This is what other golfers see — can be your real name or a nickname.</div>
             </div>
+
             {error && <div style={{ background: "rgba(200,60,60,0.1)", border: "1px solid rgba(200,60,60,0.25)", borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(240,120,120,0.9)" }}>{error}</div>}
             <button className="btn-primary" onClick={saveStep1} disabled={saving || !displayName.trim()}>{saving ? (uploadingAvatar ? "Uploading photo..." : "Saving...") : "Next →"}</button>
           </div>
         )}
 
+        {/* ── Step 2: Game ── */}
         {step === 2 && (
           <div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 6 }}>What&apos;s your<br />game like?</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 32, lineHeight: 1.6 }}>Helps us match you with relevant content. You can change this anytime.</div>
-            <label className="ob-label" style={{ marginBottom: 12 }}>Skill Level</label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 20 }}>
-              {HANDICAP_BUCKETS.map(b => (
-                <button key={b.value} onClick={() => { setHandicapBucket(b.value); setUseCustom(false); }} style={{ padding: "12px 4px", borderRadius: 12, border: `1.5px solid ${!useCustom && handicapBucket === b.value ? "rgba(77,168,98,0.6)" : "rgba(255,255,255,0.1)"}`, background: !useCustom && handicapBucket === b.value ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minHeight: 44 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: !useCustom && handicapBucket === b.value ? "#4da862" : "#fff" }}>{b.label}</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#4da862" }}>{b.sublabel}</span>
-                </button>
-              ))}
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 32, lineHeight: 1.6 }}>Helps us match you with relevant content. You can update this anytime.</div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+              <button className={`game-card${handicapMode === "ghin" ? " selected" : ""}`} onClick={() => setHandicapMode("ghin")}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: handicapMode === "ghin" ? 14 : 0 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 10, background: handicapMode === "ghin" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={handicapMode === "ghin" ? "#4da862" : "rgba(255,255,255,0.5)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: handicapMode === "ghin" ? "#4da862" : "#fff" }}>Log my exact GHIN index</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>I have an official handicap index</div>
+                  </div>
+                </div>
+                {handicapMode === "ghin" && (
+                  <div onClick={e => e.stopPropagation()}>
+                    <input
+                      className="ob-input"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="54"
+                      placeholder="e.g. 12.4"
+                      value={handicapCustom}
+                      onChange={e => setHandicapCustom(e.target.value)}
+                      autoFocus
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                )}
+              </button>
+
+              <button className={`game-card${handicapMode === "none" ? " selected" : ""}`} onClick={() => setHandicapMode("none")}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 10, background: handicapMode === "none" ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={handicapMode === "none" ? "#4da862" : "rgba(255,255,255,0.5)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="20"/><path d="M12 2 L19 6 L12 10 Z" fill={handicapMode === "none" ? "#4da862" : "rgba(255,255,255,0.5)"} stroke="none"/><ellipse cx="12" cy="21.5" rx="4" ry="1.2"/></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: handicapMode === "none" ? "#4da862" : "#fff" }}>No GHIN — and that&apos;s okay!</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>I play for fun, no official index</div>
+                  </div>
+                </div>
+              </button>
             </div>
-            <button onClick={() => setUseCustom(c => !c)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: useCustom ? "#4da862" : "rgba(255,255,255,0.6)", marginBottom: 12, padding: 0, display: "flex", alignItems: "center", gap: 5 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{useCustom ? <polyline points="20 6 9 17 4 12"/> : <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>}</svg>
-              {useCustom ? "Using exact index" : "Enter exact handicap index"}
-            </button>
-            {useCustom && <div style={{ marginBottom: 20 }}><input className="ob-input" type="number" step="0.1" min="0" max="54" placeholder="e.g. 12.4" value={handicapCustom} onChange={e => setHandicapCustom(e.target.value)} style={{ width: 140 }} /></div>}
-            <div style={{ marginTop: 8 }}>
-              <button className="btn-primary" onClick={saveStep2} disabled={saving} style={{ marginBottom: 10 }}>{saving ? "Saving..." : "Next →"}</button>
-              <button className="btn-ghost" onClick={() => setStep(3)}>Skip for now</button>
-            </div>
+
+            <button className="btn-primary" onClick={saveStep2} disabled={saving} style={{ marginBottom: 10 }}>{saving ? "Saving..." : "Next →"}</button>
+            <button className="btn-ghost" onClick={() => setStep(3)}>Skip for now</button>
           </div>
         )}
 
+        {/* ── Step 3: Points system ── */}
         {step === 3 && (
           <div>
+            {/* Icon */}
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(251,191,36,0.1)", border: "1.5px solid rgba(251,191,36,0.25)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 10 }}>Earn points,<br />rank up</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, marginBottom: 8 }}>
+              Golf course knowledge is built by golfers, for golfers. Tour It rewards you for every clip, scorecard, and data point you contribute — because your intel makes the platform more valuable for every golfer who tees it up next.
+            </div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, marginBottom: 28 }}>
+              We run <span style={{ color: "#fbbf24", fontWeight: 600 }}>monthly competitions</span> where the top contributors earn recognition and rewards. The more you add, the higher you climb — from <span style={{ color: "rgba(190,190,190,0.75)" }}>Caddie</span> all the way to <span style={{ color: "#fbbf24" }}>Legend</span>.
+            </div>
+
+            {/* Points breakdown */}
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 28 }}>
+              <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>
+                Ways to earn points
+              </div>
+              {POINTS_EXAMPLES.map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px", borderBottom: i < POINTS_EXAMPLES.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)" }}>{item.label}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862", flexShrink: 0, marginLeft: 12 }}>+{item.pts} pts</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Onboarding points tally */}
+            <div style={{ background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, padding: "14px 16px", marginBottom: 28 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862", marginBottom: 8, letterSpacing: "0.04em" }}>🚀 You&apos;re already earning</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
+                Signing up earned you <span style={{ color: "#fff", fontWeight: 600 }}>+50 pts</span>. Completing your profile gives you <span style={{ color: "#fff", fontWeight: 600 }}>+25 pts</span>. Turn on notifications at the end and pick up another <span style={{ color: "#fff", fontWeight: 600 }}>+10 pts</span>.
+              </div>
+            </div>
+
+            <button className="btn-primary" onClick={() => setStep(4)}>Next →</button>
+          </div>
+        )}
+
+        {/* ── Step 4: Home Course ── */}
+        {step === 4 && (
+          <div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1.15, marginBottom: 6 }}>Where do you<br />call home?</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 32, lineHeight: 1.6 }}>Your home course shows on your profile. You can always skip this.</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 32, lineHeight: 1.6 }}>Your home course shows on your profile with a flag badge. You can always change this later.</div>
+
             {homeCourse ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(77,168,98,0.1)", border: "1.5px solid rgba(77,168,98,0.4)", borderRadius: 14, padding: "14px 16px", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(77,168,98,0.1)", border: "1.5px solid rgba(77,168,98,0.4)", borderRadius: 14, padding: "14px 16px", marginBottom: 24 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><line x1="12" y1="2" x2="12" y2="20" stroke="#4da862" strokeWidth="2" strokeLinecap="round"/><path d="M12 2 L19 6 L12 10 Z" fill="#4da862"/><ellipse cx="12" cy="21" rx="3.5" ry="1" stroke="#4da862" strokeWidth="1.5" fill="none"/></svg>
+                  <span style={{ fontSize: 20 }}>🚩</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{homeCourse.name}</div>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{[homeCourse.city, homeCourse.state].filter(Boolean).join(", ")}</div>
                 </div>
-                <button onClick={() => { setHomeCourse(null); setCourseSearch(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: 4 }}>
+                <button onClick={() => { setHomeCourse(null); setCourseSearch(""); setCourseSearched(false); }} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", padding: 4 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
             ) : (
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 24 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(77,168,98,0.35)", borderRadius: 12, padding: "12px 14px", marginBottom: 8 }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                   <input value={courseSearch} onChange={e => setCourseSearch(e.target.value)} placeholder="Search by course name or city..." style={{ background: "none", border: "none", outline: "none", flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff" }} />
-                  {courseLoading && <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.4)", borderTopColor: "#4da862", animation: "spin 0.6s linear infinite" }} />}
+                  {courseLoading && <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.4)", borderTopColor: "#4da862", animation: "spin 0.6s linear infinite", flexShrink: 0 }} />}
                 </div>
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
                 {courseResults.length > 0 && (
-                  <div style={{ background: "rgba(13,35,24,0.98)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, overflow: "hidden" }}>
+                  <div style={{ background: "rgba(13,35,24,0.98)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, overflow: "hidden", marginBottom: 8 }}>
                     {courseResults.map(c => (
-                      <div key={c.id} className="course-row" style={{ padding: "12px 14px" }} onClick={() => { setHomeCourse(c); setCourseSearch(""); setCourseResults([]); }}>
+                      <div key={c.id} className="course-row" onClick={() => { setHomeCourse(c); setCourseSearch(""); setCourseResults([]); }}>
                         <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="12" y1="2" x2="12" y2="18" stroke="#4da862" strokeWidth="2" strokeLinecap="round"/><path d="M12 2 L17 5 L12 8 Z" fill="#4da862"/></svg>
+                          <span style={{ fontSize: 16 }}>🚩</span>
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
@@ -290,10 +382,39 @@ export default function OnboardingProfilePage() {
                     ))}
                   </div>
                 )}
+
+                {/* Course not found prompt */}
+                {courseSearched && courseResults.length === 0 && courseSearch.trim().length > 2 && (
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px" }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>No courses found for &ldquo;{courseSearch}&rdquo;</div>
+                    <a
+                      href={`mailto:corey@touritgolf.com?subject=Add course: ${encodeURIComponent(courseSearch)}&body=Hi, I'd like to add ${encodeURIComponent(courseSearch)} to Tour It.`}
+                      style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Request this course be added →
+                    </a>
+                  </div>
+                )}
               </div>
             )}
-            <button className="btn-primary" onClick={() => finish(!homeCourse)} disabled={saving} style={{ marginBottom: 10 }}>{saving ? "Almost done..." : "Finish Setup ✓"}</button>
-            <button className="btn-ghost" onClick={() => finish(true)}>Skip for now</button>
+
+            {/* CTA */}
+            <button
+              className="btn-primary"
+              onClick={finish}
+              disabled={saving}
+              style={{ marginBottom: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            >
+              {saving ? "Almost done..." : homeCourse ? (
+                <>
+                  <span style={{ fontSize: 16 }}>🚩</span>
+                  <span>Let&apos;s go to {homeCourse.name}</span>
+                  <span>→</span>
+                </>
+              ) : "Finish Setup ✓"}
+            </button>
+            <button className="btn-ghost" onClick={finish} disabled={saving}>Skip for now</button>
           </div>
         )}
 
