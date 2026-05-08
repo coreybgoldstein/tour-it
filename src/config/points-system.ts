@@ -10,15 +10,14 @@ export const PointAction = {
 
   // Content contribution
   UPLOAD_CLIP:                 "upload_clip",
-  UPLOAD_FIRST_FOR_HOLE:       "upload_first_for_hole",
   UPLOAD_FIRST_FOR_COURSE:     "upload_first_for_course",
   UPLOAD_SERIES:               "upload_series",
 
-  // Intel on clip (per upload)
-  ADD_CLUB_TO_CLIP:            "add_club_to_clip",
-  ADD_WIND_TO_CLIP:            "add_wind_to_clip",
-  ADD_STRATEGY_NOTE:           "add_strategy_note",
-  INTEL_COMPLETE_BONUS:        "intel_complete_bonus",
+  // Intel quality (variable amount: see calcIntelBonus)
+  INTEL_BONUS:                 "intel_bonus",
+
+  // Hole-level photo contribution
+  ADD_HOLE_PHOTO:              "add_hole_photo",
 
   // Course data contribution (first-to-fill)
   ADD_COVER_PHOTO:             "add_cover_photo",
@@ -42,7 +41,6 @@ export const PointAction = {
   LIKE_RECEIVED:               "like_received",
   COMMENT_RECEIVED:            "comment_received",
   FOLLOW_RECEIVED:             "follow_received",
-  CLIP_SAVED:                  "clip_saved",
 
   // Milestones (one-time)
   MILESTONE_10_LIKES:          "milestone_10_likes",
@@ -50,7 +48,7 @@ export const PointAction = {
   MILESTONE_1000_LIKES:        "milestone_1000_likes",
 
   // Streak milestones (one-time)
-  STREAK_4_WEEKS:              "streak_4_weeks",
+  STREAK_3_WEEKS:              "streak_3_weeks",
   STREAK_8_WEEKS:              "streak_8_weeks",
   STREAK_12_WEEKS:             "streak_12_weeks",
   STREAK_26_WEEKS:             "streak_26_weeks",
@@ -61,7 +59,6 @@ export const PointAction = {
 
   // Reversals
   UNLIKE_RECEIVED:             "unlike_received",
-  UNSAVE_RECEIVED:             "unsave_received",
   UPLOAD_DELETED:              "upload_deleted",
 } as const;
 
@@ -74,14 +71,14 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
   [PointAction.ENABLE_NOTIFICATIONS]:      10,
 
   [PointAction.UPLOAD_CLIP]:               20,
-  [PointAction.UPLOAD_FIRST_FOR_HOLE]:     50,
   [PointAction.UPLOAD_FIRST_FOR_COURSE]:  100,
   [PointAction.UPLOAD_SERIES]:             30,
 
-  [PointAction.ADD_CLUB_TO_CLIP]:           5,
-  [PointAction.ADD_WIND_TO_CLIP]:           5,
-  [PointAction.ADD_STRATEGY_NOTE]:          5,
-  [PointAction.INTEL_COMPLETE_BONUS]:       5,
+  // Variable — actual amount comes from calcIntelBonus and is passed
+  // through awardPoints' customAmount override.
+  [PointAction.INTEL_BONUS]:                0,
+
+  [PointAction.ADD_HOLE_PHOTO]:             5,
 
   [PointAction.ADD_COVER_PHOTO]:           25,
   [PointAction.ADD_COURSE_LOGO]:           15,
@@ -102,13 +99,12 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
   [PointAction.LIKE_RECEIVED]:              2,
   [PointAction.COMMENT_RECEIVED]:           3,
   [PointAction.FOLLOW_RECEIVED]:            5,
-  [PointAction.CLIP_SAVED]:                 4,
 
   [PointAction.MILESTONE_10_LIKES]:        25,
   [PointAction.MILESTONE_100_LIKES]:      100,
   [PointAction.MILESTONE_1000_LIKES]:     500,
 
-  [PointAction.STREAK_4_WEEKS]:           150,
+  [PointAction.STREAK_3_WEEKS]:           150,
   [PointAction.STREAK_8_WEEKS]:           350,
   [PointAction.STREAK_12_WEEKS]:          600,
   [PointAction.STREAK_26_WEEKS]:         1500,
@@ -117,7 +113,6 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
   [PointAction.REFERRAL_SIGNUP]:          100,
 
   [PointAction.UNLIKE_RECEIVED]:           -2,
-  [PointAction.UNSAVE_RECEIVED]:           -4,
   [PointAction.UPLOAD_DELETED]:           -20,
 };
 
@@ -130,12 +125,30 @@ export const ONE_TIME_ACTIONS = new Set<PointActionKey>([
   PointAction.MILESTONE_10_LIKES,
   PointAction.MILESTONE_100_LIKES,
   PointAction.MILESTONE_1000_LIKES,
-  PointAction.STREAK_4_WEEKS,
+  PointAction.STREAK_3_WEEKS,
   PointAction.STREAK_8_WEEKS,
   PointAction.STREAK_12_WEEKS,
   PointAction.STREAK_26_WEEKS,
   PointAction.STREAK_52_WEEKS,
 ]);
+
+/**
+ * Compute the intel bonus based on how many of the three intel fields
+ * (club, wind, strategy note) the user filled in. Scales from 0 to 10:
+ *   0 fields → 0 pts
+ *   1 field  → 4 pts
+ *   2 fields → 7 pts
+ *   3 fields → 10 pts
+ */
+export function calcIntelBonus(
+  club: string | null | undefined,
+  wind: string | null | undefined,
+  strategyNote: string | null | undefined
+): number {
+  const filled = [club, wind, strategyNote].filter(v => v && v.trim().length > 0).length;
+  if (filled === 0) return 0;
+  return Math.ceil((filled / 3) * 10);
+}
 
 // Rank tiers — must match RankTier enum in schema.prisma
 export const RANK_TIERS = [

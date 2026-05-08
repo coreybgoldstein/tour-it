@@ -12,6 +12,11 @@ type AwardPointsOptions = {
   action: PointActionKey;
   referenceId?: string;
   metadata?: Record<string, unknown>;
+  /**
+   * Override the action's default point value. Used for variable-amount
+   * actions like INTEL_BONUS where the amount depends on runtime data.
+   */
+  customAmount?: number;
 };
 
 // Per-action daily caps (max awards per user per calendar day)
@@ -23,7 +28,6 @@ const DAILY_CAPS: Partial<Record<PointActionKey, number>> = {
 
 // Pioneer bonus actions share a group cap of 5/day
 const PIONEER_ACTIONS = [
-  PointAction.UPLOAD_FIRST_FOR_HOLE,
   PointAction.UPLOAD_FIRST_FOR_COURSE,
 ] as const;
 const PIONEER_DAILY_CAP = 5;
@@ -46,9 +50,13 @@ export async function awardPoints({
   action,
   referenceId,
   metadata,
+  customAmount,
 }: AwardPointsOptions): Promise<{ totalPoints: number; level: number } | null> {
   const supabase = await createClient();
-  const points = POINT_VALUES[action];
+  const points = customAmount ?? POINT_VALUES[action];
+
+  // Skip no-op awards (e.g. INTEL_BONUS with zero filled fields)
+  if (points === 0) return null;
 
   // Guard: skip one-time actions already awarded
   if (ONE_TIME_ACTIONS.has(action)) {
@@ -111,7 +119,9 @@ export async function awardPoints({
     return null;
   }
 
-  // Fetch current progression or default
+  // Fetch current progression or default. Update totalPoints, weeklyPoints
+  // AND monthlyPoints together — leaderboard sorts on monthlyPoints during
+  // active competitions, so this MUST stay in sync with totalPoints.
   const { data: prog } = await supabase
     .from("UserProgression")
     .select("totalPoints, weeklyPoints, monthlyPoints")

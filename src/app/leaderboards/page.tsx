@@ -21,7 +21,21 @@ type Entry = {
   user: { displayName: string; username: string; avatarUrl: string | null } | null;
 };
 
-const MEDAL = ["🥇", "🥈", "🥉"];
+// Owner of the app — excluded from public leaderboards.
+const OWNER_USER_ID = "5d2dd909-65a6-44e8-8bd4-94419f7622d9";
+
+function TrophyIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="trophy">
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+      <path d="M4 22h16"/>
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+    </svg>
+  );
+}
 
 export default function LeaderboardsPage() {
   const router = useRouter();
@@ -49,6 +63,7 @@ export default function LeaderboardsPage() {
     supabase
       .from("UserProgression")
       .select("userId, totalPoints, monthlyPoints, level, rank, user:userId(displayName, username, avatarUrl)")
+      .neq("userId", OWNER_USER_ID)
       .order(sortField, { ascending: false })
       .limit(50)
       .then(({ data }) => {
@@ -77,6 +92,7 @@ export default function LeaderboardsPage() {
         const { count } = await supabase
           .from("UserProgression")
           .select("*", { count: "exact", head: true })
+          .neq("userId", OWNER_USER_ID)
           .gt(sortField, myPts);
         setMyRank((count ?? 0) + 1);
       });
@@ -84,6 +100,8 @@ export default function LeaderboardsPage() {
 
   const pts = (e: Entry) =>
     period === "all" ? e.totalPoints : e.monthlyPoints;
+
+  const showCompetitionBanner = isMayActive() && period === "monthly";
 
   return (
     <main style={{ minHeight: "100svh", background: "#07100a", paddingBottom: 90, color: "#fff" }}>
@@ -96,7 +114,7 @@ export default function LeaderboardsPage() {
       </div>
 
       {/* Period tabs */}
-      <div style={{ display: "flex", gap: 8, padding: "0 20px", marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 8, padding: "0 20px", marginBottom: showCompetitionBanner ? 12 : 20 }}>
         {(["all", "monthly"] as Period[]).map(p => (
           <button
             key={p}
@@ -104,22 +122,49 @@ export default function LeaderboardsPage() {
             style={{ flex: 1, padding: "9px 0", borderRadius: 10, border: `1px solid ${period === p ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.08)"}`, background: period === p ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.03)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: period === p ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer", textTransform: "capitalize", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
           >
             {p === "all" ? "All Time" : currentMonth}
-            {p === "monthly" && isMayActive() && (
-              <span
-                onClick={e => { e.stopPropagation(); setShowCompModal(true); }}
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
-                title="May Competition rules"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
-                </svg>
-              </span>
-            )}
           </button>
         ))}
       </div>
+
+      {/* May competition banner */}
+      {showCompetitionBanner && (
+        <div style={{
+          margin: "0 20px 12px",
+          padding: "11px 14px",
+          borderRadius: 10,
+          background: "rgba(251,191,36,0.08)",
+          border: "1px solid rgba(251,191,36,0.2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: 12,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.85)", minWidth: 0 }}>
+            <span aria-hidden style={{ flexShrink: 0 }}>🏆</span>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              May Competition — $50 GolfNow card on the line
+            </span>
+          </div>
+          <button
+            onClick={() => setShowCompModal(true)}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#fbbf24",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            Rules →
+          </button>
+        </div>
+      )}
 
       {/* List */}
       {loading ? (
@@ -137,15 +182,16 @@ export default function LeaderboardsPage() {
           {entries.map((entry, i) => {
             const isMe = entry.userId === currentUserId;
             const rankColor = RANK_COLORS[entry.rank as keyof typeof RANK_COLORS] ?? "rgba(200,200,200,0.7)";
+            const isFirst = i === 0;
             return (
               <div
                 key={entry.userId}
                 onClick={() => router.push(`/profile/${entry.userId}`)}
                 style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", marginBottom: 6, borderRadius: 12, background: isMe ? "rgba(77,168,98,0.08)" : "rgba(255,255,255,0.025)", border: `1px solid ${isMe ? "rgba(77,168,98,0.25)" : "rgba(255,255,255,0.06)"}`, cursor: "pointer" }}
               >
-                {/* Rank number */}
-                <div style={{ width: 28, textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: i < 3 ? 18 : 14, color: i < 3 ? "#fff" : "rgba(255,255,255,0.35)", fontWeight: 700, flexShrink: 0 }}>
-                  {i < 3 ? MEDAL[i] : i + 1}
+                {/* Rank slot — trophy for #1, plain number for everyone else */}
+                <div style={{ width: 28, textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: 14, color: "rgba(255,255,255,0.4)", fontWeight: 700, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {isFirst ? <TrophyIcon /> : i + 1}
                 </div>
 
                 {/* Avatar with rank ring */}

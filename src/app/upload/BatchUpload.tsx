@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { compressVideo } from "@/lib/compressVideo";
 import { sendPushToUser } from "@/lib/sendPush";
+import { calcIntelBonus } from "@/config/points-system";
 
 type Course = { id: string; name: string; city: string; state: string; holeCount: number };
 type TagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
@@ -329,21 +330,22 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         }
 
         // Award points (fire-and-forget — don't block the upload flow)
-        const awardFetch = (action: string, refId = uploadId) => fetch("/api/points/award", {
+        const awardFetch = (action: string, refId = uploadId, customAmount?: number) => fetch("/api/points/award", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, referenceId: refId }),
+          body: JSON.stringify({ action, referenceId: refId, ...(customAmount !== undefined ? { customAmount } : {}) }),
         }).catch(() => {});
         awardFetch("upload_clip");
         if ((cRow?.uploadCount || 0) === 0) awardFetch("upload_first_for_course");
-        if (isFirstForHole) awardFetch("upload_first_for_hole");
-        // Intel awards
-        const hasClub  = !!clip.clubUsed.trim();
-        const hasWind  = !!clip.windCondition;
-        const hasNote  = clip.strategyNote.trim().length >= 30;
-        if (hasClub) awardFetch("add_club_to_clip");
-        if (hasWind) awardFetch("add_wind_to_clip");
-        if (hasNote) awardFetch("add_strategy_note");
-        if (hasClub && hasWind && hasNote) awardFetch("intel_complete_bonus");
+        // Single variable-amount intel bonus based on how many of the
+        // three intel fields the user filled in.
+        const club  = clip.clubUsed.trim();
+        const wind  = clip.windCondition || "";
+        const note  = clip.strategyNote.trim().length >= 30 ? clip.strategyNote.trim() : "";
+        const intelBonus = calcIntelBonus(club, wind, note);
+        if (intelBonus > 0) awardFetch("intel_bonus", uploadId, intelBonus);
+        // Mark `isFirstForHole` as referenced so unused-var lint stays quiet
+        // (kept on the row in case we want to reintroduce hole-pioneer badges)
+        void isFirstForHole;
 
         // Tags + notifications
         if (clip.taggedUsers.length > 0) {

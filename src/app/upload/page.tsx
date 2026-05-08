@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { compressVideo } from "@/lib/compressVideo";
 import BatchUpload from "./BatchUpload";
 import { sendPushToUser } from "@/lib/sendPush";
+import { calcIntelBonus } from "@/config/points-system";
 import exifr from "exifr";
 
 type Course = {
@@ -662,10 +663,16 @@ function UploadPageInner() {
       ;(async () => {
         const actions: string[] = ["upload_clip"];
         if ((cRow?.uploadCount || 0) === 0) actions.push("upload_first_for_course");
-        if (holeId && (hRow?.uploadCount || 0) === 0) actions.push("upload_first_for_hole");
         for (const action of actions) {
           await fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, referenceId: uploadId }) }).catch(() => {});
         }
+        // Variable intel bonus (4/7/10 pts based on filled fields)
+        const intelBonus = calcIntelBonus(intel.club, intel.wind, intel.notes);
+        if (intelBonus > 0) {
+          await fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "intel_bonus", referenceId: uploadId, customAmount: intelBonus }) }).catch(() => {});
+        }
+        // hRow is no longer used for points but kept for future references
+        void hRow;
         const now = new Date().toISOString();
         const { data: contrib } = await supabase.from("CourseContribution").select("id, uploadCount").eq("userId", user.id).eq("courseId", selectedCourse.id).maybeSingle();
         if (contrib) {
