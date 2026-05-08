@@ -8,7 +8,7 @@ type TopCourse = { id: string; name: string; city: string; state: string; upload
 type TopUploader = { id: string; username: string; displayName: string; uploadCount: number; avatarUrl: string | null };
 type RecentUser = { id: string; username: string; displayName: string; avatarUrl: string | null; createdAt: string };
 
-type EventType = "signup" | "upload" | "like" | "comment" | "follow" | "search" | "round";
+type EventType = "signup" | "upload" | "like" | "comment" | "follow" | "search" | "round" | "course_update";
 type ActivityEvent = {
   id: string; type: EventType;
   actorUsername: string; actorAvatar: string | null; actorId: string | null;
@@ -18,20 +18,24 @@ type ActivityEvent = {
 const EVENT_COLOR: Record<EventType, string> = {
   signup: "#2dd4bf", upload: "#4da862", like: "#f97316",
   comment: "#60a5fa", follow: "#a78bfa", search: "#fbbf24", round: "#4ade80",
+  course_update: "#fb923c",
 };
 const EVENT_LABEL: Record<EventType, string> = {
-  signup: "JOINED", upload: "POSTED", like: "LIKED",
+  signup: "JOINED", upload: "CLIP", like: "LIKED",
   comment: "COMMENT", follow: "FOLLOWED", search: "SEARCHED", round: "ROUND",
+  course_update: "COURSE",
 };
 
-function timeAgo(iso: string) {
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+function toEst(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  const opts: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/New_York" };
+  const time = d.toLocaleTimeString("en-US", opts);
+  const todayEst = now.toLocaleDateString("en-US", { timeZone: "America/New_York" });
+  const dayEst = d.toLocaleDateString("en-US", { timeZone: "America/New_York" });
+  if (todayEst === dayEst) return time;
+  const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+  return `${date} · ${time}`;
 }
 
 function ActivityFeed() {
@@ -43,14 +47,15 @@ function ActivityFeed() {
     const supabase = createClient();
     const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
-    const [uploadsRes, likesRes, commentsRes, followsRes, searchesRes, signupsRes, roundsRes] = await Promise.all([
-      supabase.from("Upload").select("id, createdAt, userId, user:userId(username, avatarUrl), course:courseId(name)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(20),
+    const [uploadsRes, likesRes, commentsRes, followsRes, searchesRes, signupsRes, roundsRes, courseUpdatesRes] = await Promise.all([
+      supabase.from("Upload").select("id, createdAt, userId, user:userId(username, avatarUrl), course:courseId(name, city, state)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(30),
       supabase.from("Like").select("id, createdAt, userId, user:userId(username, avatarUrl)").not("uploadId", "is", null).gte("createdAt", since).order("createdAt", { ascending: false }).limit(25),
       supabase.from("Comment").select("id, createdAt, userId, body, user:userId(username, avatarUrl)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
       supabase.from("Follow").select("id, createdAt, followerId, follower:followerId(username, avatarUrl), following:followingId(username)").eq("status", "ACTIVE").gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
       supabase.from("SearchLog").select("id, createdAt, userId, query, user:userId(username, avatarUrl)").not("userId", "is", null).gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
       supabase.from("User").select("id, createdAt, username, avatarUrl").gte("createdAt", since).order("createdAt", { ascending: false }).limit(10),
       supabase.from("Round").select("id, createdAt, userId, totalScore, user:userId(username, avatarUrl), course:courseId(name)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(10),
+      supabase.from("Course").select("id, updatedAt, name, city, state, description, coverImageUrl, logoUrl, yearEstablished, access").gte("updatedAt", since).order("updatedAt", { ascending: false }).limit(20),
     ]);
 
     const all: ActivityEvent[] = [];
@@ -81,6 +86,12 @@ function ActivityFeed() {
     for (const r of (roundsRes.data ?? [])) {
       const usr = (r as any).user; const crs = (r as any).course; const sc = r.totalScore ? ` (${r.totalScore})` : "";
       all.push({ id: `rd_${r.id}`, type: "round", actorId: r.userId, actorUsername: usr?.username ?? "user", actorAvatar: usr?.avatarUrl ?? null, text: crs?.name ? `logged a round at ${crs.name}${sc}` : `logged a round${sc}`, time: r.createdAt });
+    }
+    for (const c of (courseUpdatesRes.data ?? [])) {
+      const fields = [c.description ? "description" : null, c.coverImageUrl ? "cover photo" : null, c.logoUrl ? "logo" : null].filter(Boolean);
+      const what = fields.length > 0 ? fields.join(", ") : "data";
+      const loc = [c.city, c.state].filter(Boolean).join(", ");
+      all.push({ id: `cu_${c.id}`, type: "course_update", actorId: null, actorUsername: c.name, actorAvatar: null, text: `${what} updated${loc ? ` · ${loc}` : ""}`, time: c.updatedAt });
     }
 
     all.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
@@ -124,7 +135,7 @@ function ActivityFeed() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, letterSpacing: "0.07em", color, background: `${color}18`, border: `1px solid ${color}30`, borderRadius: 3, padding: "2px 5px" }}>{EVENT_LABEL[ev.type]}</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.22)", minWidth: 26, textAlign: "right" }}>{timeAgo(ev.time)}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.22)", minWidth: 26, textAlign: "right" }}>{toEst(ev.time)}</div>
                 </div>
               </div>
             );
