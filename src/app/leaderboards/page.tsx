@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { rankLabel } from "@/lib/progression";
@@ -39,7 +39,10 @@ function TrophyIcon() {
 
 export default function LeaderboardsPage() {
   const router = useRouter();
-  const [period, setPeriod] = useState<Period>("all");
+  const searchParams = useSearchParams();
+  const [period, setPeriod] = useState<Period>(
+    searchParams.get("period") === "monthly" ? "monthly" : "all"
+  );
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
