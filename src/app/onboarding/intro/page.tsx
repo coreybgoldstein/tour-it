@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const DEMO_VIDEO_ID = "5aadf7941cd346f7270361b4c44b7f47";
+const DEMO_VIDEO_ID = "2f960f5d4c3d7993addb954de8386c41"; // Boca Grove tee shot
 
 const MOCK_LEADERS = [
   { rank: 1, name: "TourPro_Mike",    pts: "8,420", color: "#fbbf24", tier: "Legend"     },
