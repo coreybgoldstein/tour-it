@@ -9,30 +9,36 @@ export default function MayCompetitionBanner() {
   return (
     <Link href="/leaderboards?period=monthly" style={{ display: "block", textDecoration: "none" }}>
       <div style={{
-        background: "linear-gradient(90deg, #2d7a42 0%, #4da862 100%)",
+        background: "linear-gradient(90deg, #1e5c30 0%, #2d7a42 50%, #3a9954 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "10px 16px",
+        padding: "0 16px",
+        height: 44,
         cursor: "pointer",
+        gap: 10,
       }}>
+        <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>🏆</span>
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 12,
-          fontWeight: 500,
+          fontSize: 13,
+          fontWeight: 600,
           color: "#fff",
-          lineHeight: 1.45,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
           flex: 1,
           minWidth: 0,
+          letterSpacing: "0.01em",
         }}>
-          🏆&nbsp;&nbsp;May Competition — top the leaderboard, win a $50 GolfNow gift card
+          May Competition —{" "}
+          <span style={{ color: "#fde68a", fontWeight: 700 }}>$50 GolfNow card</span>
+          {" "}on the line
         </div>
         <span style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: 300,
-          color: "rgba(255,255,255,0.75)",
-          marginLeft: 10,
+          color: "rgba(255,255,255,0.7)",
           flexShrink: 0,
           lineHeight: 1,
         }}>›</span>
