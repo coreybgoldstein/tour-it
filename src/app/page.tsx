@@ -649,7 +649,7 @@ export default function Home() {
         supabase.from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
           .order("rankScore", { ascending: false, nullsFirst: false }).limit(50),
         supabase.from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
-          .order("createdAt", { ascending: false }).limit(5),
+          .order("createdAt", { ascending: false }).limit(20),
       ]);
 
       // Merge pools, deduplicate
@@ -661,15 +661,25 @@ export default function Home() {
 
       if (pool.length === 0) { setLoading(false); return; }
 
-      // Score = rankScore × quality × seen-penalty × jitter
+      // Score = (rankScore + freshnessBonus) × quality × seen-penalty × jitter
+      // Additive freshness bonus so brand-new clips (rankScore ≈ 0) still surface.
+      const now = Date.now();
+      const DAY = 86_400_000;
       const scored = pool
-        .map(u => ({
-          ...u,
-          _score: (u.rankScore ?? 0)
-            * (u.cloudflareVideoId ? 1.15 : 0.85)  // CF-processed = higher quality
-            * (seenIds.has(u.id) ? 0.15 : 1.0)      // seen this session → sink to back
-            * (0.5 + Math.random() * 1.0),            // ±50% jitter for variety
-        }))
+        .map(u => {
+          const ageMs = now - new Date(u.createdAt).getTime();
+          const freshnessBonus = ageMs < DAY         ? 2.0   // < 1 day
+            : ageMs < 3 * DAY                        ? 1.0   // 1–3 days
+            : ageMs < 7 * DAY                        ? 0.35  // 3–7 days
+            : 0;
+          return {
+            ...u,
+            _score: ((u.rankScore ?? 0) + freshnessBonus)
+              * (u.cloudflareVideoId ? 1.15 : 0.85)  // CF-processed = higher quality
+              * (seenIds.has(u.id) ? 0.15 : 1.0)      // seen this session → sink to back
+              * (0.5 + Math.random() * 1.0),            // ±50% jitter for variety
+          };
+        })
         .sort((a, b) => b._score - a._score);
 
       // Course diversity cap: max 2 clips per course per load
