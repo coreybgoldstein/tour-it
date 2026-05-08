@@ -21,17 +21,17 @@ export default function MayCompetitionBanner() {
         <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>🏆</span>
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: 600,
           color: "#fff",
           whiteSpace: "nowrap",
           overflow: "hidden",
           flex: 1,
           minWidth: 0,
-          letterSpacing: "0.01em",
+          letterSpacing: "0.02em",
         }}>
           May Competition —{" "}
-          <span style={{ color: "#fde68a", fontWeight: 700 }}>$50 GolfNow card</span>
+          <span style={{ color: "#fde68a", fontWeight: 700 }}>$75 GolfNow gift card</span>
           {" "}on the line
         </div>
         <span style={{
