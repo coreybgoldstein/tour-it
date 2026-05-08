@@ -77,7 +77,7 @@ export default function OnboardingIntroPage() {
         .intro-scroll { display: flex; overflow-x: scroll; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex: 1; }
         .intro-scroll::-webkit-scrollbar { display: none; }
         .intro-slide { flex-shrink: 0; width: 100%; scroll-snap-align: start; position: relative; overflow: hidden; }
-        @keyframes pulse-soft { 0%,100%{opacity:.11} 50%{opacity:.17} }
+        @keyframes pulse-soft { 0%,100%{opacity:.3} 50%{opacity:.48} }
       `}</style>
 
       {/* Skip */}
@@ -105,8 +105,8 @@ export default function OnboardingIntroPage() {
             ))}
           </div>
           {/* Vignette overlay */}
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 70% at 50% 50%, rgba(7,16,10,0.35) 0%, rgba(7,16,10,0.82) 100%)" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.7) 0%, transparent 25%, transparent 70%, rgba(7,16,10,0.8) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 80% 70% at 50% 50%, rgba(7,16,10,0.2) 0%, rgba(7,16,10,0.68) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.55) 0%, transparent 25%, transparent 65%, rgba(7,16,10,0.65) 100%)" }} />
 
           {/* Content */}
           <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", textAlign: "center" }}>
@@ -122,12 +122,14 @@ export default function OnboardingIntroPage() {
 
         {/* ── SLIDE 2: Real Clips, Real Intel ── */}
         <div className="intro-slide" style={{ background: "#000" }}>
-          {/* Looping Cloudflare video */}
-          <iframe
-            src={`https://iframe.videodelivery.net/${DEMO_VIDEO_ID}?autoplay=true&muted=true&loop=true&controls=false&preload=true&poster=`}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", objectFit: "cover" }}
-            allow="autoplay; fullscreen"
-            title="clip preview"
+          {/* Looping video via Cloudflare Stream HLS */}
+          <video
+            src={`https://videodelivery.net/${DEMO_VIDEO_ID}/manifest/video.m3u8`}
+            autoPlay
+            muted
+            loop
+            playsInline
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           />
           {/* Dark overlay */}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 40%, rgba(0,0,0,0.6) 100%)" }} />
@@ -151,7 +153,7 @@ export default function OnboardingIntroPage() {
         {/* ── SLIDE 3: Earn Points & Rank Up ── */}
         <div className="intro-slide">
           {/* Leaderboard background */}
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", filter: "blur(1.5px)", opacity: 0.22, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", filter: "blur(0.5px)", opacity: 0.5, pointerEvents: "none" }}>
             <div style={{ width: "100%", maxWidth: 340, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, overflow: "hidden" }}>
               <div style={{ padding: "12px 16px", background: "rgba(251,191,36,0.1)", borderBottom: "1px solid rgba(255,255,255,0.06)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fbbf24" }}>Monthly Leaderboard</div>
               {MOCK_LEADERS.map((u, i) => (
@@ -167,7 +169,7 @@ export default function OnboardingIntroPage() {
             </div>
           </div>
           {/* Overlay */}
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 85% 75% at 50% 50%, rgba(7,16,10,0.5) 0%, rgba(7,16,10,0.88) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 85% 75% at 50% 50%, rgba(7,16,10,0.38) 0%, rgba(7,16,10,0.82) 100%)" }} />
 
           {/* Content */}
           <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", textAlign: "center" }}>
@@ -189,7 +191,7 @@ export default function OnboardingIntroPage() {
         <div className="intro-slide">
           {/* Upload screen mockup */}
           <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 28px", pointerEvents: "none" }}>
-            <div style={{ width: "100%", maxWidth: 320, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, overflow: "hidden", opacity: 0.28, filter: "blur(1px)" }}>
+            <div style={{ width: "100%", maxWidth: 320, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, overflow: "hidden", opacity: 0.52, filter: "blur(0.5px)" }}>
               {/* Fake video thumbnail */}
               <div style={{ height: 140, background: "linear-gradient(135deg, #1a4a22 0%, #0c1e11 100%)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                 <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -210,7 +212,7 @@ export default function OnboardingIntroPage() {
             </div>
           </div>
           {/* Overlay */}
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 85% 75% at 50% 50%, rgba(7,16,10,0.45) 0%, rgba(7,16,10,0.88) 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 85% 75% at 50% 50%, rgba(7,16,10,0.32) 0%, rgba(7,16,10,0.82) 100%)" }} />
 
           {/* Content */}
           <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", textAlign: "center" }}>
