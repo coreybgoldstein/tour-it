@@ -147,7 +147,7 @@ export default function LeaderboardsPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.85)", minWidth: 0 }}>
             <span aria-hidden style={{ flexShrink: 0 }}>🏆</span>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              May Competition — $75 GolfNow gift card on the line
+              May Competition — $100 GolfNow gift card on the line
             </span>
           </div>
           <button
