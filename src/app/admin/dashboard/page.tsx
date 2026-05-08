@@ -27,7 +27,11 @@ const EVENT_LABEL: Record<EventType, string> = {
 };
 
 function toEst(iso: string) {
-  const d = new Date(iso);
+  // Supabase returns TIMESTAMP (no tz) without Z — browser treats it as local time.
+  // Force UTC by appending Z if there's no timezone designator after the date part.
+  const normalized = iso.includes("T") ? iso : iso.replace(" ", "T");
+  const utcStr = /[Z+]/.test(normalized.slice(10)) ? normalized : normalized + "Z";
+  const d = new Date(utcStr);
   const now = new Date();
   const opts: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/New_York" };
   const time = d.toLocaleTimeString("en-US", opts);
