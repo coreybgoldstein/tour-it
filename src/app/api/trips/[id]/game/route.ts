@@ -63,43 +63,39 @@ function buildPrompt(data: {
   holeHandicaps: number[];
   teams: Array<{ name: string; playerIds: string[] }>;
 }): string {
-  const { courseName, coursePar, teeSlope, teeRating, format, formatConfig, players, holeHandicaps, teams } = data;
+  const { courseName, coursePar, teeSlope, teeRating, format, formatConfig, players, teams } = data;
   const formatName = FORMAT_NAMES[format] || format;
 
   const playerLines = players
-    .map(p => `  ${p.displayName}: HI ${p.handicapIndex.toFixed(1)} → Course HCP ${p.courseHandicap} → Net ${p.netStrokes} shot${p.netStrokes !== 1 ? "s" : ""} vs field → Strokes on holes: ${p.strokeHoles.length > 0 ? p.strokeHoles.join(", ") : "none"} → Team ${p.teamId}`)
+    .map(p => `  ${p.displayName} (Team ${p.teamId}): HI ${p.handicapIndex} → Course HCP ${p.courseHandicap} → Net ${p.netStrokes} strokes → Holes with stroke: ${p.strokeHoles.length > 0 ? p.strokeHoles.join(", ") : "none"}`)
     .join("\n");
-
-  const holeRankLines = holeHandicaps.map((rank, i) => `  Hole ${i + 1}: HCP ${rank}`).join("\n");
 
   let formatDetails = "";
   if (format === "nassau") {
-    formatDetails = `Dollar amounts: $${formatConfig.frontAmount} front 9 / $${formatConfig.backAmount} back 9 / $${formatConfig.totalAmount} overall 18`;
+    formatDetails = `Bets: $${formatConfig.frontAmount} front 9 / $${formatConfig.backAmount} back 9 / $${formatConfig.totalAmount} overall 18`;
   } else if (format === "skins") {
     formatDetails = `$${formatConfig.skinsAmount} per skin. Carryover on ties: ${formatConfig.carryover ? "yes" : "no"}`;
   } else if (format === "stableford") {
     formatDetails = `Points: 2+ over=0pts, bogey=1pt, par=2pts, birdie=3pts, eagle=4pts, albatross=5pts`;
   } else if (format === "best_ball") {
-    formatDetails = `Team best-ball: best net score on each hole counts for the team`;
+    formatDetails = `Team best-ball: lowest net score per hole counts for the team`;
   } else if (format === "match_play") {
-    formatDetails = `Match play: win holes outright (halved = split point). Most holes won wins the match`;
+    formatDetails = `Win holes (halved = tied). Most holes won wins the match`;
   } else if (format === "scramble") {
-    formatDetails = `Scramble: all players hit from the best shot location each stroke`;
+    formatDetails = `All players hit each shot; group plays from the best ball`;
   }
 
   const teamLines = teams.length > 0
-    ? teams.map(t => `  ${t.name}: ${t.playerIds.map(pid => players.find(p => p.displayName === pid || (p as any).userId === pid)?.displayName || pid).join(" & ")}`).join("\n")
-    : "  Individual game — no teams";
+    ? teams.map(t => `  ${t.name}: ${t.playerIds.map(pid => players.find(p => (p as any).userId === pid)?.displayName || pid).join(" & ")}`).join("\n")
+    : "  Individual — no teams";
 
-  return `You are a golf game expert. Generate a complete, accurate game sheet for this group.
+  return `You are a golf game expert. Generate rules and share text for this round.
 
-Return ONLY valid JSON with exactly two string fields: "gameSheet" and "shareText".
-No markdown code blocks, no extra text — just the raw JSON object.
+Return ONLY valid JSON with exactly three string fields: "rules", "tip", and "shareText".
+No markdown, no code blocks — just raw JSON.
 
-COURSE: ${courseName}
-TEE: Slope ${teeSlope} / Rating ${teeRating} / Par ${coursePar}
-FORMAT: ${formatName}
-${formatDetails}
+COURSE: ${courseName} | TEE: Slope ${teeSlope} / Rating ${teeRating} / Par ${coursePar}
+FORMAT: ${formatName} — ${formatDetails}
 
 PLAYERS:
 ${playerLines}
@@ -107,22 +103,19 @@ ${playerLines}
 TEAMS:
 ${teamLines}
 
-HOLE HANDICAP RANKINGS:
-${holeRankLines}
+For "rules" (3–5 sentences, plain text):
+Explain exactly how ${formatName} works for THIS specific group. Mention: teams, ${formatDetails}, how net strokes apply, who wins and how. Be concrete — name teams/amounts where relevant.
 
-For "gameSheet" (in-app display, use \\n for newlines):
-- Header: course name, tee info, format + amounts
-- Each player section: name, team, handicap index, course handicap, net shots, list of stroke holes
-- Format rules section: explain ${formatName} rules clearly for these specific players (mention teams, amounts, how to score)
-- One practical tip
+For "tip" (1 sentence):
+One practical, specific tip for this format and group (e.g. which holes matter most, pacing, strategy).
 
-For "shareText" (SMS-ready, under 350 words, plain text):
-- Start with: "${courseName} — ${formatName}"
-- Tee: Slope ${teeSlope} / Rating ${teeRating}
-- Brief team breakdown
-- Each player: name, net shots, which holes they get a stroke (keep compact)
-- Quick rules reminder
-- End with a fun "let's go" sign-off`;
+For "shareText" (SMS-ready plain text, under 280 words):
+- Line 1: "${courseName} — ${formatName}"
+- Line 2: Tee: Slope ${teeSlope} / Rating ${teeRating}
+- Teams: brief breakdown
+- Each player: name, net shots, stroke holes (compact)
+- 1-line rules reminder
+- Fun sign-off`;
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -201,7 +194,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
     const rawText = response.content[0].type === "text" ? response.content[0].text : "{}";
     const parsed = JSON.parse(rawText);
-    gameSheet = parsed.gameSheet || rawText;
+    gameSheet = JSON.stringify({ rules: parsed.rules || "", tip: parsed.tip || "" });
     shareText = parsed.shareText || rawText;
   } catch (e) {
     return NextResponse.json({ error: "Failed to generate game sheet" }, { status: 500 });

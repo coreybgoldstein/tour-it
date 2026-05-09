@@ -305,6 +305,7 @@ export default function TripPage() {
   const [gameSkinsCarryover, setGameSkinsCarryover] = useState(true);
   const [gameHoleHandicaps, setGameHoleHandicaps] = useState<number[]>(Array(18).fill(0));
   const [gameHoleHandicapsKnown, setGameHoleHandicapsKnown] = useState(false);
+  const [gameHandicapWarning, setGameHandicapWarning] = useState(false);
   const [gameError, setGameError] = useState("");
   const [coursesWithHandicaps, setCoursesWithHandicaps] = useState<Set<string>>(new Set());
   const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
@@ -664,7 +665,11 @@ export default function TripPage() {
       setGameCoursePar(par);
       const ranks = holes.map((h: any) => h.handicapRank || 0);
       setGameHoleHandicaps(ranks);
-      setGameHoleHandicapsKnown(ranks.every((r: number) => r > 0));
+      const hasAnyData = ranks.some((r: number) => r > 0);
+      const sortedRanks = [...ranks].sort((a: number, b: number) => a - b);
+      const isValid1to18 = ranks.length === 18 && sortedRanks.every((v: number, i: number) => v === i + 1);
+      setGameHoleHandicapsKnown(isValid1to18);
+      setGameHandicapWarning(hasAnyData && !isValid1to18);
     } else {
       setGameCoursePar(72);
       setGameHoleHandicaps(Array(18).fill(0));
@@ -1413,14 +1418,14 @@ export default function TripPage() {
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                               <button
-                                onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.max(0, Math.round((pl.handicapIndex - 0.1) * 10) / 10) } : pl))}
+                                onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.max(-10, Math.round((pl.handicapIndex - 0.1) * 10) / 10) } : pl))}
                                 style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 300, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>−</button>
                               <input
-                                type="number" step="0.1" min="0" max="54"
+                                type="number" step="0.1" min="-10" max="54"
                                 value={p.handicapIndex === 0 ? "" : p.handicapIndex}
                                 placeholder="0"
-                                onChange={e => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: e.target.value === "" ? 0 : Math.max(0, Math.min(54, parseFloat(e.target.value) || 0)) } : pl))}
-                                style={{ width: 50, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", textAlign: "center" }}
+                                onChange={e => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: e.target.value === "" ? 0 : Math.max(-10, Math.min(54, parseFloat(e.target.value) || 0)) } : pl))}
+                                style={{ width: 54, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", textAlign: "center" }}
                               />
                               <button
                                 onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.min(54, Math.round((pl.handicapIndex + 0.1) * 10) / 10) } : pl))}
@@ -1457,22 +1462,25 @@ export default function TripPage() {
               {/* Step 4: Configure */}
               {!generatingGame && gameStep === 4 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  {(gameFormat === "nassau" || gameFormat === "match_play" || gameFormat === "best_ball") && (
+                  {gameFormat !== "skins" && (
                     <div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>Team Assignment</div>
-                      {gamePlayers.map((p, i) => (
-                        <div key={p.userId} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", flex: 1 }}>{p.displayName}</span>
-                          <div style={{ display: "flex", gap: 6 }}>
-                            {["A", "B"].map(team => (
-                              <button key={team} onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, teamId: team } : pl))}
-                                style={{ padding: "5px 14px", borderRadius: 8, border: `1.5px solid ${p.teamId === team ? "#4da862" : "rgba(255,255,255,0.12)"}`, background: p.teamId === team ? "rgba(77,168,98,0.15)" : "transparent", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: p.teamId === team ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer" }}>
-                                Team {team}
-                              </button>
-                            ))}
+                      {gamePlayers.map((p, i) => {
+                        const teamLetters = Array.from({ length: gamePlayers.length }, (_, k) => String.fromCharCode(65 + k));
+                        return (
+                          <div key={p.userId} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", flex: 1 }}>{p.displayName}</span>
+                            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                              {teamLetters.map(team => (
+                                <button key={team} onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, teamId: team } : pl))}
+                                  style={{ width: 34, height: 30, borderRadius: 8, border: `1.5px solid ${p.teamId === team ? "#4da862" : "rgba(255,255,255,0.12)"}`, background: p.teamId === team ? "rgba(77,168,98,0.15)" : "transparent", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: p.teamId === team ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer" }}>
+                                  {team}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
@@ -1510,9 +1518,9 @@ export default function TripPage() {
                   )}
 
                   {(gameFormat === "stableford" || gameFormat === "scramble") && (
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>
-                      {gameFormat === "stableford" && "Points scoring: bogey=1pt, par=2pts, birdie=3pts, eagle=4pts, albatross=5pts. Highest total wins."}
-                      {gameFormat === "scramble" && "Everyone hits on each shot. The group selects the best ball and all play from there. No individual handicap strokes."}
+                    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
+                      {gameFormat === "stableford" && "Bogey=1pt, par=2pts, birdie=3pts, eagle=4pts. Teams combine points per hole if teammates are assigned above."}
+                      {gameFormat === "scramble" && "All players hit from the best shot each stroke. Assign teams above for team-vs-team play, or put everyone on separate teams for a group scramble."}
                     </div>
                   )}
                 </div>
@@ -1521,6 +1529,13 @@ export default function TripPage() {
               {/* Step 5: Hole Handicap Rankings */}
               {!generatingGame && gameStep === 5 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {gameHandicapWarning && (
+                    <div style={{ background: "rgba(255,170,0,0.08)", border: "1px solid rgba(255,170,0,0.25)", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#ffaa00", lineHeight: 1.5 }}>
+                        This course has hole data but the rankings don't form a complete 1–18 set. Please verify and correct them — accurate rankings are critical for fair stroke allocation.
+                      </div>
+                    </div>
+                  )}
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
                     Enter each hole's difficulty ranking (1 = hardest, 18 = easiest). Found on the scorecard. We'll save these for future games at this course.
                   </div>
@@ -1553,8 +1568,8 @@ export default function TripPage() {
               {generatingGame && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "60px 0" }}>
                   <div style={{ width: 52, height: 52, borderRadius: "50%", border: "3px solid rgba(77,168,98,0.15)", borderTop: "3px solid #4da862", animation: "spin 1s linear infinite" }} />
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>Building your game sheet...</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Claude is crunching the handicaps</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>Tour It is crunching the numbers...</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Calculating handicaps &amp; building your game sheet</div>
                   <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
               )}
@@ -1620,8 +1635,92 @@ export default function TripPage() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
-            <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{viewGame.gameSheet}</div>
+            <div style={{ overflowY: "auto", flex: 1, padding: "16px 20px 8px" }}>
+              {(() => {
+                let sheetData: { rules?: string; tip?: string } = {};
+                try { sheetData = JSON.parse(viewGame.gameSheet); } catch {}
+                const isStructured = !!sheetData.rules;
+
+                const teamGroups = (() => {
+                  if (!viewGame.players) return [] as { team: string; members: string[] }[];
+                  const map: Record<string, string[]> = {};
+                  for (const p of viewGame.players) {
+                    const t = p.teamId || "Solo";
+                    if (!map[t]) map[t] = [];
+                    map[t].push(p.displayName);
+                  }
+                  return Object.entries(map).filter(([t]) => t !== "Solo").map(([team, members]) => ({ team, members }));
+                })();
+
+                if (isStructured) {
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {/* Teams */}
+                      {teamGroups.length > 1 && (
+                        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "12px 14px" }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Teams</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            {teamGroups.map(({ team, members }) => (
+                              <div key={team} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                <div style={{ width: 24, height: 24, borderRadius: 7, background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{team}</div>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)" }}>{members.join(" & ")}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Players */}
+                      {viewGame.players?.map((p: any, i: number) => (
+                        <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 14px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", flex: 1 }}>{p.displayName}</div>
+                            {p.teamId && p.teamId !== "Solo" && (
+                              <div style={{ padding: "2px 8px", borderRadius: 6, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>Team {p.teamId}</div>
+                            )}
+                          </div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: p.strokeHoles?.length > 0 ? 8 : 0 }}>
+                            {[
+                              { label: "HI", value: p.handicapIndex },
+                              { label: "Course HCP", value: p.courseHandicap },
+                              { label: "Net Shots", value: p.netStrokes > 0 ? `+${p.netStrokes}` : String(p.netStrokes) },
+                            ].map(({ label, value }) => (
+                              <div key={label} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "7px 8px", textAlign: "center" }}>
+                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: label === "Net Shots" ? "#4da862" : "#fff" }}>{value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          {p.strokeHoles?.length > 0 && (
+                            <div style={{ background: "rgba(77,168,98,0.06)", borderRadius: 8, padding: "6px 10px" }}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", marginRight: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Strokes on holes:</span>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{p.strokeHoles.join(", ")}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Rules */}
+                      {sheetData.rules && (
+                        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "12px 14px" }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Format Rules</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.72)", lineHeight: 1.65 }}>{sheetData.rules}</div>
+                        </div>
+                      )}
+
+                      {/* Tip */}
+                      {sheetData.tip && (
+                        <div style={{ background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, padding: "10px 14px", marginBottom: 4 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Pro Tip</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>{sheetData.tip}</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{viewGame.gameSheet}</div>;
+              })()}
             </div>
             <div style={{ padding: "12px 20px 28px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 10, flexShrink: 0 }}>
               <button
