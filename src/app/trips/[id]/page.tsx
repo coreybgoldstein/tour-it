@@ -60,6 +60,7 @@ type GamePlayer = { userId: string; displayName: string; avatarUrl: string | nul
 type TripGameRecord = {
   id: string; courseId: string; courseName: string; format: string;
   formatConfig: Record<string, unknown>; players: any[]; gameSheet: string; shareText: string; createdAt: string;
+  courseLogoUrl?: string | null;
 };
 
 const GAME_FORMATS = [
@@ -305,6 +306,8 @@ export default function TripPage() {
   const [gameHoleHandicaps, setGameHoleHandicaps] = useState<number[]>(Array(18).fill(0));
   const [gameHoleHandicapsKnown, setGameHoleHandicapsKnown] = useState(false);
   const [gameError, setGameError] = useState("");
+  const [coursesWithHandicaps, setCoursesWithHandicaps] = useState<Set<string>>(new Set());
+  const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -350,7 +353,25 @@ export default function TripPage() {
       if (clipsData) setClips(clipsData);
 
       const { data: gamesData } = await supabase.from("TripGame").select("id, courseId, courseName, format, formatConfig, players, gameSheet, shareText, createdAt").eq("tripId", id).order("createdAt", { ascending: false });
-      if (gamesData) setGames(gamesData as TripGameRecord[]);
+      if (gamesData && gamesData.length > 0) {
+        const gcIds = [...new Set(gamesData.map((g: any) => g.courseId))];
+        const { data: gcLogos } = await supabase.from("Course").select("id, logoUrl").in("id", gcIds);
+        const logoMap: Record<string, string | null> = {};
+        gcLogos?.forEach((c: any) => { logoMap[c.id] = c.logoUrl; });
+        setGames(gamesData.map((g: any) => ({ ...g, courseLogoUrl: logoMap[g.courseId] || null })) as TripGameRecord[]);
+      }
+
+      // Check which trip courses have hole handicap data
+      if (tcData && tcData.length > 0) {
+        const allCourseIds = tcData.map((tc: any) => tc.courseId);
+        const { data: holesData } = await supabase.from("Hole").select("courseId, handicapRank").in("courseId", allCourseIds);
+        const haveHandicaps = new Set<string>();
+        allCourseIds.forEach((cid: string) => {
+          const holes = (holesData || []).filter((h: any) => h.courseId === cid);
+          if (holes.length === 18 && holes.every((h: any) => h.handicapRank > 0)) haveHandicaps.add(cid);
+        });
+        setCoursesWithHandicaps(haveHandicaps);
+      }
 
       setLoading(false);
     }
@@ -525,6 +546,28 @@ export default function TripPage() {
         id: newId, courseId: selectedAddCourse.id, playDate: addPlayDate || null, teeTime: addTeeTime || null, accommodation: addAccom.trim() || null, sortOrder: tripCourses.length,
         course: { id: selectedAddCourse.id, name: selectedAddCourse.name, city: selectedAddCourse.city, state: selectedAddCourse.state, uploadCount: 0, logoUrl: null },
       }]);
+
+      // Check if course has hole handicap data; notify admin if not
+      const { data: holeCheck } = await supabase.from("Hole").select("handicapRank").eq("courseId", selectedAddCourse.id);
+      const hasHandicaps = holeCheck && holeCheck.length === 18 && holeCheck.every((h: any) => h.handicapRank > 0);
+      if (hasHandicaps) {
+        setCoursesWithHandicaps(prev => new Set([...prev, selectedAddCourse.id]));
+      } else {
+        const { data: admins } = await supabase.from("User").select("id").eq("isAdmin", true);
+        if (admins && admins.length > 0) {
+          const now = new Date().toISOString();
+          for (const admin of admins) {
+            await supabase.from("Notification").insert({
+              id: crypto.randomUUID(), userId: admin.id, type: "admin_alert",
+              title: "Course needs scorecard data",
+              body: `"${selectedAddCourse.name}" was added to a trip — hole handicap rankings may be missing`,
+              linkUrl: `/courses/${selectedAddCourse.id}`,
+              read: false, createdAt: now, updatedAt: now,
+            });
+          }
+        }
+      }
+
       setAddCourseStep("search");
       setSelectedAddCourse(null);
       setCourseSearch("");
@@ -665,6 +708,16 @@ export default function TripPage() {
     setGeneratingGame(false);
   };
 
+  const deleteGame = async (gameId: string) => {
+    if (deletingGameId) return;
+    setDeletingGameId(gameId);
+    await createClient().from("TripGame").delete().eq("id", gameId);
+    setGames(prev => prev.filter(g => g.id !== gameId));
+    setViewGameOpen(false);
+    setViewGame(null);
+    setDeletingGameId(null);
+  };
+
   const formatDate = (d: string | null) => {
     if (!d) return "";
     const dt = new Date(d + "T00:00:00");
@@ -784,9 +837,15 @@ export default function TripPage() {
               ))}
             </div>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{members.length} {members.length === 1 ? "golfer" : "golfers"}</span>
-            <button onClick={() => setInviteOpen(true)} style={{ marginLeft: "auto", background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer" }}>
-              + Invite
-            </button>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+              <button onClick={() => setChatOpen(true)} style={{ background: messages.length > 0 ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.06)", border: `1px solid ${messages.length > 0 ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: messages.length > 0 ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Chat{messages.length > 0 ? ` · ${messages.length}` : ""}
+              </button>
+              <button onClick={() => setInviteOpen(true)} style={{ background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer" }}>
+                + Invite
+              </button>
+            </div>
           </div>
 
           {trip.description && (
@@ -870,6 +929,12 @@ export default function TripPage() {
                         {tc.teeTime && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>⏰ {formatTeeTime(tc.teeTime)}</span>}
                         {tc.accommodation && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>🏨 {tc.accommodation}</span>}
                       </div>
+                      {!coursesWithHandicaps.has(tc.courseId) && (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, background: "rgba(230,160,0,0.1)", border: "1px solid rgba(230,160,0,0.25)", borderRadius: 99, padding: "2px 7px" }}>
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(230,160,0,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(230,160,0,0.8)" }}>Scorecard data needed for games</span>
+                        </div>
+                      )}
                     </div>
                     <button onClick={e => { e.stopPropagation(); openEditCourse(tc); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -878,39 +943,6 @@ export default function TripPage() {
                 </div>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* Trip Chat */}
-        <div style={{ padding: "24px 20px 0" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div className="section-label" style={{ marginBottom: 0 }}>Trip Chat {messages.length > 0 && `· ${messages.length}`}</div>
-            <button
-              onClick={() => setChatOpen(true)}
-              style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              Open Chat
-            </button>
-          </div>
-          {messages.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "16px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>No messages yet — start the group chat</div>
-          ) : (
-            <button onClick={() => setChatOpen(true)} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px 14px", cursor: "pointer", textAlign: "left" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0 }}>
-                  {messages[messages.length - 1]?.user?.avatarUrl
-                    ? <img src={messages[messages.length - 1].user.avatarUrl!} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                    : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "7px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  }
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>{messages[messages.length - 1]?.user?.displayName}</span>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginLeft: 6 }}>{messages[messages.length - 1]?.body}</span>
-                </div>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-              </div>
-            </button>
           )}
         </div>
 
@@ -930,18 +962,30 @@ export default function TripPage() {
             <div style={{ textAlign: "center", padding: "16px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>No games yet — set up Nassau, Skins, and more</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {games.map(g => (
-                <button key={g.id} onClick={() => { setViewGame(g); setViewGameOpen(true); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "13px 14px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{g.courseName}</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{GAME_FORMATS.find(f => f.id === g.format)?.name || g.format} · {new Date(g.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
-                  </div>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-              ))}
+              {games.map(g => {
+                const fmt = GAME_FORMATS.find(f => f.id === g.format);
+                const cfg = g.formatConfig as any;
+                const sub = g.format === "nassau" ? `$${cfg?.frontAmount}/$${cfg?.backAmount}/$${cfg?.totalAmount}` : g.format === "skins" ? `$${cfg?.skinsAmount}/skin` : fmt?.desc || "";
+                return (
+                  <button key={g.id} onClick={() => { setViewGame(g); setViewGameOpen(true); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "13px 14px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                      {g.courseLogoUrl
+                        ? <img src={g.courseLogoUrl} alt={g.courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{abbr(g.courseName)}</span>
+                      }
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.courseName}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{fmt?.name || g.format}</span>
+                        {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>· {sub}</span>}
+                      </div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{g.players?.length || 0} players</div>
+                    </div>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -1354,26 +1398,47 @@ export default function TripPage() {
               {/* Step 2: Players */}
               {!generatingGame && gameStep === 2 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 4 }}>Edit each player's handicap index if needed</div>
-                  {gamePlayers.map((p, i) => (
-                    <div key={p.userId} style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "10px 12px" }}>
-                      <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0 }}>
-                        {p.avatarUrl ? <img src={p.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "9px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{p.displayName}</div>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)" }}>HI</span>
-                        <input
-                          type="number" step="0.1" min="0" max="54"
-                          value={p.handicapIndex}
-                          onChange={e => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Number(e.target.value) } : pl))}
-                          style={{ width: 52, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", textAlign: "center" }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                  {(() => {
+                    const minHI = Math.min(...gamePlayers.map(p => p.handicapIndex));
+                    return gamePlayers.map((p, i) => {
+                      const diff = Math.round(p.handicapIndex * (gameTeeSlope / 113) + (gameTeeRating - gameCoursePar)) - Math.round(minHI * (gameTeeSlope / 113) + (gameTeeRating - gameCoursePar));
+                      return (
+                        <div key={p.userId} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "12px 12px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: diff > 0 ? 6 : 0 }}>
+                            <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0 }}>
+                              {p.avatarUrl ? <img src={p.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "9px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{p.displayName}</div>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <button
+                                onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.max(0, Math.round((pl.handicapIndex - 0.1) * 10) / 10) } : pl))}
+                                style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 300, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>−</button>
+                              <input
+                                type="number" step="0.1" min="0" max="54"
+                                value={p.handicapIndex === 0 ? "" : p.handicapIndex}
+                                placeholder="0"
+                                onChange={e => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: e.target.value === "" ? 0 : Math.max(0, Math.min(54, parseFloat(e.target.value) || 0)) } : pl))}
+                                style={{ width: 50, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", textAlign: "center" }}
+                              />
+                              <button
+                                onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.min(54, Math.round((pl.handicapIndex + 0.1) * 10) / 10) } : pl))}
+                                style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#4da862", fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 300, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>+</button>
+                            </div>
+                          </div>
+                          {diff > 0 && (
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", paddingLeft: 42 }}>
+                              Gives <span style={{ color: "#4da862", fontWeight: 600 }}>+{diff} shot{diff !== 1 ? "s" : ""}</span> vs lowest handicap
+                            </div>
+                          )}
+                          {diff === 0 && gamePlayers.length > 1 && (
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", paddingLeft: 42 }}>Lowest handicap — receives no shots</div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
 
@@ -1533,17 +1598,30 @@ export default function TripPage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column" }}>
           <div onClick={() => setViewGameOpen(false)} style={{ flex: 1, background: "rgba(0,0,0,0.5)" }} />
           <div style={{ background: "#0d1f14", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", maxHeight: "88vh" }}>
-            <div style={{ padding: "14px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-              <div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>{GAME_FORMATS.find(f => f.id === viewGame.format)?.name || viewGame.format}</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{viewGame.courseName}</div>
+            <div style={{ padding: "14px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                {viewGame.courseLogoUrl
+                  ? <img src={viewGame.courseLogoUrl} alt={viewGame.courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                  : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{abbr(viewGame.courseName)}</span>
+                }
               </div>
-              <button onClick={() => setViewGameOpen(false)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 900, color: "#fff" }}>{GAME_FORMATS.find(f => f.id === viewGame.format)?.name || viewGame.format}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{viewGame.courseName} · {viewGame.players?.length || 0} players</div>
+              </div>
+              <button
+                onClick={() => { if (confirm("Delete this game?")) deleteGame(viewGame.id); }}
+                disabled={deletingGameId === viewGame.id}
+                style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(192,57,43,0.12)", border: "1px solid rgba(192,57,43,0.25)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(192,57,43,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+              <button onClick={() => setViewGameOpen(false)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
             <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{viewGame.gameSheet}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{viewGame.gameSheet}</div>
             </div>
             <div style={{ padding: "12px 20px 28px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 10, flexShrink: 0 }}>
               <button
