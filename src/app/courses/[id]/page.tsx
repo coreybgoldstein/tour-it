@@ -1164,7 +1164,7 @@ const [editDescription, setEditDescription] = useState("");
                               ) : (
                                 <img src={topClip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                               )}
-                              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.72) 0%, rgba(7,16,10,0.55) 40%, rgba(7,16,10,0.78) 100%)" }} />
+                              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.45) 0%, rgba(7,16,10,0.25) 40%, rgba(7,16,10,0.5) 100%)" }} />
                             </>
                           )}
                           {/* Content */}
