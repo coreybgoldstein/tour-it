@@ -1012,14 +1012,18 @@ const [editDescription, setEditDescription] = useState("");
                   <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 18px" }} />
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12, paddingLeft: 4 }}>Save Course</div>
                   <button onClick={() => toggleSave("PLAYED")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: saveType === "PLAYED" ? "rgba(26,158,66,0.12)" : "transparent", border: `1px solid ${saveType === "PLAYED" ? "rgba(26,158,66,0.35)" : "transparent"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", marginBottom: 8 }}>
-                    <span style={{ fontSize: 22 }}>✓</span>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: saveType === "PLAYED" ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={saveType === "PLAYED" ? "#1a9e42" : "rgba(255,255,255,0.6)"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
                     <div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: saveType === "PLAYED" ? "#1a9e42" : "#fff" }}>Played</div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>I&apos;ve played this course</div>
                     </div>
                   </button>
                   <button onClick={() => toggleSave("BUCKET_LIST")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: saveType === "BUCKET_LIST" ? "rgba(26,158,66,0.12)" : "transparent", border: `1px solid ${saveType === "BUCKET_LIST" ? "rgba(26,158,66,0.35)" : "transparent"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", marginBottom: 8 }}>
-                    <span style={{ fontSize: 22 }}>⛳</span>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: saveType === "BUCKET_LIST" ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={saveType === "BUCKET_LIST" ? "#1a9e42" : "rgba(255,255,255,0.6)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                    </div>
                     <div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#1a9e42" : "#fff" }}>Bucket List</div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
@@ -1047,7 +1051,9 @@ const [editDescription, setEditDescription] = useState("");
                     }}
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: "transparent", border: "1px solid transparent", borderRadius: 12, cursor: "pointer", textAlign: "left" }}
                   >
-                    <span style={{ fontSize: 22 }}>✈️</span>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+                    </div>
                     <div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>Golf Trip</div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Add to a trip itinerary</div>
