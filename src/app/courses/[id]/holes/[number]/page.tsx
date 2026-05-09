@@ -14,7 +14,7 @@ import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
-import { VideoScrubber, PhotoBadge } from "@/components/clip/VideoScrubber";
+import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 function FlagBadge({ label }: { label: string | number }) {
   return (
@@ -152,10 +152,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
               {i === shotIndex && <VideoScrubber videoRef={{ current: videoRefs.current[shot.id] ?? null }} />}
             </>
           ) : (
-            <>
-              <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              {i === shotIndex && <PhotoBadge key={shot.id} />}
-            </>
+            <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           )}
         </div>
       ))}
@@ -669,7 +666,6 @@ export default function HolePage() {
             {activeUpload.mediaType === "PHOTO" ? (
               <>
                 <img src={activeUpload.mediaUrl} className="photo-el" alt="clip" onClick={() => {}} />
-                <PhotoBadge key={activeUpload.id} />
               </>
             ) : (
               <>
@@ -834,6 +830,7 @@ export default function HolePage() {
               <div style={{ position: "absolute", left: 100, bottom: 112, zIndex: 10, display: "flex", alignItems: "baseline", gap: 7 }}>
                 {uploaders[activeUpload.userId]?.username && <span onClick={() => router.push(`/profile/${activeUpload.userId}`)} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaders[activeUpload.userId].username}</span>}
                 {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}</span>}
+                {activeUpload.mediaType !== "VIDEO" && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
               </div>
             )}
 

@@ -12,7 +12,7 @@ import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
-import { VideoScrubber, PhotoBadge } from "@/components/clip/VideoScrubber";
+import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import ProgressionTracker from "@/components/ProgressionTracker";
 import { rateLimit } from "@/lib/rateLimit";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
@@ -77,10 +77,7 @@ function ProfileFeedCard({
           onClick={() => { const v = videoRef.current; if (!v) return; if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); } else { v.pause(); setVideoPaused(true); } }}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
-        <>
-          <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          <PhotoBadge />
-        </>
+        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
       {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} />}
@@ -190,6 +187,7 @@ function ProfileFeedCard({
         <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, display: "flex", alignItems: "baseline", gap: 7 }}>
           {uploaderInfo.username && <span onClick={() => router.push(`/profile/${uploaderInfo.id}`)} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaderInfo.username}</span>}
           {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
+          {clip.mediaType !== "VIDEO" && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
         </div>
       )}
       </div>{/* end inner wrapper */}

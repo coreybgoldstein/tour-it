@@ -58,38 +58,3 @@ export function VideoScrubber({ videoRef, left = 16 }: { videoRef: React.RefObje
     </div>
   );
 }
-
-export function PhotoBadge() {
-  const [opacity, setOpacity] = useState(1);
-
-  useEffect(() => {
-    const fade = setTimeout(() => setOpacity(0), 1800);
-    return () => clearTimeout(fade);
-  }, []);
-
-  return (
-    <div style={{
-      position: "absolute",
-      top: "50%", left: "50%",
-      transform: "translate(-50%, 32px)",
-      zIndex: 110,
-      background: "rgba(0,0,0,0.52)",
-      backdropFilter: "blur(10px)",
-      border: "1px solid rgba(255,255,255,0.12)",
-      borderRadius: 24,
-      padding: "7px 14px",
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      pointerEvents: "none",
-      opacity,
-      transition: "opacity 0.5s ease",
-    }}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.82)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-      </svg>
-      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.82)", letterSpacing: "0.05em" }}>PHOTO</span>
-    </div>
-  );
-}
