@@ -351,7 +351,7 @@ export default function TripPage() {
         createdAt: now,
         updatedAt: now,
       });
-      sendPushToUser(inviteeId, "You've been invited!", `${inviterName} added you to "${tripName}"`, `/trips/${id}`);
+      sendPushToUser("trip_invite", inviteeId, id);
     }
     setInviting(null);
   };
