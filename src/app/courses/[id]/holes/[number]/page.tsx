@@ -152,7 +152,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
           ) : (
             <>
               <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              <PhotoBadge />
+              {i === shotIndex && <PhotoBadge key={shot.id} />}
             </>
           )}
         </div>
@@ -654,7 +654,7 @@ export default function HolePage() {
             {activeUpload.mediaType === "PHOTO" ? (
               <>
                 <img src={activeUpload.mediaUrl} className="photo-el" alt="clip" onClick={() => {}} />
-                <PhotoBadge />
+                <PhotoBadge key={activeUpload.id} />
               </>
             ) : (
               <>
@@ -716,7 +716,7 @@ export default function HolePage() {
               return (
                 <>
                   <HoleSideBar holeIndex={scoutedHoles.indexOf(holeNum ?? -1)} scoutedHoles={scoutedHoles} />
-                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={uploads.length} username={uploaders[activeUpload.userId]?.username} />
+                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={uploads.length} />
                 </>
               );
             })()}
@@ -794,11 +794,10 @@ export default function HolePage() {
               </div>
             )}
 
-            {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && (
-              <div style={{ position: "absolute", left: 14, bottom: 170, zIndex: 10, pointerEvents: "none" }}>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-                  {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}
-                </span>
+            {(uploaders[activeUpload.userId]?.username || formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)) && (
+              <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
+                {uploaders[activeUpload.userId]?.username && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{uploaders[activeUpload.userId].username}</span>}
+                {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}</span>}
               </div>
             )}
 

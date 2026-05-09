@@ -537,18 +537,10 @@ function VideoCard({
 
       <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} />
 
-      {formatClipDate(clip.datePlayedAt, clip.createdAt) && (
-        <div style={{ position: "absolute", left: 16, bottom: 128, zIndex: 10, pointerEvents: "none" }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-            {formatClipDate(clip.datePlayedAt, clip.createdAt)}
-          </span>
-        </div>
-      )}
-      {clip.username && (
-        <div style={{ position: "absolute", left: 16, bottom: 108, zIndex: 10, pointerEvents: "none" }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
-            {clip.username}
-          </span>
+      {(clip.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
+        <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
+          {clip.username && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{clip.username}</span>}
+          {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
         </div>
       )}
 
