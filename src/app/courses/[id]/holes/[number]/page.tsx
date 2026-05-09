@@ -81,6 +81,7 @@ type Series = {
   shots: Upload[];
   username: string;
   avatarUrl: string | null;
+  userId: string;
 };
 
 const SHOT_LABEL: Record<string, string> = {
@@ -97,6 +98,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
   const touchStartX = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDesktop = useIsDesktop();
+  const router = useRouter();
 
   const activeShot = series.shots[shotIndex];
 
@@ -216,13 +218,15 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 16px 40px", zIndex: 10 }}>
         {/* Uploader */}
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
-          <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(26,158,66,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            {series.avatarUrl
-              ? <img src={series.avatarUrl} alt={series.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            }
-          </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.6)" }}>@{series.username}</span>
+          <button onClick={() => router.push(`/profile/${series.userId}`)} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+            <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(26,158,66,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              {series.avatarUrl
+                ? <img src={series.avatarUrl} alt={series.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              }
+            </div>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.6)" }}>@{series.username}</span>
+          </button>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>· Shot {shotIndex + 1} of {series.shots.length}</span>
         </div>
 
@@ -469,6 +473,7 @@ export default function HolePage() {
             shots: shots.sort((a, b) => (a.seriesOrder || 0) - (b.seriesOrder || 0)),
             username: "golfer",
             avatarUrl: null,
+            userId: shots[0]?.userId ?? "",
           }));
 
           // Fetch usernames for series
@@ -484,6 +489,7 @@ export default function HolePage() {
               ...sg,
               username: users?.find((u: any) => u.id === sg.shots[0]?.userId)?.username || "golfer",
               avatarUrl: users?.find((u: any) => u.id === sg.shots[0]?.userId)?.avatarUrl || null,
+              userId: sg.shots[0]?.userId ?? "",
             }));
             setSeries(enriched);
             // Also enrich uploaders map with series user rank data
