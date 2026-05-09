@@ -195,21 +195,24 @@ export default function ListsPage() {
       <div style={{ display: "flex", padding: "12px 20px", gap: 8 }}>
         <button
           onClick={() => setTab("BUCKET_LIST")}
-          style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: tab === "BUCKET_LIST" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.05)", color: tab === "BUCKET_LIST" ? "#4da862" : "rgba(255,255,255,0.45)" }}
+          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "10px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: tab === "BUCKET_LIST" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.05)", color: tab === "BUCKET_LIST" ? "#4da862" : "rgba(255,255,255,0.45)" }}
         >
-          ⛳ Bucket List {bucketList.length > 0 && <span style={{ fontSize: 10, fontWeight: 400 }}>({bucketList.length})</span>}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          Bucket List {bucketList.length > 0 && <span style={{ fontSize: 10, fontWeight: 400 }}>({bucketList.length})</span>}
         </button>
         <button
           onClick={() => setTab("PLAYED")}
-          style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: tab === "PLAYED" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.05)", color: tab === "PLAYED" ? "#4da862" : "rgba(255,255,255,0.45)" }}
+          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "10px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: tab === "PLAYED" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.05)", color: tab === "PLAYED" ? "#4da862" : "rgba(255,255,255,0.45)" }}
         >
-          ✓ Played {played.length > 0 && <span style={{ fontSize: 10, fontWeight: 400 }}>({played.length})</span>}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Played {played.length > 0 && <span style={{ fontSize: 10, fontWeight: 400 }}>({played.length})</span>}
         </button>
         <button
           onClick={() => setTab("TRIPS")}
-          style={{ flex: 1, padding: "10px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: tab === "TRIPS" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.05)", color: tab === "TRIPS" ? "#4da862" : "rgba(255,255,255,0.45)" }}
+          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5, padding: "10px 0", borderRadius: 12, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, background: tab === "TRIPS" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.05)", color: tab === "TRIPS" ? "#4da862" : "rgba(255,255,255,0.45)" }}
         >
-          ✈️ Trips {trips.length > 0 && <span style={{ fontSize: 10, fontWeight: 400 }}>({trips.length})</span>}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Trips {trips.length > 0 && <span style={{ fontSize: 10, fontWeight: 400 }}>({trips.length})</span>}
         </button>
       </div>
 
