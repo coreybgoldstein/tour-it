@@ -661,7 +661,9 @@ export default function Home() {
       });
 
     async function loadFeed() {
-      let seenIds = new Set<string>(JSON.parse(sessionStorage.getItem("tour_feed_seen") || "[]"));
+      let seenIds: Set<string>;
+      try { seenIds = new Set<string>(JSON.parse(sessionStorage.getItem("tour_feed_seen") || "[]")); }
+      catch { seenIds = new Set(); }
 
       // Get current user from cached session to exclude own clips from discovery
       const { data: { session } } = await supabase.auth.getSession();
@@ -781,7 +783,7 @@ export default function Home() {
       setLoading(false);
     }
 
-    loadFeed();
+    loadFeed().catch(() => setLoading(false));
   }, []);
 
   const handleFollow = useCallback(async (targetId: string) => {
@@ -1307,7 +1309,7 @@ export default function Home() {
 
         {/* ── Feed loading skeleton ── */}
         {loading && (
-          <div className="feed-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, background: "#07100a" }}>
+          <div className="feed-item" style={{ height: "100svh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, background: "#07100a" }}>
             <div style={{ width: 32, height: 32, borderRadius: "50%", border: "2.5px solid rgba(77,168,98,0.25)", borderTopColor: "#4da862", animation: "spin 0.9s linear infinite" }} />
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>Loading clips…</span>
           </div>
@@ -1325,7 +1327,7 @@ export default function Home() {
         ))}
 
         {!loading && feedItems.length === 0 && (
-          <div className="feed-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: 32, textAlign: "center" }}>
+          <div className="feed-item" style={{ height: "100svh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: 32, textAlign: "center" }}>
             <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(26,158,66,0.08)", border: "1px solid rgba(26,158,66,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
             </div>
