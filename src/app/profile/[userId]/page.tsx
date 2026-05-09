@@ -497,7 +497,7 @@ export default function ProfilePage() {
         ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}`
         : `/courses/${uploadData.courseId}`;
       supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, read: false, createdAt: now, updatedAt: now }).then(() => {});
-      fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: uploadData.userId, title: "New comment", body: `${commenterName} commented on your clip`, url: clipLink }) }).catch(() => {});
+      fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
       fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
     }
     setCommentItems(prev => [...prev, { id: newId, body: commentText.trim(), createdAt: now, username: currentUserMeta?.username || "you", avatarUrl: currentUserMeta?.avatarUrl || null }]);
@@ -520,7 +520,7 @@ export default function ProfilePage() {
       const followerName = follower?.displayName || follower?.username || "Someone";
       const now = new Date().toISOString();
       await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: userId as string, type: "follow", title: "New follower", body: `${followerName} started following you`, linkUrl: `/profile/${currentUserId}`, read: false, createdAt: now, updatedAt: now });
-      fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, title: "New follower", body: `${followerName} started following you`, url: `/profile/${currentUserId}` }) }).catch(() => {});
+      fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "follow_received", recipientUserId: userId }) }).catch(() => {});
       fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "follow_received", recipientUserId: userId }) }).catch(() => {});
     }
     setFollowLoading(false);

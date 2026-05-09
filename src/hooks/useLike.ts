@@ -119,7 +119,7 @@ export function useLike({ uploadId, initialLikeCount }: UseLikeOptions): UseLike
             const linkUrl = upload.holeNumber ? `/courses/${upload.courseId}/holes/${upload.holeNumber}?clip=${uploadId}` : `/courses/${upload.courseId}`;
             const body = `Your clip hit ${newLikeCount.toLocaleString()} likes 🎯`;
             await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: upload.userId, type: "like_milestone", title: `${newLikeCount} likes!`, body, linkUrl, read: false, createdAt: now, updatedAt: now });
-            fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: upload.userId, title: `${newLikeCount} likes!`, body, url: linkUrl }) }).catch(() => {});
+            fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "like_milestone", recipientUserId: upload.userId, referenceId: uploadId, likeCount: newLikeCount }) }).catch(() => {});
             fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: milestoneAction[newLikeCount], recipientUserId: upload.userId, referenceId: uploadId }) }).catch(() => {});
           }
         }

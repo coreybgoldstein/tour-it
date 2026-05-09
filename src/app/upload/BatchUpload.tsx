@@ -372,7 +372,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
               }))
             ),
           ]);
-          clip.taggedUsers.forEach(u => sendPushToUser(u.id, `${taggerName} tagged you in a clip`, `${selectedCourse.name} · Hole ${clip.holeNumber}`, `/courses/${selectedCourse.id}`));
+          clip.taggedUsers.forEach(u => sendPushToUser("tag", u.id, uploadId));
         }
 
         done++;
@@ -405,7 +405,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           updatedAt: now,
         }))
       );
-      followers.forEach((f: { followerId: string }) => sendPushToUser(f.followerId, "New clips", body, courseLink));
+      followers.forEach((f: { followerId: string }) => sendPushToUser("new_clips", f.followerId, selectedCourse.id));
     })();
 
     setUploading(false);

@@ -712,7 +712,7 @@ function UploadPageInner() {
             }))
           ),
         ]);
-        taggedUsers.forEach(u => sendPushToUser(u.id, "You were tagged in a clip", `${taggerName} tagged you at ${selectedCourse.name} — Hole ${selectedHole}`, `/courses/${selectedCourse.id}`));
+        taggedUsers.forEach(u => sendPushToUser("tag", u.id, uploadId));
       }
 
       // Notify followers of new clip (fire-and-forget)
@@ -737,7 +737,7 @@ function UploadPageInner() {
             updatedAt: now,
           }))
         );
-        followers.forEach((f: { followerId: string }) => sendPushToUser(f.followerId, "New clip", `${uploaderName} posted at ${selectedCourse.name}${holeLabel}`, clipLink));
+        followers.forEach((f: { followerId: string }) => sendPushToUser("new_clip", f.followerId, uploadId));
       })();
 
       setSubmitted(true);
