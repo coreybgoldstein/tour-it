@@ -451,14 +451,14 @@ function SearchPageInner() {
   }, []);
 
   useEffect(() => {
-    if (!query.trim()) return;
+    if (!query.trim() && searchTab !== "people") return;
     const dismissed = localStorage.getItem("invite_banner_dismissed_at");
     if (dismissed) {
       const days14 = 14 * 24 * 60 * 60 * 1000;
       if (Date.now() - Number(dismissed) < days14) return;
     }
     setInviteBannerVisible(true);
-  }, [query]);
+  }, [query, searchTab]);
 
   const showResults = query.trim().length >= 1 || hasFilters;
   const displayList = showResults ? results : [];
@@ -754,7 +754,7 @@ function SearchPageInner() {
         )}
 
         {/* Invite banner — shown on any tab after first non-empty search */}
-        {inviteBannerVisible && showResults && (
+        {inviteBannerVisible && (showResults || searchTab === "people") && (
           <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, padding: "12px 14px", margin: "14px 0" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             <div style={{ flex: 1 }}>
