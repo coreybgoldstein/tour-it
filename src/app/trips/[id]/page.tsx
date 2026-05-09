@@ -207,6 +207,8 @@ export default function TripPage() {
   const [user, setUser] = useState<any>(null);
   const [isOwner, setIsOwner] = useState(false);
 
+  const [membersOpen, setMembersOpen] = useState(false);
+
   // Invite sheet
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteQuery, setInviteQuery] = useState("");
@@ -840,7 +842,7 @@ export default function TripPage() {
 
             {/* Members + chat + invite — centered */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <button onClick={() => setMembersOpen(true)} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                 <div style={{ display: "flex" }}>
                   {members.slice(0, 4).map((m, i) => (
                     <div key={m.id} style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "2px solid #07100a", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -6 : 0, flexShrink: 0, zIndex: members.length - i }}>
@@ -851,8 +853,8 @@ export default function TripPage() {
                     </div>
                   ))}
                 </div>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{members.length} {members.length === 1 ? "golfer" : "golfers"}</span>
-              </div>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.15)" }}>{members.length} {members.length === 1 ? "golfer" : "golfers"}</span>
+              </button>
               <button onClick={() => setChatOpen(true)} style={{ background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Chat{messages.length > 0 ? ` · ${messages.length}` : ""}
@@ -1078,6 +1080,37 @@ export default function TripPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Members sheet */}
+      {membersOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setMembersOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 20px 40px", maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 18px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 14 }}>
+              Golfers · {members.length}
+            </div>
+            <div style={{ overflowY: "auto", flex: 1 }}>
+              {members.map(m => (
+                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(77,168,98,0.3)", background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {m.user.avatarUrl
+                      ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{m.user.displayName}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>@{m.user.username}</div>
+                  </div>
+                  {m.role === "admin" && (
+                    <div style={{ padding: "3px 8px", borderRadius: 6, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Admin</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -1366,7 +1399,7 @@ export default function TripPage() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Create Game</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>
-                  {gameStep === 1 && "Step 1 of 5 — Course & Tee"}
+                  {gameStep === 1 && "Step 1 of 5 — Select Course"}
                   {gameStep === 2 && "Step 2 of 5 — Players & Handicaps"}
                   {gameStep === 3 && "Step 3 of 5 — Game Format"}
                   {gameStep === 4 && "Step 4 of 5 — Configure"}
@@ -1417,22 +1450,13 @@ export default function TripPage() {
                           </div>
                         </div>
                       ) : (
-                        <div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Tee Info (enter manually)</div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-                            {[["Slope", gameTeeSlope.toString(), (v: string) => setGameTeeSlope(Number(v))], ["Rating", gameTeeRating.toString(), (v: string) => setGameTeeRating(Number(v))], ["Par", gameCoursePar.toString(), (v: string) => setGameCoursePar(Number(v))]].map(([label, val, setter]) => (
-                              <div key={label as string}>
-                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 4 }}>{label as string}</div>
-                                <input type="number" value={val as string} onChange={e => (setter as (v: string) => void)(e.target.value)}
-                                  style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} />
-                              </div>
-                            ))}
-                          </div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", lineHeight: 1.5 }}>
+                          No tee data on file — using par {gameCoursePar}, slope 113. Handicaps will still be relative to each other.
                         </div>
                       )}
-                      <div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Par: {gameCoursePar} · Slope: {gameTeeSlope} · Rating: {gameTeeRating}</div>
-                      </div>
+                      {gameTeeBoxes.length > 0 && (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>Par {gameCoursePar} · Slope {gameTeeSlope} · Rating {gameTeeRating}</div>
+                      )}
                     </>
                   )}
                 </div>
