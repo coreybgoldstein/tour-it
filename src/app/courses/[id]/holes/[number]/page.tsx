@@ -14,6 +14,7 @@ import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
+import { VideoScrubber, PhotoBadge } from "@/components/clip/VideoScrubber";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 function FlagBadge({ label }: { label: string | number }) {
   return (
@@ -137,16 +138,22 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
       {series.shots.map((shot, i) => (
         <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.2s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
           {shot.mediaType === "VIDEO" ? (
-            <HlsVideo
-              ref={el => { videoRefs.current[shot.id] = el as HTMLVideoElement | null; }}
-              src={getVideoSrc(shot.mediaUrl, shot.cloudflareVideoId)}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              loop
-              playsInline
-              muted={muted}
-            />
+            <>
+              <HlsVideo
+                ref={el => { videoRefs.current[shot.id] = el as HTMLVideoElement | null; }}
+                src={getVideoSrc(shot.mediaUrl, shot.cloudflareVideoId)}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                loop
+                playsInline
+                muted={muted}
+              />
+              {i === shotIndex && <VideoScrubber videoRef={{ current: videoRefs.current[shot.id] ?? null }} />}
+            </>
           ) : (
-            <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <>
+              <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <PhotoBadge />
+            </>
           )}
         </div>
       ))}
@@ -645,25 +652,31 @@ export default function HolePage() {
           >
             <div style={{ position: "relative", width: "100%", maxWidth: isDesktop ? 390 : "100%", height: "100%", overflow: "hidden" }}>
             {activeUpload.mediaType === "PHOTO" ? (
-              <img src={activeUpload.mediaUrl} className="photo-el" alt="clip" onClick={() => {}} />
+              <>
+                <img src={activeUpload.mediaUrl} className="photo-el" alt="clip" onClick={() => {}} />
+                <PhotoBadge />
+              </>
             ) : (
-              <HlsVideo
-                ref={el => { videoRefs.current[activeUpload.id] = el as HTMLVideoElement | null; }}
-                key={activeUpload.id}
-                src={getVideoSrc(activeUpload.mediaUrl, activeUpload.cloudflareVideoId)}
-                className="video-el"
-                autoPlay
-                playsInline
-                loop
-                muted={muted}
-                onClick={() => {
-                  const el = videoRefs.current[activeUpload.id];
-                  if (!el) return;
-                  if (el.paused) { el.play().catch(() => {}); setVideoPaused(false); }
-                  else { el.pause(); setVideoPaused(true); }
-                }}
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
-              />
+              <>
+                <HlsVideo
+                  ref={el => { videoRefs.current[activeUpload.id] = el as HTMLVideoElement | null; }}
+                  key={activeUpload.id}
+                  src={getVideoSrc(activeUpload.mediaUrl, activeUpload.cloudflareVideoId)}
+                  className="video-el"
+                  autoPlay
+                  playsInline
+                  loop
+                  muted={muted}
+                  onClick={() => {
+                    const el = videoRefs.current[activeUpload.id];
+                    if (!el) return;
+                    if (el.paused) { el.play().catch(() => {}); setVideoPaused(false); }
+                    else { el.pause(); setVideoPaused(true); }
+                  }}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
+                />
+                <VideoScrubber videoRef={{ current: videoRefs.current[activeUpload.id] ?? null }} />
+              </>
             )}
 
             {/* Pause indicator */}
