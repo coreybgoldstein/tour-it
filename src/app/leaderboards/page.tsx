@@ -78,21 +78,21 @@ export default function LeaderboardsPage() {
     fetchEntries(period, true);
   }, [period, fetchEntries]);
 
-  // Supabase realtime — fires immediately when any UserProgression row changes
+  // Broadcast subscription — fires immediately when any points are awarded
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
-      .channel("leaderboard-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "UserProgression" }, () => {
+      .channel("leaderboard-updates")
+      .on("broadcast", { event: "points-awarded" }, () => {
         fetchEntries(period);
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [period, fetchEntries]);
 
-  // Polling fallback every 15s in case realtime misses an event
+  // Polling fallback every 10s in case a broadcast is missed
   useEffect(() => {
-    const id = setInterval(() => fetchEntries(period), 15_000);
+    const id = setInterval(() => fetchEntries(period), 10_000);
     return () => clearInterval(id);
   }, [period, fetchEntries]);
 
