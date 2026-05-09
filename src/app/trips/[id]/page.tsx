@@ -807,64 +807,64 @@ export default function TripPage() {
             {!isOwner && <div style={{ width: 32 }} />}
           </div>
 
-          <div style={{ padding: "14px 20px 20px" }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
-              {/* Trip avatar — clickable to expand if image exists */}
+          <div style={{ padding: "10px 20px 14px" }}>
+            {/* Avatar + name + date inline */}
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
               <div
                 onClick={() => trip.imageUrl && setTripImageExpanded(true)}
-                style={{ width: 72, height: 72, borderRadius: 18, flexShrink: 0, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: trip.imageUrl ? "pointer" : "default" }}
+                style={{ width: 66, height: 66, borderRadius: 16, flexShrink: 0, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: trip.imageUrl ? "pointer" : "default" }}
               >
                 {uploadingImage ? (
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>...</div>
                 ) : trip.imageUrl ? (
                   <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
                 )}
               </div>
               <input ref={imageInputRef} type="file" accept="image/*" onChange={handleTripImagePick} style={{ display: "none" }} />
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 3 }}>Golf Trip</div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: trip.name.length > 22 ? 16 : trip.name.length > 14 ? 18 : 22, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{trip.name}</div>
+              <div style={{ flex: 1, minWidth: 0, paddingTop: 3 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 2 }}>Golf Trip</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: trip.name.length > 22 ? 15 : trip.name.length > 14 ? 17 : 20, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{trip.name}</div>
+                {(trip.startDate || trip.endDate) && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 5 }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.65)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+                      {trip.startDate && formatDate(trip.startDate)}{trip.startDate && trip.endDate ? " → " : ""}{trip.endDate && formatDate(trip.endDate)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
-          {(trip.startDate || trip.endDate) && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, marginLeft: 84 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
-                {trip.startDate && formatDate(trip.startDate)}{trip.startDate && trip.endDate ? " → " : ""}{trip.endDate && formatDate(trip.endDate)}
-              </span>
-            </div>
-          )}
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 84 }}>
-            <div style={{ display: "flex" }}>
-              {members.slice(0, 6).map((m, i) => (
-                <div key={m.id} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: "2px solid #07100a", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -8 : 0, flexShrink: 0, zIndex: members.length - i }}>
-                  {m.user.avatarUrl
-                    ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  }
+            {/* Members + chat + invite — centered */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ display: "flex" }}>
+                  {members.slice(0, 4).map((m, i) => (
+                    <div key={m.id} style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "2px solid #07100a", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -6 : 0, flexShrink: 0, zIndex: members.length - i }}>
+                      {m.user.avatarUrl
+                        ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      }
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{members.length} {members.length === 1 ? "golfer" : "golfers"}</span>
-            <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-              <button onClick={() => setChatOpen(true)} style={{ background: messages.length > 0 ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.06)", border: `1px solid ${messages.length > 0 ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: messages.length > 0 ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{members.length} {members.length === 1 ? "golfer" : "golfers"}</span>
+              </div>
+              <button onClick={() => setChatOpen(true)} style={{ background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Chat{messages.length > 0 ? ` · ${messages.length}` : ""}
               </button>
-              <button onClick={() => setInviteOpen(true)} style={{ background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer" }}>
+              <button onClick={() => setInviteOpen(true)} style={{ background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer" }}>
                 + Invite
               </button>
             </div>
-          </div>
 
-          {trip.description && (
-            <div style={{ marginTop: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{trip.description}</div>
-          )}
+            {trip.description && (
+              <div style={{ marginTop: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.38)", lineHeight: 1.5, textAlign: "center" }}>{trip.description}</div>
+            )}
           </div>
         </div>
 
