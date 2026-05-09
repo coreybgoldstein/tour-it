@@ -175,6 +175,18 @@ export async function GET(req: NextRequest) {
     if (count >= 1000) award(userId, "milestone_1000_likes", null, 500, null);
   }
 
+  // ── 8. Referrals ─────────────────────────────────────────────────────────────
+  const referrals = await fetchAll(sb, "Referral", "id, inviterId, status, signupAt, firstUploadAt");
+  for (const ref of referrals) {
+    if (ref.status === "VOID" || !ref.inviterId) continue;
+    if (ref.signupAt && ["SIGNED_UP", "FIRST_UPLOAD"].includes(ref.status)) {
+      award(ref.inviterId, "referral_signup", ref.id, 50, ref.signupAt);
+    }
+    if (ref.status === "FIRST_UPLOAD" && ref.firstUploadAt) {
+      award(ref.inviterId, "referral_first_upload", ref.id, 25, ref.firstUploadAt);
+    }
+  }
+
   // ── Insert new ledger rows ────────────────────────────────────────────────────
   const breakdown: Record<string, number> = {};
   for (const r of newRows) breakdown[r.action] = (breakdown[r.action] ?? 0) + 1;
