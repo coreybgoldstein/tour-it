@@ -1,12 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-!/node_modules
-!node_modules/@capacitor/camera
-!node_modules/@capacitor/geolocation
-!node_modules/@capacitor/push-notifications
-!node_modules/@capacitor/splash-screen
-!node_modules/@capacitor/status-bar
+node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -49,3 +44,9 @@ next-env.d.ts
 
 # Generated App Store screenshots
 screenshots/
+*.log
+*.png
+*.jpg
+*.jpeg
+/profile-*.png
+/seed-run-*.log
