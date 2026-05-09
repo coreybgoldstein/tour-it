@@ -755,9 +755,7 @@ export default function Home() {
         return { type: "series", seriesId, shots: sorted, courseName: first.courseName, courseLogoUrl: first.courseLogoUrl, courseCity: first.courseCity, courseState: first.courseState, courseId: first.courseId, holeId: first.holeId, holeNumber: first.holeNumber, username: first.username, avatarUrl: first.avatarUrl, userId: first.userId, rank: first.rank };
       });
 
-      const singleItems: FeedItem[] = singleClips
-        .sort((a, b) => { if (a.mediaType === "VIDEO" && b.mediaType !== "VIDEO") return -1; if (a.mediaType !== "VIDEO" && b.mediaType === "VIDEO") return 1; return 0; })
-        .map(clip => ({ type: "clip", clip }));
+      const singleItems: FeedItem[] = singleClips.map(clip => ({ type: "clip", clip }));
 
       // Interleave: insert one series after every 4 single clips so a long series doesn't dominate
       const interleaved: FeedItem[] = [];
