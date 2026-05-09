@@ -52,20 +52,31 @@ function ActivityFeed() {
     const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
     const [uploadsRes, likesRes, commentsRes, followsRes, searchesRes, signupsRes, roundsRes, courseUpdatesRes] = await Promise.all([
-      supabase.from("Upload").select("id, createdAt, userId, user:userId(username, avatarUrl), course:courseId(name, city, state)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(30),
+      supabase.from("Upload").select("id, createdAt, userId, courseId, user:userId(username, avatarUrl)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(30),
       supabase.from("Like").select("id, createdAt, userId, user:userId(username, avatarUrl)").not("uploadId", "is", null).gte("createdAt", since).order("createdAt", { ascending: false }).limit(25),
       supabase.from("Comment").select("id, createdAt, userId, body, user:userId(username, avatarUrl)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
       supabase.from("Follow").select("id, createdAt, followerId, follower:followerId(username, avatarUrl), following:followingId(username)").eq("status", "ACTIVE").gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
       supabase.from("SearchLog").select("id, createdAt, userId, query, user:userId(username, avatarUrl)").not("userId", "is", null).gte("createdAt", since).order("createdAt", { ascending: false }).limit(15),
       supabase.from("User").select("id, createdAt, username, avatarUrl").gte("createdAt", since).order("createdAt", { ascending: false }).limit(10),
-      supabase.from("Round").select("id, createdAt, userId, totalScore, user:userId(username, avatarUrl), course:courseId(name)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(10),
+      supabase.from("Round").select("id, createdAt, userId, totalScore, courseId, user:userId(username, avatarUrl)").gte("createdAt", since).order("createdAt", { ascending: false }).limit(10),
       supabase.from("Course").select("id, updatedAt, name, city, state, description, coverImageUrl, logoUrl, yearEstablished, access").gte("updatedAt", since).order("updatedAt", { ascending: false }).limit(20),
     ]);
+
+    // Batch-fetch course names for uploads + rounds (avoids FK alias join issues)
+    const courseIds = [...new Set([
+      ...(uploadsRes.data ?? []).map((u: any) => u.courseId),
+      ...(roundsRes.data ?? []).map((r: any) => r.courseId),
+    ].filter(Boolean))];
+    const courseMap: Record<string, { name: string; city: string; state: string }> = {};
+    if (courseIds.length > 0) {
+      const { data: courses } = await supabase.from("Course").select("id, name, city, state").in("id", courseIds);
+      for (const c of (courses ?? [])) courseMap[(c as any).id] = c as any;
+    }
 
     const all: ActivityEvent[] = [];
 
     for (const u of (uploadsRes.data ?? [])) {
-      const usr = (u as any).user; const crs = (u as any).course;
+      const usr = (u as any).user; const crs = courseMap[(u as any).courseId];
       all.push({ id: `up_${u.id}`, type: "upload", actorId: u.userId, actorUsername: usr?.username ?? "user", actorAvatar: usr?.avatarUrl ?? null, text: crs?.name ? `posted a clip at ${crs.name}` : "posted a clip", time: u.createdAt });
     }
     for (const l of (likesRes.data ?? [])) {
@@ -88,7 +99,7 @@ function ActivityFeed() {
       all.push({ id: `sg_${u.id}`, type: "signup", actorId: u.id, actorUsername: u.username ?? "user", actorAvatar: u.avatarUrl ?? null, text: "joined Tour It", time: u.createdAt });
     }
     for (const r of (roundsRes.data ?? [])) {
-      const usr = (r as any).user; const crs = (r as any).course; const sc = r.totalScore ? ` (${r.totalScore})` : "";
+      const usr = (r as any).user; const crs = courseMap[(r as any).courseId]; const sc = r.totalScore ? ` (${r.totalScore})` : "";
       all.push({ id: `rd_${r.id}`, type: "round", actorId: r.userId, actorUsername: usr?.username ?? "user", actorAvatar: usr?.avatarUrl ?? null, text: crs?.name ? `logged a round at ${crs.name}${sc}` : `logged a round${sc}`, time: r.createdAt });
     }
     for (const c of (courseUpdatesRes.data ?? [])) {
