@@ -106,9 +106,12 @@ function SearchPageInner() {
       .from("Course")
       .select("id, name, city, state, holeCount, isPublic, courseType, uploadCount, logoUrl")
       .gt("uploadCount", 0)
-      .order("uploadCount", { ascending: false })
-      .limit(12)
-      .then(({ data }) => { if (data) setPopular(data); });
+      .limit(50)
+      .then(({ data }) => {
+        if (!data) return;
+        const shuffled = [...data].sort(() => Math.random() - 0.5);
+        setPopular(shuffled.slice(0, 12));
+      });
   }, []);
 
   useEffect(() => {
@@ -149,9 +152,8 @@ function SearchPageInner() {
       setFollowingIds(new Set((data || []).map((r: any) => r.followingId)));
     });
     supabase.from("User").select("id, username, displayName, avatarUrl, uploadCount, createdAt")
-      .gt("uploadCount", 0)
       .order("createdAt", { ascending: false })
-      .limit(20)
+      .limit(100)
       .then(({ data: users }) => {
         if (!users) return;
         setNewGolfers(users as Person[]);
@@ -459,7 +461,7 @@ function SearchPageInner() {
       await supabase.from("Follow").delete().eq("followerId", currentUserId).eq("followingId", targetId);
       setFollowingIds(prev => { const s = new Set(prev); s.delete(targetId); return s; });
     } else {
-      await supabase.from("Follow").upsert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: targetId, status: "ACTIVE", createdAt: new Date().toISOString() }, { onConflict: "followerId,followingId" });
+      await supabase.from("Follow").insert({ followerId: currentUserId, followingId: targetId, status: "ACTIVE", createdAt: new Date().toISOString() });
       setFollowingIds(prev => new Set(prev).add(targetId));
     }
     setFollowingInProgress(prev => { const s = new Set(prev); s.delete(targetId); return s; });
@@ -686,7 +688,7 @@ function SearchPageInner() {
             )}
             {!peopleLoading && !query.trim() && (
               <>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", paddingBottom: 8 }}>New to Tour It</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", paddingBottom: 8 }}>All Golfers on Tour It</div>
                 {newGolfers.map(person => (
                   <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <div onClick={() => router.push(`/profile/${person.id}`)} style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
@@ -707,7 +709,7 @@ function SearchPageInner() {
                             await supabase.from("Follow").delete().eq("followerId", currentUserId).eq("followingId", person.id);
                             setFollowingIds(s => { const n = new Set(s); n.delete(person.id); return n; });
                           } else {
-                            await supabase.from("Follow").upsert({ followerId: currentUserId, followingId: person.id, status: "ACTIVE", createdAt: new Date().toISOString() }, { onConflict: "followerId,followingId" });
+                            await supabase.from("Follow").insert({ followerId: currentUserId, followingId: person.id, status: "ACTIVE", createdAt: new Date().toISOString() });
                             setFollowingIds(s => new Set(s).add(person.id));
                           }
                           setFollowingInProgress(s => { const n = new Set(s); n.delete(person.id); return n; });

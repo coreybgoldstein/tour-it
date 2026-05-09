@@ -640,29 +640,34 @@ export default function Home() {
       .from("Course")
       .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
       .gt("uploadCount", 0)
-      .order("uploadCount", { ascending: false })
-      .limit(10)
-      .then(({ data }) => { if (data) setTrendingCourses(data); });
+      .limit(40)
+      .then(({ data }) => {
+        if (!data) return;
+        const shuffled = [...data].sort(() => Math.random() - 0.5);
+        setTrendingCourses(shuffled.slice(0, 10));
+      });
 
     async function loadFeed() {
-      // Clips seen this session are heavily deprioritized (not excluded — pool may be small)
       const seenIds = new Set<string>(JSON.parse(sessionStorage.getItem("tour_feed_seen") || "[]"));
 
-      // Fetch top-scored pool + guaranteed freshest clips in parallel
+      // Get current user from cached session to exclude own clips from discovery
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUid = session?.user?.id ?? null;
+
       const SELECT = "id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt, rankScore";
       const [{ data: topUploads }, { data: freshUploads }] = await Promise.all([
         supabase.from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
-          .order("rankScore", { ascending: false, nullsFirst: false }).limit(50),
+          .order("rankScore", { ascending: false, nullsFirst: false }).limit(80),
         supabase.from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
-          .order("createdAt", { ascending: false }).limit(20),
+          .order("createdAt", { ascending: false }).limit(40),
       ]);
 
-      // Merge pools, deduplicate
+      // Merge pools, deduplicate, exclude current user's own clips from discovery
       const poolMap = new Map<string, any>();
       [...(topUploads || []), ...(freshUploads || [])].forEach(u => {
         if (!poolMap.has(u.id)) poolMap.set(u.id, u);
       });
-      const pool = Array.from(poolMap.values());
+      const pool = Array.from(poolMap.values()).filter(u => !currentUid || u.userId !== currentUid);
 
       if (pool.length === 0) { setLoading(false); return; }
 
@@ -799,13 +804,16 @@ export default function Home() {
     loadingMoreRef.current = true;
     setLoadingMore(true);
     const supabase = createClient();
-    const { data: uploads } = await supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUid = session?.user?.id ?? null;
+    const { data: rawUploads } = await supabase
       .from("Upload")
       .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
       .eq("moderationStatus", "APPROVED")
       .order("createdAt", { ascending: false })
       .lt("createdAt", feedCursorRef.current)
-      .limit(15);
+      .limit(25);
+    const uploads = (rawUploads || []).filter(u => !currentUid || u.userId !== currentUid);
 
     if (!uploads || uploads.length === 0) {
       hasMoreRef.current = false;
@@ -870,8 +878,8 @@ export default function Home() {
     ];
 
     setFeedItems(prev => [...prev, ...newItems]);
-    feedCursorRef.current = uploads[uploads.length - 1].createdAt;
-    hasMoreRef.current = uploads.length === 15;
+    feedCursorRef.current = rawUploads![rawUploads!.length - 1].createdAt;
+    hasMoreRef.current = rawUploads!.length >= 25;
     loadingMoreRef.current = false;
     setLoadingMore(false);
   }, []);
