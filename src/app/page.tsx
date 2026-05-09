@@ -14,6 +14,7 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
+import { VideoScrubber, PhotoBadge } from "@/components/clip/VideoScrubber";
 import { rateLimit } from "@/lib/rateLimit";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
@@ -494,8 +495,13 @@ function VideoCard({
           onEnded={onEnded}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
-        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <>
+          <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <PhotoBadge />
+        </>
       )}
+
+      {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} />}
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
 
