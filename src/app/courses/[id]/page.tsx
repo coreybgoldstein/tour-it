@@ -864,7 +864,7 @@ const [editDescription, setEditDescription] = useState("");
         body { background: #07100a; }
         .feed-modal { position: fixed; inset: 0; z-index: 100; background: #000; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; touch-action: pan-y; }
         .feed-modal::-webkit-scrollbar { display: none; }
-        .feed-hole-page { scroll-snap-align: start; scroll-snap-stop: always; height: 100svh; width: 100vw; display: flex; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior: contain; touch-action: pan-x; }
+        .feed-hole-page { scroll-snap-align: start; scroll-snap-stop: always; height: 100svh; width: 100vw; display: flex; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior: contain; touch-action: pan-x pan-y; }
         .feed-hole-page::-webkit-scrollbar { display: none; }
         .feed-clip-page { width: 100vw; height: 100svh; flex-shrink: 0; scroll-snap-align: start; scroll-snap-stop: always; }
         .feed-end-snap { scroll-snap-align: start; scroll-snap-stop: always; }
