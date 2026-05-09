@@ -526,7 +526,7 @@ const [editDescription, setEditDescription] = useState("");
               updatedAt: notifNow,
             }))
           );
-          tagged.forEach(u => sendPushToUser("comment_mention", u.id, id));
+          tagged.forEach(u => sendPushToUser("comment_mention", u.id, id as string));
         }
       }
 
