@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       inviteeUsername: user.user_metadata?.username ?? null,
       status: "VOID", signupAt: now.toISOString(),
       ipAddressAtSignup: ip, createdAt: now.toISOString(), updatedAt: now.toISOString(),
-    }).catch(() => {});
+    });
     return NextResponse.json({ ok: true, attributed: false, reason: "inviter_too_new" });
   }
 
