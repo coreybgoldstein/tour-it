@@ -197,7 +197,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       ) : (
         <>
           <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          <PhotoBadge />
+          {isActive && <PhotoBadge key={clip.id} />}
         </>
       )}
 
