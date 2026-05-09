@@ -135,6 +135,13 @@ enum LeaderboardPeriod {
   ALL_TIME
 }
 
+enum ReferralStatus {
+  PENDING
+  SIGNED_UP
+  FIRST_UPLOAD
+  VOID
+}
+
 // ============================================================
 // USER
 // ============================================================
@@ -177,6 +184,8 @@ model User {
   pointsLedger     UserPointsLedger[]
   badges           UserBadge[]
   courseContributions CourseContribution[]
+  invitesSent         Referral[]           @relation("InvitesSent")
+  inviteReceived      Referral?            @relation("InvitesReceived")
 
   @@index([username])
   @@index([email])
@@ -776,6 +785,30 @@ model RewardsWaitlist {
   createdAt DateTime @default(now())
 
   @@index([createdAt(sort: Desc)])
+}
+
+// ============================================================
+// REFERRALS
+// ============================================================
+
+model Referral {
+  id                       String         @id @default(cuid())
+  inviterId                String
+  inviteeId                String?        @unique
+  inviteeUsername          String?
+  status                   ReferralStatus @default(PENDING)
+  signupAt                 DateTime?
+  firstUploadAt            DateTime?
+  signupPointsAwardedAt    DateTime?
+  uploadPointsAwardedAt    DateTime?
+  ipAddressAtSignup        String?
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+
+  inviter                  User           @relation("InvitesSent", fields: [inviterId], references: [id])
+  invitee                  User?          @relation("InvitesReceived", fields: [inviteeId], references: [id])
+
+  @@index([inviterId])
 }
 
 model CourseRequest {

@@ -56,6 +56,7 @@ export const PointAction = {
 
   // Referrals
   REFERRAL_SIGNUP:             "referral_signup",
+  REFERRAL_FIRST_UPLOAD:       "referral_first_upload",
 
   // Progression milestones
   LEVEL_UP:                    "level_up",
@@ -114,7 +115,8 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
   [PointAction.STREAK_26_WEEKS]:         1500,
   [PointAction.STREAK_52_WEEKS]:         4000,
 
-  [PointAction.REFERRAL_SIGNUP]:          100,
+  [PointAction.REFERRAL_SIGNUP]:           50,
+  [PointAction.REFERRAL_FIRST_UPLOAD]:    25,
 
   [PointAction.LEVEL_UP]:                  25,
   // Variable — actual amount comes from RANK_UP_BONUSES, passed via customAmount.

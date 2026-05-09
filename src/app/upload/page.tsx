@@ -671,6 +671,7 @@ function UploadPageInner() {
         if (intelBonus > 0) {
           await fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "intel_bonus", referenceId: uploadId, customAmount: intelBonus }) }).catch(() => {});
         }
+        fetch("/api/referral/first-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId }) }).catch(() => {});
         // hRow is no longer used for points but kept for future references
         void hRow;
         const now = new Date().toISOString();

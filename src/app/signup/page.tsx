@@ -82,6 +82,7 @@ export default function SignUpPage() {
       }
 
       fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "signup" }) }).catch(() => {});
+      fetch("/api/referral/signup", { method: "POST" }).catch(() => {});
     }
 
     // With email confirmation disabled, session is returned immediately
