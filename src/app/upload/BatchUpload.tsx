@@ -343,6 +343,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         const note  = clip.strategyNote.trim().length >= 30 ? clip.strategyNote.trim() : "";
         const intelBonus = calcIntelBonus(club, wind, note);
         if (intelBonus > 0) awardFetch("intel_bonus", uploadId, intelBonus);
+        fetch("/api/referral/first-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId }) }).catch(() => {});
         // Mark `isFirstForHole` as referenced so unused-var lint stays quiet
         // (kept on the row in case we want to reintroduce hole-pioneer badges)
         void isFirstForHole;
