@@ -43,7 +43,7 @@ export function VideoScrubber({ videoRef }: { videoRef: React.RefObject<HTMLVide
   };
 
   return (
-    <div style={{ position: "absolute", bottom: 60, left: 0, right: 0, zIndex: 110, display: "flex", alignItems: "center", gap: 8, padding: "0 14px" }}>
+    <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, zIndex: 110, display: "flex", alignItems: "center", gap: 8, padding: "0 14px" }}>
       {/* Seek track */}
       <div
         ref={trackRef}
