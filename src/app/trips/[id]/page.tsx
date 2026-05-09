@@ -281,6 +281,7 @@ export default function TripPage() {
   const [messages, setMessages] = useState<TripMessageWithUser[]>([]);
   const [msgBody, setMsgBody] = useState("");
   const [sendingMsg, setSendingMsg] = useState(false);
+  const [chatError, setChatError] = useState("");
   const [msgsLoading, setMsgsLoading] = useState(false);
   const msgEndRef = useRef<HTMLDivElement>(null);
 
@@ -597,9 +598,10 @@ export default function TripPage() {
   const sendMessage = async () => {
     if (!msgBody.trim() || sendingMsg) return;
     setSendingMsg(true);
+    setChatError("");
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setSendingMsg(false); return; }
+    if (!session) { setChatError("Not signed in."); setSendingMsg(false); return; }
     try {
       const res = await fetch(`/api/trips/${id}/messages`, {
         method: "POST",
@@ -611,8 +613,12 @@ export default function TripPage() {
         setMessages(prev => [...prev, json.message]);
         setMsgBody("");
         setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+      } else {
+        setChatError(json.error || "Failed to send. Try again.");
       }
-    } catch { }
+    } catch {
+      setChatError("Network error. Try again.");
+    }
     setSendingMsg(false);
   };
 
@@ -1364,6 +1370,11 @@ export default function TripPage() {
               )}
               <div ref={msgEndRef} />
             </div>
+            {chatError && (
+              <div style={{ padding: "6px 14px", background: "rgba(220,50,50,0.12)", borderTop: "1px solid rgba(220,50,50,0.2)" }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#f87171" }}>{chatError}</span>
+              </div>
+            )}
             <div style={{ padding: "10px 14px 24px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8, flexShrink: 0 }}>
               <input
                 value={msgBody}
