@@ -48,6 +48,29 @@ type Clip = {
 
 type CourseResult = { id: string; name: string; city: string; state: string; holeCount: number; logoUrl?: string | null };
 
+type TripMessageWithUser = {
+  id: string; body: string; createdAt: string; userId: string;
+  user: { id: string; displayName: string; avatarUrl: string | null };
+};
+
+type TeeBox = { id: string; color: string; customLabel: string | null; slope: number | null; rating: number | null };
+
+type GamePlayer = { userId: string; displayName: string; avatarUrl: string | null; handicapIndex: number; teamId: string };
+
+type TripGameRecord = {
+  id: string; courseId: string; courseName: string; format: string;
+  formatConfig: Record<string, unknown>; players: any[]; gameSheet: string; shareText: string; createdAt: string;
+};
+
+const GAME_FORMATS = [
+  { id: "nassau", name: "Nassau", desc: "3 bets: front 9, back 9, full 18" },
+  { id: "skins", name: "Skins", desc: "Win each hole, ties carry over" },
+  { id: "match_play", name: "Match Play", desc: "Win holes, not total strokes" },
+  { id: "stableford", name: "Stableford", desc: "Points per hole: bogey=1, par=2, birdie=3+" },
+  { id: "best_ball", name: "Best Ball", desc: "Team: best net score per hole counts" },
+  { id: "scramble", name: "Scramble", desc: "All play from the best shot" },
+];
+
 // ── Inline date-range calendar ──────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -250,6 +273,39 @@ export default function TripPage() {
   const [addingCourse, setAddingCourse] = useState(false);
   const courseSearchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Message board
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState<TripMessageWithUser[]>([]);
+  const [msgBody, setMsgBody] = useState("");
+  const [sendingMsg, setSendingMsg] = useState(false);
+  const [msgsLoading, setMsgsLoading] = useState(false);
+  const msgEndRef = useRef<HTMLDivElement>(null);
+
+  // Games
+  const [games, setGames] = useState<TripGameRecord[]>([]);
+  const [gameOpen, setGameOpen] = useState(false);
+  const [gameStep, setGameStep] = useState(1);
+  const [generatingGame, setGeneratingGame] = useState(false);
+  const [viewGameOpen, setViewGameOpen] = useState(false);
+  const [viewGame, setViewGame] = useState<TripGameRecord | null>(null);
+  const [gameCourseId, setGameCourseId] = useState("");
+  const [gameCourseName, setGameCourseName] = useState("");
+  const [gameTeeBoxes, setGameTeeBoxes] = useState<TeeBox[]>([]);
+  const [gameTeeId, setGameTeeId] = useState("");
+  const [gameTeeSlope, setGameTeeSlope] = useState(113);
+  const [gameTeeRating, setGameTeeRating] = useState(72.0);
+  const [gameCoursePar, setGameCoursePar] = useState(72);
+  const [gamePlayers, setGamePlayers] = useState<GamePlayer[]>([]);
+  const [gameFormat, setGameFormat] = useState("");
+  const [gameNassauFront, setGameNassauFront] = useState("5");
+  const [gameNassauBack, setGameNassauBack] = useState("5");
+  const [gameNassauTotal, setGameNassauTotal] = useState("5");
+  const [gameSkinsAmt, setGameSkinsAmt] = useState("5");
+  const [gameSkinsCarryover, setGameSkinsCarryover] = useState(true);
+  const [gameHoleHandicaps, setGameHoleHandicaps] = useState<number[]>(Array(18).fill(0));
+  const [gameHoleHandicapsKnown, setGameHoleHandicapsKnown] = useState(false);
+  const [gameError, setGameError] = useState("");
+
   useEffect(() => {
     if (!id) return;
     const supabase = createClient();
@@ -293,6 +349,9 @@ export default function TripPage() {
       const { data: clipsData } = await supabase.from("Upload").select("id, mediaType, mediaUrl, cloudflareVideoId, courseId, tripPublic, strategyNote, shotType").eq("tripId", id).order("createdAt", { ascending: false });
       if (clipsData) setClips(clipsData);
 
+      const { data: gamesData } = await supabase.from("TripGame").select("id, courseId, courseName, format, formatConfig, players, gameSheet, shareText, createdAt").eq("tripId", id).order("createdAt", { ascending: false });
+      if (gamesData) setGames(gamesData as TripGameRecord[]);
+
       setLoading(false);
     }
     load();
@@ -309,6 +368,21 @@ export default function TripPage() {
       setInviteResults((data || []).filter((u: any) => !memberIds.has(u.id)));
     }, 280);
   }, [inviteQuery, members]);
+
+  // Poll messages while chat is open
+  useEffect(() => {
+    if (!chatOpen) return;
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 8000);
+    return () => clearInterval(interval);
+  }, [chatOpen]);
+
+  // Scroll to bottom when messages load
+  useEffect(() => {
+    if (chatOpen && messages.length > 0) {
+      setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+    }
+  }, [chatOpen, messages.length]);
 
   // Course search for add-course sheet
   useEffect(() => {
@@ -459,6 +533,138 @@ export default function TripPage() {
     setAddingCourse(false);
   };
 
+  const fetchMessages = async () => {
+    if (!id) return;
+    setMsgsLoading(true);
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setMsgsLoading(false); return; }
+    try {
+      const res = await fetch(`/api/trips/${id}/messages`, { headers: { Authorization: `Bearer ${session.access_token}` } });
+      const json = await res.json();
+      if (json.messages) setMessages(json.messages);
+    } catch { }
+    setMsgsLoading(false);
+  };
+
+  const sendMessage = async () => {
+    if (!msgBody.trim() || sendingMsg) return;
+    setSendingMsg(true);
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setSendingMsg(false); return; }
+    try {
+      const res = await fetch(`/api/trips/${id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ body: msgBody.trim() }),
+      });
+      const json = await res.json();
+      if (json.message) {
+        setMessages(prev => [...prev, json.message]);
+        setMsgBody("");
+        setTimeout(() => msgEndRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+      }
+    } catch { }
+    setSendingMsg(false);
+  };
+
+  const openGameCreator = async () => {
+    setGameStep(1);
+    setGameCourseId("");
+    setGameCourseName("");
+    setGameTeeBoxes([]);
+    setGameTeeId("");
+    setGameTeeSlope(113);
+    setGameTeeRating(72.0);
+    setGameCoursePar(72);
+    setGameFormat("");
+    setGameNassauFront("5"); setGameNassauBack("5"); setGameNassauTotal("5");
+    setGameSkinsAmt("5"); setGameSkinsCarryover(true);
+    setGameHoleHandicaps(Array(18).fill(0));
+    setGameHoleHandicapsKnown(false);
+    setGameError("");
+    // Pre-populate players from members with their handicap indexes
+    const supabase = createClient();
+    const memberUserIds = members.map(m => m.userId);
+    const { data: usersWithHI } = await supabase.from("User").select("id, displayName, avatarUrl, handicapIndex").in("id", memberUserIds);
+    const initialPlayers: GamePlayer[] = (usersWithHI || []).map((u: any) => ({
+      userId: u.id,
+      displayName: u.displayName,
+      avatarUrl: u.avatarUrl,
+      handicapIndex: u.handicapIndex ?? 0,
+      teamId: "A",
+    }));
+    setGamePlayers(initialPlayers);
+    setGameOpen(true);
+  };
+
+  const handleSelectGameCourse = async (courseId: string, courseName: string) => {
+    setGameCourseId(courseId);
+    setGameCourseName(courseName);
+    setGameTeeBoxes([]);
+    setGameTeeId("");
+    const supabase = createClient();
+    // Fetch tee boxes for this course
+    const { data: teeBoxes } = await supabase.from("TeeBox").select("id, color, customLabel, slope, rating").eq("courseId", courseId).order("slope", { ascending: false });
+    if (teeBoxes && teeBoxes.length > 0) {
+      setGameTeeBoxes(teeBoxes as TeeBox[]);
+      const firstTee = teeBoxes[0] as TeeBox;
+      setGameTeeId(firstTee.id);
+      setGameTeeSlope(firstTee.slope ?? 113);
+      setGameTeeRating(firstTee.rating ?? 72.0);
+    }
+    // Fetch course par + hole handicap ranks
+    const { data: holes } = await supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", courseId).order("holeNumber");
+    if (holes && holes.length === 18) {
+      const par = holes.reduce((sum: number, h: any) => sum + (h.par || 4), 0);
+      setGameCoursePar(par);
+      const ranks = holes.map((h: any) => h.handicapRank || 0);
+      setGameHoleHandicaps(ranks);
+      setGameHoleHandicapsKnown(ranks.every((r: number) => r > 0));
+    } else {
+      setGameCoursePar(72);
+      setGameHoleHandicaps(Array(18).fill(0));
+      setGameHoleHandicapsKnown(false);
+    }
+  };
+
+  const generateGame = async () => {
+    if (generatingGame) return;
+    if (gameHoleHandicaps.some(r => r <= 0)) {
+      setGameError("Please enter a handicap rank (1–18) for all 18 holes.");
+      return;
+    }
+    setGameError("");
+    setGeneratingGame(true);
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setGeneratingGame(false); return; }
+
+    const formatConfig: Record<string, unknown> =
+      gameFormat === "nassau" ? { frontAmount: gameNassauFront, backAmount: gameNassauBack, totalAmount: gameNassauTotal }
+      : gameFormat === "skins" ? { skinsAmount: gameSkinsAmt, carryover: gameSkinsCarryover }
+      : {};
+
+    try {
+      const res = await fetch(`/api/trips/${id}/game`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ courseId: gameCourseId, courseName: gameCourseName, coursePar: gameCoursePar, teeSlope: gameTeeSlope, teeRating: gameTeeRating, format: gameFormat, formatConfig, players: gamePlayers, holeHandicaps: gameHoleHandicaps }),
+      });
+      const json = await res.json();
+      if (json.game) {
+        setGames(prev => [json.game, ...prev]);
+        setGameOpen(false);
+        setViewGame(json.game);
+        setViewGameOpen(true);
+      } else {
+        setGameError(json.error || "Generation failed. Try again.");
+      }
+    } catch { setGameError("Network error. Try again."); }
+    setGeneratingGame(false);
+  };
+
   const formatDate = (d: string | null) => {
     if (!d) return "";
     const dt = new Date(d + "T00:00:00");
@@ -517,6 +723,11 @@ export default function TripPage() {
           .course-result-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer; }
           .course-result-row:last-child { border-bottom: none; }
           .course-result-row:active { opacity: 0.7; }
+          .msg-bubble-me { background: #2d7a42; border-radius: 16px 16px 4px 16px; padding: 9px 13px; max-width: 78%; align-self: flex-end; }
+          .msg-bubble-other { background: rgba(255,255,255,0.07); border-radius: 16px 16px 16px 4px; padding: 9px 13px; max-width: 78%; }
+          .game-format-card { border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); padding: 14px; cursor: pointer; transition: border-color 0.15s; }
+          .game-format-card.selected { border-color: #4da862; background: rgba(77,168,98,0.1); }
+          .game-format-card:active { opacity: 0.8; }
         `}</style>
 
         {/* Header */}
@@ -665,6 +876,71 @@ export default function TripPage() {
                     </button>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Trip Chat */}
+        <div style={{ padding: "24px 20px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div className="section-label" style={{ marginBottom: 0 }}>Trip Chat {messages.length > 0 && `· ${messages.length}`}</div>
+            <button
+              onClick={() => setChatOpen(true)}
+              style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Open Chat
+            </button>
+          </div>
+          {messages.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "16px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>No messages yet — start the group chat</div>
+          ) : (
+            <button onClick={() => setChatOpen(true)} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px 14px", cursor: "pointer", textAlign: "left" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0 }}>
+                  {messages[messages.length - 1]?.user?.avatarUrl
+                    ? <img src={messages[messages.length - 1].user.avatarUrl!} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                    : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "7px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  }
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>{messages[messages.length - 1]?.user?.displayName}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginLeft: 6 }}>{messages[messages.length - 1]?.body}</span>
+                </div>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </button>
+          )}
+        </div>
+
+        {/* Games */}
+        <div style={{ padding: "24px 20px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div className="section-label" style={{ marginBottom: 0 }}>Games {games.length > 0 && `· ${games.length}`}</div>
+            <button
+              onClick={openGameCreator}
+              style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create Game
+            </button>
+          </div>
+          {games.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "16px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>No games yet — set up Nassau, Skins, and more</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {games.map(g => (
+                <button key={g.id} onClick={() => { setViewGame(g); setViewGameOpen(true); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "13px 14px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{g.courseName}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{GAME_FORMATS.find(f => f.id === g.format)?.name || g.format} · {new Date(g.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</div>
+                  </div>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
               ))}
             </div>
           )}
@@ -931,6 +1207,359 @@ export default function TripPage() {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Chat sheet */}
+      {chatOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column" }}>
+          <div onClick={() => setChatOpen(false)} style={{ flex: 1, background: "rgba(0,0,0,0.5)" }} />
+          <div style={{ background: "#0d1f14", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", height: "82vh" }}>
+            <div style={{ padding: "14px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Trip Chat</div>
+              <button onClick={() => setChatOpen(false)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px 8px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {msgsLoading && messages.length === 0 ? (
+                <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 12, padding: "40px 0" }}>Loading messages...</div>
+              ) : messages.length === 0 ? (
+                <div style={{ textAlign: "center", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 12, padding: "40px 0" }}>No messages yet. Say something! 👋</div>
+              ) : (
+                messages.map(msg => {
+                  const isMe = msg.userId === user?.id || msg.user?.id === user?.id;
+                  const time = new Date(msg.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+                  return (
+                    <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start", gap: 3 }}>
+                      {!isMe && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "#4da862", fontWeight: 600, marginLeft: 2 }}>{msg.user?.displayName}</span>}
+                      <div className={isMe ? "msg-bubble-me" : "msg-bubble-other"}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", lineHeight: 1.4 }}>{msg.body}</span>
+                      </div>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.25)", marginRight: isMe ? 2 : 0, marginLeft: isMe ? 0 : 2 }}>{time}</span>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={msgEndRef} />
+            </div>
+            <div style={{ padding: "10px 14px 24px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8, flexShrink: 0 }}>
+              <input
+                value={msgBody}
+                onChange={e => setMsgBody(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                placeholder="Message the group..."
+                style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+              />
+              <button
+                onClick={sendMessage}
+                disabled={!msgBody.trim() || sendingMsg}
+                style={{ width: 40, height: 40, borderRadius: "50%", background: msgBody.trim() ? "#2d7a42" : "rgba(255,255,255,0.07)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: msgBody.trim() ? "pointer" : "default", flexShrink: 0 }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Game creator sheet */}
+      {gameOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column" }}>
+          <div onClick={() => { if (!generatingGame) setGameOpen(false); }} style={{ flex: 1, background: "rgba(0,0,0,0.5)" }} />
+          <div style={{ background: "#0d1f14", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", maxHeight: "90vh" }}>
+            {/* Header */}
+            <div style={{ padding: "14px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+              {gameStep > 1 && !generatingGame && (
+                <button onClick={() => setGameStep(s => s - 1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+              )}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Create Game</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>
+                  {gameStep === 1 && "Step 1 of 5 — Course & Tee"}
+                  {gameStep === 2 && "Step 2 of 5 — Players & Handicaps"}
+                  {gameStep === 3 && "Step 3 of 5 — Game Format"}
+                  {gameStep === 4 && "Step 4 of 5 — Configure"}
+                  {gameStep === 5 && "Step 5 of 5 — Hole Handicap Rankings"}
+                </div>
+              </div>
+              {!generatingGame && (
+                <button onClick={() => setGameOpen(false)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              )}
+            </div>
+
+            <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
+              {/* Step 1: Course & Tee */}
+              {gameStep === 1 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Select Course</div>
+                    {tripCourses.length === 0 ? (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>Add a course to this trip first</div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {tripCourses.map(tc => (
+                          <button key={tc.id} onClick={() => handleSelectGameCourse(tc.courseId, tc.course.name)}
+                            style={{ padding: "12px 14px", borderRadius: 12, border: `1.5px solid ${gameCourseId === tc.courseId ? "#4da862" : "rgba(255,255,255,0.08)"}`, background: gameCourseId === tc.courseId ? "rgba(77,168,98,0.1)" : "rgba(255,255,255,0.03)", cursor: "pointer", textAlign: "left" }}>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{tc.course.name}</div>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{tc.course.city}, {tc.course.state}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {gameCourseId && (
+                    <>
+                      {gameTeeBoxes.length > 0 ? (
+                        <div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Select Tee</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {gameTeeBoxes.map(tb => (
+                              <button key={tb.id} onClick={() => { setGameTeeId(tb.id); setGameTeeSlope(tb.slope ?? 113); setGameTeeRating(tb.rating ?? 72); }}
+                                style={{ padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${gameTeeId === tb.id ? "#4da862" : "rgba(255,255,255,0.08)"}`, background: gameTeeId === tb.id ? "rgba(77,168,98,0.1)" : "rgba(255,255,255,0.03)", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{tb.customLabel || tb.color} Tees</span>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Slope {tb.slope || "—"} / Rating {tb.rating || "—"}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Tee Info (enter manually)</div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                            {[["Slope", gameTeeSlope.toString(), (v: string) => setGameTeeSlope(Number(v))], ["Rating", gameTeeRating.toString(), (v: string) => setGameTeeRating(Number(v))], ["Par", gameCoursePar.toString(), (v: string) => setGameCoursePar(Number(v))]].map(([label, val, setter]) => (
+                              <div key={label as string}>
+                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 4 }}>{label as string}</div>
+                                <input type="number" value={val as string} onChange={e => (setter as (v: string) => void)(e.target.value)}
+                                  style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>Par: {gameCoursePar} · Slope: {gameTeeSlope} · Rating: {gameTeeRating}</div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Step 2: Players */}
+              {gameStep === 2 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 4 }}>Edit each player's handicap index if needed</div>
+                  {gamePlayers.map((p, i) => (
+                    <div key={p.userId} style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "10px 12px" }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0 }}>
+                        {p.avatarUrl ? <img src={p.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "9px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{p.displayName}</div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)" }}>HI</span>
+                        <input
+                          type="number" step="0.1" min="0" max="54"
+                          value={p.handicapIndex}
+                          onChange={e => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Number(e.target.value) } : pl))}
+                          style={{ width: 52, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", textAlign: "center" }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Step 3: Format */}
+              {gameStep === 3 && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {GAME_FORMATS.map(fmt => (
+                    <div key={fmt.id} className={`game-format-card${gameFormat === fmt.id ? " selected" : ""}`} onClick={() => setGameFormat(fmt.id)}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: gameFormat === fmt.id ? "#4da862" : "#fff", marginBottom: 4 }}>{fmt.name}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>{fmt.desc}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Step 4: Configure */}
+              {gameStep === 4 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                  {(gameFormat === "nassau" || gameFormat === "match_play" || gameFormat === "best_ball") && (
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>Team Assignment</div>
+                      {gamePlayers.map((p, i) => (
+                        <div key={p.userId} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", flex: 1 }}>{p.displayName}</span>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            {["A", "B"].map(team => (
+                              <button key={team} onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, teamId: team } : pl))}
+                                style={{ padding: "5px 14px", borderRadius: 8, border: `1.5px solid ${p.teamId === team ? "#4da862" : "rgba(255,255,255,0.12)"}`, background: p.teamId === team ? "rgba(77,168,98,0.15)" : "transparent", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: p.teamId === team ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer" }}>
+                                Team {team}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {gameFormat === "nassau" && (
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>Bet Amounts ($)</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                        {[["Front 9", gameNassauFront, setGameNassauFront], ["Back 9", gameNassauBack, setGameNassauBack], ["Full 18", gameNassauTotal, setGameNassauTotal]].map(([label, val, setter]) => (
+                          <div key={label as string}>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 4 }}>{label as string}</div>
+                            <input type="number" min="0" value={val as string} onChange={e => (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)}
+                              style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {gameFormat === "skins" && (
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>Skins Setup</div>
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>$ per skin</div>
+                        <input type="number" min="0" value={gameSkinsAmt} onChange={e => setGameSkinsAmt(e.target.value)}
+                          style={{ width: 100, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} />
+                      </div>
+                      <button onClick={() => setGameSkinsCarryover(v => !v)}
+                        style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                        <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${gameSkinsCarryover ? "#4da862" : "rgba(255,255,255,0.2)"}`, background: gameSkinsCarryover ? "#4da862" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {gameSkinsCarryover && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                        </div>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Carryover on ties</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {(gameFormat === "stableford" || gameFormat === "scramble") && (
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>
+                      {gameFormat === "stableford" && "Points scoring: bogey=1pt, par=2pts, birdie=3pts, eagle=4pts, albatross=5pts. Highest total wins."}
+                      {gameFormat === "scramble" && "Everyone hits on each shot. The group selects the best ball and all play from there. No individual handicap strokes."}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Step 5: Hole Handicap Rankings */}
+              {gameStep === 5 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
+                    Enter each hole's difficulty ranking (1 = hardest, 18 = easiest). Found on the scorecard. We'll save these for future games at this course.
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                    {gameHoleHandicaps.map((rank, i) => (
+                      <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "8px 10px" }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Hole {i + 1}</div>
+                        <input
+                          type="number" min="1" max="18"
+                          value={rank || ""}
+                          placeholder="—"
+                          onChange={e => {
+                            const val = Math.min(18, Math.max(1, Number(e.target.value)));
+                            setGameHoleHandicaps(prev => prev.map((r, idx) => idx === i ? val : r));
+                          }}
+                          style={{ width: "100%", background: "transparent", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: rank > 0 ? "#4da862" : "rgba(255,255,255,0.3)", outline: "none", textAlign: "center" }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {gameError && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#e05c5c" }}>{gameError}</div>}
+                </div>
+              )}
+
+              {generatingGame && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "40px 0" }}>
+                  <div style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid rgba(77,168,98,0.2)", borderTop: "3px solid #4da862", animation: "spin 1s linear infinite" }} />
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Generating your game sheet...</div>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              )}
+            </div>
+
+            {/* Footer CTA */}
+            {!generatingGame && (
+              <div style={{ padding: "12px 20px 28px", borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+                {gameStep < 5 ? (
+                  <button
+                    onClick={() => {
+                      if (gameStep === 1 && !gameCourseId) return;
+                      if (gameStep === 3 && !gameFormat) return;
+                      if (gameStep === 4) {
+                        // Skip step 5 if hole handicaps already known
+                        if (gameHoleHandicapsKnown) { generateGame(); return; }
+                      }
+                      setGameStep(s => s + 1);
+                    }}
+                    disabled={(gameStep === 1 && !gameCourseId) || (gameStep === 3 && !gameFormat)}
+                    style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: (gameStep === 1 && !gameCourseId) || (gameStep === 3 && !gameFormat) ? "rgba(255,255,255,0.06)" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer" }}
+                  >
+                    {gameStep === 4 && gameHoleHandicapsKnown ? "Generate Game Sheet" : "Continue"}
+                  </button>
+                ) : (
+                  <button
+                    onClick={generateGame}
+                    style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer" }}
+                  >
+                    Generate Game Sheet
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* View game sheet */}
+      {viewGameOpen && viewGame && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column" }}>
+          <div onClick={() => setViewGameOpen(false)} style={{ flex: 1, background: "rgba(0,0,0,0.5)" }} />
+          <div style={{ background: "#0d1f14", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", maxHeight: "88vh" }}>
+            <div style={{ padding: "14px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+              <div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>{GAME_FORMATS.find(f => f.id === viewGame.format)?.name || viewGame.format}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{viewGame.courseName}</div>
+              </div>
+              <button onClick={() => setViewGameOpen(false)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{viewGame.gameSheet}</div>
+            </div>
+            <div style={{ padding: "12px 20px 28px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 10, flexShrink: 0 }}>
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: `${viewGame.courseName} — ${GAME_FORMATS.find(f => f.id === viewGame.format)?.name || viewGame.format}`, text: viewGame.shareText });
+                  } else {
+                    navigator.clipboard.writeText(viewGame.shareText);
+                  }
+                }}
+                style={{ flex: 1, padding: "13px", borderRadius: 12, border: "none", background: "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Send to Group
+              </button>
+              <button
+                onClick={() => { navigator.clipboard.writeText(viewGame.shareText); }}
+                style={{ padding: "13px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
+              >
+                Copy
+              </button>
+            </div>
           </div>
         </div>
       )}
