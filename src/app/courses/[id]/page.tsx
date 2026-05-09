@@ -1004,54 +1004,57 @@ const [editDescription, setEditDescription] = useState("");
               <svg width="11" height="11" viewBox="0 0 24 24" fill={saved ? "#1a9e42" : "none"} stroke={saved ? "#1a9e42" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
               <span style={{ color: saved ? "#1a9e42" : "rgba(255,255,255,0.5)" }}>{saved ? "Saved" : "Save"}</span>
             </button>
-            {/* Save picker dropdown */}
+            {/* Save picker — fixed bottom sheet */}
             {showPicker && (
-              <div style={{ position: "absolute", bottom: "calc(100% + 8px)", right: 0, background: "rgba(13,35,24,0.98)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 12, padding: 6, zIndex: 50, minWidth: 160, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
-                <button onClick={() => toggleSave("PLAYED")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "PLAYED" ? "rgba(26,158,66,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
-                  <span style={{ fontSize: 16 }}>✓</span>
-                  <div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "PLAYED" ? "#1a9e42" : "#fff" }}>Played</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I&apos;ve played this course</div>
-                  </div>
-                </button>
-                <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" }} />
-                <button onClick={() => toggleSave("BUCKET_LIST")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: saveType === "BUCKET_LIST" ? "rgba(26,158,66,0.15)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
-                  <span style={{ fontSize: 16 }}>⛳</span>
-                  <div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#1a9e42" : "#fff" }}>Bucket List</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
-                  </div>
-                </button>
-                <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" }} />
-                <button
-                  onClick={async () => {
-                    setShowPicker(false);
-                    setTripStep("select");
-                    setNewTripName(""); setNewTripStart(""); setNewTripEnd("");
-                    setTripPlayDate(""); setTripTeeTime(""); setTripAccommodation("");
-                    setSelectedTripId(null); setSelectedTripName("");
-                    if (user) {
-                      const supabase = createClient();
-                      const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id);
-                      if (memberData && memberData.length > 0) {
-                        const tripIds = memberData.map((m: any) => m.tripId);
-                        const { data: tripsData } = await supabase.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).order("createdAt", { ascending: false });
-                        setUserTrips(tripsData || []);
-                      } else {
-                        setUserTrips([]);
+              <>
+                <div onClick={() => setShowPicker(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200 }} />
+                <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0d2318", borderTop: "1px solid rgba(26,158,66,0.25)", borderRadius: "18px 18px 0 0", padding: "8px 16px 40px", zIndex: 201 }}>
+                  <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 18px" }} />
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 12, paddingLeft: 4 }}>Save Course</div>
+                  <button onClick={() => toggleSave("PLAYED")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: saveType === "PLAYED" ? "rgba(26,158,66,0.12)" : "transparent", border: `1px solid ${saveType === "PLAYED" ? "rgba(26,158,66,0.35)" : "transparent"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", marginBottom: 8 }}>
+                    <span style={{ fontSize: 22 }}>✓</span>
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: saveType === "PLAYED" ? "#1a9e42" : "#fff" }}>Played</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>I&apos;ve played this course</div>
+                    </div>
+                  </button>
+                  <button onClick={() => toggleSave("BUCKET_LIST")} style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: saveType === "BUCKET_LIST" ? "rgba(26,158,66,0.12)" : "transparent", border: `1px solid ${saveType === "BUCKET_LIST" ? "rgba(26,158,66,0.35)" : "transparent"}`, borderRadius: 12, cursor: "pointer", textAlign: "left", marginBottom: 8 }}>
+                    <span style={{ fontSize: 22 }}>⛳</span>
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: saveType === "BUCKET_LIST" ? "#1a9e42" : "#fff" }}>Bucket List</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>I want to play this</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setShowPicker(false);
+                      setTripStep("select");
+                      setNewTripName(""); setNewTripStart(""); setNewTripEnd("");
+                      setTripPlayDate(""); setTripTeeTime(""); setTripAccommodation("");
+                      setSelectedTripId(null); setSelectedTripName("");
+                      if (user) {
+                        const supabase = createClient();
+                        const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id);
+                        if (memberData && memberData.length > 0) {
+                          const tripIds = memberData.map((m: any) => m.tripId);
+                          const { data: tripsData } = await supabase.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).order("createdAt", { ascending: false });
+                          setUserTrips(tripsData || []);
+                        } else {
+                          setUserTrips([]);
+                        }
                       }
-                    }
-                    setTripPickerOpen(true);
-                  }}
-                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "transparent", border: "none", borderRadius: 8, cursor: "pointer", textAlign: "left", marginTop: 2 }}
-                >
-                  <span style={{ fontSize: 16 }}>✈️</span>
-                  <div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Golf Trip</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Add to a trip itinerary</div>
-                  </div>
-                </button>
-              </div>
+                      setTripPickerOpen(true);
+                    }}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: "transparent", border: "1px solid transparent", borderRadius: 12, cursor: "pointer", textAlign: "left" }}
+                  >
+                    <span style={{ fontSize: 22 }}>✈️</span>
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>Golf Trip</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>Add to a trip itinerary</div>
+                    </div>
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
