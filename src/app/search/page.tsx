@@ -92,7 +92,6 @@ function SearchPageInner() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [closestCourses, setClosestCourses] = useState<Course[]>([]);
   const [closestLabel, setClosestLabel] = useState("");
-  const [inviteBannerVisible, setInviteBannerVisible] = useState(false);
   const suggestRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevLoadingRef = useRef(false);
   const suggestionBoxRef = useRef<HTMLDivElement>(null);
@@ -450,15 +449,6 @@ function SearchPageInner() {
     return () => clearTimeout(t);
   }, []);
 
-  useEffect(() => {
-    if (!query.trim() && searchTab !== "people") return;
-    const dismissed = localStorage.getItem("invite_banner_dismissed_at");
-    if (dismissed) {
-      const days14 = 14 * 24 * 60 * 60 * 1000;
-      if (Date.now() - Number(dismissed) < days14) return;
-    }
-    setInviteBannerVisible(true);
-  }, [query, searchTab]);
 
   const showResults = query.trim().length >= 1 || hasFilters;
   const displayList = showResults ? results : [];
@@ -659,6 +649,17 @@ function SearchPageInner() {
               </button>
             ))}
 
+            {/* Invite pill — shown inline when People tab is active */}
+            {searchTab === "people" && (
+              <a
+                href="/invite"
+                style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", borderRadius: 99, border: "1px solid rgba(77,168,98,0.35)", background: "rgba(77,168,98,0.1)", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", textDecoration: "none", whiteSpace: "nowrap" }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Invite Friends
+              </a>
+            )}
+
             {/* Filter button — only on courses tab */}
             {searchTab === "courses" && (
               <button
@@ -753,22 +754,6 @@ function SearchPageInner() {
           </>
         )}
 
-        {/* Invite banner — shown on any tab after first non-empty search */}
-        {inviteBannerVisible && (showResults || searchTab === "people") && (
-          <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, padding: "12px 14px", margin: "14px 0" }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            <div style={{ flex: 1 }}>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)" }}>Know a golfer? </span>
-              <a href="/invite" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", textDecoration: "none" }}>Invite them — earn 50 pts →</a>
-            </div>
-            <button
-              onClick={() => { localStorage.setItem("invite_banner_dismissed_at", String(Date.now())); setInviteBannerVisible(false); }}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "rgba(255,255,255,0.25)", flexShrink: 0 }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-          </div>
-        )}
 
         {/* ── Courses tab ── */}
         {searchTab === "courses" && <>
