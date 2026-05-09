@@ -669,54 +669,31 @@ export default function Home() {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUid = session?.user?.id ?? null;
 
-      const SELECT = "id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt, rankScore";
-      const [{ data: topUploads }, { data: freshUploads }] = await Promise.all([
-        supabase.from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
-          .order("rankScore", { ascending: false, nullsFirst: false }).limit(80),
-        supabase.from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
-          .order("createdAt", { ascending: false }).limit(40),
-      ]);
+      const SELECT = "id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt";
+      const { data: allUploads } = await supabase
+        .from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
+        .order("createdAt", { ascending: false }).limit(200);
 
-      // Merge pools, deduplicate, exclude current user's own clips from discovery
-      const poolMap = new Map<string, any>();
-      [...(topUploads || []), ...(freshUploads || [])].forEach(u => {
-        if (!poolMap.has(u.id)) poolMap.set(u.id, u);
-      });
-      const pool = Array.from(poolMap.values()).filter(u => !currentUid || u.userId !== currentUid);
+      // Exclude own clips and clips already seen this session
+      const pool = (allUploads || []).filter(u =>
+        (!currentUid || u.userId !== currentUid) && !seenIds.has(u.id)
+      );
 
       if (pool.length === 0) { setLoading(false); return; }
 
-      // Score = (rankScore + freshnessBonus) × quality × seen-penalty × jitter
-      // Additive freshness bonus so brand-new clips (rankScore ≈ 0) still surface.
-      const now = Date.now();
-      const DAY = 86_400_000;
-      const scored = pool
-        .map(u => {
-          const ageMs = now - new Date(u.createdAt).getTime();
-          const freshnessBonus = ageMs < DAY         ? 2.0   // < 1 day
-            : ageMs < 3 * DAY                        ? 1.0   // 1–3 days
-            : ageMs < 7 * DAY                        ? 0.35  // 3–7 days
-            : 0;
-          return {
-            ...u,
-            _score: ((u.rankScore ?? 0) + freshnessBonus)
-              * (u.cloudflareVideoId ? 1.15 : 0.85)  // CF-processed = higher quality
-              * (seenIds.has(u.id) ? 0.15 : 1.0)      // seen this session → sink to back
-              * (0.5 + Math.random() * 1.0),            // ±50% jitter for variety
-          };
-        })
-        .sort((a, b) => b._score - a._score);
+      // Full shuffle — true variety on every load
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
 
-      // Course diversity cap: max 2 clips per course per load
-      const courseCounts: Record<string, number> = {};
-      const diverse = scored.filter(u => {
-        const n = courseCounts[u.courseId] ?? 0;
-        if (n >= 2) return false;
-        courseCounts[u.courseId] = n + 1;
-        return true;
-      });
-
-      const uploads = diverse.slice(0, 15);
+      // 5-slide course spacing: no same course within 5 consecutive slots
+      const recentCourses: string[] = [];
+      const uploads: typeof shuffled = [];
+      for (const clip of shuffled) {
+        if (!recentCourses.slice(-5).includes(clip.courseId)) {
+          uploads.push(clip);
+          recentCourses.push(clip.courseId);
+        }
+        if (uploads.length >= 15) break;
+      }
 
       // Persist seen IDs for this session (cap at 100)
       sessionStorage.setItem(
@@ -724,8 +701,7 @@ export default function Home() {
         JSON.stringify([...seenIds, ...uploads.map(u => u.id)].slice(-100))
       );
 
-      const rawUploads = topUploads; // used for cursor + hasMore below
-      if (!rawUploads || uploads.length === 0) { setLoading(false); return; }
+      if (uploads.length === 0) { setLoading(false); return; }
 
       const courseIds = [...new Set(uploads.map((u: any) => u.courseId))];
       const userIds = [...new Set(uploads.map((u: any) => u.userId))];
@@ -795,8 +771,8 @@ export default function Home() {
       });
       while (si < singleItems.length) interleaved.push(singleItems[si++]);
       setFeedItems(interleaved);
-      feedCursorRef.current = rawUploads[rawUploads.length - 1].createdAt;
-      hasMoreRef.current = rawUploads.length >= 50;
+      feedCursorRef.current = allUploads![allUploads!.length - 1].createdAt;
+      hasMoreRef.current = (allUploads?.length ?? 0) >= 200;
       setLoading(false);
     }
 

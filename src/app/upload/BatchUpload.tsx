@@ -629,17 +629,12 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
                       rows={2}
                       style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", outline: "none", boxSizing: "border-box", resize: "none" }}
                     />
-                    {clip.strategyNote.trim().length > 0 && clip.strategyNote.trim().length < 30 && (
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 3 }}>
-                        {30 - clip.strategyNote.trim().length} more chars for +5 pts
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <button onClick={() => updateClip(clip.id, { showIntel: true })}
                     style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: "6px 0 0" }}>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.5)" }}>Add intel (+20 pts)</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.5)" }}>Add intel</span>
                   </button>
                 )}
               </div>
