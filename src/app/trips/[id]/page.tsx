@@ -1295,7 +1295,7 @@ export default function TripPage() {
 
             <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
               {/* Step 1: Course & Tee */}
-              {gameStep === 1 && (
+              {!generatingGame && gameStep === 1 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   <div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Select Course</div>
@@ -1352,7 +1352,7 @@ export default function TripPage() {
               )}
 
               {/* Step 2: Players */}
-              {gameStep === 2 && (
+              {!generatingGame && gameStep === 2 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 4 }}>Edit each player's handicap index if needed</div>
                   {gamePlayers.map((p, i) => (
@@ -1378,7 +1378,7 @@ export default function TripPage() {
               )}
 
               {/* Step 3: Format */}
-              {gameStep === 3 && (
+              {!generatingGame && gameStep === 3 && (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {GAME_FORMATS.map(fmt => (
                     <div key={fmt.id} className={`game-format-card${gameFormat === fmt.id ? " selected" : ""}`} onClick={() => setGameFormat(fmt.id)}>
@@ -1390,7 +1390,7 @@ export default function TripPage() {
               )}
 
               {/* Step 4: Configure */}
-              {gameStep === 4 && (
+              {!generatingGame && gameStep === 4 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   {(gameFormat === "nassau" || gameFormat === "match_play" || gameFormat === "best_ball") && (
                     <div>
@@ -1454,7 +1454,7 @@ export default function TripPage() {
               )}
 
               {/* Step 5: Hole Handicap Rankings */}
-              {gameStep === 5 && (
+              {!generatingGame && gameStep === 5 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
                     Enter each hole's difficulty ranking (1 = hardest, 18 = easiest). Found on the scorecard. We'll save these for future games at this course.
@@ -1476,14 +1476,20 @@ export default function TripPage() {
                       </div>
                     ))}
                   </div>
-                  {gameError && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#e05c5c" }}>{gameError}</div>}
                 </div>
               )}
 
+              {/* Error — visible on any step */}
+              {!generatingGame && gameError && (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#e05c5c", marginTop: 8 }}>{gameError}</div>
+              )}
+
+              {/* Generating spinner — replaces step content */}
               {generatingGame && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "40px 0" }}>
-                  <div style={{ width: 48, height: 48, borderRadius: "50%", border: "3px solid rgba(77,168,98,0.2)", borderTop: "3px solid #4da862", animation: "spin 1s linear infinite" }} />
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>Generating your game sheet...</div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "60px 0" }}>
+                  <div style={{ width: 52, height: 52, borderRadius: "50%", border: "3px solid rgba(77,168,98,0.15)", borderTop: "3px solid #4da862", animation: "spin 1s linear infinite" }} />
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>Building your game sheet...</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Claude is crunching the handicaps</div>
                   <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
               )}
