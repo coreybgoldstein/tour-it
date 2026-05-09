@@ -1072,9 +1072,13 @@ export default function Home() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
 
-            {/* Logo mark */}
-            <div style={{ paddingLeft: 24, paddingBottom: 28, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            {/* Logo mark + invite button */}
+            <div style={{ paddingLeft: 24, paddingRight: 16, paddingBottom: 28, borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 36, width: "auto" }} />
+              <button onClick={() => { setMenuOpen(false); router.push("/invite"); }} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "7px 14px", cursor: "pointer" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>Invite</span>
+              </button>
             </div>
 
             {/* Nav items */}
@@ -1125,8 +1129,8 @@ export default function Home() {
           {/* Green header bar */}
           <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", borderBottom: "1px solid rgba(77,168,98,0.35)", flexShrink: 0 }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
-            {/* 3-col row: hamburger | logo | invite + bell */}
-            <div style={{ display: "grid", gridTemplateColumns: "44px 1fr auto", alignItems: "center", paddingTop: "max(14px, env(safe-area-inset-top))", paddingBottom: 10, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
+            {/* 3-col row: hamburger | logo | bell */}
+            <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: "max(14px, env(safe-area-inset-top))", paddingBottom: 10, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
               {/* Hamburger */}
               <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: isDesktop ? "none" : "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
@@ -1137,12 +1141,8 @@ export default function Home() {
               <div style={{ display: "flex", justifyContent: isDesktop ? "flex-start" : "center" }}>
                 <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 56 : 44, width: "auto" }} />
               </div>
-              {/* Invite + Bell — right side */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button onClick={() => router.push("/invite")} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "6px 12px", cursor: "pointer" }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>Invite</span>
-                </button>
+              {/* Bell — right-aligned in third column */}
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
                 <NotificationBellInline />
               </div>
             </div>

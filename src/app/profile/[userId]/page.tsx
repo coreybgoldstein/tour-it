@@ -1019,8 +1019,12 @@ export default function ProfilePage() {
             <button onClick={() => setMenuOpen(false)} style={{ position: "absolute", top: 18, right: 16, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
-            <div style={{ paddingLeft: 24, paddingBottom: 28, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <div style={{ paddingLeft: 24, paddingRight: 16, paddingBottom: 28, borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 36, width: "auto" }} />
+              <button onClick={() => { setMenuOpen(false); router.push("/invite"); }} style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "7px 14px", cursor: "pointer" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>Invite</span>
+              </button>
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 12 }}>
               {[
