@@ -306,6 +306,7 @@ export default function TripPage() {
   const [gameHoleHandicaps, setGameHoleHandicaps] = useState<number[]>(Array(18).fill(0));
   const [gameHoleHandicapsKnown, setGameHoleHandicapsKnown] = useState(false);
   const [gameHandicapWarning, setGameHandicapWarning] = useState(false);
+  const [tripImageExpanded, setTripImageExpanded] = useState(false);
   const [gameError, setGameError] = useState("");
   const [coursesWithHandicaps, setCoursesWithHandicaps] = useState<Set<string>>(new Set());
   const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
@@ -789,40 +790,48 @@ export default function TripPage() {
         `}</style>
 
         {/* Header */}
-        <div style={{ padding: "52px 20px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
-            <button onClick={() => router.push("/lists")} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, marginTop: 2 }}>
+        <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          {/* Top bar: back ← ... edit */}
+          <div style={{ paddingTop: "max(14px, env(safe-area-inset-top))", padding: "max(14px, env(safe-area-inset-top)) 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <button onClick={() => router.push("/lists")} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
-
-            {/* Trip avatar (display only — edit via pencil → Edit Trip) */}
-            <div style={{ width: 80, height: 80, borderRadius: 20, flexShrink: 0, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {uploadingImage ? (
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>...</div>
-              ) : trip.imageUrl ? (
-                <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
-              )}
-            </div>
-            <input ref={imageInputRef} type="file" accept="image/*" onChange={handleTripImagePick} style={{ display: "none" }} />
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 3 }}>Golf Trip</div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: trip.name.length > 22 ? 16 : trip.name.length > 14 ? 18 : 22, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{trip.name}</div>
-            </div>
             {isOwner && (
               <button
                 onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
-                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, marginTop: 2 }}
+                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
             )}
+            {!isOwner && <div style={{ width: 32 }} />}
           </div>
 
+          <div style={{ padding: "14px 20px 20px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
+              {/* Trip avatar — clickable to expand if image exists */}
+              <div
+                onClick={() => trip.imageUrl && setTripImageExpanded(true)}
+                style={{ width: 72, height: 72, borderRadius: 18, flexShrink: 0, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: trip.imageUrl ? "pointer" : "default" }}
+              >
+                {uploadingImage ? (
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>...</div>
+                ) : trip.imageUrl ? (
+                  <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 22, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
+                )}
+              </div>
+              <input ref={imageInputRef} type="file" accept="image/*" onChange={handleTripImagePick} style={{ display: "none" }} />
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 3 }}>Golf Trip</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: trip.name.length > 22 ? 16 : trip.name.length > 14 ? 18 : 22, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{trip.name}</div>
+              </div>
+            </div>
+
           {(trip.startDate || trip.endDate) && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, marginLeft: 46 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, marginLeft: 84 }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
                 {trip.startDate && formatDate(trip.startDate)}{trip.startDate && trip.endDate ? " → " : ""}{trip.endDate && formatDate(trip.endDate)}
@@ -830,7 +839,7 @@ export default function TripPage() {
             </div>
           )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 46 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 84 }}>
             <div style={{ display: "flex" }}>
               {members.slice(0, 6).map((m, i) => (
                 <div key={m.id} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: "2px solid #07100a", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -8 : 0, flexShrink: 0, zIndex: members.length - i }}>
@@ -854,8 +863,9 @@ export default function TripPage() {
           </div>
 
           {trip.description && (
-            <div style={{ marginTop: 12, marginLeft: 46, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{trip.description}</div>
+            <div style={{ marginTop: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{trip.description}</div>
           )}
+          </div>
         </div>
 
         {/* Courses */}
@@ -1071,6 +1081,16 @@ export default function TripPage() {
         </div>
       )}
 
+      {/* Trip image expand overlay */}
+      {tripImageExpanded && trip?.imageUrl && (
+        <div onClick={() => setTripImageExpanded(false)} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button onClick={() => setTripImageExpanded(false)} style={{ position: "absolute", top: 20, right: 20, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <img src={trip.imageUrl} alt={trip.name} style={{ maxWidth: "92vw", maxHeight: "80vh", borderRadius: 16, objectFit: "contain" }} onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+
       {/* Invite sheet */}
       {inviteOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => { setInviteOpen(false); setInviteQuery(""); setInviteResults([]); }}>
@@ -1099,6 +1119,24 @@ export default function TripPage() {
                   </button>
                 </div>
               ))}
+            </div>
+            {/* Invite someone not on Tour It yet */}
+            <div style={{ paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.07)", marginTop: 4 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Not on Tour It yet?</div>
+              <button
+                onClick={() => {
+                  const msg = `Join me on Tour It for ${trip?.name || "our golf trip"}! Sign up at touritgolf.com`;
+                  if (navigator.share) {
+                    navigator.share({ title: "Join me on Tour It", text: msg });
+                  } else {
+                    navigator.clipboard.writeText(msg);
+                  }
+                }}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", cursor: "pointer" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Invite Friend to Tour It
+              </button>
             </div>
           </div>
         </div>
@@ -1655,6 +1693,12 @@ export default function TripPage() {
                 if (isStructured) {
                   return (
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {/* Scorecard accuracy note */}
+                      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "9px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,170,0,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>Verify <span style={{ color: "rgba(255,255,255,0.65)" }}>{viewGame.courseName}</span>'s scorecard is complete and accurate in the course profile for correct stroke allocation.</span>
+                      </div>
+
                       {/* Teams */}
                       {teamGroups.length > 1 && (
                         <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "12px 14px" }}>
