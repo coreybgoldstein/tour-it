@@ -197,7 +197,7 @@ function CourseCard({ course, onClick, compact }: { course: TrendingCourse; onCl
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport, onEdit }: {
+function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow }: {
   userId: string; avatarUrl: string | null; username: string; rank?: string | null;
   courseId: string; courseName: string;
   liked: boolean; onLike: () => void; likeCount: number;
@@ -206,6 +206,8 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
   onIntel: (() => void) | null; intelOpen: boolean;
   onReport?: () => void;
   onEdit?: () => void;
+  isFollowing?: boolean;
+  onFollow?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
@@ -228,11 +230,18 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
       )}
       {/* Uploader avatar — directly below Intel */}
       <button onClick={onTapUser} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-        <div className={isLegend(rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {avatarUrl
-            ? <img src={avatarUrl} alt={username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          }
+        <div style={{ position: "relative" }}>
+          <div className={isLegend(rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {avatarUrl
+              ? <img src={avatarUrl} alt={username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            }
+          </div>
+          {onFollow && !isFollowing && (
+            <button onClick={e => { e.stopPropagation(); onFollow(); }} style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: "#2d7a42", border: "1.5px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0, zIndex: 1 }}>
+              <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+            </button>
+          )}
         </div>
       </button>
       {/* Like */}
@@ -289,12 +298,13 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
 }
 
 function SeriesCard({
-  item, isActive, onTapCourse, onTapUser, onComment, currentUserId,
+  item, isActive, onTapCourse, onTapUser, onComment, currentUserId, followingIds, onFollow,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
   isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
   currentUserId?: string | null;
+  followingIds?: Set<string>; onFollow?: (userId: string) => void;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
@@ -412,7 +422,7 @@ function SeriesCard({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} />
 
       <IntelPanel
         open={intelOpen}
@@ -437,11 +447,12 @@ function SeriesCard({
 }
 
 function VideoCard({
-  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId,
+  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow,
 }: {
   clip: FeedClip; isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
   onEnded: () => void;
+  followingIds?: Set<string>; onFollow?: (userId: string) => void;
   onReport?: () => void;
   onEdit?: () => void;
   currentUserId?: string | null;
@@ -535,12 +546,12 @@ function VideoCard({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} />
 
       {(clip.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
-        <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
-          {clip.username && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{clip.username}</span>}
-          {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
+        <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, display: "flex", alignItems: "baseline", gap: 7 }}>
+          {clip.username && <span onClick={onTapUser} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{clip.username}</span>}
+          {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
         </div>
       )}
 
@@ -597,6 +608,8 @@ export default function Home() {
   const [submittingReport, setSubmittingReport] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [editClipInfo, setEditClipInfo] = useState<{ id: string; courseId: string; holeId: string | null; holeNumber: number | null } | null>(null);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
   const feedRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedCursorRef = useRef<string | null>(null);
@@ -633,6 +646,8 @@ export default function Home() {
         const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
         setUserProfile(profile);
         import("@/lib/registerPush").then(({ registerPush }) => registerPush(data.user!.id));
+        const { data: follows } = await supabase.from("Follow").select("followingId").eq("followerId", data.user.id).eq("status", "ACTIVE");
+        setFollowingIds(new Set((follows || []).map((f: any) => f.followingId)));
       }
     });
 
@@ -787,6 +802,21 @@ export default function Home() {
 
     loadFeed();
   }, []);
+
+  const handleFollow = useCallback(async (targetId: string) => {
+    if (!user?.id) { router.push("/login"); return; }
+    if (followingInProgress.has(targetId)) return;
+    setFollowingInProgress(s => new Set(s).add(targetId));
+    const supabase = createClient();
+    if (followingIds.has(targetId)) {
+      await supabase.from("Follow").delete().eq("followerId", user.id).eq("followingId", targetId);
+      setFollowingIds(s => { const n = new Set(s); n.delete(targetId); return n; });
+    } else {
+      await supabase.from("Follow").insert({ followerId: user.id, followingId: targetId, status: "ACTIVE", createdAt: new Date().toISOString() });
+      setFollowingIds(s => new Set(s).add(targetId));
+    }
+    setFollowingInProgress(s => { const n = new Set(s); n.delete(targetId); return n; });
+  }, [user, followingIds, followingInProgress, router]);
 
   const handleScroll = useCallback(() => {
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
@@ -1302,9 +1332,9 @@ export default function Home() {
         {!loading && feedItems.map((item, i) => (
           <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
             {item.type === "series" ? (
-              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} />
+              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} />
             )}
           </div>
         ))}

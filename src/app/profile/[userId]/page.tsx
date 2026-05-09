@@ -187,9 +187,9 @@ function ProfileFeedCard({
         uploaderHandicap={uploaderInfo.handicapIndex}
       />
       {(uploaderInfo.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
-        <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
-          {uploaderInfo.username && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{uploaderInfo.username}</span>}
-          {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
+        <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, display: "flex", alignItems: "baseline", gap: 7 }}>
+          {uploaderInfo.username && <span onClick={() => router.push(`/profile/${uploaderInfo.id}`)} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaderInfo.username}</span>}
+          {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
         </div>
       )}
       </div>{/* end inner wrapper */}

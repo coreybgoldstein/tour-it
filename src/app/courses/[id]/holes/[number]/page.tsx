@@ -294,6 +294,8 @@ export default function HolePage() {
   const [muted, setMuted] = useState(sessionMute.get());
   const [copied, setCopied] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
   const [reportClipId, setReportClipId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState<string | null>(null);
   const [submittingReport, setSubmittingReport] = useState(false);
@@ -326,7 +328,14 @@ export default function HolePage() {
   const multiHoleKey = MULTI_SHOT_MAP[number as string];
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => setUser(data.user));
+    const sb = createClient();
+    sb.auth.getUser().then(async ({ data }) => {
+      setUser(data.user);
+      if (data.user) {
+        const { data: follows } = await sb.from("Follow").select("followingId").eq("followerId", data.user.id).eq("status", "ACTIVE");
+        setFollowingIds(new Set((follows || []).map((f: any) => f.followingId)));
+      }
+    });
   }, []);
 
   // Load hole list (uploadCounts) for smart navigation — skip empty holes
@@ -742,11 +751,32 @@ export default function HolePage() {
 
               {/* Uploader avatar — directly below Intel */}
               <button className="action-btn" onClick={() => activeUpload && router.push(`/profile/${activeUpload.userId}`)}>
-                <div className={isLegend(uploader?.rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploader?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {uploader?.avatarUrl
-                    ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  }
+                <div style={{ position: "relative" }}>
+                  <div className={isLegend(uploader?.rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploader?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {uploader?.avatarUrl
+                      ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    }
+                  </div>
+                  {activeUpload && user?.id && user.id !== activeUpload.userId && !followingIds.has(activeUpload.userId) && (
+                    <button onClick={async e => {
+                      e.stopPropagation();
+                      const targetId = activeUpload.userId;
+                      if (followingInProgress.has(targetId)) return;
+                      setFollowingInProgress(s => new Set(s).add(targetId));
+                      const sb = createClient();
+                      if (followingIds.has(targetId)) {
+                        await sb.from("Follow").delete().eq("followerId", user.id).eq("followingId", targetId);
+                        setFollowingIds(s => { const n = new Set(s); n.delete(targetId); return n; });
+                      } else {
+                        await sb.from("Follow").insert({ followerId: user.id, followingId: targetId, status: "ACTIVE", createdAt: new Date().toISOString() });
+                        setFollowingIds(s => new Set(s).add(targetId));
+                      }
+                      setFollowingInProgress(s => { const n = new Set(s); n.delete(targetId); return n; });
+                    }} style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: "#2d7a42", border: "1.5px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0, zIndex: 1 }}>
+                      <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+                    </button>
+                  )}
                 </div>
               </button>
 
@@ -801,9 +831,9 @@ export default function HolePage() {
             )}
 
             {(uploaders[activeUpload.userId]?.username || formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)) && (
-              <div style={{ position: "absolute", left: 100, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
-                {uploaders[activeUpload.userId]?.username && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{uploaders[activeUpload.userId].username}</span>}
-                {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}</span>}
+              <div style={{ position: "absolute", left: 100, bottom: 112, zIndex: 10, display: "flex", alignItems: "baseline", gap: 7 }}>
+                {uploaders[activeUpload.userId]?.username && <span onClick={() => router.push(`/profile/${activeUpload.userId}`)} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaders[activeUpload.userId].username}</span>}
+                {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}</span>}
               </div>
             )}
 
