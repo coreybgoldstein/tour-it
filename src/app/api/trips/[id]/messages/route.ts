@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
 
 function sb() {
   return createServiceClient(
@@ -10,9 +9,10 @@ function sb() {
   );
 }
 
-async function getAuthedUser() {
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
+async function getAuthedUser(req: NextRequest) {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token) return null;
+  const { data: { user } } = await sb().auth.getUser(token);
   return user;
 }
 
@@ -28,7 +28,7 @@ async function isMember(tripId: string, userId: string): Promise<boolean> {
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await getAuthedUser();
+  const user = await getAuthedUser(req);
   if (!user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const dbUser = await getDbUser(user.email);
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await getAuthedUser();
+  const user = await getAuthedUser(req);
   if (!user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const dbUser = await getDbUser(user.email);
