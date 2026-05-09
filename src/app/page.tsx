@@ -661,7 +661,7 @@ export default function Home() {
       });
 
     async function loadFeed() {
-      const seenIds = new Set<string>(JSON.parse(sessionStorage.getItem("tour_feed_seen") || "[]"));
+      let seenIds = new Set<string>(JSON.parse(sessionStorage.getItem("tour_feed_seen") || "[]"));
 
       // Get current user from cached session to exclude own clips from discovery
       const { data: { session } } = await supabase.auth.getSession();
@@ -673,12 +673,17 @@ export default function Home() {
         .eq("mediaType", "VIDEO")
         .order("createdAt", { ascending: false }).limit(200);
 
-      // Exclude own clips and clips already seen this session
-      const pool = (allUploads || []).filter(u =>
-        (!currentUid || u.userId !== currentUid) && !seenIds.has(u.id)
-      );
+      // Exclude own clips
+      const allEligible = (allUploads || []).filter(u => !currentUid || u.userId !== currentUid);
+      if (allEligible.length === 0) { setLoading(false); return; }
 
-      if (pool.length === 0) { setLoading(false); return; }
+      // Exclude already-seen clips; reset if all have been seen
+      let pool = allEligible.filter(u => !seenIds.has(u.id));
+      if (pool.length === 0) {
+        sessionStorage.removeItem("tour_feed_seen");
+        seenIds = new Set();
+        pool = allEligible;
+      }
 
       // Full shuffle — true variety on every load
       const shuffled = [...pool].sort(() => Math.random() - 0.5);
@@ -694,17 +699,20 @@ export default function Home() {
         if (uploads.length >= 15) break;
       }
 
+      // Fallback if course-spacing over-filtered
+      const finalUploads = uploads.length > 0 ? uploads : shuffled.slice(0, 15);
+
       // Persist seen IDs for this session (cap at 100)
       sessionStorage.setItem(
         "tour_feed_seen",
-        JSON.stringify([...seenIds, ...uploads.map(u => u.id)].slice(-100))
+        JSON.stringify([...seenIds, ...finalUploads.map(u => u.id)].slice(-100))
       );
 
-      if (uploads.length === 0) { setLoading(false); return; }
+      if (finalUploads.length === 0) { setLoading(false); return; }
 
-      const courseIds = [...new Set(uploads.map((u: any) => u.courseId))];
-      const userIds = [...new Set(uploads.map((u: any) => u.userId))];
-      const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
+      const courseIds = [...new Set(finalUploads.map((u: any) => u.courseId))];
+      const userIds = [...new Set(finalUploads.map((u: any) => u.userId))];
+      const holeIds = [...new Set(finalUploads.map((u: any) => u.holeId).filter(Boolean))];
 
       const [{ data: courses }, { data: users }, { data: holes }, { data: progressions }] = await Promise.all([
         supabase.from("Course").select("id, name, logoUrl, city, state").in("id", courseIds),
@@ -716,7 +724,7 @@ export default function Home() {
       const rankMap: Record<string, string> = {};
       progressions?.forEach((p: any) => { rankMap[p.userId] = p.rank; });
 
-      const enriched: FeedClip[] = uploads.map((u: any) => {
+      const enriched: FeedClip[] = finalUploads.map((u: any) => {
         const hole = holes?.find((h: any) => h.id === u.holeId);
         const user = users?.find((usr: any) => usr.id === u.userId);
         const course = courses?.find((c: any) => c.id === u.courseId);
