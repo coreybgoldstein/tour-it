@@ -92,7 +92,7 @@ export default function AboutPage() {
           fontSize: isDesktop ? 16 : 14, color: "#4da862",
           margin: 0, lineHeight: 1.4, letterSpacing: "0.01em", textAlign: "center", position: "relative",
         }}>
-          Built for those who golf. By those who golf.
+          Scout Before You Play
         </p>
       </div>
 
@@ -121,21 +121,8 @@ export default function AboutPage() {
             In the weeks leading up to it, the only thing that scratched the itch was research. I wanted to know what my tee shots would look like. What kind of greens I&apos;d be putting on. The terrain, the wind, the holes that were going to test me. I watched every flyover I could find. I scrolled Instagram looking for clips. I pieced it together however I could.
           </p>
           <p style={{ fontSize: isDesktop ? 16 : 15, lineHeight: 1.78, color: "rgba(255,255,255,0.72)", marginBottom: 28 }}>
-            But there was always a gap. Flyovers don&apos;t tell you where the trouble is. Instagram clips are scattered — you stumble onto something good, but half the time you don&apos;t even know what hole you&apos;re looking at, let alone the line or the wind. I kept thinking —
+            I kept thinking about how we consume content now — short clips, vertical video, scroll to the next one. And I realized: golfers are already out there recording their rounds. The footage exists. Someone always has their phone out on the 14th tee. The gap wasn&apos;t the content. It was the place where that content could live in a way you could actually use — organized by course, by hole, by shot type, with real intel attached.
           </p>
-          <blockquote style={{
-            margin: "0 0 28px",
-            padding: isDesktop ? "0 0 0 24px" : "0 0 0 18px",
-            borderLeft: "3px solid rgba(77,168,98,0.5)",
-          }}>
-            <p style={{
-              fontFamily: "'Playfair Display', serif", fontStyle: "italic",
-              fontSize: isDesktop ? 19 : 17, lineHeight: 1.65,
-              color: "rgba(255,255,255,0.88)", margin: 0,
-            }}>
-              &ldquo;Somewhere out there is a golfer who just played this hole. They know exactly what I want to know. Why can&apos;t I just see what they saw?&rdquo;
-            </p>
-          </blockquote>
           <p style={{ fontSize: isDesktop ? 16 : 15, lineHeight: 1.78, color: "rgba(255,255,255,0.72)", marginBottom: 20 }}>
             Tour It is the answer to that question. It&apos;s the tool I wanted before every trip, every new course, every round on a track I&apos;d never played.
           </p>
@@ -153,11 +140,17 @@ export default function AboutPage() {
         <SectionDivider />
 
         {/* Manifesto */}
+        <h2 style={{
+          fontFamily: "'Playfair Display', serif", fontSize: isDesktop ? 26 : 22,
+          fontWeight: 700, color: "#fff", margin: "0 0 24px",
+        }}>
+          What Tour It Is
+        </h2>
         <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
           Golf is better when you know what&apos;s coming. The local member who&apos;s played the course a thousand times. The buddy who tells you to take one less club into 14. The regular who knows exactly where the green falls off. That kind of knowledge has always lived in the conversation between players — passed around the cart, shared over a beer after the round, dropped casually on the range.
         </p>
         <p style={{ fontSize: isDesktop ? 18 : 17, lineHeight: 1.7, color: "#fff", fontWeight: 600, marginBottom: 22 }}>
-          Tour It is where that conversation lives now.
+          Tour It is where that conversation can live.
         </p>
         <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 22 }}>
           Search any course. Open any hole. See what real golfers saw — clips of the tee shot, the approach, the green, with notes on wind, lines, and what to know before you play. The kind of intel you&apos;d get from a buddy who played there last week, except the buddy is the entire community, and the course is anywhere.
@@ -209,7 +202,7 @@ export default function AboutPage() {
               return (
                 <div key={tier.rank} style={{
                   display: "flex", alignItems: "flex-start", gap: 20,
-                  padding: "24px 0",
+                  padding: "14px 0",
                   borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.05)",
                 }}>
                   {/* Color bar + connector line */}
