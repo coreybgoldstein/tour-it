@@ -201,7 +201,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         </>
       )}
 
-      {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} />}
+      {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} left={holeNumber ? 100 : 16} />}
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.65) 100%)", pointerEvents: "none", zIndex: 5 }} />
 
@@ -308,7 +308,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       />
 
       {(uploader?.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
-        <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
+        <div style={{ position: "absolute", left: holeNumber ? 100 : 16, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
           {uploader?.username && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{uploader.username}</span>}
           {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
         </div>

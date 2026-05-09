@@ -675,7 +675,7 @@ export default function HolePage() {
                   }}
                   style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
                 />
-                <VideoScrubber videoRef={{ current: videoRefs.current[activeUpload.id] ?? null }} />
+                <VideoScrubber videoRef={{ current: videoRefs.current[activeUpload.id] ?? null }} left={100} />
               </>
             )}
 
@@ -795,7 +795,7 @@ export default function HolePage() {
             )}
 
             {(uploaders[activeUpload.userId]?.username || formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)) && (
-              <div style={{ position: "absolute", left: 16, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
+              <div style={{ position: "absolute", left: 100, bottom: 112, zIndex: 10, pointerEvents: "none", display: "flex", alignItems: "baseline", gap: 7 }}>
                 {uploaders[activeUpload.userId]?.username && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{uploaders[activeUpload.userId].username}</span>}
                 {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 400, color: "rgba(255,255,255,0.6)", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}</span>}
               </div>
