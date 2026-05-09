@@ -351,7 +351,7 @@ export default function TripPage() {
         createdAt: now,
         updatedAt: now,
       });
-      sendPushToUser("trip_invite", inviteeId, id);
+      sendPushToUser("trip_invite", inviteeId, id as string);
     }
     setInviting(null);
   };
