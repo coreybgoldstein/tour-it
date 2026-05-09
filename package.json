@@ -39,6 +39,7 @@
     "prisma": "^5.22.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "resend": "^6.12.3",
     "web-push": "^3.6.7"
   },
   "devDependencies": {
@@ -51,6 +52,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "pg": "^8.20.0",
+    "playwright": "^1.59.1",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
