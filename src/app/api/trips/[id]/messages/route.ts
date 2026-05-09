@@ -85,7 +85,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     userId: dbUser.id,
     body: body.trim(),
     createdAt: now,
-    updatedAt: now,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
