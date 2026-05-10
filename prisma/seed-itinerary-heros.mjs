@@ -41,7 +41,7 @@ const HERO_PAGES = {
   "nebraska-sandhills":           ["Sand Hills (Nebraska)", "Sandhills", "Nebraska"],
   "northern-michigan-loop":       ["Arcadia, Michigan", "Sleeping Bear Dunes National Lakeshore", "Lake Michigan"],
   "pacific-northwest-underrated": ["Chambers Bay"],
-  "long-island-loop":             ["Bethpage State Park", "2019 PGA Championship"],
+  "long-island-loop":             ["Bethpage State Park"],
   "chicago-publics":              ["Cog Hill Golf & Country Club"],
   "coastal-carolina-public":      ["Kiawah Island Golf Resort"],
   "texas-stretch":                ["PGA of America"],
@@ -51,10 +51,11 @@ const UA = "TourItGolf/1.0 (https://touritgolf.com; coreybgoldstein@gmail.com)";
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const out = { force: false, onlySlug: null };
+  const out = { force: false, onlySlug: null, url: null };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--force") out.force = true;
     if (args[i] === "--slug" && args[i + 1]) out.onlySlug = args[i + 1];
+    if (args[i] === "--url" && args[i + 1]) out.url = args[i + 1];
   }
   return out;
 }
@@ -72,13 +73,15 @@ async function fetchWikipediaImage(pageTitle) {
   const j = await r.json();
   const src = j?.originalimage?.source ?? j?.thumbnail?.source ?? null;
   if (!src) throw new Error(`No image on Wikipedia page "${pageTitle}"`);
-  // Prefer a wider crop if originalimage is huge — Wikipedia originals can be 4k+.
-  // Use thumbnail if original is suspiciously narrow (portrait/square logo).
+  // Reject PNG / SVG — Wikipedia leads in those formats are almost always
+  // logos, not photographs. We only want photos for a hero.
+  if (/\.(png|svg)(\?|$)/i.test(src)) {
+    throw new Error(`Lead image on "${pageTitle}" is a logo (${src.match(/\.(png|svg)/i)?.[0]}), skipping`);
+  }
   const original = j.originalimage;
   if (original && original.width && original.height) {
     const ratio = original.width / original.height;
     if (ratio < 1.2 && j.thumbnail?.source) {
-      // Prefer a landscape thumbnail variant if Wikipedia provides one
       return { url: j.thumbnail.source, width: j.thumbnail.width, ratio: j.thumbnail.width / j.thumbnail.height, page: j.title };
     }
     return { url: src, width: original.width, ratio, page: j.title };
@@ -123,24 +126,43 @@ async function main() {
 
   const results = [];
   for (const it of targets) {
-    const pages = HERO_PAGES[it.slug];
     let success = false;
-    for (const page of pages) {
-      process.stdout.write(`  ${it.slug.padEnd(30)} ← ${page.padEnd(46)} `);
+
+    // --url override: skip Wikipedia entirely and use the user-provided image
+    if (args.url && (args.onlySlug === it.slug || targets.length === 1)) {
+      process.stdout.write(`  ${it.slug.padEnd(30)} ← ${args.url.slice(0, 60).padEnd(60)} `);
       try {
-        const wiki = await fetchWikipediaImage(page);
-        const publicUrl = await uploadToSupabase(wiki.url, it.slug);
+        const publicUrl = await uploadToSupabase(args.url, it.slug);
         const { error: upErr } = await sb
           .from("TripItinerary")
           .update({ heroImageUrl: publicUrl, updatedAt: new Date().toISOString() })
           .eq("id", it.id);
         if (upErr) throw upErr;
         console.log(`✅  ${publicUrl.slice(publicUrl.lastIndexOf("/") + 1)}`);
-        results.push({ slug: it.slug, page, url: publicUrl, status: "ok" });
+        results.push({ slug: it.slug, page: "(--url override)", url: publicUrl, status: "ok" });
         success = true;
-        break;
       } catch (e) {
         console.log(`✗  ${e.message}`);
+      }
+    } else {
+      const pages = HERO_PAGES[it.slug];
+      for (const page of pages) {
+        process.stdout.write(`  ${it.slug.padEnd(30)} ← ${page.padEnd(46)} `);
+        try {
+          const wiki = await fetchWikipediaImage(page);
+          const publicUrl = await uploadToSupabase(wiki.url, it.slug);
+          const { error: upErr } = await sb
+            .from("TripItinerary")
+            .update({ heroImageUrl: publicUrl, updatedAt: new Date().toISOString() })
+            .eq("id", it.id);
+          if (upErr) throw upErr;
+          console.log(`✅  ${publicUrl.slice(publicUrl.lastIndexOf("/") + 1)}`);
+          results.push({ slug: it.slug, page, url: publicUrl, status: "ok" });
+          success = true;
+          break;
+        } catch (e) {
+          console.log(`✗  ${e.message}`);
+        }
       }
     }
     if (!success) results.push({ slug: it.slug, status: "error", error: "all pages failed" });
