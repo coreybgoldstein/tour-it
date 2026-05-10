@@ -20,6 +20,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
+import { readFileSync } from "fs";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -111,7 +112,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const result = { dbStates: [], limit: 100, list: [] };
+  const result = { dbStates: [], limit: 100, list: [], ids: [], idsFile: null };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--db-state" && args[i + 1]) {
@@ -122,6 +123,12 @@ function parseArgs() {
     }
     if (args[i] === "--list" && args[i + 1]) {
       result.list = args[i + 1].split(",").map((n) => n.trim());
+    }
+    if (args[i] === "--ids" && args[i + 1]) {
+      result.ids = args[i + 1].split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    if (args[i] === "--ids-file" && args[i + 1]) {
+      result.idsFile = args[i + 1];
     }
   }
 
@@ -448,6 +455,28 @@ async function main() {
       if (data) dbCourses.push(data);
       else console.log(`  ⚠ No DB match for: ${name}`);
     }
+  } else if (args.ids.length > 0 || args.idsFile) {
+    let ids = args.ids;
+    if (args.idsFile) {
+      const raw = readFileSync(args.idsFile, "utf8").trim();
+      const parsed = raw.startsWith("[") ? JSON.parse(raw) : raw.split(/[\s,]+/).filter(Boolean);
+      ids = [...ids, ...parsed];
+    }
+    console.log(`Mode: ID list (${ids.length} ids)\n`);
+    const { data, error } = await supabase
+      .from("Course")
+      .select(
+        "id, name, city, state, zipCode, description, coverImageUrl, logoUrl, yearEstablished, courseType, websiteUrl, phone, holeCount, latitude, longitude"
+      )
+      .in("id", ids);
+    if (error) {
+      console.error(`DB query failed: ${error.message}`);
+      process.exit(1);
+    }
+    dbCourses = data || [];
+    const foundIds = new Set(dbCourses.map((c) => c.id));
+    const missing = ids.filter((id) => !foundIds.has(id));
+    missing.forEach((id) => console.log(`  ⚠ No DB match for id: ${id}`));
   } else {
     console.log("Usage:");
     console.log("  node src/scripts/seed-courses-bulk.mjs --db-state NY,NC,FL --limit 300");
