@@ -371,6 +371,7 @@ export default function CourseProfilePage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 const [editDescription, setEditDescription] = useState("");
+  const [editWebsite, setEditWebsite] = useState("");
   const [aboutOpen, setAboutOpen] = useState(false);
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
@@ -690,6 +691,7 @@ const [editDescription, setEditDescription] = useState("");
     setEditYearEstablished(course.yearEstablished?.toString() || "");
     setEditCourseType(course.courseType || "");
     setEditDescription(course.description || "");
+    setEditWebsite((course as any).websiteUrl || "");
     setCoverFile(null);
     setCoverPreview(null);
     setLogoFile(null);
@@ -771,6 +773,12 @@ const [editDescription, setEditDescription] = useState("");
 
     if (editCourseName.trim()) payload.name = editCourseName.trim();
     if (editDescription.trim()) payload.description = editDescription.trim();
+    if (editWebsite.trim()) {
+      // Auto-prepend https:// for raw domains so the API normalizer accepts it
+      let url = editWebsite.trim();
+      if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+      payload.websiteUrl = url;
+    }
     if (editCity.trim()) payload.city = editCity.trim();
     if (editState.trim()) payload.state = editState.trim();
     payload.zipCode = editZip.trim() || null;
@@ -1659,7 +1667,7 @@ const [editDescription, setEditDescription] = useState("");
                 </div>
 
                 {/* Course Logo upload */}
-                <div style={{ marginBottom: 24 }}>
+                <div style={{ marginBottom: 20 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Course Logo</div>
                   <label style={{ display: "block", cursor: "pointer" }}>
                     <div style={{ width: 80, height: 80, borderRadius: 12, border: "1.5px dashed rgba(26,158,66,0.4)", background: "rgba(26,158,66,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
@@ -1674,6 +1682,21 @@ const [editDescription, setEditDescription] = useState("");
                     <input type="file" accept="image/*" onChange={handleLogoPick} style={{ display: "none" }} />
                   </label>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 6 }}>Tap the square to upload a logo image</div>
+                </div>
+
+                {/* Website URL */}
+                <div style={{ marginBottom: 24 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Website URL <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,0.25)", marginLeft: 4 }}>(optional · +10 pts)</span></div>
+                  <input
+                    type="url"
+                    inputMode="url"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    value={editWebsite}
+                    onChange={e => setEditWebsite(e.target.value)}
+                    placeholder="course.com or https://course.com"
+                    style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 13px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                  />
                 </div>
 
                 {contributeError && (
@@ -2041,6 +2064,7 @@ const [editDescription, setEditDescription] = useState("");
                     const tripId = crypto.randomUUID();
                     await supabase.from("GolfTrip").insert({ id: tripId, name: newTripName.trim(), startDate: newTripStart || null, endDate: newTripEnd || null, createdBy: user.id });
                     await supabase.from("GolfTripMember").insert({ id: crypto.randomUUID(), tripId, userId: user.id, role: "owner" });
+                    fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "create_trip", referenceId: tripId }) }).catch(() => {});
                     setSelectedTripId(tripId);
                     setSelectedTripName(newTripName.trim());
                     setSavingTrip(false);

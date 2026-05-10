@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rateLimit";
+import { awardPoints } from "@/lib/awardPoints";
+import { PointAction } from "@/config/points-system";
 
-const ALLOWED_FIELDS = new Set(["name", "description", "coverImageUrl", "logoUrl", "city", "state", "zipCode", "yearEstablished", "courseType"]);
+const ALLOWED_FIELDS = new Set(["name", "description", "coverImageUrl", "logoUrl", "city", "state", "zipCode", "yearEstablished", "courseType", "websiteUrl"]);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -57,6 +59,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if ("zipCode" in updates && typeof updates.zipCode === "string") {
     updates.zipCode = updates.zipCode.trim().slice(0, 10) || null;
   }
+  if ("websiteUrl" in updates && typeof updates.websiteUrl === "string") {
+    let url = updates.websiteUrl.trim();
+    if (url) {
+      if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+      try {
+        const u = new URL(url);
+        if (u.protocol !== "http:" && u.protocol !== "https:") {
+          return NextResponse.json({ error: "Website must be http(s)" }, { status: 400 });
+        }
+        updates.websiteUrl = u.toString().slice(0, 500);
+      } catch {
+        return NextResponse.json({ error: "Invalid website URL" }, { status: 400 });
+      }
+    } else {
+      updates.websiteUrl = null;
+    }
+  }
 
   // If city or state changed, re-geocode using course name for precision
   const cityChanged = "city" in updates && updates.city;
@@ -90,8 +109,38 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
   }
 
+  // Capture pre-update state so we know which fields went null → set
+  const { data: before } = await supabase
+    .from("Course")
+    .select("description, coverImageUrl, logoUrl, yearEstablished, courseType, zipCode, websiteUrl")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase.from("Course").update(updates).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Award course-field points for any field that went from null/empty to a real value.
+  // Each action is referenceId-scoped to the courseId so the same field can't double-award.
+  if (before) {
+    const FIELD_ACTIONS: Array<[keyof typeof before, typeof PointAction[keyof typeof PointAction]]> = [
+      ["description",      PointAction.ADD_COURSE_DESCRIPTION],
+      ["coverImageUrl",    PointAction.ADD_COVER_PHOTO],
+      ["logoUrl",          PointAction.ADD_COURSE_LOGO],
+      ["yearEstablished",  PointAction.ADD_YEAR_ESTABLISHED],
+      ["courseType",       PointAction.ADD_COURSE_TYPE],
+      ["zipCode",          PointAction.ADD_ZIP_CODE],
+      ["websiteUrl",       PointAction.ADD_WEBSITE_URL],
+    ];
+    for (const [field, action] of FIELD_ACTIONS) {
+      const wasEmpty = before[field] === null || before[field] === undefined || before[field] === "";
+      const newValue = (updates as Record<string, unknown>)[field as string];
+      const isNowSet = newValue !== null && newValue !== undefined && newValue !== "";
+      if (wasEmpty && isNowSet) {
+        // Don't await — fire-and-forget so the response stays snappy
+        awardPoints({ userId: user.id, action, referenceId: `${id}:${field}` }).catch(() => {});
+      }
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }

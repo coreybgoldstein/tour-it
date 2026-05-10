@@ -58,6 +58,11 @@ export const PointAction = {
   REFERRAL_SIGNUP:             "referral_signup",
   REFERRAL_FIRST_UPLOAD:       "referral_first_upload",
 
+  // Trips & Games (one-time per reference: tripId / gameId)
+  CREATE_TRIP:                 "create_trip",
+  CREATE_GAME:                 "create_game",
+  ENABLE_RYDER_CUP:            "enable_ryder_cup",
+
   // Progression milestones
   LEVEL_UP:                    "level_up",
   RANK_UP:                     "rank_up",
@@ -117,6 +122,10 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
 
   [PointAction.REFERRAL_SIGNUP]:           50,
   [PointAction.REFERRAL_FIRST_UPLOAD]:    25,
+
+  [PointAction.CREATE_TRIP]:               50,
+  [PointAction.CREATE_GAME]:               15,
+  [PointAction.ENABLE_RYDER_CUP]:          15,
 
   [PointAction.LEVEL_UP]:                  25,
   // Variable — actual amount comes from RANK_UP_BONUSES, passed via customAmount.

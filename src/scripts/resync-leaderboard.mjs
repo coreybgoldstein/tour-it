@@ -201,6 +201,18 @@ async function main() {
     }
   }
 
+  // 9. Trips, games, Ryder Cup activations
+  console.log("Loading trips & games…");
+  const trips = await fetchAll("GolfTrip", "id, createdBy, ryderCupEnabled, createdAt, updatedAt");
+  for (const t of trips) {
+    if (t.createdBy) award(t.createdBy, "create_trip", t.id, 50, t.createdAt);
+    if (t.ryderCupEnabled && t.createdBy) award(t.createdBy, "enable_ryder_cup", t.id, 15, t.updatedAt ?? t.createdAt);
+  }
+  const games = await fetchAll("TripGame", "id, createdBy, createdAt");
+  for (const g of games) {
+    if (g.createdBy) award(g.createdBy, "create_game", g.id, 15, g.createdAt);
+  }
+
   // ── Insert any new ledger rows ────────────────────────────────────────────
   const breakdown = {};
   for (const r of newRows) breakdown[r.action] = (breakdown[r.action] ?? 0) + 1;

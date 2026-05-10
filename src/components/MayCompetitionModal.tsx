@@ -90,6 +90,14 @@ const COMPETITION_GROUPS: Group[] = [
     ],
   },
   {
+    title: "Trips & Games",
+    rows: [
+      { label: "Create a trip",                                  display: fmt(POINT_VALUES[PointAction.CREATE_TRIP]) },
+      { label: "Create a game inside a trip",                    display: fmt(POINT_VALUES[PointAction.CREATE_GAME]) },
+      { label: "Turn a trip into a Ryder Cup (one-time per trip)", display: fmt(POINT_VALUES[PointAction.ENABLE_RYDER_CUP]) },
+    ],
+  },
+  {
     title: "Progression",
     rows: [
       { label: "Level up",                              display: fmt(POINT_VALUES[PointAction.LEVEL_UP]) },

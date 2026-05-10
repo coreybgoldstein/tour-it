@@ -15,6 +15,17 @@ const SELF_ACTIONS = new Set<PointActionKey>([
   PointAction.INTEL_BONUS,
   PointAction.ADD_HOLE_PHOTO,
   PointAction.UPLOAD_DELETED,
+  PointAction.CREATE_TRIP,
+  PointAction.CREATE_GAME,
+  PointAction.ENABLE_RYDER_CUP,
+  PointAction.ADD_COVER_PHOTO,
+  PointAction.ADD_COURSE_LOGO,
+  PointAction.ADD_YEAR_ESTABLISHED,
+  PointAction.ADD_COURSE_TYPE,
+  PointAction.ADD_ZIP_CODE,
+  PointAction.ADD_WEBSITE_URL,
+  PointAction.ADD_COURSE_DESCRIPTION,
+  PointAction.COURSE_PROFILE_COMPLETE,
 ]);
 
 export async function POST(req: NextRequest) {

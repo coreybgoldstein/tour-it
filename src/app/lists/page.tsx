@@ -144,6 +144,13 @@ export default function ListsPage() {
       createdAt: now,
     });
 
+    // +50 pts for creating a trip — once per tripId
+    fetch("/api/points/award", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create_trip", referenceId: tripId }),
+    }).catch(() => {});
+
     setCreating(false);
     setCreateOpen(false);
     setTripName("");

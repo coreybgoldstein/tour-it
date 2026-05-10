@@ -187,6 +187,17 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── 9. Trips, games, Ryder Cup activations ─────────────────────────────────
+  const trips = await fetchAll(sb, "GolfTrip", "id, createdBy, ryderCupEnabled, createdAt, updatedAt");
+  for (const t of trips as any[]) {
+    if (t.createdBy) award(t.createdBy, "create_trip", t.id, 50, t.createdAt);
+    if (t.ryderCupEnabled && t.createdBy) award(t.createdBy, "enable_ryder_cup", t.id, 15, t.updatedAt ?? t.createdAt);
+  }
+  const tripGames = await fetchAll(sb, "TripGame", "id, createdBy, createdAt");
+  for (const g of tripGames as any[]) {
+    if (g.createdBy) award(g.createdBy, "create_game", g.id, 15, g.createdAt);
+  }
+
   // ── Insert new ledger rows ────────────────────────────────────────────────────
   const breakdown: Record<string, number> = {};
   for (const r of newRows) breakdown[r.action] = (breakdown[r.action] ?? 0) + 1;

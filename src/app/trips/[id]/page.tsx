@@ -546,6 +546,16 @@ export default function TripPage() {
     if (!isOwner || !trip) return;
     setTrip(prev => prev ? { ...prev, ryderCupEnabled: enabled } : prev);
     await createClient().from("GolfTrip").update({ ryderCupEnabled: enabled }).eq("id", trip.id);
+
+    // +15 pts the first time Ryder Cup is enabled on this trip — referenceId
+    // dedupe means toggling off and back on doesn't re-award.
+    if (enabled) {
+      fetch("/api/points/award", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "enable_ryder_cup", referenceId: trip.id }),
+      }).catch(() => {});
+    }
   };
 
   const teamColors = {
@@ -803,6 +813,13 @@ export default function TripPage() {
         setGameOpen(false);
         setViewGame(hydrated);
         setViewGameOpen(true);
+
+        // +15 pts for generating a game — once per gameId
+        fetch("/api/points/award", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "create_game", referenceId: json.game.id }),
+        }).catch(() => {});
       } else {
         setGameError(json.error || "Generation failed. Try again.");
       }

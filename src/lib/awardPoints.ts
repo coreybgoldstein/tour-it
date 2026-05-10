@@ -34,6 +34,23 @@ const PIONEER_ACTIONS = [
 ] as const;
 const PIONEER_DAILY_CAP = 5;
 
+// Actions that should be awarded once per (userId, action, referenceId) tuple
+// — i.e. once per trip / game / course-field, not once per user globally.
+// Avoids re-awarding when toggling Ryder Cup, rebuilding a game, or
+// re-saving the same course field.
+const REFERENCE_DEDUPED_ACTIONS = new Set<PointActionKey>([
+  PointAction.CREATE_TRIP,
+  PointAction.CREATE_GAME,
+  PointAction.ENABLE_RYDER_CUP,
+  PointAction.ADD_COVER_PHOTO,
+  PointAction.ADD_COURSE_LOGO,
+  PointAction.ADD_YEAR_ESTABLISHED,
+  PointAction.ADD_COURSE_TYPE,
+  PointAction.ADD_ZIP_CODE,
+  PointAction.ADD_WEBSITE_URL,
+  PointAction.ADD_COURSE_DESCRIPTION,
+]);
+
 // Course field actions share a group cap of 20/day
 const COURSE_FIELD_ACTIONS = [
   PointAction.ADD_COVER_PHOTO,
@@ -67,6 +84,19 @@ export async function awardPoints({
       .select("id")
       .eq("userId", userId)
       .eq("action", action)
+      .maybeSingle();
+    if (existing) return null;
+  }
+
+  // Guard: per-reference dedupe (e.g. don't re-award CREATE_GAME if the same
+  // gameId is replayed). Requires a referenceId — without one, falls through.
+  if (REFERENCE_DEDUPED_ACTIONS.has(action) && referenceId) {
+    const { data: existing } = await supabase
+      .from("UserPointsLedger")
+      .select("id")
+      .eq("userId", userId)
+      .eq("action", action)
+      .eq("referenceId", referenceId)
       .maybeSingle();
     if (existing) return null;
   }
