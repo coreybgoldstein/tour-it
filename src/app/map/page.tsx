@@ -385,11 +385,18 @@ export default function MapPage() {
           80%  { transform: translate(-15px, -18px); }
           100% { transform: translate(0px, 0px); }
         }
-        @keyframes dart-bounce {
-          0%   { transform: scale(1.4) translateY(-8px); }
-          60%  { transform: scale(0.95) translateY(0); }
-          80%  { transform: scale(1.05) translateY(-2px); }
-          100% { transform: scale(1.0) translateY(0); }
+        @keyframes dart-fly-in {
+          0%   { transform: translate(110px, -200px) rotate(-50deg); opacity: 0; }
+          20%  { opacity: 1; }
+          75%  { transform: translate(0, 0) rotate(7deg); }
+          88%  { transform: translate(0, 0) rotate(-3deg); }
+          100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        @keyframes dart-wobble {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(2deg); }
+          50% { transform: rotate(-1.5deg); }
+          75% { transform: rotate(0.5deg); }
         }
         @keyframes ripple-out {
           0%   { transform: scale(0); opacity: 0.6; }
@@ -621,7 +628,15 @@ export default function MapPage() {
             pointerEvents: "all",
           }}>
             <button
-              onClick={() => { setDartMode(true); setDartPhase("aiming"); }}
+              onClick={() => {
+                // Zoom out to US so the dart has the whole map to land on.
+                if (mapRef.current) {
+                  skipNextMoveRef.current = true;
+                  mapRef.current.flyTo([39.5, -98.35], 4, { duration: 0.9 });
+                }
+                setDartMode(true);
+                setDartPhase("aiming");
+              }}
               aria-label="Throw a dart"
               style={{
                 width: 52,
@@ -678,9 +693,14 @@ export default function MapPage() {
                 const result = findClosestItinerary(wobbleLat, wobbleLng, itineraries);
                 setDartResult(result);
 
+                // Haptic feedback on supported devices (mostly Android Chrome / iOS PWAs)
+                if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+                  try { navigator.vibrate([8, 40, 16]); } catch {}
+                }
+
                 fetch(`/api/itineraries/${result.id}/throw`, { method: "POST" }).catch(() => {});
 
-                setTimeout(() => setDartPhase("revealing"), 700);
+                setTimeout(() => setDartPhase("revealing"), 850);
               } else {
                 // Centroids haven't loaded yet — bail out gracefully
                 setDartMode(false);
@@ -723,19 +743,32 @@ export default function MapPage() {
 
             <div style={{
               position: "absolute",
-              top: "18%",
+              top: "16%",
               left: "50%",
               transform: "translateX(-50%)",
-              fontFamily: "'Outfit', sans-serif",
-              fontSize: 10,
-              color: "rgba(255,255,255,0.6)",
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
+              textAlign: "center",
               pointerEvents: "none",
               whiteSpace: "nowrap",
               textShadow: "0 1px 6px rgba(0,0,0,0.7)",
             }}>
-              Tap to throw
+              <div style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 22,
+                fontWeight: 700,
+                color: "#fff",
+                marginBottom: 4,
+              }}>
+                Tap anywhere
+              </div>
+              <div style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 11,
+                color: "rgba(77,168,98,0.95)",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+              }}>
+                Your dart picks the trip
+              </div>
             </div>
 
             <div style={{
@@ -755,28 +788,59 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* C. Dart landing — ripple + dart icon */}
+        {/* C. Dart landing — ripple + flying red dart */}
         {dartMode && dartPhase === "thrown" && dartPosition && (
           <div style={{ position: "absolute", inset: 0, zIndex: 600, pointerEvents: "none" }}>
+            {/* Impact ripple — delayed slightly so it fires when the dart lands */}
             <div style={{
               position: "absolute",
-              left: dartPosition.x - 20,
-              top: dartPosition.y - 20,
-              width: 40, height: 40,
+              left: dartPosition.x - 22,
+              top: dartPosition.y - 22,
+              width: 44, height: 44,
               borderRadius: "50%",
               border: "2px solid #4da862",
-              animation: "ripple-out 600ms ease-out forwards",
+              animation: "ripple-out 700ms ease-out 350ms forwards",
+              opacity: 0,
             }} />
             <div style={{
               position: "absolute",
-              left: dartPosition.x - 12,
-              top: dartPosition.y - 28,
-              animation: "dart-bounce 400ms cubic-bezier(0.34,1.56,0.64,1) forwards",
+              left: dartPosition.x - 24,
+              top: dartPosition.y - 24,
+              width: 48, height: 48,
+              borderRadius: "50%",
+              border: "1.5px solid rgba(220, 38, 38, 0.7)",
+              animation: "ripple-out 800ms ease-out 350ms forwards",
+              opacity: 0,
+            }} />
+
+            {/* Realistic red dart, anchored so the tip lands on dartPosition */}
+            <div style={{
+              position: "absolute",
+              left: dartPosition.x - 16,
+              top: dartPosition.y - 56,
+              width: 32, height: 56,
+              transformOrigin: "50% 100%",
+              animation: "dart-fly-in 480ms cubic-bezier(0.4, 1.4, 0.55, 1) forwards",
+              filter: "drop-shadow(0 6px 8px rgba(0,0,0,0.55))",
             }}>
-              <svg width="24" height="28" viewBox="0 0 24 28" fill="none">
-                <path d="M12 2 L16 10 L12 8 L8 10 Z" fill="#4da862" />
-                <rect x="11" y="8" width="2" height="16" fill="#4da862" opacity="0.7" />
-                <circle cx="12" cy="26" r="2" fill="#4da862" />
+              <svg width="32" height="56" viewBox="0 0 32 56" fill="none">
+                {/* Flights — three red panels for a bit of dimensionality */}
+                <path d="M16 2 L26 13 L16 9 Z"  fill="#dc2626" />
+                <path d="M16 2 L6 13 L16 9 Z"   fill="#ef4444" />
+                <path d="M6 13 L13 16 L16 9 Z"  fill="#b91c1c" />
+                <path d="M26 13 L19 16 L16 9 Z" fill="#b91c1c" />
+                {/* Shaft — white plastic */}
+                <rect x="14" y="13" width="4" height="22" fill="#f3f4f6" />
+                <line x1="14" y1="13" x2="14" y2="35" stroke="#9ca3af" strokeWidth="0.5" />
+                <line x1="18" y1="13" x2="18" y2="35" stroke="#9ca3af" strokeWidth="0.5" />
+                {/* Barrel — silver grip */}
+                <rect x="13" y="33" width="6" height="13" rx="1" fill="#71717a" />
+                <line x1="13" y1="36" x2="19" y2="36" stroke="#3f3f46" strokeWidth="0.5" />
+                <line x1="13" y1="40" x2="19" y2="40" stroke="#3f3f46" strokeWidth="0.5" />
+                <line x1="13" y1="44" x2="19" y2="44" stroke="#3f3f46" strokeWidth="0.5" />
+                {/* Tip — silver point */}
+                <path d="M13 46 L19 46 L16 55 Z" fill="#a1a1aa" />
+                <path d="M16 49 L16 55 L19 46 Z" fill="#71717a" />
               </svg>
             </div>
           </div>
