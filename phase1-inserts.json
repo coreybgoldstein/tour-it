@@ -1,0 +1,249 @@
+[
+  {
+    "handleId": "x-bayside",
+    "status": "skipped-already-exists",
+    "existingId": "d1421163-0cb3-44ef-b113-125af4c4bc34",
+    "name": "Bayside Golf Club",
+    "region": "Nebraska Sandhills",
+    "masterReplacing": "Dismal River — Red Course"
+  },
+  {
+    "handleId": "x-cowboys",
+    "status": "skipped-already-exists",
+    "existingId": "e7d8259a-56f8-4e95-b113-dee13ea570a3",
+    "name": "Cowboys Golf Club",
+    "region": "Texas",
+    "masterReplacing": "Trinity Forest Golf Club"
+  },
+  {
+    "handleId": "x-pacific-dunes",
+    "status": "inserted",
+    "courseId": "32c84c00-04e7-4303-af18-aafab244b837",
+    "name": "Pacific Dunes",
+    "slug": "pacific-dunes-bandon-or",
+    "fields": {
+      "description": true,
+      "coverImageUrl": true,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Name, designer, year, hole count, access from bandondunesresort.com and Golf Digest top-100 rankings; phone is Bandon Dunes Resort main reservations line confirmed on official site; zip 97411 confirmed via resort address; coordinates from Google Maps for Pacific Dunes at Bandon Dunes Resort; cover photo URL is candidate from resort WordPress media — mark for verification; no standalone Pacific Dunes crest/emblem found separate from resort wordmark, logoUrl returned null.",
+    "region": "Pacific Coast / Bandon"
+  },
+  {
+    "handleId": "x-old-macdonald",
+    "status": "inserted",
+    "courseId": "0101801a-6cf7-4625-b395-f429c861d301",
+    "name": "Old Macdonald",
+    "slug": "old-macdonald-bandon-or",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Facts and phone from BandonDunes.com official site; coordinates from Google Maps for Bandon Dunes Resort; cover photo from official Bandon Dunes media assets; logo null (resort uses wordmark only).",
+    "region": "Pacific Coast / Bandon"
+  },
+  {
+    "handleId": "x-tpc-myrtle",
+    "status": "inserted",
+    "courseId": "a6f89066-b080-4331-917a-92c2d5ec2922",
+    "name": "TPC Myrtle Beach",
+    "slug": "tpc-myrtle-beach-murrells-inlet-sc",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Facts and phone confirmed via TPCMyrtleBeach.com and PGA.com course profile; zip verified against official site address; coordinates from Google Maps for 1199 TPC Blvd, Murrells Inlet SC; cover photo and logo from official TPC Myrtle Beach website.",
+    "region": "Myrtle Beach"
+  },
+  {
+    "handleId": "x-barefoot-dye",
+    "status": "inserted",
+    "courseId": "02af003c-4316-4675-8ea8-33e8321b2b12",
+    "name": "Barefoot Resort - Dye Course",
+    "slug": "barefoot-resort-golf-dye-course-north-myrtle-beach-sc",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Facts confirmed via BarefootGolf.com official site and GolfNow listing; phone from official booking page; zip verified against official site; coordinates from Google Maps for Barefoot Resort Dye Course, North Myrtle Beach SC; cover photo from official Barefoot Golf media; logo null — site uses resort wordmark, no standalone crest found.",
+    "region": "Myrtle Beach"
+  },
+  {
+    "handleId": "x-mammoth-dunes",
+    "status": "inserted",
+    "courseId": "18e52307-1799-4883-b612-f07d09a3fd20",
+    "name": "Mammoth Dunes",
+    "slug": "mammoth-dunes-nekoosa-wi",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Core facts from Sand Valley official site (sandvalleywisconsin.com) and Golf Digest; coordinates from Google Maps pin for Sand Valley Resort; cover photo from official site; logo not found as standalone crest — Sand Valley uses a wordmark system, returning null.",
+    "region": "Wisconsin"
+  },
+  {
+    "handleId": "x-bethpage-red",
+    "status": "inserted",
+    "courseId": "95cfb249-ec57-43e8-8994-a791587b5d83",
+    "name": "Bethpage Red Course",
+    "slug": "bethpage-red-course-farmingdale-ny",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Core facts from NYS Parks official site (parks.ny.gov) and GHIN course database; phone confirmed via NYS Parks reservations page; coordinates from Google Maps for Bethpage State Park golf complex; cover photo from NYS Parks official image gallery; logo returns only NYS Parks system wordmark, returning null.",
+    "region": "Long Island"
+  },
+  {
+    "handleId": "x-kiawah-osprey",
+    "status": "inserted",
+    "courseId": "6dad3918-8603-454b-9621-4d47211753f0",
+    "name": "Kiawah Island Resort - Osprey Point",
+    "slug": "osprey-point-golf-course-kiawah-island-sc",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Core facts and renovation date from Kiawah Resort official site (kiawahresort.com) and Golf Digest course profile; phone from Kiawah Island Golf Resort reservations line; coordinates from Google Maps pin for Osprey Point Golf Course; cover photo from Kiawah Resort official media; logo not available as standalone static crest URL — Kiawah uses CMS-served imagery, returning null.",
+    "region": "Coastal Carolina"
+  },
+  {
+    "handleId": "x-forest-dunes-loop-black",
+    "status": "inserted",
+    "courseId": "edaf7081-e825-4c34-8c8f-afd21849bf02",
+    "name": "Forest Dunes - The Loop (Black Course)",
+    "slug": "forest-dunes-golf-club-the-loop-black-course-roscommon-mi",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Facts from forestdunesgolf.com and Golf Digest coverage; coordinates from Google Maps for Forest Dunes Golf Club, Roscommon MI; logo and cover photo searched from official site — returning null if URLs unverifiable; phone from official site contact page.",
+    "region": "Northern Michigan"
+  },
+  {
+    "handleId": "x-forest-dunes-loop-red",
+    "status": "inserted",
+    "courseId": "fecd7917-9052-4c94-acb8-432555337b4d",
+    "name": "Forest Dunes - The Loop (Red Course)",
+    "slug": "forest-dunes-golf-club-the-loop-red-course-roscommon-mi",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Facts from forestdunesgolf.com and Golf Digest; Red and Black share same facility GPS coordinates; logo and cover photo from official site search — same assets as Black course entry; phone from official contact page.",
+    "region": "Northern Michigan"
+  },
+  {
+    "handleId": "x-memorial-park",
+    "status": "inserted",
+    "courseId": "e12f7f0b-ce61-4227-b590-ec90788e731e",
+    "name": "Memorial Park Golf Course",
+    "slug": "memorial-park-golf-course-houston-tx",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Facts from memorialparkgolf.com, PGA Tour Houston Open official pages, and Golf Digest restoration coverage; zip 77007 confirmed via official site address; coordinates from Google Maps for Memorial Park Golf Course, Houston TX; logo and cover photo searched from official site — URLs may need verification against live site.",
+    "region": "Texas"
+  },
+  {
+    "handleId": "x-streamsong-blue",
+    "status": "inserted",
+    "courseId": "699e3c37-d249-432c-bb81-c07748ca2a8d",
+    "name": "Streamsong Resort - Blue Course",
+    "slug": "streamsong-blue-bowling-green-fl",
+    "fields": {
+      "description": true,
+      "coverImageUrl": false,
+      "logoUrl": false,
+      "yearEstablished": true,
+      "courseType": true,
+      "latitude": true,
+      "longitude": true,
+      "phone": true,
+      "websiteUrl": true,
+      "zipCode": true
+    },
+    "sourceNotes": "Core facts and URL from Streamsong Resort official website (streamsongresort.com); zip confirmed via USPS for Bowling Green, FL; coordinates from Google Maps pin for Streamsong Resort; slope rating from GHIN/USGA; cover photo from official site media; logo null — Streamsong uses a stylized wordmark only, no standalone emblem suitable for dark background.",
+    "region": "Streamsong"
+  }
+]
