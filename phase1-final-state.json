@@ -1,0 +1,1416 @@
+{
+  "rows": [
+    {
+      "id": "02cc9821-9444-4896-99f8-13f12502104f",
+      "name": "Cantigny Golf",
+      "city": "DuPage County",
+      "state": "IL",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Roger Packard designed Cantigny Golf in 1989 on the grounds of the Robert R. McCormick estate, and the 27-hole facility — three distinct 9-hole loops named Woodside, Hillside, and Lakeside — rewards players who can work the ball through mature hardwoods and around well-guarded, undulating greens. The course consistently earns a spot on Golf Digest's best public courses in Illinois rankings, and the manicured conditioning reflects the deep resources of the McCormick Foundation that operates it. It plays firm, fast, and longer than it looks — the kind of place that punishes a lazy round-planner who doesn't check the wind.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1989,
+      "websiteUrl": "http://www.cantignygolf.org/",
+      "phone": "(630) 668-8463"
+    },
+    {
+      "id": "d1421163-0cb3-44ef-b113-125af4c4bc34",
+      "name": "Bayside Golf Club",
+      "city": "Brule",
+      "state": "NE",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Bayside Golf Club is a no-frills 9-hole track carved out of the Nebraska Sandhills just minutes from Lake McConaughy, the state's largest reservoir. The wide-open terrain and prevailing winds off the lake make club selection a genuine puzzle on nearly every hole. It's the kind of honest, unhurried golf that rural Nebraska does best — bring your own pace and a solid short game.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": null,
+      "websiteUrl": null,
+      "phone": "(308) 287-2244"
+    },
+    {
+      "id": "b25a736e-05a6-4892-8143-3534ecb0712e",
+      "name": "Pinehurst Course No. 8",
+      "city": "Pinehurst",
+      "state": "NC",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Tom Fazio designed Pinehurst No. 8 in 1996 specifically to handle the overflow of resort play that the legendary No. 2 couldn't absorb — but it long ago earned a reputation on its own terms, with a slope rating of 147 from the tips that rivals anything on the resort property. The routing carves through longleaf pines on terrain that feels wilder and more varied than its sibling courses, with several forced carries over wetlands that demand commitment off the tee. It's the course at Pinehurst that surprises first-timers most: longer, tougher, and more demanding than they expected.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1996,
+      "websiteUrl": "https://www.pinehurst.com/golf/courses/course-no-8/",
+      "phone": "(910) 235-8507"
+    },
+    {
+      "id": "7d918cd6-20a3-4251-8577-a33a308f8fdb",
+      "name": "TPC Scottsdale Stadium Course",
+      "city": "Scottsdale",
+      "state": "AZ",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Tom Weiskopf and Jay Morrish designed the Stadium Course in 1987 specifically to be a spectator venue, and the 16th hole — a short par-3 surrounded by a natural amphitheater that holds over 20,000 fans during the WM Phoenix Open — is the loudest, most raucous hole in professional golf. The course plays to a slope of 135 from the championship tees and demands precision through a layout where desert scrub, bunkers, and aggressive green contours punish anything offline. Away from tournament week, playing the Stadium Course offers a rare chance to walk the same ground where Mickelson, Tiger, and Cantlay have made and broken their seasons.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1987,
+      "websiteUrl": "https://www.tpc.com/tpcscottsdale",
+      "phone": "(480) 585-4334"
+    },
+    {
+      "id": "ceb95a05-d039-4f2d-ae01-6bdd954d00c1",
+      "name": "Bethpage Black Golf Course",
+      "city": "Bethpage",
+      "state": "NY",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Bethpage Black is no joke—this is a proper championship course that's hosted the U.S. Open twice, the PGA Championship, and is prepping for the 2025 Ryder Cup, so you know the setup is legit. It's Long Island public golf, which means it's packed and you'll wait your turn, but the course itself is relentless: tight fairways, thick rough, and greens that'll humble you quick. The whole vibe is old-school New York grit—no fancy clubhouse theatrics, just honest golf that demands respect. Play it once and you'll understand why the USGA keeps coming back.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/covers/ceb95a05-d039-4f2d-ae01-6bdd954d00c1/1774765880086.jpeg",
+      "logoUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/logos/ceb95a05-d039-4f2d-ae01-6bdd954d00c1/1774765881070.jpeg",
+      "yearEstablished": 1936,
+      "websiteUrl": "https://parks.ny.gov/golf/81/details.aspx",
+      "phone": "(516) 249-0700"
+    },
+    {
+      "id": "7328fbce-0496-4881-8f74-38c071e69d82",
+      "name": "Cog Hill Golf & Country Club",
+      "city": "Lemont Township",
+      "state": "IL",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Cog Hill's Course No. 4 — known as Dubsdread — was redesigned by Rees Jones in 2009 and carries a slope rating of 149 from the back tees, making it one of the most demanding public-access courses in the country. The facility's four 18-hole courses made it a Chicago-area institution for nearly a century, and Dubsdread hosted the BMW Championship and the Western Open for decades, testing tour professionals on the same tree-lined, bunker-guarded layout open to the public any morning. Playing Dubsdread on a breezy afternoon, with its tabletop greens and punishing rough, gives you a clear sense of why the pros called it one of the toughest stops on the schedule.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1927,
+      "websiteUrl": "https://www.coghillgolf.com",
+      "phone": "(630) 257-5872"
+    },
+    {
+      "id": "85d5d80b-2686-4195-ad5f-fe746c42673b",
+      "name": "Streamsong Resort - Red Course",
+      "city": "Bowling Green",
+      "state": "FL",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Streamsong Red and Blue are two of America's most acclaimed public-access courses, built on a former phosphate strip mine in Hardee County — Red designed by Coore & Crenshaw and Blue by Tom Doak, both opening in 2012. The moonscape-like sandy ridges and expansive skies of the reclaimed phosphate land create links-style conditions unlike anything else in the South.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2012,
+      "websiteUrl": "https://www.streamsongresort.com",
+      "phone": "(888) 295-6758"
+    },
+    {
+      "id": "3af1f0ca-7343-4300-bb54-2df13d62d8b1",
+      "name": "Streamsong Resort - Black Course",
+      "city": "Bowling Green",
+      "state": "FL",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Streamsong Black is Gil Hanse's addition to the Streamsong Resort campus, opening in 2017 and earning Golf Digest's Best New Course of the Year award. Like its siblings, the Black route exploits the old phosphate terrain — but Hanse's routing leans into the wildest, most tumbling contours of the property for a distinctly rugged feel.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2017,
+      "websiteUrl": "https://www.streamsongresort.com/golf/streamsong-black/",
+      "phone": "(863) 428-6088"
+    },
+    {
+      "id": "ac3d93e6-5613-4341-966b-3f67309bf80a",
+      "name": "Harborside International Golf Center (Port)",
+      "city": "Chicago",
+      "state": "IL",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "The Port Course is the facility's flagship layout, known for its rugged fescue and dramatic elevation changes that offer panoramic views of the Chicago skyline. It provides a stern test of golf that famously earned a comparison to the legendary Muirfield in Scotland from two-time Masters champion Ben Crenshaw.  \nThe par-3 15th hole features a signature \"anchor\" design, with a massive bunker shaped like an anchor that wraps around the green.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/covers/ac3d93e6-5613-4341-966b-3f67309bf80a/1777945176338.png",
+      "logoUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/logos/ac3d93e6-5613-4341-966b-3f67309bf80a/1777945177007.jpg",
+      "yearEstablished": 1995,
+      "websiteUrl": "https://www.harborsidegolf.com",
+      "phone": "(312) 782-7837"
+    },
+    {
+      "id": "26876227-b58f-4247-9335-72ed4738ffa0",
+      "name": "Montauk Downs",
+      "city": "Montauk",
+      "state": "NY",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Robert Trent Jones Sr. redesigned Montauk Downs in 1968 into one of the most demanding — and underrated — public courses in the Northeast, featuring wide fairways that funnel into deceptively small, firm greens. The routing plays through open, wind-swept terrain near the tip of Long Island, where ocean breezes routinely add one to two clubs on approach shots and turn a manageable par-72 into a full examination. At a slope of 135 from the tips, it consistently ranks among the best public-access courses in New York State and punishes any round where you stop thinking.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1968,
+      "websiteUrl": "https://parks.ny.gov/golf/10",
+      "phone": "(631) 668-1234"
+    },
+    {
+      "id": "043c8047-07f4-47cf-9e97-252e86a2e3f8",
+      "name": "Wild Horse Golf Club",
+      "city": "Dawson County",
+      "state": "NE",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Dave Axland and Dan Proctor routed Wild Horse through the Nebraska Sandhills in 1999, letting the natural topography do most of the heavy lifting — there's almost no earth movement here, just fescue fairways tumbling through sand blowouts and native rough that will swallow anything offline. The course has earned consistent national recognition as one of the best public courses in the country, often appearing alongside far pricier Sand Hills-area courses at a fraction of the green fee. Playing it in wind — which is nearly always — demands shot-shaping creativity that most courses never ask for.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1999,
+      "websiteUrl": "https://www.wildhorsegoclub.com",
+      "phone": "(308) 537-7700"
+    },
+    {
+      "id": "0da8b1ed-ddb5-481c-bb6f-85152baa2863",
+      "name": "The Prairie Club",
+      "city": "Valentine",
+      "state": "NE",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "The Prairie Club opened its Dunes course in 2010 and the Pines course in 2011, delivering 36 holes of minimalist Sandhills golf in the remote Cherry County — Gil Hanse handled the Pines while Tom Lehman collaborated on the Dunes, both routing fairways through blowouts and over ridgelines with almost no artifice. The property sits hours from any major airport, which filters the field to golfers who mean it, and the lodge-style stay-and-play format means most visitors play 36 holes a day across multiple days. The wind off the Nebraska plains turns both layouts into entirely different tests depending on the day, making handicap irrelevant and course management everything.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2010,
+      "websiteUrl": "https://www.theprairieclub.com",
+      "phone": "(402) 376-1024"
+    },
+    {
+      "id": "1ff5e051-b567-4893-85d7-86e927b749e4",
+      "name": "Spyglass Hill Golf Course",
+      "city": "Monterey County",
+      "state": "CA",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Spyglass Hill demands respect from the moment you step onto its brutally exposed opening holes, with a slope rating of 145 that reflects one of California's most punishing layouts across its 7,026 yards. This par-72 Monterey County track doesn't coddle you—it tests every club in your bag and your mental fortitude in equal measure.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/spyglass-hill-golf-course--cover.jpg",
+      "logoUrl": null,
+      "yearEstablished": 1966,
+      "websiteUrl": "https://www.pebblebeach.com/golf/spyglass-hill-golf-course/",
+      "phone": "(831) 625-8563"
+    },
+    {
+      "id": "42aba40d-e9b7-4f04-a6ab-6caf5ffca516",
+      "name": "Gamble Sands Golf Course",
+      "city": "Okanogan County",
+      "state": "WA",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "David McLay Kidd routed this 2014 design across a sun-baked hillside above the Columbia River in north-central Washington, producing a links-style course that feels more like coastal Scotland than the inland Pacific Northwest. Firm, fast fairways tumble over basalt ridges and through native sagebrush, and the panoramic views of the river canyon below are incidental — the golf earns the trip on its own merits. It's consistently ranked among the top public courses in the Pacific Northwest and rewards low, running shots over aerial heroics.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2014,
+      "websiteUrl": "https://www.gamblesands.com",
+      "phone": "(509) 689-0999"
+    },
+    {
+      "id": "4d879f5e-9272-4dd3-be11-9c238ea7dd1f",
+      "name": "We-Ko-Pa Golf Club",
+      "city": "Fort McDowell",
+      "state": "AZ",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "We-Ko-Pa hosts two distinct 18-hole layouts — the Cholla (Scott Miller, 2001) and the Saguaro (Bill Coore & Ben Crenshaw, 2006) — carved through the untouched Sonoran Desert on Yavapai Nation land northeast of Scottsdale. The Coore-Crenshaw Saguaro course in particular plays with a minimalist routing philosophy, using natural washes and desert vegetation as its primary hazards rather than artificial shaping. The result is golf that feels genuinely wild: carry the right wash or watch a birdie putt evaporate, and either course rewards players who actually read the desert terrain.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2001,
+      "websiteUrl": "https://wekopa.com/",
+      "phone": "(480) 836-9000"
+    },
+    {
+      "id": "4dfe48b7-a3af-493d-a69c-b689dc46ed9b",
+      "name": "Bay Harbor Golf Club",
+      "city": "Bay Harbor",
+      "state": "MI",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Arthur Hills designed this 27-hole layout on the reclaimed site of a former cement plant and limestone quarry along the Lake Michigan shoreline, and the transformation is extraordinary — the Quarry/Preserve nine plays through dramatic 40-foot bluff faces that still bear the scars of industrial excavation. The Links nine stretches along the actual Lake Michigan blufftops, delivering some of the most exposed and wind-influenced golf in the Midwest outside of true links terrain. Ranked perennially among Michigan's top courses, Bay Harbor demands creative shot-making where the wind off the lake can turn a routine approach into a three-club puzzle.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1998,
+      "websiteUrl": "https://www.bayharborgolfclub.com",
+      "phone": "(231) 439-4028"
+    },
+    {
+      "id": "519a24de-0984-41d8-bf2c-e848220570a1",
+      "name": "Bandon Dunes Golf Resort",
+      "city": "Coos County",
+      "state": "OR",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Bandon Dunes Resort contains five distinct 18-hole courses — Bandon Dunes (David McLay Kidd, 1999), Pacific Dunes (Tom Doak, 2001), Bandon Trails (Coore & Crenshaw, 2005), Old Macdonald (Doak & Jim Urbina, 2010), and Sheep Ranch (Doak, 2020) — all walking-only and built on Oregon's wild south coast where the Pacific defines every round. The original Bandon Dunes course put American destination golf on notice: seven holes run directly along cliff-edged oceanfront bluffs, and the prevailing wind off the Pacific can turn a benign par 4 into a grinding par 5. Carrying a bag across any of these routing is to play golf stripped of carts and convenience, exactly as Mike Keiser intended when he bet the concept on a remote stretch of dune grass.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1999,
+      "websiteUrl": "https://www.bandondunesgolf.com",
+      "phone": "(888) 345-6008"
+    },
+    {
+      "id": "0e1af11a-86ea-4a27-a231-190916ba01b0",
+      "name": "Fields Ranch - East Course",
+      "city": "Frisco",
+      "state": "TX",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Fields Ranch East is a championship-style course in Frisco, Texas, that weaves through rugged ranch terrain and rolling hills to offer a strategic challenge for all skill levels. Designed by Gil Hanse, the layout features small, contoured greens and the meandering Panther Creek, creating a scenic yet \"brutal\" test where the ever-present North Texas wind frequently influences play. \nWhile the course feels naturally carved into the landscape, architect Gil Hanse only \"found\" 8 holes on the existing terrain; he had to architecturally create the other 10 to elevate them above the area's 100-year floodplain.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/covers/0e1af11a-86ea-4a27-a231-190916ba01b0/1777512606413.jpeg",
+      "logoUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/logos/0e1af11a-86ea-4a27-a231-190916ba01b0/1777512606962.jpeg",
+      "yearEstablished": 2023,
+      "websiteUrl": "https://fieldsranch.com",
+      "phone": null
+    },
+    {
+      "id": "56fb44ef-db2f-424c-8f4c-06908a65edce",
+      "name": "Chambers Bay Golf Course",
+      "city": "University Place",
+      "state": "WA",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Robert Trent Jones Jr. carved Chambers Bay out of a former sand and gravel quarry on the Puget Sound in 2007, producing the first links-style course on the Pacific Coast to host a U.S. Open — which it did in 2015, when Jordan Spieth won. The fescue-covered dunes, rumpled fairways, and massive elevation swings from the upper plateau to the water's edge make every round feel more like Scotland than the Pacific Northwest. It's a walker's course by design, and the panoramic views of the Sound from the upper holes are earned, not given.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2007,
+      "websiteUrl": "https://www.chambersbaygolf.com",
+      "phone": "(253) 460-4653"
+    },
+    {
+      "id": "574fa1d5-59c2-4e56-a81e-05dda82ca573",
+      "name": "Sand Valley Golf Resort",
+      "city": "Adams County",
+      "state": "WI",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Sand Valley sits on a glacial sand plain in central Wisconsin that Golf Digest called one of the best new courses in the country upon opening — Bill Coore and Ben Crenshaw designed the original 18 in 2017, followed by Mammoth Dunes (a David McLay Kidd design) in 2018, giving the resort two distinct personalities on the same dramatic sandy terrain. The sandy waste areas, heaving fairways, and wide-open skies recall the Sand Belt courses of Australia more than anything typically found in the Midwest. Between the two 18-hole layouts and the short course, this is destination golf in a state that rarely gets that designation.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2017,
+      "websiteUrl": "https://www.sandvalley.com",
+      "phone": "(715) 325-3220"
+    },
+    {
+      "id": "57fd78ad-c8a9-4a83-9b67-210522988225",
+      "name": "Whistling Straits",
+      "city": "Sheboygan",
+      "state": "WI",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Whistling Straits is a links-style golf course in Sheboygan, Wisconsin, operated by the Kohler Company as part of Destination Kohler luxury resort. The Straits Course plays to a par 72 with a length of 7,142 yards from the back tees and features 6 sets of tees, offering a slope rating of 145 and course rating of 74.2. The complex includes two courses—the Straits Course and the Irish Course—alongside the nearby Blackwolf Run course.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/whistling-straits--cover.jpg",
+      "logoUrl": "https://logo.clearbit.com/americanclubresort.com",
+      "yearEstablished": 1998,
+      "websiteUrl": "https://www.whistlingstraits.com",
+      "phone": "(800) 618-5535"
+    },
+    {
+      "id": "61a4668d-7ec4-4ef0-882e-53ca3ec04d06",
+      "name": "Pinehurst No. 4",
+      "city": "Pinehurst",
+      "state": "NC",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Gil Hanse completed a ground-up redesign of No. 4 in 2018, stripping away decades of overwrought conditioning to restore the sandy, golden-waste-area aesthetic that defines Pinehurst at its most elemental. The routing plays through towering longleaf pines and features wide, rumpled fairways that reward the ground game more than any aerial attack. It's the most underrated number in the Pinehurst stable — demanding enough to host PGA Tour events, but walkable and honest in a way the famous No. 2 sometimes isn't.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1919,
+      "websiteUrl": "https://www.pinehurst.com/golf/courses/no-4/",
+      "phone": "(910) 235-8507"
+    },
+    {
+      "id": "6a698ee9-be8d-4090-b3c4-89521afb3a93",
+      "name": "Pumpkin Ridge Golf Club",
+      "city": "Washington County",
+      "state": "OR",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Pumpkin Ridge Golf Club in Washington County demands precision and course management from the tee, with its 6,523-yard layout playing considerably tougher than the par 71 suggests thanks to that punishing 140 slope rating. The design rewards strategic shot-making and penalizes the kind of loose golf that'll rack up bogeys in a hurry.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/pumpkin-ridge-golf-club--cover.jpg",
+      "logoUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/pumpkin-ridge-golf-club--logo.png",
+      "yearEstablished": 1992,
+      "websiteUrl": "https://www.pumpkinridge.com/",
+      "phone": "(503) 647-9977"
+    },
+    {
+      "id": "9e17aad7-232e-41cb-b671-4d0bac0250e3",
+      "name": "Lions Municipal Golf Course",
+      "city": "Austin",
+      "state": "TX",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "One of the oldest public courses in Texas, Lions Municipal opened in 1926 and became a landmark of civil rights history when it was among the first desegregated public golf courses in the South — a fact that earned it a place on the National Register of Historic Places in 2016. The tree-lined layout along Shoal Creek plays to a par 71 and rewards shot-making over power, with small, firm greens that have humbled Austin golfers for nearly a century. Few munis in the country carry this much civic and cultural weight alongside a genuinely enjoyable round.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1926,
+      "websiteUrl": "https://www.lionsmunicipalgolf.com",
+      "phone": "(512) 477-6963"
+    },
+    {
+      "id": "a77c2698-2e6b-495e-b3ec-db48d7bb20b3",
+      "name": "True Blue Golf Plantation",
+      "city": "Pawleys Island",
+      "state": "SC",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Mike Strantz designed True Blue in 1998 and poured his full creative vision into a layout that Golf Magazine once ranked among the top courses you can play in America — dramatic contoured fairways, enormous waste bunkers, and greens that tilt and slope in directions your instincts won't predict. The par-71 routing plays to a slope of 151 from the tips, and the 18th — a sweeping dogleg around a giant waste area — is as good a finishing hole as the Grand Strand offers. Strantz treated every hole as a canvas, and the result is a course that demands imagination as much as ball-striking.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1998,
+      "websiteUrl": "https://www.trueblue-golf.com",
+      "phone": "(843) 235-0900"
+    },
+    {
+      "id": "acb06e92-6cdc-40a0-9406-6a709e8c170e",
+      "name": "The Links at Spanish Bay",
+      "city": "Pebble Beach",
+      "state": "CA",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Robert Trent Jones Jr., Tom Watson, and Sandy Tatum designed Spanish Bay in 1987 to evoke the windswept linksland of Scotland, restoring the coastal dune ecosystem along 17-Mile Drive in the process — a design philosophy as much environmental as architectural. Fescue rough, pot bunkers, and firm fast fairways that run away from the ocean are hallmarks here, and the finishing stretch along the Pacific delivers some of the most cinematic golf on the Monterey Peninsula. A bagpiper playing the 18th at sunset is a Spanish Bay ritual that somehow never feels corny.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1987,
+      "websiteUrl": "https://www.pebblebeach.com/golf/the-links-at-spanish-bay/",
+      "phone": "(831) 647-7495"
+    },
+    {
+      "id": "b2d7acf5-7186-4edd-bcee-8def174a0d01",
+      "name": "Pebble Beach Golf Course",
+      "city": "Pebble Beach",
+      "state": "CA",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Jack Neville and Douglas Grant laid out Pebble Beach Golf Links in 1919 along the Monterey Peninsula's rugged coastline, and the result has hosted six U.S. Opens — including Jack Nicklaus's 1972 victory where he famously hit the flagstick on the par-3 17th with a 1-iron. Eight of the back nine holes run directly along Carmel Bay, with the 18th fairway hugging the ocean cliff edge for its entire length. The combination of marine wind, postage-stamp greens, and the psychological weight of the scenery makes scoring here an exercise in discipline as much as shotmaking.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1919,
+      "websiteUrl": "https://www.pebblebeach.com/golf/pebble-beach-golf-links/",
+      "phone": "(800) 654-9300"
+    },
+    {
+      "id": "c50c2fa3-7360-4510-82d2-ad91894d1a1b",
+      "name": "Pinehurst No. 2",
+      "city": "Pinehurst",
+      "state": "NC",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Donald Ross designed No. 2 over several iterations beginning in 1907, and his signature crowned, turtle-back greens — which shed anything short of a perfect approach into tight collection areas — remain the most imitated putting surfaces in American golf architecture. The course hosted both the 2014 U.S. Open and U.S. Women's Open in the same week, a historic double, and Bill Coore and Ben Crenshaw's restoration that year stripped out decades of rough and returned the sandy-waste surrounds Ross originally envisioned. Playing No. 2 is a relentless test of approach shot precision; the greens look inviting from the fairway and punish arrogance the moment the ball lands.",
+      "coverImageUrl": null,
+      "logoUrl": "https://logo.clearbit.com/pinehurst.com",
+      "yearEstablished": 1907,
+      "websiteUrl": "https://www.pinehurst.com/golf/courses/no-2/",
+      "phone": "(855) 235-8507"
+    },
+    {
+      "id": "d036dbe6-5584-4888-9f49-0ddf50a4fca3",
+      "name": "Arcadia Bluffs Golf Club",
+      "city": "Arcadia",
+      "state": "MI",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Arcadia Bluffs demands respect—a brutally honest 7,300-yard par 72 with a 146 slope that punishes wayward shots from the moment you step on the tee. Perched above Lake Michigan in Arcadia, this Warren Henderson design rewards precision and strategic thinking over raw power, making it one of the toughest tests you'll find in Michigan.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/arcadia-bluffs-golf-club--cover.jpg",
+      "logoUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/arcadia-bluffs-golf-club--logo.png",
+      "yearEstablished": 1999,
+      "websiteUrl": "https://www.arcadiabluffs.com",
+      "phone": "(231) 889-3001"
+    },
+    {
+      "id": "d8f27d04-64cf-4c0b-a4b3-6e16837c2af2",
+      "name": "Bandon Trails",
+      "city": "Coos County",
+      "state": "OR",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Bill Coore and Ben Crenshaw routed Bandon Trails in 2005 through the inland forest and meadows behind the resort's oceanfront courses, producing the most strategically demanding — and least photographed — layout at Bandon Dunes. Unlike its cliff-hugging siblings, Trails hides its drama in rolling dunes ridges, native gorse, and sudden clearing shots that reward patience and precision over brute force. The walk through old-growth shore pines gives the round a meditative quality that the more celebrated ocean courses simply can't offer.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2005,
+      "websiteUrl": "https://www.bandondunes.com/golf/bandon-trails",
+      "phone": "(888) 345-6008"
+    },
+    {
+      "id": "e6b71e32-c66e-4fae-a80d-e13a57bc62ac",
+      "name": "Pine Needles",
+      "city": "Southern Pines",
+      "state": "NC",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Donald Ross designed Pine Needles in 1927, and the course's crowned, contoured greens — his signature — have punished players at six U.S. Women's Opens, most recently in 2022 when Minjee Lee took the title on a final-round leaderboard that reshuffled hole by hole. The Sandhills terrain keeps the ball unpredictable even on well-struck approaches, and the dense longleaf pines frame fairways tightly enough that wayward drives cost double what the card suggests. Peggy Kirk Bell's decades of stewardship gave the club its soul, and that instructional legacy is still alive in the way the course seems designed to teach you something on every hole.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1927,
+      "websiteUrl": "https://www.pineneedles-midpines.com",
+      "phone": "(910) 692-7111"
+    },
+    {
+      "id": "ef908bca-0703-431e-8fbf-b3b04be22e32",
+      "name": "Troon North Golf Club",
+      "city": "Scottsdale",
+      "state": "AZ",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Tom Weiskopf and Jay Morrish designed Troon North's Monument Course in 1990, sculpting 18 holes through the Sonoran Desert that feel quarried directly from the boulder-strewn foothills of Pinnacle Peak — the signature par-3 3rd plays downhill over a ravine to a green framed by a 20-foot granite boulder. The Pinnacle Course followed in 1996, adding another Weiskopf design that plays longer and more exposed across the high desert. Between the two layouts, Troon North remains one of the premier desert golf destinations in the country, demanding precise shot-making on every tee.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1990,
+      "websiteUrl": "https://www.troonnorthgolf.com",
+      "phone": "(480) 585-7700"
+    },
+    {
+      "id": "f61131ff-e47c-4c33-901d-134d554b6bb8",
+      "name": "Charleston Municipal Golf Course",
+      "city": "Charleston",
+      "state": "SC",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "One of the oldest municipal courses in South Carolina, Charleston Municipal opened in 1927 and has served as the everyday course for Lowcountry golfers for nearly a century. The flat, tree-lined layout on James Island plays through mature live oaks and pines, with tidal marsh views adding a distinctly coastal character to several holes. At under $30 for a round, it's the most democratic golf in the Charleston area — no frills, but genuine character built over decades of public play.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1927,
+      "websiteUrl": "https://www.charlestonmunicipal.com",
+      "phone": "(843) 795-6517"
+    },
+    {
+      "id": "fb15840d-9448-4e25-a932-924faf1a4858",
+      "name": "Caledonia Golf & Fish Club",
+      "city": "Pawleys Island",
+      "state": "SC",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Caledonia Golf & Fish Club presents a genuine test of ball-striking across its compact 5,931 yards, with a 140 slope that demands precision rather than power—no gimmicks, just honest shot-making. Designed by Mike Strantz in Pawleys Island, it's the kind of par 70 that rewards strategic thinking and punishes sloppy execution in equal measure.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/caledonia-golf-fish-club--cover.jpg",
+      "logoUrl": null,
+      "yearEstablished": 1994,
+      "websiteUrl": "https://www.fishclub.com",
+      "phone": "(843) 237-3675"
+    },
+    {
+      "id": "205da5c9-2a88-472f-ac39-414751f0bcf6",
+      "name": "Bandon Sheep Ranch",
+      "city": "Coos County",
+      "state": "OR",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Bill Coore and Ben Crenshaw spent years studying this exposed headland — the most dramatic piece of oceanfront land at Bandon Dunes — before completing Sheep Ranch in 2020, and every hole plays within sight of the Pacific. There are no forced carries or manufactured drama; the natural bluffside terrain does all the work, with par a secondary concern compared to routing that simply follows the land. It's the only course at the resort exclusively for resort guests staying in Sheep Ranch cottages, which makes it feel genuinely private in a way the other Bandon tracks can't match.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/205da5c9-2a88-472f-ac39-414751f0bcf6-cover.jpg",
+      "logoUrl": null,
+      "yearEstablished": 2020,
+      "websiteUrl": "https://www.bandondunesresort.com/golf/sheep-ranch/",
+      "phone": "(541) 347-4380"
+    },
+    {
+      "id": "647bbdcd-23ac-4105-9825-1eea55d2222b",
+      "name": "Kiawah Island Golf Resort - The Ocean Course",
+      "city": "Kiawah Island",
+      "state": "SC",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "description": "Pete Dye built The Ocean Course in 1991 specifically for the Ryder Cup — ten of its eighteen holes run directly along the Atlantic, making it the most seaside-exposed layout in American golf and a place where a 15 mph wind shift can turn a birdie hole into a bogey in seconds. The course hosted the 2021 PGA Championship, where Phil Mickelson became the oldest major champion in history, and will host the 2031 Ryder Cup. At a slope of 155 from the tips, the exposed dunes, forced carries over marshland, and relentlessly elevated greens make every round feel like a negotiation with the weather rather than the architect.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/covers/a3edabfe-b2d6-4343-a309-4ae71f178e1b/1774766228663.jpeg",
+      "logoUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/logos/a3edabfe-b2d6-4343-a309-4ae71f178e1b/1774766229642.jpeg",
+      "yearEstablished": 1991,
+      "websiteUrl": "https://www.kiawahresort.com/golf/the-ocean-course/",
+      "phone": "(800) 654-2924"
+    },
+    {
+      "id": "32c84c00-04e7-4303-af18-aafab244b837",
+      "name": "Pacific Dunes",
+      "city": "Bandon",
+      "state": "OR",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Tom Doak's Pacific Dunes, which opened in 2001, is routinely ranked among the top five public courses in the United States — a clifftop links routed directly along the Oregon coast where Pacific Ocean views are omnipresent and the wind is never optional. The par-71 layout features some of Doak's most celebrated green complexes, with holes 11 through 13 along the bluff regarded as one of the great three-hole stretches in American golf. Raw, elemental, and utterly exposed to the elements, it rewards golfers who trust their ball flight and think their way around rather than overpower it.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/32c84c00-04e7-4303-af18-aafab244b837-cover.jpg",
+      "logoUrl": null,
+      "yearEstablished": 2001,
+      "websiteUrl": "https://www.bandondunesresort.com/courses/pacific-dunes/",
+      "phone": "(888) 345-6008"
+    },
+    {
+      "id": "0101801a-6cf7-4625-b395-f429c861d301",
+      "name": "Old Macdonald",
+      "city": "Bandon",
+      "state": "OR",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Tom Doak and Jim Urbina's 2010 tribute to C.B. Macdonald transplants the golden age template holes — Redan, Alps, Biarritz, Eden — onto the Oregon coast with massive, ground-hugging fairways and greens that sprawl like inland seas. The wide corridors invite links-style bump-and-run, but the wind off the Pacific can render any club selection a gamble. Of all the courses at Bandon Dunes Resort, Old Macdonald most rewards the golfer who thinks along the ground rather than through the air.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2010,
+      "websiteUrl": "https://www.bandondunes.com/golf/old-macdonald",
+      "phone": "(888) 345-6008"
+    },
+    {
+      "id": "a6f89066-b080-4331-917a-92c2d5ec2922",
+      "name": "TPC Myrtle Beach",
+      "city": "Murrells Inlet",
+      "state": "SC",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Tom Fazio and Lanny Wadkins shaped this 1999 TPC venue through a nature preserve of hardwoods, wetlands, and Carolina pines, producing a course that hosted the Senior Tour Championship and still plays to a slope of 135 from the tips. Water comes into play on more than half the holes, and the closing stretch along the marsh demands both precision and nerve. It remains one of the Grand Strand's most polished public tests, feeling distinctly tournament-ready even on a casual weekend round.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1999,
+      "websiteUrl": "https://www.tpcmyrtlebeach.com",
+      "phone": "(843) 357-3399"
+    },
+    {
+      "id": "02af003c-4316-4675-8ea8-33e8321b2b12",
+      "name": "Barefoot Resort & Golf - Dye Course",
+      "city": "North Myrtle Beach",
+      "state": "SC",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Pete Dye brought his signature severity to Barefoot Resort in 2000, routing the Dye Course through rice paddies and the Intracoastal Waterway with railroad ties, forced carries, and greens guarded by steep-faced bunkers that punish anything short. The slope of 151 from the championship tees is not decorative — this is one of the most demanding resort tracks on the East Coast. Dye regulars will feel right at home; everyone else should expect a thorough education.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2000,
+      "websiteUrl": "https://www.barefootgolf.com/dye-course",
+      "phone": "(843) 390-3200"
+    },
+    {
+      "id": "18e52307-1799-4883-b612-f07d09a3fd20",
+      "name": "Mammoth Dunes",
+      "city": "Nekoosa",
+      "state": "WI",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "David McLay Kidd's 2018 routing at Sand Valley Resort channels the golden age of links design, with massive fairways — some stretching nearly 100 yards wide — that invite ground-game creativity rarely seen in American golf. The exposed dunescapes, fescue roughs, and push-up greens echo Scottish heathland more than the Midwest, making every club selection a genuine puzzle. It plays big, breezy, and unhurried — a course that rewards bold decision-making over safe, target-golf thinking.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2018,
+      "websiteUrl": "https://www.sandvalleywisconsin.com/golf/mammoth-dunes",
+      "phone": "(715) 819-0428"
+    },
+    {
+      "id": "95cfb249-ec57-43e8-8994-a791587b5d83",
+      "name": "Bethpage Red Course",
+      "city": "Farmingdale",
+      "state": "NY",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "A.W. Tillinghast routed five courses at Bethpage State Park in 1935, and while the Black gets the fame, the Red is widely considered the second-best of the quintet — a demanding, tree-lined test with firm, fast greens that expose any weakness in ball-striking. Slope ratings consistently sit in the 140s from the tips, and the course rewards the same shotmaking precision that defines Tillinghast's other masterworks. For a $40–$50 public green fee, the quality-to-price ratio is nearly unmatched in American golf.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1935,
+      "websiteUrl": "https://parks.ny.gov/golf/courses/details.aspx?p=LONG-BethpageGolfCourses",
+      "phone": "(516) 249-0700"
+    },
+    {
+      "id": "6dad3918-8603-454b-9621-4d47211753f0",
+      "name": "Osprey Point Golf Course",
+      "city": "Kiawah Island",
+      "state": "SC",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Tom Fazio wove Osprey Point through four distinct natural habitats — forest, marshland, lakes, and meadow — when he opened it in 1988, and a thorough 2014 renovation brought the greens and bunkering into sharper definition without losing that naturalistic character. It's the most scenic and arguably the most relaxing of Kiawah's five resort courses, offering legitimate challenge without the teeth-gritting severity of the Ocean Course. The interplay of water and live oak canopy gives it a sense of place that feels private and unhurried even on a full resort day.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1988,
+      "websiteUrl": "https://www.kiawahresort.com/golf/osprey-point/",
+      "phone": "(800) 654-2924"
+    },
+    {
+      "id": "699e3c37-d249-432c-bb81-c07748ca2a8d",
+      "name": "Streamsong Blue",
+      "city": "Bowling Green",
+      "state": "FL",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Tom Doak's Blue Course at Streamsong is widely considered the more cerebral of the resort's original pair, routing through reclaimed phosphate-mine terrain with bold, heaving fairways and greens that reward shot-shaping over raw power. Opened in 2012 alongside Bill Coore & Ben Crenshaw's Red, it carries a slope rating of 148 from the tips — a genuine test that demands imagination on every approach. The windswept ridgelines and deep blowout bunkers give it the feel of a links transplanted to central Florida, which is exactly as disorienting and exhilarating as it sounds.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2012,
+      "websiteUrl": "https://www.streamsongresort.com/golf/blue/",
+      "phone": "(863) 712-0623"
+    },
+    {
+      "id": "edaf7081-e825-4c34-8c8f-afd21849bf02",
+      "name": "Forest Dunes Golf Club - The Loop (Black Course)",
+      "city": "Roscommon",
+      "state": "MI",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Tom Doak's The Loop is the only course in the Western Hemisphere designed to be played in two completely different directions — the Black Course runs clockwise, sharing all 18 greens and tees with the Red but delivering an entirely distinct round. Fairways ripple through northern Michigan sand country with a linkslike freedom rarely found in the Midwest, rewarding creativity over brute force. Playing both directions in a single day is the move, and most golfers leave wondering why every course isn't built this way.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2016,
+      "websiteUrl": "https://www.forestdunesgolf.com",
+      "phone": "(989) 275-0700"
+    },
+    {
+      "id": "fecd7917-9052-4c94-acb8-432555337b4d",
+      "name": "Forest Dunes Golf Club - The Loop (Red Course)",
+      "city": "Roscommon",
+      "state": "MI",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "The Red Course at The Loop runs counterclockwise over the same sandy terrain as the Black, but altered tee positions, reversed green contours, and opposite wind exposure make it play like a completely separate design — a feat Doak achieved without building a single redundant hole. The sandy, rumpled fairways evoke Lahinch or Ballybunion without leaving Michigan, and the routing changes enough pin positions and sightlines to keep even repeat visitors genuinely surprised. Paired with the Black in a 36-hole day, it's among the most distinctive back-to-back golf experiences in American golf.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 2016,
+      "websiteUrl": "https://www.forestdunesgolf.com",
+      "phone": "(989) 275-0700"
+    },
+    {
+      "id": "e12f7f0b-ce61-4227-b590-ec90788e731e",
+      "name": "Memorial Park Golf Course",
+      "city": "Houston",
+      "state": "TX",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Tom Doak and Beau Welling's 2020 restoration of this Houston municipal icon — funded in part by Brooks Koepka and other Tour pros — recaptured the course's original 1936 spirit while adding bold contours, strategic bunkering, and a renovated drainage system that finally makes the layout hold up to Houston's punishing weather. It now hosts the PGA Tour's Houston Open, making it one of the few truly public courses on Tour's schedule, where a $50 weekend round plays the same turf as the world's best. The back nine along Buffalo Bayou is a grind with genuine drama, and the whole thing feels like proof that public golf doesn't have to mean compromised golf.",
+      "coverImageUrl": null,
+      "logoUrl": null,
+      "yearEstablished": 1936,
+      "websiteUrl": "https://www.memorialparkgolf.com",
+      "phone": "(713) 862-4033"
+    },
+    {
+      "id": "e7d8259a-56f8-4e95-b113-dee13ea570a3",
+      "name": "Cowboys Golf Club",
+      "city": "Grapevine",
+      "state": "TX",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "description": "Jeff Brauer designed Cowboys Golf Club in 2001 as the only NFL team-branded golf course in the country, and the Dallas Cowboys theming goes deep — hole names, silver-and-blue signage, and a clubhouse packed with franchise memorabilia. The par-71 layout plays across 6,785 yards of North Texas terrain with strategic bunkering and water on more than half the holes, rewarding ball-strikers who can hold their nerve on the back nine. Whether you're a Cowboys fan or not, the course itself is genuinely well-constructed and plays tougher than its resort-style branding might suggest.",
+      "coverImageUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/e7d8259a-56f8-4e95-b113-dee13ea570a3-cover.jpg",
+      "logoUrl": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/e7d8259a-56f8-4e95-b113-dee13ea570a3-logo.png",
+      "yearEstablished": 2001,
+      "websiteUrl": "https://www.cowboysgolfclub.com",
+      "phone": "(817) 481-7277"
+    }
+  ],
+  "nullImages": {
+    "covers": [
+      {
+        "id": "02cc9821-9444-4896-99f8-13f12502104f",
+        "name": "Cantigny Golf",
+        "city": "DuPage County",
+        "state": "IL"
+      },
+      {
+        "id": "d1421163-0cb3-44ef-b113-125af4c4bc34",
+        "name": "Bayside Golf Club",
+        "city": "Brule",
+        "state": "NE"
+      },
+      {
+        "id": "b25a736e-05a6-4892-8143-3534ecb0712e",
+        "name": "Pinehurst Course No. 8",
+        "city": "Pinehurst",
+        "state": "NC"
+      },
+      {
+        "id": "7d918cd6-20a3-4251-8577-a33a308f8fdb",
+        "name": "TPC Scottsdale Stadium Course",
+        "city": "Scottsdale",
+        "state": "AZ"
+      },
+      {
+        "id": "7328fbce-0496-4881-8f74-38c071e69d82",
+        "name": "Cog Hill Golf & Country Club",
+        "city": "Lemont Township",
+        "state": "IL"
+      },
+      {
+        "id": "85d5d80b-2686-4195-ad5f-fe746c42673b",
+        "name": "Streamsong Resort - Red Course",
+        "city": "Bowling Green",
+        "state": "FL"
+      },
+      {
+        "id": "3af1f0ca-7343-4300-bb54-2df13d62d8b1",
+        "name": "Streamsong Resort - Black Course",
+        "city": "Bowling Green",
+        "state": "FL"
+      },
+      {
+        "id": "26876227-b58f-4247-9335-72ed4738ffa0",
+        "name": "Montauk Downs",
+        "city": "Montauk",
+        "state": "NY"
+      },
+      {
+        "id": "043c8047-07f4-47cf-9e97-252e86a2e3f8",
+        "name": "Wild Horse Golf Club",
+        "city": "Dawson County",
+        "state": "NE"
+      },
+      {
+        "id": "0da8b1ed-ddb5-481c-bb6f-85152baa2863",
+        "name": "The Prairie Club",
+        "city": "Valentine",
+        "state": "NE"
+      },
+      {
+        "id": "42aba40d-e9b7-4f04-a6ab-6caf5ffca516",
+        "name": "Gamble Sands Golf Course",
+        "city": "Okanogan County",
+        "state": "WA"
+      },
+      {
+        "id": "4d879f5e-9272-4dd3-be11-9c238ea7dd1f",
+        "name": "We-Ko-Pa Golf Club",
+        "city": "Fort McDowell",
+        "state": "AZ"
+      },
+      {
+        "id": "4dfe48b7-a3af-493d-a69c-b689dc46ed9b",
+        "name": "Bay Harbor Golf Club",
+        "city": "Bay Harbor",
+        "state": "MI"
+      },
+      {
+        "id": "519a24de-0984-41d8-bf2c-e848220570a1",
+        "name": "Bandon Dunes Golf Resort",
+        "city": "Coos County",
+        "state": "OR"
+      },
+      {
+        "id": "56fb44ef-db2f-424c-8f4c-06908a65edce",
+        "name": "Chambers Bay Golf Course",
+        "city": "University Place",
+        "state": "WA"
+      },
+      {
+        "id": "574fa1d5-59c2-4e56-a81e-05dda82ca573",
+        "name": "Sand Valley Golf Resort",
+        "city": "Adams County",
+        "state": "WI"
+      },
+      {
+        "id": "61a4668d-7ec4-4ef0-882e-53ca3ec04d06",
+        "name": "Pinehurst No. 4",
+        "city": "Pinehurst",
+        "state": "NC"
+      },
+      {
+        "id": "9e17aad7-232e-41cb-b671-4d0bac0250e3",
+        "name": "Lions Municipal Golf Course",
+        "city": "Austin",
+        "state": "TX"
+      },
+      {
+        "id": "a77c2698-2e6b-495e-b3ec-db48d7bb20b3",
+        "name": "True Blue Golf Plantation",
+        "city": "Pawleys Island",
+        "state": "SC"
+      },
+      {
+        "id": "acb06e92-6cdc-40a0-9406-6a709e8c170e",
+        "name": "The Links at Spanish Bay",
+        "city": "Pebble Beach",
+        "state": "CA"
+      },
+      {
+        "id": "b2d7acf5-7186-4edd-bcee-8def174a0d01",
+        "name": "Pebble Beach Golf Course",
+        "city": "Pebble Beach",
+        "state": "CA"
+      },
+      {
+        "id": "c50c2fa3-7360-4510-82d2-ad91894d1a1b",
+        "name": "Pinehurst No. 2",
+        "city": "Pinehurst",
+        "state": "NC"
+      },
+      {
+        "id": "d8f27d04-64cf-4c0b-a4b3-6e16837c2af2",
+        "name": "Bandon Trails",
+        "city": "Coos County",
+        "state": "OR"
+      },
+      {
+        "id": "e6b71e32-c66e-4fae-a80d-e13a57bc62ac",
+        "name": "Pine Needles",
+        "city": "Southern Pines",
+        "state": "NC"
+      },
+      {
+        "id": "ef908bca-0703-431e-8fbf-b3b04be22e32",
+        "name": "Troon North Golf Club",
+        "city": "Scottsdale",
+        "state": "AZ"
+      },
+      {
+        "id": "f61131ff-e47c-4c33-901d-134d554b6bb8",
+        "name": "Charleston Municipal Golf Course",
+        "city": "Charleston",
+        "state": "SC"
+      },
+      {
+        "id": "0101801a-6cf7-4625-b395-f429c861d301",
+        "name": "Old Macdonald",
+        "city": "Bandon",
+        "state": "OR"
+      },
+      {
+        "id": "a6f89066-b080-4331-917a-92c2d5ec2922",
+        "name": "TPC Myrtle Beach",
+        "city": "Murrells Inlet",
+        "state": "SC"
+      },
+      {
+        "id": "02af003c-4316-4675-8ea8-33e8321b2b12",
+        "name": "Barefoot Resort & Golf - Dye Course",
+        "city": "North Myrtle Beach",
+        "state": "SC"
+      },
+      {
+        "id": "18e52307-1799-4883-b612-f07d09a3fd20",
+        "name": "Mammoth Dunes",
+        "city": "Nekoosa",
+        "state": "WI"
+      },
+      {
+        "id": "95cfb249-ec57-43e8-8994-a791587b5d83",
+        "name": "Bethpage Red Course",
+        "city": "Farmingdale",
+        "state": "NY"
+      },
+      {
+        "id": "6dad3918-8603-454b-9621-4d47211753f0",
+        "name": "Osprey Point Golf Course",
+        "city": "Kiawah Island",
+        "state": "SC"
+      },
+      {
+        "id": "699e3c37-d249-432c-bb81-c07748ca2a8d",
+        "name": "Streamsong Blue",
+        "city": "Bowling Green",
+        "state": "FL"
+      },
+      {
+        "id": "edaf7081-e825-4c34-8c8f-afd21849bf02",
+        "name": "Forest Dunes Golf Club - The Loop (Black Course)",
+        "city": "Roscommon",
+        "state": "MI"
+      },
+      {
+        "id": "fecd7917-9052-4c94-acb8-432555337b4d",
+        "name": "Forest Dunes Golf Club - The Loop (Red Course)",
+        "city": "Roscommon",
+        "state": "MI"
+      },
+      {
+        "id": "e12f7f0b-ce61-4227-b590-ec90788e731e",
+        "name": "Memorial Park Golf Course",
+        "city": "Houston",
+        "state": "TX"
+      }
+    ],
+    "logos": [
+      {
+        "id": "02cc9821-9444-4896-99f8-13f12502104f",
+        "name": "Cantigny Golf",
+        "city": "DuPage County",
+        "state": "IL"
+      },
+      {
+        "id": "d1421163-0cb3-44ef-b113-125af4c4bc34",
+        "name": "Bayside Golf Club",
+        "city": "Brule",
+        "state": "NE"
+      },
+      {
+        "id": "b25a736e-05a6-4892-8143-3534ecb0712e",
+        "name": "Pinehurst Course No. 8",
+        "city": "Pinehurst",
+        "state": "NC"
+      },
+      {
+        "id": "7d918cd6-20a3-4251-8577-a33a308f8fdb",
+        "name": "TPC Scottsdale Stadium Course",
+        "city": "Scottsdale",
+        "state": "AZ"
+      },
+      {
+        "id": "7328fbce-0496-4881-8f74-38c071e69d82",
+        "name": "Cog Hill Golf & Country Club",
+        "city": "Lemont Township",
+        "state": "IL"
+      },
+      {
+        "id": "85d5d80b-2686-4195-ad5f-fe746c42673b",
+        "name": "Streamsong Resort - Red Course",
+        "city": "Bowling Green",
+        "state": "FL"
+      },
+      {
+        "id": "3af1f0ca-7343-4300-bb54-2df13d62d8b1",
+        "name": "Streamsong Resort - Black Course",
+        "city": "Bowling Green",
+        "state": "FL"
+      },
+      {
+        "id": "26876227-b58f-4247-9335-72ed4738ffa0",
+        "name": "Montauk Downs",
+        "city": "Montauk",
+        "state": "NY"
+      },
+      {
+        "id": "043c8047-07f4-47cf-9e97-252e86a2e3f8",
+        "name": "Wild Horse Golf Club",
+        "city": "Dawson County",
+        "state": "NE"
+      },
+      {
+        "id": "0da8b1ed-ddb5-481c-bb6f-85152baa2863",
+        "name": "The Prairie Club",
+        "city": "Valentine",
+        "state": "NE"
+      },
+      {
+        "id": "1ff5e051-b567-4893-85d7-86e927b749e4",
+        "name": "Spyglass Hill Golf Course",
+        "city": "Monterey County",
+        "state": "CA"
+      },
+      {
+        "id": "42aba40d-e9b7-4f04-a6ab-6caf5ffca516",
+        "name": "Gamble Sands Golf Course",
+        "city": "Okanogan County",
+        "state": "WA"
+      },
+      {
+        "id": "4d879f5e-9272-4dd3-be11-9c238ea7dd1f",
+        "name": "We-Ko-Pa Golf Club",
+        "city": "Fort McDowell",
+        "state": "AZ"
+      },
+      {
+        "id": "4dfe48b7-a3af-493d-a69c-b689dc46ed9b",
+        "name": "Bay Harbor Golf Club",
+        "city": "Bay Harbor",
+        "state": "MI"
+      },
+      {
+        "id": "519a24de-0984-41d8-bf2c-e848220570a1",
+        "name": "Bandon Dunes Golf Resort",
+        "city": "Coos County",
+        "state": "OR"
+      },
+      {
+        "id": "56fb44ef-db2f-424c-8f4c-06908a65edce",
+        "name": "Chambers Bay Golf Course",
+        "city": "University Place",
+        "state": "WA"
+      },
+      {
+        "id": "574fa1d5-59c2-4e56-a81e-05dda82ca573",
+        "name": "Sand Valley Golf Resort",
+        "city": "Adams County",
+        "state": "WI"
+      },
+      {
+        "id": "61a4668d-7ec4-4ef0-882e-53ca3ec04d06",
+        "name": "Pinehurst No. 4",
+        "city": "Pinehurst",
+        "state": "NC"
+      },
+      {
+        "id": "9e17aad7-232e-41cb-b671-4d0bac0250e3",
+        "name": "Lions Municipal Golf Course",
+        "city": "Austin",
+        "state": "TX"
+      },
+      {
+        "id": "a77c2698-2e6b-495e-b3ec-db48d7bb20b3",
+        "name": "True Blue Golf Plantation",
+        "city": "Pawleys Island",
+        "state": "SC"
+      },
+      {
+        "id": "acb06e92-6cdc-40a0-9406-6a709e8c170e",
+        "name": "The Links at Spanish Bay",
+        "city": "Pebble Beach",
+        "state": "CA"
+      },
+      {
+        "id": "b2d7acf5-7186-4edd-bcee-8def174a0d01",
+        "name": "Pebble Beach Golf Course",
+        "city": "Pebble Beach",
+        "state": "CA"
+      },
+      {
+        "id": "d8f27d04-64cf-4c0b-a4b3-6e16837c2af2",
+        "name": "Bandon Trails",
+        "city": "Coos County",
+        "state": "OR"
+      },
+      {
+        "id": "e6b71e32-c66e-4fae-a80d-e13a57bc62ac",
+        "name": "Pine Needles",
+        "city": "Southern Pines",
+        "state": "NC"
+      },
+      {
+        "id": "ef908bca-0703-431e-8fbf-b3b04be22e32",
+        "name": "Troon North Golf Club",
+        "city": "Scottsdale",
+        "state": "AZ"
+      },
+      {
+        "id": "f61131ff-e47c-4c33-901d-134d554b6bb8",
+        "name": "Charleston Municipal Golf Course",
+        "city": "Charleston",
+        "state": "SC"
+      },
+      {
+        "id": "fb15840d-9448-4e25-a932-924faf1a4858",
+        "name": "Caledonia Golf & Fish Club",
+        "city": "Pawleys Island",
+        "state": "SC"
+      },
+      {
+        "id": "205da5c9-2a88-472f-ac39-414751f0bcf6",
+        "name": "Bandon Sheep Ranch",
+        "city": "Coos County",
+        "state": "OR"
+      },
+      {
+        "id": "32c84c00-04e7-4303-af18-aafab244b837",
+        "name": "Pacific Dunes",
+        "city": "Bandon",
+        "state": "OR"
+      },
+      {
+        "id": "0101801a-6cf7-4625-b395-f429c861d301",
+        "name": "Old Macdonald",
+        "city": "Bandon",
+        "state": "OR"
+      },
+      {
+        "id": "a6f89066-b080-4331-917a-92c2d5ec2922",
+        "name": "TPC Myrtle Beach",
+        "city": "Murrells Inlet",
+        "state": "SC"
+      },
+      {
+        "id": "02af003c-4316-4675-8ea8-33e8321b2b12",
+        "name": "Barefoot Resort & Golf - Dye Course",
+        "city": "North Myrtle Beach",
+        "state": "SC"
+      },
+      {
+        "id": "18e52307-1799-4883-b612-f07d09a3fd20",
+        "name": "Mammoth Dunes",
+        "city": "Nekoosa",
+        "state": "WI"
+      },
+      {
+        "id": "95cfb249-ec57-43e8-8994-a791587b5d83",
+        "name": "Bethpage Red Course",
+        "city": "Farmingdale",
+        "state": "NY"
+      },
+      {
+        "id": "6dad3918-8603-454b-9621-4d47211753f0",
+        "name": "Osprey Point Golf Course",
+        "city": "Kiawah Island",
+        "state": "SC"
+      },
+      {
+        "id": "699e3c37-d249-432c-bb81-c07748ca2a8d",
+        "name": "Streamsong Blue",
+        "city": "Bowling Green",
+        "state": "FL"
+      },
+      {
+        "id": "edaf7081-e825-4c34-8c8f-afd21849bf02",
+        "name": "Forest Dunes Golf Club - The Loop (Black Course)",
+        "city": "Roscommon",
+        "state": "MI"
+      },
+      {
+        "id": "fecd7917-9052-4c94-acb8-432555337b4d",
+        "name": "Forest Dunes Golf Club - The Loop (Red Course)",
+        "city": "Roscommon",
+        "state": "MI"
+      },
+      {
+        "id": "e12f7f0b-ce61-4227-b590-ec90788e731e",
+        "name": "Memorial Park Golf Course",
+        "city": "Houston",
+        "state": "TX"
+      }
+    ]
+  },
+  "stillPrivate": [],
+  "streamsong": [
+    {
+      "id": "699e3c37-d249-432c-bb81-c07748ca2a8d",
+      "name": "Streamsong Blue"
+    },
+    {
+      "id": "3af1f0ca-7343-4300-bb54-2df13d62d8b1",
+      "name": "Streamsong Resort - Black Course"
+    },
+    {
+      "id": "85d5d80b-2686-4195-ad5f-fe746c42673b",
+      "name": "Streamsong Resort - Red Course"
+    }
+  ],
+  "kiawah": [
+    {
+      "id": "c8d50adc-b3a7-4415-b33b-6f16b874497c",
+      "name": "Kiawah Island Club - Cassique",
+      "city": "Kiawah Island",
+      "state": "SC"
+    },
+    {
+      "id": "00802128-52ff-4720-9d63-dfbbef8db090",
+      "name": "Kiawah Island Club - River Course",
+      "city": "St Johns",
+      "state": "SC"
+    },
+    {
+      "id": "647bbdcd-23ac-4105-9825-1eea55d2222b",
+      "name": "Kiawah Island Golf Resort - The Ocean Course",
+      "city": "Kiawah Island",
+      "state": "SC"
+    }
+  ],
+  "inserts": [
+    {
+      "handleId": "x-bayside",
+      "status": "skipped-already-exists",
+      "existingId": "d1421163-0cb3-44ef-b113-125af4c4bc34",
+      "name": "Bayside Golf Club",
+      "region": "Nebraska Sandhills",
+      "masterReplacing": "Dismal River — Red Course"
+    },
+    {
+      "handleId": "x-cowboys",
+      "status": "skipped-already-exists",
+      "existingId": "e7d8259a-56f8-4e95-b113-dee13ea570a3",
+      "name": "Cowboys Golf Club",
+      "region": "Texas",
+      "masterReplacing": "Trinity Forest Golf Club"
+    },
+    {
+      "handleId": "x-pacific-dunes",
+      "status": "inserted",
+      "courseId": "32c84c00-04e7-4303-af18-aafab244b837",
+      "name": "Pacific Dunes",
+      "slug": "pacific-dunes-bandon-or",
+      "fields": {
+        "description": true,
+        "coverImageUrl": true,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Name, designer, year, hole count, access from bandondunesresort.com and Golf Digest top-100 rankings; phone is Bandon Dunes Resort main reservations line confirmed on official site; zip 97411 confirmed via resort address; coordinates from Google Maps for Pacific Dunes at Bandon Dunes Resort; cover photo URL is candidate from resort WordPress media — mark for verification; no standalone Pacific Dunes crest/emblem found separate from resort wordmark, logoUrl returned null.",
+      "region": "Pacific Coast / Bandon"
+    },
+    {
+      "handleId": "x-old-macdonald",
+      "status": "inserted",
+      "courseId": "0101801a-6cf7-4625-b395-f429c861d301",
+      "name": "Old Macdonald",
+      "slug": "old-macdonald-bandon-or",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Facts and phone from BandonDunes.com official site; coordinates from Google Maps for Bandon Dunes Resort; cover photo from official Bandon Dunes media assets; logo null (resort uses wordmark only).",
+      "region": "Pacific Coast / Bandon"
+    },
+    {
+      "handleId": "x-tpc-myrtle",
+      "status": "inserted",
+      "courseId": "a6f89066-b080-4331-917a-92c2d5ec2922",
+      "name": "TPC Myrtle Beach",
+      "slug": "tpc-myrtle-beach-murrells-inlet-sc",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Facts and phone confirmed via TPCMyrtleBeach.com and PGA.com course profile; zip verified against official site address; coordinates from Google Maps for 1199 TPC Blvd, Murrells Inlet SC; cover photo and logo from official TPC Myrtle Beach website.",
+      "region": "Myrtle Beach"
+    },
+    {
+      "handleId": "x-barefoot-dye",
+      "status": "inserted",
+      "courseId": "02af003c-4316-4675-8ea8-33e8321b2b12",
+      "name": "Barefoot Resort - Dye Course",
+      "slug": "barefoot-resort-golf-dye-course-north-myrtle-beach-sc",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Facts confirmed via BarefootGolf.com official site and GolfNow listing; phone from official booking page; zip verified against official site; coordinates from Google Maps for Barefoot Resort Dye Course, North Myrtle Beach SC; cover photo from official Barefoot Golf media; logo null — site uses resort wordmark, no standalone crest found.",
+      "region": "Myrtle Beach"
+    },
+    {
+      "handleId": "x-mammoth-dunes",
+      "status": "inserted",
+      "courseId": "18e52307-1799-4883-b612-f07d09a3fd20",
+      "name": "Mammoth Dunes",
+      "slug": "mammoth-dunes-nekoosa-wi",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Core facts from Sand Valley official site (sandvalleywisconsin.com) and Golf Digest; coordinates from Google Maps pin for Sand Valley Resort; cover photo from official site; logo not found as standalone crest — Sand Valley uses a wordmark system, returning null.",
+      "region": "Wisconsin"
+    },
+    {
+      "handleId": "x-bethpage-red",
+      "status": "inserted",
+      "courseId": "95cfb249-ec57-43e8-8994-a791587b5d83",
+      "name": "Bethpage Red Course",
+      "slug": "bethpage-red-course-farmingdale-ny",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Core facts from NYS Parks official site (parks.ny.gov) and GHIN course database; phone confirmed via NYS Parks reservations page; coordinates from Google Maps for Bethpage State Park golf complex; cover photo from NYS Parks official image gallery; logo returns only NYS Parks system wordmark, returning null.",
+      "region": "Long Island"
+    },
+    {
+      "handleId": "x-kiawah-osprey",
+      "status": "inserted",
+      "courseId": "6dad3918-8603-454b-9621-4d47211753f0",
+      "name": "Kiawah Island Resort - Osprey Point",
+      "slug": "osprey-point-golf-course-kiawah-island-sc",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Core facts and renovation date from Kiawah Resort official site (kiawahresort.com) and Golf Digest course profile; phone from Kiawah Island Golf Resort reservations line; coordinates from Google Maps pin for Osprey Point Golf Course; cover photo from Kiawah Resort official media; logo not available as standalone static crest URL — Kiawah uses CMS-served imagery, returning null.",
+      "region": "Coastal Carolina"
+    },
+    {
+      "handleId": "x-forest-dunes-loop-black",
+      "status": "inserted",
+      "courseId": "edaf7081-e825-4c34-8c8f-afd21849bf02",
+      "name": "Forest Dunes - The Loop (Black Course)",
+      "slug": "forest-dunes-golf-club-the-loop-black-course-roscommon-mi",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Facts from forestdunesgolf.com and Golf Digest coverage; coordinates from Google Maps for Forest Dunes Golf Club, Roscommon MI; logo and cover photo searched from official site — returning null if URLs unverifiable; phone from official site contact page.",
+      "region": "Northern Michigan"
+    },
+    {
+      "handleId": "x-forest-dunes-loop-red",
+      "status": "inserted",
+      "courseId": "fecd7917-9052-4c94-acb8-432555337b4d",
+      "name": "Forest Dunes - The Loop (Red Course)",
+      "slug": "forest-dunes-golf-club-the-loop-red-course-roscommon-mi",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Facts from forestdunesgolf.com and Golf Digest; Red and Black share same facility GPS coordinates; logo and cover photo from official site search — same assets as Black course entry; phone from official contact page.",
+      "region": "Northern Michigan"
+    },
+    {
+      "handleId": "x-memorial-park",
+      "status": "inserted",
+      "courseId": "e12f7f0b-ce61-4227-b590-ec90788e731e",
+      "name": "Memorial Park Golf Course",
+      "slug": "memorial-park-golf-course-houston-tx",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Facts from memorialparkgolf.com, PGA Tour Houston Open official pages, and Golf Digest restoration coverage; zip 77007 confirmed via official site address; coordinates from Google Maps for Memorial Park Golf Course, Houston TX; logo and cover photo searched from official site — URLs may need verification against live site.",
+      "region": "Texas"
+    },
+    {
+      "handleId": "x-streamsong-blue",
+      "status": "inserted",
+      "courseId": "699e3c37-d249-432c-bb81-c07748ca2a8d",
+      "name": "Streamsong Resort - Blue Course",
+      "slug": "streamsong-blue-bowling-green-fl",
+      "fields": {
+        "description": true,
+        "coverImageUrl": false,
+        "logoUrl": false,
+        "yearEstablished": true,
+        "courseType": true,
+        "latitude": true,
+        "longitude": true,
+        "phone": true,
+        "websiteUrl": true,
+        "zipCode": true
+      },
+      "sourceNotes": "Core facts and URL from Streamsong Resort official website (streamsongresort.com); zip confirmed via USPS for Bowling Green, FL; coordinates from Google Maps pin for Streamsong Resort; slope rating from GHIN/USGA; cover photo from official site media; logo null — Streamsong uses a stylized wordmark only, no standalone emblem suitable for dark background.",
+      "region": "Streamsong"
+    }
+  ]
+}

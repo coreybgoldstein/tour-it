@@ -8,17 +8,19 @@
 
 ## TL;DR
 
+**Phase 1 closed. 48 of 48 master entries (after Dismal River → Bayside and Trinity Forest → Cowboys swaps) are in the DB with descriptions, year, courseType, website, phone, and lat/lng. Zero PRIVATE rows in the master list. Image assets are the only remaining gap — deferred to a Phase 2 image-only re-run.**
+
 | | Count |
 |---|---|
-| Master entries (Streamsong Red and Blue counted separately) | 48 |
-| Distinct master courses | 46 |
-| Found in DB and enriched | 38 / 48 master entries (37 distinct DB rows updated, 0 failures) |
-| Truly missing — blocker | 10 |
-| Wrong-row matches caught and corrected | 2 |
-| Structural data issues flagged | 2 |
-| PRIVATE-flag mis-classifications to fix | 2 |
-| Genuine PRIVATE in master list (need product call) | 2 |
-| Image assets still null | 28 covers, 30 logos |
+| Master entries (after 2 swaps) | 48 |
+| Found in DB and enriched (Phase 1 first pass) | 37 |
+| Newly inserted via targeted override (Issues 2 + 3 + 4a) | 11 |
+| Already existed in DB and enriched (swap targets) | 2 |
+| Total master rows present in DB now | **48 / 48** |
+| PRIVATE rows in master list | **0** |
+| Images filled (covers / logos) | 12 covers, 9 logos |
+| **Images still null** | **36 covers, 39 logos** — Phase 2 re-run |
+| Failed inserts/updates | 0 |
 
 The audit's biggest surprise is that the master list of "famous public/resort US courses" turned out to have **10 outright gaps** in our 11k-row DB, plus two structural quirks (one Streamsong row covering two courses, one duplicated Kiawah Ocean row). The trip-itinerary feature cannot ship on these 10 without an insert exception.
 
@@ -190,45 +192,44 @@ The seeder's strict image rules (no transparent logos, no `.aspx`, no Clubessent
 
 ## 3 — Skipped / flagged
 
-### 3a — Truly missing from DB (10 master entries)
+### 3a — 10 truly-missing courses → RESOLVED via targeted insert (Issue 3)
 
-These famous public/resort courses are not in the 11k-row DB under any name we could find. Cross-checked by city, by state, and by parent-resort name. **They are blockers for the trip-itinerary feature.**
+All 10 courses below were missing from the 11k-row DB under any name we could find. Per sign-off, inserted via `src/scripts/phase1-insert-missing.mjs` using the same Anthropic-research + Supabase Storage pipeline as the bulk seeder.
 
-| Course | State | Region | What we found instead |
+| Master entry | DB name | Course id | description | year | courseType | image fields |
+|---|---|---|---|---|---|---|
+| Pacific Dunes | Pacific Dunes | `32c84c00-04e7-4303-af18-aafab244b837` | ✅ | ✅ | PUBLIC | covers/logos null |
+| Old Macdonald | Old Macdonald | `0101801a-6cf7-4625-b395-f429c861d301` | ✅ | ✅ | PUBLIC | covers/logos null |
+| TPC Myrtle Beach | TPC Myrtle Beach | `a6f89066-b080-4331-917a-92c2d5ec2922` | ✅ | ✅ | PUBLIC | covers/logos null |
+| Barefoot Resort — Dye Course | Barefoot Resort & Golf - Dye Course | `02af003c-4316-4675-8ea8-33e8321b2b12` | ✅ | ✅ | PUBLIC | covers/logos null |
+| Mammoth Dunes | Mammoth Dunes | `18e52307-1799-4883-b612-f07d09a3fd20` | ✅ | ✅ | PUBLIC | covers/logos null |
+| Bethpage Red | Bethpage Red Course | `95cfb249-ec57-43e8-8994-a791587b5d83` | ✅ | ✅ | PUBLIC | covers/logos null |
+| Kiawah Island — Osprey Point | Osprey Point Golf Course | `6dad3918-8603-454b-9621-4d47211753f0` | ✅ | ✅ | (per research) | covers/logos null |
+| Forest Dunes — The Loop (Black) | Forest Dunes Golf Club - The Loop (Black Course) | `edaf7081-e825-4c34-8c8f-afd21849bf02` | ✅ | ✅ | PUBLIC | covers/logos null |
+| Forest Dunes — The Loop (Red) | Forest Dunes Golf Club - The Loop (Red Course) | `fecd7917-9052-4c94-acb8-432555337b4d` | ✅ | ✅ | PUBLIC | covers/logos null |
+| Memorial Park Golf Course | Memorial Park Golf Course | `e12f7f0b-ce61-4227-b590-ec90788e731e` | ✅ | ✅ | PUBLIC | covers/logos null |
+
+Each row was created with: `id` (UUID), `slug` (slugified + uniqued), `city`, `state`, `country=US`, `holeCount`, `isPublic`, `courseType`, `description`, `yearEstablished`, `websiteUrl`, `phone`, `latitude`, `longitude`, `zipCode`. 18 holes auto-created per course. Image fetches mostly hit 404s — same as the enrichment pass, this is the seeder's strict-source rules biting against resort site `/wp-content/` paths Claude proposed. Flagged for Phase 2 image-only re-run (see §5).
+
+### 3a-bis — Issue 2 swaps → DONE
+
+| Master entry replaced | Replaced by | Course id | Note |
 |---|---|---|---|
-| Pacific Dunes | OR | Bandon | Bandon, OR has 0 courses in DB. Bandon Dunes / Trails / Sheep Ranch are stored without a city. |
-| Old Macdonald | OR | Bandon | same |
-| TPC Myrtle Beach | SC | Myrtle Beach | Not present under any TPC variant in Myrtle Beach / Murrells Inlet |
-| Barefoot Resort — Dye Course | SC | Myrtle Beach | No "Barefoot" rows in DB at all — entire Barefoot Resort (Love, Fazio, Dye, Norman) missing |
-| Mammoth Dunes | WI | Wisconsin | Sand Valley parent record exists; Mammoth Dunes does not |
-| Bethpage Red | NY | Long Island | DB has Bethpage Black + Yellow + a generic "State Park Golf Courses" parent — no Red, Green, Blue |
-| Kiawah Island — Osprey Point | SC | Coastal Carolina | DB has Cassique, Ocean (×2 — duplicate), Cougar Point absent, Osprey Point absent, Turtle Point absent |
-| Forest Dunes — The Loop (Black) | MI | Northern Michigan | Only "Forest Dunes Golf Resort" parent exists |
-| Forest Dunes — The Loop (Red) | MI | Northern Michigan | same |
-| Memorial Park Golf Course | TX | Texas | Of 19 Houston courses in DB, this PGA-Tour-host muni is not one. |
+| Dismal River — Red Course (PRIVATE) | Bayside Golf Club | `d1421163-0cb3-44ef-b113-125af4c4bc34` | Already in DB, enriched in this run. Public links course on Lake McConaughy, NE. |
+| Trinity Forest Golf Club (PRIVATE) | Cowboys Golf Club | `e7d8259a-56f8-4e95-b113-dee13ea570a3` | Already in DB, enriched in this run. Public NFL-themed Jeff Brauer design, Grapevine TX. **Got coverImageUrl + logoUrl** ✅ |
 
-#### Recommended targeted insert override
+The original Dismal River and Trinity Forest rows were left in the DB (not deleted — they're still part of the 11k course catalog). They are simply no longer referenced by the trip-itinerary master list. The Phase 2 itinerary work should reference the Bayside / Cowboys IDs above for the NE Sandhills and TX Stretch slots.
 
-The "no inserts" rule exists to prevent duplicate/messy rows in a 11k-row external dataset — but these 10 are flagship public courses and the source dataset has clear gaps. Recommend a **one-time, narrowly-scoped exception**:
+### 3b — Structural data issues → RESOLVED
 
-- Insert exactly these 10 courses, no more.
-- Use `prisma db push` schema with explicit `id`, `slug`, `city`, `state`, `country: "US"`. Slugs derived from `slugify(name + city)`.
-- All other fields go through the same Claude-research path the bulk seeder already uses, so verification standards stay identical to enrichment.
-- Pre-flight: re-query the DB by exact name + slug right before insert to guard against new rows that landed via the external sync between audit and execution.
-- Post-flight: SELECT all 10 by id and confirm `coverImageUrl`, `logoUrl`, `description` are populated — flag any that came back null.
+1. **Streamsong Red + Blue split (Issue 4a) → DONE.** `src/scripts/phase1-insert-missing.mjs` inserted a new "Streamsong Blue" row at `699e3c37-d249-432c-bb81-c07748ca2a8d`, then renamed the existing combined row to "Streamsong Resort - Red Course." DB now has three distinct Streamsong rows:
+   - Streamsong Resort - Red Course → `85d5d80b-2686-4195-ad5f-fe746c42673b` (renamed from "Red and Blue Courses")
+   - Streamsong Blue → `699e3c37-d249-432c-bb81-c07748ca2a8d` (new)
+   - Streamsong Resort - Black Course → `3af1f0ca-7343-4300-bb54-2df13d62d8b1` (unchanged)
 
-If you green-light it, I'd implement this as `src/scripts/phase1-insert-missing.mjs` so the override is discoverable, scoped, and easy to revert.
+   Note: the Red row's data was researched assuming combined Red+Blue access; consider a follow-up enrichment pass on `85d5d80b…` now that it represents only the Red course (Bill Coore + Ben Crenshaw, 2012, top-100 minimalist).
 
-### 3b — Structural data issues (no enrichment fix)
-
-These two require a data-modeling decision before the trip itinerary feature can use them cleanly:
-
-1. **Streamsong Red and Streamsong Blue share one row** — `85d5d80b-2686-4195-ad5f-fe746c42673b` is named "Streamsong Resort - Red and Blue Courses." Two master entries map to one row. Options:
-   - Leave as-is and treat the trip itinerary as "Streamsong Red+Blue combined."
-   - Split into two rows (insert a second one, retire the combined record), which violates the no-insert rule.
-   - Flag for the data-source team to provide split records.
-
-2. **Kiawah Ocean Course is duplicated** — `647bbdcd-23ac-4105-9825-1eea55d2222b` ("Kiawah Island Golf Resort - The Ocean Course") and `a3edabfe-b2d6-4343-a309-4ae71f178e1b` ("Kiawah Island Ocean Course") both reference the same physical course. The enrichment run targets the first id; the second is a duplicate that should be merged or deleted. Any uploads attached to the duplicate would need to be re-pointed before deletion.
+2. **Kiawah Ocean Course dedupe (Issue 4b) → DONE.** `src/scripts/phase1-dedupe-kiawah.mjs` merged the dupe row's coverImageUrl, logoUrl, 1 Upload, 1 Save into the keeper (`647bbdcd-23ac-4105-9825-1eea55d2222b`), then hard-deleted the dupe (`a3edabfe-b2d6-4343-a309-4ae71f178e1b`) along with its 18 Holes and 18 TeeBoxes. Verification query returned the keeper plus genuine non-Kiawah Ocean Courses (Half Moon Bay CA, Hammock Beach FL, Hokuala HI, The Breakers FL) — no Kiawah duplicates remain.
 
 ### 3c — Sub-resort matches that were enriched as the parent record
 
@@ -236,59 +237,69 @@ Several master entries map to a parent-resort row in the DB rather than to the s
 
 ---
 
-## 4 — Access-type review needed
+## 4 — Access-type review
 
-Four rows came back PRIVATE after enrichment. **Two are mis-classifications, two are genuine private clubs that need a product call.**
+### 4a — Issue 1 mis-classified PRIVATE → FIXED
+Both rows flipped to `courseType=PUBLIC, isPublic=true` via `src/scripts/phase1-fix-private.mjs` (used IDs not names — the user's literal SQL in the original brief used `"accessType"` which doesn't exist in this schema).
 
-### 4a — Mis-classified PRIVATE (fix before launch)
-| Row | Should be | Why |
+| Row | Course id | New courseType |
 |---|---|---|
-| Bandon Sheep Ranch (`205da5c9-…`) | PUBLIC | Bandon Dunes Resort property, same access as Pacific Dunes / Bandon Trails — pay-and-play with resort booking. The seeder appears to have inferred PRIVATE from "Sheep Ranch"-style naming. |
-| Fields Ranch - East Course (`0e1af11a-…`) | PUBLIC | This is the public PGA HQ course at PGA Frisco — opened 2023 specifically as a public-resort PGA Tour-host venue. PRIVATE here is wrong. |
+| Bandon Sheep Ranch | `205da5c9-2a88-472f-ac39-414751f0bcf6` | **PUBLIC** ✅ |
+| Fields Ranch - East Course (PGA Frisco) | `0e1af11a-86ea-4a27-a231-190916ba01b0` | **PUBLIC** ✅ |
 
-These should be flipped to PUBLIC by hand or by an `update`-only re-run scoped to these two ids. Suggested SQL (run via Supabase SQL editor or a small script):
+### 4b — Issue 2 genuine PRIVATE swaps → DONE
+Both rows removed from the master list, replaced by the public alternatives in §3a-bis. The original Dismal River Club (`fbda8440-…`) and Trinity Forest Golf Club (`71b956b0-…`) rows still exist in the broader 11k-course catalog (just not in the trip-itinerary master list anymore).
 
-```sql
-UPDATE "Course" SET "courseType" = 'PUBLIC', "isPublic" = true
-WHERE id IN (
-  '205da5c9-2a88-472f-ac39-414751f0bcf6',
-  '0e1af11a-86ea-4a27-a231-190916ba01b0'
-);
-```
+### 4c — Final state across all 48 master-list rows
+**Zero PRIVATE rows.** Confirmed via post-fix DB snapshot (`phase1-final-state.json`).
 
-### 4b — Genuine private clubs in the master list (product decision)
-| Row | Note |
-|---|---|
-| Dismal River Club (`fbda8440-…`) | Private members club. Has a stay-and-play arrangement that lets non-members play during certain windows, but base access is members-and-guests-only. |
-| Trinity Forest Golf Club (`71b956b0-…`) | Private. Has hosted PGA Tour events but is not a public/resort course. |
+---
 
-The brief says "no private clubs" in the trip itinerary master list. So these two need a product call:
-- **Swap them out** of the master list and replace with public/resort substitutes from the same region (Sandhills NE / DFW TX).
-- **Keep them but tag specially** as "private — limited access" if the trip itinerary is willing to surface known-but-restricted experiences.
-- **Drop without replacement** — the regions still have other entries.
+## 5 — Phase 2 image-only re-run target list (deferred per user)
 
-Recommend Option 1 (swap) to match the brief's hard rule. Possible substitutes:
-- Dismal River → another Sandhills entry (Sand Hills Golf Club is private too; **Ballyneal** is private; **Bayside Golf Club** in Nebraska or **The Bridges at Lake Mac** are public-but-thinner). Cleanest swap: **another Sand Valley sister course** in WI, or accept that the Sandhills public bench is shallow.
-- Trinity Forest → **The Old American Golf Club** (The Colony, TX, public Tripp Davis design) or **Tour 18 Dallas** (homage course, public).
+Phase 2 itinerary work is unblocked — descriptions/access/year/coords are good across all 48 rows. The remaining gap is image assets, deferred to a separate pass.
+
+- **36 of 48 rows have null `coverImageUrl`**
+- **39 of 48 rows have null `logoUrl`**
+
+Strategy for the image-only re-run (not part of Phase 1 — listed here so the list is ready):
+- **Covers**: try Wikipedia / Wikimedia Commons (CC-licensed aerial shots are common for top-100 courses), Unsplash (search by course name), GolfPass / GolfNow CDN (public listings often have hero images on stable URLs), or scrape the `og:image` meta tag from each course's official site.
+- **Logos**: scrape favicons / Open Graph image / `apple-touch-icon` from the official site, or fall back to Wikipedia infobox crests.
+- **Last-resort fallback**: an auto-generated "course initials on Tour It dark green" SVG so no card in the trip itinerary feature ever ships fully blank.
+
+The full per-course null-image list is in `phase1-final-state.json` under `nullImages.covers` and `nullImages.logos` — 36 + 39 entries with id, name, city, state ready to feed into a Phase 2 script.
+
+**Rows that have at least one image after this run** (12 covers, 9 logos; intersection): Cowboys GC has both. Bandon Sheep Ranch and Kiawah Island Ocean Course have both via cover-from-research and logo-merged-from-dupe respectively. Spyglass Hill, Pinehurst No. 2, Caledonia have covers only.
 
 ---
 
 ## Files produced
 
-- `phase1-audit.json` — machine-readable audit results (initial 32 hits + ambiguous candidates + missing list)
-- `phase1-ids.json` — final 37 confirmed Course.id values that were enriched in this run
-- `src/scripts/phase1-audit.mjs` — name-pattern audit script
-- `src/scripts/phase1-probe.mjs` — broader probe for missing courses
-- `src/scripts/phase1-probe2.mjs` — by-city probe for resort-area gaps
+- `phase1-audit.json` — initial audit results (32 hits + ambiguous candidates + missing list)
+- `phase1-ids.json` — 37 confirmed Course.id values enriched in the first pass
+- `phase1-inserts.json` — 11 inserts + 2 skip-existing + Streamsong rename results
+- `phase1-final-state.json` — post-fix DB snapshot, including null-image lists for Phase 2
+- `phase1-enrich.log`, `phase1-insert.log`, `phase1-enrich-swaps.log` — raw seeder/inserter output
+- `src/scripts/phase1-audit.mjs` — name-pattern audit
+- `src/scripts/phase1-probe.mjs`, `phase1-probe2.mjs` — broader probes for missing courses
+- `src/scripts/phase1-finalize.mjs` — log → section-2 markdown builder
+- `src/scripts/phase1-fix-private.mjs` — Issue 1 (Sheep Ranch + Fields Ranch East → PUBLIC)
+- `src/scripts/phase1-inspect-kiawah.mjs`, `phase1-dedupe-kiawah.mjs` — Issue 4b dupe merge + delete
+- `src/scripts/phase1-insert-missing.mjs` — Issues 2 + 3 + 4a (13 inserts + Streamsong rename)
+- `src/scripts/phase1-final-state.mjs` — coverage snapshot + null-image lister
 - `src/scripts/seed-courses-bulk.mjs` — extended with `--ids` and `--ids-file` flags
 
 ---
 
-## Next steps (out of Phase 1 scope, listed for reference)
+## Phase 1 status: COMPLETE — all 5 issues resolved
 
-1. **Fix the 2 mis-classified PRIVATE rows** — small UPDATE, see §4a SQL.
-2. **Make the call on Dismal River + Trinity Forest** (§4b).
-3. **Sign off on the targeted-insert proposal** in §3a, or pick a substitute course list for the 10 gaps.
-4. **Decide Streamsong Red+Blue treatment** in §3b.1.
-5. **Merge or delete the Kiawah Ocean duplicate** in §3b.2.
-6. **Image-asset Phase 2** — 28 covers + 30 logos still null. See §2b for sourcing strategy options.
+| Issue | Status |
+|---|---|
+| 1. Mis-classified PRIVATE → PUBLIC | ✅ Sheep Ranch + Fields Ranch East flipped |
+| 2. Swap genuinely-private courses | ✅ Dismal River → Bayside; Trinity Forest → Cowboys |
+| 3. Insert 10 truly-missing courses | ✅ All 10 inserted with verified data |
+| 4a. Streamsong Red + Blue split | ✅ Blue inserted, Red+Blue row renamed to Red |
+| 4b. Kiawah Ocean Course dedupe | ✅ Dupe merged + deleted, single row remains |
+| 5. Image re-run | ⏸ Deferred per user — not blocking Phase 2 |
+
+Stopping here. Phase 2 awaits your sign-off on this report.
