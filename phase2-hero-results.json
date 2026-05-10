@@ -1,44 +1,8 @@
 [
   {
-    "slug": "bandon-dunes-marathon",
-    "page": "Bandon, Oregon",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-bandon-dunes-marathon.jpg",
-    "status": "ok"
-  },
-  {
-    "slug": "myrtle-beach-classic",
-    "page": "Myrtle Beach, South Carolina",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-myrtle-beach-classic.jpg",
-    "status": "ok"
-  },
-  {
-    "slug": "nebraska-sandhills",
-    "page": "Sand Hills (Nebraska)",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-nebraska-sandhills.jpg",
-    "status": "ok"
-  },
-  {
-    "slug": "northern-michigan-loop",
-    "page": "Sleeping Bear Dunes National Lakeshore",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-northern-michigan-loop.jpg",
-    "status": "ok"
-  },
-  {
-    "slug": "scottsdale-desert-run",
-    "page": "Scottsdale, Arizona",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-scottsdale-desert-run.jpg",
-    "status": "ok"
-  },
-  {
     "slug": "long-island-loop",
     "page": "Bethpage State Park",
     "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-long-island-loop.jpg",
-    "status": "ok"
-  },
-  {
-    "slug": "streamsong-experience",
-    "page": "Bowling Green, Florida",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-streamsong-experience.jpg",
     "status": "ok"
   }
 ]

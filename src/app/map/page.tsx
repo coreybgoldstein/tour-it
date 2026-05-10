@@ -311,24 +311,33 @@ export default function MapPage() {
 
       fetchByBounds(map);
 
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          if (cancelled) return;
-          const { latitude, longitude } = pos.coords;
-          skipNextMoveRef.current = true;
-          map.flyTo([latitude, longitude], USER_ZOOM, { duration: 1.8 });
+      // If we landed here via ?dart=true (e.g. "Throw Again" from a trip page),
+      // skip the user-location flyTo and stay zoomed out at US-wide instead.
+      const isDartEntry = new URLSearchParams(window.location.search).get("dart") === "true";
 
-          const dot = L.divIcon({
-            html: `<div style="width:14px;height:14px;border-radius:50%;background:#4da862;border:2.5px solid #fff;box-shadow:0 0 0 4px rgba(77,168,98,0.25)"></div>`,
-            className: "",
-            iconSize: [14, 14],
-            iconAnchor: [7, 7],
-          });
-          L.marker([latitude, longitude], { icon: dot, zIndexOffset: 1000 }).addTo(map);
-        },
-        () => {},
-        { enableHighAccuracy: false, timeout: 8000 }
-      );
+      if (isDartEntry) {
+        skipNextMoveRef.current = true;
+        map.flyTo([39.5, -98.35], 3, { duration: 0.6 });
+      } else {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (cancelled) return;
+            const { latitude, longitude } = pos.coords;
+            skipNextMoveRef.current = true;
+            map.flyTo([latitude, longitude], USER_ZOOM, { duration: 1.8 });
+
+            const dot = L.divIcon({
+              html: `<div style="width:14px;height:14px;border-radius:50%;background:#4da862;border:2.5px solid #fff;box-shadow:0 0 0 4px rgba(77,168,98,0.25)"></div>`,
+              className: "",
+              iconSize: [14, 14],
+              iconAnchor: [7, 7],
+            });
+            L.marker([latitude, longitude], { icon: dot, zIndexOffset: 1000 }).addTo(map);
+          },
+          () => {},
+          { enableHighAccuracy: false, timeout: 8000 }
+        );
+      }
 
       map.on("moveend", () => {
         if (skipNextMoveRef.current) { skipNextMoveRef.current = false; return; }
@@ -677,10 +686,26 @@ export default function MapPage() {
                 WebkitBackdropFilter: "blur(6px)",
               }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="#4da862" strokeWidth="1.5" />
-                <circle cx="12" cy="12" r="6" stroke="#4da862" strokeWidth="1.5" />
-                <circle cx="12" cy="12" r="2.5" fill="#4da862" />
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                {/* Outer wire / board edge */}
+                <circle cx="12" cy="12" r="11" fill="#0a0a0a" />
+                {/* Cream number band */}
+                <circle cx="12" cy="12" r="10" fill="#f4ead2" />
+                {/* Playing area */}
+                <circle cx="12" cy="12" r="9" fill="#111" />
+                {/* 8-wedge dividers (4 lines = 8 segments) */}
+                <g stroke="#52525b" strokeWidth="0.5" strokeLinecap="round">
+                  <line x1="12" y1="3"    x2="12"    y2="21" />
+                  <line x1="3"  y1="12"   x2="21"    y2="12" />
+                  <line x1="4.93" y1="4.93"  x2="19.07" y2="19.07" />
+                  <line x1="19.07" y1="4.93" x2="4.93"  y2="19.07" />
+                </g>
+                {/* Triple ring */}
+                <circle cx="12" cy="12" r="4.6" fill="none" stroke="#dc2626" strokeWidth="0.9" />
+                {/* Green bull */}
+                <circle cx="12" cy="12" r="2.4" fill="#16a34a" />
+                {/* Red bullseye */}
+                <circle cx="12" cy="12" r="1.2" fill="#dc2626" />
               </svg>
             </button>
             <span style={{
