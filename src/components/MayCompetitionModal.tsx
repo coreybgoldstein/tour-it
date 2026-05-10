@@ -5,23 +5,104 @@ import { POINT_VALUES, PointAction } from "@/config/points-system";
 
 type Props = { onClose: () => void };
 
-type CompetitionRow = { label: string; display: string; negative?: boolean };
+type Row = { label: string; display: string; negative?: boolean };
+type Group = { title: string; rows: Row[] };
 
-const COMPETITION_POINTS: CompetitionRow[] = [
-  { label: "Upload a clip",                            display: `+${POINT_VALUES[PointAction.UPLOAD_CLIP]} pts` },
-  { label: "First clip ever at a course (bonus)",      display: `+${POINT_VALUES[PointAction.UPLOAD_FIRST_FOR_COURSE]} pts` },
-  { label: "Upload a full-hole series",                display: `+${POINT_VALUES[PointAction.UPLOAD_SERIES]} pts` },
-  { label: "Intel quality bonus (club, wind, note)",   display: "+4 to +10 pts" },
-  { label: "Add a hole photo",                         display: `+${POINT_VALUES[PointAction.ADD_HOLE_PHOTO]} pts` },
-  { label: "Add a course cover photo",                 display: `+${POINT_VALUES[PointAction.ADD_COVER_PHOTO]} pts` },
-  { label: "Write a course description",               display: `+${POINT_VALUES[PointAction.ADD_COURSE_DESCRIPTION]} pts` },
-  { label: "Complete a course's full profile",         display: `+${POINT_VALUES[PointAction.COURSE_PROFILE_COMPLETE]} pts` },
-  { label: "Like received on your clip",               display: `+${POINT_VALUES[PointAction.LIKE_RECEIVED]} pts` },
-  { label: "Comment received on your clip",            display: `+${POINT_VALUES[PointAction.COMMENT_RECEIVED]} pts` },
-  { label: "New follower",                             display: `+${POINT_VALUES[PointAction.FOLLOW_RECEIVED]} pts` },
-  { label: "3-week upload streak",                     display: `+${POINT_VALUES[PointAction.STREAK_3_WEEKS]} pts` },
-  { label: "Level up",                                 display: `+${POINT_VALUES[PointAction.LEVEL_UP]} pts` },
-  { label: "Rank promotion (LOCAL → LEGEND)",          display: "+100 to +1000 pts" },
+const fmt = (n: number) => `+${n} pts`;
+const fmtNeg = (n: number) => `${n} pts`;
+
+// Source-of-truth for every action lives in src/config/points-system.ts.
+// Pulling values from POINT_VALUES so this list never drifts.
+const COMPETITION_GROUPS: Group[] = [
+  {
+    title: "Content & Uploads",
+    rows: [
+      { label: "Upload a clip",                          display: fmt(POINT_VALUES[PointAction.UPLOAD_CLIP]) },
+      { label: "First clip ever at a course (bonus)",    display: fmt(POINT_VALUES[PointAction.UPLOAD_FIRST_FOR_COURSE]) },
+      { label: "Upload a full-hole series",              display: fmt(POINT_VALUES[PointAction.UPLOAD_SERIES]) },
+      { label: "Intel quality bonus (club, wind, note)", display: "+4 to +10 pts" },
+      { label: "Add a hole photo",                       display: fmt(POINT_VALUES[PointAction.ADD_HOLE_PHOTO]) },
+    ],
+  },
+  {
+    title: "Course Data Contribution",
+    rows: [
+      { label: "Add a course cover photo",        display: fmt(POINT_VALUES[PointAction.ADD_COVER_PHOTO]) },
+      { label: "Add a course logo",               display: fmt(POINT_VALUES[PointAction.ADD_COURSE_LOGO]) },
+      { label: "Write a course description",      display: fmt(POINT_VALUES[PointAction.ADD_COURSE_DESCRIPTION]) },
+      { label: "Add year established",            display: fmt(POINT_VALUES[PointAction.ADD_YEAR_ESTABLISHED]) },
+      { label: "Add website URL",                 display: fmt(POINT_VALUES[PointAction.ADD_WEBSITE_URL]) },
+      { label: "Add course type",                 display: fmt(POINT_VALUES[PointAction.ADD_COURSE_TYPE]) },
+      { label: "Add zip code",                    display: fmt(POINT_VALUES[PointAction.ADD_ZIP_CODE]) },
+      { label: "Complete a course's full profile (bonus)", display: fmt(POINT_VALUES[PointAction.COURSE_PROFILE_COMPLETE]) },
+    ],
+  },
+  {
+    title: "Scorecard & Rounds",
+    rows: [
+      { label: "Add hole par",                        display: fmt(POINT_VALUES[PointAction.ADD_HOLE_PAR]) },
+      { label: "Add hole yardage",                    display: fmt(POINT_VALUES[PointAction.ADD_HOLE_YARDAGE]) },
+      { label: "Complete a scorecard",                display: fmt(POINT_VALUES[PointAction.SCORECARD_COMPLETE]) },
+      { label: "First scorecard for a course",        display: fmt(POINT_VALUES[PointAction.FIRST_SCORECARD_FOR_COURSE]) },
+      { label: "Log your first round (one-time)",     display: fmt(POINT_VALUES[PointAction.LOG_FIRST_ROUND]) },
+      { label: "Log a complete round",                display: fmt(POINT_VALUES[PointAction.LOG_COMPLETE_ROUND]) },
+    ],
+  },
+  {
+    title: "Social",
+    rows: [
+      { label: "Like received on your clip",       display: fmt(POINT_VALUES[PointAction.LIKE_RECEIVED]) },
+      { label: "Comment received on your clip",    display: fmt(POINT_VALUES[PointAction.COMMENT_RECEIVED]) },
+      { label: "New follower",                     display: fmt(POINT_VALUES[PointAction.FOLLOW_RECEIVED]) },
+    ],
+  },
+  {
+    title: "Onboarding (one-time)",
+    rows: [
+      { label: "Sign up",                          display: fmt(POINT_VALUES[PointAction.SIGNUP]) },
+      { label: "Complete your profile",            display: fmt(POINT_VALUES[PointAction.COMPLETE_PROFILE]) },
+      { label: "Enable push notifications",        display: fmt(POINT_VALUES[PointAction.ENABLE_NOTIFICATIONS]) },
+    ],
+  },
+  {
+    title: "Like Milestones (one-time)",
+    rows: [
+      { label: "10 total likes received",          display: fmt(POINT_VALUES[PointAction.MILESTONE_10_LIKES]) },
+      { label: "100 total likes received",         display: fmt(POINT_VALUES[PointAction.MILESTONE_100_LIKES]) },
+      { label: "1,000 total likes received",       display: fmt(POINT_VALUES[PointAction.MILESTONE_1000_LIKES]) },
+    ],
+  },
+  {
+    title: "Upload Streaks (one-time)",
+    rows: [
+      { label: "3-week streak",   display: fmt(POINT_VALUES[PointAction.STREAK_3_WEEKS]) },
+      { label: "8-week streak",   display: fmt(POINT_VALUES[PointAction.STREAK_8_WEEKS]) },
+      { label: "12-week streak",  display: fmt(POINT_VALUES[PointAction.STREAK_12_WEEKS]) },
+      { label: "26-week streak",  display: fmt(POINT_VALUES[PointAction.STREAK_26_WEEKS]) },
+      { label: "52-week streak",  display: fmt(POINT_VALUES[PointAction.STREAK_52_WEEKS]) },
+    ],
+  },
+  {
+    title: "Referrals",
+    rows: [
+      { label: "Friend signs up with your link",       display: fmt(POINT_VALUES[PointAction.REFERRAL_SIGNUP]) },
+      { label: "Friend posts their first clip",        display: fmt(POINT_VALUES[PointAction.REFERRAL_FIRST_UPLOAD]) },
+    ],
+  },
+  {
+    title: "Progression",
+    rows: [
+      { label: "Level up",                              display: fmt(POINT_VALUES[PointAction.LEVEL_UP]) },
+      { label: "Rank promotion (LOCAL → LEGEND)",       display: "+100 to +1,000 pts" },
+    ],
+  },
+  {
+    title: "Deductions",
+    rows: [
+      { label: "Like removed from your clip",  display: fmtNeg(POINT_VALUES[PointAction.UNLIKE_RECEIVED]),  negative: true },
+      { label: "Clip deleted",                 display: fmtNeg(POINT_VALUES[PointAction.UPLOAD_DELETED]),   negative: true },
+    ],
+  },
 ];
 
 export default function MayCompetitionModal({ onClose }: Props) {
@@ -110,21 +191,30 @@ export default function MayCompetitionModal({ onClose }: Props) {
 
           {/* How Points Work */}
           <Section title="How Points Work">
-            <div style={{ display: "flex", flexDirection: "column", gap: 0, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, overflow: "hidden", marginTop: 4 }}>
-              {COMPETITION_POINTS.map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "10px 14px",
-                    borderBottom: i < COMPETITION_POINTS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                  }}
-                >
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)" }}>
-                    {item.label}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 4 }}>
+              {COMPETITION_GROUPS.map((group) => (
+                <div key={group.title}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 6, paddingLeft: 2 }}>
+                    {group.title}
                   </div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: item.negative ? "rgba(240,100,100,0.8)" : "#4da862", flexShrink: 0, marginLeft: 12 }}>
-                    {item.display}
+                  <div style={{ display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, overflow: "hidden" }}>
+                    {group.rows.map((item, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "10px 14px",
+                          borderBottom: i < group.rows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                        }}
+                      >
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)" }}>
+                          {item.label}
+                        </div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: item.negative ? "rgba(240,100,100,0.8)" : "#4da862", flexShrink: 0, marginLeft: 12 }}>
+                          {item.display}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
