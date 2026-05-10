@@ -18,7 +18,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync, statSync } from "fs";
+import { extname } from "path";
 
 dotenv.config();
 const sb = createClient(
@@ -51,11 +52,12 @@ const UA = "TourItGolf/1.0 (https://touritgolf.com; coreybgoldstein@gmail.com)";
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const out = { force: false, onlySlug: null, url: null };
+  const out = { force: false, onlySlug: null, url: null, file: null };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--force") out.force = true;
     if (args[i] === "--slug" && args[i + 1]) out.onlySlug = args[i + 1];
     if (args[i] === "--url" && args[i + 1]) out.url = args[i + 1];
+    if (args[i] === "--file" && args[i + 1]) out.file = args[i + 1];
   }
   return out;
 }
@@ -105,6 +107,25 @@ async function uploadToSupabase(imageUrl, slug) {
   return data.publicUrl;
 }
 
+async function uploadLocalFile(filePath, slug) {
+  statSync(filePath); // throws if missing
+  const buf = readFileSync(filePath);
+  const ext = extname(filePath).slice(1).toLowerCase().replace("jpeg", "jpg") || "jpg";
+  const ct =
+    ext === "png"  ? "image/png"  :
+    ext === "webp" ? "image/webp" :
+    ext === "svg"  ? "image/svg+xml" :
+                      "image/jpeg";
+  const path = `course-images/itinerary-${slug}.${ext}`;
+  const { error } = await sb.storage.from("tour-it-photos").upload(path, buf, {
+    contentType: ct,
+    upsert: true,
+  });
+  if (error) throw new Error(`Storage upload: ${error.message}`);
+  const { data } = sb.storage.from("tour-it-photos").getPublicUrl(path);
+  return data.publicUrl;
+}
+
 async function main() {
   const args = parseArgs();
   console.log("\n🖼  Tour It — Itinerary hero images from Wikipedia");
@@ -128,8 +149,24 @@ async function main() {
   for (const it of targets) {
     let success = false;
 
-    // --url override: skip Wikipedia entirely and use the user-provided image
-    if (args.url && (args.onlySlug === it.slug || targets.length === 1)) {
+    // --file override: read local file, upload to Supabase
+    if (args.file && (args.onlySlug === it.slug || targets.length === 1)) {
+      process.stdout.write(`  ${it.slug.padEnd(30)} ← (file) ${args.file.padEnd(50)} `);
+      try {
+        const publicUrl = await uploadLocalFile(args.file, it.slug);
+        const { error: upErr } = await sb
+          .from("TripItinerary")
+          .update({ heroImageUrl: publicUrl, updatedAt: new Date().toISOString() })
+          .eq("id", it.id);
+        if (upErr) throw upErr;
+        console.log(`✅  ${publicUrl.slice(publicUrl.lastIndexOf("/") + 1)}`);
+        results.push({ slug: it.slug, page: "(--file override)", url: publicUrl, status: "ok" });
+        success = true;
+      } catch (e) {
+        console.log(`✗  ${e.message}`);
+      }
+    } else if (args.url && (args.onlySlug === it.slug || targets.length === 1)) {
+      // --url override: skip Wikipedia entirely and use the user-provided image
       process.stdout.write(`  ${it.slug.padEnd(30)} ← ${args.url.slice(0, 60).padEnd(60)} `);
       try {
         const publicUrl = await uploadToSupabase(args.url, it.slug);
