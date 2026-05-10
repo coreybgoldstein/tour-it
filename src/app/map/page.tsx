@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { findClosestItinerary, type ItineraryCentroid } from "@/lib/geo";
 
 type MapCourse = {
   id: string;
@@ -64,6 +65,13 @@ export default function MapPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const cardStripRef = useRef<HTMLDivElement>(null);
 
+  // Dart-throw state (additive — Phase 3B)
+  const [dartMode, setDartMode] = useState(false);
+  const [dartPhase, setDartPhase] = useState<"idle" | "aiming" | "thrown" | "revealing">("idle");
+  const [dartPosition, setDartPosition] = useState<{ x: number; y: number } | null>(null);
+  const [dartResult, setDartResult] = useState<ItineraryCentroid | null>(null);
+  const [itineraries, setItineraries] = useState<ItineraryCentroid[]>([]);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -73,6 +81,20 @@ export default function MapPage() {
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Fetch itinerary centroids + auto-open dart mode if ?dart=true
+  useEffect(() => {
+    fetch("/api/itineraries/centroids")
+      .then((r) => r.json())
+      .then((data: ItineraryCentroid[]) => setItineraries(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("centroids fetch error:", err));
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("dart") === "true") {
+      setDartMode(true);
+      setDartPhase("aiming");
+    }
   }, []);
 
   const fetchByBounds = useCallback(async (map: any) => {
@@ -348,6 +370,35 @@ export default function MapPage() {
         .map-search-input { background: none; border: none; outline: none; font-family: 'Outfit', sans-serif; font-size: 14px; color: #fff; flex: 1; min-width: 0; }
         .map-search-input::placeholder { color: rgba(255,255,255,0.3); }
         .suggest-item:active { background: rgba(255,255,255,0.06) !important; }
+
+        /* Phase 3B — dart-throw animations */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes dart-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(77,168,98,0); }
+          50%       { box-shadow: 0 0 0 8px rgba(77,168,98,0.2); }
+        }
+        @keyframes crosshair-drift {
+          0%   { transform: translate(0px, 0px); }
+          20%  { transform: translate(18px, -12px); }
+          40%  { transform: translate(-10px, 20px); }
+          60%  { transform: translate(22px, 8px); }
+          80%  { transform: translate(-15px, -18px); }
+          100% { transform: translate(0px, 0px); }
+        }
+        @keyframes dart-bounce {
+          0%   { transform: scale(1.4) translateY(-8px); }
+          60%  { transform: scale(0.95) translateY(0); }
+          80%  { transform: scale(1.05) translateY(-2px); }
+          100% { transform: scale(1.0) translateY(0); }
+        }
+        @keyframes ripple-out {
+          0%   { transform: scale(0); opacity: 0.6; }
+          100% { transform: scale(4); opacity: 0; }
+        }
+        @keyframes reveal-up {
+          from { transform: translateY(100%); }
+          to   { transform: translateY(0); }
+        }
       `}</style>
 
       <div style={{ position: "fixed", inset: 0, background: "#07100a", display: "flex", flexDirection: "column" }}>
@@ -488,6 +539,7 @@ export default function MapPage() {
           <div style={{
             position: "absolute", bottom: 80, left: 0, right: 0, zIndex: 500,
             paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            display: dartPhase === "revealing" ? "none" : "block",
           }}>
             <div
               ref={cardStripRef}
@@ -551,6 +603,313 @@ export default function MapPage() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* ── Phase 3B: Dart-throw UX ───────────────────────────────────── */}
+
+        {/* A. Dart button — hidden once dart mode opens */}
+        {!dartMode && (
+          <div style={{
+            position: "absolute",
+            top: 140,
+            right: 16,
+            zIndex: 490,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 4,
+            pointerEvents: "all",
+          }}>
+            <button
+              onClick={() => { setDartMode(true); setDartPhase("aiming"); }}
+              aria-label="Throw a dart"
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: "50%",
+                background: "rgba(7,16,10,0.92)",
+                border: "1px solid rgba(77,168,98,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                animation: "dart-pulse 1.2s ease-in-out 3",
+                backdropFilter: "blur(6px)",
+                WebkitBackdropFilter: "blur(6px)",
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="#4da862" strokeWidth="1.5" />
+                <circle cx="12" cy="12" r="6" stroke="#4da862" strokeWidth="1.5" />
+                <circle cx="12" cy="12" r="2.5" fill="#4da862" />
+              </svg>
+            </button>
+            <span style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 9,
+              color: "#4da862",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+              textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+            }}>
+              Throw a Dart
+            </span>
+          </div>
+        )}
+
+        {/* B. Aiming overlay + crosshair */}
+        {dartMode && dartPhase === "aiming" && (
+          <div
+            onClick={(e) => {
+              if (!mapContainerRef.current) return;
+              const rect = mapContainerRef.current.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              setDartPosition({ x, y });
+              setDartPhase("thrown");
+
+              const L = (window as any)._leafletL;
+              if (L && mapRef.current && itineraries.length > 0) {
+                const containerPoint = L.point(x, y);
+                const latlng = mapRef.current.containerPointToLatLng(containerPoint);
+                const wobbleLat = latlng.lat + (Math.random() - 0.5) * 1.0;
+                const wobbleLng = latlng.lng + (Math.random() - 0.5) * 1.0;
+                const result = findClosestItinerary(wobbleLat, wobbleLng, itineraries);
+                setDartResult(result);
+
+                fetch(`/api/itineraries/${result.id}/throw`, { method: "POST" }).catch(() => {});
+
+                setTimeout(() => setDartPhase("revealing"), 700);
+              } else {
+                // Centroids haven't loaded yet — bail out gracefully
+                setDartMode(false);
+                setDartPhase("idle");
+                setDartPosition(null);
+              }
+            }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 600,
+              background: "rgba(7,16,10,0.15)",
+              cursor: "crosshair",
+            }}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setDartMode(false);
+                setDartPhase("idle");
+              }}
+              aria-label="Cancel"
+              style={{
+                position: "absolute",
+                top: "max(env(safe-area-inset-top, 0px), 12px)",
+                right: 16,
+                width: 32, height: 32,
+                borderRadius: "50%",
+                background: "rgba(7,16,10,0.85)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                color: "#fff",
+                fontSize: 16,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 10,
+              }}
+            >✕</button>
+
+            <div style={{
+              position: "absolute",
+              top: "18%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 10,
+              color: "rgba(255,255,255,0.6)",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              pointerEvents: "none",
+              whiteSpace: "nowrap",
+              textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+            }}>
+              Tap to throw
+            </div>
+
+            <div style={{
+              position: "absolute",
+              top: "45%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              animation: "crosshair-drift 2.8s ease-in-out infinite",
+              pointerEvents: "none",
+            }}>
+              <div style={{ position: "relative", width: 60, height: 60, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ position: "absolute", width: 60, height: 60, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.4)" }} />
+                <div style={{ position: "absolute", width: 30, height: 30, borderRadius: "50%", border: "1.5px solid rgba(77,168,98,0.6)" }} />
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4da862" }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* C. Dart landing — ripple + dart icon */}
+        {dartMode && dartPhase === "thrown" && dartPosition && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 600, pointerEvents: "none" }}>
+            <div style={{
+              position: "absolute",
+              left: dartPosition.x - 20,
+              top: dartPosition.y - 20,
+              width: 40, height: 40,
+              borderRadius: "50%",
+              border: "2px solid #4da862",
+              animation: "ripple-out 600ms ease-out forwards",
+            }} />
+            <div style={{
+              position: "absolute",
+              left: dartPosition.x - 12,
+              top: dartPosition.y - 28,
+              animation: "dart-bounce 400ms cubic-bezier(0.34,1.56,0.64,1) forwards",
+            }}>
+              <svg width="24" height="28" viewBox="0 0 24 28" fill="none">
+                <path d="M12 2 L16 10 L12 8 L8 10 Z" fill="#4da862" />
+                <rect x="11" y="8" width="2" height="16" fill="#4da862" opacity="0.7" />
+                <circle cx="12" cy="26" r="2" fill="#4da862" />
+              </svg>
+            </div>
+          </div>
+        )}
+
+        {/* D. Reveal sheet */}
+        {dartMode && dartPhase === "revealing" && dartResult && (
+          <>
+            <div
+              onClick={() => { setDartMode(false); setDartPhase("idle"); setDartResult(null); setDartPosition(null); }}
+              style={{ position: "absolute", inset: 0, zIndex: 601 }}
+            />
+            <div style={{
+              position: "absolute",
+              bottom: 0, left: 0, right: 0,
+              zIndex: 602,
+              background: "#0e1a13",
+              borderRadius: "20px 20px 0 0",
+              border: "1px solid rgba(77,168,98,0.25)",
+              padding: "20px 20px",
+              paddingBottom: "calc(20px + env(safe-area-inset-bottom, 0px))",
+              animation: "reveal-up 380ms cubic-bezier(0.34,1.56,0.64,1) forwards",
+            }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)", margin: "0 auto 20px" }} />
+
+              <div style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 10,
+                color: "#4da862",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                marginBottom: 10,
+              }}>
+                🎯 Your dart landed on...
+              </div>
+
+              <div style={{
+                display: "inline-block",
+                border: "1px solid rgba(77,168,98,0.4)",
+                borderRadius: 20,
+                padding: "3px 10px",
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 10,
+                color: "#4da862",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                marginTop: 4,
+                marginBottom: 16,
+              }}>
+                {dartResult.vibeTag.replace(/_/g, " ")}
+              </div>
+
+              <div style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 26, fontWeight: 700, color: "#fff",
+                lineHeight: 1.2, marginBottom: 6,
+              }}>
+                {dartResult.name}
+              </div>
+
+              <div style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 14, color: "rgba(255,255,255,0.65)",
+                marginBottom: 16, lineHeight: 1.5,
+              }}>
+                {dartResult.tagline}
+              </div>
+
+              <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+                {[`${dartResult.durationDays} ${dartResult.durationDays === 1 ? "Day" : "Days"}`, dartResult.costBand].map((p) => (
+                  <div key={p} style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 20,
+                    padding: "4px 12px",
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: 12,
+                    color: "rgba(255,255,255,0.7)",
+                  }}>{p}</div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => router.push(`/trip-ideas/${dartResult.slug}`)}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  background: "#2d7a42",
+                  border: "1px solid #4da862",
+                  borderRadius: 12,
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: "#fff",
+                  cursor: "pointer",
+                  marginBottom: 10,
+                }}
+              >
+                See the Itinerary →
+              </button>
+
+              <button
+                onClick={() => {
+                  setDartResult(null);
+                  setDartPosition(null);
+                  setDartPhase("aiming");
+                }}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: 12,
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 14,
+                  color: "rgba(255,255,255,0.5)",
+                  cursor: "pointer",
+                  marginBottom: 16,
+                }}
+              >
+                Throw Again
+              </button>
+
+              <div style={{
+                textAlign: "center",
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 11,
+                color: "rgba(255,255,255,0.25)",
+              }}>
+                Thrown {dartResult.dartThrowCount.toLocaleString()} {dartResult.dartThrowCount === 1 ? "time" : "times"}
+              </div>
+            </div>
+          </>
         )}
 
         <BottomNav />

@@ -886,6 +886,7 @@ model TripItinerary {
   latitude        Float
   longitude       Float
   region          String
+  dartThrowCount  Int      @default(0)
   stops           TripItineraryStop[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
