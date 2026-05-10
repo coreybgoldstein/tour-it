@@ -1416,8 +1416,31 @@ export default function TripPage() {
       {editOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setEditOpen(false)}>
           <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 20px 40px", maxHeight: "90vh", overflowY: "auto" }}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 18px" }} />
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 18 }}>Edit Trip</div>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 14px" }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, gap: 12 }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Edit Trip</div>
+              <button
+                onClick={saveEdit}
+                disabled={!editName.trim() || saving}
+                style={{
+                  background: (!editName.trim() || saving) ? "rgba(77,168,98,0.18)" : "#2d7a42",
+                  border: `1px solid ${(!editName.trim() || saving) ? "rgba(77,168,98,0.25)" : "#4da862"}`,
+                  borderRadius: 99,
+                  padding: "8px 18px",
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "#fff",
+                  cursor: (!editName.trim() || saving) ? "not-allowed" : "pointer",
+                  opacity: (!editName.trim() || saving) ? 0.6 : 1,
+                  letterSpacing: "0.02em",
+                  flexShrink: 0,
+                  boxShadow: (!editName.trim() || saving) ? "none" : "0 2px 10px rgba(45,122,66,0.4)",
+                }}
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {/* Trip photo */}
               <div>
@@ -1450,21 +1473,20 @@ export default function TripPage() {
                 <DateRangePicker startDate={editStart} endDate={editEnd} onChange={(s, e) => { setEditStart(s); setEditEnd(e); }} />
               </div>
             </div>
-            <button onClick={saveEdit} disabled={!editName.trim() || saving} style={{ width: "100%", marginTop: 20, background: "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: (!editName.trim() || saving) ? 0.5 : 1 }}>
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-            {confirmDelete ? (
-              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>Cancel</button>
-                <button onClick={handleDeleteTrip} disabled={deletingTrip} style={{ flex: 1, background: "rgba(200,60,60,0.12)", border: "1px solid rgba(200,60,60,0.3)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(220,100,100,0.9)", cursor: "pointer" }}>
-                  {deletingTrip ? "Deleting…" : "Confirm Delete"}
+            <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              {confirmDelete ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => setConfirmDelete(false)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>Cancel</button>
+                  <button onClick={handleDeleteTrip} disabled={deletingTrip} style={{ flex: 1, background: "rgba(200,60,60,0.12)", border: "1px solid rgba(200,60,60,0.3)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(220,100,100,0.9)", cursor: "pointer" }}>
+                    {deletingTrip ? "Deleting…" : "Confirm Delete"}
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setConfirmDelete(true)} style={{ width: "100%", background: "none", border: "1px solid rgba(200,60,60,0.2)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(200,80,80,0.6)", cursor: "pointer" }}>
+                  Delete Trip
                 </button>
-              </div>
-            ) : (
-              <button onClick={() => setConfirmDelete(true)} style={{ width: "100%", marginTop: 10, background: "none", border: "1px solid rgba(200,60,60,0.2)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(200,80,80,0.6)", cursor: "pointer" }}>
-                Delete Trip
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
