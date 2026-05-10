@@ -64,7 +64,8 @@
       "Bash(powershell -Command \"powercfg /change standby-timeout-ac 0; powercfg /change monitor-timeout-ac 0\")",
       "Bash(powershell -Command \"powercfg /SETACVALUEINDEX SCHEME_CURRENT SUB_BUTTONS LIDACTION 0; powercfg /SETACTIVE SCHEME_CURRENT\")",
       "Bash(pm2 logs:*)",
-      "Bash(grep -n \"^}\\\\s*$\" \"src/app/trips/[id]/page.tsx\")"
+      "Bash(grep -n \"^}\\\\s*$\" \"src/app/trips/[id]/page.tsx\")",
+      "Bash(grep -qE \"courses\\\\\\\\n$|GolfCourseAPI scorecard sweep\" top500-scorecards.log)"
     ]
   }
 }
