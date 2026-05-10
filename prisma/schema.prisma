@@ -179,6 +179,7 @@ model User {
   homeCourse       Course?            @relation("HomeCourse", fields: [homeCourseId], references: [id])
   createdTrips     GolfTrip[]         @relation("CreatedTrips")
   tripMemberships  GolfTripMember[]   @relation("TripMemberships")
+  ryderAssignments GolfTripRyderTeam[]
   tripMessages     TripMessage[]
   createdTripGames TripGame[]
   notifications    Notification[]
@@ -555,13 +556,36 @@ model GolfTrip {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
+  // Ryder Cup mode
+  ryderCupEnabled Boolean @default(false)
+  redTeamName     String?
+  blueTeamName    String?
+  redTeamScore    Float   @default(0)
+  blueTeamScore   Float   @default(0)
+
   creator     User             @relation("CreatedTrips", fields: [createdBy], references: [id])
   courses     GolfTripCourse[]
   members     GolfTripMember[]
   messages    TripMessage[]
   games       TripGame[]
+  ryderTeams  GolfTripRyderTeam[]
 
   @@index([createdBy])
+}
+
+model GolfTripRyderTeam {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  team      String   // "RED" | "BLUE"
+  createdAt DateTime @default(now())
+
+  trip      GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId])
+  @@index([tripId])
+  @@index([userId])
 }
 
 model GolfTripCourse {
