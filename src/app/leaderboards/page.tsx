@@ -198,6 +198,28 @@ export default function LeaderboardsPage() {
         </div>
       )}
 
+      {/* Masters-classic "LEADERS" banner — Augusta yellow on deep green */}
+      {!loading && entries.length > 0 && (
+        <div style={{
+          margin: "0 16px 10px",
+          padding: "8px 0 7px",
+          background: "#fbbf24",
+          color: "#1a3d28",
+          fontFamily: "'Playfair Display', serif",
+          fontSize: 15,
+          fontWeight: 700,
+          textAlign: "center",
+          letterSpacing: "0.38em",
+          textTransform: "uppercase",
+          borderRadius: 4,
+          borderTop: "2px solid #d4a017",
+          borderBottom: "2px solid #d4a017",
+          paddingLeft: "0.38em",
+        }}>
+          Leaders
+        </div>
+      )}
+
       {/* List */}
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 60 }}>
@@ -221,8 +243,8 @@ export default function LeaderboardsPage() {
                 onClick={() => router.push(`/profile/${entry.userId}`)}
                 style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 12px", marginBottom: 6, borderRadius: 12, background: isMe ? "rgba(77,168,98,0.08)" : "rgba(255,255,255,0.025)", border: `1px solid ${isMe ? "rgba(77,168,98,0.25)" : "rgba(255,255,255,0.06)"}`, cursor: "pointer" }}
               >
-                {/* Rank slot — trophy for #1, plain number for everyone else */}
-                <div style={{ width: 28, textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: 14, color: "rgba(255,255,255,0.4)", fontWeight: 700, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {/* Rank slot — trophy for #1, Masters-yellow Playfair numeral for everyone else */}
+                <div style={{ width: 28, textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: 15, color: "#fbbf24", fontWeight: 700, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {isFirst ? <TrophyIcon /> : i + 1}
                 </div>
 
