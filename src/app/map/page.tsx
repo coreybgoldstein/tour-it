@@ -830,10 +830,10 @@ export default function MapPage() {
               <div style={{
                 position: "absolute",
                 top: 0, bottom: 0,
-                left: lockedX - 1,
-                width: 2,
+                left: lockedX - 2,
+                width: 4,
                 background: "rgba(220,38,38,0.55)",
-                boxShadow: "0 0 8px rgba(220,38,38,0.4)",
+                boxShadow: "0 0 10px rgba(220,38,38,0.45)",
                 pointerEvents: "none",
               }} />
             )}
@@ -845,10 +845,10 @@ export default function MapPage() {
                 style={{
                   position: "absolute",
                   top: 0, bottom: 0,
-                  width: 3,
+                  width: 5,
                   background: "#4da862",
-                  boxShadow: "0 0 16px rgba(77,168,98,0.85), 0 0 4px rgba(77,168,98,1)",
-                  animation: "sweep-x 1.05s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate, meter-pulse 0.4s ease-in-out infinite",
+                  boxShadow: "0 0 18px rgba(77,168,98,0.9), 0 0 5px rgba(77,168,98,1)",
+                  animation: "sweep-x 1.5s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate, meter-pulse 0.45s ease-in-out infinite",
                   pointerEvents: "none",
                 }}
               />
@@ -861,10 +861,10 @@ export default function MapPage() {
                 style={{
                   position: "absolute",
                   left: 0, right: 0,
-                  height: 3,
+                  height: 5,
                   background: "#4da862",
-                  boxShadow: "0 0 16px rgba(77,168,98,0.85), 0 0 4px rgba(77,168,98,1)",
-                  animation: "sweep-y 0.95s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate, meter-pulse 0.4s ease-in-out infinite",
+                  boxShadow: "0 0 18px rgba(77,168,98,0.9), 0 0 5px rgba(77,168,98,1)",
+                  animation: "sweep-y 1.35s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate, meter-pulse 0.45s ease-in-out infinite",
                   pointerEvents: "none",
                 }}
               />
