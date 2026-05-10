@@ -870,7 +870,8 @@ export default function TripPage() {
           .feed-modal { position: fixed; inset: 0; z-index: 100; background: #000; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
           .feed-modal::-webkit-scrollbar { display: none; }
           .feed-snap { scroll-snap-align: start; scroll-snap-stop: always; height: 100dvh; position: relative; background: #000; flex-shrink: 0; }
-          .section-label { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 10px; }
+          .section-label { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 800; letter-spacing: 0.01em; color: #fff; margin-bottom: 10px; }
+          .section-label .count { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: #4da862; letter-spacing: 0.04em; margin-left: 8px; vertical-align: 2px; }
           .course-card { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
           .course-card:last-child { border-bottom: none; }
           .invite-result { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -1033,7 +1034,7 @@ export default function TripPage() {
         {/* Courses */}
         <div style={{ padding: "20px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div className="section-label" style={{ marginBottom: 0 }}>Courses · {tripCourses.length}</div>
+            <div className="section-label" style={{ marginBottom: 0 }}>Itinerary{tripCourses.length > 0 && <span className="count">{tripCourses.length}</span>}</div>
             <button
               onClick={() => { setAddCourseStep("search"); setCourseSearch(""); setCourseResults([]); setSelectedAddCourse(null); setAddPlayDate(""); setAddTeeTime(""); setAddAccom(""); setAddCourseOpen(true); }}
               style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer" }}
@@ -1126,7 +1127,7 @@ export default function TripPage() {
         {/* Games */}
         <div style={{ padding: "24px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div className="section-label" style={{ marginBottom: 0 }}>Games {games.length > 0 && `· ${games.length}`}</div>
+            <div className="section-label" style={{ marginBottom: 0 }}>Games{games.length > 0 && <span className="count">{games.length}</span>}</div>
             <button
               onClick={openGameCreator}
               style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
@@ -1170,7 +1171,7 @@ export default function TripPage() {
         {/* Trip Clips */}
         <div style={{ padding: "24px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div className="section-label" style={{ marginBottom: 0 }}>Trip Clips · {clips.length}</div>
+            <div className="section-label" style={{ marginBottom: 0 }}>Trip Clips{clips.length > 0 && <span className="count">{clips.length}</span>}</div>
             <button
               onClick={() => router.push(`/upload${primaryCourseId ? `?courseId=${primaryCourseId}&tripId=${id}` : `?tripId=${id}`}`)}
               style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
@@ -2132,8 +2133,8 @@ function RyderCupHero({
   ) => {
     const c = teamColors[team];
     return (
-      <div style={{ flex: 1, padding: "16px 14px 14px", background: c.accentBg, position: "relative", textAlign: align }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.65)", letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 6 }}>
+      <div style={{ flex: 1, padding: "10px 12px 10px", background: c.accentBg, position: "relative", textAlign: align }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.6)", letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 3 }}>
           {team === "RED" ? "Red" : "Blue"}
         </div>
         {isOwner ? (
@@ -2143,18 +2144,18 @@ function RyderCupHero({
             placeholder={placeholder}
             style={{
               width: "100%", background: "transparent", border: "none", outline: "none",
-              fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, color: "#fff",
+              fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#fff",
               textAlign: align, padding: 0,
             }}
           />
         ) : (
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
             {name?.trim() || placeholder}
           </div>
         )}
 
         {/* Score */}
-        <div style={{ marginTop: 14, display: "flex", justifyContent: align === "left" ? "flex-start" : "flex-end" }}>
+        <div style={{ marginTop: 6, display: "flex", justifyContent: align === "left" ? "flex-start" : "flex-end" }}>
           {isEditingScore ? (
             <input
               autoFocus
@@ -2162,16 +2163,16 @@ function RyderCupHero({
               defaultValue={score}
               onBlur={e => { setRyderScore(team, parseFloat(e.target.value)); setEditing(false); }}
               onKeyDown={e => { if (e.key === "Enter") { setRyderScore(team, parseFloat((e.target as HTMLInputElement).value)); setEditing(false); } else if (e.key === "Escape") setEditing(false); }}
-              style={{ width: 90, fontFamily: "'Playfair Display', serif", fontSize: 50, fontWeight: 900, color: "#fff", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(212,160,23,0.5)", borderRadius: 8, textAlign: "center", outline: "none" }}
+              style={{ width: 70, fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 900, color: "#fff", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(212,160,23,0.5)", borderRadius: 6, textAlign: "center", outline: "none" }}
             />
           ) : (
             <div
               onClick={() => isOwner && setEditing(true)}
               style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: 56, fontWeight: 900, color: "#fff", lineHeight: 1,
+                fontSize: 38, fontWeight: 900, color: "#fff", lineHeight: 1,
                 cursor: isOwner ? "pointer" : "default",
-                textShadow: "0 2px 12px rgba(0,0,0,0.5)",
+                textShadow: "0 2px 10px rgba(0,0,0,0.5)",
               }}
             >
               {formatRyderScore(score)}
@@ -2180,27 +2181,27 @@ function RyderCupHero({
         </div>
 
         {/* Member avatars */}
-        <div style={{ marginTop: 12, display: "flex", justifyContent: align === "left" ? "flex-start" : "flex-end", flexWrap: "wrap", gap: 4 }}>
+        <div style={{ marginTop: 8, display: "flex", justifyContent: align === "left" ? "flex-start" : "flex-end", flexWrap: "wrap", gap: 3 }}>
           {teamMembers.length === 0 ? (
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>No players assigned</div>
-          ) : teamMembers.slice(0, 6).map(m => (
-            <div key={m.id} style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "1.5px solid #fff", background: "rgba(0,0,0,0.3)" }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>No players</div>
+          ) : teamMembers.slice(0, 5).map(m => (
+            <div key={m.id} style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", border: "1.5px solid #fff", background: "rgba(0,0,0,0.3)" }}>
               {m.user.avatarUrl
                 ? <img src={m.user.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ margin: "6px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ margin: "5px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               }
             </div>
           ))}
-          {teamMembers.length > 6 && (
-            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>+{teamMembers.length - 6}</div>
+          {teamMembers.length > 5 && (
+            <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#fff" }}>+{teamMembers.length - 5}</div>
           )}
         </div>
 
         {/* Owner score buttons */}
         {isOwner && (
-          <div style={{ marginTop: 12, display: "flex", gap: 6, justifyContent: align === "left" ? "flex-start" : "flex-end" }}>
-            <button onClick={() => updateRyderScore(team, 0.5)} style={{ padding: "6px 11px", borderRadius: 8, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.02em" }}>+ ½</button>
-            <button onClick={() => updateRyderScore(team, 1)}   style={{ padding: "6px 11px", borderRadius: 8, background: "#d4a017", border: "1px solid #fbbf24", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 800, color: "#1a1a1a", cursor: "pointer" }}>+ 1</button>
+          <div style={{ marginTop: 8, display: "flex", gap: 5, justifyContent: align === "left" ? "flex-start" : "flex-end" }}>
+            <button onClick={() => updateRyderScore(team, 0.5)} style={{ padding: "4px 9px", borderRadius: 7, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#fff", cursor: "pointer" }}>+ ½</button>
+            <button onClick={() => updateRyderScore(team, 1)}   style={{ padding: "4px 9px", borderRadius: 7, background: "#d4a017", border: "1px solid #fbbf24", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "#1a1a1a", cursor: "pointer" }}>+ 1</button>
           </div>
         )}
       </div>
@@ -2217,32 +2218,47 @@ function RyderCupHero({
         position: "relative",
       }}>
         {/* Top gold trim */}
-        <div style={{ height: 4, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
+        <div style={{ height: 3, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
 
         {/* Title bar */}
-        <div style={{ background: "#0a0a0a", padding: "8px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 12, fontWeight: 800, color: "#d4a017", letterSpacing: "0.18em", textTransform: "uppercase" }}>🏆 The Ryder Cup</div>
+        <div style={{ background: "#0a0a0a", padding: "5px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 800, color: "#d4a017", letterSpacing: "0.18em", textTransform: "uppercase" }}>The Ryder Cup</div>
           {isOwner && (
-            <button onClick={onEditTeams} style={{ background: "none", border: "none", padding: 0, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(212,160,23,0.85)", cursor: "pointer", letterSpacing: "0.04em" }}>Edit teams</button>
+            <button onClick={onEditTeams} style={{ background: "none", border: "none", padding: 0, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(212,160,23,0.85)", cursor: "pointer", letterSpacing: "0.04em" }}>Edit</button>
           )}
         </div>
 
-        {/* Body — two team panels */}
+        {/* Body — two team panels with trophy badge in the middle */}
         <div style={{ display: "flex", position: "relative" }}>
           {renderTeamSide("RED", trip.redTeamName, "Red Team", trip.redTeamScore ?? 0, redMembers, editingRedScore, setEditingRedScore, "left")}
-          {/* Vertical gold divider */}
-          <div style={{ position: "absolute", top: "10%", bottom: "10%", left: "50%", width: 1, background: "linear-gradient(to bottom, transparent, #d4a017 40%, #d4a017 60%, transparent)", transform: "translateX(-0.5px)" }} />
+          {/* Center trophy badge */}
+          <div style={{
+            position: "absolute",
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 42, height: 42, borderRadius: "50%",
+            background: "radial-gradient(circle at 30% 30%, #fde68a 0%, #d4a017 50%, #92580f 100%)",
+            border: "2px solid #fbbf24",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.3)",
+            zIndex: 2,
+            pointerEvents: "none",
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#7c4a05" stroke="#3d2300" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" fill="none" stroke="#3d2300" strokeWidth="1.4"/>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" fill="none" stroke="#3d2300" strokeWidth="1.4"/>
+              <path d="M4 22h16" stroke="#3d2300" strokeWidth="1.6"/>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" stroke="#3d2300" strokeWidth="1.4" fill="none"/>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" stroke="#3d2300" strokeWidth="1.4" fill="none"/>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" stroke="#3d2300" strokeWidth="1.2"/>
+            </svg>
+          </div>
           {renderTeamSide("BLUE", trip.blueTeamName, "Blue Team", trip.blueTeamScore ?? 0, blueMembers, editingBlueScore, setEditingBlueScore, "right")}
         </div>
 
         {/* Bottom gold trim */}
-        <div style={{ height: 3, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
+        <div style={{ height: 2, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
       </div>
-      {isOwner && (
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: 8 }}>
-          Tap a score to edit · button-tap shortcuts add ½ or 1
-        </div>
-      )}
     </div>
   );
 }
