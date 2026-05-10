@@ -1871,6 +1871,39 @@ export default function TripPage() {
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
                     Enter each hole's difficulty ranking (1 = hardest, 18 = easiest). Found on the scorecard. We'll save these for future games at this course.
                   </div>
+                  {/* Quick path: open the course's scorecard editor in another tab.
+                      Earns +30 SCORECARD_COMPLETE points and propagates to every
+                      future game on this course. */}
+                  <a
+                    href={`/courses/${gameCourseId}?scorecard=edit`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      padding: "10px 14px",
+                      background: "rgba(77,168,98,0.1)",
+                      border: "1px solid rgba(77,168,98,0.3)",
+                      borderRadius: 10,
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: "#4da862",
+                      textDecoration: "none",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span>Open the full scorecard editor →</span>
+                      <span style={{ fontWeight: 400, fontSize: 10, color: "rgba(77,168,98,0.7)", letterSpacing: "0.04em" }}>Earn +30 pts when you complete it · saves for every future game here</span>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15 3 21 3 21 9"/>
+                      <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                  </a>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                     {gameHoleHandicaps.map((rank, i) => (
                       <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "8px 10px" }}>
