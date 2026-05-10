@@ -426,12 +426,12 @@ export default function MapPage() {
           to   { transform: translateY(0); }
         }
         @keyframes sweep-x {
-          0%, 100% { left: 4%; }
-          50%      { left: 96%; }
+          0%, 100% { left: 14%; }
+          50%      { left: 84%; }
         }
         @keyframes sweep-y {
-          0%, 100% { top: 18%; }
-          50%      { top: 78%; }
+          0%, 100% { top: 24%; }
+          50%      { top: 76%; }
         }
         @keyframes meter-pulse {
           0%, 100% { opacity: 0.85; }
@@ -850,11 +850,11 @@ export default function MapPage() {
               </div>
             </div>
 
-            {/* Locked X line (visible during Y phase) */}
+            {/* Locked X line — vertical span constrained to US lat range */}
             {lockedX !== null && (
               <div style={{
                 position: "absolute",
-                top: 0, bottom: 0,
+                top: "22%", bottom: "22%",
                 left: lockedX - 2,
                 width: 4,
                 background: "rgba(220,38,38,0.55)",
@@ -863,13 +863,13 @@ export default function MapPage() {
               }} />
             )}
 
-            {/* X sweeping bar (vertical line moving horizontally) */}
+            {/* X sweeping bar — vertical line, US-height, sweeping over US lng range */}
             {aimAxis === "x" && (
               <div
                 ref={xBarRef}
                 style={{
                   position: "absolute",
-                  top: 0, bottom: 0,
+                  top: "22%", bottom: "22%",
                   width: 5,
                   background: "#4da862",
                   boxShadow: "0 0 18px rgba(77,168,98,0.9), 0 0 5px rgba(77,168,98,1)",
@@ -879,13 +879,13 @@ export default function MapPage() {
               />
             )}
 
-            {/* Y sweeping bar (horizontal line moving vertically) */}
+            {/* Y sweeping bar — horizontal line, US-width, sweeping over US lat range */}
             {aimAxis === "y" && (
               <div
                 ref={yBarRef}
                 style={{
                   position: "absolute",
-                  left: 0, right: 0,
+                  left: "12%", right: "14%",
                   height: 5,
                   background: "#4da862",
                   boxShadow: "0 0 18px rgba(77,168,98,0.9), 0 0 5px rgba(77,168,98,1)",
