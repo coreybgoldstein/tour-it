@@ -673,12 +673,20 @@ export default function TripPage() {
       const par = holes.reduce((sum: number, h: any) => sum + (h.par || 4), 0);
       setGameCoursePar(par);
       const ranks = holes.map((h: any) => h.handicapRank || 0);
-      setGameHoleHandicaps(ranks);
       const hasAnyData = ranks.some((r: number) => r > 0);
       const sortedRanks = [...ranks].sort((a: number, b: number) => a - b);
-      const isValid1to18 = ranks.length === 18 && sortedRanks.every((v: number, i: number) => v === i + 1);
-      setGameHoleHandicapsKnown(isValid1to18);
-      setGameHandicapWarning(hasAnyData && !isValid1to18);
+      const isCompleteSet = ranks.length === 18 && sortedRanks.every((v: number, i: number) => v === i + 1);
+      // Sentinel: ranks are exactly [1, 2, 3, ..., 18] in hole order. That's
+      // a default/never-actually-filled state — real scorecards never have
+      // hole 1 ranked hardest, hole 18 easiest. Treat as unset.
+      const isSequentialSentinel = isCompleteSet && ranks.every((v: number, i: number) => v === i + 1);
+      const isValid = isCompleteSet && !isSequentialSentinel;
+
+      // If sentinel, clear the rankings so the user starts fresh on step 5
+      // instead of seeing 1, 2, 3, ... pre-filled.
+      setGameHoleHandicaps(isSequentialSentinel ? Array(18).fill(0) : ranks);
+      setGameHoleHandicapsKnown(isValid);
+      setGameHandicapWarning((hasAnyData && !isCompleteSet) || isSequentialSentinel);
     } else {
       setGameCoursePar(72);
       setGameHoleHandicaps(Array(18).fill(0));
@@ -1450,30 +1458,14 @@ export default function TripPage() {
                     )}
                   </div>
 
+                  {/* Tee selection removed for now — handleSelectGameCourse
+                      auto-picks the highest-slope tee box behind the scenes
+                      so the slope/rating still feed the handicap math. */}
                   {gameCourseId && (
-                    <>
-                      {gameTeeBoxes.length > 0 ? (
-                        <div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Select Tee</div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            {gameTeeBoxes.map(tb => (
-                              <button key={tb.id} onClick={() => { setGameTeeId(tb.id); setGameTeeSlope(tb.slope ?? 113); setGameTeeRating(tb.rating ?? 72); }}
-                                style={{ padding: "11px 14px", borderRadius: 12, border: `1.5px solid ${gameTeeId === tb.id ? "#4da862" : "rgba(255,255,255,0.08)"}`, background: gameTeeId === tb.id ? "rgba(77,168,98,0.1)" : "rgba(255,255,255,0.03)", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{tb.customLabel || tb.color} Tees</span>
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Slope {tb.slope || "—"} / Rating {tb.rating || "—"}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)", lineHeight: 1.5 }}>
-                          No tee data on file — using par {gameCoursePar}, slope 113. Handicaps will still be relative to each other.
-                        </div>
-                      )}
-                      {gameTeeBoxes.length > 0 && (
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>Par {gameCoursePar} · Slope {gameTeeSlope} · Rating {gameTeeRating}</div>
-                      )}
-                    </>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>
+                      Par {gameCoursePar}
+                      {gameTeeBoxes.length > 0 && ` · Slope ${gameTeeSlope} · Rating ${gameTeeRating}`}
+                    </div>
                   )}
                 </div>
               )}
@@ -1610,7 +1602,7 @@ export default function TripPage() {
                   {gameHandicapWarning && (
                     <div style={{ background: "rgba(255,170,0,0.08)", border: "1px solid rgba(255,170,0,0.25)", borderRadius: 10, padding: "10px 12px" }}>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#ffaa00", lineHeight: 1.5 }}>
-                        This course has hole data but the rankings don't form a complete 1–18 set. Please verify and correct them — accurate rankings are critical for fair stroke allocation.
+                        These rankings don't look right — please update them from the actual scorecard. Each hole should have a unique difficulty rank where 1 = hardest, 18 = easiest (and they're rarely in 1, 2, 3… hole order).
                       </div>
                     </div>
                   )}
