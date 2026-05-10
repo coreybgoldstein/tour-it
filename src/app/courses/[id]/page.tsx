@@ -372,6 +372,7 @@ export default function CourseProfilePage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 const [editDescription, setEditDescription] = useState("");
   const [editWebsite, setEditWebsite] = useState("");
+  const [editHoleCount, setEditHoleCount] = useState<9 | 18>(18);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
@@ -692,6 +693,7 @@ const [editDescription, setEditDescription] = useState("");
     setEditCourseType(course.courseType || "");
     setEditDescription(course.description || "");
     setEditWebsite((course as any).websiteUrl || "");
+    setEditHoleCount(course.holeCount === 9 ? 9 : 18);
     setCoverFile(null);
     setCoverPreview(null);
     setLogoFile(null);
@@ -784,6 +786,7 @@ const [editDescription, setEditDescription] = useState("");
     payload.zipCode = editZip.trim() || null;
     payload.yearEstablished = editYearEstablished ? parseInt(editYearEstablished) : null;
     if (editCourseType) payload.courseType = editCourseType;
+    if (editHoleCount === 9 || editHoleCount === 18) payload.holeCount = editHoleCount;
 
     if (Object.keys(payload).length === 0) {
       setContributing(false);
@@ -1151,7 +1154,7 @@ const [editDescription, setEditDescription] = useState("");
         </div>
       )}
 
-      {/* 18-hole grid — stacked Front 9 / Back 9 */}
+      {/* Holes grid — Front 9 always; Back 9 only on 18-hole courses */}
       <div style={{ padding: courseClips.length === 0 ? "0 16px" : "0 16px", maxWidth: isDesktop ? 600 : undefined }}>
         {courseClips.length === 0 ? (
           <div style={{ textAlign: "center", padding: "28px 20px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -1164,7 +1167,10 @@ const [editDescription, setEditDescription] = useState("");
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            {[{ label: "Front 9", nineHoles: [1,2,3,4,5,6,7,8,9] }, { label: "Back 9", nineHoles: [10,11,12,13,14,15,16,17,18] }].map(({ label, nineHoles }) => {
+            {(course.holeCount === 9
+              ? [{ label: "9 Holes", nineHoles: [1,2,3,4,5,6,7,8,9] }]
+              : [{ label: "Front 9", nineHoles: [1,2,3,4,5,6,7,8,9] }, { label: "Back 9", nineHoles: [10,11,12,13,14,15,16,17,18] }]
+            ).map(({ label, nineHoles }) => {
               const scoutedCount = nineHoles.filter(h => holeClipsMap[h]?.length > 0).length;
               return (
                 <div key={label}>
@@ -1627,6 +1633,19 @@ const [editDescription, setEditDescription] = useState("");
                         <button key={type} onClick={() => setEditCourseType(editCourseType === type ? "" : type)}
                           style={{ flex: 1, background: editCourseType === type ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${editCourseType === type ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, padding: "10px 6px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editCourseType === type ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer" }}>
                           {type === "SEMI_PRIVATE" ? "Semi-Private" : type.charAt(0) + type.slice(1).toLowerCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Holes (9 / 18) */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                    <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Holes</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {([9, 18] as const).map(n => (
+                        <button key={n} onClick={() => setEditHoleCount(n)}
+                          style={{ flex: 1, background: editHoleCount === n ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${editHoleCount === n ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, padding: "10px 6px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editHoleCount === n ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer" }}>
+                          {n} holes
                         </button>
                       ))}
                     </div>
