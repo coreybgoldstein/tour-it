@@ -719,9 +719,14 @@ export default function TripPage() {
       });
       const json = await res.json();
       if (json.game) {
-        setGames(prev => [json.game, ...prev]);
+        // Hydrate courseLogoUrl from tripCourses since the API response
+        // doesn't include it. The list view picks it up on next page load
+        // via the logo lookup; this is just for the immediate view sheet.
+        const logoUrl = tripCourses.find(tc => tc.courseId === gameCourseId)?.course.logoUrl ?? null;
+        const hydrated = { ...json.game, courseLogoUrl: logoUrl };
+        setGames(prev => [hydrated, ...prev]);
         setGameOpen(false);
-        setViewGame(json.game);
+        setViewGame(hydrated);
         setViewGameOpen(true);
       } else {
         setGameError(json.error || "Generation failed. Try again.");
@@ -1725,10 +1730,28 @@ export default function TripPage() {
                 if (isStructured) {
                   return (
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                      {/* Scorecard accuracy note */}
-                      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "9px 12px", display: "flex", alignItems: "flex-start", gap: 8 }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,170,0,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>Verify <span style={{ color: "rgba(255,255,255,0.65)" }}>{viewGame.courseName}</span>'s scorecard is complete and accurate in the course profile for correct stroke allocation.</span>
+                      {/* Scorecard accuracy note + quick edit button */}
+                      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "9px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,170,0,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5, flex: 1, minWidth: 0 }}>Verify <span style={{ color: "rgba(255,255,255,0.65)" }}>{viewGame.courseName}</span>'s scorecard for correct stroke allocation.</span>
+                        <button
+                          onClick={() => router.push(`/courses/${viewGame.courseId}?scorecard=edit`)}
+                          style={{
+                            flexShrink: 0,
+                            background: "rgba(77,168,98,0.12)",
+                            border: "1px solid rgba(77,168,98,0.4)",
+                            borderRadius: 8,
+                            padding: "5px 10px",
+                            fontFamily: "'Outfit', sans-serif",
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: "#4da862",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Check it →
+                        </button>
                       </div>
 
                       {/* Teams */}

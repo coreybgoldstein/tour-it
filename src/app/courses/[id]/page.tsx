@@ -332,6 +332,8 @@ export default function CourseProfilePage() {
   const fromMap = searchParams.get("from") === "map";
   const fromTripIdea = searchParams.get("from") === "trip-idea";
   const tripIdeaSlug = fromTripIdea ? searchParams.get("slug") : null;
+  const scorecardParam = searchParams.get("scorecard");
+  const scorecardAutoOpenedRef = useRef(false);
   const isDesktop = useIsDesktop();
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
@@ -553,6 +555,14 @@ const [editDescription, setEditDescription] = useState("");
         const mapped = holesData.map((h: any) => ({ id: h.id, holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null }));
         setHoles(mapped);
         setEditedHoles(mapped);
+
+        // Deep-link: ?scorecard=1 opens the sheet, ?scorecard=edit opens it
+        // in edit mode. Used by the trip game-detail "Verify scorecard" button.
+        if (scorecardParam && !scorecardAutoOpenedRef.current) {
+          scorecardAutoOpenedRef.current = true;
+          setScorecardOpen(true);
+          if (scorecardParam === "edit") setScorecardEditMode(true);
+        }
       }
 
       const { data: uploads } = await supabase
