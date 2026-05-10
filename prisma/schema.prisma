@@ -589,16 +589,19 @@ model GolfTripRyderTeam {
 }
 
 model GolfTripCourse {
-  id            String   @id @default(cuid())
-  tripId        String
-  courseId      String
-  playDate      String?
-  teeTime       String?
-  accommodation String?
-  sortOrder     Int      @default(0)
-  createdAt     DateTime @default(now())
+  id                String   @id @default(cuid())
+  tripId            String
+  courseId          String
+  // Paired 9+9 round: when set, this stop plays as 18 holes — front 9 from
+  // courseId, back 9 from secondaryCourseId. Both courses must be holeCount=9.
+  secondaryCourseId String?
+  playDate          String?
+  teeTime           String?
+  accommodation     String?
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
 
-  trip          GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  trip              GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   @@index([tripId])
 }
