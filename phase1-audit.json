@@ -1,0 +1,939 @@
+{
+  "runAt": "2026-05-10T00:13:58.437Z",
+  "masterCount": 48,
+  "found": [
+    {
+      "display": "Pebble Beach Golf Links",
+      "region": "Pacific Coast / Bandon",
+      "id": "b2d7acf5-7186-4edd-bcee-8def174a0d01",
+      "name": "Pebble Beach Golf Course",
+      "city": "Pebble Beach",
+      "state": "CA",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Pebble Beach",
+      "ambiguous": false
+    },
+    {
+      "display": "Spyglass Hill Golf Course",
+      "region": "Pacific Coast / Bandon",
+      "id": "1ff5e051-b567-4893-85d7-86e927b749e4",
+      "name": "Spyglass Hill Golf Course",
+      "city": "Monterey County",
+      "state": "CA",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Spyglass",
+      "ambiguous": false
+    },
+    {
+      "display": "Bandon Dunes",
+      "region": "Pacific Coast / Bandon",
+      "id": "519a24de-0984-41d8-bf2c-e848220570a1",
+      "name": "Bandon Dunes Golf Resort",
+      "city": "Coos County",
+      "state": "OR",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Bandon Dunes",
+      "ambiguous": false
+    },
+    {
+      "display": "Bandon Trails",
+      "region": "Pacific Coast / Bandon",
+      "id": "d8f27d04-64cf-4c0b-a4b3-6e16837c2af2",
+      "name": "Bandon Trails",
+      "city": "Coos County",
+      "state": "OR",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Bandon Trails",
+      "ambiguous": false
+    },
+    {
+      "display": "Sheep Ranch",
+      "region": "Pacific Coast / Bandon",
+      "id": "205da5c9-2a88-472f-ac39-414751f0bcf6",
+      "name": "Bandon Sheep Ranch",
+      "city": "Coos County",
+      "state": "OR",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Sheep Ranch",
+      "ambiguous": false
+    },
+    {
+      "display": "Pinehurst No. 2",
+      "region": "Pinehurst Area",
+      "id": "c50c2fa3-7360-4510-82d2-ad91894d1a1b",
+      "name": "Pinehurst No. 2",
+      "city": "Pinehurst",
+      "state": "NC",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Pinehurst No. 2",
+      "ambiguous": false
+    },
+    {
+      "display": "Pinehurst No. 4",
+      "region": "Pinehurst Area",
+      "id": "61a4668d-7ec4-4ef0-882e-53ca3ec04d06",
+      "name": "Pinehurst No. 4",
+      "city": "Pinehurst",
+      "state": "NC",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Pinehurst No. 4",
+      "ambiguous": false
+    },
+    {
+      "display": "Pine Needles Lodge & Golf Club",
+      "region": "Pinehurst Area",
+      "id": "e6b71e32-c66e-4fae-a80d-e13a57bc62ac",
+      "name": "Pine Needles",
+      "city": "Southern Pines",
+      "state": "NC",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Pine Needles",
+      "ambiguous": false
+    },
+    {
+      "display": "Caledonia Golf & Fish Club",
+      "region": "Myrtle Beach",
+      "id": "fb15840d-9448-4e25-a932-924faf1a4858",
+      "name": "Caledonia Golf & Fish Club",
+      "city": "Pawleys Island",
+      "state": "SC",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Caledonia",
+      "ambiguous": false
+    },
+    {
+      "display": "We-Ko-Pa — Saguaro Course",
+      "region": "Arizona",
+      "id": "4d879f5e-9272-4dd3-be11-9c238ea7dd1f",
+      "name": "We-Ko-Pa Golf Club",
+      "city": "Fort McDowell",
+      "state": "AZ",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "phone"
+      ],
+      "matchPattern": "We-Ko-Pa",
+      "ambiguous": false
+    },
+    {
+      "display": "Troon North — Monument Course",
+      "region": "Arizona",
+      "id": "ef908bca-0703-431e-8fbf-b3b04be22e32",
+      "name": "Troon North Golf Club",
+      "city": "Scottsdale",
+      "state": "AZ",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Troon North",
+      "ambiguous": false
+    },
+    {
+      "display": "TPC Scottsdale — Stadium Course",
+      "region": "Arizona",
+      "id": "7d918cd6-20a3-4251-8577-a33a308f8fdb",
+      "name": "TPC Scottsdale Stadium Course",
+      "city": "Scottsdale",
+      "state": "AZ",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "TPC Scottsdale Stadium",
+      "ambiguous": false
+    },
+    {
+      "display": "Sand Valley",
+      "region": "Wisconsin",
+      "id": "574fa1d5-59c2-4e56-a81e-05dda82ca573",
+      "name": "Sand Valley Golf Resort",
+      "city": "Adams County",
+      "state": "WI",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Sand Valley",
+      "ambiguous": false
+    },
+    {
+      "display": "Whistling Straits — Straits Course",
+      "region": "Wisconsin",
+      "id": "57fd78ad-c8a9-4a83-9b67-210522988225",
+      "name": "Whistling Straits",
+      "city": "Sheboygan",
+      "state": "WI",
+      "courseType": "SEMI_PRIVATE",
+      "isPublic": true,
+      "nullFields": [
+        "yearEstablished",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Whistling Straits",
+      "ambiguous": true
+    },
+    {
+      "display": "Wild Horse Golf Club",
+      "region": "Nebraska Sandhills",
+      "id": "043c8047-07f4-47cf-9e97-252e86a2e3f8",
+      "name": "Wild Horse Golf Club",
+      "city": "Dawson County",
+      "state": "NE",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Wild Horse",
+      "ambiguous": false
+    },
+    {
+      "display": "The Prairie Club — Dunes Course",
+      "region": "Nebraska Sandhills",
+      "id": "0da8b1ed-ddb5-481c-bb6f-85152baa2863",
+      "name": "The Prairie Club",
+      "city": "Valentine",
+      "state": "NE",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Prairie Club",
+      "ambiguous": false
+    },
+    {
+      "display": "Dismal River — Red Course",
+      "region": "Nebraska Sandhills",
+      "id": "fbda8440-e63b-437a-8cb3-92143767c2e1",
+      "name": "Dismal River Club",
+      "city": "Hooker County",
+      "state": "NE",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Dismal River",
+      "ambiguous": false
+    },
+    {
+      "display": "Arcadia Bluffs — Bluffs Course",
+      "region": "Northern Michigan",
+      "id": "bb682596-eaf1-438d-a4eb-dc439b775d1f",
+      "name": "Arcadia Bluffs - South Course",
+      "city": "Arcadia",
+      "state": "MI",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Arcadia Bluffs",
+      "ambiguous": true
+    },
+    {
+      "display": "Bay Harbor Golf Club (Boyne)",
+      "region": "Northern Michigan",
+      "id": "4dfe48b7-a3af-493d-a69c-b689dc46ed9b",
+      "name": "Bay Harbor Golf Club",
+      "city": "Bay Harbor",
+      "state": "MI",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Bay Harbor",
+      "ambiguous": true
+    },
+    {
+      "display": "Chambers Bay",
+      "region": "Pacific Northwest",
+      "id": "56fb44ef-db2f-424c-8f4c-06908a65edce",
+      "name": "Chambers Bay Golf Course",
+      "city": "University Place",
+      "state": "WA",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Chambers Bay",
+      "ambiguous": false
+    },
+    {
+      "display": "Gamble Sands",
+      "region": "Pacific Northwest",
+      "id": "42aba40d-e9b7-4f04-a6ab-6caf5ffca516",
+      "name": "Gamble Sands Golf Course",
+      "city": "Okanogan County",
+      "state": "WA",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Gamble Sands",
+      "ambiguous": false
+    },
+    {
+      "display": "Pumpkin Ridge — Ghost Creek",
+      "region": "Pacific Northwest",
+      "id": "6a698ee9-be8d-4090-b3c4-89521afb3a93",
+      "name": "Pumpkin Ridge Golf Club",
+      "city": "Washington County",
+      "state": "OR",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Pumpkin Ridge",
+      "ambiguous": false
+    },
+    {
+      "display": "Bethpage Black",
+      "region": "Long Island",
+      "id": "ceb95a05-d039-4f2d-ae01-6bdd954d00c1",
+      "name": "Bethpage Black Golf Course",
+      "city": "Bethpage",
+      "state": "NY",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "nullFields": [
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Bethpage Black",
+      "ambiguous": false
+    },
+    {
+      "display": "Montauk Downs",
+      "region": "Long Island",
+      "id": "26876227-b58f-4247-9335-72ed4738ffa0",
+      "name": "Montauk Downs",
+      "city": "Montauk",
+      "state": "NY",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "nullFields": [
+        "coverImageUrl",
+        "logoUrl"
+      ],
+      "matchPattern": "Montauk Downs",
+      "ambiguous": false
+    },
+    {
+      "display": "Cog Hill — Dubsdread (No. 4)",
+      "region": "Chicago",
+      "id": "7328fbce-0496-4881-8f74-38c071e69d82",
+      "name": "Cog Hill Golf & Country Club",
+      "city": "Lemont Township",
+      "state": "IL",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Cog Hill",
+      "ambiguous": false
+    },
+    {
+      "display": "Cantigny Golf",
+      "region": "Chicago",
+      "id": "02cc9821-9444-4896-99f8-13f12502104f",
+      "name": "Cantigny Golf",
+      "city": "DuPage County",
+      "state": "IL",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "phone"
+      ],
+      "matchPattern": "Cantigny",
+      "ambiguous": true
+    },
+    {
+      "display": "Harborside International — Port Course",
+      "region": "Chicago",
+      "id": "ac3d93e6-5613-4341-966b-3f67309bf80a",
+      "name": "Harborside International Golf Center (Port)",
+      "city": "Chicago",
+      "state": "IL",
+      "courseType": "PUBLIC",
+      "isPublic": true,
+      "nullFields": [
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Harborside%Port",
+      "ambiguous": false
+    },
+    {
+      "display": "Charleston Municipal Golf Course",
+      "region": "Coastal Carolina",
+      "id": "f61131ff-e47c-4c33-901d-134d554b6bb8",
+      "name": "Charleston Municipal Golf Course",
+      "city": "Charleston",
+      "state": "SC",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Charleston Municipal",
+      "ambiguous": false
+    },
+    {
+      "display": "Kiawah Island — The Ocean Course",
+      "region": "Coastal Carolina",
+      "id": "647bbdcd-23ac-4105-9825-1eea55d2222b",
+      "name": "Kiawah Island Golf Resort - The Ocean Course",
+      "city": "Kiawah Island",
+      "state": "SC",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Kiawah%Ocean",
+      "ambiguous": true
+    },
+    {
+      "display": "PGA Frisco — Fields Ranch East",
+      "region": "Texas",
+      "id": "4fe6e532-78ae-41b4-b8ee-1bbb4846f26b",
+      "name": "Fields Ranch - West Course",
+      "city": "Frisco",
+      "state": "TX",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Fields Ranch",
+      "ambiguous": true
+    },
+    {
+      "display": "Trinity Forest Golf Club",
+      "region": "Texas",
+      "id": "71b956b0-3714-40bb-932f-c548808d55d4",
+      "name": "Trinity Forest Golf Club",
+      "city": "Dallas",
+      "state": "TX",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Trinity Forest",
+      "ambiguous": false
+    },
+    {
+      "display": "Lions Municipal Golf Course",
+      "region": "Texas",
+      "id": "9e17aad7-232e-41cb-b671-4d0bac0250e3",
+      "name": "Lions Municipal Golf Course",
+      "city": "Austin",
+      "state": "TX",
+      "courseType": null,
+      "isPublic": true,
+      "nullFields": [
+        "description",
+        "coverImageUrl",
+        "logoUrl",
+        "yearEstablished",
+        "courseType",
+        "zipCode",
+        "websiteUrl",
+        "phone"
+      ],
+      "matchPattern": "Lions Municipal",
+      "ambiguous": false
+    }
+  ],
+  "missing": [
+    {
+      "display": "The Links at Spanish Bay",
+      "state": "CA",
+      "region": "Pacific Coast / Bandon",
+      "triedPatterns": [
+        "Spanish Bay"
+      ]
+    },
+    {
+      "display": "Pacific Dunes",
+      "state": "OR",
+      "region": "Pacific Coast / Bandon",
+      "triedPatterns": [
+        "Pacific Dunes"
+      ]
+    },
+    {
+      "display": "Old Macdonald",
+      "state": "OR",
+      "region": "Pacific Coast / Bandon",
+      "triedPatterns": [
+        "Old Macdonald",
+        "Old Mac"
+      ]
+    },
+    {
+      "display": "Pinehurst No. 8",
+      "state": "NC",
+      "region": "Pinehurst Area",
+      "triedPatterns": [
+        "Pinehurst No. 8",
+        "Pinehurst No 8",
+        "Pinehurst #8"
+      ]
+    },
+    {
+      "display": "True Blue Golf Club",
+      "state": "SC",
+      "region": "Myrtle Beach",
+      "triedPatterns": [
+        "True Blue"
+      ]
+    },
+    {
+      "display": "TPC Myrtle Beach",
+      "state": "SC",
+      "region": "Myrtle Beach",
+      "triedPatterns": [
+        "TPC Myrtle"
+      ]
+    },
+    {
+      "display": "Barefoot Resort — Dye Course",
+      "state": "SC",
+      "region": "Myrtle Beach",
+      "triedPatterns": [
+        "Barefoot%Dye",
+        "Dye Course"
+      ]
+    },
+    {
+      "display": "Mammoth Dunes",
+      "state": "WI",
+      "region": "Wisconsin",
+      "triedPatterns": [
+        "Mammoth Dunes"
+      ]
+    },
+    {
+      "display": "Streamsong Red",
+      "state": "FL",
+      "region": "Streamsong",
+      "triedPatterns": [
+        "Streamsong Red"
+      ]
+    },
+    {
+      "display": "Streamsong Blue",
+      "state": "FL",
+      "region": "Streamsong",
+      "triedPatterns": [
+        "Streamsong Blue"
+      ]
+    },
+    {
+      "display": "Streamsong Black",
+      "state": "FL",
+      "region": "Streamsong",
+      "triedPatterns": [
+        "Streamsong Black"
+      ]
+    },
+    {
+      "display": "Forest Dunes — The Loop (Black)",
+      "state": "MI",
+      "region": "Northern Michigan",
+      "triedPatterns": [
+        "Loop Black",
+        "The Loop Black",
+        "Forest Dunes Loop"
+      ]
+    },
+    {
+      "display": "Forest Dunes — The Loop (Red)",
+      "state": "MI",
+      "region": "Northern Michigan",
+      "triedPatterns": [
+        "Loop Red",
+        "The Loop Red"
+      ]
+    },
+    {
+      "display": "Bethpage Red",
+      "state": "NY",
+      "region": "Long Island",
+      "triedPatterns": [
+        "Bethpage Red"
+      ]
+    },
+    {
+      "display": "Kiawah Island — Osprey Point",
+      "state": "SC",
+      "region": "Coastal Carolina",
+      "triedPatterns": [
+        "Kiawah%Osprey",
+        "Osprey Point"
+      ]
+    },
+    {
+      "display": "Memorial Park Golf Course",
+      "state": "TX",
+      "region": "Texas",
+      "triedPatterns": [
+        "Memorial Park"
+      ]
+    }
+  ],
+  "ambiguous": [
+    {
+      "display": "Whistling Straits — Straits Course",
+      "chosen": {
+        "id": "57fd78ad-c8a9-4a83-9b67-210522988225",
+        "name": "Whistling Straits",
+        "city": "Sheboygan"
+      },
+      "candidates": [
+        {
+          "id": "57fd78ad-c8a9-4a83-9b67-210522988225",
+          "name": "Whistling Straits",
+          "city": "Sheboygan"
+        },
+        {
+          "id": "d8298463-166c-417f-9862-5771eecfd93e",
+          "name": "Whistling Straits",
+          "city": "Haven"
+        }
+      ]
+    },
+    {
+      "display": "Arcadia Bluffs — Bluffs Course",
+      "chosen": {
+        "id": "bb682596-eaf1-438d-a4eb-dc439b775d1f",
+        "name": "Arcadia Bluffs - South Course",
+        "city": "Arcadia"
+      },
+      "candidates": [
+        {
+          "id": "bb682596-eaf1-438d-a4eb-dc439b775d1f",
+          "name": "Arcadia Bluffs - South Course",
+          "city": "Arcadia"
+        },
+        {
+          "id": "d036dbe6-5584-4888-9f49-0ddf50a4fca3",
+          "name": "Arcadia Bluffs Golf Club",
+          "city": "Arcadia"
+        }
+      ]
+    },
+    {
+      "display": "Bay Harbor Golf Club (Boyne)",
+      "chosen": {
+        "id": "4dfe48b7-a3af-493d-a69c-b689dc46ed9b",
+        "name": "Bay Harbor Golf Club",
+        "city": "Bay Harbor"
+      },
+      "candidates": [
+        {
+          "id": "4dfe48b7-a3af-493d-a69c-b689dc46ed9b",
+          "name": "Bay Harbor Golf Club",
+          "city": "Bay Harbor"
+        },
+        {
+          "id": "c4c10379-9b9b-40f5-9b02-d9f5eb3d2c71",
+          "name": "Bay Harbor Golf Club - The Links Quarry",
+          "city": "Bay Harbor"
+        }
+      ]
+    },
+    {
+      "display": "Cantigny Golf",
+      "chosen": {
+        "id": "02cc9821-9444-4896-99f8-13f12502104f",
+        "name": "Cantigny Golf",
+        "city": "DuPage County"
+      },
+      "candidates": [
+        {
+          "id": "02cc9821-9444-4896-99f8-13f12502104f",
+          "name": "Cantigny Golf",
+          "city": "DuPage County"
+        },
+        {
+          "id": "db51d1a0-86db-4275-b1d7-ec3e8ef8532a",
+          "name": "Cantigny Golf Youth Links",
+          "city": "DuPage County"
+        }
+      ]
+    },
+    {
+      "display": "Kiawah Island — The Ocean Course",
+      "chosen": {
+        "id": "647bbdcd-23ac-4105-9825-1eea55d2222b",
+        "name": "Kiawah Island Golf Resort - The Ocean Course",
+        "city": "Kiawah Island"
+      },
+      "candidates": [
+        {
+          "id": "647bbdcd-23ac-4105-9825-1eea55d2222b",
+          "name": "Kiawah Island Golf Resort - The Ocean Course",
+          "city": "Kiawah Island"
+        },
+        {
+          "id": "a3edabfe-b2d6-4343-a309-4ae71f178e1b",
+          "name": "Kiawah Island Ocean Course",
+          "city": "Kiawah Island"
+        }
+      ]
+    },
+    {
+      "display": "PGA Frisco — Fields Ranch East",
+      "chosen": {
+        "id": "4fe6e532-78ae-41b4-b8ee-1bbb4846f26b",
+        "name": "Fields Ranch - West Course",
+        "city": "Frisco"
+      },
+      "candidates": [
+        {
+          "id": "4fe6e532-78ae-41b4-b8ee-1bbb4846f26b",
+          "name": "Fields Ranch - West Course",
+          "city": "Frisco"
+        },
+        {
+          "id": "0e1af11a-86ea-4a27-a231-190916ba01b0",
+          "name": "Fields Ranch - East Course",
+          "city": "Frisco"
+        }
+      ]
+    }
+  ],
+  "privateFlags": []
+}
