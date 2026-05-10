@@ -330,6 +330,8 @@ export default function CourseProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromMap = searchParams.get("from") === "map";
+  const fromTripIdea = searchParams.get("from") === "trip-idea";
+  const tripIdeaSlug = fromTripIdea ? searchParams.get("slug") : null;
   const isDesktop = useIsDesktop();
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
@@ -924,14 +926,20 @@ const [editDescription, setEditDescription] = useState("");
           </button>
         )}
 
-        {/* Back to map button — only shown when navigated from /map */}
-        {fromMap && (
+        {/* Back pill — shown when arrived from /map or a trip-idea page */}
+        {(fromMap || fromTripIdea) && (
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              if (fromTripIdea && tripIdeaSlug) {
+                router.push(`/trip-ideas/${tripIdeaSlug}`);
+              } else {
+                router.back();
+              }
+            }}
             style={{ position: "absolute", top: 8, left: 16, zIndex: 11, display: "flex", alignItems: "center", gap: 6, background: "rgba(7,16,10,0.75)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "6px 12px 6px 8px", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>Map</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>{fromTripIdea ? "Trip" : "Map"}</span>
           </button>
         )}
 

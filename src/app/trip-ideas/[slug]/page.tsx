@@ -203,7 +203,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
   return (
     <div style={{ background: "#07100a", minHeight: "100svh", color: "#fff", paddingBottom: 120 }}>
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <div style={{ position: "relative", height: "100svh", minHeight: 560, overflow: "hidden" }}>
+      <div style={{ position: "relative", height: "65svh", minHeight: 440, maxHeight: 620, overflow: "hidden" }}>
         <div
           aria-hidden
           style={{
@@ -239,7 +239,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
         </Link>
 
         {/* Hero content pinned bottom */}
-        <div style={{ position: "absolute", bottom: 32, left: 0, right: 0, padding: "0 20px", zIndex: 5 }}>
+        <div style={{ position: "absolute", bottom: 28, left: 0, right: 0, padding: "0 20px", zIndex: 5 }}>
           <span style={{
             display: "inline-block",
             padding: "4px 10px",
@@ -385,7 +385,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
 
                   {s.course && (
                     <Link
-                      href={`/courses/${s.course.id}`}
+                      href={`/courses/${s.course.id}?from=trip-idea&slug=${encodeURIComponent(it.slug)}`}
                       style={{
                         display: "block",
                         marginTop: 14,
