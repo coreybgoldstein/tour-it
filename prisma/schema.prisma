@@ -227,11 +227,12 @@ model Course {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  holes         Hole[]
-  saves         Save[]
-  views         View[]
-  homeUsers     User[]   @relation("HomeCourse")
-  teeBoxes      TeeBox[]
+  holes           Hole[]
+  saves           Save[]
+  views           View[]
+  homeUsers       User[]   @relation("HomeCourse")
+  teeBoxes        TeeBox[]
+  itineraryStops  TripItineraryStop[]
 
   @@index([state])
   @@index([city, state])
@@ -863,4 +864,47 @@ model CourseRequest {
 
   @@index([userId])
   @@index([status, createdAt(sort: Desc)])
+}
+
+// ============================================================
+// TRIP ITINERARIES — curated golf trips for the dart-throw feature
+// ============================================================
+
+model TripItinerary {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  tagline         String
+  whyThisTrip     String   @db.Text
+  heroImageUrl    String?
+  vibeTag         String
+  costBand        String
+  bestSeasonStart Int
+  bestSeasonEnd   Int
+  durationDays    Int
+  stayRec         String
+  latitude        Float
+  longitude       Float
+  region          String
+  stops           TripItineraryStop[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([region])
+  @@index([vibeTag])
+}
+
+model TripItineraryStop {
+  id            String        @id @default(cuid())
+  itineraryId   String
+  itinerary     TripItinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  courseId      String
+  course        Course        @relation(fields: [courseId], references: [id])
+  day           Int
+  order         Int           @default(1)
+  note          String?
+
+  @@unique([itineraryId, day, order])
+  @@index([itineraryId])
+  @@index([courseId])
 }
