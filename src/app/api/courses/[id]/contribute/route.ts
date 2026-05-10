@@ -4,7 +4,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { awardPoints } from "@/lib/awardPoints";
 import { PointAction } from "@/config/points-system";
 
-const ALLOWED_FIELDS = new Set(["name", "description", "coverImageUrl", "logoUrl", "city", "state", "zipCode", "yearEstablished", "courseType", "websiteUrl"]);
+const ALLOWED_FIELDS = new Set(["name", "description", "coverImageUrl", "logoUrl", "city", "state", "zipCode", "yearEstablished", "courseType", "websiteUrl", "holeCount"]);
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -58,6 +58,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
   if ("zipCode" in updates && typeof updates.zipCode === "string") {
     updates.zipCode = updates.zipCode.trim().slice(0, 10) || null;
+  }
+  if ("holeCount" in updates) {
+    const hc = Number(updates.holeCount);
+    if (![9, 18].includes(hc)) {
+      return NextResponse.json({ error: "holeCount must be 9 or 18" }, { status: 400 });
+    }
+    updates.holeCount = hc;
   }
   if ("websiteUrl" in updates && typeof updates.websiteUrl === "string") {
     let url = updates.websiteUrl.trim();
@@ -118,6 +125,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { error } = await supabase.from("Course").update(updates).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // If holeCount changed, sync the Hole rows to match. Adds new holes if
+  // going from 9 → 18, removes holes 10–18 if going from 18 → 9.
+  if ("holeCount" in updates) {
+    const hc = updates.holeCount as number;
+    const { data: existingHoles } = await supabase
+      .from("Hole")
+      .select("id, holeNumber")
+      .eq("courseId", id);
+    const existingNums = new Set((existingHoles ?? []).map((h: any) => h.holeNumber));
+    if (hc === 9) {
+      const idsToDrop = (existingHoles ?? []).filter((h: any) => h.holeNumber > 9).map((h: any) => h.id);
+      if (idsToDrop.length) await supabase.from("Hole").delete().in("id", idsToDrop);
+    } else if (hc === 18) {
+      const now = new Date().toISOString();
+      const toAdd: any[] = [];
+      for (let n = 1; n <= 18; n++) {
+        if (!existingNums.has(n)) {
+          toAdd.push({ id: crypto.randomUUID(), courseId: id, holeNumber: n, par: 4, uploadCount: 0, createdAt: now, updatedAt: now });
+        }
+      }
+      if (toAdd.length) await supabase.from("Hole").insert(toAdd);
+    }
+  }
 
   // Award course-field points for any field that went from null/empty to a real value.
   // Each action is referenceId-scoped to the courseId so the same field can't double-award.
