@@ -28,11 +28,13 @@ type RyderAssignment = { userId: string; team: "RED" | "BLUE" };
 type TripCourse = {
   id: string;
   courseId: string;
+  secondaryCourseId?: string | null;
   playDate: string | null;
   teeTime: string | null;
   accommodation: string | null;
   sortOrder: number;
-  course: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null };
+  course: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; holeCount?: number };
+  secondaryCourse?: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; holeCount?: number } | null;
 };
 
 type Member = {
@@ -278,11 +280,17 @@ export default function TripPage() {
 
   // Add course sheet
   const [addCourseOpen, setAddCourseOpen] = useState(false);
-  const [addCourseStep, setAddCourseStep] = useState<"search" | "details">("search");
+  const [addCourseStep, setAddCourseStep] = useState<"search" | "details" | "pairSearch">("search");
   const [courseSearch, setCourseSearch] = useState("");
   const [courseResults, setCourseResults] = useState<CourseResult[]>([]);
   const [courseSearchLoading, setCourseSearchLoading] = useState(false);
   const [selectedAddCourse, setSelectedAddCourse] = useState<CourseResult | null>(null);
+  // 9+9 pairing state
+  const [pairCourse, setPairCourse] = useState<CourseResult | null>(null);
+  const [pairSearch, setPairSearch] = useState("");
+  const [pairResults, setPairResults] = useState<CourseResult[]>([]);
+  const [pairSearchLoading, setPairSearchLoading] = useState(false);
+  const pairSearchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [addPlayDate, setAddPlayDate] = useState("");
   const [addTeeTime, setAddTeeTime] = useState("");
   const [addAccom, setAddAccom] = useState("");
@@ -339,13 +347,17 @@ export default function TripPage() {
       setTrip(tripData);
       setIsOwner(authUser?.id === tripData.createdBy);
 
-      const { data: tcData } = await supabase.from("GolfTripCourse").select("id, courseId, playDate, teeTime, accommodation, sortOrder").eq("tripId", id);
+      const { data: tcData } = await supabase.from("GolfTripCourse").select("id, courseId, secondaryCourseId, playDate, teeTime, accommodation, sortOrder").eq("tripId", id);
       if (tcData && tcData.length > 0) {
-        const courseIds = tcData.map((tc: any) => tc.courseId);
-        const { data: coursesData } = await supabase.from("Course").select("id, name, city, state, uploadCount, logoUrl").in("id", courseIds);
+        const allCourseIds = [
+          ...tcData.map((tc: any) => tc.courseId),
+          ...tcData.map((tc: any) => tc.secondaryCourseId).filter(Boolean),
+        ];
+        const { data: coursesData } = await supabase.from("Course").select("id, name, city, state, uploadCount, logoUrl, holeCount").in("id", allCourseIds);
         const mapped = tcData.map((tc: any) => ({
           ...tc,
           course: coursesData?.find((c: any) => c.id === tc.courseId) || { id: tc.courseId, name: "Unknown", city: "", state: "", uploadCount: 0, logoUrl: null },
+          secondaryCourse: tc.secondaryCourseId ? (coursesData?.find((c: any) => c.id === tc.secondaryCourseId) || null) : null,
         }));
         // Sort chronologically by playDate; undated entries go to the end
         mapped.sort((a: any, b: any) => {
@@ -627,14 +639,35 @@ export default function TripPage() {
 
   const addCourseToTrip = async () => {
     if (!selectedAddCourse || addingCourse) return;
+    // Pairing rule: both courses must be 9-hole. Server-side double-check.
+    if (pairCourse && (selectedAddCourse.holeCount !== 9 || pairCourse.holeCount !== 9)) {
+      console.warn("Pairing requires two 9-hole courses; aborting");
+      return;
+    }
     setAddingCourse(true);
     const supabase = createClient();
     const newId = crypto.randomUUID();
-    const { error } = await supabase.from("GolfTripCourse").insert({ id: newId, tripId: id as string, courseId: selectedAddCourse.id, playDate: addPlayDate || null, teeTime: addTeeTime || null, accommodation: addAccom.trim() || null, sortOrder: tripCourses.length });
+    const { error } = await supabase.from("GolfTripCourse").insert({
+      id: newId,
+      tripId: id as string,
+      courseId: selectedAddCourse.id,
+      secondaryCourseId: pairCourse?.id || null,
+      playDate: addPlayDate || null,
+      teeTime: addTeeTime || null,
+      accommodation: addAccom.trim() || null,
+      sortOrder: tripCourses.length,
+    });
     if (!error) {
       setTripCourses(prev => [...prev, {
-        id: newId, courseId: selectedAddCourse.id, playDate: addPlayDate || null, teeTime: addTeeTime || null, accommodation: addAccom.trim() || null, sortOrder: tripCourses.length,
-        course: { id: selectedAddCourse.id, name: selectedAddCourse.name, city: selectedAddCourse.city, state: selectedAddCourse.state, uploadCount: 0, logoUrl: null },
+        id: newId,
+        courseId: selectedAddCourse.id,
+        secondaryCourseId: pairCourse?.id || null,
+        playDate: addPlayDate || null,
+        teeTime: addTeeTime || null,
+        accommodation: addAccom.trim() || null,
+        sortOrder: tripCourses.length,
+        course: { id: selectedAddCourse.id, name: selectedAddCourse.name, city: selectedAddCourse.city, state: selectedAddCourse.state, uploadCount: 0, logoUrl: null, holeCount: selectedAddCourse.holeCount },
+        secondaryCourse: pairCourse ? { id: pairCourse.id, name: pairCourse.name, city: pairCourse.city, state: pairCourse.state, uploadCount: 0, logoUrl: null, holeCount: pairCourse.holeCount } : null,
       }]);
 
       // Check if course has hole handicap data; notify admin if not
@@ -660,10 +693,34 @@ export default function TripPage() {
 
       setAddCourseStep("search");
       setSelectedAddCourse(null);
+      setPairCourse(null);
+      setPairSearch("");
+      setPairResults([]);
       setCourseSearch("");
       setAddPlayDate(""); setAddTeeTime(""); setAddAccom("");
     }
     setAddingCourse(false);
+  };
+
+  // Pair-search debounce — same shape as the main course search but
+  // forced-filter to holeCount=9 since you can only pair with another 9.
+  const handlePairSearchChange = (val: string) => {
+    setPairSearch(val);
+    if (pairSearchDebounce.current) clearTimeout(pairSearchDebounce.current);
+    if (val.trim().length < 2) { setPairResults([]); return; }
+    pairSearchDebounce.current = setTimeout(async () => {
+      setPairSearchLoading(true);
+      const sb = createClient();
+      const { data } = await sb
+        .from("Course")
+        .select("id, name, city, state, holeCount, logoUrl")
+        .eq("holeCount", 9)
+        .ilike("name", `%${val.trim()}%`)
+        .order("uploadCount", { ascending: false })
+        .limit(20);
+      setPairResults((data ?? []).filter((c: any) => c.id !== selectedAddCourse?.id) as CourseResult[]);
+      setPairSearchLoading(false);
+    }, 250);
   };
 
   const fetchMessages = async () => {
@@ -737,13 +794,14 @@ export default function TripPage() {
     setGameOpen(true);
   };
 
-  const handleSelectGameCourse = async (courseId: string, courseName: string) => {
+  const handleSelectGameCourse = async (courseId: string, courseName: string, secondaryCourseId?: string | null, secondaryName?: string | null) => {
     setGameCourseId(courseId);
-    setGameCourseName(courseName);
+    // Combined name for paired stops
+    setGameCourseName(secondaryCourseId && secondaryName ? `${courseName} + ${secondaryName}` : courseName);
     setGameTeeBoxes([]);
     setGameTeeId("");
     const supabase = createClient();
-    // Fetch tee boxes for this course
+    // Fetch tee boxes for this course (primary only — pairing tees aren't a concept)
     const { data: teeBoxes } = await supabase.from("TeeBox").select("id, color, customLabel, slope, rating").eq("courseId", courseId).order("slope", { ascending: false });
     if (teeBoxes && teeBoxes.length > 0) {
       setGameTeeBoxes(teeBoxes as TeeBox[]);
@@ -752,7 +810,48 @@ export default function TripPage() {
       setGameTeeSlope(firstTee.slope ?? 113);
       setGameTeeRating(firstTee.rating ?? 72.0);
     }
-    // Fetch course par + hole handicap ranks
+
+    if (secondaryCourseId) {
+      // ── Paired 9+9 round ─────────────────────────────────────────────
+      const [primaryRes, secondaryRes] = await Promise.all([
+        supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", courseId).order("holeNumber"),
+        supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", secondaryCourseId).order("holeNumber"),
+      ]);
+      const primaryHoles = (primaryRes.data ?? []).slice(0, 9);
+      const secondaryHoles = (secondaryRes.data ?? []).slice(0, 9);
+
+      if (primaryHoles.length === 9 && secondaryHoles.length === 9) {
+        const stitchedPar = [...primaryHoles, ...secondaryHoles].reduce((s, h) => s + (h.par || 4), 0);
+        setGameCoursePar(stitchedPar);
+
+        // Stitch handicap ranks: front 9 = odd (1,3,5,7,9,11,13,15,17), back 9 = even.
+        // Front rank R becomes (R*2 - 1), back rank R becomes (R*2).
+        const stitchedRanks: number[] = [];
+        for (const h of primaryHoles) {
+          const r = h.handicapRank;
+          stitchedRanks.push(r && r >= 1 && r <= 9 ? r * 2 - 1 : 0);
+        }
+        for (const h of secondaryHoles) {
+          const r = h.handicapRank;
+          stitchedRanks.push(r && r >= 1 && r <= 9 ? r * 2 : 0);
+        }
+
+        const isComplete = stitchedRanks.every((r) => r >= 1 && r <= 18);
+        const sortedSet = [...stitchedRanks].sort((a, b) => a - b);
+        const isValid1to18 = isComplete && sortedSet.every((v, i) => v === i + 1);
+
+        setGameHoleHandicaps(stitchedRanks);
+        setGameHoleHandicapsKnown(isValid1to18);
+        setGameHandicapWarning(stitchedRanks.some((r) => r > 0) && !isValid1to18);
+      } else {
+        setGameCoursePar(72);
+        setGameHoleHandicaps(Array(18).fill(0));
+        setGameHoleHandicapsKnown(false);
+      }
+      return;
+    }
+
+    // ── Single 18-hole course (existing behavior) ─────────────────────
     const { data: holes } = await supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", courseId).order("holeNumber");
     if (holes && holes.length === 18) {
       const par = holes.reduce((sum: number, h: any) => sum + (h.par || 4), 0);
@@ -761,14 +860,9 @@ export default function TripPage() {
       const hasAnyData = ranks.some((r: number) => r > 0);
       const sortedRanks = [...ranks].sort((a: number, b: number) => a - b);
       const isCompleteSet = ranks.length === 18 && sortedRanks.every((v: number, i: number) => v === i + 1);
-      // Sentinel: ranks are exactly [1, 2, 3, ..., 18] in hole order. That's
-      // a default/never-actually-filled state — real scorecards never have
-      // hole 1 ranked hardest, hole 18 easiest. Treat as unset.
       const isSequentialSentinel = isCompleteSet && ranks.every((v: number, i: number) => v === i + 1);
       const isValid = isCompleteSet && !isSequentialSentinel;
 
-      // If sentinel, clear the rankings so the user starts fresh on step 5
-      // instead of seeing 1, 2, 3, ... pre-filled.
       setGameHoleHandicaps(isSequentialSentinel ? Array(18).fill(0) : ranks);
       setGameHoleHandicapsKnown(isValid);
       setGameHandicapWarning((hasAnyData && !isCompleteSet) || isSequentialSentinel);
@@ -1093,7 +1187,7 @@ export default function TripPage() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>Itinerary{tripCourses.length > 0 && <span className="count">{tripCourses.length}</span>}</div>
             <button
-              onClick={() => { setAddCourseStep("search"); setCourseSearch(""); setCourseResults([]); setSelectedAddCourse(null); setAddPlayDate(""); setAddTeeTime(""); setAddAccom(""); setAddCourseOpen(true); }}
+              onClick={() => { setAddCourseStep("search"); setCourseSearch(""); setCourseResults([]); setSelectedAddCourse(null); setPairCourse(null); setPairSearch(""); setPairResults([]); setAddPlayDate(""); setAddTeeTime(""); setAddAccom(""); setAddCourseOpen(true); }}
               style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer" }}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -1150,14 +1244,27 @@ export default function TripPage() {
                     }}
                     onClick={() => { if (swipedId === tc.id) { setSwipedId(null); } }}
                   >
-                    <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", cursor: "pointer" }}>
-                      {tc.course.logoUrl
-                        ? <img src={tc.course.logoUrl} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
-                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{abbr(tc.course.name)}</span>
-                      }
+                    <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ position: "relative", width: 44, height: 44, flexShrink: 0, cursor: "pointer" }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                        {tc.course.logoUrl
+                          ? <img src={tc.course.logoUrl} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                          : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{abbr(tc.course.name)}</span>
+                        }
+                      </div>
+                      {tc.secondaryCourse && (
+                        <div style={{ position: "absolute", bottom: -3, right: -3, width: 22, height: 22, borderRadius: 6, background: "rgba(7,16,10,0.95)", border: "1.5px solid #4da862", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {tc.secondaryCourse.logoUrl
+                            ? <img src={tc.secondaryCourse.logoUrl} alt={tc.secondaryCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#4da862" }}>{abbr(tc.secondaryCourse.name)}</span>
+                          }
+                        </div>
+                      )}
                     </div>
                     <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tc.course.name}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {tc.course.name}
+                        {tc.secondaryCourse && <span style={{ color: "rgba(77,168,98,0.85)", fontWeight: 500 }}> + {tc.secondaryCourse.name}</span>}
+                      </div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", marginTop: 3 }}>
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{[tc.course.city, tc.course.state].filter(Boolean).join(", ")}</span>
                         {tc.playDate && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.8)" }}>📅 {formatDate(tc.playDate)}</span>}
@@ -1611,7 +1718,73 @@ export default function TripPage() {
                   Back
                 </button>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Course Details</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862", marginBottom: 20 }}>{selectedAddCourse.name}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862", marginBottom: 20 }}>
+                  {selectedAddCourse.name}
+                  {pairCourse && <span style={{ color: "rgba(255,255,255,0.5)" }}> + {pairCourse.name}</span>}
+                </div>
+
+                {/* 9+9 pairing panel — only visible when the selected course is 9 holes */}
+                {selectedAddCourse.holeCount === 9 && (
+                  <div style={{
+                    marginBottom: 18,
+                    padding: "12px 14px",
+                    borderRadius: 12,
+                    border: `1px solid ${pairCourse ? "rgba(77,168,98,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    background: pairCourse ? "rgba(77,168,98,0.06)" : "rgba(255,255,255,0.025)",
+                  }}>
+                    {pairCourse ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                          {pairCourse.logoUrl
+                            ? <img src={pairCourse.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862" }}>{abbr(pairCourse.name)}</span>
+                          }
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 2 }}>Paired round · 18 holes</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", lineHeight: 1.3 }}>
+                            <span style={{ fontWeight: 700 }}>Front 9:</span> {selectedAddCourse.name}
+                            <br/>
+                            <span style={{ fontWeight: 700 }}>Back 9:</span> {pairCourse.name}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+                          <button
+                            onClick={() => {
+                              // Swap front/back
+                              const front = pairCourse;
+                              const back = selectedAddCourse;
+                              setSelectedAddCourse(front);
+                              setPairCourse(back);
+                            }}
+                            title="Swap front / back 9"
+                            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, padding: "4px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.65)", cursor: "pointer" }}
+                          >Swap</button>
+                          <button
+                            onClick={() => setPairCourse(null)}
+                            title="Remove pairing"
+                            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "4px 8px", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.45)", cursor: "pointer" }}
+                          >Remove</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setAddCourseStep("pairSearch"); setPairSearch(""); setPairResults([]); }}
+                        style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left" }}
+                      >
+                        <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(77,168,98,0.12)", border: "1px dashed rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>Pair with another 9-hole course</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Stitch two 9s into an 18-hole round (e.g. Bay Harbor: Links + Quarry)</div>
+                        </div>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
                   <div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Play Date <span style={{ fontWeight: 400 }}>(optional)</span></div>
@@ -1634,6 +1807,45 @@ export default function TripPage() {
                 <button onClick={addCourseToTrip} disabled={addingCourse} style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: addingCourse ? "default" : "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}>
                   {addingCourse ? "Adding..." : "Add to Trip ✓"}
                 </button>
+              </>
+            )}
+
+            {/* Pair-search step — only shown when user clicked 'Pair with another 9-hole' */}
+            {addCourseStep === "pairSearch" && selectedAddCourse && (
+              <>
+                <button onClick={() => setAddCourseStep("details")} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.45)", fontSize: 12, fontFamily: "'Outfit', sans-serif", display: "flex", alignItems: "center", gap: 4, marginBottom: 14, padding: 0 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  Back
+                </button>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Pair the 9</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 16 }}>
+                  Front 9: <span style={{ color: "#4da862", fontWeight: 600 }}>{selectedAddCourse.name}</span>. Pick the back 9 from any other 9-hole course.
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(77,168,98,0.35)", borderRadius: 12, padding: "11px 14px", marginBottom: 14 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                  <input autoFocus value={pairSearch} onChange={e => handlePairSearchChange(e.target.value)} placeholder="Search 9-hole courses..." style={{ background: "none", border: "none", outline: "none", flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff" }} />
+                </div>
+                <div style={{ flex: 1, overflowY: "auto" }}>
+                  {pairSearchLoading && <div style={{ textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 13 }}>Searching...</div>}
+                  {!pairSearchLoading && pairSearch.length >= 2 && pairResults.length === 0 && (
+                    <div style={{ textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 13 }}>No 9-hole courses found</div>
+                  )}
+                  {pairResults.map(c => (
+                    <div key={c.id} className="course-result-row" onClick={() => { setPairCourse(c); setAddCourseStep("details"); }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                        {c.logoUrl
+                          ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                          : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>{abbr(c.name)}</span>
+                        }
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>{[c.city, c.state].filter(Boolean).join(", ")} · 9 holes</div>
+                      </div>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                  ))}
+                </div>
               </>
             )}
           </div>
@@ -1738,10 +1950,16 @@ export default function TripPage() {
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {tripCourses.map(tc => (
-                          <button key={tc.id} onClick={() => handleSelectGameCourse(tc.courseId, tc.course.name)}
+                          <button key={tc.id} onClick={() => handleSelectGameCourse(tc.courseId, tc.course.name, tc.secondaryCourseId, tc.secondaryCourse?.name)}
                             style={{ padding: "12px 14px", borderRadius: 12, border: `1.5px solid ${gameCourseId === tc.courseId ? "#4da862" : "rgba(255,255,255,0.08)"}`, background: gameCourseId === tc.courseId ? "rgba(77,168,98,0.1)" : "rgba(255,255,255,0.03)", cursor: "pointer", textAlign: "left" }}>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{tc.course.name}</div>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{tc.course.city}, {tc.course.state}</div>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>
+                              {tc.course.name}
+                              {tc.secondaryCourse && <span style={{ color: "rgba(77,168,98,0.85)" }}> + {tc.secondaryCourse.name}</span>}
+                            </div>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>
+                              {tc.course.city}, {tc.course.state}
+                              {tc.secondaryCourse && <span style={{ color: "rgba(77,168,98,0.7)", marginLeft: 6 }}>· paired 9+9</span>}
+                            </div>
                           </button>
                         ))}
                       </div>
