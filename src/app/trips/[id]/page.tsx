@@ -777,6 +777,34 @@ export default function TripPage() {
       setGameHoleHandicaps(Array(18).fill(0));
       setGameHoleHandicapsKnown(false);
     }
+
+    // If the scorecard is missing yardage, kick off an on-demand API fetch
+    // in the background. When it returns, re-load the holes so step 5 (and
+    // anyone else looking at the scorecard) gets fresh data without the
+    // user having to do anything.
+    const { data: existingHoles } = await supabase.from("Hole").select("yardage, handicapRank").eq("courseId", courseId);
+    const yardageGap = (existingHoles ?? []).some(h => h.yardage == null);
+    if (yardageGap) {
+      fetch(`/api/courses/${courseId}/refresh-scorecard`, { method: "POST" })
+        .then(r => r.json())
+        .then(result => {
+          if (!result?.matched) return;
+          // Re-pull the now-filled hole data
+          supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", courseId).order("holeNumber")
+            .then(({ data: refreshed }) => {
+              if (!refreshed || refreshed.length !== 18) return;
+              const par = refreshed.reduce((s, h) => s + (h.par || 4), 0);
+              setGameCoursePar(par);
+              const ranks = refreshed.map(h => h.handicapRank || 0);
+              const sorted = [...ranks].sort((a, b) => a - b);
+              const valid = ranks.length === 18 && sorted.every((v, i) => v === i + 1) && !ranks.every((v, i) => v === i + 1);
+              setGameHoleHandicaps(ranks);
+              setGameHoleHandicapsKnown(valid);
+              setGameHandicapWarning(false);
+            });
+        })
+        .catch(() => {});
+    }
   };
 
   const generateGame = async () => {

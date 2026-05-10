@@ -50,11 +50,13 @@ async function rateLimitedFetch(url, attempt = 1) {
 
 function parseArgs() {
   const a = process.argv.slice(2);
-  const out = { ids: [], missingItinerary: false, allItinerary: false, dryRun: false };
+  const out = { ids: [], missingItinerary: false, allItinerary: false, dryRun: false, topN: 0, force: false };
   for (let i = 0; i < a.length; i++) {
     if (a[i] === "--ids" && a[i + 1]) out.ids = a[i + 1].split(",").map((s) => s.trim());
     if (a[i] === "--missing-itinerary") out.missingItinerary = true;
     if (a[i] === "--all-itinerary") out.allItinerary = true;
+    if (a[i] === "--top" && a[i + 1]) out.topN = parseInt(a[i + 1]);
+    if (a[i] === "--force") out.force = true;
     if (a[i] === "--dry-run") out.dryRun = true;
   }
   return out;
@@ -185,11 +187,33 @@ async function main() {
     const { data: stops } = await sb.from("TripItineraryStop").select("courseId");
     ids.push(...(stops ?? []).map((s) => s.courseId));
   }
+  if (args.topN > 0) {
+    // Engagement-weighted top N. Real usage > arbitrary alphabetical.
+    // uploadCount × 3 (real intel posted), saveCount × 2 (planning), viewCount × 1.
+    // Filter to 9/18-hole courses only — 27h+ resorts can't match the API.
+    console.log(`Loading top ${args.topN} courses by engagement…`);
+    const { data: top } = await sb
+      .from("Course")
+      .select("id, uploadCount, saveCount, viewCount, holeCount")
+      .in("holeCount", [9, 18])
+      .order("uploadCount", { ascending: false })
+      .order("saveCount", { ascending: false })
+      .order("viewCount", { ascending: false })
+      .limit(args.topN);
+    ids.push(...(top ?? []).map((c) => c.id));
+  }
   ids = [...new Set(ids)];
-  if (ids.length === 0) { console.log("Pass --ids or --missing-itinerary"); process.exit(0); }
+  if (ids.length === 0) { console.log("Pass --ids, --missing-itinerary, or --top N"); process.exit(0); }
 
-  const { data: courses } = await sb.from("Course").select("id, name, city, state, holeCount").in("id", ids);
-  if (!courses?.length) { console.log("No courses found"); process.exit(0); }
+  // Chunk the .in() query — 500 UUIDs blow past the PostgREST URL length cap
+  const courses = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    const chunk = ids.slice(i, i + 100);
+    const { data, error } = await sb.from("Course").select("id, name, city, state, holeCount").in("id", chunk);
+    if (error) { console.error(`Course query chunk error: ${error.message}`); process.exit(1); }
+    courses.push(...(data ?? []));
+  }
+  if (!courses.length) { console.log("No courses found"); process.exit(0); }
 
   console.log(`\n🏌️  GolfCourseAPI scorecard sweep — ${courses.length} courses\n`);
 
@@ -204,8 +228,12 @@ async function main() {
       continue;
     }
 
-    // Skip if already fully populated, unless force
-    if (!args.allItinerary) {
+    // Skip if already fully populated, unless force.
+    // --force or --all-itinerary mean "replace existing values with API data" —
+    // worth it because the API yardages are published / authoritative vs
+    // the Anthropic-estimated values we filled earlier.
+    const forceOverwrite = args.allItinerary || args.force;
+    if (!forceOverwrite) {
       const { data: holes } = await sb.from("Hole").select("yardage").eq("courseId", c.id);
       const filled = (holes ?? []).filter((h) => h.yardage != null).length;
       if (filled === c.holeCount) {
