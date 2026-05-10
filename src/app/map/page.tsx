@@ -67,7 +67,7 @@ export default function MapPage() {
 
   // Dart-throw state (additive — Phase 3B)
   const [dartMode, setDartMode] = useState(false);
-  const [dartPhase, setDartPhase] = useState<"idle" | "aiming" | "thrown" | "revealing">("idle");
+  const [dartPhase, setDartPhase] = useState<"idle" | "aiming" | "thrown" | "zooming" | "revealing">("idle");
   const [dartPosition, setDartPosition] = useState<{ x: number; y: number } | null>(null);
   const [dartResult, setDartResult] = useState<ItineraryCentroid | null>(null);
   const [itineraries, setItineraries] = useState<ItineraryCentroid[]>([]);
@@ -402,6 +402,11 @@ export default function MapPage() {
           25% { transform: rotate(2deg); }
           50% { transform: rotate(-1.5deg); }
           75% { transform: rotate(0.5deg); }
+        }
+        @keyframes dart-fade-zoom {
+          0%   { opacity: 1; transform: scale(1); }
+          70%  { opacity: 0.6; transform: scale(0.92); }
+          100% { opacity: 0; transform: scale(0.7); }
         }
         @keyframes ripple-out {
           0%   { transform: scale(0); opacity: 0.6; }
@@ -738,7 +743,18 @@ export default function MapPage() {
 
                 fetch(`/api/itineraries/${result.id}/throw`, { method: "POST" }).catch(() => {});
 
-                setTimeout(() => setDartPhase("revealing"), 850);
+                // Cinematic sequence:
+                //   0–480ms   dart fly-in keyframe
+                //   600ms     enter "zooming" phase, map flies to result centroid
+                //   600+1600ms reveal sheet slides up
+                setTimeout(() => {
+                  setDartPhase("zooming");
+                  if (mapRef.current) {
+                    skipNextMoveRef.current = true;
+                    mapRef.current.flyTo([result.latitude, result.longitude], 7, { duration: 1.6 });
+                  }
+                }, 600);
+                setTimeout(() => setDartPhase("revealing"), 2400);
               } else {
                 setDartMode(false);
                 setDartPhase("idle");
@@ -865,8 +881,8 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* C. Dart landing — ripple + flying red dart */}
-        {dartMode && dartPhase === "thrown" && dartPosition && (
+        {/* C. Dart landing + cinematic zoom-in */}
+        {dartMode && (dartPhase === "thrown" || dartPhase === "zooming") && dartPosition && (
           <div style={{ position: "absolute", inset: 0, zIndex: 600, pointerEvents: "none" }}>
             {/* Impact ripple — delayed slightly so it fires when the dart lands */}
             <div style={{
@@ -890,14 +906,17 @@ export default function MapPage() {
               opacity: 0,
             }} />
 
-            {/* Realistic red dart, anchored so the tip lands on dartPosition */}
+            {/* Realistic red dart, anchored so the tip lands on dartPosition.
+                Switches from fly-in to fade-out when the camera starts zooming. */}
             <div style={{
               position: "absolute",
               left: dartPosition.x - 16,
               top: dartPosition.y - 56,
               width: 32, height: 56,
               transformOrigin: "50% 100%",
-              animation: "dart-fly-in 480ms cubic-bezier(0.4, 1.4, 0.55, 1) forwards",
+              animation: dartPhase === "zooming"
+                ? "dart-fade-zoom 1.4s ease-in 200ms forwards"
+                : "dart-fly-in 480ms cubic-bezier(0.4, 1.4, 0.55, 1) forwards",
               filter: "drop-shadow(0 6px 8px rgba(0,0,0,0.55))",
             }}>
               <svg width="32" height="56" viewBox="0 0 32 56" fill="none">
@@ -1025,6 +1044,11 @@ export default function MapPage() {
                   setDartPosition(null);
                   setLockedX(null);
                   setAimAxis("x");
+                  // Re-zoom to US-wide so the next throw lands somewhere new.
+                  if (mapRef.current) {
+                    skipNextMoveRef.current = true;
+                    mapRef.current.flyTo([39.5, -98.35], 3, { duration: 0.8 });
+                  }
                   setDartPhase("aiming");
                 }}
                 style={{
