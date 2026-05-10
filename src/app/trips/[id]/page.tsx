@@ -888,23 +888,20 @@ export default function TripPage() {
 
         {/* Header */}
         <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          {/* Top bar: back ← ... edit */}
-          <div style={{ paddingTop: "max(14px, env(safe-area-inset-top))", padding: "max(14px, env(safe-area-inset-top)) 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <button onClick={() => router.push("/lists")} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
-            {isOwner && (
+          {/* Edit pencil floats top-right (back button removed — TopBar's
+              hamburger and logo cover navigation now). */}
+          {isOwner && (
+            <div style={{ padding: "10px 20px 0", display: "flex", justifyContent: "flex-end" }}>
               <button
                 onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
-                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
-            )}
-            {!isOwner && <div style={{ width: 32 }} />}
-          </div>
+            </div>
+          )}
 
-          <div style={{ padding: "10px 20px 14px" }}>
+          <div style={{ padding: isOwner ? "4px 20px 14px" : "12px 20px 14px" }}>
             {/* Avatar + name + date inline */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
               <div
@@ -922,8 +919,23 @@ export default function TripPage() {
               <input ref={imageInputRef} type="file" accept="image/*" onChange={handleTripImagePick} style={{ display: "none" }} />
 
               <div style={{ flex: 1, minWidth: 0, paddingTop: 3 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 2 }}>Golf Trip</div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: trip.name.length > 22 ? 15 : trip.name.length > 14 ? 17 : 20, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>{trip.name}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 3 }}>Golf Trip</div>
+                <div
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    // Bigger overall but auto-shrink so long names still fit one line
+                    fontSize: trip.name.length > 28 ? 20 : trip.name.length > 22 ? 22 : trip.name.length > 16 ? 26 : 30,
+                    fontWeight: 900,
+                    color: "#fff",
+                    lineHeight: 1.15,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  title={trip.name}
+                >
+                  {trip.name}
+                </div>
                 {(trip.startDate || trip.endDate) && (
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 5 }}>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.65)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
