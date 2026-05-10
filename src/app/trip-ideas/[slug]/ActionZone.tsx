@@ -116,6 +116,13 @@ export default function ActionZone({ itinerary, budgetRange, siteUrl, isAuthenti
         if (courseErr) throw courseErr;
       }
 
+      // +50 pts for creating a trip from a curated itinerary
+      fetch("/api/points/award", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create_trip", referenceId: tripId }),
+      }).catch(() => {});
+
       showToast("Trip saved — find it in your Trips tab");
     } catch (e: any) {
       console.error("Save trip failed", e);
