@@ -395,14 +395,25 @@ export default function TripPage() {
         setGames(gamesData.map((g: any) => ({ ...g, courseLogoUrl: logoMap[g.courseId] || null })) as TripGameRecord[]);
       }
 
-      // Check which trip courses have hole handicap data
+      // Check which trip courses have complete hole handicap data. A course
+      // is 'complete' when every Hole row has a handicapRank > 0 AND the row
+      // count matches the course's declared holeCount (9 or 18).
       if (tcData && tcData.length > 0) {
-        const allCourseIds = tcData.map((tc: any) => tc.courseId);
-        const { data: holesData } = await supabase.from("Hole").select("courseId, handicapRank").in("courseId", allCourseIds);
+        const allCourseIds = [
+          ...tcData.map((tc: any) => tc.courseId),
+          ...tcData.map((tc: any) => tc.secondaryCourseId).filter(Boolean),
+        ];
+        const [{ data: coursesMeta }, { data: holesData }] = await Promise.all([
+          supabase.from("Course").select("id, holeCount").in("id", allCourseIds),
+          supabase.from("Hole").select("courseId, handicapRank").in("courseId", allCourseIds),
+        ]);
+        const holeCountById: Record<string, number> = {};
+        (coursesMeta ?? []).forEach((c: any) => { holeCountById[c.id] = c.holeCount; });
         const haveHandicaps = new Set<string>();
         allCourseIds.forEach((cid: string) => {
+          const expected = holeCountById[cid] ?? 18;
           const holes = (holesData || []).filter((h: any) => h.courseId === cid);
-          if (holes.length === 18 && holes.every((h: any) => h.handicapRank > 0)) haveHandicaps.add(cid);
+          if (holes.length === expected && holes.every((h: any) => h.handicapRank > 0)) haveHandicaps.add(cid);
         });
         setCoursesWithHandicaps(haveHandicaps);
       }
@@ -1114,9 +1125,6 @@ export default function TripPage() {
               </button>
             </div>
 
-            {trip.description && (
-              <div style={{ marginTop: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.38)", lineHeight: 1.5, textAlign: "center" }}>{trip.description}</div>
-            )}
           </div>
         </div>
 
@@ -1271,7 +1279,13 @@ export default function TripPage() {
                         {tc.teeTime && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>⏰ {formatTeeTime(tc.teeTime)}</span>}
                         {tc.accommodation && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>🏨 {tc.accommodation}</span>}
                       </div>
-                      {!coursesWithHandicaps.has(tc.courseId) && (
+                      {(() => {
+                        // For paired stops, both 9-hole sides must be complete.
+                        // For single stops, just the primary.
+                        const primaryComplete = coursesWithHandicaps.has(tc.courseId);
+                        const secondaryComplete = !tc.secondaryCourseId || coursesWithHandicaps.has(tc.secondaryCourseId);
+                        return primaryComplete && secondaryComplete;
+                      })() ? null : (
                         <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, background: "rgba(230,160,0,0.1)", border: "1px solid rgba(230,160,0,0.25)", borderRadius: 99, padding: "2px 7px" }}>
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(230,160,0,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(230,160,0,0.8)" }}>Scorecard data needed for games</span>
