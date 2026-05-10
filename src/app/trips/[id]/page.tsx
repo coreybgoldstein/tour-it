@@ -1247,30 +1247,94 @@ export default function TripPage() {
       {/* Members sheet */}
       {membersOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setMembersOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 20px 40px", maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 20px 40px", maxHeight: "78vh", display: "flex", flexDirection: "column" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 18px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 14 }}>
-              Golfers · {members.length}
+              Golfers{members.length > 0 && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862", fontWeight: 600, marginLeft: 8, verticalAlign: 2 }}>{members.length}</span>}
             </div>
-            <div style={{ overflowY: "auto", flex: 1 }}>
-              {members.map(m => (
-                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(77,168,98,0.3)", background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {m.user.avatarUrl
-                      ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    }
-                  </div>
+
+            {trip?.ryderCupEnabled ? (
+              // ── Side-by-side red vs blue layout ─────────────────────
+              (() => {
+                const redMembers = members.filter(m => teamOf(m.userId) === "RED");
+                const blueMembers = members.filter(m => teamOf(m.userId) === "BLUE");
+                const unassigned = members.filter(m => teamOf(m.userId) === null);
+
+                const renderTeamColumn = (label: string, color: string, ringColor: string, list: Member[], align: "left" | "right") => (
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{m.user.displayName}</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>@{m.user.username}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color, marginBottom: 10, textAlign: align }}>
+                      {label}
+                    </div>
+                    {list.length === 0 ? (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", fontStyle: "italic", textAlign: align }}>No players</div>
+                    ) : list.map(m => (
+                      <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", flexDirection: align === "right" ? "row-reverse" : "row" }}>
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: `2px solid ${ringColor}`, background: "rgba(0,0,0,0.3)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 0 1px rgba(0,0,0,0.4)` }}>
+                          {m.user.avatarUrl
+                            ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          }
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0, textAlign: align }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.user.displayName}</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{m.user.username}</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  {m.role === "admin" && (
-                    <div style={{ padding: "3px 8px", borderRadius: 6, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Admin</div>
-                  )}
-                </div>
-              ))}
-            </div>
+                );
+
+                return (
+                  <div style={{ overflowY: "auto", flex: 1 }}>
+                    <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: unassigned.length > 0 ? 16 : 0 }}>
+                      {renderTeamColumn(trip.redTeamName?.trim() || "Red Team", "#fca5a5", "#c8102e", redMembers, "left")}
+                      <div style={{ width: 1, alignSelf: "stretch", background: "linear-gradient(to bottom, transparent, #d4a017 30%, #d4a017 70%, transparent)" }} />
+                      {renderTeamColumn(trip.blueTeamName?.trim() || "Blue Team", "#93c5fd", "#3b82f6", blueMembers, "right")}
+                    </div>
+                    {unassigned.length > 0 && (
+                      <div style={{ marginTop: 8, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>Unassigned</div>
+                        {unassigned.map(m => (
+                          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
+                            <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.15)", background: "rgba(77,168,98,0.12)", flexShrink: 0 }}>
+                              {m.user.avatarUrl
+                                ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "10px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                              }
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>{m.user.displayName}</div>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)" }}>@{m.user.username}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
+            ) : (
+              // ── Default flat list (no Ryder Cup) ─────────────────────
+              <div style={{ overflowY: "auto", flex: 1 }}>
+                {members.map(m => (
+                  <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(77,168,98,0.3)", background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {m.user.avatarUrl
+                        ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      }
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{m.user.displayName}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>@{m.user.username}</div>
+                    </div>
+                    {m.role === "admin" && (
+                      <div style={{ padding: "3px 8px", borderRadius: 6, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Admin</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
