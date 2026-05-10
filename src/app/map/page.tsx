@@ -71,6 +71,11 @@ export default function MapPage() {
   const [dartPosition, setDartPosition] = useState<{ x: number; y: number } | null>(null);
   const [dartResult, setDartResult] = useState<ItineraryCentroid | null>(null);
   const [itineraries, setItineraries] = useState<ItineraryCentroid[]>([]);
+  // Madden FG-kick aiming: tap to lock X, then tap to lock Y.
+  const [aimAxis, setAimAxis] = useState<"x" | "y">("x");
+  const [lockedX, setLockedX] = useState<number | null>(null);
+  const xBarRef = useRef<HTMLDivElement>(null);
+  const yBarRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -406,6 +411,18 @@ export default function MapPage() {
           from { transform: translateY(100%); }
           to   { transform: translateY(0); }
         }
+        @keyframes sweep-x {
+          0%, 100% { left: 4%; }
+          50%      { left: 96%; }
+        }
+        @keyframes sweep-y {
+          0%, 100% { top: 18%; }
+          50%      { top: 78%; }
+        }
+        @keyframes meter-pulse {
+          0%, 100% { opacity: 0.85; }
+          50%      { opacity: 1; }
+        }
       `}</style>
 
       <div style={{ position: "fixed", inset: 0, background: "#07100a", display: "flex", flexDirection: "column" }}>
@@ -629,13 +646,15 @@ export default function MapPage() {
           }}>
             <button
               onClick={() => {
-                // Zoom out to US so the dart has the whole map to land on.
+                // Zoom out wide enough to show the whole continental US.
                 if (mapRef.current) {
                   skipNextMoveRef.current = true;
-                  mapRef.current.flyTo([39.5, -98.35], 4, { duration: 0.9 });
+                  mapRef.current.flyTo([39.5, -98.35], 3, { duration: 0.9 });
                 }
                 setDartMode(true);
                 setDartPhase("aiming");
+                setAimAxis("x");
+                setLockedX(null);
               }}
               aria-label="Throw a dart"
               style={{
@@ -673,14 +692,34 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* B. Aiming overlay + crosshair */}
+        {/* B. Aiming overlay — two-tap Madden FG-kick style meter */}
         {dartMode && dartPhase === "aiming" && (
           <div
-            onClick={(e) => {
+            onClick={() => {
               if (!mapContainerRef.current) return;
-              const rect = mapContainerRef.current.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const y = e.clientY - rect.top;
+              const mapRect = mapContainerRef.current.getBoundingClientRect();
+
+              if (aimAxis === "x") {
+                const bar = xBarRef.current;
+                if (!bar) return;
+                const r = bar.getBoundingClientRect();
+                const x = r.left + r.width / 2 - mapRect.left;
+                setLockedX(x);
+                setAimAxis("y");
+                if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+                  try { navigator.vibrate(10); } catch {}
+                }
+                return;
+              }
+
+              // aimAxis === "y" → second lock, throw the dart
+              if (lockedX === null) return;
+              const bar = yBarRef.current;
+              if (!bar) return;
+              const r = bar.getBoundingClientRect();
+              const y = r.top + r.height / 2 - mapRect.top;
+              const x = lockedX;
+
               setDartPosition({ x, y });
               setDartPhase("thrown");
 
@@ -688,12 +727,11 @@ export default function MapPage() {
               if (L && mapRef.current && itineraries.length > 0) {
                 const containerPoint = L.point(x, y);
                 const latlng = mapRef.current.containerPointToLatLng(containerPoint);
-                const wobbleLat = latlng.lat + (Math.random() - 0.5) * 1.0;
-                const wobbleLng = latlng.lng + (Math.random() - 0.5) * 1.0;
+                const wobbleLat = latlng.lat + (Math.random() - 0.5) * 0.6;
+                const wobbleLng = latlng.lng + (Math.random() - 0.5) * 0.6;
                 const result = findClosestItinerary(wobbleLat, wobbleLng, itineraries);
                 setDartResult(result);
 
-                // Haptic feedback on supported devices (mostly Android Chrome / iOS PWAs)
                 if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
                   try { navigator.vibrate([8, 40, 16]); } catch {}
                 }
@@ -702,7 +740,6 @@ export default function MapPage() {
 
                 setTimeout(() => setDartPhase("revealing"), 850);
               } else {
-                // Centroids haven't loaded yet — bail out gracefully
                 setDartMode(false);
                 setDartPhase("idle");
                 setDartPosition(null);
@@ -712,8 +749,9 @@ export default function MapPage() {
               position: "absolute",
               inset: 0,
               zIndex: 600,
-              background: "rgba(7,16,10,0.15)",
-              cursor: "crosshair",
+              background: "rgba(7,16,10,0.20)",
+              cursor: "pointer",
+              userSelect: "none",
             }}
           >
             <button
@@ -721,6 +759,8 @@ export default function MapPage() {
                 e.stopPropagation();
                 setDartMode(false);
                 setDartPhase("idle");
+                setLockedX(null);
+                setAimAxis("x");
               }}
               aria-label="Cancel"
               style={{
@@ -741,50 +781,87 @@ export default function MapPage() {
               }}
             >✕</button>
 
+            {/* Top instruction — phase-aware */}
             <div style={{
               position: "absolute",
-              top: "16%",
-              left: "50%",
-              transform: "translateX(-50%)",
+              top: "max(env(safe-area-inset-top, 0px), 16px)",
+              left: 16, right: 56,
               textAlign: "center",
               pointerEvents: "none",
-              whiteSpace: "nowrap",
-              textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+              textShadow: "0 1px 6px rgba(0,0,0,0.8)",
             }}>
+              <div style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 9,
+                color: "rgba(77,168,98,0.9)",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                marginBottom: 2,
+              }}>Step {aimAxis === "x" ? "1" : "2"} of 2</div>
               <div style={{
                 fontFamily: "'Playfair Display', serif",
                 fontSize: 22,
                 fontWeight: 700,
                 color: "#fff",
-                marginBottom: 4,
+                lineHeight: 1.15,
               }}>
-                Tap anywhere
+                {aimAxis === "x" ? "Tap to lock the line" : "Tap to throw"}
               </div>
               <div style={{
                 fontFamily: "'Outfit', sans-serif",
                 fontSize: 11,
-                color: "rgba(77,168,98,0.95)",
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.55)",
+                marginTop: 4,
+                letterSpacing: "0.04em",
               }}>
-                Your dart picks the trip
+                {aimAxis === "x" ? "It's sweeping left to right" : "Now stop the horizontal sweep"}
               </div>
             </div>
 
-            <div style={{
-              position: "absolute",
-              top: "45%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              animation: "crosshair-drift 2.8s ease-in-out infinite",
-              pointerEvents: "none",
-            }}>
-              <div style={{ position: "relative", width: 60, height: 60, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div style={{ position: "absolute", width: 60, height: 60, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.4)" }} />
-                <div style={{ position: "absolute", width: 30, height: 30, borderRadius: "50%", border: "1.5px solid rgba(77,168,98,0.6)" }} />
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4da862" }} />
-              </div>
-            </div>
+            {/* Locked X line (visible during Y phase) */}
+            {lockedX !== null && (
+              <div style={{
+                position: "absolute",
+                top: 0, bottom: 0,
+                left: lockedX - 1,
+                width: 2,
+                background: "rgba(220,38,38,0.55)",
+                boxShadow: "0 0 8px rgba(220,38,38,0.4)",
+                pointerEvents: "none",
+              }} />
+            )}
+
+            {/* X sweeping bar (vertical line moving horizontally) */}
+            {aimAxis === "x" && (
+              <div
+                ref={xBarRef}
+                style={{
+                  position: "absolute",
+                  top: 0, bottom: 0,
+                  width: 3,
+                  background: "#4da862",
+                  boxShadow: "0 0 16px rgba(77,168,98,0.85), 0 0 4px rgba(77,168,98,1)",
+                  animation: "sweep-x 1.05s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate, meter-pulse 0.4s ease-in-out infinite",
+                  pointerEvents: "none",
+                }}
+              />
+            )}
+
+            {/* Y sweeping bar (horizontal line moving vertically) */}
+            {aimAxis === "y" && (
+              <div
+                ref={yBarRef}
+                style={{
+                  position: "absolute",
+                  left: 0, right: 0,
+                  height: 3,
+                  background: "#4da862",
+                  boxShadow: "0 0 16px rgba(77,168,98,0.85), 0 0 4px rgba(77,168,98,1)",
+                  animation: "sweep-y 0.95s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate, meter-pulse 0.4s ease-in-out infinite",
+                  pointerEvents: "none",
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -850,7 +927,7 @@ export default function MapPage() {
         {dartMode && dartPhase === "revealing" && dartResult && (
           <>
             <div
-              onClick={() => { setDartMode(false); setDartPhase("idle"); setDartResult(null); setDartPosition(null); }}
+              onClick={() => { setDartMode(false); setDartPhase("idle"); setDartResult(null); setDartPosition(null); setLockedX(null); setAimAxis("x"); }}
               style={{ position: "absolute", inset: 0, zIndex: 601 }}
             />
             <div style={{
@@ -946,6 +1023,8 @@ export default function MapPage() {
                 onClick={() => {
                   setDartResult(null);
                   setDartPosition(null);
+                  setLockedX(null);
+                  setAimAxis("x");
                   setDartPhase("aiming");
                 }}
                 style={{

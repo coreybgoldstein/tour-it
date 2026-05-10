@@ -200,89 +200,99 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
     border: "1px solid rgba(255,255,255,0.12)",
   };
 
+  // Header: dramatic hero only when there's an actual image to show.
+  // Otherwise render a compact header so the trip name is above the fold.
+  const heroContent = (
+    <>
+      <span style={{
+        display: "inline-block",
+        padding: "4px 10px",
+        border: "1px solid rgba(77,168,98,0.6)",
+        borderRadius: 999,
+        color: "#4da862",
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: 10, fontWeight: 700,
+        textTransform: "uppercase",
+        letterSpacing: "0.14em",
+        marginBottom: 14,
+      }}>{vibeLabel(it.vibeTag)}</span>
+
+      <h1 style={{
+        fontFamily: "'Playfair Display', serif",
+        fontSize: "clamp(32px, 7.5vw, 48px)",
+        fontWeight: 700,
+        lineHeight: 1.05,
+        margin: 0,
+        marginBottom: 10,
+        color: "#fff",
+      }}>{it.name}</h1>
+
+      <p style={{
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: 16,
+        color: "rgba(255,255,255,0.7)",
+        lineHeight: 1.4,
+        margin: 0,
+        marginBottom: 18,
+        maxWidth: 540,
+      }}>{it.tagline}</p>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <span style={pill}>{it.durationDays} {it.durationDays === 1 ? "Day" : "Days"}</span>
+        <span style={pill}>{it.costBand}</span>
+        <span style={pill}>{seasonLabel}</span>
+      </div>
+    </>
+  );
+
+  const backButton = (
+    <Link
+      href="/map"
+      aria-label="Back"
+      style={{
+        position: "absolute",
+        top: "max(env(safe-area-inset-top, 0px), 16px)", left: 16,
+        width: 40, height: 40, borderRadius: "50%",
+        background: "rgba(7,16,10,0.6)",
+        border: "1px solid rgba(255,255,255,0.18)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+        zIndex: 5,
+      }}
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </Link>
+  );
+
   return (
     <div style={{ background: "#07100a", minHeight: "100svh", color: "#fff", paddingBottom: 120 }}>
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <div style={{ position: "relative", height: "65svh", minHeight: 440, maxHeight: 620, overflow: "hidden" }}>
-        <div
-          aria-hidden
-          style={{
-            position: "absolute", inset: 0,
-            background: it.heroImageUrl
-              ? `url('${it.heroImageUrl}') center/cover no-repeat`
-              : "radial-gradient(circle at 20% 20%, rgba(45,122,66,0.35) 0%, transparent 55%), radial-gradient(circle at 80% 80%, rgba(77,168,98,0.18) 0%, transparent 50%), linear-gradient(160deg, #0e1a13 0%, #07100a 100%)",
-          }}
-        />
-        <div
-          aria-hidden
-          style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(7,16,10,0.95) 100%)" }}
-        />
-
-        {/* Back button */}
-        <Link
-          href="/map"
-          aria-label="Back"
-          style={{
-            position: "absolute",
-            top: "max(env(safe-area-inset-top, 0px), 16px)", left: 16,
-            width: 40, height: 40, borderRadius: "50%",
-            background: "rgba(7,16,10,0.6)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-            zIndex: 5,
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </Link>
-
-        {/* Hero content pinned bottom */}
-        <div style={{ position: "absolute", bottom: 28, left: 0, right: 0, padding: "0 20px", zIndex: 5 }}>
-          <span style={{
-            display: "inline-block",
-            padding: "4px 10px",
-            border: "1px solid rgba(77,168,98,0.6)",
-            borderRadius: 999,
-            color: "#4da862",
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: 10, fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
-            marginBottom: 14,
-          }}>{vibeLabel(it.vibeTag)}</span>
-
-          <h1 style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: "clamp(34px, 8vw, 52px)",
-            fontWeight: 700,
-            lineHeight: 1.05,
-            margin: 0,
-            marginBottom: 10,
-            color: "#fff",
-          }}>{it.name}</h1>
-
-          <p style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: 16,
-            color: "rgba(255,255,255,0.7)",
-            lineHeight: 1.4,
-            margin: 0,
-            marginBottom: 18,
-            maxWidth: 540,
-          }}>{it.tagline}</p>
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <span style={pill}>{it.durationDays} {it.durationDays === 1 ? "Day" : "Days"}</span>
-            <span style={pill}>{it.costBand}</span>
-            <span style={pill}>{seasonLabel}</span>
+      {it.heroImageUrl ? (
+        // ── DRAMATIC HERO (when an image is set) ─────────────────────────
+        <div style={{ position: "relative", height: "65svh", minHeight: 440, maxHeight: 620, overflow: "hidden" }}>
+          <div aria-hidden style={{ position: "absolute", inset: 0, background: `url('${it.heroImageUrl}') center/cover no-repeat` }} />
+          <div aria-hidden style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(7,16,10,0.95) 100%)" }} />
+          {backButton}
+          <div style={{ position: "absolute", bottom: 28, left: 0, right: 0, padding: "0 20px", zIndex: 5 }}>
+            {heroContent}
           </div>
         </div>
-      </div>
+      ) : (
+        // ── COMPACT HEADER (no image — name above the fold) ──────────────
+        <header style={{
+          position: "relative",
+          padding: "max(env(safe-area-inset-top, 0px), 12px) 20px 26px",
+          background: "radial-gradient(ellipse at 50% 0%, rgba(45,122,66,0.18) 0%, transparent 65%), #07100a",
+        }}>
+          {backButton}
+          <div style={{ height: 56 }} aria-hidden />
+          {heroContent}
+        </header>
+      )}
 
       {/* ── BODY ──────────────────────────────────────────────────────────── */}
-      <div style={{ padding: "28px 16px 16px", display: "flex", flexDirection: "column", gap: 22 }}>
+      <div style={{ padding: it.heroImageUrl ? "28px 16px 16px" : "10px 16px 16px", display: "flex", flexDirection: "column", gap: 22 }}>
 
         {/* Why This Trip */}
         <section style={card}>
