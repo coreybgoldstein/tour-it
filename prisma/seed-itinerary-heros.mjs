@@ -44,7 +44,7 @@ const HERO_PAGES = {
   "long-island-loop":             ["Bethpage State Park"],
   "chicago-publics":              ["Cog Hill Golf & Country Club"],
   "coastal-carolina-public":      ["Kiawah Island Golf Resort"],
-  "texas-stretch":                ["PGA of America"],
+  "texas-stretch":                ["PGA Frisco", "Fields Ranch", "2027 PGA Championship", "2024 KitchenAid Senior PGA Championship", "Frisco, Texas"],
 };
 
 const UA = "TourItGolf/1.0 (https://touritgolf.com; coreybgoldstein@gmail.com)";
