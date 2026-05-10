@@ -797,40 +797,31 @@ export default function MapPage() {
               }}
             >✕</button>
 
-            {/* Top instruction — phase-aware */}
+            {/* Instruction — sits over Canada at the US-wide zoom */}
             <div style={{
               position: "absolute",
-              top: "max(env(safe-area-inset-top, 0px), 16px)",
+              top: "14%",
               left: 16, right: 56,
               textAlign: "center",
               pointerEvents: "none",
-              textShadow: "0 1px 6px rgba(0,0,0,0.8)",
+              textShadow: "0 1px 8px rgba(0,0,0,0.85), 0 0 20px rgba(7,16,10,0.6)",
             }}>
               <div style={{
                 fontFamily: "'Outfit', sans-serif",
-                fontSize: 9,
-                color: "rgba(77,168,98,0.9)",
+                fontSize: 10,
+                color: "rgba(77,168,98,0.85)",
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
-                marginBottom: 2,
+                marginBottom: 6,
               }}>Step {aimAxis === "x" ? "1" : "2"} of 2</div>
               <div style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: 700,
-                color: "#fff",
+                color: "#4da862",
                 lineHeight: 1.15,
               }}>
-                {aimAxis === "x" ? "Tap to lock the line" : "Tap to throw"}
-              </div>
-              <div style={{
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: 11,
-                color: "rgba(255,255,255,0.55)",
-                marginTop: 4,
-                letterSpacing: "0.04em",
-              }}>
-                {aimAxis === "x" ? "It's sweeping left to right" : "Now stop the horizontal sweep"}
+                {aimAxis === "x" ? "Tap twice to throw the dart" : "One more tap"}
               </div>
             </div>
 
