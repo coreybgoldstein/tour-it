@@ -84,8 +84,18 @@ async function searchGoogle(query, mode /* "cover" | "logo" */) {
     if (!r.ok) return [];
     const j = await r.json();
     return (j.items ?? [])
-      .map((it) => ({ url: it.link, width: it.image?.width, height: it.image?.height, source: it.displayLink }))
-      .filter((c) => c.url && !isBlockedHost(c.url));
+      .flatMap((it) => {
+        const out = [];
+        if (it.link && !isBlockedHost(it.link)) {
+          out.push({ url: it.link, width: it.image?.width, height: it.image?.height, source: it.displayLink });
+        }
+        // gstatic proxy thumbnail — always fetchable, even when the source
+        // CDN blocks hotlinking. Lower res but reliable.
+        if (it.image?.thumbnailLink) {
+          out.push({ url: it.image.thumbnailLink, width: it.image.thumbnailWidth, height: it.image.thumbnailHeight, source: `gstatic-thumb (${it.displayLink})` });
+        }
+        return out;
+      });
   } catch { return []; }
 }
 
@@ -116,7 +126,7 @@ async function fetchAndUpload(imageUrl, courseId, type) {
     if (!ct.startsWith("image/")) return null;
     const ext = extFromUrl(imageUrl) || extFromContentType(ct);
     const buf = await r.arrayBuffer();
-    if (buf.byteLength < 4 * 1024) return null; // < 4KB is almost always a placeholder
+    if (buf.byteLength < 2 * 1024) return null; // < 2KB almost always placeholder
     const path = `course-images/${courseId}-${type}.${ext}`;
     const { error } = await sb.storage.from("tour-it-photos").upload(path, new Uint8Array(buf), {
       contentType: ct,
