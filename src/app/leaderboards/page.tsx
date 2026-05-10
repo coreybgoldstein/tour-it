@@ -130,7 +130,7 @@ export default function LeaderboardsPage() {
   return (
     <main style={{ minHeight: "100svh", background: "#07100a", paddingBottom: 90, color: "#fff" }}>
       {/* Header */}
-      <div style={{ padding: "56px 20px 0", display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+      <div style={{ padding: "16px 20px 0", display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
