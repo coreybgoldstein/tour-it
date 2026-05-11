@@ -140,10 +140,10 @@ export default function TourItTopBar() {
             display: "grid",
             gridTemplateColumns: "44px 1fr 44px",
             alignItems: "center",
-            paddingTop: "max(10px, env(safe-area-inset-top))",
-            paddingBottom: 8,
-            paddingLeft: 14,
-            paddingRight: 14,
+            paddingTop: "max(14px, env(safe-area-inset-top))",
+            paddingBottom: 10,
+            paddingLeft: 16,
+            paddingRight: 16,
             position: "relative",
             zIndex: 1,
           }}
@@ -175,7 +175,7 @@ export default function TourItTopBar() {
             <img
               src="/tour-it-logo-full.png"
               alt="Tour It"
-              style={{ height: 38, width: "auto", cursor: "pointer" }}
+              style={{ height: 48, width: "auto", cursor: "pointer" }}
               onClick={() => router.push("/")}
             />
           </div>

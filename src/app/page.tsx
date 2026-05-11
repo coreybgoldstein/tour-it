@@ -1148,7 +1148,7 @@ export default function Home() {
               </button>
               {/* Logo — centered on mobile, left-aligned on desktop */}
               <div style={{ display: "flex", justifyContent: isDesktop ? "flex-start" : "center" }}>
-                <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 56 : 44, width: "auto" }} />
+                <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 60 : 48, width: "auto" }} />
               </div>
               {/* Bell — right-aligned in third column */}
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
