@@ -597,7 +597,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nearMeCourses, setNearMeCourses] = useState<TrendingCourse[]>([]);
   const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
-  const [nearMeRadius, setNearMeRadius] = useState(10);
+  const [nearMeRadius, setNearMeRadius] = useState(50);
   const [publicOnly, setPublicOnly] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -1233,13 +1233,13 @@ export default function Home() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap" }}>
                   {locationStatus === "granted" && [10, 25, 50].map(r => (
-                    <button key={r} onClick={() => { setNearMeRadius(r); fetchNearMe(r); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: nearMeRadius === r ? "#fff" : "rgba(255,255,255,0.35)", background: nearMeRadius === r ? "rgba(26,158,66,0.3)" : "rgba(255,255,255,0.05)", border: `1px solid ${nearMeRadius === r ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "3px 9px", cursor: "pointer", whiteSpace: "nowrap" }}>
+                    <button key={r} onClick={() => { setNearMeRadius(r); fetchNearMe(r); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: nearMeRadius === r ? "#fff" : "rgba(255,255,255,0.35)", background: nearMeRadius === r ? "rgba(26,158,66,0.22)" : "transparent", border: `1px solid ${nearMeRadius === r ? "rgba(26,158,66,0.45)" : "rgba(255,255,255,0.08)"}`, borderRadius: 99, padding: "3px 9px", cursor: "pointer", whiteSpace: "nowrap" }}>
                       {r}mi
                     </button>
                   ))}
-                  <button onClick={() => router.push("/map")} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "3px 9px", cursor: "pointer", whiteSpace: "nowrap" }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3,11 3,20 9,17 15,20 21,17 21,8 15,11 9,8"/><line x1="9" y1="8" x2="9" y2="17"/><line x1="15" y1="11" x2="15" y2="20"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.6)" }}>Map</span>
+                  <button onClick={() => router.push("/map")} style={{ display: "flex", alignItems: "center", gap: 5, background: "linear-gradient(135deg, rgba(26,158,66,0.32) 0%, rgba(26,158,66,0.18) 100%)", border: "1px solid rgba(77,168,98,0.55)", borderRadius: 99, padding: "5px 13px", cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 0 12px rgba(26,158,66,0.18)" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3,11 3,20 9,17 15,20 21,17 21,8 15,11 9,8"/><line x1="9" y1="8" x2="9" y2="17"/><line x1="15" y1="11" x2="15" y2="20"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", letterSpacing: "0.02em" }}>Map</span>
                   </button>
                   {locationStatus === "idle" && (
                     <button onClick={() => fetchNearMe()} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: 99, padding: "4px 12px", cursor: "pointer" }}>
@@ -1253,17 +1253,6 @@ export default function Home() {
                 <div style={{ padding: "0 20px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.2)", lineHeight: 1.5 }}>
                   Tap Enable to find courses within {nearMeRadius} miles of you.
                 </div>
-              )}
-              {locationStatus === "granted" && (
-                <button
-                  onClick={() => { const next = !publicOnly; setPublicOnly(next); fetchNearMe(undefined, next); }}
-                  style={{ display: "flex", alignItems: "center", gap: 7, padding: "0 20px 10px", background: "none", border: "none", cursor: "pointer" }}
-                >
-                  <div style={{ width: 28, height: 16, borderRadius: 99, background: publicOnly ? "#2d7a42" : "rgba(255,255,255,0.1)", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-                    <div style={{ position: "absolute", top: 2, left: publicOnly ? 12 : 2, width: 12, height: 12, borderRadius: "50%", background: "#fff", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
-                  </div>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: publicOnly ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.45)", letterSpacing: "0.06em" }}>Public only</span>
-                </button>
               )}
               {locationStatus === "loading" && (
                 <div className="courses-row">
