@@ -229,6 +229,74 @@ type Round = { id: string; courseId: string; date: string; totalScore: number | 
 type EarnedBadge = import("@/types/badges").EarnedBadge;
 type EditTagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
 type FollowUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
+type ProfileTrip = {
+  id: string;
+  name: string;
+  startDate: string | null;
+  endDate: string | null;
+  imageUrl: string | null;
+  courseCount: number;
+  totalHoles: number;
+  memberCount: number;
+  gameCount: number;
+  firstCourseLogo: string | null;
+  isUpcoming: boolean;
+};
+
+function formatTripDateRange(start: string | null | undefined, end: string | null | undefined): string | null {
+  if (!start) return null;
+  const s = new Date(start);
+  if (Number.isNaN(s.getTime())) return null;
+  const mo = (d: Date) => d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+  const day = (d: Date) => d.getUTCDate();
+  if (!end) return `${mo(s)} ${day(s)}`;
+  const e = new Date(end);
+  if (Number.isNaN(e.getTime())) return `${mo(s)} ${day(s)}`;
+  if (mo(s) === mo(e)) return `${mo(s)} ${day(s)}–${day(e)}`;
+  return `${mo(s)} ${day(s)} – ${mo(e)} ${day(e)}`;
+}
+
+function UpcomingTripCard({ trip, onClick }: { trip: ProfileTrip; onClick: () => void }) {
+  const date = formatTripDateRange(trip.startDate, trip.endDate);
+  const meta: string[] = [];
+  if (trip.courseCount > 0) meta.push(`${trip.courseCount} ${trip.courseCount === 1 ? "course" : "courses"}`);
+  if (trip.totalHoles > 0) meta.push(`${trip.totalHoles} holes`);
+  if (trip.memberCount > 0) meta.push(`${trip.memberCount} ${trip.memberCount === 1 ? "golfer" : "golfers"}`);
+  return (
+    <button
+      onClick={onClick}
+      style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}
+    >
+      <div style={{ width: 44, height: 44, borderRadius: 10, background: trip.imageUrl || trip.firstCourseLogo ? "transparent" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {trip.imageUrl
+          ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : trip.firstCourseLogo
+            ? <img src={trip.firstCourseLogo} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
+        }
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 2 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{trip.name}</div>
+          {date && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", flexShrink: 0 }}>{date}</div>}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+          <span>{meta.join(" · ")}</span>
+          {trip.gameCount > 0 && (
+            <>
+              <span style={{ color: "rgba(255,255,255,0.2)" }}>·</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#4da862", fontWeight: 600 }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+                {trip.gameCount} {trip.gameCount === 1 ? "game" : "games"}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+  );
+}
 
 export default function ProfilePage() {
   const { userId } = useParams();
@@ -243,7 +311,8 @@ export default function ProfilePage() {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
   const [selectedBadge, setSelectedBadge] = useState<EarnedBadge | null>(null);
-  const [profileTab, setProfileTab] = useState<"clips" | "rounds">("clips");
+  const [profileTab, setProfileTab] = useState<"clips" | "rounds" | "trips">("clips");
+  const [trips, setTrips] = useState<ProfileTrip[]>([]);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -432,6 +501,76 @@ export default function ProfilePage() {
 
       const { data: badgesData } = await supabase.from("UserBadge").select("id, awardedAt, badge:badgeId(slug, name, description, category, rarity)").eq("userId", userId as string).order("awardedAt", { ascending: false });
       setEarnedBadges((badgesData || []) as unknown as EarnedBadge[]);
+
+      // Owner-only: trips
+      if (owner) {
+        const { data: tripMemberRows } = await supabase
+          .from("GolfTripMember")
+          .select("tripId")
+          .eq("userId", userId as string);
+        const tripIds = Array.from(new Set((tripMemberRows || []).map((r: any) => r.tripId)));
+        if (tripIds.length > 0) {
+          const [{ data: tripRows }, { data: tcRows }, { data: tripMemberCounts }, { data: gameRows }] = await Promise.all([
+            supabase.from("GolfTrip").select("id, name, startDate, endDate, imageUrl").in("id", tripIds),
+            supabase.from("GolfTripCourse").select("tripId, courseId, secondaryCourseId, sortOrder").in("tripId", tripIds),
+            supabase.from("GolfTripMember").select("tripId").in("tripId", tripIds),
+            supabase.from("TripGame").select("tripId").in("tripId", tripIds),
+          ]);
+          const memberByTrip = new Map<string, number>();
+          for (const r of (tripMemberCounts || []) as any[]) {
+            memberByTrip.set(r.tripId, (memberByTrip.get(r.tripId) ?? 0) + 1);
+          }
+          const gameByTrip = new Map<string, number>();
+          for (const r of (gameRows || []) as any[]) {
+            gameByTrip.set(r.tripId, (gameByTrip.get(r.tripId) ?? 0) + 1);
+          }
+          const tcByTrip = new Map<string, any[]>();
+          for (const r of (tcRows || []) as any[]) {
+            if (!tcByTrip.has(r.tripId)) tcByTrip.set(r.tripId, []);
+            tcByTrip.get(r.tripId)!.push(r);
+          }
+          const allCourseIds = Array.from(new Set(((tcRows || []) as any[]).flatMap(r => [r.courseId, r.secondaryCourseId]).filter(Boolean)));
+          const courseInfoMap = new Map<string, { logoUrl: string | null; holeCount: number | null }>();
+          if (allCourseIds.length > 0) {
+            const { data: courseRows } = await supabase.from("Course").select("id, logoUrl, holeCount").in("id", allCourseIds);
+            for (const c of (courseRows || []) as any[]) {
+              courseInfoMap.set(c.id, { logoUrl: c.logoUrl, holeCount: c.holeCount });
+            }
+          }
+          const today = new Date().toISOString().slice(0, 10);
+          const built: ProfileTrip[] = ((tripRows || []) as any[]).map(t => {
+            const tcs = (tcByTrip.get(t.id) ?? []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+            const totalHoles = tcs.reduce((sum, tc) => {
+              const a = courseInfoMap.get(tc.courseId)?.holeCount ?? 18;
+              const b = tc.secondaryCourseId ? (courseInfoMap.get(tc.secondaryCourseId)?.holeCount ?? 0) : 0;
+              return sum + a + b;
+            }, 0);
+            const firstCourseLogo = tcs.length > 0 ? (courseInfoMap.get(tcs[0].courseId)?.logoUrl ?? null) : null;
+            const endRef = t.endDate || t.startDate;
+            const isUpcoming = !endRef || endRef >= today;
+            return {
+              id: t.id,
+              name: t.name,
+              startDate: t.startDate,
+              endDate: t.endDate,
+              imageUrl: t.imageUrl,
+              courseCount: tcs.length,
+              totalHoles,
+              memberCount: memberByTrip.get(t.id) ?? 0,
+              gameCount: gameByTrip.get(t.id) ?? 0,
+              firstCourseLogo,
+              isUpcoming,
+            };
+          }).sort((a, b) => {
+            // upcoming first (ascending by start), then past (descending by start)
+            if (a.isUpcoming !== b.isUpcoming) return a.isUpcoming ? -1 : 1;
+            const aRef = a.startDate || "";
+            const bRef = b.startDate || "";
+            return a.isUpcoming ? aRef.localeCompare(bRef) : bRef.localeCompare(aRef);
+          });
+          setTrips(built);
+        }
+      }
 
       setLoading(false);
     }
@@ -1066,9 +1205,9 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Left-aligned identity band */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px 8px" }}>
-        {/* Avatar — 64px, rank-colored ring */}
+      {/* Identity band — matches the trip page pattern */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "12px 16px 10px" }}>
+        {/* Avatar — rank-colored ring */}
         <div
           className={isLegend(profileRank) ? "legend-ring" : undefined}
           onClick={() => setShowAvatarModal(true)}
@@ -1078,38 +1217,47 @@ export default function ProfilePage() {
         </div>
 
         {/* Identity stack */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Row 1: @username + edit pencil */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 25, fontWeight: 700, color: getRankColor(profileRank), lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{profile.username}</div>
+        <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
+          {/* Eyebrow: @username + inline EDIT pill */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
+              @{profile.username}
+            </div>
             {isOwner && (
-              <button onClick={() => setShowEdit(true)} style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                  <path d="m15 5 4 4"/>
-                </svg>
+              <button
+                onClick={() => setShowEdit(true)}
+                aria-label="Edit profile"
+                style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit
               </button>
             )}
           </div>
 
-          {/* Row 2: hcp + home course + badges pills */}
+          {/* Display name — Playfair big heading */}
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 6 }}>
+            {profile.displayName?.trim() || profile.username}
+          </div>
+
+          {/* Pills row */}
           {(profile.handicapIndex !== null || homeCourse || earnedBadges.length > 0) && (
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 4 }}>
-              {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)" }}>{profile.handicapIndex} hcp</div>}
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 6 }}>
+              {profile.handicapIndex !== null && <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "3px 9px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.82)" }}>{profile.handicapIndex} hcp</div>}
               {homeCourse && (
-                <div onClick={() => router.push(`/courses/${homeCourse.id}`)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)", cursor: "pointer" }}>{homeCourse.name}</div>
+                <div onClick={() => router.push(`/courses/${homeCourse.id}`)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "3px 9px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.82)", cursor: "pointer" }}>{homeCourse.name}</div>
               )}
               {earnedBadges.length > 0 && (
-                <div onClick={() => router.push(`/profile/${userId}/badges`)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "3px 8px", fontSize: 12, color: "rgba(255,255,255,0.82)", cursor: "pointer" }}>🏅 {earnedBadges.length} badges</div>
+                <div onClick={() => router.push(`/profile/${userId}/badges`)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "3px 9px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.82)", cursor: "pointer" }}>🏅 {earnedBadges.length} {earnedBadges.length === 1 ? "badge" : "badges"}</div>
               )}
             </div>
           )}
 
-          {/* Row 3: followers · following */}
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.62)", fontFamily: "'Outfit', sans-serif", fontSize: 13 }}><span style={{ fontWeight: 700 }}>{followerCount}</span> followers</button>
-            <span style={{ margin: "0 4px", color: "rgba(255,255,255,0.3)", fontSize: 13 }}>·</span>
-            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.62)", fontFamily: "'Outfit', sans-serif", fontSize: 13 }}><span style={{ fontWeight: 700 }}>{followingCount}</span> following</button>
+          {/* Followers · following */}
+          <div style={{ display: "flex", alignItems: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>
+            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.55)" }}><span style={{ fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{followerCount}</span> followers</button>
+            <span style={{ margin: "0 5px", color: "rgba(255,255,255,0.25)" }}>·</span>
+            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.55)" }}><span style={{ fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{followingCount}</span> following</button>
           </div>
         </div>
 
@@ -1127,15 +1275,34 @@ export default function ProfilePage() {
       {/* Progression tracker */}
       <ProgressionTracker userId={userId as string} isOwner={isOwner} />
 
-      {/* Clips / Rounds tabs with counts */}
+      {/* Upcoming trips — owner-only, shows up to 2 with quick-glance metadata */}
+      {isOwner && trips.filter(t => t.isUpcoming).length > 0 && (
+        <div style={{ padding: "8px 16px 12px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>Upcoming</div>
+            {trips.filter(t => t.isUpcoming).length > 2 && (
+              <button onClick={() => setProfileTab("trips")} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(77,168,98,0.85)" }}>
+                View all →
+              </button>
+            )}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {trips.filter(t => t.isUpcoming).slice(0, 2).map(t => (
+              <UpcomingTripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Clips / Rounds / Trips tabs with counts */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
-        {(["clips", "rounds"] as const).map(tab => {
-          const count = tab === "clips" ? allClips.length : rounds.length;
+        {(isOwner ? (["clips", "rounds", "trips"] as const) : (["clips", "rounds"] as const)).map(tab => {
+          const count = tab === "clips" ? allClips.length : tab === "rounds" ? rounds.length : trips.length;
           const active = profileTab === tab;
           return (
             <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${active ? "#4da862" : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: active ? "#fff" : "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                {tab === "clips" ? "Clips" : "Rounds"}
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: active ? "#fff" : "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                {tab === "clips" ? "Clips" : tab === "rounds" ? "Rounds" : "Trips"}
               </span>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.2)", background: active ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px", letterSpacing: 0 }}>
                 {count}
@@ -1144,6 +1311,25 @@ export default function ProfilePage() {
           );
         })}
       </div>
+
+      {/* Trips tab body */}
+      {profileTab === "trips" && (
+        <div style={{ padding: "12px 16px" }}>
+          {trips.length === 0 ? (
+            <div style={{ padding: "48px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.4)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              </div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>No trips yet</div>
+              {isOwner && <button onClick={() => router.push("/trips")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "11px 28px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: "'Outfit', sans-serif" }}>Plan a trip</button>}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {trips.map(t => <UpcomingTripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Clips grid */}
       {profileTab === "clips" && (
