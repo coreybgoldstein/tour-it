@@ -9,12 +9,12 @@ export default function LevelTracker({ pct, rankColor }: Props) {
   const clamped = Math.max(2, Math.min(96, pct));
 
   return (
-    <div style={{ marginTop: 8, marginBottom: 2 }}>
-      {/* paddingRight = svgWidth(18) - poleX(3) = 15, so pole sits exactly at bar end */}
-      <div style={{ position: "relative", paddingRight: 15 }}>
+    <div style={{ marginTop: 6, marginBottom: 2 }}>
+      {/* paddingRight = svgWidth(14) - poleX(2.5) = 11.5, pole sits at bar end */}
+      <div style={{ position: "relative", paddingRight: 11 }}>
         {/* Track */}
         <div style={{
-          height: 10,
+          height: 5,
           borderRadius: 99,
           background: "rgba(255,255,255,0.07)",
           position: "relative",
@@ -30,54 +30,37 @@ export default function LevelTracker({ pct, rankColor }: Props) {
           }}>
             <div style={{
               position: "absolute", inset: 0,
-              background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, transparent 65%)",
+              background: "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, transparent 70%)",
             }} />
           </div>
 
-          {/* Ball — static */}
+          {/* Ball — simplified for small size */}
           <div style={{
             position: "absolute",
             top: "50%",
             left: `${clamped}%`,
-            width: 20,
-            height: 20,
+            width: 12,
+            height: 12,
             borderRadius: "50%",
-            background: "radial-gradient(circle at 36% 30%, #ffffff 0%, #eaedf1 28%, #c6ccd6 68%, #b4bcc8 100%)",
+            background: "radial-gradient(circle at 36% 30%, #ffffff 0%, #eaedf1 32%, #c6ccd6 72%, #b4bcc8 100%)",
             transform: "translate(-50%, -50%)",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.55)",
             zIndex: 2,
           }}>
-            {/* Specular highlight */}
-            <div style={{ position: "absolute", top: "7%", left: "9%", width: "44%", height: "38%", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0) 72%)" }} />
-            {/* Dimples */}
-            <div style={{ position: "absolute", top: "20%", left: "55%", width: 2.5, height: 2.5, borderRadius: "50%", background: "rgba(0,0,0,0.13)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.35)" }} />
-            <div style={{ position: "absolute", top: "18%", left: "73%", width: 2, height: 2, borderRadius: "50%", background: "rgba(0,0,0,0.11)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.3)" }} />
-            <div style={{ position: "absolute", top: "34%", left: "44%", width: 2.5, height: 2.5, borderRadius: "50%", background: "rgba(0,0,0,0.12)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.32)" }} />
-            <div style={{ position: "absolute", top: "32%", left: "63%", width: 2.5, height: 2.5, borderRadius: "50%", background: "rgba(0,0,0,0.14)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.35)" }} />
-            <div style={{ position: "absolute", top: "30%", left: "80%", width: 2, height: 2, borderRadius: "50%", background: "rgba(0,0,0,0.12)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.3)" }} />
-            <div style={{ position: "absolute", top: "47%", left: "28%", width: 2, height: 2, borderRadius: "50%", background: "rgba(0,0,0,0.10)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.28)" }} />
-            <div style={{ position: "absolute", top: "46%", left: "52%", width: 2.5, height: 2.5, borderRadius: "50%", background: "rgba(0,0,0,0.15)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.36)" }} />
-            <div style={{ position: "absolute", top: "44%", left: "71%", width: 2.5, height: 2.5, borderRadius: "50%", background: "rgba(0,0,0,0.14)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.34)" }} />
-            <div style={{ position: "absolute", top: "48%", left: "84%", width: 2, height: 2, borderRadius: "50%", background: "rgba(0,0,0,0.12)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.3)" }} />
-            <div style={{ position: "absolute", top: "62%", left: "37%", width: 2.5, height: 2.5, borderRadius: "50%", background: "rgba(0,0,0,0.16)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.34)" }} />
-            <div style={{ position: "absolute", top: "60%", left: "57%", width: 2.5, height: 2.5, borderRadius: "50%", background: "rgba(0,0,0,0.16)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.34)" }} />
-            <div style={{ position: "absolute", top: "62%", left: "74%", width: 2, height: 2, borderRadius: "50%", background: "rgba(0,0,0,0.14)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.3)" }} />
-            <div style={{ position: "absolute", top: "74%", left: "26%", width: 2, height: 2, borderRadius: "50%", background: "rgba(0,0,0,0.15)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.3)" }} />
-            <div style={{ position: "absolute", top: "72%", left: "47%", width: 2.5, height: 2.5, borderRadius: "50%", background: "rgba(0,0,0,0.17)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.32)" }} />
-            <div style={{ position: "absolute", top: "74%", left: "65%", width: 2, height: 2, borderRadius: "50%", background: "rgba(0,0,0,0.15)", boxShadow: "0 0.5px 0 rgba(255,255,255,0.28)" }} />
+            <div style={{ position: "absolute", top: "10%", left: "12%", width: "44%", height: "38%", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0) 72%)" }} />
           </div>
         </div>
 
-        {/* Flag — pole at x=3 in 18px SVG → sits 15px from right = exactly at bar end */}
+        {/* Flag — pole at x=2.5 in 14px SVG → sits 11.5px from right = exactly at bar end */}
         <div style={{
           position: "absolute",
           right: 0,
           top: "50%",
-          transform: "translateY(-80%)",
+          transform: "translateY(-78%)",
         }}>
-          <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
-            <line x1="3" y1="27" x2="3" y2="1" stroke="rgba(255,255,255,0.38)" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M3 1 L17 7.5 L3 14 Z" fill="#e03030" />
+          <svg width="14" height="22" viewBox="0 0 14 22" fill="none">
+            <line x1="2.5" y1="21" x2="2.5" y2="1" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M2.5 1 L13 6 L2.5 11 Z" fill="#e03030" />
           </svg>
         </div>
       </div>
