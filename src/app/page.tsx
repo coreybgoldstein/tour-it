@@ -1210,7 +1210,7 @@ export default function Home() {
             const deduped = trendingCourses.filter(c => !nearMeIds.has(c.id));
             return (
               <div style={{ flexShrink: 0 }}>
-                <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>
+                <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
                   Popular on Tour It
                 </div>
                 <div className="courses-row">
@@ -1227,20 +1227,21 @@ export default function Home() {
           {/* Courses Near Me */}
           {locationStatus !== "denied" && (
             <div style={{ flexShrink: 0, marginTop: 10 }}>
-              <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", flexShrink: 0 }}>
+              <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", flexShrink: 0 }}>
                   Courses Near Me
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap" }}>
+                <button onClick={() => router.push("/map")} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(26,158,66,0.18)", border: "1px solid rgba(26,158,66,0.45)", borderRadius: 99, padding: "3px 9px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3,11 3,20 9,17 15,20 21,17 21,8 15,11 9,8"/><line x1="9" y1="8" x2="9" y2="17"/><line x1="15" y1="11" x2="15" y2="20"/></svg>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Map</span>
+                </button>
+                <div style={{ flex: 1 }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap", flexShrink: 0 }}>
                   {locationStatus === "granted" && [10, 25, 50].map(r => (
                     <button key={r} onClick={() => { setNearMeRadius(r); fetchNearMe(r); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: nearMeRadius === r ? "#fff" : "rgba(255,255,255,0.35)", background: nearMeRadius === r ? "rgba(26,158,66,0.22)" : "transparent", border: `1px solid ${nearMeRadius === r ? "rgba(26,158,66,0.45)" : "rgba(255,255,255,0.08)"}`, borderRadius: 99, padding: "3px 9px", cursor: "pointer", whiteSpace: "nowrap" }}>
                       {r}mi
                     </button>
                   ))}
-                  <button onClick={() => router.push("/map")} style={{ display: "flex", alignItems: "center", gap: 5, background: "linear-gradient(135deg, rgba(26,158,66,0.32) 0%, rgba(26,158,66,0.18) 100%)", border: "1px solid rgba(77,168,98,0.55)", borderRadius: 99, padding: "5px 13px", cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 0 12px rgba(26,158,66,0.18)" }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3,11 3,20 9,17 15,20 21,17 21,8 15,11 9,8"/><line x1="9" y1="8" x2="9" y2="17"/><line x1="15" y1="11" x2="15" y2="20"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", letterSpacing: "0.02em" }}>Map</span>
-                  </button>
                   {locationStatus === "idle" && (
                     <button onClick={() => fetchNearMe()} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.25)", borderRadius: 99, padding: "4px 12px", cursor: "pointer" }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
