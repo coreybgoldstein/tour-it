@@ -1056,20 +1056,15 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Top bar */}
-      <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", gap: 8 }}>
-        {isOwner ? (
-          <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
-            <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
-            <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
-            <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
-          </button>
-        ) : (
+      {/* Back button — only shown when viewing someone else's profile.
+          The global TourItTopBar provides the hamburger on the owner's own profile. */}
+      {!isOwner && (
+        <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={() => router.back()} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Left-aligned identity band */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px 8px" }}>
