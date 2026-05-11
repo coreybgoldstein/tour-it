@@ -310,8 +310,9 @@ export default function ProfilePage() {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
   const [selectedBadge, setSelectedBadge] = useState<EarnedBadge | null>(null);
-  const [profileTab, setProfileTab] = useState<"clips" | "rounds" | "trips">("clips");
-  const [trips, setTrips] = useState<ProfileTrip[]>([]);
+  const [profileTab, setProfileTab] = useState<"clips" | "lists">("clips");
+  const [savedCourses, setSavedCourses] = useState<SavedCourse[]>([]);
+  const [listFilter, setListFilter] = useState<"BUCKET_LIST" | "PLAYED">("BUCKET_LIST");
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -501,73 +502,29 @@ export default function ProfilePage() {
       const { data: badgesData } = await supabase.from("UserBadge").select("id, awardedAt, badge:badgeId(slug, name, description, category, rarity)").eq("userId", userId as string).order("awardedAt", { ascending: false });
       setEarnedBadges((badgesData || []) as unknown as EarnedBadge[]);
 
-      // Owner-only: trips
+      // Owner-only: saved courses (bucket list + played)
       if (owner) {
-        const { data: tripMemberRows } = await supabase
-          .from("GolfTripMember")
-          .select("tripId")
-          .eq("userId", userId as string);
-        const tripIds = Array.from(new Set((tripMemberRows || []).map((r: any) => r.tripId)));
-        if (tripIds.length > 0) {
-          const [{ data: tripRows }, { data: tcRows }, { data: tripMemberCounts }, { data: gameRows }] = await Promise.all([
-            supabase.from("GolfTrip").select("id, name, startDate, endDate, imageUrl").in("id", tripIds),
-            supabase.from("GolfTripCourse").select("tripId, courseId, secondaryCourseId, sortOrder").in("tripId", tripIds),
-            supabase.from("GolfTripMember").select("tripId").in("tripId", tripIds),
-            supabase.from("TripGame").select("tripId").in("tripId", tripIds),
-          ]);
-          const memberByTrip = new Map<string, number>();
-          for (const r of (tripMemberCounts || []) as any[]) {
-            memberByTrip.set(r.tripId, (memberByTrip.get(r.tripId) ?? 0) + 1);
-          }
-          const gameByTrip = new Map<string, number>();
-          for (const r of (gameRows || []) as any[]) {
-            gameByTrip.set(r.tripId, (gameByTrip.get(r.tripId) ?? 0) + 1);
-          }
-          const tcByTrip = new Map<string, any[]>();
-          for (const r of (tcRows || []) as any[]) {
-            if (!tcByTrip.has(r.tripId)) tcByTrip.set(r.tripId, []);
-            tcByTrip.get(r.tripId)!.push(r);
-          }
-          const allCourseIds = Array.from(new Set(((tcRows || []) as any[]).flatMap(r => [r.courseId, r.secondaryCourseId]).filter(Boolean)));
-          const courseInfoMap = new Map<string, { logoUrl: string | null; holeCount: number | null }>();
-          if (allCourseIds.length > 0) {
-            const { data: courseRows } = await supabase.from("Course").select("id, logoUrl, holeCount").in("id", allCourseIds);
-            for (const c of (courseRows || []) as any[]) {
-              courseInfoMap.set(c.id, { logoUrl: c.logoUrl, holeCount: c.holeCount });
-            }
-          }
-          const today = new Date().toISOString().slice(0, 10);
-          const built: ProfileTrip[] = ((tripRows || []) as any[]).map(t => {
-            const tcs = (tcByTrip.get(t.id) ?? []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-            const totalHoles = tcs.reduce((sum, tc) => {
-              const a = courseInfoMap.get(tc.courseId)?.holeCount ?? 18;
-              const b = tc.secondaryCourseId ? (courseInfoMap.get(tc.secondaryCourseId)?.holeCount ?? 0) : 0;
-              return sum + a + b;
-            }, 0);
-            const firstCourseLogo = tcs.length > 0 ? (courseInfoMap.get(tcs[0].courseId)?.logoUrl ?? null) : null;
-            const endRef = t.endDate || t.startDate;
-            const isUpcoming = !endRef || endRef >= today;
+        const { data: savesData } = await supabase
+          .from("Save")
+          .select("id, courseId, saveType")
+          .eq("userId", userId as string)
+          .not("courseId", "is", null);
+        if (savesData && savesData.length > 0) {
+          const courseIds = Array.from(new Set(savesData.map((s: any) => s.courseId)));
+          const { data: coursesData } = await supabase
+            .from("Course")
+            .select("id, name, city, state, logoUrl, uploadCount")
+            .in("id", courseIds);
+          const courseMap = new Map<string, any>((coursesData ?? []).map((c: any) => [c.id, c]));
+          setSavedCourses(savesData.map((s: any) => {
+            const c = courseMap.get(s.courseId);
             return {
-              id: t.id,
-              name: t.name,
-              startDate: t.startDate,
-              endDate: t.endDate,
-              imageUrl: t.imageUrl,
-              courseCount: tcs.length,
-              totalHoles,
-              memberCount: memberByTrip.get(t.id) ?? 0,
-              gameCount: gameByTrip.get(t.id) ?? 0,
-              firstCourseLogo,
-              isUpcoming,
+              id: s.id,
+              courseId: s.courseId,
+              saveType: s.saveType as "PLAYED" | "BUCKET_LIST",
+              course: c ? { id: c.id, name: c.name, city: c.city, state: c.state } : { id: s.courseId, name: "Unknown", city: "", state: "" },
             };
-          }).sort((a, b) => {
-            // upcoming first (ascending by start), then past (descending by start)
-            if (a.isUpcoming !== b.isUpcoming) return a.isUpcoming ? -1 : 1;
-            const aRef = a.startDate || "";
-            const bRef = b.startDate || "";
-            return a.isUpcoming ? aRef.localeCompare(bRef) : bRef.localeCompare(aRef);
-          });
-          setTrips(built);
+          }));
         }
       }
 
@@ -1292,34 +1249,15 @@ export default function ProfilePage() {
       {/* Progression tracker */}
       <ProgressionTracker userId={userId as string} isOwner={isOwner} />
 
-      {/* Upcoming trips — owner-only, shows up to 2 with quick-glance metadata */}
-      {isOwner && trips.filter(t => t.isUpcoming).length > 0 && (
-        <div style={{ padding: "8px 16px 12px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>Upcoming</div>
-            {trips.filter(t => t.isUpcoming).length > 2 && (
-              <button onClick={() => setProfileTab("trips")} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(77,168,98,0.85)" }}>
-                View all →
-              </button>
-            )}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {trips.filter(t => t.isUpcoming).slice(0, 2).map(t => (
-              <UpcomingTripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Clips / Rounds / Trips tabs with counts */}
+      {/* Clips / Lists tabs (Lists is owner-only — saves are private) */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
-        {(isOwner ? (["clips", "rounds", "trips"] as const) : (["clips", "rounds"] as const)).map(tab => {
-          const count = tab === "clips" ? allClips.length : tab === "rounds" ? rounds.length : trips.length;
+        {(isOwner ? (["clips", "lists"] as const) : (["clips"] as const)).map(tab => {
+          const count = tab === "clips" ? allClips.length : savedCourses.length;
           const active = profileTab === tab;
           return (
             <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${active ? "#4da862" : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: active ? "#fff" : "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                {tab === "clips" ? "Clips" : tab === "rounds" ? "Rounds" : "Trips"}
+                {tab === "clips" ? "Clips" : "Lists"}
               </span>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.2)", background: active ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px", letterSpacing: 0 }}>
                 {count}
@@ -1329,22 +1267,62 @@ export default function ProfilePage() {
         })}
       </div>
 
-      {/* Trips tab body */}
-      {profileTab === "trips" && (
-        <div style={{ padding: "12px 16px" }}>
-          {trips.length === 0 ? (
-            <div style={{ padding: "48px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.4)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      {/* Lists tab body — Bucket List / Played toggle */}
+      {profileTab === "lists" && isOwner && (
+        <div style={{ padding: "14px 16px 24px" }}>
+          {/* Sub-toggle */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            {([
+              { key: "BUCKET_LIST" as const, label: "Bucket List", count: savedCourses.filter(s => s.saveType === "BUCKET_LIST").length },
+              { key: "PLAYED" as const, label: "Played", count: savedCourses.filter(s => s.saveType === "PLAYED").length },
+            ]).map(opt => {
+              const active = listFilter === opt.key;
+              return (
+                <button key={opt.key} onClick={() => setListFilter(opt.key)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 0", borderRadius: 99, border: `1px solid ${active ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.08)"}`, background: active ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.03)", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: active ? "#4da862" : "rgba(255,255,255,0.5)" }}>
+                  {opt.label}
+                  <span style={{ fontSize: 10, fontWeight: 700, color: active ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.3)" }}>{opt.count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {(() => {
+            const filtered = savedCourses.filter(s => s.saveType === listFilter);
+            if (filtered.length === 0) {
+              return (
+                <div style={{ padding: "40px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {listFilter === "BUCKET_LIST"
+                      ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.45)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                      : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.45)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    }
+                  </div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>{listFilter === "BUCKET_LIST" ? "Nothing on your bucket list yet" : "No courses played yet"}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", maxWidth: 240, lineHeight: 1.5 }}>{listFilter === "BUCKET_LIST" ? "Tap the bookmark on any course to save it here." : "Mark a course as played to add it to this list."}</div>
+                </div>
+              );
+            }
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {filtered.map(s => (
+                  <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, cursor: "pointer", textAlign: "left" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>
+                        {s.course.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.course.name}</div>
+                      {(s.course.city || s.course.state) && (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{[s.course.city, s.course.state].filter(Boolean).join(", ")}</div>
+                      )}
+                    </div>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
+                ))}
               </div>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>No trips yet</div>
-              {isOwner && <button onClick={() => router.push("/trips")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "11px 28px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: "'Outfit', sans-serif" }}>Plan a trip</button>}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {trips.map(t => <UpcomingTripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
@@ -1383,47 +1361,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Rounds list */}
-      {profileTab === "rounds" && (
-        <div style={{ padding: "16px 20px 32px" }}>
-          {rounds.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginBottom: 6 }}>No rounds logged yet</div>
-              {isOwner && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.2)" }}>Rounds are logged automatically when you upload a clip</div>}
-            </div>
-          ) : (
-            rounds.map(r => {
-              const course = coursesPlayed.find(c => c.id === r.courseId);
-              const [y, m, d] = r.date.split("-").map(Number);
-              const dateStr = new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-              return (
-                <div key={r.id} onClick={() => router.push(`/profile/${userId}/rounds/${r.id}`)}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, marginBottom: 8, cursor: "pointer" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, marginRight: 12, overflow: "hidden", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {course?.logoUrl
-                      ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(77,168,98,0.7)" }}>{course?.name?.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?"}</span>
-                    }
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course?.name || "Unknown Course"}</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{dateStr}</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0, marginLeft: 12 }}>
-                    {r.totalScore != null && (
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1 }}>{r.totalScore}</div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>Score</div>
-                      </div>
-                    )}
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
 
       {/* Badge detail sheet */}
       {selectedBadge && (() => {
