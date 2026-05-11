@@ -541,7 +541,7 @@ export default function TripPage() {
   const updateRyderTeamName = async (team: "RED" | "BLUE", name: string) => {
     if (!isOwner || !trip) return;
     const field = team === "RED" ? "redTeamName" : "blueTeamName";
-    const value = name.trim() || null;
+    const value = name.length > 0 ? name : null;
     setTrip(prev => prev ? { ...prev, [field]: value } : prev);
     await createClient().from("GolfTrip").update({ [field]: value }).eq("id", trip.id);
   };
@@ -1559,9 +1559,9 @@ export default function TripPage() {
                 return (
                   <div style={{ overflowY: "auto", flex: 1 }}>
                     <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: unassigned.length > 0 ? 16 : 0 }}>
-                      {renderTeamColumn(trip.redTeamName?.trim() || "Red Team", "#fca5a5", "#c8102e", redMembers, "left")}
+                      {renderTeamColumn(trip.redTeamName?.trim() || "Team 1", "#fca5a5", "#c8102e", redMembers, "left")}
                       <div style={{ width: 1, alignSelf: "stretch", background: "linear-gradient(to bottom, transparent, #d4a017 30%, #d4a017 70%, transparent)" }} />
-                      {renderTeamColumn(trip.blueTeamName?.trim() || "Blue Team", "#93c5fd", "#3b82f6", blueMembers, "right")}
+                      {renderTeamColumn(trip.blueTeamName?.trim() || "Team 2", "#93c5fd", "#3b82f6", blueMembers, "right")}
                     </div>
                     {unassigned.length > 0 && (
                       <div style={{ marginTop: 8, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
@@ -2502,7 +2502,7 @@ export default function TripPage() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
               <div>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff" }}>Ryder Cup Setup</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "#d4a017", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Red vs Blue</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "#d4a017", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Team vs Team</div>
               </div>
               <button onClick={() => setRyderSetupOpen(false)} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -2512,20 +2512,32 @@ export default function TripPage() {
             {/* Team name inputs */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 18 }}>
               <div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#c8102e", marginBottom: 5 }}>Red Team</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#c8102e" }} />
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>Team 1</span>
+                </div>
                 <input
                   value={trip.redTeamName ?? ""}
                   onChange={e => updateRyderTeamName("RED", e.target.value)}
-                  placeholder="Red Team"
+                  placeholder="Team name"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="words"
                   style={{ width: "100%", background: "rgba(200,16,46,0.10)", border: "1px solid rgba(200,16,46,0.45)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", outline: "none" }}
                 />
               </div>
               <div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#3b82f6", marginBottom: 5 }}>Blue Team</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3b82f6" }} />
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>Team 2</span>
+                </div>
                 <input
                   value={trip.blueTeamName ?? ""}
                   onChange={e => updateRyderTeamName("BLUE", e.target.value)}
-                  placeholder="Blue Team"
+                  placeholder="Team name"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="words"
                   style={{ width: "100%", background: "rgba(30,58,138,0.18)", border: "1px solid rgba(59,130,246,0.45)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", outline: "none" }}
                 />
               </div>
@@ -2546,9 +2558,13 @@ export default function TripPage() {
                     </div>
                     <div style={{ flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", fontWeight: 500 }}>{m.user.displayName || m.user.username}</div>
                     <div style={{ display: "flex", gap: 4 }}>
-                      <button onClick={() => assignRyderMember(m.userId, "RED")} style={{ padding: "5px 9px", borderRadius: 7, background: t === "RED" ? "#c8102e" : "rgba(200,16,46,0.15)", border: `1px solid ${t === "RED" ? "#c8102e" : "rgba(200,16,46,0.4)"}`, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: t === "RED" ? "#fff" : "#fca5a5", cursor: "pointer", letterSpacing: "0.06em" }}>RED</button>
-                      <button onClick={() => assignRyderMember(m.userId, "BLUE")} style={{ padding: "5px 9px", borderRadius: 7, background: t === "BLUE" ? "#1e3a8a" : "rgba(30,58,138,0.18)", border: `1px solid ${t === "BLUE" ? "#3b82f6" : "rgba(59,130,246,0.4)"}`, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: t === "BLUE" ? "#fff" : "#93c5fd", cursor: "pointer", letterSpacing: "0.06em" }}>BLUE</button>
-                      <button onClick={() => assignRyderMember(m.userId, null)} style={{ padding: "5px 8px", borderRadius: 7, background: t === null ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${t === null ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)"}`, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>–</button>
+                      <button onClick={() => assignRyderMember(m.userId, "RED")} aria-label="Assign to team 1" style={{ width: 28, height: 28, borderRadius: 8, background: t === "RED" ? "#c8102e" : "rgba(200,16,46,0.15)", border: `1px solid ${t === "RED" ? "#c8102e" : "rgba(200,16,46,0.4)"}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: t === "RED" ? "#fff" : "#c8102e" }} />
+                      </button>
+                      <button onClick={() => assignRyderMember(m.userId, "BLUE")} aria-label="Assign to team 2" style={{ width: 28, height: 28, borderRadius: 8, background: t === "BLUE" ? "#1e3a8a" : "rgba(30,58,138,0.18)", border: `1px solid ${t === "BLUE" ? "#3b82f6" : "rgba(59,130,246,0.4)"}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: t === "BLUE" ? "#fff" : "#3b82f6" }} />
+                      </button>
+                      <button onClick={() => assignRyderMember(m.userId, null)} aria-label="Unassign" style={{ width: 28, height: 28, borderRadius: 8, background: t === null ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${t === null ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)"}`, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", cursor: "pointer" }}>–</button>
                     </div>
                   </div>
                 );
@@ -2635,29 +2651,29 @@ function RyderCupHero({
   ) => {
     const c = teamColors[team];
     return (
-      <div style={{ flex: 1, padding: "10px 12px 10px", background: c.accentBg, position: "relative", textAlign: align }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "rgba(255,255,255,0.6)", letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 3 }}>
-          {team === "RED" ? "Red" : "Blue"}
-        </div>
+      <div style={{ flex: 1, padding: "8px 10px 8px", background: c.accentBg, position: "relative", textAlign: align }}>
         {isOwner ? (
           <input
             value={name ?? ""}
             onChange={e => updateRyderTeamName(team, e.target.value)}
             placeholder={placeholder}
+            spellCheck={false}
+            autoCorrect="off"
+            autoCapitalize="words"
             style={{
               width: "100%", background: "transparent", border: "none", outline: "none",
-              fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#fff",
+              fontFamily: "'Playfair Display', serif", fontSize: 12, fontWeight: 800, color: "#fff",
               textAlign: align, padding: 0,
             }}
           />
         ) : (
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 12, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
             {name?.trim() || placeholder}
           </div>
         )}
 
         {/* Score */}
-        <div style={{ marginTop: 6, display: "flex", justifyContent: align === "left" ? "flex-start" : "flex-end" }}>
+        <div style={{ marginTop: 5, display: "flex", justifyContent: align === "left" ? "flex-start" : "flex-end" }}>
           {isEditingScore ? (
             <input
               autoFocus
@@ -2665,14 +2681,14 @@ function RyderCupHero({
               defaultValue={score}
               onBlur={e => { setRyderScore(team, parseFloat(e.target.value)); setEditing(false); }}
               onKeyDown={e => { if (e.key === "Enter") { setRyderScore(team, parseFloat((e.target as HTMLInputElement).value)); setEditing(false); } else if (e.key === "Escape") setEditing(false); }}
-              style={{ width: 70, fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 900, color: "#fff", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(212,160,23,0.5)", borderRadius: 6, textAlign: "center", outline: "none" }}
+              style={{ width: 60, fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, color: "#fff", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(212,160,23,0.5)", borderRadius: 6, textAlign: "center", outline: "none" }}
             />
           ) : (
             <div
               onClick={() => isOwner && setEditing(true)}
               style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: 38, fontWeight: 900, color: "#fff", lineHeight: 1,
+                fontSize: 32, fontWeight: 900, color: "#fff", lineHeight: 1,
                 cursor: isOwner ? "pointer" : "default",
                 textShadow: "0 2px 10px rgba(0,0,0,0.5)",
               }}
@@ -2683,27 +2699,27 @@ function RyderCupHero({
         </div>
 
         {/* Member avatars */}
-        <div style={{ marginTop: 8, display: "flex", justifyContent: align === "left" ? "flex-start" : "flex-end", flexWrap: "wrap", gap: 3 }}>
+        <div style={{ marginTop: 6, display: "flex", justifyContent: align === "left" ? "flex-start" : "flex-end", flexWrap: "wrap", gap: 3 }}>
           {teamMembers.length === 0 ? (
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>No players</div>
           ) : teamMembers.slice(0, 5).map(m => (
-            <div key={m.id} style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden", border: "1.5px solid #fff", background: "rgba(0,0,0,0.3)" }}>
+            <div key={m.id} style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", border: "1.5px solid #fff", background: "rgba(0,0,0,0.3)" }}>
               {m.user.avatarUrl
                 ? <img src={m.user.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ margin: "5px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                : <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ margin: "5px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               }
             </div>
           ))}
           {teamMembers.length > 5 && (
-            <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#fff" }}>+{teamMembers.length - 5}</div>
+            <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#fff" }}>+{teamMembers.length - 5}</div>
           )}
         </div>
 
         {/* Owner score buttons */}
         {isOwner && (
-          <div style={{ marginTop: 8, display: "flex", gap: 5, justifyContent: align === "left" ? "flex-start" : "flex-end" }}>
-            <button onClick={() => updateRyderScore(team, 0.5)} style={{ padding: "4px 9px", borderRadius: 7, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#fff", cursor: "pointer" }}>+ ½</button>
-            <button onClick={() => updateRyderScore(team, 1)}   style={{ padding: "4px 9px", borderRadius: 7, background: "#d4a017", border: "1px solid #fbbf24", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "#1a1a1a", cursor: "pointer" }}>+ 1</button>
+          <div style={{ marginTop: 7, display: "flex", gap: 5, justifyContent: align === "left" ? "flex-start" : "flex-end" }}>
+            <button onClick={() => updateRyderScore(team, 0.5)} style={{ padding: "3px 8px", borderRadius: 7, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#fff", cursor: "pointer" }}>+ ½</button>
+            <button onClick={() => updateRyderScore(team, 1)}   style={{ padding: "3px 8px", borderRadius: 7, background: "#d4a017", border: "1px solid #fbbf24", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, color: "#1a1a1a", cursor: "pointer" }}>+ 1</button>
           </div>
         )}
       </div>
@@ -2713,18 +2729,18 @@ function RyderCupHero({
   return (
     <div style={{ padding: "16px 16px 0" }}>
       <div style={{
-        borderRadius: 18,
+        borderRadius: 16,
         overflow: "hidden",
         border: "1px solid rgba(212,160,23,0.4)",
         boxShadow: "0 6px 24px rgba(0,0,0,0.5)",
         position: "relative",
       }}>
         {/* Top gold trim */}
-        <div style={{ height: 3, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
+        <div style={{ height: 2, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
 
         {/* Title bar */}
-        <div style={{ background: "#0a0a0a", padding: "5px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 800, color: "#d4a017", letterSpacing: "0.18em", textTransform: "uppercase" }}>The Ryder Cup</div>
+        <div style={{ background: "#0a0a0a", padding: "4px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 800, color: "#d4a017", letterSpacing: "0.18em", textTransform: "uppercase" }}>The Ryder Cup</div>
           {isOwner && (
             <button onClick={onEditTeams} style={{ background: "none", border: "none", padding: 0, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(212,160,23,0.85)", cursor: "pointer", letterSpacing: "0.04em" }}>Edit</button>
           )}
@@ -2732,13 +2748,13 @@ function RyderCupHero({
 
         {/* Body — two team panels with trophy badge in the middle */}
         <div style={{ display: "flex", position: "relative" }}>
-          {renderTeamSide("RED", trip.redTeamName, "Red Team", trip.redTeamScore ?? 0, redMembers, editingRedScore, setEditingRedScore, "left")}
+          {renderTeamSide("RED", trip.redTeamName, "Team 1", trip.redTeamScore ?? 0, redMembers, editingRedScore, setEditingRedScore, "left")}
           {/* Center trophy badge */}
           <div style={{
             position: "absolute",
             top: "50%", left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 42, height: 42, borderRadius: "50%",
+            width: 36, height: 36, borderRadius: "50%",
             background: "radial-gradient(circle at 30% 30%, #fde68a 0%, #d4a017 50%, #92580f 100%)",
             border: "2px solid #fbbf24",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -2746,7 +2762,7 @@ function RyderCupHero({
             zIndex: 2,
             pointerEvents: "none",
           }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="#7c4a05" stroke="#3d2300" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#7c4a05" stroke="#3d2300" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" fill="none" stroke="#3d2300" strokeWidth="1.4"/>
               <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" fill="none" stroke="#3d2300" strokeWidth="1.4"/>
               <path d="M4 22h16" stroke="#3d2300" strokeWidth="1.6"/>
@@ -2755,7 +2771,7 @@ function RyderCupHero({
               <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" stroke="#3d2300" strokeWidth="1.2"/>
             </svg>
           </div>
-          {renderTeamSide("BLUE", trip.blueTeamName, "Blue Team", trip.blueTeamScore ?? 0, blueMembers, editingBlueScore, setEditingBlueScore, "right")}
+          {renderTeamSide("BLUE", trip.blueTeamName, "Team 2", trip.blueTeamScore ?? 0, blueMembers, editingBlueScore, setEditingBlueScore, "right")}
         </div>
 
         {/* Bottom gold trim */}
