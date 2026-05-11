@@ -441,11 +441,11 @@ function EmptyState({ title, subtitle, ctaLabel, onCta }: { title: string; subti
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "48px 24px", textAlign: "center" }}>
       <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {/* Golf ball on a tee — silhouette */}
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(77,168,98,0.55)">
-          <circle cx="12" cy="7" r="5.2"/>
-          <path d="M8.2 12.6 H15.8 L14.8 14.4 H9.2 Z"/>
-          <path d="M10.6 14.4 L13.4 14.4 L12 22 Z"/>
+        {/* Golf ball on a tee — outlined */}
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.55)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="6.5" r="4.5"/>
+          <line x1="7.5" y1="12" x2="16.5" y2="12"/>
+          <path d="M10 12 L12 21 L14 12"/>
         </svg>
       </div>
       <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{title}</div>

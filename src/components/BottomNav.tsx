@@ -68,11 +68,11 @@ export default function BottomNav() {
       active: isTeeUp,
       onClick: () => router.push("/tee-up"),
       icon: (active: boolean) => (
-        // Golf ball on a tee — silhouette
-        <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "#4da862" : "rgba(255,255,255,0.85)"}>
-          <circle cx="12" cy="7" r="5.2"/>
-          <path d="M8.2 12.6 H15.8 L14.8 14.4 H9.2 Z"/>
-          <path d="M10.6 14.4 L13.4 14.4 L12 22 Z"/>
+        // Golf ball on a tee — outlined to match the other line icons
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="6.5" r="4.5"/>
+          <line x1="7.5" y1="12" x2="16.5" y2="12"/>
+          <path d="M10 12 L12 21 L14 12"/>
         </svg>
       ),
     },
@@ -94,14 +94,15 @@ export default function BottomNav() {
       active: isLeaderboards,
       onClick: () => router.push("/leaderboards"),
       icon: (active: boolean) => (
-        // Trophy
+        // Masters-style leaderboard — scalloped arched top, finial balls, short post
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-          <path d="M4 22h16"/>
-          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+          <circle cx="4" cy="4.5" r="1.2"/>
+          <circle cx="20" cy="4.5" r="1.2"/>
+          <path d="M4 5.5 Q12 9 20 5.5 L20 17 L4 17 Z"/>
+          <line x1="7" y1="11" x2="17" y2="11"/>
+          <line x1="7" y1="14" x2="17" y2="14"/>
+          <line x1="12" y1="17" x2="12" y2="20"/>
+          <line x1="10" y1="20" x2="14" y2="20"/>
         </svg>
       ),
     },
