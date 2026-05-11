@@ -1278,12 +1278,13 @@ export default function TripPage() {
                         const scorecardComplete = primaryComplete && secondaryComplete;
                         return (
                           <div key={tc.id} style={{ position: "relative", overflow: "hidden", borderRadius: 12, marginBottom: 6 }}>
-                            {/* Delete zone revealed on swipe */}
+                            {/* Delete zone revealed on swipe — subtle, icon-only */}
                             <div
                               onClick={async () => { await createClient().from("GolfTripCourse").delete().eq("id", tc.id); setTripCourses(prev => prev.filter(c => c.id !== tc.id)); setSwipedId(null); }}
-                              style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, background: "#c0392b", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", borderRadius: 12 }}
+                              style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 64, background: "rgba(180,60,60,0.18)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", borderRadius: 12 }}
+                              aria-label="Delete stop"
                             >
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff" }}>Delete</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(220,120,120,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                             </div>
 
                             {/* Swipeable row */}
@@ -1291,23 +1292,23 @@ export default function TripPage() {
                               ref={el => { swipeCardRef.current[tc.id] = el; }}
                               style={{
                                 display: "flex", alignItems: "stretch", gap: 12,
-                                background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)",
+                                background: "#0b140e", border: "1px solid rgba(255,255,255,0.06)",
                                 borderRadius: 12, padding: "12px 12px 12px 12px",
                                 position: "relative",
-                                transform: swipedId === tc.id ? "translateX(-80px)" : "translateX(0)",
+                                transform: swipedId === tc.id ? "translateX(-64px)" : "translateX(0)",
                                 transition: "transform 0.2s ease",
                               }}
                               onTouchStart={e => {
                                 swipeTouchStartX.current = e.touches[0].clientX;
                                 swipeTouchStartY.current = e.touches[0].clientY;
-                                swipeCurrentX.current = swipedId === tc.id ? -80 : 0;
+                                swipeCurrentX.current = swipedId === tc.id ? -64 : 0;
                               }}
                               onTouchMove={e => {
                                 const dx = e.touches[0].clientX - swipeTouchStartX.current;
                                 const dy = e.touches[0].clientY - swipeTouchStartY.current;
                                 if (Math.abs(dy) > Math.abs(dx)) return;
-                                const base = swipedId === tc.id ? -80 : 0;
-                                const next = Math.max(-80, Math.min(0, base + dx));
+                                const base = swipedId === tc.id ? -64 : 0;
+                                const next = Math.max(-64, Math.min(0, base + dx));
                                 const el = swipeCardRef.current[tc.id];
                                 if (el) { el.style.transition = "none"; el.style.transform = `translateX(${next}px)`; }
                                 swipeCurrentX.current = next;
@@ -1315,9 +1316,9 @@ export default function TripPage() {
                               onTouchEnd={() => {
                                 const el = swipeCardRef.current[tc.id];
                                 if (el) el.style.transition = "transform 0.2s ease";
-                                if (swipeCurrentX.current < -40) {
+                                if (swipeCurrentX.current < -32) {
                                   setSwipedId(tc.id);
-                                  if (el) el.style.transform = "translateX(-80px)";
+                                  if (el) el.style.transform = "translateX(-64px)";
                                 } else {
                                   setSwipedId(null);
                                   if (el) el.style.transform = "translateX(0)";
