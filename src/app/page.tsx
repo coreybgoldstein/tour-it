@@ -1054,15 +1054,15 @@ export default function Home() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        /* Body bg: green + speckle for the safe-area-inset (status bar / notch) area,
-           then black below — so the green TopBar visually extends behind the iOS status bar
-           and the speckle pattern is continuous. */
-        body {
+        /* iOS paints the area behind the status bar / notch using the html (root)
+           element's background, not the body. Both need the green + speckle so the
+           TopBar visually extends to the very top of the screen. */
+        html, body {
           background:
             radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px) 0 0 / 16px 16px,
             linear-gradient(180deg, #1c4425 0, #1c4425 env(safe-area-inset-top), #07100a env(safe-area-inset-top));
-          overflow: hidden;
         }
+        body { overflow: hidden; }
         @keyframes pulse-ring { 0%,100% { transform: scale(1); opacity: 0.18; } 50% { transform: scale(1.18); opacity: 0.07; } }
         .feed { height: 100svh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .feed::-webkit-scrollbar { display: none; }
