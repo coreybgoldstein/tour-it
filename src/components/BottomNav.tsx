@@ -40,8 +40,8 @@ export default function BottomNav() {
   }, [isDesktop]);
 
   const isHome = pathname === "/";
+  const isSearch = pathname === "/search";
   const isTeeUp = pathname === "/tee-up" || pathname.startsWith("/tee-up/");
-  const isLeaderboards = pathname === "/leaderboards" || pathname.startsWith("/leaderboards/");
   const isProfile = pathname === "/profile" || pathname.startsWith("/profile/");
 
   if (!isDesktop && keyboardOpen) return null;
@@ -64,15 +64,27 @@ export default function BottomNav() {
       ),
     },
     {
-      label: "Tee Up",
-      active: isTeeUp,
-      onClick: () => router.push("/tee-up"),
+      label: "Search",
+      active: isSearch,
+      onClick: () => {
+        if (isSearch) {
+          (document.querySelector('input.search-input') as HTMLInputElement | null)?.focus();
+        } else {
+          // Ghost-input trick so iOS opens the keyboard inside the tap gesture
+          const ghost = document.createElement("input");
+          ghost.setAttribute("type", "text");
+          ghost.setAttribute("aria-hidden", "true");
+          ghost.setAttribute("tabindex", "-1");
+          Object.assign(ghost.style, { position: "fixed", top: "0", left: "0", width: "1px", height: "1px", opacity: "0", fontSize: "16px" });
+          document.body.appendChild(ghost);
+          ghost.focus();
+          router.push("/search");
+          setTimeout(() => ghost.remove(), 1000);
+        }
+      },
       icon: (active: boolean) => (
-        // Golf ball on a tee — bigger ball, distinct tee underneath
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="9" r="6"/>
-          <line x1="9.5" y1="15.5" x2="14.5" y2="15.5"/>
-          <path d="M10.5 15.5 L12 21 L13.5 15.5"/>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
       ),
     },
@@ -90,20 +102,15 @@ export default function BottomNav() {
       ),
     },
     {
-      label: "Leaderboards",
-      active: isLeaderboards,
-      onClick: () => router.push("/leaderboards"),
+      label: "Tee Up",
+      active: isTeeUp,
+      onClick: () => router.push("/tee-up"),
       icon: (active: boolean) => (
-        // Masters-style leaderboard — arched banner top, finial balls, scoreboard rows, short post
+        // Golf ball on a tee — bigger ball, distinct tee underneath
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="4" cy="3" r="1"/>
-          <circle cx="20" cy="3" r="1"/>
-          <path d="M4 4 Q12 8 20 4"/>
-          <path d="M4 4 L4 17 L20 17 L20 4"/>
-          <line x1="6" y1="10" x2="18" y2="10"/>
-          <line x1="6" y1="13.5" x2="18" y2="13.5"/>
-          <line x1="12" y1="17" x2="12" y2="20"/>
-          <line x1="10" y1="20" x2="14" y2="20"/>
+          <circle cx="12" cy="9" r="6"/>
+          <line x1="9.5" y1="15.5" x2="14.5" y2="15.5"/>
+          <path d="M10.5 15.5 L12 21 L13.5 15.5"/>
         </svg>
       ),
     },
