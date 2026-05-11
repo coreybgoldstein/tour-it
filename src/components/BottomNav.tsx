@@ -170,8 +170,8 @@ export default function BottomNav() {
   return (
     <nav style={{
       position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
-      display: "flex", alignItems: "center", justifyContent: "space-around",
-      padding: "10px 8px 18px",
+      display: "flex", alignItems: "center",
+      padding: "10px 4px 18px",
       background: "rgba(4,12,6,0.98)",
       backdropFilter: "blur(16px)",
       WebkitBackdropFilter: "blur(16px)",
@@ -185,6 +185,12 @@ export default function BottomNav() {
           key={item.label}
           onClick={item.onClick}
           style={{
+            // Each button claims equal share of the nav width so icons + labels
+            // align on a fixed grid regardless of label length ("Leaderboards"
+            // is much longer than "Home" so without flex: 1 they'd drift).
+            flex: 1,
+            minWidth: 0,
+            padding: 0,
             background: "none", border: "none", cursor: "pointer",
             display: "flex", flexDirection: "column", alignItems: "center", gap: "3px",
             ...(item.isUpload ? { marginTop: "-18px" } : {}),
@@ -195,9 +201,24 @@ export default function BottomNav() {
               {item.icon(false)}
             </div>
           ) : (
-            item.icon(item.active)
+            // Fixed-size icon slot so every item's icon visually lines up on the same row
+            <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {item.icon(item.active)}
+            </div>
           )}
-          <span style={{ fontSize: "9px", color: item.active ? "#4da862" : "rgba(255,255,255,0.8)", fontFamily: "'Outfit', sans-serif", ...(item.isUpload ? { letterSpacing: "0.04em" } : {}) }}>
+          <span style={{
+            fontSize: "9px",
+            color: item.active ? "#4da862" : "rgba(255,255,255,0.8)",
+            fontFamily: "'Outfit', sans-serif",
+            // Truncate long labels (e.g. "Leaderboards") so they never overflow
+            // the per-button slot and push the icon column off-center.
+            maxWidth: "100%",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            textAlign: "center",
+            ...(item.isUpload ? { letterSpacing: "0.04em" } : {}),
+          }}>
             {item.label.toUpperCase() === "UPLOAD" ? "UPLOAD" : item.label}
           </span>
         </button>
