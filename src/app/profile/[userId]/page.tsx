@@ -1252,8 +1252,8 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Display name — Playfair big heading */}
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 6 }}>
+          {/* Display name — Playfair big heading. lineHeight 1.3 + paddingBottom 2 give descenders (j/g/p/q/y) room without getting clipped by overflow: hidden */}
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 6, paddingBottom: 2 }}>
             {profile.displayName?.trim() || profile.username}
           </div>
 
