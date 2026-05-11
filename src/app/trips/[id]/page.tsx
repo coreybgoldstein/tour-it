@@ -1209,95 +1209,188 @@ export default function TripPage() {
             </div>
           ) : (
             <div>
-              {tripCourses.map(tc => (
-                <div key={tc.id} style={{ position: "relative", overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                  {/* Delete zone revealed on swipe */}
-                  <div
-                    onClick={async () => { await createClient().from("GolfTripCourse").delete().eq("id", tc.id); setTripCourses(prev => prev.filter(c => c.id !== tc.id)); setSwipedId(null); }}
-                    style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, background: "#c0392b", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-                  >
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff" }}>Delete</span>
-                  </div>
+              {(() => {
+                // Group stops by play date so the itinerary reads like an agenda,
+                // not a flat list. Stops without a date land in 'Unscheduled' at the end.
+                const groups = new Map<string, typeof tripCourses>();
+                for (const tc of tripCourses) {
+                  const key = tc.playDate ?? "__unscheduled";
+                  if (!groups.has(key)) groups.set(key, []);
+                  groups.get(key)!.push(tc);
+                }
+                // Sort by date asc; unscheduled goes last
+                const dayKeys = Array.from(groups.keys()).sort((a, b) => {
+                  if (a === "__unscheduled") return 1;
+                  if (b === "__unscheduled") return -1;
+                  return a.localeCompare(b);
+                });
+                // Within each day, sort by teeTime asc; missing time goes last
+                const sortByTeeTime = (a: typeof tripCourses[number], b: typeof tripCourses[number]) => {
+                  if (!a.teeTime && !b.teeTime) return a.sortOrder - b.sortOrder;
+                  if (!a.teeTime) return 1;
+                  if (!b.teeTime) return -1;
+                  return a.teeTime.localeCompare(b.teeTime);
+                };
 
-                  {/* Swipeable row */}
-                  <div
-                    ref={el => { swipeCardRef.current[tc.id] = el; }}
-                    className="course-card"
-                    style={{ borderBottom: "none", background: "#07100a", position: "relative", transform: swipedId === tc.id ? "translateX(-80px)" : "translateX(0)", transition: "transform 0.2s ease" }}
-                    onTouchStart={e => {
-                      swipeTouchStartX.current = e.touches[0].clientX;
-                      swipeTouchStartY.current = e.touches[0].clientY;
-                      swipeCurrentX.current = swipedId === tc.id ? -80 : 0;
-                    }}
-                    onTouchMove={e => {
-                      const dx = e.touches[0].clientX - swipeTouchStartX.current;
-                      const dy = e.touches[0].clientY - swipeTouchStartY.current;
-                      if (Math.abs(dy) > Math.abs(dx)) return; // vertical scroll
-                      const base = swipedId === tc.id ? -80 : 0;
-                      const next = Math.max(-80, Math.min(0, base + dx));
-                      const el = swipeCardRef.current[tc.id];
-                      if (el) { el.style.transition = "none"; el.style.transform = `translateX(${next}px)`; }
-                      swipeCurrentX.current = next;
-                    }}
-                    onTouchEnd={() => {
-                      const el = swipeCardRef.current[tc.id];
-                      if (el) el.style.transition = "transform 0.2s ease";
-                      if (swipeCurrentX.current < -40) {
-                        setSwipedId(tc.id);
-                        if (el) el.style.transform = "translateX(-80px)";
-                      } else {
-                        setSwipedId(null);
-                        if (el) el.style.transform = "translateX(0)";
-                      }
-                    }}
-                    onClick={() => { if (swipedId === tc.id) { setSwipedId(null); } }}
-                  >
-                    <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ position: "relative", width: 44, height: 44, flexShrink: 0, cursor: "pointer" }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                        {tc.course.logoUrl
-                          ? <img src={tc.course.logoUrl} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
-                          : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{abbr(tc.course.name)}</span>
-                        }
+                // Day header label: "MONDAY · MAY 13" — bigger if it's an actual date.
+                const dayHeader = (key: string) => {
+                  if (key === "__unscheduled") return "UNSCHEDULED";
+                  const d = new Date(key + "T00:00:00");
+                  const dow = d.toLocaleDateString("en-US", { weekday: "long" });
+                  const md = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                  return `${dow.toUpperCase()} · ${md.toUpperCase()}`;
+                };
+
+                // Build a clean paired-stop title that drops the shared resort prefix.
+                // "Bay Harbor Golf Club - The Preserve" + "Bay Harbor Golf Club - The Quarry"
+                // → headline "Preserve + Quarry", club "Bay Harbor Golf Club"
+                const pairedTitle = (primary: string, secondary: string) => {
+                  const pParts = primary.split(/\s+-\s+/);
+                  const sParts = secondary.split(/\s+-\s+/);
+                  if (pParts.length === 2 && sParts.length === 2 && pParts[0] === sParts[0]) {
+                    const strip = (s: string) => s.replace(/^The\s+/i, "").trim();
+                    return { headline: `${strip(pParts[1])} + ${strip(sParts[1])}`, club: pParts[0] };
+                  }
+                  return { headline: `${primary} + ${secondary}`, club: null };
+                };
+
+                const formatTime12 = (t: string) => {
+                  const [h, m] = t.split(":").map(Number);
+                  if (isNaN(h)) return t;
+                  const period = h >= 12 ? "PM" : "AM";
+                  const h12 = h % 12 === 0 ? 12 : h % 12;
+                  return `${h12}:${String(m ?? 0).padStart(2, "0")} ${period}`;
+                };
+
+                return dayKeys.map((dayKey) => {
+                  const stops = [...groups.get(dayKey)!].sort(sortByTeeTime);
+                  return (
+                    <div key={dayKey} style={{ marginBottom: 18 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "#4da862" }}>{dayHeader(dayKey)}</div>
+                        <div style={{ flex: 1, height: 1, background: "rgba(77,168,98,0.18)" }} />
                       </div>
-                      {tc.secondaryCourse && (
-                        <div style={{ position: "absolute", bottom: -3, right: -3, width: 22, height: 22, borderRadius: 6, background: "rgba(7,16,10,0.95)", border: "1.5px solid #4da862", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {tc.secondaryCourse.logoUrl
-                            ? <img src={tc.secondaryCourse.logoUrl} alt={tc.secondaryCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
-                            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#4da862" }}>{abbr(tc.secondaryCourse.name)}</span>
-                          }
-                        </div>
-                      )}
-                    </div>
-                    <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {tc.course.name}
-                        {tc.secondaryCourse && <span style={{ color: "rgba(77,168,98,0.85)", fontWeight: 500 }}> + {tc.secondaryCourse.name}</span>}
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", marginTop: 3 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{[tc.course.city, tc.course.state].filter(Boolean).join(", ")}</span>
-                        {tc.playDate && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.8)" }}>📅 {formatDate(tc.playDate)}</span>}
-                        {tc.teeTime && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>⏰ {formatTeeTime(tc.teeTime)}</span>}
-                        {tc.accommodation && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>🏨 {tc.accommodation}</span>}
-                      </div>
-                      {(() => {
-                        // For paired stops, both 9-hole sides must be complete.
-                        // For single stops, just the primary.
+                      {stops.map((tc) => {
+                        const paired = !!tc.secondaryCourse;
+                        const title = paired ? pairedTitle(tc.course.name, tc.secondaryCourse!.name) : { headline: tc.course.name, club: null };
                         const primaryComplete = coursesWithHandicaps.has(tc.courseId);
                         const secondaryComplete = !tc.secondaryCourseId || coursesWithHandicaps.has(tc.secondaryCourseId);
-                        return primaryComplete && secondaryComplete;
-                      })() ? null : (
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4, background: "rgba(230,160,0,0.1)", border: "1px solid rgba(230,160,0,0.25)", borderRadius: 99, padding: "2px 7px" }}>
-                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(230,160,0,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(230,160,0,0.8)" }}>Scorecard data needed for games</span>
-                        </div>
-                      )}
+                        const scorecardComplete = primaryComplete && secondaryComplete;
+                        return (
+                          <div key={tc.id} style={{ position: "relative", overflow: "hidden", borderRadius: 12, marginBottom: 6 }}>
+                            {/* Delete zone revealed on swipe */}
+                            <div
+                              onClick={async () => { await createClient().from("GolfTripCourse").delete().eq("id", tc.id); setTripCourses(prev => prev.filter(c => c.id !== tc.id)); setSwipedId(null); }}
+                              style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 80, background: "#c0392b", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", borderRadius: 12 }}
+                            >
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff" }}>Delete</span>
+                            </div>
+
+                            {/* Swipeable row */}
+                            <div
+                              ref={el => { swipeCardRef.current[tc.id] = el; }}
+                              style={{
+                                display: "flex", alignItems: "stretch", gap: 12,
+                                background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)",
+                                borderRadius: 12, padding: "12px 12px 12px 12px",
+                                position: "relative",
+                                transform: swipedId === tc.id ? "translateX(-80px)" : "translateX(0)",
+                                transition: "transform 0.2s ease",
+                              }}
+                              onTouchStart={e => {
+                                swipeTouchStartX.current = e.touches[0].clientX;
+                                swipeTouchStartY.current = e.touches[0].clientY;
+                                swipeCurrentX.current = swipedId === tc.id ? -80 : 0;
+                              }}
+                              onTouchMove={e => {
+                                const dx = e.touches[0].clientX - swipeTouchStartX.current;
+                                const dy = e.touches[0].clientY - swipeTouchStartY.current;
+                                if (Math.abs(dy) > Math.abs(dx)) return;
+                                const base = swipedId === tc.id ? -80 : 0;
+                                const next = Math.max(-80, Math.min(0, base + dx));
+                                const el = swipeCardRef.current[tc.id];
+                                if (el) { el.style.transition = "none"; el.style.transform = `translateX(${next}px)`; }
+                                swipeCurrentX.current = next;
+                              }}
+                              onTouchEnd={() => {
+                                const el = swipeCardRef.current[tc.id];
+                                if (el) el.style.transition = "transform 0.2s ease";
+                                if (swipeCurrentX.current < -40) {
+                                  setSwipedId(tc.id);
+                                  if (el) el.style.transform = "translateX(-80px)";
+                                } else {
+                                  setSwipedId(null);
+                                  if (el) el.style.transform = "translateX(0)";
+                                }
+                              }}
+                              onClick={() => { if (swipedId === tc.id) { setSwipedId(null); } }}
+                            >
+                              {/* Logo column */}
+                              <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ position: "relative", width: 44, height: 44, flexShrink: 0, cursor: "pointer", alignSelf: "center" }}>
+                                <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                                  {tc.course.logoUrl
+                                    ? <img src={tc.course.logoUrl} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                                    : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{abbr(tc.course.name)}</span>
+                                  }
+                                </div>
+                                {tc.secondaryCourse && (
+                                  <div style={{ position: "absolute", bottom: -4, right: -4, width: 22, height: 22, borderRadius: 6, background: "rgba(7,16,10,0.95)", border: "1.5px solid #4da862", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    {tc.secondaryCourse.logoUrl
+                                      ? <img src={tc.secondaryCourse.logoUrl} alt={tc.secondaryCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                                      : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#4da862" }}>{abbr(tc.secondaryCourse.name)}</span>
+                                    }
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Main text column */}
+                              <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ flex: 1, minWidth: 0, cursor: "pointer", alignSelf: "center" }}>
+                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.25 }}>
+                                  {title.headline}
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  <span>{title.club ?? [tc.course.city, tc.course.state].filter(Boolean).join(", ")}</span>
+                                  {paired && (
+                                    <>
+                                      <span style={{ color: "rgba(255,255,255,0.2)" }}>·</span>
+                                      <span style={{ color: "rgba(77,168,98,0.85)", fontWeight: 600 }}>9 + 9</span>
+                                    </>
+                                  )}
+                                </div>
+                                {tc.accommodation && (
+                                  <div style={{ marginTop: 4, fontFamily: "'Outfit', sans-serif", fontSize: 10.5, color: "rgba(255,255,255,0.32)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    Stay: {tc.accommodation}
+                                  </div>
+                                )}
+                                {!scorecardComplete && (
+                                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 5, background: "rgba(230,160,0,0.1)", border: "1px solid rgba(230,160,0,0.25)", borderRadius: 99, padding: "2px 8px" }}>
+                                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(230,160,0,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(230,160,0,0.85)" }}>Scorecard needed</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Tee time pill — pinned right */}
+                              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0, alignSelf: "center" }}>
+                                {tc.teeTime ? (
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", letterSpacing: "0.02em", lineHeight: 1, whiteSpace: "nowrap" }}>
+                                    {formatTime12(tc.teeTime)}
+                                  </div>
+                                ) : (
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>no time</div>
+                                )}
+                                <button onClick={e => { e.stopPropagation(); openEditCourse(tc); }} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <button onClick={e => { e.stopPropagation(); openEditCourse(tc); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                  );
+                });
+              })()}
             </div>
           )}
         </div>
