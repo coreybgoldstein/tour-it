@@ -107,21 +107,8 @@ export default function TourItTopBar() {
 
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <button
-              onClick={() => {
-                // Same iOS-keyboard ghost trick used by BottomNav's old search slot
-                if (pathname !== "/search") {
-                  const ghost = document.createElement("input");
-                  ghost.setAttribute("type", "text");
-                  ghost.setAttribute("aria-hidden", "true");
-                  ghost.setAttribute("tabindex", "-1");
-                  Object.assign(ghost.style, { position: "fixed", top: "0", left: "0", width: "1px", height: "1px", opacity: "0", fontSize: "16px" });
-                  document.body.appendChild(ghost);
-                  ghost.focus();
-                  router.push("/search");
-                  setTimeout(() => ghost.remove(), 1000);
-                }
-              }}
-              aria-label="Search"
+              onClick={() => router.push("/leaderboards")}
+              aria-label="Leaderboards"
               style={{
                 position: "relative",
                 width: 36,
@@ -135,9 +122,16 @@ export default function TourItTopBar() {
                 cursor: "pointer",
               }}
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
+              {/* Masters-style leaderboard — keeps leaderboards one tap away even though it's not in the bottom nav */}
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="4" cy="3" r="1"/>
+                <circle cx="20" cy="3" r="1"/>
+                <path d="M4 4 Q12 8 20 4"/>
+                <path d="M4 4 L4 17 L20 17 L20 4"/>
+                <line x1="6" y1="10" x2="18" y2="10"/>
+                <line x1="6" y1="13.5" x2="18" y2="13.5"/>
+                <line x1="12" y1="17" x2="12" y2="20"/>
+                <line x1="10" y1="20" x2="14" y2="20"/>
               </svg>
             </button>
           </div>
