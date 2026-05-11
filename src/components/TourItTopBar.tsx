@@ -112,10 +112,11 @@ export default function TourItTopBar() {
 
   return (
     <>
-      {/* Top bar */}
+      {/* Top bar — sticky so it stays anchored as the page scrolls */}
       <div
         style={{
-          position: "relative",
+          position: "sticky",
+          top: 0,
           background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)",
           borderBottom: "1px solid rgba(77,168,98,0.35)",
           flexShrink: 0,
