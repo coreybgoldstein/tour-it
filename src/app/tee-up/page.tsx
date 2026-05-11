@@ -255,7 +255,12 @@ function EmptyState({ title, subtitle, ctaLabel, onCta }: { title: string; subti
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "48px 24px", textAlign: "center" }}>
       <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21h16"/><path d="M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6"/><line x1="12" y1="15" x2="12" y2="2"/><path d="M12 2 L19 5 L12 8 Z" fill="rgba(77,168,98,0.5)"/></svg>
+        {/* Golf ball on a tee — silhouette */}
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(77,168,98,0.55)">
+          <circle cx="12" cy="7" r="5.2"/>
+          <path d="M8.2 12.6 H15.8 L14.8 14.4 H9.2 Z"/>
+          <path d="M10.6 14.4 L13.4 14.4 L12 22 Z"/>
+        </svg>
       </div>
       <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{title}</div>
       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5, maxWidth: 260 }}>{subtitle}</div>

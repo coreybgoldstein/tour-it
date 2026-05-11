@@ -68,12 +68,11 @@ export default function BottomNav() {
       active: isTeeUp,
       onClick: () => router.push("/tee-up"),
       icon: (active: boolean) => (
-        // Golf flag in a hole — represents future play
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 21h16"/>
-          <path d="M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6"/>
-          <line x1="12" y1="15" x2="12" y2="2"/>
-          <path d="M12 2 L19 5 L12 8 Z" fill={active ? "#4da862" : "rgba(255,255,255,0.85)"} stroke="none"/>
+        // Golf ball on a tee — silhouette
+        <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "#4da862" : "rgba(255,255,255,0.85)"}>
+          <circle cx="12" cy="7" r="5.2"/>
+          <path d="M8.2 12.6 H15.8 L14.8 14.4 H9.2 Z"/>
+          <path d="M10.6 14.4 L13.4 14.4 L12 22 Z"/>
         </svg>
       ),
     },
