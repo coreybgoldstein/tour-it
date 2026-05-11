@@ -114,8 +114,9 @@ export default function TourItTopBar() {
                 width: 36,
                 height: 36,
                 borderRadius: "50%",
-                background: "rgba(0,0,0,0.3)",
-                // Masters-yellow ring — same treatment used on the homepage inline button
+                // Match the hamburger's translucent fill so the TopBar's green
+                // shows through identically; only the ring color differentiates them
+                background: "rgba(255,255,255,0.06)",
                 border: "1.5px solid #d4a017",
                 boxShadow: "0 0 0 1px rgba(212,160,23,0.25), 0 0 8px rgba(212,160,23,0.18)",
                 display: "flex",
