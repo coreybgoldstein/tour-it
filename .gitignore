@@ -50,3 +50,7 @@ screenshots/
 *.jpeg
 /profile-*.png
 /seed-run-*.log
+
+# Temporary course-ID lists for bulk seeder runs
+/columbia-radius-ids.txt
+/columbia-chunk-*.txt
