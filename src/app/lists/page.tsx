@@ -180,7 +180,7 @@ export default function ListsPage() {
       `}</style>
 
       {/* Header */}
-      <div style={{ padding: "56px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+      <div style={{ padding: "12px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
         <div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginBottom: 4 }}>My Lists</div>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>
