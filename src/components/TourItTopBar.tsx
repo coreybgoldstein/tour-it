@@ -115,7 +115,9 @@ export default function TourItTopBar() {
                 height: 36,
                 borderRadius: "50%",
                 background: "rgba(0,0,0,0.3)",
-                border: "1px solid rgba(255,255,255,0.15)",
+                // Masters-yellow ring — same treatment used on the homepage inline button
+                border: "1.5px solid #d4a017",
+                boxShadow: "0 0 0 1px rgba(212,160,23,0.25), 0 0 8px rgba(212,160,23,0.18)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -123,7 +125,7 @@ export default function TourItTopBar() {
               }}
             >
               {/* Masters-style leaderboard — keeps leaderboards one tap away even though it's not in the bottom nav */}
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="4" cy="3" r="1"/>
                 <circle cx="20" cy="3" r="1"/>
                 <path d="M4 4 Q12 8 20 4"/>

@@ -129,25 +129,34 @@ function TourItLogo({ size = 26 }: { size?: number }) {
   );
 }
 
-function NotificationBellInline() {
+function LeaderboardsButtonInline() {
   const router = useRouter();
-  const [unread, setUnread] = useState(0);
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-      supabase.from("Notification").select("id", { count: "exact", head: true }).eq("userId", user.id).eq("read", false)
-        .then(({ count }) => setUnread(count ?? 0));
-    });
-  }, []);
   return (
-    <button onClick={() => router.push("/notifications")} style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      {unread > 0 && (
-        <div style={{ position: "absolute", top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 8, background: "#e8353a", border: "1.5px solid #07100a", boxShadow: "0 1px 5px rgba(232,53,58,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
-          <span style={{ fontSize: 9, fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "#fff", lineHeight: 1, letterSpacing: "-0.2px" }}>{unread > 99 ? "99+" : unread}</span>
-        </div>
-      )}
+    <button
+      onClick={() => router.push("/leaderboards")}
+      aria-label="Leaderboards"
+      style={{
+        position: "relative",
+        width: 36, height: 36,
+        borderRadius: "50%",
+        background: "rgba(0,0,0,0.3)",
+        // Masters-yellow ring — matches the brand color of the leaderboard reference
+        border: "1.5px solid #d4a017",
+        boxShadow: "0 0 0 1px rgba(212,160,23,0.25), 0 0 8px rgba(212,160,23,0.18)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        cursor: "pointer",
+      }}
+    >
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="4" cy="3" r="1"/>
+        <circle cx="20" cy="3" r="1"/>
+        <path d="M4 4 Q12 8 20 4"/>
+        <path d="M4 4 L4 17 L20 17 L20 4"/>
+        <line x1="6" y1="10" x2="18" y2="10"/>
+        <line x1="6" y1="13.5" x2="18" y2="13.5"/>
+        <line x1="12" y1="17" x2="12" y2="20"/>
+        <line x1="10" y1="20" x2="14" y2="20"/>
+      </svg>
     </button>
   );
 }
@@ -1160,7 +1169,7 @@ export default function Home() {
               </div>
               {/* Bell — right-aligned in third column */}
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <NotificationBellInline />
+                <LeaderboardsButtonInline />
               </div>
             </div>
           </div>
