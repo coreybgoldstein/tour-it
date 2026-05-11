@@ -583,6 +583,15 @@ export default function ProfilePage() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen, feedOpen, showEdit]);
 
+  // Reset scroll to top whenever we navigate to a (potentially new) profile.
+  // Without this, navigating from a course clip → /profile/<userId> can leave
+  // the window scrolled down from the previous page, hiding the identity
+  // header behind the sticky TopBar.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+  }, [userId]);
+
   useEffect(() => {
     if (!commentUploadId) { setCommentItems([]); return; }
     setLoadingComments(true);
