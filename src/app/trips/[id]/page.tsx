@@ -1080,20 +1080,7 @@ export default function TripPage() {
 
         {/* Header */}
         <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          {/* Edit pencil floats top-right (back button removed — TopBar's
-              hamburger and logo cover navigation now). */}
-          {isOwner && (
-            <div style={{ padding: "10px 20px 0", display: "flex", justifyContent: "flex-end" }}>
-              <button
-                onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
-                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-            </div>
-          )}
-
-          <div style={{ padding: isOwner ? "4px 20px 14px" : "12px 20px 14px" }}>
+          <div style={{ padding: "12px 20px 14px" }}>
             {/* Avatar + name + date inline */}
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
               <div
@@ -1111,7 +1098,19 @@ export default function TripPage() {
               <input ref={imageInputRef} type="file" accept="image/*" onChange={handleTripImagePick} style={{ display: "none" }} />
 
               <div style={{ flex: 1, minWidth: 0, paddingTop: 3 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 3 }}>Golf Trip</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 3 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Golf Trip</div>
+                  {isOwner && (
+                    <button
+                      onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
+                      aria-label="Edit trip"
+                      style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      Edit
+                    </button>
+                  )}
+                </div>
                 <div
                   style={{
                     fontFamily: "'Playfair Display', serif",
@@ -1161,9 +1160,6 @@ export default function TripPage() {
               <button onClick={() => setChatOpen(true)} style={{ background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 Chat{messages.length > 0 ? ` · ${messages.length}` : ""}
-              </button>
-              <button onClick={() => setInviteOpen(true)} style={{ background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer" }}>
-                + Invite
               </button>
             </div>
 
@@ -1233,9 +1229,23 @@ export default function TripPage() {
         )}
 
         {/* Courses */}
-        <div style={{ padding: "20px 20px 0" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div className="section-label" style={{ marginBottom: 0 }}>Itinerary{tripCourses.length > 0 && <span className="count">{tripCourses.length}</span>}</div>
+        <div style={{ padding: "16px 20px 0" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div className="section-label" style={{ marginBottom: 0 }}>
+              Itinerary
+              {tripCourses.length > 0 && (() => {
+                const courseCount = tripCourses.length;
+                const totalHoles = tripCourses.reduce(
+                  (sum, tc) => sum + (tc.course.holeCount ?? 18) + (tc.secondaryCourse?.holeCount ?? 0),
+                  0
+                );
+                return (
+                  <span className="count">
+                    {courseCount} {courseCount === 1 ? "course" : "courses"} · {totalHoles} holes
+                  </span>
+                );
+              })()}
+            </div>
             <button
               onClick={() => { setAddCourseStep("search"); setCourseSearch(""); setCourseResults([]); setSelectedAddCourse(null); setPairCourse(null); setPairSearch(""); setPairResults([]); setAddPlayDate(""); setAddTeeTime(""); setAddAccom(""); setAddCourseOpen(true); }}
               style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer" }}
@@ -1719,6 +1729,18 @@ export default function TripPage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setEditOpen(false)}>
           <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 20px 40px", maxHeight: "90vh", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 14px" }} />
+
+            {/* Invite — pinned to the top of the edit sheet */}
+            {isOwner && (
+              <button
+                onClick={() => { setEditOpen(false); setInviteOpen(true); }}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(77,168,98,0.14)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862", cursor: "pointer", marginBottom: 16, letterSpacing: "0.02em" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Invite Golfers to This Trip
+              </button>
+            )}
+
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, gap: 12 }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Edit Trip</div>
               <button
