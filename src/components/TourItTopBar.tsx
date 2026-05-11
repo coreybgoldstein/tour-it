@@ -216,10 +216,10 @@ export default function TourItTopBar() {
                 {
                   label: "Tee Up",
                   icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="6.5" r="4.5"/>
-                      <line x1="7.5" y1="12" x2="16.5" y2="12"/>
-                      <path d="M10 12 L12 21 L14 12"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="9" r="6"/>
+                      <line x1="9.5" y1="15.5" x2="14.5" y2="15.5"/>
+                      <path d="M10.5 15.5 L12 21 L13.5 15.5"/>
                     </svg>
                   ),
                   onClick: () => { setMenuOpen(false); router.push("/tee-up"); },
