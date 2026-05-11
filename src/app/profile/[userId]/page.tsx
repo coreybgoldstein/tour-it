@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -586,10 +586,19 @@ export default function ProfilePage() {
   // Reset scroll to top whenever we navigate to a (potentially new) profile.
   // Without this, navigating from a course clip → /profile/<userId> can leave
   // the window scrolled down from the previous page, hiding the identity
-  // header behind the sticky TopBar.
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
+  // header behind the sticky TopBar. useLayoutEffect runs before paint so the
+  // user never sees the scrolled state. Re-fire on rAF + 80ms as a safety net
+  // because iOS Safari sometimes restores scroll *after* our reset.
+  useLayoutEffect(() => {
+    const reset = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    reset();
+    const raf = requestAnimationFrame(reset);
+    const t = setTimeout(reset, 80);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
   }, [userId]);
 
   useEffect(() => {
