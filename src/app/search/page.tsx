@@ -559,17 +559,17 @@ function SearchPageInner() {
 
       <div className="search-wrap">
         {/* Header */}
-        <div style={{ padding: "56px 0 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div style={{ padding: "12px 0 16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff" }}>
               Search
             </div>
             <button
               onClick={() => router.push("/map")}
-              style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 99, padding: "7px 14px", cursor: "pointer" }}
+              style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.18)", border: "1px solid rgba(26,158,66,0.45)", borderRadius: 99, padding: "4px 11px", cursor: "pointer", flexShrink: 0 }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3,11 3,20 9,17 15,20 21,17 21,8 15,11 9,8"/><line x1="9" y1="8" x2="9" y2="17"/><line x1="15" y1="11" x2="15" y2="20"/></svg>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>Map</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3,11 3,20 9,17 15,20 21,17 21,8 15,11 9,8"/><line x1="9" y1="8" x2="9" y2="17"/><line x1="15" y1="11" x2="15" y2="20"/></svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>Map</span>
             </button>
           </div>
           <div style={{ position: "relative" }} ref={suggestionBoxRef}>
