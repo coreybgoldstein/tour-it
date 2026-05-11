@@ -443,6 +443,48 @@ export default function TripPage() {
     return () => clearInterval(interval);
   }, [chatOpen]);
 
+  // Lock body scroll + size the chat overlay to the visual viewport so iOS
+  // doesn't shift the page up when the keyboard appears.
+  useEffect(() => {
+    if (!chatOpen) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width, overflow: body.style.overflow };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    const vv = window.visualViewport;
+    const sync = () => {
+      const el = document.getElementById("trip-chat-overlay");
+      if (!el || !vv) return;
+      el.style.height = `${vv.height}px`;
+      el.style.transform = `translateY(${vv.offsetTop}px)`;
+    };
+    if (vv) {
+      sync();
+      vv.addEventListener("resize", sync);
+      vv.addEventListener("scroll", sync);
+    }
+
+    return () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+      if (vv) {
+        vv.removeEventListener("resize", sync);
+        vv.removeEventListener("scroll", sync);
+      }
+    };
+  }, [chatOpen]);
+
   // Scroll to bottom when messages load
   useEffect(() => {
     if (chatOpen && messages.length > 0) {
@@ -1962,9 +2004,9 @@ export default function TripPage() {
 
       {/* Chat sheet */}
       {chatOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column" }}>
-          <div onClick={() => setChatOpen(false)} style={{ flex: 1, background: "rgba(0,0,0,0.5)" }} />
-          <div style={{ background: "#0d1f14", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", height: "82dvh", maxHeight: "82dvh" }}>
+        <div id="trip-chat-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", zIndex: 200, display: "flex", flexDirection: "column", willChange: "transform" }}>
+          <div onClick={() => setChatOpen(false)} style={{ height: "18%", minHeight: 60, background: "rgba(0,0,0,0.5)", flexShrink: 0 }} />
+          <div style={{ background: "#0d1f14", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
             <div style={{ padding: "14px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Trip Chat</div>
               <button onClick={() => setChatOpen(false)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
