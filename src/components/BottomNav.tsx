@@ -68,11 +68,11 @@ export default function BottomNav() {
       active: isTeeUp,
       onClick: () => router.push("/tee-up"),
       icon: (active: boolean) => (
-        // Golf ball on a tee — outlined to match the other line icons
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="6.5" r="4.5"/>
-          <line x1="7.5" y1="12" x2="16.5" y2="12"/>
-          <path d="M10 12 L12 21 L14 12"/>
+        // Golf ball on a tee — bigger ball, distinct tee underneath
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="9" r="6"/>
+          <line x1="9.5" y1="15.5" x2="14.5" y2="15.5"/>
+          <path d="M10.5 15.5 L12 21 L13.5 15.5"/>
         </svg>
       ),
     },
@@ -94,13 +94,14 @@ export default function BottomNav() {
       active: isLeaderboards,
       onClick: () => router.push("/leaderboards"),
       icon: (active: boolean) => (
-        // Masters-style leaderboard — scalloped arched top, finial balls, short post
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="4" cy="4.5" r="1.2"/>
-          <circle cx="20" cy="4.5" r="1.2"/>
-          <path d="M4 5.5 Q12 9 20 5.5 L20 17 L4 17 Z"/>
-          <line x1="7" y1="11" x2="17" y2="11"/>
-          <line x1="7" y1="14" x2="17" y2="14"/>
+        // Masters-style leaderboard — arched banner top, finial balls, scoreboard rows, short post
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="4" cy="3" r="1"/>
+          <circle cx="20" cy="3" r="1"/>
+          <path d="M4 4 Q12 8 20 4"/>
+          <path d="M4 4 L4 17 L20 17 L20 4"/>
+          <line x1="6" y1="10" x2="18" y2="10"/>
+          <line x1="6" y1="13.5" x2="18" y2="13.5"/>
           <line x1="12" y1="17" x2="12" y2="20"/>
           <line x1="10" y1="20" x2="14" y2="20"/>
         </svg>
