@@ -9,6 +9,7 @@ export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const isDesktop = useIsDesktop();
 
@@ -18,8 +19,14 @@ export default function BottomNav() {
       if (!user) return;
       const { data } = await supabase.from("User").select("avatarUrl").eq("id", user.id).single();
       if (data?.avatarUrl) setAvatarUrl(data.avatarUrl);
+      const { count } = await supabase
+        .from("Notification")
+        .select("id", { count: "exact", head: true })
+        .eq("userId", user.id)
+        .eq("read", false);
+      setUnreadCount(count ?? 0);
     });
-  }, []);
+  }, [pathname]);
 
   // Hide nav when software keyboard is open (visual viewport shrinks) — mobile only
   useEffect(() => {
@@ -33,8 +40,8 @@ export default function BottomNav() {
   }, [isDesktop]);
 
   const isHome = pathname === "/";
-  const isSearch = pathname === "/search";
-  const isLists = pathname === "/lists";
+  const isTeeUp = pathname === "/tee-up" || pathname.startsWith("/tee-up/");
+  const isLeaderboards = pathname === "/leaderboards" || pathname.startsWith("/leaderboards/");
   const isProfile = pathname === "/profile" || pathname.startsWith("/profile/");
 
   if (!isDesktop && keyboardOpen) return null;
@@ -57,28 +64,16 @@ export default function BottomNav() {
       ),
     },
     {
-      label: "Search",
-      active: isSearch,
-      onClick: () => {
-        if (isSearch) {
-          (document.querySelector('input.search-input') as HTMLInputElement | null)?.focus();
-        } else {
-          // Focus a ghost input synchronously inside the gesture so iOS opens the keyboard.
-          // The search page's useEffect then transfers focus to the real input.
-          const ghost = document.createElement("input");
-          ghost.setAttribute("type", "text");
-          ghost.setAttribute("aria-hidden", "true");
-          ghost.setAttribute("tabindex", "-1");
-          Object.assign(ghost.style, { position: "fixed", top: "0", left: "0", width: "1px", height: "1px", opacity: "0", fontSize: "16px" });
-          document.body.appendChild(ghost);
-          ghost.focus();
-          router.push("/search");
-          setTimeout(() => ghost.remove(), 1000);
-        }
-      },
+      label: "Tee Up",
+      active: isTeeUp,
+      onClick: () => router.push("/tee-up"),
       icon: (active: boolean) => (
+        // Golf flag in a hole — represents future play
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          <path d="M4 21h16"/>
+          <path d="M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6"/>
+          <line x1="12" y1="15" x2="12" y2="2"/>
+          <path d="M12 2 L19 5 L12 8 Z" fill={active ? "#4da862" : "rgba(255,255,255,0.85)"} stroke="none"/>
         </svg>
       ),
     },
@@ -96,12 +91,18 @@ export default function BottomNav() {
       ),
     },
     {
-      label: "Lists",
-      active: isLists,
-      onClick: () => router.push("/lists"),
+      label: "Leaderboards",
+      active: isLeaderboards,
+      onClick: () => router.push("/leaderboards"),
       icon: (active: boolean) => (
+        // Trophy
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+          <path d="M4 22h16"/>
+          <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+          <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+          <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
         </svg>
       ),
     },
@@ -111,11 +112,18 @@ export default function BottomNav() {
       onClick: () => router.push("/profile"),
       isProfile: true,
       icon: (active: boolean) => (
-        <div style={{ width: isDesktop ? 28 : 24, height: isDesktop ? 28 : 24, borderRadius: "50%", overflow: "hidden", border: `1.8px solid ${active ? "#4da862" : "rgba(255,255,255,0.85)"}`, background: "rgba(77,168,98,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {avatarUrl
-            ? <img src={avatarUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          }
+        <div style={{ position: "relative", width: isDesktop ? 28 : 24, height: isDesktop ? 28 : 24 }}>
+          <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", border: `1.8px solid ${active ? "#4da862" : "rgba(255,255,255,0.85)"}`, background: "rgba(77,168,98,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {avatarUrl
+              ? <img src={avatarUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            }
+          </div>
+          {unreadCount > 0 && (
+            <div style={{ position: "absolute", top: -2, right: -2, minWidth: 14, height: 14, borderRadius: 7, background: "#e8353a", border: "1.5px solid rgba(4,12,6,1)", boxShadow: "0 1px 3px rgba(232,53,58,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 3px" }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 800, color: "#fff", lineHeight: 1, letterSpacing: "-0.2px" }}>{unreadCount > 99 ? "99+" : unreadCount}</span>
+            </div>
+          )}
         </div>
       ),
     },
