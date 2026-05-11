@@ -38,12 +38,16 @@ const config: CapacitorConfig = {
     },
 
     SplashScreen: {
-      launchShowDuration: 2000,
+      // Native splash stays up until JS explicitly hides it (via
+      // <HideSplash /> in the root layout). The 5000ms fallback only fires
+      // if JS never loads — guards against the "black screen on launch"
+      // App Store rejection from a slow remote WebView fetch on iOS 26.
+      launchShowDuration: 5000,
       launchAutoHide: true,
       backgroundColor: "#07100a",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
-      showSpinner: false,
+      showSpinner: true,
       iosSpinnerStyle: "small",
       spinnerColor: "#4da862",
     },
