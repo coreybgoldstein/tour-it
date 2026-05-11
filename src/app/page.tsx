@@ -1147,7 +1147,7 @@ export default function Home() {
           <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", borderBottom: "1px solid rgba(77,168,98,0.35)", flexShrink: 0 }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
             {/* 3-col row: hamburger | logo | bell */}
-            <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: "max(4px, env(safe-area-inset-top))", paddingBottom: 4, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: "max(10px, env(safe-area-inset-top))", paddingBottom: 10, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
               {/* Hamburger */}
               <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: isDesktop ? "none" : "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
@@ -1156,7 +1156,7 @@ export default function Home() {
               </button>
               {/* Logo — centered on mobile, left-aligned on desktop */}
               <div style={{ display: "flex", justifyContent: isDesktop ? "flex-start" : "center" }}>
-                <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 60 : 48, width: "auto" }} />
+                <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 68 : 56, width: "auto" }} />
               </div>
               {/* Bell — right-aligned in third column */}
               <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -1169,20 +1169,20 @@ export default function Home() {
           <MayCompetitionBanner />
 
           {/* Hero text */}
-          <div style={{ padding: "10px 20px 8px", flexShrink: 0 }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
+          <div style={{ padding: "14px 20px 10px", flexShrink: 0 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#fff", lineHeight: 1.12 }}>
               Scout your next round
             </div>
           </div>
 
           {/* Search CTA */}
-          <div style={{ padding: "0 20px 12px", flexShrink: 0 }}>
+          <div style={{ padding: "0 20px 14px", flexShrink: 0 }}>
             <button
               onClick={() => router.push("/search")}
-              style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, background: "rgba(26,158,66,0.07)", border: "1.5px solid rgba(26,158,66,0.55)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", boxShadow: "0 0 18px rgba(26,158,66,0.2), inset 0 0 10px rgba(26,158,66,0.04)" }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 11, background: "rgba(26,158,66,0.07)", border: "1.5px solid rgba(26,158,66,0.55)", borderRadius: 14, padding: "16px 18px", cursor: "pointer", boxShadow: "0 0 18px rgba(26,158,66,0.2), inset 0 0 10px rgba(26,158,66,0.04)" }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(26,158,66,0.85)" }}>Find a course — name, city, or state</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(26,158,66,0.85)" }}>Find a course — name, city, or state</span>
             </button>
           </div>
 

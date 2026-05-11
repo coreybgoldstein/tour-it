@@ -22,6 +22,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
+  // iOS Safari paints the area behind the notch/status bar using theme-color.
+  // Matches the green TopBar gradient so the green visually extends to the
+  // very top of the screen on every page.
+  themeColor: "#1c4425",
 };
 
 export const metadata: Metadata = {
