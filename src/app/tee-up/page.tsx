@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+
+type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
 
 type TripRow = {
   id: string;
@@ -57,12 +59,102 @@ export default function TeeUpPage() {
   const [pastRounds, setPastRounds] = useState<RoundRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("rounds");
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Quick Round sheet
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickCourse, setQuickCourse] = useState<CourseSearchRow | null>(null);
+  const [quickDate, setQuickDate] = useState("");
+  const [quickTime, setQuickTime] = useState("");
+  const [quickSearch, setQuickSearch] = useState("");
+  const [quickResults, setQuickResults] = useState<CourseSearchRow[]>([]);
+  const [quickSaving, setQuickSaving] = useState(false);
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced course search for the Quick Round sheet
+  useEffect(() => {
+    if (!quickSearch.trim() || quickCourse) { setQuickResults([]); return; }
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("Course")
+        .select("id, name, city, state, logoUrl")
+        .ilike("name", `%${quickSearch.trim()}%`)
+        .limit(8);
+      setQuickResults((data ?? []) as CourseSearchRow[]);
+    }, 220);
+  }, [quickSearch, quickCourse]);
+
+  async function submitQuickRound() {
+    if (!quickCourse || !quickDate || !userId || quickSaving) return;
+    setQuickSaving(true);
+    const supabase = createClient();
+    const tripId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const courseLabel = quickCourse.name;
+    const niceDate = new Date(quickDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const tripName = `${courseLabel} — ${niceDate}`;
+
+    await supabase.from("GolfTrip").insert({
+      id: tripId,
+      name: tripName,
+      createdBy: userId,
+      startDate: quickDate,
+      endDate: quickDate,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await supabase.from("GolfTripMember").insert({
+      id: crypto.randomUUID(),
+      tripId,
+      userId,
+      role: "owner",
+      createdAt: now,
+    });
+    await supabase.from("GolfTripCourse").insert({
+      id: crypto.randomUUID(),
+      tripId,
+      courseId: quickCourse.id,
+      playDate: quickDate,
+      teeTime: quickTime || null,
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // +50 pts award (same hook the long-form trip create uses)
+    fetch("/api/points/award", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create_trip", referenceId: tripId }),
+    }).catch(() => {});
+
+    setQuickSaving(false);
+    setQuickOpen(false);
+    setQuickCourse(null);
+    setQuickDate("");
+    setQuickTime("");
+    setQuickSearch("");
+    setQuickResults([]);
+    router.push(`/trips/${tripId}`);
+  }
+
+  function handleNewClick() {
+    // Future Trips → long-form trip create at /trips. Everything else (rounds + archive) → Quick Round.
+    if (tab === "trips") {
+      router.push("/trips");
+    } else {
+      setQuickOpen(true);
+    }
+  }
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) { router.replace("/login"); return; }
       const uid = data.user.id;
+      setUserId(uid);
 
       // 1) Trip IDs where user is a member
       const { data: memberRows } = await supabase
@@ -165,11 +257,11 @@ export default function TeeUpPage() {
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: "0.04em", marginTop: 2 }}>What you're playing next</div>
         </div>
         <button
-          onClick={() => router.push("/trips")}
+          onClick={handleNewClick}
           style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", borderRadius: 99, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", cursor: "pointer" }}
         >
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          New
+          {tab === "trips" ? "New Trip" : "New Round"}
         </button>
       </div>
 
@@ -210,7 +302,7 @@ export default function TeeUpPage() {
         <div style={{ padding: "16px 20px" }}>
           {tab === "rounds" && (
             futureRounds.length === 0
-              ? <EmptyState title="No future rounds scheduled" subtitle="Plan a single-day round, add friends, attach a game." ctaLabel="Schedule a round" onCta={() => router.push("/trips")} />
+              ? <EmptyState title="No future rounds scheduled" subtitle="Plan a single-day round, add friends, attach a game." ctaLabel="Schedule a round" onCta={() => setQuickOpen(true)} />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {futureRounds.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
                 </div>
@@ -243,6 +335,100 @@ export default function TeeUpPage() {
                   ))}
                 </div>
           )}
+        </div>
+      )}
+
+      {/* Quick Round sheet — single-course, single-date trip */}
+      {quickOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => { if (!quickSaving) setQuickOpen(false); }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "14px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "92vh", overflowY: "auto" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 16px" }} />
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 2 }}>Quick Round</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>Schedule a Round</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>Pick a course + a day. Invite friends and set up a game on the next screen.</div>
+            </div>
+
+            {/* Course picker */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Course</div>
+              {quickCourse ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(77,168,98,0.10)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: quickCourse.logoUrl ? "#fff" : "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {quickCourse.logoUrl
+                      ? <img src={quickCourse.logoUrl} alt={quickCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862" }}>{quickCourse.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}</span>
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{quickCourse.name}</div>
+                    {(quickCourse.city || quickCourse.state) && (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{[quickCourse.city, quickCourse.state].filter(Boolean).join(", ")}</div>
+                    )}
+                  </div>
+                  <button onClick={() => { setQuickCourse(null); setQuickSearch(""); }} aria-label="Change course" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Change</button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "10px 12px" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input
+                      value={quickSearch}
+                      onChange={e => setQuickSearch(e.target.value)}
+                      placeholder="Search a course"
+                      spellCheck={false}
+                      autoCorrect="off"
+                      style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff" }}
+                    />
+                  </div>
+                  {quickResults.length > 0 && (
+                    <div style={{ marginTop: 6, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, maxHeight: 240, overflowY: "auto" }}>
+                      {quickResults.map(c => (
+                        <button key={c.id} onClick={() => { setQuickCourse(c); setQuickSearch(""); setQuickResults([]); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", textAlign: "left" }}>
+                          <div style={{ width: 30, height: 30, borderRadius: 7, background: c.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.18)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {c.logoUrl
+                              ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#4da862" }}>{c.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}</span>
+                            }
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.9)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{[c.city, c.state].filter(Boolean).join(", ")}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Date + Tee Time */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 18 }}>
+              <div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Date</div>
+                <input type="date" value={quickDate} onChange={e => setQuickDate(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: quickDate ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Tee Time <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(opt)</span></div>
+                <input type="time" value={quickTime} onChange={e => setQuickTime(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: quickTime ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
+              </div>
+            </div>
+
+            {/* Save */}
+            <button
+              onClick={submitQuickRound}
+              disabled={!quickCourse || !quickDate || quickSaving}
+              style={{ width: "100%", background: (!quickCourse || !quickDate || quickSaving) ? "rgba(45,122,66,0.4)" : "#2d7a42", border: "none", borderRadius: 14, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: (!quickCourse || !quickDate || quickSaving) ? "not-allowed" : "pointer", letterSpacing: "0.02em", boxShadow: (!quickCourse || !quickDate || quickSaving) ? "none" : "0 4px 16px rgba(45,122,66,0.4)" }}
+            >
+              {quickSaving ? "Saving…" : "Schedule Round → Invite & Add Game"}
+            </button>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.32)", textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
+              Players, games, and accommodations get added on the round's page next.
+            </div>
+          </div>
         </div>
       )}
 
