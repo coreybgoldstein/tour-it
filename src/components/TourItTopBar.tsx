@@ -182,8 +182,21 @@ export default function TourItTopBar() {
 
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <button
-              onClick={() => setNotifOpen(true)}
-              aria-label="Notifications"
+              onClick={() => {
+                // Same iOS-keyboard ghost trick used by BottomNav's old search slot
+                if (pathname !== "/search") {
+                  const ghost = document.createElement("input");
+                  ghost.setAttribute("type", "text");
+                  ghost.setAttribute("aria-hidden", "true");
+                  ghost.setAttribute("tabindex", "-1");
+                  Object.assign(ghost.style, { position: "fixed", top: "0", left: "0", width: "1px", height: "1px", opacity: "0", fontSize: "16px" });
+                  document.body.appendChild(ghost);
+                  ghost.focus();
+                  router.push("/search");
+                  setTimeout(() => ghost.remove(), 1000);
+                }
+              }}
+              aria-label="Search"
               style={{
                 position: "relative",
                 width: 36,
@@ -197,33 +210,10 @@ export default function TourItTopBar() {
                 cursor: "pointer",
               }}
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
               </svg>
-              {unread > 0 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: -2,
-                    right: -2,
-                    minWidth: 16,
-                    height: 16,
-                    borderRadius: 8,
-                    background: "#e8353a",
-                    border: "1.5px solid #07100a",
-                    boxShadow: "0 1px 5px rgba(232,53,58,0.55)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "0 3px",
-                  }}
-                >
-                  <span style={{ fontSize: 9, fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "#fff", lineHeight: 1, letterSpacing: "-0.2px" }}>
-                    {unread > 99 ? "99+" : unread}
-                  </span>
-                </div>
-              )}
             </button>
           </div>
         </div>
@@ -299,13 +289,26 @@ export default function TourItTopBar() {
                   onClick: () => { setMenuOpen(false); router.push("/leaderboards"); },
                 },
                 {
-                  label: "My Trips",
+                  label: "Tee Up",
                   icon: (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+                      <path d="M4 21h16"/>
+                      <path d="M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6"/>
+                      <line x1="12" y1="15" x2="12" y2="2"/>
+                      <path d="M12 2 L19 5 L12 8 Z" fill="currentColor" stroke="none"/>
                     </svg>
                   ),
-                  onClick: () => { setMenuOpen(false); router.push("/trips"); },
+                  onClick: () => { setMenuOpen(false); router.push("/tee-up"); },
+                },
+                {
+                  label: "Notifications",
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                  ),
+                  onClick: () => { setMenuOpen(false); router.push("/notifications"); },
                 },
                 {
                   label: "App Feedback",
