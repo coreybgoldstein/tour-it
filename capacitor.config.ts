@@ -5,23 +5,29 @@ const config: CapacitorConfig = {
   appName: "Tour It",
   webDir: "out",
 
-  // Live server — loads the Vercel deployment inside the WebView.
+  // Live server — loads the Vercel deployment inside the WebView. Use the
+  // www subdomain explicitly so we skip the apex → www 307 redirect that
+  // was costing ~400ms on cold launch (and showing a flash of nothing on
+  // slower networks like the iPad reviewer's).
   // Remove this block for a fully bundled static build.
   server: {
-    url: "https://touritgolf.com",
+    url: "https://www.touritgolf.com",
     cleartext: false, // HTTPS only
   },
 
-  backgroundColor: "#07100a",
+  // White background everywhere so the WebView's pre-paint state on iPad is
+  // never the black void that triggered the App Store Review rejection.
+  // The web app's own background reapplies once content loads.
+  backgroundColor: "#ffffff",
 
   ios: {
     contentInset: "always", // web content fills behind status bar
-    backgroundColor: "#07100a",
+    backgroundColor: "#ffffff",
     preferredContentMode: "mobile",
   },
 
   android: {
-    backgroundColor: "#07100a",
+    backgroundColor: "#ffffff",
   },
 
   plugins: {
@@ -38,13 +44,13 @@ const config: CapacitorConfig = {
     },
 
     SplashScreen: {
-      // Native splash stays up until JS explicitly hides it (via
-      // <HideSplash /> in the root layout). The 5000ms fallback only fires
-      // if JS never loads — guards against the "black screen on launch"
-      // App Store rejection from a slow remote WebView fetch on iOS 26.
+      // Hold the splash for at least 3 seconds so the WebView has time to
+      // fully render the home screen before we hand off to it. The web side
+      // also waits 3s before calling hide() — both sides agree on the floor.
+      // Auto-hide at 5s acts as a final safety net if JS never loads.
       launchShowDuration: 5000,
       launchAutoHide: true,
-      backgroundColor: "#07100a",
+      backgroundColor: "#ffffff",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
       showSpinner: true,

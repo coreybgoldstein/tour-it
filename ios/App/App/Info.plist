@@ -44,19 +44,27 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<!-- iPad supports all four orientations so App Store Review doesn't treat
+	     the app as iPad-unsupported. The web app is mobile-first but the layout
+	     reflows fine in landscape on iPad's wider canvas. -->
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- UIRequiresFullScreen=false lets the iPad split-view multitasker work,
+	     which iPadOS 26 review explicitly checks for. Was true; flipping to
+	     false unblocks the iPad Air rejection without affecting iPhone. -->
 	<key>UIRequiresFullScreen</key>
-	<true/>
+	<false/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
