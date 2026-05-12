@@ -15,17 +15,17 @@ export default function MayCompetitionBanner() {
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 16px",
-        height: 44,
+        height: 32,
         cursor: "pointer",
         gap: 10,
         overflow: "hidden",
       }}>
         {/* Dot pattern overlay — matches the TopBar green sections for visual consistency */}
         <div aria-hidden style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
-        <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1, position: "relative", zIndex: 1 }}>🏆</span>
+        <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1, position: "relative", zIndex: 1 }}>🏆</span>
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: 600,
           color: "#fff",
           whiteSpace: "nowrap",
@@ -37,7 +37,7 @@ export default function MayCompetitionBanner() {
           zIndex: 1,
         }}>
           May Competition —{" "}
-          <span style={{ color: "#fde68a", fontWeight: 700 }}>$100 GolfNow gift card</span>
+          <span style={{ color: "#d4a017", fontWeight: 700 }}>$100 GolfNow gift card</span>
           {" "}on the line
         </div>
         <span style={{

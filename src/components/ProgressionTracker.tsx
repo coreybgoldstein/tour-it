@@ -141,39 +141,37 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
         onClick={() => router.push("/leaderboards")}
         style={{ margin: "0 16px 8px", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer", position: "relative" }}
       >
-        {/* Row 1: eyebrow LEVEL X + total pts + Ledger pill */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: rankColor, flexShrink: 0 }}>
-              Level {prog.level}
-            </span>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
-              {prog.totalPoints.toLocaleString()}
-            </span>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>pts</span>
-          </div>
-          {isOwner && (
-            <button
-              onClick={openLedger}
-              style={{ display: "flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 99, border: "1px solid rgba(77,168,98,0.3)", background: "rgba(77,168,98,0.08)", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862", flexShrink: 0, letterSpacing: "0.04em" }}
-            >
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-              Ledger
-            </button>
-          )}
+        {/* Row 1: eyebrow LEVEL X + total pts */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: rankColor, flexShrink: 0 }}>
+            Level {prog.level}
+          </span>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+            {prog.totalPoints.toLocaleString()}
+          </span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>pts</span>
         </div>
 
         {/* Thin progress bar */}
         {!atMax ? <LevelTracker pct={pct} rankColor={rankColor} /> : <div style={{ marginTop: 6, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: rankColor, letterSpacing: "0.12em" }}>MAX LEVEL</div>}
 
-        {/* Row 3: remaining-to-level + streak */}
-        {(!atMax || prog.streakWeeks > 0) && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+        {/* Row 3: Ledger pill (owner only) + remaining-to-level + streak */}
+        {(isOwner || !atMax || prog.streakWeeks > 0) && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+            {isOwner && (
+              <button
+                onClick={openLedger}
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 99, border: "1px solid rgba(77,168,98,0.3)", background: "rgba(77,168,98,0.08)", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862", letterSpacing: "0.04em" }}
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Ledger
+              </button>
+            )}
             {!atMax && (
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)" }}>
                 {remaining.toLocaleString()} to Level {prog.level + 1}

@@ -1179,8 +1179,10 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Identity band — matches the trip page pattern */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "12px 16px 10px" }}>
+      {/* Identity band — matches the trip page pattern. Avatar is vertically
+          centered in the band so it sits cleanly between the green top bar
+          and the progression card below */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px 10px" }}>
         {/* Avatar — rank-colored ring */}
         <div
           className={isLegend(profileRank) ? "legend-ring" : undefined}
