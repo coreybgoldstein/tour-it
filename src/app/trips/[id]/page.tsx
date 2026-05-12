@@ -33,8 +33,8 @@ type TripCourse = {
   teeTime: string | null;
   accommodation: string | null;
   sortOrder: number;
-  course: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; holeCount?: number };
-  secondaryCourse?: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; holeCount?: number } | null;
+  course: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; coverImageUrl: string | null; holeCount?: number };
+  secondaryCourse?: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; coverImageUrl: string | null; holeCount?: number } | null;
 };
 
 type Member = {
@@ -353,10 +353,10 @@ export default function TripPage() {
           ...tcData.map((tc: any) => tc.courseId),
           ...tcData.map((tc: any) => tc.secondaryCourseId).filter(Boolean),
         ];
-        const { data: coursesData } = await supabase.from("Course").select("id, name, city, state, uploadCount, logoUrl, holeCount").in("id", allCourseIds);
+        const { data: coursesData } = await supabase.from("Course").select("id, name, city, state, uploadCount, logoUrl, coverImageUrl, holeCount").in("id", allCourseIds);
         const mapped = tcData.map((tc: any) => ({
           ...tc,
-          course: coursesData?.find((c: any) => c.id === tc.courseId) || { id: tc.courseId, name: "Unknown", city: "", state: "", uploadCount: 0, logoUrl: null },
+          course: coursesData?.find((c: any) => c.id === tc.courseId) || { id: tc.courseId, name: "Unknown", city: "", state: "", uploadCount: 0, logoUrl: null, coverImageUrl: null },
           secondaryCourse: tc.secondaryCourseId ? (coursesData?.find((c: any) => c.id === tc.secondaryCourseId) || null) : null,
         }));
         // Sort chronologically by playDate; undated entries go to the end
@@ -719,8 +719,8 @@ export default function TripPage() {
         teeTime: addTeeTime || null,
         accommodation: addAccom.trim() || null,
         sortOrder: tripCourses.length,
-        course: { id: selectedAddCourse.id, name: selectedAddCourse.name, city: selectedAddCourse.city, state: selectedAddCourse.state, uploadCount: 0, logoUrl: null, holeCount: selectedAddCourse.holeCount },
-        secondaryCourse: pairCourse ? { id: pairCourse.id, name: pairCourse.name, city: pairCourse.city, state: pairCourse.state, uploadCount: 0, logoUrl: null, holeCount: pairCourse.holeCount } : null,
+        course: { id: selectedAddCourse.id, name: selectedAddCourse.name, city: selectedAddCourse.city, state: selectedAddCourse.state, uploadCount: 0, logoUrl: null, coverImageUrl: null, holeCount: selectedAddCourse.holeCount },
+        secondaryCourse: pairCourse ? { id: pairCourse.id, name: pairCourse.name, city: pairCourse.city, state: pairCourse.state, uploadCount: 0, logoUrl: null, coverImageUrl: null, holeCount: pairCourse.holeCount } : null,
       }]);
 
       // Check if course has hole handicap data; notify admin if not
@@ -1144,6 +1144,20 @@ export default function TripPage() {
           .game-format-card:active { opacity: 0.8; }
         `}</style>
 
+        {/* Cover photo — only shown for upcoming rounds. Uses the trip's
+            uploaded image first, then falls back to the round course's cover. */}
+        {isRound && (trip.imageUrl || roundCourse?.coverImageUrl) && (
+          <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", overflow: "hidden", background: "#0d1f12" }}>
+            <img
+              src={(trip.imageUrl || roundCourse?.coverImageUrl) as string}
+              alt={roundCourse?.name ?? trip.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+            {/* Subtle dark gradient at the bottom so the upcoming Edit pill below stays readable */}
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(7,16,10,0.6) 100%)", pointerEvents: "none" }} />
+          </div>
+        )}
+
         {/* Header */}
         <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ padding: "12px 20px 14px" }}>
@@ -1214,7 +1228,10 @@ export default function TripPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 5 }}>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.65)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
-                      {trip.startDate && formatDate(trip.startDate)}{trip.startDate && trip.endDate ? " → " : ""}{trip.endDate && formatDate(trip.endDate)}
+                      {isRound
+                        ? (trip.startDate && formatDate(trip.startDate))
+                        : <>{trip.startDate && formatDate(trip.startDate)}{trip.startDate && trip.endDate ? " → " : ""}{trip.endDate && formatDate(trip.endDate)}</>
+                      }
                     </span>
                   </div>
                 )}
@@ -1240,10 +1257,13 @@ export default function TripPage() {
                 </div>
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.15)" }}>{members.length} {members.length === 1 ? "golfer" : "golfers"}</span>
               </button>
-              <button onClick={() => setChatOpen(true)} style={{ background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                Chat{messages.length > 0 ? ` · ${messages.length}` : ""}
-              </button>
+              {/* Chat hidden in round-mode — too short of a session to need it; a quick text outside the app covers it */}
+              {!isRound && (
+                <button onClick={() => setChatOpen(true)} style={{ background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Chat{messages.length > 0 ? ` · ${messages.length}` : ""}
+                </button>
+              )}
             </div>
 
           </div>
@@ -1343,7 +1363,39 @@ export default function TripPage() {
           </div>
           )}
 
-          {tripCourses.length === 0 ? (
+          {/* Round-mode: replace the full Itinerary block with a clean "When"
+              card. Course is already shown in the header; this just surfaces
+              date + tee time prominently as the next-most-important detail. */}
+          {isRound && tripCourses[0] ? (() => {
+            const tc = tripCourses[0];
+            const dateLabel = tc.playDate ? formatDate(tc.playDate) : (trip.startDate ? formatDate(trip.startDate) : null);
+            const teeTime = tc.teeTime;
+            const formatTime12 = (t: string) => {
+              const [hh, mm] = t.split(":").map(Number);
+              if (Number.isNaN(hh)) return t;
+              const period = hh >= 12 ? "PM" : "AM";
+              const h12 = hh % 12 || 12;
+              return `${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
+            };
+            return (
+              <button
+                onClick={() => openEditCourse(tc)}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left" }}
+              >
+                <div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>When</div>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>{dateLabel ?? "Set a date"}</div>
+                  {teeTime && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862", fontWeight: 600, marginTop: 4 }}>Tee off at {formatTime12(teeTime)}</div>}
+                </div>
+                {isOwner && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, color: "rgba(77,168,98,0.85)" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Edit</span>
+                  </div>
+                )}
+              </button>
+            );
+          })() : tripCourses.length === 0 ? (
             <div style={{ textAlign: "center", padding: "28px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 13, lineHeight: 1.7 }}>
               No courses yet.<br />Tap <span style={{ color: "#4da862" }}>+ Add Course</span> to build your itinerary.
             </div>
@@ -1558,19 +1610,34 @@ export default function TripPage() {
                 const sub = g.format === "nassau" ? `$${cfg?.frontAmount}/$${cfg?.backAmount}/$${cfg?.totalAmount}` : g.format === "skins" ? `$${cfg?.skinsAmount}/skin` : fmt?.desc || "";
                 return (
                   <button key={g.id} onClick={() => { setViewGame(g); setViewGameOpen(true); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "13px 14px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
-                      {g.courseLogoUrl
-                        ? <img src={g.courseLogoUrl} alt={g.courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
-                        : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{abbr(g.courseName)}</span>
-                      }
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.courseName}</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{fmt?.name || g.format}</span>
-                        {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>· {sub}</span>}
+                    {/* Round-mode: skip the course icon + name (same course everywhere on this page). Game format becomes the title. */}
+                    {!isRound && (
+                      <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                        {g.courseLogoUrl
+                          ? <img src={g.courseLogoUrl} alt={g.courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                          : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{abbr(g.courseName)}</span>
+                        }
                       </div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{g.players?.length || 0} players</div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {isRound ? (
+                        <>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
+                            {fmt?.name || g.format}
+                            {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>· {sub}</span>}
+                          </div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>{g.players?.length || 0} players · tap for details</div>
+                        </>
+                      ) : (
+                        <>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.courseName}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{fmt?.name || g.format}</span>
+                            {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>· {sub}</span>}
+                          </div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{g.players?.length || 0} players</div>
+                        </>
+                      )}
                     </div>
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
