@@ -185,8 +185,18 @@ function buildSvg(d: BeautyShotData): string {
 
 // ---------- Route handler ----------
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const debug = new URL(req.url).searchParams.has("debug");
+  if (debug) {
+    return Response.json({
+      playfairBytes: playfair.length,
+      outfitBytes: outfit.length,
+      logoBytes: logoPng.length,
+      cwd: process.cwd(),
+      tip: "non-zero byte counts mean the files were traced into the function bundle",
+    });
+  }
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
