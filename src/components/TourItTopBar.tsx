@@ -202,10 +202,16 @@ export default function TourItTopBar() {
                 {
                   label: "Leaderboard",
                   icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="18" y="3" width="4" height="18" />
-                      <rect x="10" y="8" width="4" height="13" />
-                      <rect x="2" y="13" width="4" height="8" />
+                    // Masters-style leaderboard — matches the top-right Leaderboards button
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="4" cy="3" r="1"/>
+                      <circle cx="20" cy="3" r="1"/>
+                      <path d="M4 4 Q12 8 20 4"/>
+                      <path d="M4 4 L4 17 L20 17 L20 4"/>
+                      <line x1="6" y1="10" x2="18" y2="10"/>
+                      <line x1="6" y1="13.5" x2="18" y2="13.5"/>
+                      <line x1="12" y1="17" x2="12" y2="20"/>
+                      <line x1="10" y1="20" x2="14" y2="20"/>
                     </svg>
                   ),
                   onClick: () => { setMenuOpen(false); router.push("/leaderboards"); },
