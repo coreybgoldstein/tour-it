@@ -1053,10 +1053,18 @@ export default function TripPage() {
   // Course button hides (already have the one course), header icon swaps to
   // the course logo, and a Clone button appears so the user can spin off
   // another round with the same course/players.
+  //
+  // IMPORTANT: strip both dates to YYYY-MM-DD before comparing. Postgres/
+  // PostgREST sometimes echoes a date column as "2026-05-20" and sometimes as
+  // "2026-05-20T00:00:00" depending on how the row was touched; raw string
+  // equality misclassifies single-day rounds as multi-day trips.
+  const stripDate = (s: string | null | undefined) => s ? s.slice(0, 10) : "";
+  const _start = stripDate(trip.startDate);
+  const _end = stripDate(trip.endDate);
   const isRound = tripCourses.length === 1
     && !tripCourses[0]?.secondaryCourseId
-    && !!trip.startDate && !!trip.endDate
-    && trip.startDate === trip.endDate;
+    && !!_start && !!_end
+    && _start === _end;
   const roundCourse = isRound ? tripCourses[0]?.course : null;
 
   async function cloneAsNewRound() {
