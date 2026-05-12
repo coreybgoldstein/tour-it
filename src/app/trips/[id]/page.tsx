@@ -316,6 +316,10 @@ export default function TripPage() {
   // Scorecard verify sheet — opens over the game view so users can confirm
   // par/yardage/handicap-rank without losing the game context.
   const [scorecardSheetOpen, setScorecardSheetOpen] = useState(false);
+  // Share-the-round chooser sheet: lets the user pick between attaching the
+  // beauty PNG file or sending an iMessage-friendly link with og:image.
+  const [sendRoundChooserOpen, setSendRoundChooserOpen] = useState(false);
+  const [sendingMode, setSendingMode] = useState<"image" | "link" | null>(null);
   const [scorecardHoles, setScorecardHoles] = useState<Array<{ holeNumber: number; par: number | null; yardage: number | null; handicapRank: number | null }>>([]);
   const [scorecardLoading, setScorecardLoading] = useState(false);
   async function openScorecardSheet(courseId: string) {
@@ -1443,50 +1447,10 @@ export default function TripPage() {
           </div>
           )}
 
-          {/* Round-mode share button — fires native share with a generated
-              beauty-shot PNG (course + date + time + game shots over the
-              cover photo, no stakes). Sits right above the When card so it's
-              the primary call-to-action once everything is set. */}
+          {/* Round-mode share button — opens a chooser sheet (image vs link). */}
           {isRound && (
             <button
-              onClick={async () => {
-                try {
-                  // Same-origin fetch — when the app is on the apex domain
-                  // touritgolf.com, the route is also reachable there (Vercel
-                  // 307s to www. for canonical, but for SSR fetches that's a
-                  // no-op since we use a relative path).
-                  const url = `/api/round/${id}/beauty?ts=${Date.now()}`;
-                  const res = await fetch(url, { redirect: "follow" });
-                  if (!res.ok) throw new Error(`status ${res.status}`);
-                  const blob = await res.blob();
-                  if (blob.size < 1000) throw new Error("image came back empty — server didn't render it");
-                  const file = new File([blob], `tour-it-${id}.png`, { type: "image/png" });
-                  const niceDate = roundCourse && (tripCourses[0]?.playDate || trip.startDate)
-                    ? new Date((tripCourses[0]?.playDate || trip.startDate) + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                    : "";
-                  const teeTimeRaw = tripCourses[0]?.teeTime;
-                  const niceTime = teeTimeRaw ? (() => {
-                    const [hh, mm] = teeTimeRaw.split(":").map(Number);
-                    if (Number.isNaN(hh)) return "";
-                    const period = hh >= 12 ? "PM" : "AM";
-                    const h12 = hh % 12 || 12;
-                    return ` at ${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
-                  })() : "";
-                  const text = `Round at ${roundCourse?.name ?? trip.name}${niceDate ? ` · ${niceDate}` : ""}${niceTime} — sent from Tour It`;
-                  const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
-                  if (nav.canShare?.({ files: [file] })) {
-                    await navigator.share({ files: [file], title: "Upcoming Round", text });
-                  } else if (navigator.share) {
-                    await navigator.share({ title: "Upcoming Round", text, url: window.location.origin + url });
-                  } else {
-                    // Final fallback — open the image in a new tab so the user can save / share manually
-                    window.open(url, "_blank");
-                  }
-                } catch (e) {
-                  console.error("Beauty-shot share failed", e);
-                  alert("Couldn't generate the share image. Try again in a moment.");
-                }
-              }}
+              onClick={() => setSendRoundChooserOpen(true)}
               style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)", border: "none", borderRadius: 14, padding: "14px", marginBottom: 10, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", letterSpacing: "0.04em", boxShadow: "0 6px 20px rgba(45,122,66,0.45)" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -2099,6 +2063,117 @@ export default function TripPage() {
             </button>
             <button onClick={deleteCourse} disabled={deletingCourse} style={{ width: "100%", background: "rgba(200,60,60,0.1)", border: "1px solid rgba(200,60,60,0.3)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(220,100,100,0.9)", cursor: "pointer" }}>
               {deletingCourse ? "Removing..." : "Remove from Trip"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Send-the-round chooser sheet */}
+      {sendRoundChooserOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.55)" }} onClick={() => !sendingMode && setSendRoundChooserOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 20px calc(28px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 6px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", textAlign: "center" }}>Send the Round</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)", textAlign: "center", marginBottom: 6 }}>Pick how you want to share it.</div>
+
+            {/* Option 1: Send the image */}
+            <button
+              disabled={!!sendingMode}
+              onClick={async () => {
+                setSendingMode("image");
+                try {
+                  const url = `/api/round/${id}/beauty?ts=${Date.now()}`;
+                  const res = await fetch(url, { redirect: "follow" });
+                  if (!res.ok) throw new Error(`status ${res.status}`);
+                  const blob = await res.blob();
+                  if (blob.size < 1000) throw new Error("image came back empty");
+                  const file = new File([blob], `tour-it-${id}.png`, { type: "image/png" });
+                  const niceDate = roundCourse && (tripCourses[0]?.playDate || trip.startDate)
+                    ? new Date((tripCourses[0]?.playDate || trip.startDate) + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                    : "";
+                  const teeTimeRaw = tripCourses[0]?.teeTime;
+                  const niceTime = teeTimeRaw ? (() => {
+                    const [hh, mm] = teeTimeRaw.split(":").map(Number);
+                    if (Number.isNaN(hh)) return "";
+                    const period = hh >= 12 ? "PM" : "AM";
+                    const h12 = hh % 12 || 12;
+                    return ` at ${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
+                  })() : "";
+                  const text = `Round at ${roundCourse?.name ?? trip.name}${niceDate ? ` · ${niceDate}` : ""}${niceTime} — sent from Tour It`;
+                  const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+                  if (nav.canShare?.({ files: [file] })) {
+                    await navigator.share({ files: [file], title: "Upcoming Round", text });
+                  } else {
+                    window.open(url, "_blank");
+                  }
+                  setSendRoundChooserOpen(false);
+                } catch (e) {
+                  console.error("Beauty-shot share failed", e);
+                  alert("Couldn't generate the share image. Try again in a moment.");
+                } finally {
+                  setSendingMode(null);
+                }
+              }}
+              style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "rgba(77,168,98,0.10)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 14, cursor: sendingMode ? "default" : "pointer", textAlign: "left", opacity: sendingMode && sendingMode !== "image" ? 0.4 : 1 }}
+            >
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff" }}>{sendingMode === "image" ? "Preparing…" : "Send as image"}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>Attach the full beauty card directly.</div>
+              </div>
+            </button>
+
+            {/* Option 2: Send the link with rich preview */}
+            <button
+              disabled={!!sendingMode}
+              onClick={async () => {
+                setSendingMode("link");
+                try {
+                  const linkUrl = `${window.location.origin}/round/${id}`;
+                  const niceDate = roundCourse && (tripCourses[0]?.playDate || trip.startDate)
+                    ? new Date((tripCourses[0]?.playDate || trip.startDate) + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                    : "";
+                  const teeTimeRaw = tripCourses[0]?.teeTime;
+                  const niceTime = teeTimeRaw ? (() => {
+                    const [hh, mm] = teeTimeRaw.split(":").map(Number);
+                    if (Number.isNaN(hh)) return "";
+                    const period = hh >= 12 ? "PM" : "AM";
+                    const h12 = hh % 12 || 12;
+                    return ` at ${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
+                  })() : "";
+                  const text = `Round at ${roundCourse?.name ?? trip.name}${niceDate ? ` · ${niceDate}` : ""}${niceTime}`;
+                  if (navigator.share) {
+                    await navigator.share({ title: "Upcoming Round", text, url: linkUrl });
+                  } else {
+                    await navigator.clipboard.writeText(linkUrl);
+                    alert("Link copied to clipboard");
+                  }
+                  setSendRoundChooserOpen(false);
+                } catch (e) {
+                  console.error("Link share failed", e);
+                } finally {
+                  setSendingMode(null);
+                }
+              }}
+              style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 14, cursor: sendingMode ? "default" : "pointer", textAlign: "left", opacity: sendingMode && sendingMode !== "link" ? 0.4 : 1 }}
+            >
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff" }}>{sendingMode === "link" ? "Sharing…" : "Send as link"}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>iMessage will preview the image — tap to open in Tour It.</div>
+              </div>
+            </button>
+
+            <button
+              disabled={!!sendingMode}
+              onClick={() => setSendRoundChooserOpen(false)}
+              style={{ marginTop: 6, padding: "10px", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", cursor: "pointer" }}
+            >
+              Cancel
             </button>
           </div>
         </div>
