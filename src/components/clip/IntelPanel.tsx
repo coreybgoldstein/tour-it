@@ -192,7 +192,8 @@ export function IntelPanel({
           </div>
         )}
 
-        {/* Attribution */}
+        {/* Attribution — hidden when there's no uploader (course-level intel only) */}
+        {uploaderUsername && (
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={() => uploaderId && router.push(`/profile/${uploaderId}`)}
@@ -242,6 +243,7 @@ export function IntelPanel({
             </button>
           )}
         </div>
+        )}
       </div>
     </>
   );
