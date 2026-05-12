@@ -132,12 +132,13 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, holeDescription, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }>;
   clipIndex: number; totalClips: number;
   holeNumber?: number | null;
   holePar?: number | null; holeYardage?: number | null;
+  holeDescription?: string | null;
   scoutedHoles: number[];
   holeIndex: number;
   onEnded: () => void; onReport?: () => void; onEdit?: () => void;
@@ -153,7 +154,9 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   const [intelOpen, setIntelOpen] = useState(false);
   const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
   const uploader = uploaderMap[clip.userId];
-  const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt);
+  const isSystemUploader = uploader?.username === "tourit";
+  // Intel button shows when EITHER the uploader added scout notes OR the course has a seeded hole description (e.g. PGA Championship hole preview)
+  const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt || holeDescription);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -248,7 +251,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
                 : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               }
             </div>
-            {onFollow && currentUserId && currentUserId !== clip.userId && !followingIds?.has(clip.userId) && (
+            {onFollow && currentUserId && currentUserId !== clip.userId && !followingIds?.has(clip.userId) && !isSystemUploader && (
               <button onClick={e => { e.stopPropagation(); onFollow(clip.userId); }} style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: "#2d7a42", border: "1.5px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0, zIndex: 1 }}>
                 <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
               </button>
@@ -292,6 +295,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         holeNumber={holeNumber ?? undefined}
         holePar={holePar}
         holeYardage={holeYardage}
+        holeDescription={holeDescription}
         clubUsed={clip.clubUsed}
         windCondition={clip.windCondition}
         strategyNote={clip.strategyNote}
@@ -351,9 +355,9 @@ export default function CourseProfilePage() {
   const holeMapRef = useRef<Record<string, number>>({});
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scorecardOpen, setScorecardOpen] = useState(false);
-  const [holes, setHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null; imageUrl: string | null }[]>([]);
+  const [holes, setHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null; imageUrl: string | null; description: string | null }[]>([]);
   const [scorecardEditMode, setScorecardEditMode] = useState(false);
-  const [editedHoles, setEditedHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null; imageUrl: string | null }[]>([]);
+  const [editedHoles, setEditedHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null; imageUrl: string | null; description: string | null }[]>([]);
   const [savingScorecard, setSavingScorecard] = useState(false);
   const [scorecardView, setScorecardView] = useState<"digital" | "photo">("digital");
   const [uploadingScorecardPhoto, setUploadingScorecardPhoto] = useState(false);
@@ -542,12 +546,12 @@ const [editDescription, setEditDescription] = useState("");
       const { data: courseData } = await supabase.from("Course").select("*").eq("id", id).single();
       if (courseData) setCourse(courseData);
 
-      const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank, yardage, imageUrl").eq("courseId", id).order("holeNumber", { ascending: true });
+      const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank, yardage, imageUrl, description").eq("courseId", id).order("holeNumber", { ascending: true });
       const holeMap: Record<string, number> = {};
       holesData?.forEach((h: any) => { holeMap[h.id] = h.holeNumber; });
       holeMapRef.current = holeMap;
       if (holesData) {
-        const mapped = holesData.map((h: any) => ({ id: h.id, holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null, imageUrl: h.imageUrl || null }));
+        const mapped = holesData.map((h: any) => ({ id: h.id, holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null, imageUrl: h.imageUrl || null, description: h.description || null }));
         setHoles(mapped);
         setEditedHoles(mapped);
 
@@ -1372,7 +1376,7 @@ const [editDescription, setEditDescription] = useState("");
                 <button
                   onClick={() => {
                     const template = holes.length > 0 ? [...holes] :
-                      Array.from({ length: 18 }, (_, i) => ({ id: `new-${i + 1}`, holeNumber: i + 1, par: 4, handicapRank: i + 1, yardage: null, imageUrl: null }));
+                      Array.from({ length: 18 }, (_, i) => ({ id: `new-${i + 1}`, holeNumber: i + 1, par: 4, handicapRank: i + 1, yardage: null, imageUrl: null, description: null }));
                     setEditedHoles(template);
                     setScorecardEditMode(true);
                   }}
@@ -1810,6 +1814,7 @@ const [editDescription, setEditDescription] = useState("");
                       holeNumber={holeNum}
                       holePar={holeData?.par}
                       holeYardage={holeData?.yardage}
+                      holeDescription={holeData?.description ?? null}
                       scoutedHoles={holesWithClips}
                       holeIndex={holesWithClips.indexOf(holeNum)}
                       onEnded={() => {
