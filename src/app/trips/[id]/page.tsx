@@ -1435,10 +1435,15 @@ export default function TripPage() {
             <button
               onClick={async () => {
                 try {
+                  // Same-origin fetch — when the app is on the apex domain
+                  // touritgolf.com, the route is also reachable there (Vercel
+                  // 307s to www. for canonical, but for SSR fetches that's a
+                  // no-op since we use a relative path).
                   const url = `/api/round/${id}/beauty?ts=${Date.now()}`;
-                  const res = await fetch(url);
-                  if (!res.ok) throw new Error("could not generate image");
+                  const res = await fetch(url, { redirect: "follow" });
+                  if (!res.ok) throw new Error(`status ${res.status}`);
                   const blob = await res.blob();
+                  if (blob.size < 1000) throw new Error("image came back empty — server didn't render it");
                   const file = new File([blob], `tour-it-${id}.png`, { type: "image/png" });
                   const niceDate = roundCourse && (tripCourses[0]?.playDate || trip.startDate)
                     ? new Date((tripCourses[0]?.playDate || trip.startDate) + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
