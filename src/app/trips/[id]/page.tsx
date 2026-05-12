@@ -1363,6 +1363,44 @@ export default function TripPage() {
           </div>
           )}
 
+          {/* Round-mode share button — fires native share with a generated
+              beauty-shot PNG (course + date + time + game shots over the
+              cover photo, no stakes). Sits right above the When card so it's
+              the primary call-to-action once everything is set. */}
+          {isRound && (
+            <button
+              onClick={async () => {
+                try {
+                  const url = `/api/round/${id}/beauty?ts=${Date.now()}`;
+                  const res = await fetch(url);
+                  if (!res.ok) throw new Error("could not generate image");
+                  const blob = await res.blob();
+                  const file = new File([blob], `tour-it-${id}.png`, { type: "image/png" });
+                  const niceDate = roundCourse && (tripCourses[0]?.playDate || trip.startDate)
+                    ? new Date((tripCourses[0]?.playDate || trip.startDate) + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                    : "";
+                  const text = `Round at ${roundCourse?.name ?? trip.name}${niceDate ? ` · ${niceDate}` : ""} — sent from Tour It`;
+                  const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+                  if (nav.canShare?.({ files: [file] })) {
+                    await navigator.share({ files: [file], title: "Upcoming Round", text });
+                  } else if (navigator.share) {
+                    await navigator.share({ title: "Upcoming Round", text, url: window.location.origin + url });
+                  } else {
+                    // Final fallback — open the image in a new tab so the user can save / share manually
+                    window.open(url, "_blank");
+                  }
+                } catch (e) {
+                  console.error("Beauty-shot share failed", e);
+                  alert("Couldn't generate the share image. Try again in a moment.");
+                }
+              }}
+              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)", border: "none", borderRadius: 14, padding: "14px", marginBottom: 10, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", letterSpacing: "0.04em", boxShadow: "0 6px 20px rgba(45,122,66,0.45)" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Send the Round
+            </button>
+          )}
+
           {/* Round-mode: replace the full Itinerary block with a clean "When"
               card. Course is already shown in the header; this just surfaces
               date + tee time prominently as the next-most-important detail. */}
