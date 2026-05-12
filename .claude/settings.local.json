@@ -87,7 +87,12 @@
       "Bash(xargs -I{} du -k {})",
       "Bash(mv \"src/app/api/round/[id]/beauty/PlayfairDisplay.ttf\" public/fonts/)",
       "Bash(mv \"src/app/api/round/[id]/beauty/Outfit.ttf\" public/fonts/)",
-      "WebFetch(domain:www.pgabrand.com)"
+      "WebFetch(domain:www.pgabrand.com)",
+      "WebFetch(domain:www.pgachampionship.com)",
+      "WebFetch(domain:www.pgatour.com)",
+      "WebFetch(domain:www.cbsnews.com)",
+      "WebFetch(domain:www.golfchannel.com)",
+      "WebFetch(domain:golfcoursegurus.com)"
     ]
   }
 }

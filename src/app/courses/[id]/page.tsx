@@ -351,9 +351,9 @@ export default function CourseProfilePage() {
   const holeMapRef = useRef<Record<string, number>>({});
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scorecardOpen, setScorecardOpen] = useState(false);
-  const [holes, setHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null }[]>([]);
+  const [holes, setHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null; imageUrl: string | null }[]>([]);
   const [scorecardEditMode, setScorecardEditMode] = useState(false);
-  const [editedHoles, setEditedHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null }[]>([]);
+  const [editedHoles, setEditedHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null; imageUrl: string | null }[]>([]);
   const [savingScorecard, setSavingScorecard] = useState(false);
   const [scorecardView, setScorecardView] = useState<"digital" | "photo">("digital");
   const [uploadingScorecardPhoto, setUploadingScorecardPhoto] = useState(false);
@@ -542,12 +542,12 @@ const [editDescription, setEditDescription] = useState("");
       const { data: courseData } = await supabase.from("Course").select("*").eq("id", id).single();
       if (courseData) setCourse(courseData);
 
-      const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank, yardage").eq("courseId", id).order("holeNumber", { ascending: true });
+      const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank, yardage, imageUrl").eq("courseId", id).order("holeNumber", { ascending: true });
       const holeMap: Record<string, number> = {};
       holesData?.forEach((h: any) => { holeMap[h.id] = h.holeNumber; });
       holeMapRef.current = holeMap;
       if (holesData) {
-        const mapped = holesData.map((h: any) => ({ id: h.id, holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null }));
+        const mapped = holesData.map((h: any) => ({ id: h.id, holeNumber: h.holeNumber, par: h.par || 4, handicapRank: h.handicapRank || h.holeNumber, yardage: h.yardage || null, imageUrl: h.imageUrl || null }));
         setHoles(mapped);
         setEditedHoles(mapped);
 
@@ -1217,14 +1217,19 @@ const [editDescription, setEditDescription] = useState("");
                       const clipCount = clips?.length || 0;
                       const holeData = holes.find(h => h.holeNumber === holeNum);
                       const topClip = clips?.[0];
+                      const hasBg = hasClips || !!holeData?.imageUrl;
                       return (
                         <div
                           key={holeNum}
                           onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); if (!localStorage.getItem("ti-feed-hint")) { setShowFeedHint(true); setTimeout(() => { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); }, 2800); } } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
-                          style={{ aspectRatio: "3/4", borderRadius: 12, padding: 10, display: "flex", flexDirection: "column", cursor: "pointer", position: "relative", overflow: "hidden", background: hasClips ? "#0e1a13" : "#0a120d", border: `1px solid ${hasClips ? "rgba(77,168,98,0.2)" : "rgba(255,255,255,0.04)"}` }}
+                          style={{ aspectRatio: "3/4", borderRadius: 12, padding: 10, display: "flex", flexDirection: "column", cursor: "pointer", position: "relative", overflow: "hidden", background: hasBg ? "#0e1a13" : "#0a120d", border: `1px solid ${hasClips ? "rgba(77,168,98,0.2)" : hasBg ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)"}` }}
                         >
-                          {/* Background thumbnail for populated tiles */}
-                          {hasClips && topClip && (
+                          {/* Background thumbnail. Prefer the top user clip
+                              when one exists; otherwise fall back to the
+                              official hole photo seeded on the Course (so
+                              majors/featured courses look rich before clips
+                              start landing). */}
+                          {hasClips && topClip ? (
                             <>
                               {topClip.mediaType === "VIDEO" ? (
                                 <HlsVideo src={getVideoSrc(topClip.mediaUrl, topClip.cloudflareVideoId)} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
@@ -1233,21 +1238,26 @@ const [editDescription, setEditDescription] = useState("");
                               )}
                               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.45) 0%, rgba(7,16,10,0.25) 40%, rgba(7,16,10,0.5) 100%)" }} />
                             </>
-                          )}
+                          ) : holeData?.imageUrl ? (
+                            <>
+                              <img src={holeData.imageUrl} alt={`Hole ${holeNum}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.55) 0%, rgba(7,16,10,0.35) 40%, rgba(7,16,10,0.7) 100%)" }} />
+                            </>
+                          ) : null}
                           {/* Content */}
                           <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
                             {/* Top row: Par + Yardage */}
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasClips ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.35)" }}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasBg ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.35)", textShadow: hasBg && !hasClips ? "0 1px 3px rgba(0,0,0,0.65)" : undefined }}>
                                 {holeData?.par ? `Par ${holeData.par}` : ""}
                               </span>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasClips ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.22)" }}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasBg ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.22)", textShadow: hasBg && !hasClips ? "0 1px 3px rgba(0,0,0,0.65)" : undefined }}>
                                 {holeData?.yardage ? holeData.yardage : ""}
                               </span>
                             </div>
                             {/* Center: hole number */}
                             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: holeNum <= 9 ? 44 : 40, fontWeight: 400, color: hasClips ? "#ffffff" : "rgba(255,255,255,0.3)", letterSpacing: "-1px", lineHeight: 1 }}>{holeNum}</span>
+                              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: holeNum <= 9 ? 44 : 40, fontWeight: 400, color: hasBg ? "#ffffff" : "rgba(255,255,255,0.3)", letterSpacing: "-1px", lineHeight: 1, textShadow: hasBg && !hasClips ? "0 2px 8px rgba(0,0,0,0.6)" : undefined }}>{holeNum}</span>
                             </div>
                             {/* Bottom: clip indicator */}
                             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
