@@ -268,8 +268,8 @@ export default function TeeUpPage() {
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         {([
-          { key: "rounds" as const, label: "Future Rounds" },
-          { key: "trips" as const, label: "Future Trips" },
+          { key: "rounds" as const, label: "Upcoming Rounds" },
+          { key: "trips" as const, label: "Upcoming Trips" },
           { key: "archive" as const, label: "Archive" },
         ]).map(t => {
           const active = tab === t.key;
@@ -302,14 +302,14 @@ export default function TeeUpPage() {
         <div style={{ padding: "16px 20px" }}>
           {tab === "rounds" && (
             futureRounds.length === 0
-              ? <EmptyState title="No future rounds scheduled" subtitle="Plan a single-day round, add friends, attach a game." ctaLabel="Schedule a round" onCta={() => setQuickOpen(true)} />
+              ? <EmptyState title="No upcoming rounds" subtitle="Plan a single-day round, add friends, attach a game." ctaLabel="Schedule a round" onCta={() => setQuickOpen(true)} />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {futureRounds.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
                 </div>
           )}
           {tab === "trips" && (
             futureTrips.length === 0
-              ? <EmptyState title="No trips planned" subtitle="Plan a multi-day buddy trip with multiple courses." ctaLabel="Plan a trip" onCta={() => router.push("/trips")} />
+              ? <EmptyState title="No upcoming trips" subtitle="Plan a multi-day buddy trip with multiple courses." ctaLabel="Plan a trip" onCta={() => router.push("/trips")} />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {futureTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
                 </div>
