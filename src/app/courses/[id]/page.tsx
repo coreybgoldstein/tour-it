@@ -1228,7 +1228,18 @@ const [editDescription, setEditDescription] = useState("");
                       return (
                         <div
                           key={holeNum}
-                          onClick={() => { if (hasClips) { setFeedStartHole(holeNum); setFeedOpen(true); if (!localStorage.getItem("ti-feed-hint")) { setShowFeedHint(true); setTimeout(() => { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); }, 2800); } } else { router.push(`/upload?courseId=${id}&holeNumber=${holeNum}`); } }}
+                          onClick={() => {
+                            if (hasClips) {
+                              setFeedStartHole(holeNum);
+                              setFeedOpen(true);
+                              if (!localStorage.getItem("ti-feed-hint")) { setShowFeedHint(true); setTimeout(() => { setShowFeedHint(false); localStorage.setItem("ti-feed-hint", "1"); }, 2800); }
+                            } else {
+                              // No clips yet → land on the hole detail page so the
+                              // seeded photo + description show, then user can choose
+                              // to upload from there. Don't blast straight to upload.
+                              router.push(`/courses/${id}/holes/${holeNum}`);
+                            }
+                          }}
                           style={{ aspectRatio: "3/4", borderRadius: 12, padding: 10, display: "flex", flexDirection: "column", cursor: "pointer", position: "relative", overflow: "hidden", background: hasBg ? "#0e1a13" : "#0a120d", border: `1px solid ${hasClips ? "rgba(77,168,98,0.2)" : hasBg ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.04)"}` }}
                         >
                           {/* Background thumbnail. Prefer the top user clip
@@ -1266,17 +1277,14 @@ const [editDescription, setEditDescription] = useState("");
                             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <span style={{ fontFamily: "'Playfair Display', serif", fontSize: holeNum <= 9 ? 44 : 40, fontWeight: 400, color: hasBg ? "#ffffff" : "rgba(255,255,255,0.3)", letterSpacing: "-1px", lineHeight: 1, textShadow: hasBg && !hasClips ? "0 2px 8px rgba(0,0,0,0.6)" : undefined }}>{holeNum}</span>
                             </div>
-                            {/* Bottom: clip indicator */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                              {hasClips ? (
-                                <>
-                                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
-                                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
-                                </>
-                              ) : (
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)" }}>No clips yet</span>
-                              )}
-                            </div>
+                            {/* Bottom: clip indicator — only when there ARE clips.
+                                Empty tiles stay clean (no 'No clips yet' label). */}
+                            {hasClips && (
+                              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
