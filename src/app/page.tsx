@@ -1148,10 +1148,29 @@ export default function Home() {
         </div>
       )}
 
-      <div ref={feedRef} className="feed" onScroll={handleScroll} style={{ paddingLeft: isDesktop ? 72 : 0 }}>
+      <div
+        ref={feedRef}
+        className="feed"
+        onScroll={handleScroll}
+        style={{
+          paddingLeft: isDesktop ? 72 : 0,
+          // Logged-out users don't get the immersive snap behavior — discovery
+          // grows past 100svh for them and snap-locking the scroll would fight
+          // the natural scroll. Logged-in users keep the TikTok-style snap.
+          ...(user === null ? { scrollSnapType: "none" } : {}),
+        }}
+      >
 
-        {/* ── Discovery section ── */}
-        <div className="feed-item" style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
+        {/* ── Discovery section ──
+            Logged-in users get a fixed 100svh box (so the scroll-snap feed
+            beneath snaps cleanly). Logged-out users have extra height from the
+            Join nudge and can't interact with the immersive clip feed anyway,
+            so we let this section grow and scroll like a normal page — no
+            overlap, nothing clipped, no awkward TOUR THE FEED button. */}
+        <div className="feed-item" style={user === null
+          ? { minHeight: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "visible", position: "relative" }
+          : { height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }
+        }>
           {/* Green header bar */}
           <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", borderBottom: "1px solid rgba(77,168,98,0.35)", flexShrink: 0 }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
@@ -1286,16 +1305,12 @@ export default function Home() {
             </div>
           )}
 
-          {/* Guest sign-up prompt */}
-          {user === null && (
-            <div style={{ display: "flex", gap: 8, padding: "0 20px 20px", justifyContent: "center" }}>
-              <a href="/signup" style={{ flex: 1, maxWidth: 160, textAlign: "center", background: "#2d7a42", borderRadius: 12, padding: "12px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", textDecoration: "none" }}>Create account</a>
-              <a href="/login" style={{ flex: 1, maxWidth: 160, textAlign: "center", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: "12px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>Sign in</a>
-            </div>
-          )}
-
-          {/* Bridge to feed */}
-          {showScrollHint && (
+          {/* Bridge to feed — only shown to signed-in users. The discovery
+              section is already cramped for logged-out viewers (extra Join
+              nudge at top), and the immersive clip feed below requires login
+              for liking/saving/commenting anyway. The scroll-down hint
+              previously overlapped the courses-near-me row on smaller phones. */}
+          {showScrollHint && user !== null && (
             <button
               onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
               style={{ position: "absolute", bottom: 0, left: 0, right: 0, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", paddingBottom: 92, paddingTop: 14, background: "linear-gradient(to top, rgba(7,16,10,0.95) 0%, transparent 100%)", border: "none", cursor: "pointer", gap: 8, zIndex: 5 }}
