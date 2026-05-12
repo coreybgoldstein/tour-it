@@ -1,46 +1,27 @@
 import { NextRequest } from "next/server";
-import sharp from "sharp";
-import { readFileSync } from "fs";
+import { GlobalFonts, createCanvas, loadImage, type SKRSContext2D } from "@napi-rs/canvas";
 import { join } from "path";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 1080×1920 share card for an upcoming round. Hand-rolled SVG composed with
-// Sharp on the Node runtime — no next/og, no Satori, no edge-bundle-size
-// problem. The SVG holds layout + text; the cover photo and the Tour It logo
-// are composited in by Sharp as separate layers.
+// 1080×1920 share card for an upcoming round. Uses @napi-rs/canvas (skia-based)
+// so we get a real canvas API with registerable TTF fonts. Sharp+SVG didn't
+// work — librsvg can't resolve @font-face from data URLs, text rendered as
+// tofu boxes.
 
 const W = 1080;
 const H = 1920;
 
-// ---------- Module-scope asset loading (cold-start cost only) ----------
+// ---------- Module-scope font registration ----------
 
 const FONTS_DIR = join(process.cwd(), "public", "fonts");
-const PUBLIC_DIR = join(process.cwd(), "public");
-
-const playfair = readFileSync(join(FONTS_DIR, "PlayfairDisplay.ttf"));
-const outfit = readFileSync(join(FONTS_DIR, "Outfit.ttf"));
-const logoPng = readFileSync(join(PUBLIC_DIR, "tour-it-logo-full.png"));
-
-const playfairB64 = playfair.toString("base64");
-const outfitB64 = outfit.toString("base64");
+const LOGO_PATH = join(process.cwd(), "public", "tour-it-logo-full.png");
+GlobalFonts.registerFromPath(join(FONTS_DIR, "PlayfairDisplay.ttf"), "Playfair");
+GlobalFonts.registerFromPath(join(FONTS_DIR, "Outfit.ttf"), "Outfit");
 
 // ---------- Helpers ----------
-
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function truncate(s: string, max: number): string {
-  return s.length > max ? s.slice(0, max - 1) + "…" : s;
-}
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -59,7 +40,36 @@ function fmtTime12(t: string | null | undefined): string | null {
   return `${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
 }
 
-async function fetchImageAsBuffer(url: string): Promise<Buffer | null> {
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
+}
+
+function roundedRect(ctx: SKRSContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// Letter-spaced text — canvas doesn't natively support letter-spacing on fillText
+function fillTextSpaced(ctx: SKRSContext2D, text: string, x: number, y: number, spacing: number, align: "left" | "center" | "right" = "left") {
+  const widths = [...text].map(ch => ctx.measureText(ch).width);
+  const totalWidth = widths.reduce((a, b) => a + b, 0) + spacing * (text.length - 1);
+  let cursor = align === "center" ? x - totalWidth / 2 : align === "right" ? x - totalWidth : x;
+  for (let i = 0; i < text.length; i++) {
+    ctx.fillText(text[i], cursor, y);
+    cursor += widths[i] + spacing;
+  }
+}
+
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return null;
@@ -69,134 +79,10 @@ async function fetchImageAsBuffer(url: string): Promise<Buffer | null> {
   }
 }
 
-// ---------- Types ----------
-
-interface PlayerCard {
-  displayName: string;
-  netStrokes: number;
-  strokeHoles: number[];
-}
-
-interface BeautyShotData {
-  courseName: string;
-  courseLocation: string;
-  dateLine: string;
-  teeTimeLine: string;
-  gameFormat: string | null;
-  players: PlayerCard[];
-}
-
-// ---------- SVG template ----------
-
-function buildSvg(d: BeautyShotData): string {
-  const courseNameSize = d.courseName.length > 28 ? 48 : d.courseName.length > 20 ? 56 : 64;
-
-  // Player cards stacked, up to 4, each 120px tall + 12px gap, starting at y=1290.
-  const cardStartY = 1290;
-  const cardHeight = 120;
-  const cardGap = 12;
-  const playerCardsSvg = d.players
-    .slice(0, 4)
-    .map((p, i) => {
-      const y = cardStartY + i * (cardHeight + cardGap);
-      const badges = p.strokeHoles
-        .slice(0, 6)
-        .map((hole, j) => {
-          const bx = 700 + j * 50;
-          const by = y + 70;
-          return `
-            <rect x="${bx}" y="${by}" width="42" height="32" rx="6" fill="#4da862" opacity="0.9"/>
-            <text x="${bx + 21}" y="${by + 22}" font-family="Outfit" font-weight="700" font-size="18" fill="#07100a" text-anchor="middle">${hole}</text>
-          `;
-        })
-        .join("");
-      return `
-        <g>
-          <rect x="60" y="${y}" width="960" height="${cardHeight}" rx="20" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-          <text x="100" y="${y + 50}" font-family="Outfit" font-weight="700" font-size="32" fill="#ffffff">${escapeXml(truncate(p.displayName, 22))}</text>
-          <text x="100" y="${y + 88}" font-family="Outfit" font-weight="500" font-size="22" fill="#4da862">${p.netStrokes} stroke${p.netStrokes === 1 ? "" : "s"}</text>
-          ${badges}
-        </g>
-      `;
-    })
-    .join("");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Playfair';
-        font-weight: 900;
-        src: url(data:font/ttf;base64,${playfairB64}) format('truetype');
-      }
-      @font-face {
-        font-family: 'Outfit';
-        font-weight: 500;
-        src: url(data:font/ttf;base64,${outfitB64}) format('truetype');
-      }
-      @font-face {
-        font-family: 'Outfit';
-        font-weight: 700;
-        src: url(data:font/ttf;base64,${outfitB64}) format('truetype');
-      }
-    </style>
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1c4425"/>
-      <stop offset="50%" stop-color="#0a1d10"/>
-      <stop offset="100%" stop-color="#07100a"/>
-    </linearGradient>
-    <linearGradient id="coverScrim" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
-      <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.85"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Background gradient -->
-  <rect width="${W}" height="${H}" fill="url(#bgGrad)"/>
-
-  <!-- Eyebrow above logo -->
-  <text x="${W / 2}" y="245" font-family="Outfit" font-weight="700" font-size="26" fill="rgba(255,255,255,0.55)" text-anchor="middle" letter-spacing="6">UPCOMING ROUND</text>
-
-  <!-- Cover-card frame: Sharp composites the photo at (60, 280) underneath; this is the scrim + text overlay -->
-  <rect x="60" y="280" width="960" height="620" rx="36" fill="url(#coverScrim)"/>
-  <rect x="60" y="280" width="960" height="620" rx="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
-  <text x="100" y="830" font-family="Playfair" font-weight="900" font-size="${courseNameSize}" fill="#ffffff">${escapeXml(truncate(d.courseName, 28))}</text>
-  <text x="100" y="875" font-family="Outfit" font-weight="500" font-size="28" fill="rgba(255,255,255,0.85)">${escapeXml(d.courseLocation)}</text>
-
-  <!-- Date -->
-  <text x="${W / 2}" y="985" font-family="Playfair" font-weight="900" font-size="56" fill="#ffffff" text-anchor="middle">${escapeXml(d.dateLine)}</text>
-
-  <!-- Tee time -->
-  ${d.teeTimeLine ? `<text x="${W / 2}" y="1045" font-family="Outfit" font-weight="700" font-size="34" fill="#4da862" text-anchor="middle">${escapeXml(d.teeTimeLine)}</text>` : ""}
-
-  <!-- Game block divider + label -->
-  <line x1="60" y1="1130" x2="${W - 60}" y2="1130" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-  ${d.gameFormat ? `<text x="${W / 2}" y="1200" font-family="Outfit" font-weight="700" font-size="26" fill="rgba(255,255,255,0.55)" text-anchor="middle" letter-spacing="5">${escapeXml(d.gameFormat.toUpperCase())}</text>` : ""}
-
-  ${playerCardsSvg}
-
-  <!-- Footer -->
-  <line x1="60" y1="1820" x2="${W - 60}" y2="1820" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-  <text x="${W / 2}" y="1870" font-family="Outfit" font-weight="700" font-size="22" fill="rgba(255,255,255,0.55)" text-anchor="middle" letter-spacing="4">SCOUT BEFORE YOU PLAY · touritgolf.com</text>
-</svg>`;
-}
-
 // ---------- Route handler ----------
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const debug = new URL(req.url).searchParams.has("debug");
-  if (debug) {
-    return Response.json({
-      playfairBytes: playfair.length,
-      outfitBytes: outfit.length,
-      logoBytes: logoPng.length,
-      cwd: process.cwd(),
-      tip: "non-zero byte counts mean the files were traced into the function bundle",
-    });
-  }
   const sb = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -229,72 +115,196 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   type Player = { displayName: string; netStrokes?: number; courseHandicap?: number; strokeHoles?: number[] };
   const rawPlayers: Player[] = game && Array.isArray(game.players) ? (game.players as unknown as Player[]) : [];
-  const players: PlayerCard[] = rawPlayers.slice(0, 4).map(p => ({
+  const players = rawPlayers.slice(0, 4).map(p => ({
     displayName: p.displayName ?? "Player",
     netStrokes: p.netStrokes ?? p.courseHandicap ?? 0,
     strokeHoles: Array.isArray(p.strokeHoles) ? p.strokeHoles : [],
   }));
 
-  const data: BeautyShotData = {
-    courseName: course?.name ?? "Course",
-    courseLocation: [course?.city, course?.state].filter(Boolean).join(", "),
-    dateLine: fmtDate(tc.playDate || trip.startDate),
-    teeTimeLine: fmtTime12(tc.teeTime) ? `Tee off at ${fmtTime12(tc.teeTime)}` : "",
-    gameFormat: formatLabel,
-    players,
-  };
-
-  const svg = buildSvg(data);
-  const svgBuffer = Buffer.from(svg);
-
-  // ---- Layers ----
-  const layers: sharp.OverlayOptions[] = [];
-
-  // Cover photo: 960×620 rounded card at (60, 280). Mask to a rounded rect.
+  const courseName = course?.name ?? "Course";
+  const courseLocation = [course?.city, course?.state].filter(Boolean).join(", ");
+  const dateLine = fmtDate(tc.playDate || trip.startDate);
+  const teeTime = fmtTime12(tc.teeTime);
   const coverUrl = trip.imageUrl || course?.coverImageUrl || null;
+
+  // -------------------- DRAW --------------------
+  const canvas = createCanvas(W, H);
+  const ctx = canvas.getContext("2d");
+
+  // Background gradient (Tour It brand green → near-black)
+  {
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, "#1c4425");
+    grad.addColorStop(0.55, "#0a1d10");
+    grad.addColorStop(1, "#07100a");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // --- Tour It logo (top, 130px tall, centered) ---
+  try {
+    const logoImg = await loadImage(LOGO_PATH);
+    const targetH = 130;
+    const targetW = (logoImg.width / logoImg.height) * targetH;
+    ctx.drawImage(logoImg, (W - targetW) / 2, 80, targetW, targetH);
+  } catch {
+    // Logo not found — leave blank, eyebrow still anchors the top
+  }
+
+  // --- Eyebrow "UPCOMING ROUND" below the logo ---
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.font = "700 26px Outfit";
+  ctx.textBaseline = "alphabetic";
+  fillTextSpaced(ctx, "UPCOMING ROUND", W / 2, 250, 6, "center");
+
+  // --- Cover photo card at (60, 280) 960×620, rounded 36px ---
+  const cardX = 60;
+  const cardY = 280;
+  const cardW = 960;
+  const cardH = 620;
+  const cardR = 36;
+
+  ctx.save();
+  roundedRect(ctx, cardX, cardY, cardW, cardH, cardR);
+  ctx.clip();
+
+  // Cover photo (cover-fit into card)
+  let coverDrawn = false;
   if (coverUrl) {
-    const coverBuf = await fetchImageAsBuffer(coverUrl);
-    if (coverBuf) {
+    const buf = await fetchImageBuffer(coverUrl);
+    if (buf) {
       try {
-        const coverResized = await sharp(coverBuf)
-          .resize(960, 620, { fit: "cover", position: "center" })
-          .composite([
-            {
-              // Rounded-rect mask — only the rectangle interior is kept
-              input: Buffer.from(
-                `<svg width="960" height="620"><rect width="960" height="620" rx="36" ry="36" fill="#fff"/></svg>`
-              ),
-              blend: "dest-in",
-            },
-          ])
-          .png()
-          .toBuffer();
-        layers.push({ input: coverResized, top: 280, left: 60 });
+        const img = await loadImage(buf);
+        const scale = Math.max(cardW / img.width, cardH / img.height);
+        const dW = img.width * scale;
+        const dH = img.height * scale;
+        const dx = cardX + (cardW - dW) / 2;
+        const dy = cardY + (cardH - dH) / 2;
+        ctx.drawImage(img, dx, dy, dW, dH);
+        coverDrawn = true;
       } catch {
-        // Bad image — fall back to the SVG's scrim alone
+        // bad image — fall through to fallback fill
       }
     }
   }
-
-  // Logo: 130px tall, top-centered around y=80
-  try {
-    const logoResized = await sharp(logoPng).resize({ height: 130 }).png().toBuffer();
-    const meta = await sharp(logoResized).metadata();
-    const logoLeft = Math.round((W - (meta.width ?? 0)) / 2);
-    layers.push({ input: logoResized, top: 80, left: logoLeft });
-  } catch {
-    // No logo — keep going; eyebrow + cover still anchor the top
+  if (!coverDrawn) {
+    const g = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+    g.addColorStop(0, "#2d7a42");
+    g.addColorStop(1, "#1c4425");
+    ctx.fillStyle = g;
+    ctx.fillRect(cardX, cardY, cardW, cardH);
   }
 
-  // SVG goes on top of everything
-  layers.push({ input: svgBuffer, top: 0, left: 0 });
+  // Bottom-fade scrim for legibility of overlaid text
+  const scrim = ctx.createLinearGradient(0, cardY, 0, cardY + cardH);
+  scrim.addColorStop(0, "rgba(0,0,0,0)");
+  scrim.addColorStop(0.55, "rgba(0,0,0,0)");
+  scrim.addColorStop(1, "rgba(0,0,0,0.85)");
+  ctx.fillStyle = scrim;
+  ctx.fillRect(cardX, cardY, cardW, cardH);
 
-  const png = await sharp({
-    create: { width: W, height: H, channels: 4, background: { r: 7, g: 16, b: 10, alpha: 1 } },
-  })
-    .composite(layers)
-    .png({ quality: 90, compressionLevel: 8 })
-    .toBuffer();
+  // Course name + location overlay
+  const courseNameSize = courseName.length > 28 ? 48 : courseName.length > 20 ? 56 : 64;
+  ctx.fillStyle = "#fff";
+  ctx.font = `900 ${courseNameSize}px Playfair`;
+  ctx.fillText(truncate(courseName, 28), cardX + 40, cardY + cardH - 100);
+
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.font = "500 28px Outfit";
+  ctx.fillText(courseLocation, cardX + 40, cardY + cardH - 50);
+
+  ctx.restore();
+
+  // Hairline border on the card
+  roundedRect(ctx, cardX, cardY, cardW, cardH, cardR);
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // --- Date ---
+  ctx.fillStyle = "#fff";
+  ctx.font = "900 56px Playfair";
+  ctx.textAlign = "center";
+  ctx.fillText(dateLine, W / 2, 985);
+  ctx.textAlign = "left";
+
+  // --- Tee time ---
+  if (teeTime) {
+    ctx.fillStyle = "#4da862";
+    ctx.font = "700 34px Outfit";
+    ctx.textAlign = "center";
+    ctx.fillText(`Tee off at ${teeTime}`, W / 2, 1045);
+    ctx.textAlign = "left";
+  }
+
+  // --- Game block divider + label ---
+  ctx.strokeStyle = "rgba(255,255,255,0.1)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(60, 1130);
+  ctx.lineTo(W - 60, 1130);
+  ctx.stroke();
+
+  if (formatLabel) {
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.font = "700 26px Outfit";
+    fillTextSpaced(ctx, formatLabel.toUpperCase(), W / 2, 1205, 5, "center");
+  }
+
+  // --- Player cards (up to 4) ---
+  const cardStartY = 1260;
+  const playerCardH = 120;
+  const playerCardGap = 12;
+  players.forEach((p, i) => {
+    const y = cardStartY + i * (playerCardH + playerCardGap);
+    // card bg
+    roundedRect(ctx, 60, y, W - 120, playerCardH, 20);
+    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // name
+    ctx.fillStyle = "#fff";
+    ctx.font = "700 32px Outfit";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(truncate(p.displayName, 22), 100, y + 50);
+
+    // strokes count
+    ctx.fillStyle = "#4da862";
+    ctx.font = "500 22px Outfit";
+    ctx.fillText(`${p.netStrokes} stroke${p.netStrokes === 1 ? "" : "s"}`, 100, y + 88);
+
+    // stroke-hole badges (up to 6)
+    const badges = p.strokeHoles.slice(0, 6);
+    badges.forEach((hole, j) => {
+      const bx = 700 + j * 50;
+      const by = y + 70;
+      roundedRect(ctx, bx, by, 42, 32, 6);
+      ctx.fillStyle = "rgba(77,168,98,0.9)";
+      ctx.fill();
+      ctx.fillStyle = "#07100a";
+      ctx.font = "700 18px Outfit";
+      ctx.textAlign = "center";
+      ctx.fillText(String(hole), bx + 21, by + 22);
+      ctx.textAlign = "left";
+    });
+  });
+
+  // --- Footer ---
+  ctx.strokeStyle = "rgba(255,255,255,0.1)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(60, 1820);
+  ctx.lineTo(W - 60, 1820);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  ctx.font = "700 22px Outfit";
+  fillTextSpaced(ctx, "SCOUT BEFORE YOU PLAY · TOURITGOLF.COM", W / 2, 1870, 4, "center");
+
+  const png = await canvas.encode("png");
 
   return new Response(new Uint8Array(png), {
     status: 200,
