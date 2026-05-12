@@ -49,7 +49,9 @@ export function IntelPanel({
   const [followLoading, setFollowLoading] = useState(false);
 
   const isOwnClip = !!(currentUserId && uploaderId && currentUserId === uploaderId);
-  const showFollow = !isOwnClip && !!uploaderId && !!currentUserId;
+  // @tourit is a system account — official intel poster, not a real follow target
+  const isSystemAccount = uploaderUsername === "tourit";
+  const showFollow = !isOwnClip && !isSystemAccount && !!uploaderId && !!currentUserId;
 
   useEffect(() => {
     if (!open || !showFollow) return;
