@@ -1464,7 +1464,15 @@ export default function TripPage() {
                   const niceDate = roundCourse && (tripCourses[0]?.playDate || trip.startDate)
                     ? new Date((tripCourses[0]?.playDate || trip.startDate) + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
                     : "";
-                  const text = `Round at ${roundCourse?.name ?? trip.name}${niceDate ? ` · ${niceDate}` : ""} — sent from Tour It`;
+                  const teeTimeRaw = tripCourses[0]?.teeTime;
+                  const niceTime = teeTimeRaw ? (() => {
+                    const [hh, mm] = teeTimeRaw.split(":").map(Number);
+                    if (Number.isNaN(hh)) return "";
+                    const period = hh >= 12 ? "PM" : "AM";
+                    const h12 = hh % 12 || 12;
+                    return ` at ${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
+                  })() : "";
+                  const text = `Round at ${roundCourse?.name ?? trip.name}${niceDate ? ` · ${niceDate}` : ""}${niceTime} — sent from Tour It`;
                   const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
                   if (nav.canShare?.({ files: [file] })) {
                     await navigator.share({ files: [file], title: "Upcoming Round", text });
