@@ -19,6 +19,7 @@ import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { sendPushToUser } from "@/lib/sendPush";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
+import { activeFeaturedTournament } from "@/lib/pgaChampionship";
 type Course = {
   id: string;
   name: string;
@@ -878,6 +879,13 @@ const [editDescription, setEditDescription] = useState("");
   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
   const hero = getCourseHero(course.name);
 
+  // If this course is hosting a major right now (e.g. Aronimink during PGA
+  // Championship week), light up the hero with the same gold treatment used
+  // on the home-page card.
+  const tournament = activeFeaturedTournament();
+  const isHostingMajor = tournament?.courseId === course.id;
+  const PGA_GOLD = "#d4a017";
+
   const mostClippedHole = (() => {
     const entries = Object.entries(holeClipsMap).filter(([, c]) => c.length > 0);
     if (entries.length === 0) return null;
@@ -937,6 +945,28 @@ const [editDescription, setEditDescription] = useState("");
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Add cover photo</span>
           </button>
+        )}
+
+        {/* PGA Championship crest — top-right of hero during tournament week.
+            Mirrors the home-card treatment so the major announcement is
+            recognizable across surfaces. */}
+        {isHostingMajor && tournament && (
+          <div style={{ position: "absolute", top: 52, right: 16, zIndex: 10, width: 58, height: 58, borderRadius: 12, background: "#fff", border: `1.5px solid ${PGA_GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,0.45), 0 0 16px rgba(212,160,23,0.25)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={tournament.logoSrc}
+              alt={tournament.label}
+              style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
+              onError={(e) => {
+                const el = e.currentTarget as HTMLImageElement;
+                const parent = el.parentElement;
+                if (parent && !parent.dataset.fallback) {
+                  parent.dataset.fallback = "1";
+                  parent.innerHTML = `<div style="font-family:'Outfit',sans-serif;font-weight:900;color:${PGA_GOLD};line-height:1;text-align:center"><div style="font-size:14px">PGA</div><div style="margin-top:3px;font-size:9px">2026</div></div>`;
+                }
+              }}
+            />
+          </div>
         )}
 
         {/* Back pill — shown when arrived from /map or a trip-idea page */}
@@ -1003,6 +1033,13 @@ const [editDescription, setEditDescription] = useState("");
               </button>
             )}
           </div>
+          {isHostingMajor && tournament && (
+            <div style={{ display: "inline-flex", alignItems: "center", background: PGA_GOLD, borderRadius: 99, padding: "3px 10px", marginBottom: 8 }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, color: "#0a1d10", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+                {tournament.pillText}
+              </span>
+            </div>
+          )}
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: 6, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
             {course.name}
           </div>
