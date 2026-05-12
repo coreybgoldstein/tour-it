@@ -17,6 +17,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { readFileSync } from "fs";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -50,9 +51,10 @@ async function rateLimitedFetch(url, attempt = 1) {
 
 function parseArgs() {
   const a = process.argv.slice(2);
-  const out = { ids: [], missingItinerary: false, allItinerary: false, dryRun: false, topN: 0, force: false };
+  const out = { ids: [], idsFile: null, missingItinerary: false, allItinerary: false, dryRun: false, topN: 0, force: false };
   for (let i = 0; i < a.length; i++) {
     if (a[i] === "--ids" && a[i + 1]) out.ids = a[i + 1].split(",").map((s) => s.trim());
+    if (a[i] === "--ids-file" && a[i + 1]) out.idsFile = a[i + 1];
     if (a[i] === "--missing-itinerary") out.missingItinerary = true;
     if (a[i] === "--all-itinerary") out.allItinerary = true;
     if (a[i] === "--top" && a[i + 1]) out.topN = parseInt(a[i + 1]);
@@ -183,6 +185,10 @@ async function applyScorecard(courseId, holes /* from API */, force) {
 async function main() {
   const args = parseArgs();
   let ids = [...args.ids];
+  if (args.idsFile) {
+    const fromFile = readFileSync(args.idsFile, "utf8").split(/\s+/).filter(Boolean);
+    ids.push(...fromFile);
+  }
   if (args.missingItinerary || args.allItinerary) {
     const { data: stops } = await sb.from("TripItineraryStop").select("courseId");
     ids.push(...(stops ?? []).map((s) => s.courseId));
@@ -203,7 +209,7 @@ async function main() {
     ids.push(...(top ?? []).map((c) => c.id));
   }
   ids = [...new Set(ids)];
-  if (ids.length === 0) { console.log("Pass --ids, --missing-itinerary, or --top N"); process.exit(0); }
+  if (ids.length === 0) { console.log("Pass --ids, --ids-file, --missing-itinerary, or --top N"); process.exit(0); }
 
   // Chunk the .in() query — 500 UUIDs blow past the PostgREST URL length cap
   const courses = [];
