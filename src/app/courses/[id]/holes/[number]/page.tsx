@@ -605,8 +605,22 @@ export default function HolePage() {
   const courseAbbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
 
   if (!hasContent) {
+    const holeNumberNow = Number(number);
+    const totalHoles = holeList.length > 0 ? Math.max(...holeList.map(h => h.holeNumber)) : 18;
+    const goToHole = (n: number) => {
+      if (n >= 1 && n <= totalHoles) router.push(`/courses/${id}/holes/${n}`);
+    };
+    const emptyTouchEnd = (e: React.TouchEvent) => {
+      const dx = touchStartX.current - e.changedTouches[0].clientX;
+      const dy = touchStartY.current - e.changedTouches[0].clientY;
+      // Only react to horizontal swipes — sequential hole navigation (matches
+      // the regular swipe-between-holes UX on courses with clips).
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+        goToHole(dx > 0 ? holeNumberNow + 1 : holeNumberNow - 1);
+      }
+    };
     return (
-      <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff", display: "flex", flexDirection: "column" }}>
+      <main onTouchStart={handleTouchStart} onTouchEnd={emptyTouchEnd} style={{ minHeight: "100vh", background: "#07100a", color: "#fff", display: "flex", flexDirection: "column" }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap'); *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
 
         {/* Hero — seeded hole photo when available (e.g. Aronimink during PGA
@@ -1019,6 +1033,7 @@ export default function HolePage() {
           holeNumber={holeNum}
           holePar={!multiHoleKey ? par : undefined}
           holeYardage={hole?.yardage}
+          holeDescription={!multiHoleKey ? hole?.description : undefined}
           clubUsed={activeUpload.clubUsed}
           windCondition={activeUpload.windCondition}
           strategyNote={activeUpload.strategyNote}

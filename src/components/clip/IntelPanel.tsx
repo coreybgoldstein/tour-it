@@ -10,6 +10,7 @@ export function IntelPanel({
   holeNumber,
   holePar,
   holeYardage,
+  holeDescription,
   clubUsed,
   windCondition,
   conditions,
@@ -28,6 +29,7 @@ export function IntelPanel({
   holeNumber?: number | null;
   holePar?: number | null;
   holeYardage?: number | null;
+  holeDescription?: string | null;
   clubUsed?: string | null;
   windCondition?: string | null;
   conditions?: string | null;
@@ -140,6 +142,15 @@ export function IntelPanel({
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
+
+        {/* Course-level hole description (e.g. PGA Championship strategic
+            preview for Aronimink). Shows above any uploader-specific intel. */}
+        {holeDescription && (
+          <div style={{ background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 10, padding: "11px 13px", marginBottom: 14 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "1.4px", textTransform: "uppercase", color: "rgba(77,168,98,0.95)", marginBottom: 6 }}>About the hole</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)", lineHeight: 1.55 }}>{holeDescription}</div>
+          </div>
+        )}
 
         {/* Data cards */}
         {(clubUsed || windCondition || conditions || holeYardage != null) && (
