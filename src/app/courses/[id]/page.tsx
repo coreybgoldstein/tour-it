@@ -220,11 +220,12 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         courseName={course?.name ?? ""}
         courseLocation={[course?.city, course?.state].filter(Boolean).join(", ") || null}
         holeNumber={holeNumber}
+        holePar={holePar}
+        holeYardage={holeYardage}
         muted={muted}
         onMuteToggle={handleMuteToggle}
         onTapCourse={onClose}
         visible={true}
-        showParYardage={false}
       />
 
 
