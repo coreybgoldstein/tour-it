@@ -183,7 +183,12 @@ export default function TeeUpPage() {
       role: "owner",
       createdAt: now,
     });
-    await supabase.from("GolfTripCourse").insert({
+    // NOTE: GolfTripCourse has no updatedAt column in the schema. Sending one
+    // makes Postgres reject the insert with a "column does not exist" error,
+    // which silently fails (no error check) and leaves the trip with zero
+    // courses attached — which then misclassifies the round as a trip on the
+    // detail page.
+    const { error: tcErr } = await supabase.from("GolfTripCourse").insert({
       id: crypto.randomUUID(),
       tripId,
       courseId: quickCourse.id,
@@ -191,8 +196,14 @@ export default function TeeUpPage() {
       teeTime: quickTime || null,
       sortOrder: 0,
       createdAt: now,
-      updatedAt: now,
     });
+    if (tcErr) {
+      // Surface the failure so we never silently strand the user on a course-less trip again.
+      console.error("Quick Round: failed to attach course", tcErr);
+      alert(`Couldn't save the course on this round: ${tcErr.message}`);
+      setQuickSaving(false);
+      return;
+    }
 
     // Add invited friends as trip members + send each a notification
     if (invitedFriends.length > 0) {

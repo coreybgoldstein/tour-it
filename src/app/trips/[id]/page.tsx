@@ -1090,7 +1090,8 @@ export default function TripPage() {
       role: "owner",
       createdAt: now,
     });
-    await supabase.from("GolfTripCourse").insert({
+    // GolfTripCourse has no updatedAt column — don't send one or the insert silently fails
+    const { error: tcErr } = await supabase.from("GolfTripCourse").insert({
       id: crypto.randomUUID(),
       tripId: newTripId,
       courseId: roundCourse.id,
@@ -1098,8 +1099,12 @@ export default function TripPage() {
       teeTime: tripCourses[0]?.teeTime ?? null,
       sortOrder: 0,
       createdAt: now,
-      updatedAt: now,
     });
+    if (tcErr) {
+      console.error("Clone Round: failed to attach course", tcErr);
+      alert(`Couldn't clone the round: ${tcErr.message}`);
+      return;
+    }
     fetch("/api/points/award", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
