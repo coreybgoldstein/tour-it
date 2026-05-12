@@ -8,17 +8,15 @@
 
 export type FeaturedTournament = {
   courseId: string;
-  label: string;        // "PGA Championship"
-  yearLabel: string;    // "2026"
-  datesPill: string;    // "MAY 14–17"
+  label: string;        // long form, used in alt text etc — "PGA Championship"
+  pillText: string;     // single-line pill text on the card — keep it short
   logoSrc: string;      // /public path to the tournament logo
 };
 
 const PGA_2026: FeaturedTournament & { start: Date; end: Date } = {
   courseId: "bef620c6-48f3-456e-a1c4-7d096303bb34", // Aronimink Golf Club, Newtown Township PA
   label: "PGA Championship",
-  yearLabel: "2026",
-  datesPill: "MAY 14–17",
+  pillText: "PGA · MAY 14–17", // logo crest in the corner already says "PGA / ARONIMINK", so pill stays terse
   logoSrc: "/pga-aronimink-2026.png", // optional asset; card falls back to a text badge if missing
   start: new Date("2026-05-12T00:00:00-04:00"), // ramps up tournament week (Mon)
   end:   new Date("2026-05-17T23:59:59-04:00"), // through Sunday final round

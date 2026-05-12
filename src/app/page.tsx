@@ -217,9 +217,9 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
 
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 10px 12px" }}>
         {featured && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: GOLD, borderRadius: 99, padding: "2px 7px", marginBottom: 4 }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 800, color: "#0a1d10", letterSpacing: "0.06em" }}>
-              {featured.label.toUpperCase()} · {featured.datesPill}
+          <div style={{ display: "inline-flex", alignItems: "center", background: GOLD, borderRadius: 99, padding: "2px 7px", marginBottom: 4, maxWidth: "100%" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 800, color: "#0a1d10", letterSpacing: "0.04em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {featured.pillText}
             </span>
           </div>
         )}
