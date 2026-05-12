@@ -4,10 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 export const runtime = "edge";
 
 // 1080×1920 shareable beauty shot of an upcoming round. Vertical for IG Story /
-// iMessage / SMS native ratio. System fonts for now (the prior runtime font-
-// fetch from Google Fonts was failing on Vercel edge and silently returning a
-// 0-byte response — iMessage rendered that as an un-previewable PNG icon).
-// We'll re-add brand fonts once we bundle the .ttf files locally.
+// iMessage / SMS native ratio. Uses the same Playfair Display + Outfit fonts as
+// the site — bundled locally so edge runtime doesn't have to make external font
+// fetches (those were silently failing and emitting 0-byte responses).
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -50,6 +49,28 @@ function errorImage(message: string): ImageResponse {
   );
 }
 
+// Helper — keeps fontFamily inline syntax compact
+const FF_OUTFIT = "Outfit, sans-serif";
+const FF_PLAYFAIR = "'Playfair Display', serif";
+
+// Bundle font files into the edge function via Next.js relative imports + import.meta.url.
+// Both are variable fonts — Satori (the engine behind next/og) picks the closest weight.
+async function loadFonts() {
+  try {
+    const [playfair, outfit] = await Promise.all([
+      fetch(new URL("./PlayfairDisplay.ttf", import.meta.url)).then(r => r.arrayBuffer()),
+      fetch(new URL("./Outfit.ttf", import.meta.url)).then(r => r.arrayBuffer()),
+    ]);
+    return [
+      { name: "Playfair Display", data: playfair, style: "normal" as const, weight: 900 as const },
+      { name: "Outfit", data: outfit, style: "normal" as const, weight: 500 as const },
+      { name: "Outfit", data: outfit, style: "normal" as const, weight: 700 as const },
+    ];
+  } catch {
+    return [];
+  }
+}
+
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -60,11 +81,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const [tripRes, tcRes, memberRes, gameRes] = await Promise.all([
+    const [tripRes, tcRes, memberRes, gameRes, fonts] = await Promise.all([
       sb.from("GolfTrip").select("id, name, startDate, endDate, imageUrl").eq("id", id).maybeSingle(),
       sb.from("GolfTripCourse").select("courseId, playDate, teeTime").eq("tripId", id),
       sb.from("GolfTripMember").select("userId").eq("tripId", id),
       sb.from("TripGame").select("format, players").eq("tripId", id).order("createdAt", { ascending: false }).limit(1),
+      loadFonts(),
     ]);
     const trip = tripRes.data;
     const tcRows = tcRes.data;
@@ -99,7 +121,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     return new ImageResponse(
       (
-        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#07100a", color: "#fff" }}>
+        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#07100a", color: "#fff", fontFamily: FF_OUTFIT }}>
 
           {/* ════ HERO COVER (top 720px) ════ */}
           <div style={{ position: "relative", display: "flex", width: "100%", height: 720 }}>
@@ -123,7 +145,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                   </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", fontSize: 66, fontWeight: 900, lineHeight: 1.02, maxWidth: 820 }}>{courseName}</div>
+                  <div style={{ display: "flex", fontFamily: FF_PLAYFAIR, fontSize: 66, fontWeight: 900, lineHeight: 1.02, maxWidth: 820 }}>{courseName}</div>
                   {courseLocation && <div style={{ display: "flex", fontSize: 28, color: "rgba(255,255,255,0.65)", marginTop: 8 }}>{courseLocation}</div>}
                 </div>
               </div>
@@ -135,7 +157,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <div style={{ display: "flex", fontSize: 22, letterSpacing: 6, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", fontWeight: 700 }}>When</div>
-              <div style={{ display: "flex", fontSize: 76, fontWeight: 900, lineHeight: 1, marginTop: 8 }}>{date}</div>
+              <div style={{ display: "flex", fontFamily: FF_PLAYFAIR, fontSize: 76, fontWeight: 900, lineHeight: 1, marginTop: 8 }}>{date}</div>
               {teeTime && <div style={{ display: "flex", fontSize: 38, color: "#4da862", fontWeight: 700, marginTop: 16 }}>Tee off at {teeTime}</div>}
             </div>
 
@@ -215,7 +237,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
           </div>
         </div>
       ),
-      { width: W, height: H }
+      { width: W, height: H, fonts: fonts.length ? fonts : undefined }
     );
   } catch (err) {
     // Edge runtime swallows uncaught errors and returns 0 bytes — surface them
