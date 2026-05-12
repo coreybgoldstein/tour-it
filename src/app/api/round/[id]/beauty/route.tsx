@@ -3,10 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "edge";
 
-// 1080×1920 shareable beauty shot of an upcoming round. Vertical for IG Story /
-// iMessage / SMS native ratio. Uses the same Playfair Display + Outfit fonts as
-// the site — bundled locally so edge runtime doesn't have to make external font
-// fetches (those were silently failing and emitting 0-byte responses).
+// 1080×1920 shareable beauty shot of an upcoming round. Strava-inspired
+// composition: Tour It mark up top, cover photo as a rounded inset card,
+// course identity + date/time + game block stacked beneath on the Tour It
+// brand green. Bundled Playfair + Outfit fonts (variable .ttf next to this
+// file) so it renders consistently on Vercel edge.
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -37,24 +38,9 @@ type Player = {
 
 const W = 1080;
 const H = 1920;
-
-function errorImage(message: string): ImageResponse {
-  return new ImageResponse(
-    (
-      <div style={{ width: "100%", height: "100%", background: "#07100a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, padding: 80, textAlign: "center" }}>
-        {message}
-      </div>
-    ),
-    { width: W, height: H }
-  );
-}
-
-// Helper — keeps fontFamily inline syntax compact
 const FF_OUTFIT = "Outfit, sans-serif";
 const FF_PLAYFAIR = "'Playfair Display', serif";
 
-// Bundle font files into the edge function via Next.js relative imports + import.meta.url.
-// Both are variable fonts — Satori (the engine behind next/og) picks the closest weight.
 async function loadFonts() {
   try {
     const [playfair, outfit] = await Promise.all([
@@ -69,6 +55,17 @@ async function loadFonts() {
   } catch {
     return [];
   }
+}
+
+function errorImage(message: string): ImageResponse {
+  return new ImageResponse(
+    (
+      <div style={{ width: "100%", height: "100%", background: "#07100a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, padding: 80, textAlign: "center", fontFamily: FF_OUTFIT }}>
+        {message}
+      </div>
+    ),
+    { width: W, height: H }
+  );
 }
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -116,123 +113,144 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       ? (({ nassau: "Nassau", skins: "Skins", match: "Match Play", stroke: "Stroke Play" } as Record<string, string>)[game.format] ?? game.format.toUpperCase())
       : null;
     const players: Player[] = game && Array.isArray(game.players) ? (game.players as unknown as Player[]) : [];
-
     const golferAvatars = (users ?? []).slice(0, 8);
+
+    // Auto-shrink course-name font for long titles so it always fits one line
+    const courseNameSize = courseName.length > 32 ? 46 : courseName.length > 22 ? 54 : 62;
 
     return new ImageResponse(
       (
-        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", background: "#07100a", color: "#fff", fontFamily: FF_OUTFIT }}>
+        <div style={{
+          width: "100%", height: "100%",
+          display: "flex", flexDirection: "column",
+          // Tour It brand green gradient with a soft top vignette — matches the
+          // home page's safe-area-inset treatment but pushed deeper
+          background: "linear-gradient(180deg, #1c4425 0%, #0a1d10 55%, #07100a 100%)",
+          color: "#fff",
+          fontFamily: FF_OUTFIT,
+          padding: "70px 56px 56px",
+        }}>
 
-          {/* ════ HERO COVER (top 720px) ════ */}
-          <div style={{ position: "relative", display: "flex", width: "100%", height: 720 }}>
-            {cover ? (
-              <img src={cover} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #1c4425 0%, #07100a 100%)" }} />
-            )}
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.25) 0%, rgba(7,16,10,0.30) 40%, rgba(7,16,10,0.95) 100%)" }} />
-
-            <div style={{ position: "absolute", top: 44, right: 56, display: "flex" }}>
-              <img src={tourItLogo} alt="" style={{ height: 60, width: "auto" }} />
-            </div>
-
-            <div style={{ position: "absolute", left: 56, right: 56, bottom: 56, display: "flex", flexDirection: "column", gap: 14 }}>
-              <div style={{ display: "flex", fontSize: 22, letterSpacing: 6, color: "rgba(255,255,255,0.78)", textTransform: "uppercase", fontWeight: 700 }}>Upcoming Round</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
-                {logo && (
-                  <div style={{ width: 110, height: 110, borderRadius: 24, background: "#fff", display: "flex", overflow: "hidden", flexShrink: 0 }}>
-                    <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  </div>
-                )}
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", fontFamily: FF_PLAYFAIR, fontSize: 66, fontWeight: 900, lineHeight: 1.02, maxWidth: 820 }}>{courseName}</div>
-                  {courseLocation && <div style={{ display: "flex", fontSize: 28, color: "rgba(255,255,255,0.65)", marginTop: 8 }}>{courseLocation}</div>}
-                </div>
-              </div>
+          {/* ════ TOP: Big Tour It wordmark + tagline ════ */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            <img src={tourItLogo} alt="Tour It" style={{ height: 130, width: "auto" }} />
+            <div style={{ display: "flex", fontSize: 18, letterSpacing: 8, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", fontWeight: 700 }}>
+              Upcoming Round
             </div>
           </div>
 
-          {/* ════ BODY ════ */}
-          <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "48px 56px", gap: 40 }}>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <div style={{ display: "flex", fontSize: 22, letterSpacing: 6, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", fontWeight: 700 }}>When</div>
-              <div style={{ display: "flex", fontFamily: FF_PLAYFAIR, fontSize: 76, fontWeight: 900, lineHeight: 1, marginTop: 8 }}>{date}</div>
-              {teeTime && <div style={{ display: "flex", fontSize: 38, color: "#4da862", fontWeight: 700, marginTop: 16 }}>Tee off at {teeTime}</div>}
-            </div>
-
-            {players.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                <div style={{ display: "flex", fontSize: 22, letterSpacing: 6, color: "rgba(77,168,98,0.95)", textTransform: "uppercase", fontWeight: 700 }}>
-                  {formatLabel}
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                  {players.slice(0, 5).map((p, i) => {
-                    const strokes = p.netStrokes ?? p.courseHandicap ?? 0;
-                    const sh = Array.isArray(p.strokeHoles) ? p.strokeHoles : [];
-                    return (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 22 }}>
-                        <div style={{ width: 64, height: 64, borderRadius: 999, overflow: "hidden", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.18)" }}>
-                          {p.avatarUrl
-                            ? <img src={p.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            : <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: "#fff" }}>{(p.displayName || "?").slice(0, 1).toUpperCase()}</div>
-                          }
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                            <div style={{ display: "flex", fontSize: 32, fontWeight: 700, color: "#fff" }}>{p.displayName}</div>
-                            {strokes > 0 && (
-                              <div style={{ display: "flex", fontSize: 22, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>
-                                {strokes} {strokes === 1 ? "stroke" : "strokes"}
-                              </div>
-                            )}
-                          </div>
-                          {strokes === 0 ? (
-                            <div style={{ display: "flex", fontSize: 22, color: "rgba(255,255,255,0.55)", marginTop: 4 }}>Plays scratch</div>
-                          ) : sh.length > 0 ? (
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-                              {sh.map(h => (
-                                <div key={h} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: 8, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)" }}>
-                                  <span style={{ display: "flex", fontSize: 18, fontWeight: 700, color: "#4da862" }}>{h}</span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+          {/* ════ COVER CARD ════ */}
+          <div style={{
+            display: "flex", width: "100%", height: 620,
+            marginTop: 36,
+            borderRadius: 36,
+            overflow: "hidden",
+            position: "relative",
+            boxShadow: "0 30px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)",
+            background: "#0d1f12",
+          }}>
+            {cover ? (
+              <img src={cover} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              golferAvatars.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div style={{ display: "flex", fontSize: 22, letterSpacing: 6, color: "rgba(77,168,98,0.95)", textTransform: "uppercase", fontWeight: 700 }}>Golfers</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
-                    {golferAvatars.map(u => (
-                      <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(255,255,255,0.04)", borderRadius: 999, padding: "10px 22px 10px 10px", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        <div style={{ width: 56, height: 56, borderRadius: 999, overflow: "hidden", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid rgba(255,255,255,0.18)" }}>
-                          {u.avatarUrl
-                            ? <img src={u.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            : <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: "#fff" }}>{(u.displayName || u.username || "?").slice(0, 1).toUpperCase()}</div>
-                          }
-                        </div>
-                        <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: "#fff" }}>{u.displayName || u.username}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #2d7a42 0%, #1c4425 100%)" }} />
+            )}
+            {/* Bottom-fade scrim so the overlaid text reads */}
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 35%, rgba(7,16,10,0.72) 78%, rgba(7,16,10,0.95) 100%)" }} />
+
+            {/* Top-left logo chip on the cover */}
+            {logo && (
+              <div style={{ position: "absolute", top: 24, left: 24, display: "flex", width: 92, height: 92, borderRadius: 20, background: "#fff", overflow: "hidden", boxShadow: "0 8px 20px rgba(0,0,0,0.5)" }}>
+                <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
             )}
 
-            <div style={{ display: "flex", flex: 1 }} />
+            {/* Bottom — course identity */}
+            <div style={{ position: "absolute", left: 32, right: 32, bottom: 28, display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ display: "flex", fontFamily: FF_PLAYFAIR, fontSize: courseNameSize, fontWeight: 900, lineHeight: 1.04, color: "#fff" }}>{courseName}</div>
+              {courseLocation && (
+                <div style={{ display: "flex", fontSize: 24, color: "rgba(255,255,255,0.75)", fontWeight: 500, letterSpacing: 0.5 }}>{courseLocation}</div>
+              )}
+            </div>
+          </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 26 }}>
-              <img src={tourItLogo} alt="Tour It" style={{ height: 64, width: "auto" }} />
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-                <div style={{ display: "flex", fontSize: 18, color: "rgba(255,255,255,0.5)", letterSpacing: 4, textTransform: "uppercase", fontWeight: 700 }}>Scout Before You Play</div>
-                <div style={{ display: "flex", fontSize: 22, color: "rgba(255,255,255,0.85)", fontWeight: 700, marginTop: 4 }}>touritgolf.com</div>
+          {/* ════ DATE + TEE TIME ════ */}
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 36, gap: 6 }}>
+            <div style={{ display: "flex", fontFamily: FF_PLAYFAIR, fontSize: 56, fontWeight: 900, lineHeight: 1, color: "#fff" }}>{date}</div>
+            {teeTime && <div style={{ display: "flex", fontSize: 30, color: "#4da862", fontWeight: 700, marginTop: 8 }}>Tee off at {teeTime}</div>}
+          </div>
+
+          {/* ════ GAME or GOLFERS ════ */}
+          {players.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", marginTop: 32, gap: 14 }}>
+              <div style={{ display: "flex", fontSize: 18, letterSpacing: 6, color: "rgba(77,168,98,0.95)", textTransform: "uppercase", fontWeight: 700 }}>
+                {formatLabel}
               </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {players.slice(0, 4).map((p, i) => {
+                  const strokes = p.netStrokes ?? p.courseHandicap ?? 0;
+                  const sh = Array.isArray(p.strokeHoles) ? p.strokeHoles : [];
+                  return (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 18, background: "rgba(255,255,255,0.04)", borderRadius: 18, padding: "14px 18px", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ width: 56, height: 56, borderRadius: 999, overflow: "hidden", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "2px solid rgba(255,255,255,0.15)" }}>
+                        {p.avatarUrl
+                          ? <img src={p.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: "#fff" }}>{(p.displayName || "?").slice(0, 1).toUpperCase()}</div>
+                        }
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+                          <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: "#fff" }}>{p.displayName}</div>
+                          {strokes > 0 && (
+                            <div style={{ display: "flex", fontSize: 18, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>
+                              {strokes} {strokes === 1 ? "stroke" : "strokes"}
+                            </div>
+                          )}
+                        </div>
+                        {strokes === 0 ? (
+                          <div style={{ display: "flex", fontSize: 17, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>Plays scratch</div>
+                        ) : sh.length > 0 ? (
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 }}>
+                            {sh.slice(0, 12).map(h => (
+                              <div key={h} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 6, background: "rgba(77,168,98,0.22)", border: "1px solid rgba(77,168,98,0.5)" }}>
+                                <span style={{ display: "flex", fontSize: 15, fontWeight: 700, color: "#4da862" }}>{h}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            golferAvatars.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", marginTop: 32, gap: 14 }}>
+                <div style={{ display: "flex", fontSize: 18, letterSpacing: 6, color: "rgba(77,168,98,0.95)", textTransform: "uppercase", fontWeight: 700 }}>Golfers</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                  {golferAvatars.map(u => (
+                    <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.04)", borderRadius: 999, padding: "8px 22px 8px 8px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <div style={{ width: 48, height: 48, borderRadius: 999, overflow: "hidden", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid rgba(255,255,255,0.18)" }}>
+                        {u.avatarUrl
+                          ? <img src={u.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <div style={{ display: "flex", fontSize: 20, fontWeight: 700, color: "#fff" }}>{(u.displayName || u.username || "?").slice(0, 1).toUpperCase()}</div>
+                        }
+                      </div>
+                      <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: "#fff" }}>{u.displayName || u.username}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          )}
+
+          {/* Spacer pushes footer to the bottom */}
+          <div style={{ display: "flex", flex: 1 }} />
+
+          {/* ════ FOOTER ════ */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ display: "flex", fontSize: 18, letterSpacing: 5, color: "rgba(255,255,255,0.55)", textTransform: "uppercase", fontWeight: 700 }}>
+              Scout Before You Play · touritgolf.com
             </div>
           </div>
         </div>
@@ -240,8 +258,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       { width: W, height: H, fonts: fonts.length ? fonts : undefined }
     );
   } catch (err) {
-    // Edge runtime swallows uncaught errors and returns 0 bytes — surface them
-    // explicitly so any future regression isn't invisible to the user.
     console.error("Beauty shot render failed", err);
     return errorImage(`Render error: ${err instanceof Error ? err.message : "unknown"}`);
   }
