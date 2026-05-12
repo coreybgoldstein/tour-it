@@ -57,6 +57,20 @@ async function loadFonts() {
   }
 }
 
+async function loadLogoDataUrl(): Promise<string | null> {
+  try {
+    const buf = await fetch(new URL("./tour-it-logo-full.png", import.meta.url)).then(r => r.arrayBuffer());
+    // base64 encode for use as inline data URL (Satori reliably renders these)
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    const b64 = typeof btoa === "function" ? btoa(bin) : Buffer.from(bin, "binary").toString("base64");
+    return `data:image/png;base64,${b64}`;
+  } catch {
+    return null;
+  }
+}
+
 function errorImage(message: string): ImageResponse {
   return new ImageResponse(
     (
@@ -78,12 +92,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const [tripRes, tcRes, memberRes, gameRes, fonts] = await Promise.all([
+    const [tripRes, tcRes, memberRes, gameRes, fonts, bundledLogo] = await Promise.all([
       sb.from("GolfTrip").select("id, name, startDate, endDate, imageUrl").eq("id", id).maybeSingle(),
       sb.from("GolfTripCourse").select("courseId, playDate, teeTime").eq("tripId", id),
       sb.from("GolfTripMember").select("userId").eq("tripId", id),
       sb.from("TripGame").select("format, players").eq("tripId", id).order("createdAt", { ascending: false }).limit(1),
       loadFonts(),
+      loadLogoDataUrl(),
     ]);
     const trip = tripRes.data;
     const tcRows = tcRes.data;
@@ -106,7 +121,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const logo = course?.logoUrl || null;
     const courseName = course?.name ?? "Course";
     const courseLocation = [course?.city, course?.state].filter(Boolean).join(", ");
-    const tourItLogo = `${origin}/tour-it-logo-full.png`;
+    const tourItLogo = bundledLogo ?? `${origin}/tour-it-logo-full.png`;
 
     const game = gameRows?.[0];
     const formatLabel = game
@@ -255,7 +270,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
           </div>
         </div>
       ),
-      { width: W, height: H, fonts: fonts.length ? fonts : undefined }
+      {
+        width: W,
+        height: H,
+        fonts: fonts.length ? fonts : undefined,
+        headers: { "Cache-Control": "no-store, no-cache, must-revalidate" },
+      }
     );
   } catch (err) {
     console.error("Beauty shot render failed", err);
