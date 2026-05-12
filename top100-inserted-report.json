@@ -1,0 +1,119 @@
+[
+  {
+    "rank": 12,
+    "name": "The Lido at Sand Valley",
+    "status": "inserted",
+    "courseId": "6a2194c2-fd1e-419f-8026-ffbf4f084162",
+    "slug": "the-lido-at-sand-valley-nekoosa-wi",
+    "holeCount": 18,
+    "note": "Tom Doak 2023 re-creation of the C.B. Macdonald Lido. Public resort."
+  },
+  {
+    "rank": 24,
+    "name": "Landmand Golf Club",
+    "status": "inserted",
+    "courseId": "318ae1c4-556a-4c42-9dbd-98ed442ab7b0",
+    "slug": "landmand-golf-club-homer-ne",
+    "holeCount": 18,
+    "note": "King-Collins 2022 design overlooking Missouri River loess hills."
+  },
+  {
+    "rank": 30,
+    "name": "Pinehurst Resort - No. 10",
+    "status": "inserted",
+    "courseId": "5ab93b48-963f-4780-96e3-8ec389c52341",
+    "slug": "pinehurst-resort-no-10-pinehurst-nc",
+    "holeCount": 18,
+    "note": "Tom Doak 2024 design on the Pit Golf Links site."
+  },
+  {
+    "rank": 41,
+    "name": "Pronghorn Club at Juniper Reserve - Nicklaus Course",
+    "status": "inserted",
+    "courseId": "7d0efde0-6228-448c-9893-d85fc4d0dd6a",
+    "slug": "pronghorn-club-at-juniper-reserve-nicklaus-course-bend-or",
+    "holeCount": 18,
+    "note": "Jack Nicklaus 2007 design at Juniper Reserve (rebranded from Pronghorn). Public resort."
+  },
+  {
+    "rank": 45,
+    "name": "Sea Island Golf Club - Seaside Course",
+    "status": "inserted",
+    "courseId": "d6c9222a-ec7a-4214-b9e0-087229badd08",
+    "slug": "sea-island-golf-club-seaside-course-st-simons-island-ga",
+    "holeCount": 18,
+    "note": "Colt & Alison 1929, Tom Fazio renovation. Hosts PGA Tour RSM Classic. Resort/semi-public."
+  },
+  {
+    "rank": 50,
+    "name": "Cabot Citrus Farms - Karoo",
+    "status": "inserted",
+    "courseId": "eee8127e-8497-4b60-adee-588f6f711277",
+    "slug": "cabot-citrus-farms-karoo-brooksville-fl",
+    "holeCount": 18,
+    "note": "Kyle Franz / Mike Nuzzo 2024 redesign of former World Woods Pine Barrens."
+  },
+  {
+    "rank": 51,
+    "name": "Sedge Valley at Sand Valley",
+    "status": "inserted",
+    "courseId": "90e036de-6250-4e0e-acb0-2f02df1f34b8",
+    "slug": "sedge-valley-at-sand-valley-nekoosa-wi",
+    "holeCount": 18,
+    "note": "Tom Doak 2024 design, sub-6300 yard heathland-style. Public resort."
+  },
+  {
+    "rank": 57,
+    "name": "Wilderness Club",
+    "status": "inserted",
+    "courseId": "c3382005-f171-4c88-b463-d282fd8f06c0",
+    "slug": "wilderness-club-eureka-mt",
+    "holeCount": 18,
+    "note": "Nick Faldo 2007 design near Glacier National Park."
+  },
+  {
+    "rank": 59,
+    "name": "Wolf Creek Golf Club",
+    "status": "inserted",
+    "courseId": "604e575e-80bb-4e2e-a9bb-0a63518d2040",
+    "slug": "wolf-creek-golf-club-mesquite-nv",
+    "holeCount": 18,
+    "note": "Dennis Rider 2000 design carved through Mojave canyons."
+  },
+  {
+    "rank": 64,
+    "name": "Nemacolin - Mystic Rock",
+    "status": "inserted",
+    "courseId": "862f2855-5c0e-4439-8cbf-a4ebff51794d",
+    "slug": "nemacolin-mystic-rock-farmington-pa",
+    "holeCount": 18,
+    "note": "Pete Dye 1995 design at Nemacolin Woodlands Resort. Hosted PGA Tour 84 Lumber Classic."
+  },
+  {
+    "rank": 81,
+    "name": "Payne's Valley at Big Cedar Lodge",
+    "status": "inserted",
+    "courseId": "c315c05b-57ac-4a36-8c1b-08c615384a9b",
+    "slug": "payne-s-valley-at-big-cedar-lodge-hollister-mo",
+    "holeCount": 18,
+    "note": "Tiger Woods/TGR Design's first public course, 2020. Big Cedar Lodge resort. (Famous 19th bonus hole; we store as 18.)"
+  },
+  {
+    "rank": 82,
+    "name": "Mossy Oak Golf Club",
+    "status": "inserted",
+    "courseId": "6140215b-fd1c-4e44-b044-42b438012ba8",
+    "slug": "mossy-oak-golf-club-west-point-ms",
+    "holeCount": 18,
+    "note": "Gil Hanse 2016 design, sister property to Old Waverly."
+  },
+  {
+    "rank": 90,
+    "name": "The Prairie Club - Pines Course",
+    "status": "inserted",
+    "courseId": "3c8aaa5b-6347-4ad3-be66-9a9fd8bf3a80",
+    "slug": "the-prairie-club-pines-course-valentine-ne",
+    "holeCount": 18,
+    "note": "Graham Marsh 2010 design in Sandhills overlooking Snake River canyon."
+  }
+]

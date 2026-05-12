@@ -66,7 +66,18 @@
       "Bash(pm2 logs:*)",
       "Bash(grep -n \"^}\\\\s*$\" \"src/app/trips/[id]/page.tsx\")",
       "Bash(grep -qE \"courses\\\\\\\\n$|GolfCourseAPI scorecard sweep\" top500-scorecards.log)",
-      "Bash(awk 'NR>=1700 && /addCourseStep === \"details\" && selectedAddCourse/{found=1} found && /^            \\\\\\)\\\\}$/{print NR; exit}' \"src/app/trips/[id]/page.tsx\")"
+      "Bash(awk 'NR>=1700 && /addCourseStep === \"details\" && selectedAddCourse/{found=1} found && /^            \\\\\\)\\\\}$/{print NR; exit}' \"src/app/trips/[id]/page.tsx\")",
+      "WebFetch(domain:apify.com)",
+      "WebFetch(domain:www.aronimink.org)",
+      "WebFetch(domain:www.pga.com)",
+      "WebFetch(domain:tour-it.vercel.app)",
+      "WebFetch(domain:www.golfdigest.com)",
+      "WebFetch(domain:www.golfcoursegurus.com)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(cp /tmp/playfair.ttf \"src/app/api/round/[id]/beauty/PlayfairDisplay.ttf\")",
+      "Bash(cp /tmp/outfit.ttf \"src/app/api/round/[id]/beauty/Outfit.ttf\")",
+      "Bash(git ls-remote *)"
     ]
   }
 }

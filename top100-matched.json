@@ -1,0 +1,1668 @@
+[
+  {
+    "rank": 1,
+    "name": "Pebble Beach Golf Links",
+    "city": "Pebble Beach",
+    "state": "CA",
+    "stateCode": "CA",
+    "courseId": "b2d7acf5-7186-4edd-bcee-8def174a0d01",
+    "matchedName": "Pebble Beach Golf Course",
+    "matchedCity": "Pebble Beach",
+    "matchedState": "CA",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 2,
+    "name": "Pacific Dunes Golf Course",
+    "city": "Bandon",
+    "state": "OR",
+    "stateCode": "OR",
+    "courseId": "32c84c00-04e7-4303-af18-aafab244b837",
+    "matchedName": "Pacific Dunes",
+    "matchedCity": "Bandon",
+    "matchedState": "OR",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 3,
+    "name": "Shadow Creek Golf Club",
+    "city": "North Las Vegas",
+    "state": "NV",
+    "stateCode": "NV",
+    "courseId": "b708e3ba-702c-4f3f-b687-b7fcc3578949",
+    "matchedName": "Shadow Creek Golf Course",
+    "matchedCity": "North Las Vegas",
+    "matchedState": "NV",
+    "confidence": 0.95,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "96d531d3-c6b1-438c-af93-ac948f1ae0a9",
+        "name": "Boulder Creek Golf Course",
+        "city": "Boulder City",
+        "state": "NV",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 4,
+    "name": "Whistling Straits Resort (Straits)",
+    "city": "Haven",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "d8298463-166c-417f-9862-5771eecfd93e",
+    "matchedName": "Whistling Straits",
+    "matchedCity": "Haven",
+    "matchedState": "WI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 5,
+    "name": "The Ocean Course",
+    "city": "Kiawah Island",
+    "state": "SC",
+    "stateCode": "SC",
+    "courseId": "647bbdcd-23ac-4105-9825-1eea55d2222b",
+    "matchedName": "Kiawah Island Golf Resort - The Ocean Course",
+    "matchedCity": "Kiawah Island",
+    "matchedState": "SC",
+    "confidence": 0.629,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "8e65327f-bbcf-44ae-b500-6eb3f20a6262",
+        "name": "Ocean Creek Golf Course",
+        "city": "Beaufort County",
+        "state": "SC",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 6,
+    "name": "Pinehurst Resort (No.2)",
+    "city": "Pinehurst",
+    "state": "NC",
+    "stateCode": "NC",
+    "courseId": "c50c2fa3-7360-4510-82d2-ad91894d1a1b",
+    "matchedName": "Pinehurst No. 2",
+    "matchedCity": "Pinehurst",
+    "matchedState": "NC",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 7,
+    "name": "Bethpage State Park (Black)",
+    "city": "Farmingdale",
+    "state": "NY",
+    "stateCode": "NY",
+    "courseId": "ceb95a05-d039-4f2d-ae01-6bdd954d00c1",
+    "matchedName": "Bethpage Black Golf Course",
+    "matchedCity": "Bethpage",
+    "matchedState": "NY",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 8,
+    "name": "TPC Sawgrass (Players Stadium)",
+    "city": "Ponte Vedra Beach",
+    "state": "FL",
+    "stateCode": "FL",
+    "courseId": "ecaad021-f44c-49f9-a340-df7a2b903d52",
+    "matchedName": "TPC Sawgrass",
+    "matchedCity": "Ponte Vedra Beach",
+    "matchedState": "FL",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 9,
+    "name": "Bandon Dunes Golf Course",
+    "city": "Bandon",
+    "state": "OR",
+    "stateCode": "OR",
+    "courseId": "519a24de-0984-41d8-bf2c-e848220570a1",
+    "matchedName": "Bandon Dunes Golf Resort",
+    "matchedCity": "Coos County",
+    "matchedState": "OR",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 10,
+    "name": "Erin Hills Golf Course",
+    "city": "Erin",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "a8f6f7de-421f-4693-94af-78f6efd27150",
+    "matchedName": "Erin Hills",
+    "matchedCity": "Erin",
+    "matchedState": "WI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 11,
+    "name": "Bandon Trails",
+    "city": "Bandon",
+    "state": "OR",
+    "stateCode": "OR",
+    "courseId": "d8f27d04-64cf-4c0b-a4b3-6e16837c2af2",
+    "matchedName": "Bandon Trails",
+    "matchedCity": "Coos County",
+    "matchedState": "OR",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 13,
+    "name": "Spyglass Hill Golf Course",
+    "city": "Pebble Beach",
+    "state": "CA",
+    "stateCode": "CA",
+    "courseId": "1ff5e051-b567-4893-85d7-86e927b749e4",
+    "matchedName": "Spyglass Hill Golf Course",
+    "matchedCity": "Monterey County",
+    "matchedState": "CA",
+    "confidence": 1,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "32978979-6e8c-4eb3-b586-d52399d45d72",
+        "name": "Goat Hill Park Golf Course",
+        "city": "Oceanside",
+        "state": "CA",
+        "confidence": 0.6
+      },
+      {
+        "id": "aa2f9c79-5833-4637-84c1-01fcf4908d1f",
+        "name": "Echo Hills Golf Course",
+        "city": "Hemet",
+        "state": "CA",
+        "confidence": 0.5
+      },
+      {
+        "id": "ecac3540-f5b2-45e0-88ed-310b9e1fd5b7",
+        "name": "Presidio Hills Golf Course",
+        "city": "San Diego",
+        "state": "CA",
+        "confidence": 0.5
+      },
+      {
+        "id": "e1085d59-8c3f-4870-81a5-2480e717d1c4",
+        "name": "Coyote Hills Golf Course",
+        "city": "Fullerton",
+        "state": "CA",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 14,
+    "name": "Old Macdonald",
+    "city": "Bandon",
+    "state": "OR",
+    "stateCode": "OR",
+    "courseId": "0101801a-6cf7-4625-b395-f429c861d301",
+    "matchedName": "Old Macdonald",
+    "matchedCity": "Bandon",
+    "matchedState": "OR",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 15,
+    "name": "Arcadia Bluffs (Bluffs)",
+    "city": "Arcadia",
+    "state": "MI",
+    "stateCode": "MI",
+    "courseId": "d036dbe6-5584-4888-9f49-0ddf50a4fca3",
+    "matchedName": "Arcadia Bluffs Golf Club",
+    "matchedCity": "Arcadia",
+    "matchedState": "MI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 16,
+    "name": "Pasatiempo Golf Club",
+    "city": "Santa Cruz",
+    "state": "CA",
+    "stateCode": "CA",
+    "courseId": "04c9a0d3-d87b-4bff-b761-fb35e41b9008",
+    "matchedName": "Pasatiempo Golf Course",
+    "matchedCity": "Santa Cruz",
+    "matchedState": "CA",
+    "confidence": 0.867,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 17,
+    "name": "Blackwolf Run (River)",
+    "city": "Kohler",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "37bc91e6-3741-48dd-b7b9-aa2533578b9c",
+    "matchedName": "Blackwolf Run",
+    "matchedCity": "Kohler",
+    "matchedState": "WI",
+    "confidence": 0.867,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "3ebbfa33-fe21-4397-8839-10de5b9864ae",
+        "name": "River Run Golf Course",
+        "city": "Sparta",
+        "state": "WI",
+        "confidence": 0.8
+      },
+      {
+        "id": "6de72e80-f76d-42e2-831e-c242ac2b6877",
+        "name": "Black River Golf Course",
+        "city": "Medford",
+        "state": "WI",
+        "confidence": 0.55
+      },
+      {
+        "id": "6ee9fa95-88e1-46de-b760-065768ee27c4",
+        "name": "River Falls Golf Club",
+        "city": "River Falls",
+        "state": "WI",
+        "confidence": 0.55
+      },
+      {
+        "id": "4236abef-63df-40ce-822c-44ad5694b626",
+        "name": "Eagle River Golf Course",
+        "city": "Eagle River",
+        "state": "WI",
+        "confidence": 0.55
+      }
+    ]
+  },
+  {
+    "rank": 18,
+    "name": "The Pete Dye Course at French Lick Resort",
+    "city": "French Lick",
+    "state": "IN",
+    "stateCode": "IN",
+    "courseId": "8e162b0e-4df0-4f3a-883a-50e7edf41834",
+    "matchedName": "Pete Dye Course",
+    "matchedCity": "Orange County",
+    "matchedState": "IN",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 19,
+    "name": "Chambers Bay Golf Club",
+    "city": "University Place",
+    "state": "WA",
+    "stateCode": "WA",
+    "courseId": "56fb44ef-db2f-424c-8f4c-06908a65edce",
+    "matchedName": "Chambers Bay Golf Course",
+    "matchedCity": "University Place",
+    "matchedState": "WA",
+    "confidence": 0.95,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 20,
+    "name": "Streamsong Resort (Red)",
+    "city": "Streamsong",
+    "state": "FL",
+    "stateCode": "FL",
+    "courseId": "85d5d80b-2686-4195-ad5f-fe746c42673b",
+    "matchedName": "Streamsong Resort - Red Course",
+    "matchedCity": "Bowling Green",
+    "matchedState": "FL",
+    "confidence": 1.05,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "6ffa592e-c74b-4271-8097-9b7a02af01f2",
+        "name": "Red Reef Golf Course",
+        "city": "Boca Raton",
+        "state": "FL",
+        "confidence": 0.55
+      },
+      {
+        "id": "6e7f1c7b-63cd-4b7a-8751-be80adfa1ee6",
+        "name": "Red Stick Golf Club",
+        "city": "Vero Beach",
+        "state": "FL",
+        "confidence": 0.55
+      },
+      {
+        "id": "3af1f0ca-7343-4300-bb54-2df13d62d8b1",
+        "name": "Streamsong Resort - Black Course",
+        "city": "Bowling Green",
+        "state": "FL",
+        "confidence": 0.5
+      },
+      {
+        "id": "39fc263a-17d0-4b27-aa38-59b64ff26c86",
+        "name": "Red Reef Executive Golf Course",
+        "city": "Boca Raton",
+        "state": "FL",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 21,
+    "name": "Sand Valley at Sand Valley Resort",
+    "city": "Nekoosa",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "574fa1d5-59c2-4e56-a81e-05dda82ca573",
+    "matchedName": "Sand Valley Golf Resort",
+    "matchedCity": "Adams County",
+    "matchedState": "WI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 22,
+    "name": "Manele Golf Course",
+    "city": "Lanai City",
+    "state": "HI",
+    "stateCode": "HI",
+    "courseId": "4385e725-1068-4dca-a6c7-4bb856d7f7cd",
+    "matchedName": "The Challenge at Manele",
+    "matchedCity": "Maui County",
+    "matchedState": "HI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 23,
+    "name": "Kapalua Resort (Plantation)",
+    "city": "Kapalua",
+    "state": "HI",
+    "stateCode": "HI",
+    "courseId": "53dfb968-7c0c-4b8d-aea8-73f5bafe4a88",
+    "matchedName": "The Plantation Course",
+    "matchedCity": "Maui County",
+    "matchedState": "HI",
+    "confidence": 0.633,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 25,
+    "name": "Mammoth Dunes at Sand Valley Resort",
+    "city": "Nekoosa",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "18e52307-1799-4883-b612-f07d09a3fd20",
+    "matchedName": "Mammoth Dunes",
+    "matchedCity": "Nekoosa",
+    "matchedState": "WI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 26,
+    "name": "Streamsong Resort (Blue)",
+    "city": "Streamsong",
+    "state": "FL",
+    "stateCode": "FL",
+    "courseId": "699e3c37-d249-432c-bb81-c07748ca2a8d",
+    "matchedName": "Streamsong Blue",
+    "matchedCity": "Bowling Green",
+    "matchedState": "FL",
+    "confidence": 0.967,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "db28be3d-399a-4edc-91fd-9fd95839b46d",
+        "name": "Blue Heron Pines",
+        "city": "Punta Gorda",
+        "state": "FL",
+        "confidence": 0.633
+      },
+      {
+        "id": "1a1cc616-86e8-463a-9915-e675620123ab",
+        "name": "Bluewater Bay Resort",
+        "city": "Niceville",
+        "state": "FL",
+        "confidence": 0.633
+      },
+      {
+        "id": "0d95e33a-9ad7-4211-b83b-1a5edb3e9e55",
+        "name": "TPC Blue Monster",
+        "city": "Miami",
+        "state": "FL",
+        "confidence": 0.633
+      },
+      {
+        "id": "0573a8fe-c4cf-4949-b6fd-12c0e66d7927",
+        "name": "Blue Sky Golf Club",
+        "city": "Jacksonville",
+        "state": "FL",
+        "confidence": 0.55
+      }
+    ]
+  },
+  {
+    "rank": 27,
+    "name": "Sheep Ranch",
+    "city": "Bandon",
+    "state": "OR",
+    "stateCode": "OR",
+    "courseId": "205da5c9-2a88-472f-ac39-414751f0bcf6",
+    "matchedName": "Bandon Sheep Ranch",
+    "matchedCity": "Coos County",
+    "matchedState": "OR",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 28,
+    "name": "Harbour Town Golf Links",
+    "city": "Hilton Head Island",
+    "state": "SC",
+    "stateCode": "SC",
+    "courseId": "d3d78ea9-cf4a-487b-ba6d-2b6ee6af8008",
+    "matchedName": "Harbour Town Golf Links",
+    "matchedCity": "Hilton Head Island",
+    "matchedState": "SC",
+    "confidence": 1.3,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 29,
+    "name": "The Highland Course at Primland",
+    "city": "Meadows of Dan",
+    "state": "VA",
+    "stateCode": "VA",
+    "courseId": "1b7e173f-3c24-4e63-8508-f02dfa604811",
+    "matchedName": "Primland Golf Resort",
+    "matchedCity": "Patrick County",
+    "matchedState": "VA",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 31,
+    "name": "Gamble Sands",
+    "city": "Brewster",
+    "state": "WA",
+    "stateCode": "WA",
+    "courseId": "42aba40d-e9b7-4f04-a6ab-6caf5ffca516",
+    "matchedName": "Gamble Sands Golf Course",
+    "matchedCity": "Okanogan County",
+    "matchedState": "WA",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 32,
+    "name": "Pinehurst Resort (No.4)",
+    "city": "Pinehurst",
+    "state": "NC",
+    "stateCode": "NC",
+    "courseId": "61a4668d-7ec4-4ef0-882e-53ca3ec04d06",
+    "matchedName": "Pinehurst No. 4",
+    "matchedCity": "Pinehurst",
+    "matchedState": "NC",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 33,
+    "name": "Streamsong Resort (Black)",
+    "city": "Streamsong",
+    "state": "FL",
+    "stateCode": "FL",
+    "courseId": "3af1f0ca-7343-4300-bb54-2df13d62d8b1",
+    "matchedName": "Streamsong Resort - Black Course",
+    "matchedCity": "Bowling Green",
+    "matchedState": "FL",
+    "confidence": 1.05,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "85d5d80b-2686-4195-ad5f-fe746c42673b",
+        "name": "Streamsong Resort - Red Course",
+        "city": "Bowling Green",
+        "state": "FL",
+        "confidence": 0.5
+      },
+      {
+        "id": "699e3c37-d249-432c-bb81-c07748ca2a8d",
+        "name": "Streamsong Blue",
+        "city": "Bowling Green",
+        "state": "FL",
+        "confidence": 0.333
+      }
+    ]
+  },
+  {
+    "rank": 34,
+    "name": "Fields Ranch PGA of America Frisco (East)",
+    "city": "Frisco",
+    "state": "TX",
+    "stateCode": "TX",
+    "courseId": "0e1af11a-86ea-4a27-a231-190916ba01b0",
+    "matchedName": "Fields Ranch - East Course",
+    "matchedCity": "Frisco",
+    "matchedState": "TX",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 35,
+    "name": "Black Desert",
+    "city": "Ivins",
+    "state": "UT",
+    "stateCode": "UT",
+    "courseId": "2443b702-9fb6-4af2-8063-8d43f5f5f7ac",
+    "matchedName": "Black Desert Golf Course",
+    "matchedCity": "Santa Clara",
+    "matchedState": "UT",
+    "confidence": 0.5,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 36,
+    "name": "The Prairie Club (Dunes)",
+    "city": "Valentine",
+    "state": "NE",
+    "stateCode": "NE",
+    "courseId": "0da8b1ed-ddb5-481c-bb6f-85152baa2863",
+    "matchedName": "The Prairie Club",
+    "matchedCity": "Valentine",
+    "matchedState": "NE",
+    "confidence": 0.95,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "71533f98-02f6-49bc-860b-74111e394701",
+        "name": "Awarii Dunes Golf Course",
+        "city": "Axtell",
+        "state": "NE",
+        "confidence": 0.55
+      },
+      {
+        "id": "79ef40ab-c56c-47ff-be9d-71bf5952d5ed",
+        "name": "Prairie Hills Golf Course",
+        "city": "Buffalo County",
+        "state": "NE",
+        "confidence": 0.25
+      }
+    ]
+  },
+  {
+    "rank": 37,
+    "name": "Forest Dunes Golf Club",
+    "city": "Roscommon",
+    "state": "MI",
+    "stateCode": "MI",
+    "courseId": "6d5209fc-0c4c-451b-bb4a-4a0b81198c7b",
+    "matchedName": "Forest Dunes Golf Resort",
+    "matchedCity": "South Branch Township",
+    "matchedState": "MI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 38,
+    "name": "Yale Golf Course",
+    "city": "New Haven",
+    "state": "CT",
+    "stateCode": "CT",
+    "courseId": "f9f1a62f-b530-469f-8eab-f6bbe9d8a303",
+    "matchedName": "Yale Golf Course",
+    "matchedCity": "New Haven",
+    "matchedState": "CT",
+    "confidence": 1.2,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 39,
+    "name": "The Greenbrier (Old White TPC)",
+    "city": "White Sulphur Springs",
+    "state": "WV",
+    "stateCode": "WV",
+    "courseId": "f035e2f5-19f3-451e-b916-aaf21f3e1ab3",
+    "matchedName": "The Greenbrier - The Old White TPC",
+    "matchedCity": "Greenbrier County",
+    "matchedState": "WV",
+    "confidence": 1.4,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "34d62017-6518-497d-a9eb-6523264fdf58",
+        "name": "The Greenbrier Sporting Club - The Snead",
+        "city": "White Sulphur Springs",
+        "state": "WV",
+        "confidence": 0.6
+      },
+      {
+        "id": "c06f167b-d959-4411-9495-5b7ea375a3a7",
+        "name": "The Greenbrier - Greenbrier Course",
+        "city": "Greenbrier County",
+        "state": "WV",
+        "confidence": 0.4
+      },
+      {
+        "id": "2dda4b7f-62da-42c8-83ed-fab130decabf",
+        "name": "The Greenbrier - Meadows Course",
+        "city": "Greenbrier County",
+        "state": "WV",
+        "confidence": 0.4
+      },
+      {
+        "id": "576af052-7fa8-416e-8ef3-7d4e5ac4317e",
+        "name": "Greenbrier Hills Golf Club",
+        "city": "Rainelle",
+        "state": "WV",
+        "confidence": 0.2
+      }
+    ]
+  },
+  {
+    "rank": 40,
+    "name": "Torrey Pines Golf Course (South)",
+    "city": "La Jolla",
+    "state": "CA",
+    "stateCode": "CA",
+    "courseId": "a4f292fc-6000-423b-a6d6-5e9c00e72d5f",
+    "matchedName": "Torrey Pines South Course",
+    "matchedCity": "La Jolla",
+    "matchedState": "CA",
+    "confidence": 1.4,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "b2ff3e32-ee08-4779-9c10-bc9102c82b34",
+        "name": "South Gate Golf Course",
+        "city": "South Gate",
+        "state": "CA",
+        "confidence": 0.9
+      },
+      {
+        "id": "aaa3c2d0-701f-430f-bee3-49945a60d5de",
+        "name": "Indian Canyons Golf Resort South Golf Course",
+        "city": "Palm Springs",
+        "state": "CA",
+        "confidence": 0.8
+      },
+      {
+        "id": "94b85d2f-d9a9-4449-afd3-31455b41585e",
+        "name": "Shadow Hills Golf Club - South Course",
+        "city": "Indio",
+        "state": "CA",
+        "confidence": 0.8
+      },
+      {
+        "id": "c3dc5787-1089-4b7b-94d4-b0e9fcc0717d",
+        "name": "Torrey Pines North Course",
+        "city": "La Jolla",
+        "state": "CA",
+        "confidence": 0.8
+      }
+    ]
+  },
+  {
+    "rank": 42,
+    "name": "Omni Homestead (Cascades)",
+    "city": "Hot Springs",
+    "state": "VA",
+    "stateCode": "VA",
+    "courseId": "9364bb6b-16b8-4d2c-bac6-8c96f88f96e4",
+    "matchedName": "The Cascades",
+    "matchedCity": "Hot Springs",
+    "matchedState": "",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 43,
+    "name": "Mauna Kea Golf Course",
+    "city": "Kohala Coast",
+    "state": "HI",
+    "stateCode": "HI",
+    "courseId": "46d74396-a80f-40fa-9e03-7d137c68e156",
+    "matchedName": "Mauna Kea Golf Course",
+    "matchedCity": "Kohala Coast",
+    "matchedState": "HI",
+    "confidence": 1.2,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "8219d938-57ee-48d0-aca4-48b9e4cd5a58",
+        "name": "Mauna Lani Golf",
+        "city": "Hawaiʻi County",
+        "state": "HI",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 44,
+    "name": "Tobacco Road Golf Club",
+    "city": "Sanford",
+    "state": "NC",
+    "stateCode": "NC",
+    "courseId": "8292a39f-5bf2-4f92-8ed2-1f7cf770d8fd",
+    "matchedName": "Tobacco Road Golf Club",
+    "matchedCity": "Sanford",
+    "matchedState": "NC",
+    "confidence": 1.2,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 46,
+    "name": "Ozarks National at Big Cedar Lodge",
+    "city": "Hollister",
+    "state": "MO",
+    "stateCode": "MO",
+    "courseId": "a34c08c5-a2d2-4dff-9918-139534068fb0",
+    "matchedName": "Ozarks National Golf Course",
+    "matchedCity": "Hollister",
+    "matchedState": "MO",
+    "confidence": 0.533,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "e25a9538-372c-42fc-a8b2-395a7cd6f800",
+        "name": "The Deuce at the National",
+        "city": "Parkville",
+        "state": "MO",
+        "confidence": 0.333
+      },
+      {
+        "id": "2fb228b6-3086-44e6-b6a7-af46863276c1",
+        "name": "The Duece at the National",
+        "city": "Parkville",
+        "state": "MO",
+        "confidence": 0.333
+      },
+      {
+        "id": "0276cce5-5fe9-4cf1-8356-d5ce0cfb3ff0",
+        "name": "The National Golf Club",
+        "city": "Parkville",
+        "state": "MO",
+        "confidence": 0.167
+      },
+      {
+        "id": "2fdf52c8-6b13-4b01-9f42-e86cad685fd4",
+        "name": "Osage National Golf Club",
+        "city": "Osage Beach",
+        "state": "MO",
+        "confidence": 0.167
+      }
+    ]
+  },
+  {
+    "rank": 47,
+    "name": "The Broadmoor Golf Club (East)",
+    "city": "Colorado Springs",
+    "state": "CO",
+    "stateCode": "CO",
+    "courseId": "43ec89ca-9f9a-47a8-936f-84f956c8f330",
+    "matchedName": "The Broadmoor Golf Courses",
+    "matchedCity": "Colorado Springs",
+    "matchedState": "CO",
+    "confidence": 0.8,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "ab1ca00d-58bd-48d0-a01f-1800372eab90",
+        "name": "Broadmoor Cheyenne",
+        "city": "Colorado Springs",
+        "state": "CO",
+        "confidence": 0.4
+      }
+    ]
+  },
+  {
+    "rank": 48,
+    "name": "Fallen Oak Golf Club",
+    "city": "Saucier",
+    "state": "MS",
+    "stateCode": "MS",
+    "courseId": "cdfa7784-cfc6-4c46-a51d-e7b319164843",
+    "matchedName": "Fallen Oak Golf Course",
+    "matchedCity": "Saucier",
+    "matchedState": "MS",
+    "confidence": 0.95,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 49,
+    "name": "Sentryworld Golf Course",
+    "city": "Stevens Point",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "d3937e3e-3764-49f3-a369-8150382bbf05",
+    "matchedName": "Sentry World Golf Center",
+    "matchedCity": "Stevens Point",
+    "matchedState": "WI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 52,
+    "name": "Cordevalle Golf Club",
+    "city": "San Martin",
+    "state": "CA",
+    "stateCode": "CA",
+    "courseId": "66e2134e-4e30-49c8-beb2-ed895249bee0",
+    "matchedName": "CordeValle Golf Club",
+    "matchedCity": "Santa Clara County",
+    "matchedState": "CA",
+    "confidence": 1,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 53,
+    "name": "Arcadia Bluffs (South)",
+    "city": "Bear Lake",
+    "state": "MI",
+    "stateCode": "MI",
+    "courseId": "bb682596-eaf1-438d-a4eb-dc439b775d1f",
+    "matchedName": "Arcadia Bluffs - South Course",
+    "matchedCity": "Arcadia",
+    "matchedState": "MI",
+    "confidence": 1.15,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "6e018513-33d6-4f54-a634-f1ad6a51a3c2",
+        "name": "Stonehedge South",
+        "city": "Ross Township",
+        "state": "MI",
+        "confidence": 0.633
+      },
+      {
+        "id": "d036dbe6-5584-4888-9f49-0ddf50a4fca3",
+        "name": "Arcadia Bluffs Golf Club",
+        "city": "Arcadia",
+        "state": "MI",
+        "confidence": 0.5
+      },
+      {
+        "id": "447671ca-5008-4ee0-b653-d7a48cb157d5",
+        "name": "Lakeview Hills Golf Resort - South Course",
+        "city": "Lexington",
+        "state": "MI",
+        "confidence": 0.467
+      },
+      {
+        "id": "a02bd7e8-7d08-4f82-95d4-94b9cae67b5d",
+        "name": "Arcadia Hills Golf Club",
+        "city": "Attica",
+        "state": "MI",
+        "confidence": 0.25
+      }
+    ]
+  },
+  {
+    "rank": 54,
+    "name": "The Links at Spanish Bay",
+    "city": "Pebble Beach",
+    "state": "CA",
+    "stateCode": "CA",
+    "courseId": "acb06e92-6cdc-40a0-9406-6a709e8c170e",
+    "matchedName": "The Links at Spanish Bay",
+    "matchedCity": "Pebble Beach",
+    "matchedState": "CA",
+    "confidence": 1.3,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "0dab82ac-dad2-4064-b316-a898ed0ff965",
+        "name": "The Links at Paso Robles",
+        "city": "Paso Robles",
+        "state": "CA",
+        "confidence": 0.6
+      },
+      {
+        "id": "be7d1a9e-1341-49c9-8d8e-410f80030ea9",
+        "name": "The Links at Bodega Harbour",
+        "city": "Bodega Bay",
+        "state": "CA",
+        "confidence": 0.6
+      },
+      {
+        "id": "4953518b-71b5-4845-bbd8-3f0f3c5955ac",
+        "name": "The Links at Everline",
+        "city": "Olympic Valley",
+        "state": "CA",
+        "confidence": 0.6
+      },
+      {
+        "id": "a2cdc854-a716-4733-9b8f-06b194934e20",
+        "name": "The Links at Terranea",
+        "city": "Rancho Palos Verdes",
+        "state": "CA",
+        "confidence": 0.6
+      }
+    ]
+  },
+  {
+    "rank": 55,
+    "name": "Marquette Golf Club (Greywalls)",
+    "city": "Marquette",
+    "state": "MI",
+    "stateCode": "MI",
+    "courseId": "34ed5d2d-1c04-491c-ab98-28a81e17c233",
+    "matchedName": "Marquette Golf Club Greywalls",
+    "matchedCity": "Marquette",
+    "matchedState": "MI",
+    "confidence": 1.5,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "292e4170-d064-4bdc-844e-eee1a1d709e8",
+        "name": "Marquette Golf Club",
+        "city": "Marquette",
+        "state": "MI",
+        "confidence": 0.95
+      },
+      {
+        "id": "4a5b556b-1798-484f-8947-ce100435b095",
+        "name": "Marquette Trails Country Club",
+        "city": "Lake Township",
+        "state": "MI",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 56,
+    "name": "Paa-Ko Ridge Golf Club",
+    "city": "Sandia Park",
+    "state": "NM",
+    "stateCode": "NM",
+    "courseId": "182d9238-d951-4f96-8d59-e69a82349ea2",
+    "matchedName": "Paa-Ko Ridge Golf Club",
+    "matchedCity": "Sandia Park",
+    "matchedState": "NM",
+    "confidence": 1.3,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 58,
+    "name": "The Quarry at Giants Ridge",
+    "city": "Biwabik",
+    "state": "MN",
+    "stateCode": "MN",
+    "courseId": "ba98b53e-224b-4901-9cf4-6c4d18a82e2b",
+    "matchedName": "The Quarry",
+    "matchedCity": "Aurora",
+    "matchedState": "MN",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 60,
+    "name": "Pine Needles Lodge and Golf Club",
+    "city": "Southern Pines",
+    "state": "NC",
+    "stateCode": "NC",
+    "courseId": "e6b71e32-c66e-4fae-a80d-e13a57bc62ac",
+    "matchedName": "Pine Needles",
+    "matchedCity": "Southern Pines",
+    "matchedState": "NC",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 61,
+    "name": "Tetherow Golf Club",
+    "city": "Bend",
+    "state": "OR",
+    "stateCode": "OR",
+    "courseId": "c8009a10-40e9-41fe-820a-d3fc81f6085e",
+    "matchedName": "Tetherow Golf Club",
+    "matchedCity": "Deschutes County",
+    "matchedState": "OR",
+    "confidence": 1,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 62,
+    "name": "PGA West (Stadium)",
+    "city": "La Quinta",
+    "state": "CA",
+    "stateCode": "CA",
+    "courseId": "e2569f38-ac05-4f33-be3b-c9fb0a4d5fc4",
+    "matchedName": "TPC Stadium Golf Course (PGA West)",
+    "matchedCity": "La Quinta",
+    "matchedState": "CA",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 63,
+    "name": "The Loop (Black)",
+    "city": "Roscommon",
+    "state": "MI",
+    "stateCode": "MI",
+    "courseId": "edaf7081-e825-4c34-8c8f-afd21849bf02",
+    "matchedName": "Forest Dunes Golf Club - The Loop (Black Course)",
+    "matchedCity": "Roscommon",
+    "matchedState": "MI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 65,
+    "name": "Whistling Straits (Irish)",
+    "city": "Haven",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "57fd78ad-c8a9-4a83-9b67-210522988225",
+    "matchedName": "Whistling Straits",
+    "matchedCity": "Sheboygan",
+    "matchedState": "WI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 66,
+    "name": "The Golf Courses of Lawsonia (Links)",
+    "city": "Green Lake",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "7bca915e-53e6-4a74-8ffd-758dac255665",
+    "matchedName": "Golf Courses of Lawsonia",
+    "matchedCity": "Town of Brooklyn",
+    "matchedState": "WI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 67,
+    "name": "Wynn Golf Club",
+    "city": "Las Vegas",
+    "state": "NV",
+    "stateCode": "NV",
+    "courseId": "4458772d-ddf3-4f4e-bbee-65461f9e79b4",
+    "matchedName": "Wynn Golf Course",
+    "matchedCity": "Las Vegas",
+    "matchedState": "NV",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 68,
+    "name": "The Loop (Red)",
+    "city": "Roscommon",
+    "state": "MI",
+    "stateCode": "MI",
+    "courseId": "fecd7917-9052-4c94-acb8-432555337b4d",
+    "matchedName": "Forest Dunes Golf Club - The Loop (Red Course)",
+    "matchedCity": "Roscommon",
+    "matchedState": "MI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 69,
+    "name": "Crosswater Golf Club",
+    "city": "Sunriver",
+    "state": "OR",
+    "stateCode": "OR",
+    "courseId": "add24a40-6489-4a5b-9a77-a4c8e5d44f5e",
+    "matchedName": "Crosswater Golf Course",
+    "matchedCity": "Deschutes County",
+    "matchedState": "OR",
+    "confidence": 0.667,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 70,
+    "name": "Tullymore Golf Resort",
+    "city": "Stanwood",
+    "state": "MI",
+    "stateCode": "MI",
+    "courseId": "283c36aa-1ceb-4e30-b541-83fe934a0adc",
+    "matchedName": "Tullymore",
+    "matchedCity": "Stanwood",
+    "matchedState": "MI",
+    "confidence": 0.533,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 71,
+    "name": "Red Sky Ranch and Golf Club (Fazio)",
+    "city": "Wolcott",
+    "state": "CO",
+    "stateCode": "CO",
+    "courseId": "b9d9b5b3-59e4-4ba3-ae30-552d271fffda",
+    "matchedName": "Red Sky Ranch Golf Club- Tom Fazio Course",
+    "matchedCity": "Eagle County",
+    "matchedState": "CO",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 72,
+    "name": "The Wilderness at Fortune Bay",
+    "city": "Tower",
+    "state": "MN",
+    "stateCode": "MN",
+    "courseId": "9ca5c6db-f852-452b-8b49-180208ca5497",
+    "matchedName": "The Wilderness at Fortune Bay",
+    "matchedCity": "Greenwood Township",
+    "matchedState": "MN",
+    "confidence": 1.1,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 73,
+    "name": "Makai Golf Club",
+    "city": "Princeville",
+    "state": "HI",
+    "stateCode": "HI",
+    "courseId": "98bb7048-3d25-488d-8223-963d73bb50dd",
+    "matchedName": "Princeville Makai Golf Club",
+    "matchedCity": "Princeville",
+    "matchedState": "HI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 74,
+    "name": "Cascata Golf Club",
+    "city": "Boulder City",
+    "state": "NV",
+    "stateCode": "NV",
+    "courseId": "448289a9-5fa8-40e2-8d54-05e2821f9ef7",
+    "matchedName": "Cascata Golf Course",
+    "matchedCity": "Boulder City",
+    "matchedState": "NV",
+    "confidence": 0.867,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 75,
+    "name": "Golden Horseshoe Golf Club (Gold)",
+    "city": "Williamsburg",
+    "state": "VA",
+    "stateCode": "VA",
+    "courseId": "0176bb8f-fd35-4ead-951b-d5220d6098dc",
+    "matchedName": "Golden Horseshoe Golf Club Gold Course",
+    "matchedCity": "Williamsburg",
+    "matchedState": "VA",
+    "confidence": 1.433,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "ff3bfd32-2287-4efc-b095-0ba5d7e635a1",
+        "name": "Golden Horseshoe Golf Club Green Course",
+        "city": "Williamsburg",
+        "state": "VA",
+        "confidence": 1.167
+      }
+    ]
+  },
+  {
+    "rank": 76,
+    "name": "Cog Hill Golf and Country Club (No. 4 Dubsdread)",
+    "city": "Lemont",
+    "state": "IL",
+    "stateCode": "IL",
+    "courseId": "7328fbce-0496-4881-8f74-38c071e69d82",
+    "matchedName": "Cog Hill Golf & Country Club",
+    "matchedCity": "Lemont Township",
+    "matchedState": "IL",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 77,
+    "name": "Fields Ranch PGA of America Frisco (West)",
+    "city": "Frisco",
+    "state": "TX",
+    "stateCode": "TX",
+    "courseId": "4fe6e532-78ae-41b4-b8ee-1bbb4846f26b",
+    "matchedName": "Fields Ranch - West Course",
+    "matchedCity": "Frisco",
+    "matchedState": "TX",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 78,
+    "name": "Taconic Golf Club",
+    "city": "Williamstown",
+    "state": "MA",
+    "stateCode": "MA",
+    "courseId": "fbde8fc7-cdd9-463f-acf0-c65e96a469e1",
+    "matchedName": "Williams College Taconic Golf Course",
+    "matchedCity": "Williamstown",
+    "matchedState": "MA",
+    "confidence": 0.6,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 79,
+    "name": "The Dunes Golf and Beach Club",
+    "city": "Myrtle Beach",
+    "state": "SC",
+    "stateCode": "SC",
+    "courseId": "7c9bfd22-d8e1-4ab5-9a8a-b4c88870683e",
+    "matchedName": "Dunes Golf & Beach Club",
+    "matchedCity": "Myrtle Beach",
+    "matchedState": "SC",
+    "confidence": 0.867,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "19ebd7c6-2f3f-42bd-877e-558f2a005e3d",
+        "name": "Surf Golf & Beach Club",
+        "city": "North Myrtle Beach",
+        "state": "SC",
+        "confidence": 0.7
+      },
+      {
+        "id": "a984ef19-d24f-4179-9c8b-3deae1b65722",
+        "name": "Dunes West Golf Club",
+        "city": "Mount Pleasant",
+        "state": "SC",
+        "confidence": 0.5
+      },
+      {
+        "id": "7041d57c-cd9b-4802-8637-1dba06925319",
+        "name": "Palmetto Dunes - George Fazio Golf Course",
+        "city": "Hilton Head",
+        "state": "SC",
+        "confidence": 0.333
+      },
+      {
+        "id": "21089e88-54eb-4872-9a2b-39afc16ceee5",
+        "name": "Palmetto Dunes - Arthur Hills Golf Course",
+        "city": "Hilton Head",
+        "state": "SC",
+        "confidence": 0.333
+      }
+    ]
+  },
+  {
+    "rank": 80,
+    "name": "The Classic at Maddens Resort",
+    "city": "Brainerd",
+    "state": "MN",
+    "stateCode": "MN",
+    "courseId": "43c72348-ccf7-4770-8c59-c8fc88ec8db4",
+    "matchedName": "The Classic at Madden's",
+    "matchedCity": "East Gull Lake",
+    "matchedState": "MN",
+    "confidence": 0.8,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 83,
+    "name": "Edgewood Tahoe Golf Course",
+    "city": "Lake Tahoe",
+    "state": "NV",
+    "stateCode": "NV",
+    "courseId": "321da61a-4710-4571-bf4a-d39219886276",
+    "matchedName": "Edgewood Tahoe Golf Course",
+    "matchedCity": "Lake Tahoe",
+    "matchedState": "NV",
+    "confidence": 1.2,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 84,
+    "name": "Wild Horse Golf Course",
+    "city": "Gothenburg",
+    "state": "NE",
+    "stateCode": "NE",
+    "courseId": "043c8047-07f4-47cf-9e97-252e86a2e3f8",
+    "matchedName": "Wild Horse Golf Club",
+    "matchedCity": "Dawson County",
+    "matchedState": "NE",
+    "confidence": 0.75,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "34dbc2a8-89a2-4ea0-ace0-43165a108040",
+        "name": "Wildwood Golf Course",
+        "city": "Nebraska City",
+        "state": "NE",
+        "confidence": 0.5
+      },
+      {
+        "id": "ccf14022-dca6-4abc-9816-69c4acee916a",
+        "name": "Wilderness Ridge Golf Course",
+        "city": "Lincoln",
+        "state": "NE",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 85,
+    "name": "Black Mesa Golf Club",
+    "city": "Espanola",
+    "state": "NM",
+    "stateCode": "NM",
+    "courseId": "42f0470e-499f-4dbc-b4f9-cb9156660c3e",
+    "matchedName": "Black Mesa Golf Club",
+    "matchedCity": "Española",
+    "matchedState": "NM",
+    "confidence": 1,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 86,
+    "name": "Trump National Doral Miami (Blue Monster)",
+    "city": "Miami",
+    "state": "FL",
+    "stateCode": "FL",
+    "courseId": "4d7cd615-3a23-4081-84d2-501c40aae59c",
+    "matchedName": "Trump National Doral",
+    "matchedCity": "Miami",
+    "matchedState": "FL",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 87,
+    "name": "Red Sky Ranch and Golf Club (Norman)",
+    "city": "Wolcott",
+    "state": "CO",
+    "stateCode": "CO",
+    "courseId": "524eb087-4fd5-4aea-a1fa-00131b127cf2",
+    "matchedName": "Red Sky Ranch Golf Club- Greg Norman Course",
+    "matchedCity": "Eagle County",
+    "matchedState": "CO",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 88,
+    "name": "Mid Pines Inn and Golf Club",
+    "city": "Southern Pines",
+    "state": "NC",
+    "stateCode": "NC",
+    "courseId": "5b669a70-85e8-416e-93a4-9ccfd819bbca",
+    "matchedName": "Mid Pines",
+    "matchedCity": "Southern Pines",
+    "matchedState": "NC",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 89,
+    "name": "The Park at West Palm Beach",
+    "city": "West Palm Beach",
+    "state": "FL",
+    "stateCode": "FL",
+    "courseId": "314c4f27-aba0-44e4-bfcb-fb2dfbe5b523",
+    "matchedName": "The Park West Palm",
+    "matchedCity": "West Palm Beach",
+    "matchedState": "FL",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 91,
+    "name": "Firestone Country Club (South)",
+    "city": "Akron",
+    "state": "OH",
+    "stateCode": "OH",
+    "courseId": "2959834a-c923-48b6-a77e-0a4860db910f",
+    "matchedName": "Firestone Country Club",
+    "matchedCity": "Akron",
+    "matchedState": "OH",
+    "confidence": 0.95,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "9dc3a8f9-3c1c-448b-9b15-e120d8798e21",
+        "name": "South Toledo Golf Club",
+        "city": "Toledo",
+        "state": "OH",
+        "confidence": 0.8
+      },
+      {
+        "id": "29dc4099-80ee-42c5-bb27-6d062fe27f4b",
+        "name": "Portage Country Club",
+        "city": "Akron",
+        "state": "OH",
+        "confidence": 0.7
+      },
+      {
+        "id": "04bc32d7-8a1d-4d5a-828e-8eab536158ec",
+        "name": "Thunderbird South",
+        "city": "Huron Township",
+        "state": "OH",
+        "confidence": 0.55
+      },
+      {
+        "id": "46267bdb-24f5-4fb7-a075-d76703c930f8",
+        "name": "Mill Creek Golf Course (South)",
+        "city": "Boardman",
+        "state": "OH",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 92,
+    "name": "Blackwolf Run (Meadow Valleys)",
+    "city": "Kohler",
+    "state": "WI",
+    "stateCode": "WI",
+    "courseId": "37bc91e6-3741-48dd-b7b9-aa2533578b9c",
+    "matchedName": "Blackwolf Run",
+    "matchedCity": "Kohler",
+    "matchedState": "WI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": 17
+  },
+  {
+    "rank": 93,
+    "name": "Quintero Golf Club",
+    "city": "Peoria",
+    "state": "AZ",
+    "stateCode": "AZ",
+    "courseId": "07dc7133-1486-441f-b9b4-e29db65700f1",
+    "matchedName": "Quintero Golf Club",
+    "matchedCity": "Peoria",
+    "matchedState": "AZ",
+    "confidence": 1.2,
+    "source": "auto",
+    "alternates": []
+  },
+  {
+    "rank": 94,
+    "name": "Buffalo Ridge Golf Club at Big Cedar Lodge",
+    "city": "Hollister",
+    "state": "MO",
+    "stateCode": "MO",
+    "courseId": "2f27785a-9603-40a1-9667-4a3eb1417d6a",
+    "matchedName": "Buffalo Ridge Springs Golf Course",
+    "matchedCity": "Branson",
+    "matchedState": "MO",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 95,
+    "name": "TPC San Antonio (Oaks)",
+    "city": "San Antonio",
+    "state": "TX",
+    "stateCode": "TX",
+    "courseId": "6b4cce70-2087-4c7b-a16f-b901e53644bd",
+    "matchedName": "TPC San Antonio Oaks Course",
+    "matchedCity": "Bexar County",
+    "matchedState": "TX",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 96,
+    "name": "Wine Valley Golf Club",
+    "city": "Walla Walla",
+    "state": "WA",
+    "stateCode": "WA",
+    "courseId": "c6f89880-613f-42db-8367-f71b1bc7b170",
+    "matchedName": "Wine Valley Golf Club",
+    "matchedCity": "Walla Walla County",
+    "matchedState": "WA",
+    "confidence": 1.2,
+    "source": "auto",
+    "alternates": [
+      {
+        "id": "08e70297-3a64-44a7-bbeb-2c9e68aa6285",
+        "name": "Tumwater Valley Golf Course",
+        "city": "Tumwater",
+        "state": "WA",
+        "confidence": 0.5
+      },
+      {
+        "id": "60f4492d-8535-4195-93a1-decf68449835",
+        "name": "Tahoma Valley Golf and Country Club",
+        "city": "Yelm",
+        "state": "WA",
+        "confidence": 0.5
+      },
+      {
+        "id": "99f899cd-4b87-41b4-952b-8b233901e10f",
+        "name": "Hangman Valley Golf Course",
+        "city": "Spokane County",
+        "state": "WA",
+        "confidence": 0.5
+      },
+      {
+        "id": "4e56135a-27e8-40b7-9014-5f835fbca052",
+        "name": "Mint Valley Golf Course",
+        "city": "Longview",
+        "state": "WA",
+        "confidence": 0.5
+      }
+    ]
+  },
+  {
+    "rank": 97,
+    "name": "The PFAU Course at Indiana University",
+    "city": "Bloomington",
+    "state": "IN",
+    "stateCode": "IN",
+    "courseId": "bc46c215-fda2-4afe-b7e4-78727e542bfc",
+    "matchedName": "Pfau Indiana University Golf Course",
+    "matchedCity": "Bloomington",
+    "matchedState": "IN",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 98,
+    "name": "Southern Pines Golf Club",
+    "city": "Southern Pines",
+    "state": "NC",
+    "stateCode": "NC",
+    "courseId": "fdc31d26-c49c-49ae-b279-ce042eecdca5",
+    "matchedName": "Southern Pines Golf Club",
+    "matchedCity": "Southern Pines",
+    "matchedState": "NC",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 99,
+    "name": "Reynolds Lake Oconee (Great Waters)",
+    "city": "Eatonton",
+    "state": "GA",
+    "stateCode": "GA",
+    "courseId": "4d77455e-1d1f-4bbc-8ffd-63d96330051e",
+    "matchedName": "Reynolds Great Waters",
+    "matchedCity": "Putnam County",
+    "matchedState": "GA",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  },
+  {
+    "rank": 100,
+    "name": "Bay Harbor Golf Club (Links/Quarry)",
+    "city": "Bay Harbor",
+    "state": "MI",
+    "stateCode": "MI",
+    "courseId": "c4c10379-9b9b-40f5-9b02-d9f5eb3d2c71",
+    "matchedName": "Bay Harbor Golf Club - The Links",
+    "matchedCity": "Bay Harbor",
+    "matchedState": "MI",
+    "confidence": 1,
+    "source": "override",
+    "duplicateOf": null
+  }
+]

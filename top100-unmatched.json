@@ -1,0 +1,108 @@
+[
+  {
+    "rank": 12,
+    "name": "The Lido at Sand Valley",
+    "city": "Nekoosa",
+    "state": "WI",
+    "stateCode": "WI",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 24,
+    "name": "Landmand",
+    "city": "Homer",
+    "state": "NE",
+    "stateCode": "NE",
+    "reason": "no match",
+    "alternates": []
+  },
+  {
+    "rank": 30,
+    "name": "Pinehurst Resort (No. 10)",
+    "city": "Pinehurst",
+    "state": "NC",
+    "stateCode": "NC",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 41,
+    "name": "Pronghorn Club at Juniper Reserve (Nicklaus)",
+    "city": "Bend",
+    "state": "OR",
+    "stateCode": "OR",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 45,
+    "name": "Sea Island Golf Club (Seaside)",
+    "city": "St. Simons Island",
+    "state": "GA",
+    "stateCode": "GA",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 50,
+    "name": "Cabot Citrus Farms (Karoo)",
+    "city": "Brooksville",
+    "state": "FL",
+    "stateCode": "FL",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 51,
+    "name": "Sedge Valley at Sand Valley",
+    "city": "Nekoosa",
+    "state": "WI",
+    "stateCode": "WI",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 57,
+    "name": "Wilderness Club",
+    "city": "Eureka",
+    "state": "MT",
+    "stateCode": "MT",
+    "reason": "no match",
+    "alternates": []
+  },
+  {
+    "rank": 59,
+    "name": "Wolf Creek Golf Club",
+    "city": "Mesquite",
+    "state": "NV",
+    "stateCode": "NV",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 64,
+    "name": "Nemacolin Woodlands Resort & Spa (Mystic Rock)",
+    "city": "Farmington",
+    "state": "PA",
+    "stateCode": "PA",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 81,
+    "name": "Payne's Valley at Big Cedar Lodge",
+    "city": "Hollister",
+    "state": "MO",
+    "stateCode": "MO",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 82,
+    "name": "Mossy Oak Golf Club",
+    "city": "West Point",
+    "state": "MS",
+    "stateCode": "MS",
+    "reason": "not in DB (override)"
+  },
+  {
+    "rank": 90,
+    "name": "The Prairie Club (Pines)",
+    "city": "Valentine",
+    "state": "NE",
+    "stateCode": "NE",
+    "reason": "not in DB (override)"
+  }
+]
