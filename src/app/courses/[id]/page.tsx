@@ -1183,9 +1183,16 @@ const [editDescription, setEditDescription] = useState("");
         </div>
       )}
 
-      {/* Holes grid — Front 9 always; Back 9 only on 18-hole courses */}
-      <div style={{ padding: courseClips.length === 0 ? "0 16px" : "0 16px", maxWidth: isDesktop ? 600 : undefined }}>
-        {courseClips.length === 0 ? (
+      {/* Holes grid — Front 9 always; Back 9 only on 18-hole courses.
+          Show the grid whenever EITHER there are user clips OR we've seeded
+          hole imagery (Aronimink during PGA week, etc). Generic empty state
+          only fires when the course is truly blank. */}
+      {(() => {
+        const hasHoleImagery = holes.some(h => h.imageUrl);
+        const isEmpty = courseClips.length === 0 && !hasHoleImagery;
+        return (
+      <div style={{ padding: "0 16px", maxWidth: isDesktop ? 600 : undefined }}>
+        {isEmpty ? (
           <div style={{ textAlign: "center", padding: "28px 20px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>⛳</div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 900, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>No intel on this course yet.</div>
@@ -1281,6 +1288,8 @@ const [editDescription, setEditDescription] = useState("");
           </div>
         )}
       </div>
+        );
+      })()}
 
       {/* Extended Play — horizontal scroll row */}
       {extendedClips.length > 0 && (
