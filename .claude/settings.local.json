@@ -77,7 +77,12 @@
       "Bash(git stash *)",
       "Bash(cp /tmp/playfair.ttf \"src/app/api/round/[id]/beauty/PlayfairDisplay.ttf\")",
       "Bash(cp /tmp/outfit.ttf \"src/app/api/round/[id]/beauty/Outfit.ttf\")",
-      "Bash(git ls-remote *)"
+      "Bash(git ls-remote *)",
+      "Bash(gh api *)",
+      "PowerShell(gh api repos/coreybgoldstein/tour-it/commits/31e207d0/check-runs 2>&1)",
+      "Bash(python -m json.tool)",
+      "Bash(npx next *)",
+      "Bash(npx vercel@latest inspect dpl_Hrqko9qbFHLuH8C7nAXzKPD7b7eP --logs)"
     ]
   }
 }

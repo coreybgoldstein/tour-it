@@ -1,13 +1,17 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // 1080×1920 shareable beauty shot of an upcoming round. Strava-inspired
 // composition: Tour It mark up top, cover photo as a rounded inset card,
 // course identity + date/time + game block stacked beneath on the Tour It
-// brand green. Bundled Playfair + Outfit fonts (variable .ttf next to this
-// file) so it renders consistently on Vercel edge.
+// brand green. Runs on the Node.js runtime so we can bundle Playfair + Outfit
+// fonts and the Tour It logo as binary assets without hitting the edge
+// function size limit.
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -41,11 +45,15 @@ const H = 1920;
 const FF_OUTFIT = "Outfit, sans-serif";
 const FF_PLAYFAIR = "'Playfair Display', serif";
 
+// Resolve binary assets relative to this module so Next's output-file-tracing
+// copies them next to the bundled function on Vercel.
+const assetPath = (name: string) => fileURLToPath(new URL(`./${name}`, import.meta.url));
+
 async function loadFonts() {
   try {
     const [playfair, outfit] = await Promise.all([
-      fetch(new URL("./PlayfairDisplay.ttf", import.meta.url)).then(r => r.arrayBuffer()),
-      fetch(new URL("./Outfit.ttf", import.meta.url)).then(r => r.arrayBuffer()),
+      readFile(assetPath("PlayfairDisplay.ttf")),
+      readFile(assetPath("Outfit.ttf")),
     ]);
     return [
       { name: "Playfair Display", data: playfair, style: "normal" as const, weight: 900 as const },
@@ -59,13 +67,8 @@ async function loadFonts() {
 
 async function loadLogoDataUrl(): Promise<string | null> {
   try {
-    const buf = await fetch(new URL("./tour-it-logo-full.png", import.meta.url)).then(r => r.arrayBuffer());
-    // base64 encode for use as inline data URL (Satori reliably renders these)
-    const bytes = new Uint8Array(buf);
-    let bin = "";
-    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-    const b64 = typeof btoa === "function" ? btoa(bin) : Buffer.from(bin, "binary").toString("base64");
-    return `data:image/png;base64,${b64}`;
+    const buf = await readFile(assetPath("tour-it-logo-full.png"));
+    return `data:image/png;base64,${buf.toString("base64")}`;
   } catch {
     return null;
   }
