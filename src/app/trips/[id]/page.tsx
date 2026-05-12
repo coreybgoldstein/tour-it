@@ -1144,24 +1144,87 @@ export default function TripPage() {
           .game-format-card:active { opacity: 0.8; }
         `}</style>
 
-        {/* Cover photo — only shown for upcoming rounds. Uses the trip's
-            uploaded image first, then falls back to the round course's cover. */}
-        {isRound && (trip.imageUrl || roundCourse?.coverImageUrl) && (
-          <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", overflow: "hidden", background: "#0d1f12" }}>
-            <img
-              src={(trip.imageUrl || roundCourse?.coverImageUrl) as string}
-              alt={roundCourse?.name ?? trip.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            />
-            {/* Subtle dark gradient at the bottom so the upcoming Edit pill below stays readable */}
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(7,16,10,0.6) 100%)", pointerEvents: "none" }} />
-          </div>
-        )}
+        {/* Round-mode hero — cover photo at the top of the page with course
+            name + date + tee time overlaid. This replaces the separate header
+            card + the When card so course/date/time appears exactly once. */}
+        {isRound && (() => {
+          const cover = trip.imageUrl || roundCourse?.coverImageUrl;
+          const tc = tripCourses[0];
+          const dateLabel = tc?.playDate ? formatDate(tc.playDate) : (trip.startDate ? formatDate(trip.startDate) : null);
+          const teeTimeRaw = tc?.teeTime;
+          const formatTime12 = (t: string) => {
+            const [hh, mm] = t.split(":").map(Number);
+            if (Number.isNaN(hh)) return t;
+            const period = hh >= 12 ? "PM" : "AM";
+            const h12 = hh % 12 || 12;
+            return `${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
+          };
+          return (
+            <div style={{ position: "relative", width: "100%", aspectRatio: cover ? "4/3" : undefined, minHeight: cover ? undefined : 260, overflow: "hidden", background: cover ? "#0d1f12" : "linear-gradient(135deg, #1c4425 0%, #07100a 100%)" }}>
+              {cover && (
+                <img
+                  src={cover}
+                  alt={roundCourse?.name ?? trip.name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              )}
+              {/* Vertical dark scrim — readable text without burying the photo */}
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.30) 0%, rgba(7,16,10,0.35) 45%, rgba(7,16,10,0.92) 100%)", pointerEvents: "none" }} />
 
-        {/* Header */}
+              {/* Edit pill — top-right */}
+              {isOwner && (
+                <button
+                  onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
+                  aria-label="Edit round"
+                  style={{ position: "absolute", top: 14, right: 14, display: "flex", alignItems: "center", gap: 4, background: "rgba(7,16,10,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "6px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.95)", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit
+                </button>
+              )}
+
+              {/* Bottom overlay: course identity + when */}
+              <div style={{ position: "absolute", left: 18, right: 18, bottom: 18, display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)" }}>Upcoming Round</div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
+                  {(roundCourse?.logoUrl) && (
+                    <div style={{ width: 52, height: 52, borderRadius: 12, background: "#fff", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                      <img src={roundCourse.logoUrl} alt={roundCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: roundCourse && roundCourse.name.length > 28 ? 22 : 26, fontWeight: 900, color: "#fff", lineHeight: 1.1, textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+                      {roundCourse?.name ?? trip.name}
+                    </div>
+                    {roundCourse && (roundCourse.city || roundCourse.state) && (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 2, textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}>
+                        {[roundCourse.city, roundCourse.state].filter(Boolean).join(", ")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {(dateLabel || teeTimeRaw) && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 4 }}>
+                    {dateLabel && (
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.6)" }}>{dateLabel}</div>
+                    )}
+                    {teeTimeRaw && (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862", fontWeight: 700, textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}>· {formatTime12(teeTimeRaw)}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Header
+            In round-mode the entire avatar/name/date block is hidden — that
+            content lives on the cover photo overlay above. Only the
+            Members/Chat/Invite row renders so golfers stay one tap away. */}
         <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ padding: "12px 20px 14px" }}>
-            {/* Avatar + name + date inline */}
+          <div style={{ padding: isRound ? "12px 20px" : "12px 20px 14px" }}>
+            {!isRound && (
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
               <div
                 onClick={() => trip.imageUrl && setTripImageExpanded(true)}
@@ -1237,6 +1300,7 @@ export default function TripPage() {
                 )}
               </div>
             </div>
+            )}
 
             {/* Members + chat + invite — centered */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
@@ -1401,39 +1465,11 @@ export default function TripPage() {
             </button>
           )}
 
-          {/* Round-mode: replace the full Itinerary block with a clean "When"
-              card. Course is already shown in the header; this just surfaces
-              date + tee time prominently as the next-most-important detail. */}
-          {isRound && tripCourses[0] ? (() => {
-            const tc = tripCourses[0];
-            const dateLabel = tc.playDate ? formatDate(tc.playDate) : (trip.startDate ? formatDate(trip.startDate) : null);
-            const teeTime = tc.teeTime;
-            const formatTime12 = (t: string) => {
-              const [hh, mm] = t.split(":").map(Number);
-              if (Number.isNaN(hh)) return t;
-              const period = hh >= 12 ? "PM" : "AM";
-              const h12 = hh % 12 || 12;
-              return `${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
-            };
-            return (
-              <button
-                onClick={() => openEditCourse(tc)}
-                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "16px 18px", cursor: "pointer", textAlign: "left" }}
-              >
-                <div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>When</div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>{dateLabel ?? "Set a date"}</div>
-                  {teeTime && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862", fontWeight: 600, marginTop: 4 }}>Tee off at {formatTime12(teeTime)}</div>}
-                </div>
-                {isOwner && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, color: "rgba(77,168,98,0.85)" }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>Edit</span>
-                  </div>
-                )}
-              </button>
-            );
-          })() : tripCourses.length === 0 ? (
+          {/* Round-mode: When block dropped — course/date/time live on the
+              cover photo overlay now. We jump straight from header → Send the
+              Round → Games → Clips. The "Courses" section is fully empty in
+              round-mode (header + button hidden above, this empty here). */}
+          {isRound ? null : tripCourses.length === 0 ? (
             <div style={{ textAlign: "center", padding: "28px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 13, lineHeight: 1.7 }}>
               No courses yet.<br />Tap <span style={{ color: "#4da862" }}>+ Add Course</span> to build your itinerary.
             </div>
