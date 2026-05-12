@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import WebKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,8 +8,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Force the window + root host view + the WKWebView background to white
+        // so iPad never shows a black flash during the remote-URL bootstrap.
+        // (App Store Review rejected the build on iPad Air M3 / iPadOS 26.4.2
+        // because the WebView's empty state painted black before first content.)
+        if let window = self.window {
+            window.backgroundColor = .white
+            window.rootViewController?.view.backgroundColor = .white
+        }
+        DispatchQueue.main.async { [weak self] in
+            self?.applyWhiteBackgroundsRecursively()
+        }
         return true
+    }
+
+    /// Walk the view hierarchy a couple of times and force every WKWebView to
+    /// be white. The view tree isn't fully built at didFinishLaunching, so we
+    /// also re-apply when the app becomes active.
+    private func applyWhiteBackgroundsRecursively() {
+        guard let root = window?.rootViewController?.view else { return }
+        root.backgroundColor = .white
+        func walk(_ v: UIView) {
+            v.backgroundColor = .white
+            if let web = v as? WKWebView {
+                web.isOpaque = true
+                web.backgroundColor = .white
+                web.scrollView.backgroundColor = .white
+            }
+            v.subviews.forEach(walk)
+        }
+        walk(root)
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -26,7 +55,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        // Re-apply white backgrounds once the view tree is guaranteed to be live.
+        applyWhiteBackgroundsRecursively()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

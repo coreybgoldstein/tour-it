@@ -2,14 +2,14 @@
 
 import { useEffect } from "react";
 
-// Tells the native Capacitor splash screen to hide as soon as the React tree
-// has mounted, so the WebView's first paint never exposes a black background
-// before the page is ready. No-op on the web.
-//
-// Belt-and-suspenders: also schedules a defensive 4s timeout in case the
-// initial hide() call somehow doesn't take (e.g. plugin not registered yet).
-// The native config still has launchAutoHide=true with a 5s fallback as a
-// final safety net — same behavior we'd get from a vanilla browser environment.
+// Holds the native Capacitor splash screen up for at least 3 seconds before
+// telling it to hide, so the WebView has time to fully render the home
+// screen on slower devices (e.g. the iPad Air M3 that App Store Review
+// ran the app on — too-fast hide() exposed an empty black WebView). No-op
+// on the web. The native config keeps launchAutoHide at 5s as the final
+// safety net if JS never loads at all.
+const SPLASH_MIN_HOLD_MS = 3000;
+
 export default function HideSplash() {
   useEffect(() => {
     let cancelled = false;
@@ -23,12 +23,13 @@ export default function HideSplash() {
       }
     };
 
-    // Hide right away
-    hide();
-
-    // Defensive: hide again after a tick in case the plugin wasn't ready
-    const t = setTimeout(() => { if (!cancelled) hide(); }, 4000);
-    return () => { cancelled = true; clearTimeout(t); };
+    // Wait at least 3 seconds before hiding the splash so the WebView is
+    // guaranteed to have painted its first frame on iPad. Even if React
+    // mounted immediately, we don't yank the splash early.
+    const t1 = setTimeout(() => { if (!cancelled) hide(); }, SPLASH_MIN_HOLD_MS);
+    // Defensive second call in case the first one missed the plugin
+    const t2 = setTimeout(() => { if (!cancelled) hide(); }, SPLASH_MIN_HOLD_MS + 1500);
+    return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   return null;
