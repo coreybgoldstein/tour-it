@@ -605,104 +605,27 @@ export default function HolePage() {
   const courseAbbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
 
   if (!hasContent) {
-    const holeNumberNow = Number(number);
-    const totalHoles = holeList.length > 0 ? Math.max(...holeList.map(h => h.holeNumber)) : 18;
-    const goToHole = (n: number) => {
-      if (n >= 1 && n <= totalHoles) router.push(`/courses/${id}/holes/${n}`);
-    };
-    // Match the populated-view UX: vertical swipe navigates between holes
-    // (TikTok-style — swipe up for next, swipe down for prev). Since there
-    // are no clips on this hole to scroll through, vertical swipe is repurposed
-    // for hole navigation. Horizontal kept as an extra affordance.
-    const emptyTouchEnd = (e: React.TouchEvent) => {
-      const dx = touchStartX.current - e.changedTouches[0].clientX;
-      const dy = touchStartY.current - e.changedTouches[0].clientY;
-      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 50) {
-        goToHole(dy > 0 ? holeNumberNow + 1 : holeNumberNow - 1);
-      } else if (Math.abs(dx) > 50) {
-        goToHole(dx > 0 ? holeNumberNow + 1 : holeNumberNow - 1);
-      }
-    };
+    // Generic no-content state for courses where we don't have any clips or
+    // seeded official content yet. (Aronimink and any other course where
+    // @tourit has posted intel goes down the regular populated path below.)
     return (
-      <>
-      <main onTouchStart={handleTouchStart} onTouchEnd={emptyTouchEnd} style={{ height: "100dvh", background: "#000", color: "#fff", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+      <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff", display: "flex", flexDirection: "column" }}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap'); *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
-
-        {/* Hero — seeded hole photo when available (e.g. Aronimink during PGA
-            week); falls back to a back-button bar if there's no photo yet. */}
-        {hole?.imageUrl ? (
-          <>
-            <img src={hole.imageUrl} alt={`Hole ${hole.holeNumber}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.45) 0%, rgba(7,16,10,0.10) 35%, rgba(7,16,10,0.85) 100%)" }} />
-
-            {/* Top bar */}
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "36px 14px 12px", zIndex: 20, gap: 10 }}>
-              <button onClick={() => router.back()} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-              </button>
-            </div>
-
-            {/* Right rail — Intel button (description lives here, not on the image) + Upload */}
-            <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 30 }}>
-              <button onClick={() => setIntelOpen(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(77,168,98,0.25)", backdropFilter: "blur(8px)", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                </div>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
-              </button>
-
-              <button onClick={() => router.push(`/upload?courseId=${id}${holeNum ? `&holeNumber=${holeNum}` : ""}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                </div>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>UPLOAD</span>
-              </button>
-            </div>
-
-            {/* Identity overlay at bottom of photo — no description here, that lives in INTEL */}
-            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "0 16px 88px", zIndex: 20 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", marginBottom: 4 }}>{course?.name}</div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 40, fontWeight: 900, color: "#fff", lineHeight: 1, marginBottom: 6, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>Hole {hole.holeNumber}</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)" }}>
-                <span>Par {hole.par}</span>
-                {hole.yardage ? <><span style={{ color: "rgba(255,255,255,0.3)" }}>·</span><span>{hole.yardage} yds</span></> : null}
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <button onClick={() => router.back()} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-              </button>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>{course?.name} — {pageTitle}</span>
-            </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: 32, alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-              <div style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
-              </div>
-              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</p>
-              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>Be the first to upload intel<br/>for {course?.name} — {pageTitle}</p>
-              <button onClick={() => router.push(`/upload?courseId=${id}${holeNum ? `&holeNumber=${holeNum}` : ""}`)} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Upload a clip</button>
-            </div>
-          </>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          <button onClick={() => router.back()} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>{course?.name} — {pageTitle}</span>
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
+          <div style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+          </div>
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</p>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>Be the first to upload intel<br/>for {course?.name} — {pageTitle}</p>
+          <button onClick={() => router.push(`/upload?courseId=${id}${holeNum ? `&holeNumber=${holeNum}` : ""}`)} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Upload a clip</button>
+        </div>
       </main>
-
-      {/* Intel panel — opens with just the course-level hole description.
-          No uploader attribution (we hide that block when uploaderUsername is empty). */}
-      {hole?.imageUrl && (
-        <IntelPanel
-          open={intelOpen}
-          onClose={() => setIntelOpen(false)}
-          holeNumber={hole.holeNumber}
-          holePar={hole.par}
-          holeYardage={hole.yardage}
-          holeDescription={hole.description}
-          uploaderUsername=""
-        />
-      )}
-      </>
     );
   }
 

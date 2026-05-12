@@ -1237,13 +1237,14 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Follow button — right side of band for non-owners */}
-        {!isOwner && currentUserId && (
+        {/* Follow button — right side of band for non-owners.
+            @tourit is a system account, not a real follow target — hide entirely. */}
+        {!isOwner && profile.username !== "tourit" && currentUserId && (
           <button onClick={handleFollow} disabled={followLoading} style={{ flexShrink: 0, padding: "8px 16px", borderRadius: 10, border: isFollowing ? "1px solid rgba(255,255,255,0.15)" : "none", background: isFollowing ? "rgba(255,255,255,0.06)" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: isFollowing ? "rgba(255,255,255,0.6)" : "#fff", cursor: "pointer", opacity: followLoading ? 0.6 : 1 }}>
             {followLoading ? "…" : isFollowing ? "Following" : "Follow"}
           </button>
         )}
-        {!isOwner && !currentUserId && (
+        {!isOwner && profile.username !== "tourit" && !currentUserId && (
           <button onClick={() => router.push("/login")} style={{ flexShrink: 0, padding: "8px 16px", borderRadius: 10, background: "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Follow</button>
         )}
       </div>
