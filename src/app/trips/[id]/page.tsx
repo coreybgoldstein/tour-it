@@ -1160,7 +1160,7 @@ export default function TripPage() {
             return `${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
           };
           return (
-            <div style={{ position: "relative", width: "100%", aspectRatio: cover ? "4/3" : undefined, minHeight: cover ? undefined : 260, overflow: "hidden", background: cover ? "#0d1f12" : "linear-gradient(135deg, #1c4425 0%, #07100a 100%)" }}>
+            <div style={{ position: "relative", width: "100%", aspectRatio: cover ? "16/9" : undefined, minHeight: cover ? undefined : 220, overflow: "hidden", background: cover ? "#0d1f12" : "linear-gradient(135deg, #1c4425 0%, #07100a 100%)" }}>
               {cover && (
                 <img
                   src={cover}
@@ -1204,12 +1204,12 @@ export default function TripPage() {
                   </div>
                 </div>
                 {(dateLabel || teeTimeRaw) && (
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 4 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
                     {dateLabel && (
-                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.6)" }}>{dateLabel}</div>
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.7)", lineHeight: 1 }}>{dateLabel}</div>
                     )}
                     {teeTimeRaw && (
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862", fontWeight: 700, textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}>· {formatTime12(teeTimeRaw)}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, color: "#4da862", fontWeight: 800, textShadow: "0 2px 10px rgba(0,0,0,0.7)", letterSpacing: "0.01em" }}>· {formatTime12(teeTimeRaw)}</div>
                     )}
                   </div>
                 )}
