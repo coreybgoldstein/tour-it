@@ -113,13 +113,26 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     ? (({ nassau: "Nassau", skins: "Skins", match: "Match Play", stroke: "Stroke Play" } as Record<string, string>)[game.format] ?? game.format)
     : null;
 
-  type Player = { displayName: string; netStrokes?: number; courseHandicap?: number; strokeHoles?: number[] };
+  type Player = { displayName: string; avatarUrl?: string | null; netStrokes?: number; courseHandicap?: number; strokeHoles?: number[] };
   const rawPlayers: Player[] = game && Array.isArray(game.players) ? (game.players as unknown as Player[]) : [];
-  const players = rawPlayers.slice(0, 4).map(p => ({
+  const playersTrimmed = rawPlayers.slice(0, 4).map(p => ({
     displayName: p.displayName ?? "Player",
+    avatarUrl: p.avatarUrl ?? null,
     netStrokes: p.netStrokes ?? p.courseHandicap ?? 0,
     strokeHoles: Array.isArray(p.strokeHoles) ? p.strokeHoles : [],
   }));
+  // Fetch and decode all avatars in parallel — failures fall through to initial-letter fallback
+  const avatarImages = await Promise.all(
+    playersTrimmed.map(async p => {
+      if (!p.avatarUrl) return null;
+      try {
+        const buf = await fetchImageBuffer(p.avatarUrl);
+        if (!buf) return null;
+        return await loadImage(buf);
+      } catch { return null; }
+    })
+  );
+  const players = playersTrimmed.map((p, i) => ({ ...p, avatarImg: avatarImages[i] }));
 
   const courseName = course?.name ?? "Course";
   const courseLocation = [course?.city, course?.state].filter(Boolean).join(", ");
@@ -203,11 +216,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   ctx.fillStyle = scrim;
   ctx.fillRect(cardX, cardY, cardW, cardH);
 
-  // Course name + location overlay
-  const courseNameSize = courseName.length > 28 ? 48 : courseName.length > 20 ? 56 : 64;
-  ctx.fillStyle = "#fff";
+  // Course name — auto-shrink the font until the full name fits on one line
+  const courseMaxWidth = cardW - 80;
+  let courseNameSize = 68;
   ctx.font = `900 ${courseNameSize}px Playfair`;
-  ctx.fillText(truncate(courseName, 28), cardX + 40, cardY + cardH - 100);
+  while (ctx.measureText(courseName).width > courseMaxWidth && courseNameSize > 34) {
+    courseNameSize -= 2;
+    ctx.font = `900 ${courseNameSize}px Playfair`;
+  }
+  ctx.fillStyle = "#fff";
+  ctx.fillText(courseName, cardX + 40, cardY + cardH - 100);
 
   ctx.fillStyle = "rgba(255,255,255,0.85)";
   ctx.font = "500 28px Outfit";
@@ -245,50 +263,102 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   ctx.lineTo(W - 60, 1130);
   ctx.stroke();
 
+  // --- Game format label — bright white + flanked by green accent dots ---
   if (formatLabel) {
-    ctx.fillStyle = "rgba(255,255,255,0.55)";
-    ctx.font = "700 26px Outfit";
-    fillTextSpaced(ctx, formatLabel.toUpperCase(), W / 2, 1205, 5, "center");
+    const label = formatLabel.toUpperCase();
+    ctx.font = "900 34px Outfit";
+    ctx.fillStyle = "#fff";
+    fillTextSpaced(ctx, label, W / 2, 1210, 8, "center");
+
+    // measure to place the accent dots on either side
+    const widths = [...label].map(ch => ctx.measureText(ch).width);
+    const total = widths.reduce((a, b) => a + b, 0) + 8 * (label.length - 1);
+    const dotR = 5;
+    ctx.fillStyle = "#4da862";
+    ctx.beginPath();
+    ctx.arc(W / 2 - total / 2 - 28, 1198, dotR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(W / 2 + total / 2 + 28, 1198, dotR, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  // --- Player cards (up to 4) ---
+  // --- Player cards (up to 4) — avatars, bold names, brighter strokes/badges ---
   const cardStartY = 1260;
   const playerCardH = 120;
   const playerCardGap = 12;
   players.forEach((p, i) => {
     const y = cardStartY + i * (playerCardH + playerCardGap);
+
     // card bg
     roundedRect(ctx, 60, y, W - 120, playerCardH, 20);
     ctx.fillStyle = "rgba(255,255,255,0.04)";
     ctx.fill();
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
+    // avatar (circular, 64px)
+    const avatarSize = 64;
+    const avatarX = 90;
+    const avatarY = y + (playerCardH - avatarSize) / 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    if (p.avatarImg) {
+      ctx.drawImage(p.avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+    } else {
+      // initial-letter fallback on a brand-green disc
+      ctx.fillStyle = "#2d7a42";
+      ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 32px Outfit";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText((p.displayName || "?").slice(0, 1).toUpperCase(), avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 2);
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+    }
+    ctx.restore();
+    // hairline ring on the avatar
+    ctx.beginPath();
+    ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,255,255,0.18)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const textX = avatarX + avatarSize + 20;
+
     // name
     ctx.fillStyle = "#fff";
-    ctx.font = "700 32px Outfit";
+    ctx.font = "900 36px Outfit";
     ctx.textBaseline = "alphabetic";
-    ctx.fillText(truncate(p.displayName, 22), 100, y + 50);
+    ctx.fillText(truncate(p.displayName, 18), textX, y + 50);
 
-    // strokes count
+    // strokes count — bigger, brighter
     ctx.fillStyle = "#4da862";
-    ctx.font = "500 22px Outfit";
-    ctx.fillText(`${p.netStrokes} stroke${p.netStrokes === 1 ? "" : "s"}`, 100, y + 88);
+    ctx.font = "700 24px Outfit";
+    ctx.fillText(`${p.netStrokes} stroke${p.netStrokes === 1 ? "" : "s"}`, textX, y + 88);
 
-    // stroke-hole badges (up to 6)
+    // stroke-hole badges (up to 6) — saturated green + white digits + bolder
     const badges = p.strokeHoles.slice(0, 6);
     badges.forEach((hole, j) => {
-      const bx = 700 + j * 50;
-      const by = y + 70;
-      roundedRect(ctx, bx, by, 42, 32, 6);
-      ctx.fillStyle = "rgba(77,168,98,0.9)";
+      const bw = 46;
+      const bh = 36;
+      const bx = (W - 60) - (badges.length - j) * (bw + 6);
+      const by = y + (playerCardH - bh) / 2;
+      roundedRect(ctx, bx, by, bw, bh, 8);
+      ctx.fillStyle = "#4da862";
       ctx.fill();
       ctx.fillStyle = "#07100a";
-      ctx.font = "700 18px Outfit";
+      ctx.font = "900 20px Outfit";
       ctx.textAlign = "center";
-      ctx.fillText(String(hole), bx + 21, by + 22);
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(hole), bx + bw / 2, by + bh / 2 + 1);
       ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
     });
   });
 
