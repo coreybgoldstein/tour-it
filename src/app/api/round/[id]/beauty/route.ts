@@ -6,13 +6,13 @@ import { createClient } from "@supabase/supabase-js";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 1080×1920 share card for an upcoming round. Uses @napi-rs/canvas (skia-based)
-// so we get a real canvas API with registerable TTF fonts. Sharp+SVG didn't
-// work — librsvg can't resolve @font-face from data URLs, text rendered as
-// tofu boxes.
+// 1080×1350 share card for an upcoming round (4:5 portrait — fits iMessage's
+// preview crop natively, so the Tour It mark and footer aren't chopped off).
+// Uses @napi-rs/canvas (skia-based) for a real canvas API with registerable
+// TTF fonts.
 
 const W = 1080;
-const H = 1920;
+const H = 1350;
 
 // ---------- Module-scope font registration ----------
 
@@ -154,28 +154,28 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     ctx.fillRect(0, 0, W, H);
   }
 
-  // --- Tour It logo (top, 130px tall, centered) ---
+  // --- Tour It logo (top, 96px tall, centered) ---
   try {
     const logoImg = await loadImage(LOGO_PATH);
-    const targetH = 130;
+    const targetH = 96;
     const targetW = (logoImg.width / logoImg.height) * targetH;
-    ctx.drawImage(logoImg, (W - targetW) / 2, 80, targetW, targetH);
+    ctx.drawImage(logoImg, (W - targetW) / 2, 56, targetW, targetH);
   } catch {
     // Logo not found — leave blank, eyebrow still anchors the top
   }
 
   // --- Eyebrow "UPCOMING ROUND" below the logo ---
   ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.font = "700 26px Outfit";
+  ctx.font = "700 22px Outfit";
   ctx.textBaseline = "alphabetic";
-  fillTextSpaced(ctx, "UPCOMING ROUND", W / 2, 250, 6, "center");
+  fillTextSpaced(ctx, "UPCOMING ROUND", W / 2, 188, 6, "center");
 
-  // --- Cover photo card at (60, 280) 960×620, rounded 36px ---
+  // --- Cover photo card 960×370, rounded 32px ---
   const cardX = 60;
-  const cardY = 280;
+  const cardY = 218;
   const cardW = 960;
-  const cardH = 620;
-  const cardR = 36;
+  const cardH = 370;
+  const cardR = 32;
 
   ctx.save();
   roundedRect(ctx, cardX, cardY, cardW, cardH, cardR);
@@ -217,58 +217,58 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   ctx.fillRect(cardX, cardY, cardW, cardH);
 
   // Course name — auto-shrink the font until the full name fits on one line
-  const courseMaxWidth = cardW - 80;
-  let courseNameSize = 68;
+  const courseMaxWidth = cardW - 64;
+  let courseNameSize = 60;
   ctx.font = `900 ${courseNameSize}px Playfair`;
-  while (ctx.measureText(courseName).width > courseMaxWidth && courseNameSize > 34) {
+  while (ctx.measureText(courseName).width > courseMaxWidth && courseNameSize > 32) {
     courseNameSize -= 2;
     ctx.font = `900 ${courseNameSize}px Playfair`;
   }
   ctx.fillStyle = "#fff";
-  ctx.fillText(courseName, cardX + 40, cardY + cardH - 100);
+  ctx.fillText(courseName, cardX + 32, cardY + cardH - 78);
 
   ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.font = "500 28px Outfit";
-  ctx.fillText(courseLocation, cardX + 40, cardY + cardH - 50);
+  ctx.font = "500 24px Outfit";
+  ctx.fillText(courseLocation, cardX + 32, cardY + cardH - 36);
 
   ctx.restore();
 
   // Hairline border on the card
   roundedRect(ctx, cardX, cardY, cardW, cardH, cardR);
-  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
   ctx.lineWidth = 2;
   ctx.stroke();
 
   // --- Date ---
   ctx.fillStyle = "#fff";
-  ctx.font = "900 56px Playfair";
+  ctx.font = "900 50px Playfair";
   ctx.textAlign = "center";
-  ctx.fillText(dateLine, W / 2, 985);
+  ctx.fillText(dateLine, W / 2, 665);
   ctx.textAlign = "left";
 
   // --- Tee time ---
   if (teeTime) {
     ctx.fillStyle = "#4da862";
-    ctx.font = "700 34px Outfit";
+    ctx.font = "700 30px Outfit";
     ctx.textAlign = "center";
-    ctx.fillText(`Tee off at ${teeTime}`, W / 2, 1045);
+    ctx.fillText(`Tee off at ${teeTime}`, W / 2, 715);
     ctx.textAlign = "left";
   }
 
-  // --- Game block divider + label ---
-  ctx.strokeStyle = "rgba(255,255,255,0.1)";
+  // --- Thin divider above the game block ---
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(60, 1130);
-  ctx.lineTo(W - 60, 1130);
+  ctx.moveTo(120, 770);
+  ctx.lineTo(W - 120, 770);
   ctx.stroke();
 
   // --- Game format label — bright white + flanked by green accent dots ---
   if (formatLabel) {
     const label = formatLabel.toUpperCase();
-    ctx.font = "900 34px Outfit";
+    ctx.font = "900 30px Outfit";
     ctx.fillStyle = "#fff";
-    fillTextSpaced(ctx, label, W / 2, 1210, 8, "center");
+    fillTextSpaced(ctx, label, W / 2, 820, 8, "center");
 
     // measure to place the accent dots on either side
     const widths = [...label].map(ch => ctx.measureText(ch).width);
@@ -276,31 +276,31 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const dotR = 5;
     ctx.fillStyle = "#4da862";
     ctx.beginPath();
-    ctx.arc(W / 2 - total / 2 - 28, 1198, dotR, 0, Math.PI * 2);
+    ctx.arc(W / 2 - total / 2 - 26, 810, dotR, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(W / 2 + total / 2 + 28, 1198, dotR, 0, Math.PI * 2);
+    ctx.arc(W / 2 + total / 2 + 26, 810, dotR, 0, Math.PI * 2);
     ctx.fill();
   }
 
   // --- Player cards (up to 4) — avatars, bold names, brighter strokes/badges ---
-  const cardStartY = 1260;
-  const playerCardH = 120;
-  const playerCardGap = 12;
+  const cardStartY = 860;
+  const playerCardH = 96;
+  const playerCardGap = 10;
   players.forEach((p, i) => {
     const y = cardStartY + i * (playerCardH + playerCardGap);
 
     // card bg
-    roundedRect(ctx, 60, y, W - 120, playerCardH, 20);
+    roundedRect(ctx, 60, y, W - 120, playerCardH, 18);
     ctx.fillStyle = "rgba(255,255,255,0.04)";
     ctx.fill();
     ctx.strokeStyle = "rgba(255,255,255,0.10)";
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // avatar (circular, 64px)
-    const avatarSize = 64;
-    const avatarX = 90;
+    // avatar (circular, 56px)
+    const avatarSize = 56;
+    const avatarX = 86;
     const avatarY = y + (playerCardH - avatarSize) / 2;
     ctx.save();
     ctx.beginPath();
@@ -314,7 +314,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       ctx.fillStyle = "#2d7a42";
       ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
       ctx.fillStyle = "#fff";
-      ctx.font = "900 32px Outfit";
+      ctx.font = "900 28px Outfit";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText((p.displayName || "?").slice(0, 1).toUpperCase(), avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 2);
@@ -329,31 +329,31 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    const textX = avatarX + avatarSize + 20;
+    const textX = avatarX + avatarSize + 18;
 
     // name
     ctx.fillStyle = "#fff";
-    ctx.font = "900 36px Outfit";
+    ctx.font = "900 30px Outfit";
     ctx.textBaseline = "alphabetic";
-    ctx.fillText(truncate(p.displayName, 18), textX, y + 50);
+    ctx.fillText(truncate(p.displayName, 18), textX, y + 42);
 
-    // strokes count — bigger, brighter
+    // strokes count
     ctx.fillStyle = "#4da862";
-    ctx.font = "700 24px Outfit";
-    ctx.fillText(`${p.netStrokes} stroke${p.netStrokes === 1 ? "" : "s"}`, textX, y + 88);
+    ctx.font = "700 20px Outfit";
+    ctx.fillText(`${p.netStrokes} stroke${p.netStrokes === 1 ? "" : "s"}`, textX, y + 74);
 
     // stroke-hole badges (up to 6) — saturated green + white digits + bolder
     const badges = p.strokeHoles.slice(0, 6);
     badges.forEach((hole, j) => {
-      const bw = 46;
-      const bh = 36;
-      const bx = (W - 60) - (badges.length - j) * (bw + 6);
+      const bw = 40;
+      const bh = 32;
+      const bx = (W - 80) - (badges.length - j) * (bw + 6);
       const by = y + (playerCardH - bh) / 2;
-      roundedRect(ctx, bx, by, bw, bh, 8);
+      roundedRect(ctx, bx, by, bw, bh, 7);
       ctx.fillStyle = "#4da862";
       ctx.fill();
       ctx.fillStyle = "#07100a";
-      ctx.font = "900 20px Outfit";
+      ctx.font = "900 18px Outfit";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String(hole), bx + bw / 2, by + bh / 2 + 1);
@@ -363,16 +363,23 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   });
 
   // --- Footer ---
-  ctx.strokeStyle = "rgba(255,255,255,0.1)";
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(60, 1820);
-  ctx.lineTo(W - 60, 1820);
+  ctx.moveTo(120, 1268);
+  ctx.lineTo(W - 120, 1268);
   ctx.stroke();
 
   ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.font = "700 22px Outfit";
-  fillTextSpaced(ctx, "SCOUT BEFORE YOU PLAY · TOURITGOLF.COM", W / 2, 1870, 4, "center");
+  ctx.font = "700 20px Outfit";
+  fillTextSpaced(ctx, "SCOUT BEFORE YOU PLAY · TOURITGOLF.COM", W / 2, 1305, 4, "center");
+
+  // --- Aesthetic inset frame border (subtle Tour-It-green hairline) ---
+  const borderInset = 18;
+  roundedRect(ctx, borderInset, borderInset, W - borderInset * 2, H - borderInset * 2, 28);
+  ctx.strokeStyle = "rgba(77,168,98,0.45)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
   const png = await canvas.encode("png");
 
