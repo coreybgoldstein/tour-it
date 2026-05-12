@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 
 type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
+type FriendRow = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
 
 type TripRow = {
   id: string;
@@ -71,6 +72,28 @@ export default function TeeUpPage() {
   const [quickSaving, setQuickSaving] = useState(false);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Friend-invite state for the Quick Round sheet
+  const [friendSearch, setFriendSearch] = useState("");
+  const [friendResults, setFriendResults] = useState<FriendRow[]>([]);
+  const [invitedFriends, setInvitedFriends] = useState<FriendRow[]>([]);
+  const friendDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced friend search — pull from the User table
+  useEffect(() => {
+    if (!friendSearch.trim()) { setFriendResults([]); return; }
+    if (friendDebounce.current) clearTimeout(friendDebounce.current);
+    friendDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("User")
+        .select("id, username, displayName, avatarUrl")
+        .ilike("username", `%${friendSearch.trim()}%`)
+        .limit(8);
+      const invitedIds = new Set(invitedFriends.map(f => f.id));
+      setFriendResults(((data ?? []) as FriendRow[]).filter(u => !invitedIds.has(u.id) && u.id !== userId));
+    }, 220);
+  }, [friendSearch, invitedFriends, userId]);
+
   // Debounced course search for the Quick Round sheet
   useEffect(() => {
     if (!quickSearch.trim() || quickCourse) { setQuickResults([]); return; }
@@ -123,6 +146,34 @@ export default function TeeUpPage() {
       updatedAt: now,
     });
 
+    // Add invited friends as trip members + send each a notification
+    if (invitedFriends.length > 0) {
+      await supabase.from("GolfTripMember").insert(
+        invitedFriends.map(f => ({
+          id: crypto.randomUUID(),
+          tripId,
+          userId: f.id,
+          role: "member",
+          createdAt: now,
+        }))
+      );
+      const { data: inviterProfile } = await supabase.from("User").select("displayName, username").eq("id", userId).single();
+      const inviterName = inviterProfile?.displayName || inviterProfile?.username || "Someone";
+      await supabase.from("Notification").insert(
+        invitedFriends.map(f => ({
+          id: crypto.randomUUID(),
+          userId: f.id,
+          type: "trip_invite",
+          title: "You've been invited!",
+          body: `${inviterName} added you to "${tripName}"`,
+          linkUrl: `/trips/${tripId}`,
+          read: false,
+          createdAt: now,
+          updatedAt: now,
+        }))
+      );
+    }
+
     // +50 pts award (same hook the long-form trip create uses)
     fetch("/api/points/award", {
       method: "POST",
@@ -137,6 +188,9 @@ export default function TeeUpPage() {
     setQuickTime("");
     setQuickSearch("");
     setQuickResults([]);
+    setInvitedFriends([]);
+    setFriendSearch("");
+    setFriendResults([]);
     router.push(`/trips/${tripId}`);
   }
 
@@ -342,13 +396,13 @@ export default function TeeUpPage() {
       {quickOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => { if (!quickSaving) setQuickOpen(false); }}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "14px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "92vh", overflowY: "auto" }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "14px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "92dvh", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 16px" }} />
 
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 2 }}>Quick Round</div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>Schedule a Round</div>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>Pick a course + a day. Invite friends and set up a game on the next screen.</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>Pick a course, a day, and friends to play with. Games get added on the round's page.</div>
             </div>
 
             {/* Course picker */}
@@ -417,16 +471,93 @@ export default function TeeUpPage() {
               </div>
             </div>
 
+            {/* Friends (optional) */}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>
+                Players <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
+              </div>
+
+              {/* Selected friends chips */}
+              {invitedFriends.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                  {invitedFriends.map(f => (
+                    <button key={f.id} onClick={() => setInvitedFriends(prev => prev.filter(x => x.id !== f.id))} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 99, padding: "4px 9px 4px 4px", cursor: "pointer" }}>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.3)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {f.avatarUrl
+                          ? <img src={f.avatarUrl} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        }
+                      </div>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>{f.username}</span>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Friend search input */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "10px 12px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input
+                  value={friendSearch}
+                  onChange={e => setFriendSearch(e.target.value)}
+                  placeholder="Add friends by username"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff" }}
+                />
+              </div>
+              {friendResults.length > 0 && (
+                <div style={{ marginTop: 6, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, maxHeight: 200, overflowY: "auto" }}>
+                  {friendResults.map(f => (
+                    <button key={f.id} onClick={() => { setInvitedFriends(prev => [...prev, f]); setFriendSearch(""); setFriendResults([]); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", textAlign: "left" }}>
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.3)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {f.avatarUrl
+                          ? <img src={f.avatarUrl} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        }
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.displayName || f.username}</div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{f.username}</div>
+                      </div>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", letterSpacing: "0.04em", textTransform: "uppercase", flexShrink: 0 }}>Add</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Invite a friend who's not on Tour It */}
+              <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Don't see your friend?</span>
+                <button
+                  onClick={() => {
+                    const msg = `Join me on Tour It! Sign up at touritgolf.com — we're playing${quickCourse ? ` ${quickCourse.name}` : " a round"}${quickDate ? ` on ${new Date(quickDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}.`;
+                    if (typeof navigator !== "undefined" && navigator.share) {
+                      navigator.share({ title: "Join me on Tour It", text: msg }).catch(() => {});
+                    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+                      navigator.clipboard.writeText(msg).catch(() => {});
+                    }
+                  }}
+                  style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(77,168,98,0.85)", letterSpacing: "0.04em" }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Invite to Tour It
+                </button>
+              </div>
+            </div>
+
             {/* Save */}
             <button
               onClick={submitQuickRound}
               disabled={!quickCourse || !quickDate || quickSaving}
               style={{ width: "100%", background: (!quickCourse || !quickDate || quickSaving) ? "rgba(45,122,66,0.4)" : "#2d7a42", border: "none", borderRadius: 14, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: (!quickCourse || !quickDate || quickSaving) ? "not-allowed" : "pointer", letterSpacing: "0.02em", boxShadow: (!quickCourse || !quickDate || quickSaving) ? "none" : "0 4px 16px rgba(45,122,66,0.4)" }}
             >
-              {quickSaving ? "Saving…" : "Schedule Round → Invite & Add Game"}
+              {quickSaving ? "Saving…" : invitedFriends.length > 0 ? `Schedule Round + Invite ${invitedFriends.length}` : "Schedule Round"}
             </button>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.32)", textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
-              Players, games, and accommodations get added on the round's page next.
+              Games and accommodations get added on the round's page next.
             </div>
           </div>
         </div>
