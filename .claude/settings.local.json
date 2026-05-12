@@ -84,7 +84,9 @@
       "Bash(npx next *)",
       "Bash(npx vercel@latest inspect dpl_Hrqko9qbFHLuH8C7nAXzKPD7b7eP --logs)",
       "Bash(grep -oE \"\\(Error|error|Cannot|ENOENT\\)[^<]{0,200}\" /tmp/err.html)",
-      "Bash(xargs -I{} du -k {})"
+      "Bash(xargs -I{} du -k {})",
+      "Bash(mv \"src/app/api/round/[id]/beauty/PlayfairDisplay.ttf\" public/fonts/)",
+      "Bash(mv \"src/app/api/round/[id]/beauty/Outfit.ttf\" public/fonts/)"
     ]
   }
 }

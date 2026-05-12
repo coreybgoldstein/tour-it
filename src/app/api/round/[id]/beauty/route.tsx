@@ -6,9 +6,8 @@ export const runtime = "edge";
 // 1080×1920 shareable beauty shot of an upcoming round. Strava-inspired
 // composition: Tour It mark up top, cover photo as a rounded inset card,
 // course identity + date/time + game block stacked beneath on the Tour It
-// brand green. Fonts are bundled next to this file (variable .ttf). The Tour
-// It logo lives in /public and is fetched at request time + inlined as a data
-// URL so the edge function bundle stays under the 1MB compressed limit.
+// brand green. Fonts + logo live in /public and are fetched at request time so
+// they don't count against the edge function bundle limit.
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -42,12 +41,14 @@ const H = 1920;
 const FF_OUTFIT = "Outfit, sans-serif";
 const FF_PLAYFAIR = "'Playfair Display', serif";
 
-async function loadFonts() {
+async function loadFonts(origin: string) {
   try {
-    const [playfair, outfit] = await Promise.all([
-      fetch(new URL("./PlayfairDisplay.ttf", import.meta.url)).then(r => r.arrayBuffer()),
-      fetch(new URL("./Outfit.ttf", import.meta.url)).then(r => r.arrayBuffer()),
+    const [pfRes, ofRes] = await Promise.all([
+      fetch(`${origin}/fonts/PlayfairDisplay.ttf`),
+      fetch(`${origin}/fonts/Outfit.ttf`),
     ]);
+    if (!pfRes.ok || !ofRes.ok) return [];
+    const [playfair, outfit] = await Promise.all([pfRes.arrayBuffer(), ofRes.arrayBuffer()]);
     return [
       { name: "Playfair Display", data: playfair, style: "normal" as const, weight: 900 as const },
       { name: "Outfit", data: outfit, style: "normal" as const, weight: 500 as const },
@@ -102,7 +103,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       sb.from("GolfTripCourse").select("courseId, playDate, teeTime").eq("tripId", id),
       sb.from("GolfTripMember").select("userId").eq("tripId", id),
       sb.from("TripGame").select("format, players").eq("tripId", id).order("createdAt", { ascending: false }).limit(1),
-      loadFonts(),
+      loadFonts(origin),
       loadLogoDataUrl(origin),
     ]);
     const trip = tripRes.data;
