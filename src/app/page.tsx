@@ -18,6 +18,7 @@ import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { rateLimit } from "@/lib/rateLimit";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
+import { activeFeaturedTournament, type FeaturedTournament } from "@/lib/pgaChampionship";
 
 type TrendingCourse = {
   id: string;
@@ -162,16 +163,18 @@ function LeaderboardsButtonInline() {
 }
 
 
-function CourseCard({ course, onClick, compact }: { course: TrendingCourse; onClick: () => void; compact?: boolean }) {
+function CourseCard({ course, onClick, compact, featured }: { course: TrendingCourse; onClick: () => void; compact?: boolean; featured?: FeaturedTournament | null }) {
   const h = compact ? 174 : 188;
   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+  const GOLD = "#d4a017";
   return (
     <div
       onClick={onClick}
       style={{
         width: 148, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
         cursor: "pointer", position: "relative", background: "rgba(10,28,18,0.95)",
-        border: "1px solid rgba(26,158,66,0.12)",
+        border: featured ? `1.5px solid ${GOLD}` : "1px solid rgba(26,158,66,0.12)",
+        boxShadow: featured ? "0 0 0 1px rgba(212,160,23,0.25), 0 0 14px rgba(212,160,23,0.22)" : undefined,
       }}
     >
       {course.coverImageUrl && (
@@ -189,14 +192,44 @@ function CourseCard({ course, onClick, compact }: { course: TrendingCourse; onCl
         </div>
       )}
 
+      {/* PGA Championship badge — top-right corner of the thumbnail.
+          Tries the tournament logo asset; falls back to a gold text crest
+          when the image isn't present in /public yet. */}
+      {featured && (
+        <div style={{ position: "absolute", top: 6, right: 6, width: 36, height: 36, borderRadius: 8, background: "#fff", border: `1.5px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.35)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={featured.logoSrc}
+            alt={featured.label}
+            style={{ width: "100%", height: "100%", objectFit: "contain" }}
+            onError={(e) => {
+              // No logo asset yet → swap the <img> for a gold text crest
+              const el = e.currentTarget as HTMLImageElement;
+              const parent = el.parentElement;
+              if (parent && !parent.dataset.fallback) {
+                parent.dataset.fallback = "1";
+                parent.innerHTML = `<div style="font-family:'Outfit',sans-serif;font-size:9px;font-weight:900;color:${GOLD};line-height:1;letter-spacing:0.04em;text-align:center"><div>PGA</div><div style="margin-top:2px;font-size:7px">2026</div></div>`;
+              }
+            }}
+          />
+        </div>
+      )}
+
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 10px 12px" }}>
+        {featured && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: GOLD, borderRadius: 99, padding: "2px 7px", marginBottom: 4 }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 800, color: "#0a1d10", letterSpacing: "0.06em" }}>
+              {featured.label.toUpperCase()} · {featured.datesPill}
+            </span>
+          </div>
+        )}
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#fff", lineHeight: 1.35, marginBottom: 3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
           {course.name}
         </div>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.35)" }}>
           {[course.city, course.state].filter(s => s?.trim()).join(", ")}
         </div>
-        {course.uploadCount > 0 && (
+        {course.uploadCount > 0 && !featured && (
           <div style={{ marginTop: 5, display: "inline-flex", alignItems: "center", background: "rgba(26,158,66,0.18)", borderRadius: 99, padding: "2px 8px" }}>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "#1a9e42" }}>{course.uploadCount} clips</span>
           </div>
@@ -658,16 +691,35 @@ export default function Home() {
       }
     });
 
-    supabase
-      .from("Course")
-      .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
-      .gt("uploadCount", 0)
-      .limit(40)
-      .then(({ data }) => {
-        if (!data) return;
-        const shuffled = [...data].sort(() => Math.random() - 0.5);
-        setTrendingCourses(shuffled.slice(0, 10));
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("Course")
+        .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
+        .gt("uploadCount", 0)
+        .limit(40);
+      if (!data) return;
+      const shuffled = [...data].sort(() => Math.random() - 0.5);
+      let picked = shuffled.slice(0, 10);
+
+      // During tournament week, anchor the featured course (e.g. PGA Aronimink)
+      // to the first position. Falls back gracefully if it's already in the
+      // list (move to front) or not yet in trending (fetch it directly).
+      const featured = activeFeaturedTournament();
+      if (featured) {
+        const already = picked.find(c => c.id === featured.courseId);
+        if (already) {
+          picked = [already, ...picked.filter(c => c.id !== featured.courseId)];
+        } else {
+          const { data: fc } = await supabase
+            .from("Course")
+            .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
+            .eq("id", featured.courseId)
+            .maybeSingle();
+          if (fc) picked = [fc, ...picked.slice(0, 9)];
+        }
+      }
+      setTrendingCourses(picked);
+    })();
 
     async function loadFeed() {
       let seenIds: Set<string>;
@@ -1232,10 +1284,14 @@ export default function Home() {
             </div>
           )}
 
-          {/* Popular courses — dedupe against near me */}
+          {/* Popular courses — dedupe against near me. Active featured
+              tournament (e.g. PGA Championship at Aronimink) keeps its spot
+              even when it would dedupe against the near-me row, and is shown
+              first with a gold-framed treatment. */}
           {(() => {
+            const featured = activeFeaturedTournament();
             const nearMeIds = new Set(nearMeCourses.map(c => c.id));
-            const deduped = trendingCourses.filter(c => !nearMeIds.has(c.id));
+            const deduped = trendingCourses.filter(c => !nearMeIds.has(c.id) || c.id === featured?.courseId);
             return (
               <div style={{ flexShrink: 0 }}>
                 <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
@@ -1243,7 +1299,13 @@ export default function Home() {
                 </div>
                 <div className="courses-row">
                   {deduped.length > 0 ? deduped.map(course => (
-                    <CourseCard key={course.id} course={course} onClick={() => router.push(`/courses/${course.id}`)} compact />
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      onClick={() => router.push(`/courses/${course.id}`)}
+                      compact
+                      featured={featured && course.id === featured.courseId ? featured : null}
+                    />
                   )) : [1, 2, 3].map(i => (
                     <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
