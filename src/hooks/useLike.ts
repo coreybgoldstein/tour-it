@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { computeRankScore } from "@/lib/rankScore";
 
 type UseLikeOptions = {
   uploadId: string;
@@ -17,6 +16,12 @@ type UseLikeReturn = {
   loading: boolean;
 };
 
+// Source-of-truth like hook. All mutation goes through /api/likes/toggle which
+// upserts the Like row, then recomputes Upload.likeCount from COUNT(Like) on
+// the server. Client never does read-modify-write on the counter — that was
+// the root cause of stale counts. UI updates optimistically and reverts on
+// error so a network failure can never strand the user in a "liked but not
+// saved" state.
 export function useLike({ uploadId, initialLikeCount }: UseLikeOptions): UseLikeReturn {
   const router = useRouter();
   const [liked, setLiked] = useState(false);
@@ -25,112 +30,67 @@ export function useLike({ uploadId, initialLikeCount }: UseLikeOptions): UseLike
   const [userId, setUserId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
-  // Check if user has liked this upload on mount
+  // Hydrate the user's current like status on mount. maybeSingle() returns
+  // null on no row instead of throwing — single() was logging an error every
+  // time someone viewed an unliked clip.
   useEffect(() => {
     const supabase = createClient();
-
-    async function checkLikeStatus() {
+    let cancelled = false;
+    (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      
+      if (cancelled) return;
       if (user) {
         setUserId(user.id);
-        
-        const { data: existingLike } = await supabase
+        const { data } = await supabase
           .from("Like")
           .select("id")
           .eq("userId", user.id)
           .eq("uploadId", uploadId)
-          .single();
-
-        if (existingLike) {
-          setLiked(true);
-        }
+          .maybeSingle();
+        if (!cancelled) setLiked(!!data);
       }
-      
-      setInitialized(true);
-    }
-
-    checkLikeStatus();
+      if (!cancelled) setInitialized(true);
+    })();
+    return () => { cancelled = true; };
   }, [uploadId]);
 
   const toggleLike = useCallback(async () => {
     if (loading) return;
-
-    // If not logged in, redirect to login
     if (!userId) {
       router.push("/login");
       return;
     }
 
+    const wasLiked = liked;
+    const previousCount = likeCount;
+
+    // Optimistic update — flip immediately so the heart animates without
+    // waiting on the network. We'll revert if the server call fails.
+    setLiked(!wasLiked);
+    setLikeCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
     setLoading(true);
-    const supabase = createClient();
 
     try {
-      // Fetch createdAt + commentCount for rankScore recalc
-      const { data: uploadMeta } = await supabase
-        .from("Upload")
-        .select("createdAt, commentCount")
-        .eq("id", uploadId)
-        .single();
-
-      if (liked) {
-        await supabase.from("Like").delete().eq("userId", userId).eq("uploadId", uploadId);
-        const newLikeCount = Math.max(0, likeCount - 1);
-        const newRank = uploadMeta
-          ? computeRankScore(newLikeCount, uploadMeta.commentCount || 0, uploadMeta.createdAt)
-          : undefined;
-        await supabase.from("Upload").update({
-          likeCount: newLikeCount,
-          ...(newRank !== undefined && { rankScore: newRank }),
-        }).eq("id", uploadId);
-        setLiked(false);
-        setLikeCount(prev => Math.max(0, prev - 1));
-        // Award unlike_received to clip owner (fire-and-forget)
-        const { data: owner } = await supabase.from("Upload").select("userId").eq("id", uploadId).maybeSingle();
-        if (owner?.userId && owner.userId !== userId) {
-          fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "unlike_received", recipientUserId: owner.userId, referenceId: uploadId }) }).catch(() => {});
-        }
-      } else {
-        await supabase.from("Like").insert({
-          id: crypto.randomUUID(),
-          userId,
-          uploadId,
-          createdAt: new Date().toISOString(),
-        });
-        const newLikeCount = likeCount + 1;
-        const newRank = uploadMeta
-          ? computeRankScore(newLikeCount, uploadMeta.commentCount || 0, uploadMeta.createdAt)
-          : undefined;
-        await supabase.from("Upload").update({
-          likeCount: newLikeCount,
-          ...(newRank !== undefined && { rankScore: newRank }),
-        }).eq("id", uploadId);
-        setLiked(true);
-        setLikeCount(prev => prev + 1);
-
-        // Award like_received points to clip owner + milestone notifications
-        const { data: upload } = await supabase.from("Upload").select("userId, courseId, holeNumber").eq("id", uploadId).single();
-        if (upload && upload.userId !== userId) {
-          fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "like_received", recipientUserId: upload.userId, referenceId: uploadId }) }).catch(() => {});
-          const milestones = [10, 100, 1000];
-          const milestoneAction: Record<number, string> = { 10: "milestone_10_likes", 100: "milestone_100_likes", 1000: "milestone_1000_likes" };
-          if (milestones.includes(newLikeCount)) {
-            const now = new Date().toISOString();
-            const linkUrl = upload.holeNumber ? `/courses/${upload.courseId}/holes/${upload.holeNumber}?clip=${uploadId}` : `/courses/${upload.courseId}`;
-            const body = `Your clip hit ${newLikeCount.toLocaleString()} likes 🎯`;
-            await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: upload.userId, type: "like_milestone", title: `${newLikeCount} likes!`, body, linkUrl, read: false, createdAt: now, updatedAt: now });
-            fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "like_milestone", recipientUserId: upload.userId, referenceId: uploadId, likeCount: newLikeCount }) }).catch(() => {});
-            fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: milestoneAction[newLikeCount], recipientUserId: upload.userId, referenceId: uploadId }) }).catch(() => {});
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error toggling like:", error);
-      // Revert optimistic update would go here if needed
+      const res = await fetch("/api/likes/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uploadId, action: wasLiked ? "unlike" : "like" }),
+      });
+      if (!res.ok) throw new Error(`toggle failed: ${res.status}`);
+      const data: { liked: boolean; likeCount: number } = await res.json();
+      // Sync to the server's authoritative values. If two users liked nearly
+      // simultaneously the count may be different from our optimistic +1.
+      setLiked(data.liked);
+      setLikeCount(data.likeCount);
+    } catch (err) {
+      // Revert optimistic update so UI matches the server
+      setLiked(wasLiked);
+      setLikeCount(previousCount);
+      console.error("Like toggle failed:", err);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-  }, [liked, likeCount, loading, uploadId, userId]);
+  }, [liked, likeCount, loading, uploadId, userId, router]);
 
   return {
     liked,
