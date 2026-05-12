@@ -1,17 +1,14 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
-import { readFile } from "fs/promises";
-import { fileURLToPath } from "url";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 // 1080×1920 shareable beauty shot of an upcoming round. Strava-inspired
 // composition: Tour It mark up top, cover photo as a rounded inset card,
 // course identity + date/time + game block stacked beneath on the Tour It
-// brand green. Runs on the Node.js runtime so we can bundle Playfair + Outfit
-// fonts and the Tour It logo as binary assets without hitting the edge
-// function size limit.
+// brand green. Fonts are bundled next to this file (variable .ttf). The Tour
+// It logo lives in /public and is fetched at request time + inlined as a data
+// URL so the edge function bundle stays under the 1MB compressed limit.
 
 function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -45,15 +42,11 @@ const H = 1920;
 const FF_OUTFIT = "Outfit, sans-serif";
 const FF_PLAYFAIR = "'Playfair Display', serif";
 
-// Resolve binary assets relative to this module so Next's output-file-tracing
-// copies them next to the bundled function on Vercel.
-const assetPath = (name: string) => fileURLToPath(new URL(`./${name}`, import.meta.url));
-
 async function loadFonts() {
   try {
     const [playfair, outfit] = await Promise.all([
-      readFile(assetPath("PlayfairDisplay.ttf")),
-      readFile(assetPath("Outfit.ttf")),
+      fetch(new URL("./PlayfairDisplay.ttf", import.meta.url)).then(r => r.arrayBuffer()),
+      fetch(new URL("./Outfit.ttf", import.meta.url)).then(r => r.arrayBuffer()),
     ]);
     return [
       { name: "Playfair Display", data: playfair, style: "normal" as const, weight: 900 as const },
@@ -65,10 +58,19 @@ async function loadFonts() {
   }
 }
 
-async function loadLogoDataUrl(): Promise<string | null> {
+// Pull the Tour It logo from /public at request time and inline as a data URL.
+// Doing it here (rather than bundling next to the route) keeps us under the
+// edge function's 1MB compressed bundle limit, and inlining as data: makes
+// Satori render it deterministically (its own image fetch is flaky).
+async function loadLogoDataUrl(origin: string): Promise<string | null> {
   try {
-    const buf = await readFile(assetPath("tour-it-logo-full.png"));
-    return `data:image/png;base64,${buf.toString("base64")}`;
+    const res = await fetch(`${origin}/tour-it-logo-full.png`);
+    if (!res.ok) return null;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    let bin = "";
+    for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+    const b64 = typeof btoa === "function" ? btoa(bin) : Buffer.from(bin, "binary").toString("base64");
+    return `data:image/png;base64,${b64}`;
   } catch {
     return null;
   }
@@ -101,7 +103,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       sb.from("GolfTripMember").select("userId").eq("tripId", id),
       sb.from("TripGame").select("format, players").eq("tripId", id).order("createdAt", { ascending: false }).limit(1),
       loadFonts(),
-      loadLogoDataUrl(),
+      loadLogoDataUrl(origin),
     ]);
     const trip = tripRes.data;
     const tcRows = tcRes.data;
