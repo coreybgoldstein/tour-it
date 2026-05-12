@@ -1047,6 +1047,59 @@ export default function TripPage() {
     );
   }
 
+  // Round-mode = a 1-day, 1-course, 1-stop trip created via Quick Round.
+  // The page UI adapts: eyebrow says "Upcoming Round", Ryder Cup banner hides
+  // (rounds are too short for it), the Itinerary section header drops, Add
+  // Course button hides (already have the one course), header icon swaps to
+  // the course logo, and a Clone button appears so the user can spin off
+  // another round with the same course/players.
+  const isRound = tripCourses.length === 1
+    && !tripCourses[0]?.secondaryCourseId
+    && !!trip.startDate && !!trip.endDate
+    && trip.startDate === trip.endDate;
+  const roundCourse = isRound ? tripCourses[0]?.course : null;
+
+  async function cloneAsNewRound() {
+    if (!isRound || !roundCourse || !user?.id) return;
+    const supabase = createClient();
+    const newTripId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const today = new Date().toISOString().slice(0, 10);
+    const niceDate = new Date(today + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    await supabase.from("GolfTrip").insert({
+      id: newTripId,
+      name: `${roundCourse.name} — ${niceDate}`,
+      createdBy: user.id,
+      startDate: today,
+      endDate: today,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await supabase.from("GolfTripMember").insert({
+      id: crypto.randomUUID(),
+      tripId: newTripId,
+      userId: user.id,
+      role: "owner",
+      createdAt: now,
+    });
+    await supabase.from("GolfTripCourse").insert({
+      id: crypto.randomUUID(),
+      tripId: newTripId,
+      courseId: roundCourse.id,
+      playDate: today,
+      teeTime: tripCourses[0]?.teeTime ?? null,
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+    fetch("/api/points/award", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create_trip", referenceId: newTripId }),
+    }).catch(() => {});
+    router.push(`/trips/${newTripId}`);
+  }
+
   const primaryCourseId = tripCourses[0]?.courseId;
 
   return (
@@ -1085,12 +1138,14 @@ export default function TripPage() {
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
               <div
                 onClick={() => trip.imageUrl && setTripImageExpanded(true)}
-                style={{ width: 66, height: 66, borderRadius: 16, flexShrink: 0, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: trip.imageUrl ? "pointer" : "default" }}
+                style={{ width: 66, height: 66, borderRadius: 16, flexShrink: 0, overflow: "hidden", background: trip.imageUrl || (isRound && roundCourse?.logoUrl) ? "#fff" : "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: trip.imageUrl ? "pointer" : "default" }}
               >
                 {uploadingImage ? (
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>...</div>
                 ) : trip.imageUrl ? (
                   <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : isRound && roundCourse?.logoUrl ? (
+                  <img src={roundCourse.logoUrl} alt={roundCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
                 )}
@@ -1099,16 +1154,31 @@ export default function TripPage() {
 
               <div style={{ flex: 1, minWidth: 0, paddingTop: 3 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 3 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>Golf Trip</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{isRound ? "Upcoming Round" : "Golf Trip"}</div>
                   {isOwner && (
-                    <button
-                      onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
-                      aria-label="Edit trip"
-                      style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
-                    >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                      {isRound && (
+                        <button
+                          onClick={cloneAsNewRound}
+                          aria-label="Clone this round"
+                          style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer" }}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="9" y="9" width="12" height="12" rx="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                          </svg>
+                          Clone
+                        </button>
+                      )}
+                      <button
+                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
+                        aria-label="Edit trip"
+                        style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
+                      >
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       Edit
                     </button>
+                    </div>
                   )}
                 </div>
                 <div
@@ -1166,8 +1236,8 @@ export default function TripPage() {
           </div>
         </div>
 
-        {/* ── Ryder Cup ────────────────────────────────────────────────── */}
-        {trip.ryderCupEnabled ? (
+        {/* ── Ryder Cup — hidden in round-mode (a single-day round is too short for it) */}
+        {!isRound && (trip.ryderCupEnabled ? (
           <RyderCupHero
             trip={trip}
             members={members}
@@ -1225,11 +1295,15 @@ export default function TripPage() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(212,160,23,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
               </button>
             </div>
-          )
+          ))
         )}
 
         {/* Courses */}
         <div style={{ padding: "16px 20px 0" }}>
+          {/* Section header + Add Course button are hidden in round-mode —
+              the course is already chosen and a round only has one stop, so
+              the section reduces to just the course card itself. */}
+          {!isRound && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>
               Itinerary
@@ -1254,6 +1328,7 @@ export default function TripPage() {
               Add Course
             </button>
           </div>
+          )}
 
           {tripCourses.length === 0 ? (
             <div style={{ textAlign: "center", padding: "28px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 13, lineHeight: 1.7 }}>
