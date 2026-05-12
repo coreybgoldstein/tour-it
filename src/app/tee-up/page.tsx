@@ -78,16 +78,64 @@ export default function TeeUpPage() {
   const [invitedFriends, setInvitedFriends] = useState<FriendRow[]>([]);
   const friendDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounced friend search — pull from the User table
+  // Lock body scroll + size the Quick Round overlay to the visualViewport so
+  // iOS Safari's keyboard doesn't push the top of the sheet off-screen when an
+  // input is focused near the bottom. dvh alone wasn't enough — the layout
+  // viewport doesn't shrink with the keyboard, so the sheet anchored to
+  // bottom: 0 had its top scrolled out of view.
+  useEffect(() => {
+    if (!quickOpen) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width, overflow: body.style.overflow };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    const vv = window.visualViewport;
+    const sync = () => {
+      const el = document.getElementById("quick-round-overlay");
+      if (!el || !vv) return;
+      el.style.height = `${vv.height}px`;
+      el.style.transform = `translateY(${vv.offsetTop}px)`;
+    };
+    if (vv) {
+      sync();
+      vv.addEventListener("resize", sync);
+      vv.addEventListener("scroll", sync);
+    }
+
+    return () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+      if (vv) {
+        vv.removeEventListener("resize", sync);
+        vv.removeEventListener("scroll", sync);
+      }
+    };
+  }, [quickOpen]);
+
+  // Debounced friend search — match BOTH username and displayName so "Marc"
+  // finds the user whose username is "mzl" but displayName is "Marc". Uses
+  // Supabase's .or() with two ilike conditions joined with OR.
   useEffect(() => {
     if (!friendSearch.trim()) { setFriendResults([]); return; }
     if (friendDebounce.current) clearTimeout(friendDebounce.current);
     friendDebounce.current = setTimeout(async () => {
       const supabase = createClient();
+      const q = friendSearch.trim();
       const { data } = await supabase
         .from("User")
         .select("id, username, displayName, avatarUrl")
-        .ilike("username", `%${friendSearch.trim()}%`)
+        .or(`username.ilike.%${q}%,displayName.ilike.%${q}%`)
         .limit(8);
       const invitedIds = new Set(invitedFriends.map(f => f.id));
       setFriendResults(((data ?? []) as FriendRow[]).filter(u => !invitedIds.has(u.id) && u.id !== userId));
@@ -252,7 +300,18 @@ export default function TeeUpPage() {
           const firstCourseLogo = tcs.length > 0 ? (courseInfo.get(tcs[0].courseId)?.logoUrl ?? null) : null;
           const endRef = t.endDate || t.startDate;
           const isPast = !!endRef && endRef < today;
-          const isRound = tcs.length === 1 && t.startDate && t.endDate && t.startDate === t.endDate;
+          // Round = exactly one stop (no paired secondary course) on a single day.
+          // Strip any time component before comparing dates — Postgres can echo
+          // back a date string with a timestamp depending on how the row was
+          // touched, and "2026-05-20" !== "2026-05-20T00:00:00" would
+          // otherwise misclassify a single-day round as a trip.
+          const stripDate = (s: string | null | undefined) => s ? s.slice(0, 10) : "";
+          const startD = stripDate(t.startDate);
+          const endD = stripDate(t.endDate);
+          const isRound = tcs.length === 1
+            && !tcs[0]?.secondaryCourseId
+            && !!startD && !!endD
+            && startD === endD;
           return {
             id: t.id, name: t.name, startDate: t.startDate, endDate: t.endDate, imageUrl: t.imageUrl,
             courseCount: tcs.length, totalHoles,
@@ -392,11 +451,14 @@ export default function TeeUpPage() {
         </div>
       )}
 
-      {/* Quick Round sheet — single-course, single-date trip */}
+      {/* Quick Round sheet — single-course, single-date trip
+          The overlay's height + translateY track window.visualViewport so the
+          sheet sits inside the visible area on iOS Safari even when the
+          keyboard is up. Sheet flex-aligns to the bottom of that container. */}
       {quickOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => { if (!quickSaving) setQuickOpen(false); }}>
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
-          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "14px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "92dvh", overflowY: "auto" }}>
+        <div id="quick-round-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", zIndex: 200, display: "flex", flexDirection: "column", willChange: "transform" }} onClick={() => { if (!quickSaving) setQuickOpen(false); }}>
+          <div onClick={() => { if (!quickSaving) setQuickOpen(false); }} style={{ flex: 1, background: "rgba(0,0,0,0.6)", minHeight: 40 }} />
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "14px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "92%", overflowY: "auto", flexShrink: 0 }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 16px" }} />
 
             <div style={{ marginBottom: 14 }}>
