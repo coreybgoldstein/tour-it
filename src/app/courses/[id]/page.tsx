@@ -1368,7 +1368,7 @@ const [editDescription, setEditDescription] = useState("");
                 <button
                   onClick={() => {
                     const template = holes.length > 0 ? [...holes] :
-                      Array.from({ length: 18 }, (_, i) => ({ id: `new-${i + 1}`, holeNumber: i + 1, par: 4, handicapRank: i + 1, yardage: null }));
+                      Array.from({ length: 18 }, (_, i) => ({ id: `new-${i + 1}`, holeNumber: i + 1, par: 4, handicapRank: i + 1, yardage: null, imageUrl: null }));
                     setEditedHoles(template);
                     setScorecardEditMode(true);
                   }}
