@@ -313,6 +313,22 @@ export default function TripPage() {
   const [generatingGame, setGeneratingGame] = useState(false);
   const [viewGameOpen, setViewGameOpen] = useState(false);
   const [viewGame, setViewGame] = useState<TripGameRecord | null>(null);
+  // Scorecard verify sheet — opens over the game view so users can confirm
+  // par/yardage/handicap-rank without losing the game context.
+  const [scorecardSheetOpen, setScorecardSheetOpen] = useState(false);
+  const [scorecardHoles, setScorecardHoles] = useState<Array<{ holeNumber: number; par: number | null; yardage: number | null; handicapRank: number | null }>>([]);
+  const [scorecardLoading, setScorecardLoading] = useState(false);
+  async function openScorecardSheet(courseId: string) {
+    setScorecardSheetOpen(true);
+    setScorecardLoading(true);
+    const { data } = await createClient()
+      .from("Hole")
+      .select("holeNumber, par, yardage, handicapRank")
+      .eq("courseId", courseId)
+      .order("holeNumber");
+    setScorecardHoles((data as any) ?? []);
+    setScorecardLoading(false);
+  }
   const [gameCourseId, setGameCourseId] = useState("");
   const [gameCourseName, setGameCourseName] = useState("");
   const [gameTeeBoxes, setGameTeeBoxes] = useState<TeeBox[]>([]);
@@ -2679,7 +2695,7 @@ export default function TripPage() {
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,170,0,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5, flex: 1, minWidth: 0 }}>Verify <span style={{ color: "rgba(255,255,255,0.65)" }}>{viewGame.courseName}</span>'s scorecard for correct stroke allocation.</span>
                         <button
-                          onClick={() => router.push(`/courses/${viewGame.courseId}?scorecard=edit`)}
+                          onClick={() => openScorecardSheet(viewGame.courseId)}
                           style={{
                             flexShrink: 0,
                             background: "rgba(77,168,98,0.12)",
@@ -2784,6 +2800,74 @@ export default function TripPage() {
                 style={{ padding: "13px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
               >
                 Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Scorecard verify sheet — pops over the game view so the user can
+          check stroke allocation without losing context. Footer has an
+          "Edit on course page" affordance that does navigate away (rare),
+          plus a Close button that returns to the game. */}
+      {scorecardSheetOpen && viewGame && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 250 }} onClick={() => setScorecardSheetOpen(false)}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }} />
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "14px 0 calc(20px + env(safe-area-inset-bottom))", maxHeight: "85dvh", display: "flex", flexDirection: "column" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 14px", flexShrink: 0 }} />
+
+            <div style={{ padding: "0 20px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexShrink: 0 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 2 }}>Verify Scorecard</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 900, color: "#fff", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{viewGame.courseName}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>Confirm par, yardage, and handicap rank for each hole.</div>
+              </div>
+              <button onClick={() => setScorecardSheetOpen(false)} aria-label="Close" style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {/* Table — sticky header row, scrollable body */}
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "60px 1fr 1fr 1fr", padding: "10px 20px", position: "sticky", top: 0, background: "#0d2318", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 1 }}>
+                {(["Hole", "Par", "Yards", "HCP"] as const).map(h => (
+                  <div key={h} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", textAlign: h === "Hole" ? "left" : "center" }}>{h}</div>
+                ))}
+              </div>
+
+              {scorecardLoading ? (
+                <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid rgba(77,168,98,0.2)", borderTopColor: "#4da862", animation: "spin 0.8s linear infinite" }} />
+                </div>
+              ) : scorecardHoles.length === 0 ? (
+                <div style={{ padding: "40px 20px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
+                  No scorecard data yet for this course.
+                </div>
+              ) : (
+                scorecardHoles.map(h => (
+                  <div key={h.holeNumber} style={{ display: "grid", gridTemplateColumns: "60px 1fr 1fr 1fr", padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "center" }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff" }}>{h.holeNumber}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: h.par != null ? "#fff" : "rgba(255,80,80,0.7)", textAlign: "center" }}>{h.par != null ? h.par : "—"}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: h.yardage != null ? "rgba(255,255,255,0.78)" : "rgba(255,80,80,0.7)", textAlign: "center" }}>{h.yardage != null ? h.yardage.toLocaleString() : "—"}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: h.handicapRank != null && h.handicapRank > 0 ? "#4da862" : "rgba(255,80,80,0.7)", fontWeight: 700, textAlign: "center" }}>{h.handicapRank != null && h.handicapRank > 0 ? h.handicapRank : "—"}</div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer actions */}
+            <div style={{ padding: "12px 20px 4px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8, flexShrink: 0 }}>
+              <button
+                onClick={() => setScorecardSheetOpen(false)}
+                style={{ flex: 1, background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.02em" }}
+              >
+                Looks correct
+              </button>
+              <button
+                onClick={() => router.push(`/courses/${viewGame.courseId}?scorecard=edit`)}
+                style={{ flex: 1, background: "rgba(230,160,0,0.12)", border: "1px solid rgba(230,160,0,0.4)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(230,160,0,0.95)", cursor: "pointer", letterSpacing: "0.02em" }}
+              >
+                Edit on course page →
               </button>
             </div>
           </div>
