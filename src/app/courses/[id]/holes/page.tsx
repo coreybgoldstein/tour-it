@@ -97,8 +97,9 @@ export default function HolesOverviewPage() {
         .hole-card.has-clips { border-color: rgba(77,168,98,0.22); }
       `}</style>
 
-      {/* Sticky header with back + course name */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "52px 16px 10px", position: "sticky", top: 0, background: "#07100a", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      {/* Sticky header — top padding includes iOS safe-area-inset so the
+          back button never sits under the notch / Dynamic Island. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "calc(20px + env(safe-area-inset-top)) 16px 10px", position: "sticky", top: 0, background: "#07100a", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <button
           onClick={() => router.back()}
           style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}

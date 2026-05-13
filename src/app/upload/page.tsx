@@ -828,7 +828,9 @@ function UploadPageInner() {
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .upload-wrap { max-width: 480px; margin: 0 auto; padding: 0 20px 40px; }
-        .upload-header { display: flex; align-items: center; gap: 12px; padding: 52px 20px 12px; position: sticky; top: 0; background: #07100a; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; }
+        /* Sticky header top padding uses env(safe-area-inset-top) so the back
+           button never sits behind the iOS notch / Dynamic Island. */
+        .upload-header { display: flex; align-items: center; gap: 12px; padding: calc(20px + env(safe-area-inset-top)) 20px 12px; position: sticky; top: 0; background: #07100a; z-index: 10; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; }
         .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .progress-bar { height: 2px; background: rgba(255,255,255,0.06); margin: 0 20px 28px; border-radius: 99px; }
         .progress-fill { height: 2px; background: #4da862; border-radius: 99px; transition: width 0.3s ease; }
