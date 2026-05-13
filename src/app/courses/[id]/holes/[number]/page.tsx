@@ -852,7 +852,7 @@ export default function HolePage() {
               // (80 for 1-9, 105 for 10+) so the row hugs the HoleIdentityCard
               // without floating. Bottom lifts above the VideoScrubber on
               // video clips and clears the BottomNav on photo clips.
-              <div style={{ position: "absolute", left: (holeNum ?? 0) >= 10 ? 105 : 80, bottom: activeUpload.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ position: "absolute", left: (holeNum ?? 0) >= 10 ? 105 : 80, bottom: activeUpload.mediaType === "VIDEO" ? "calc(130px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
                 <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
                   <div className={isLegend(uploaders[activeUpload.userId]?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaders[activeUpload.userId]?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {uploaders[activeUpload.userId]?.avatarUrl
