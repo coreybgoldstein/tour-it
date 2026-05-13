@@ -309,12 +309,6 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         // so the row clears the HoleIdentityCard sitting bottom-left.
         // Bottom lifts above the VideoScrubber on video clips and clears
         // the BottomNav (Face ID home indicator included) on photos.
-        {/* left:
-              - no hole number  → 16 (flush left, no flag to dodge)
-              - single digit 1-9 → 80 (cleared the narrow "1" flag)
-              - double digit 10+ → 105 (cleared the wider "10" flag)
-            Both with ~8-12px gap from the HoleIdentityCard's right edge
-            so the row hugs the flag instead of floating in the middle. */}
         <div style={{ position: "absolute", left: !holeNumber ? 16 : holeNumber >= 10 ? 105 : 80, bottom: clip.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={() => router.push(`/profile/${clip.userId}`)} aria-label={`Open ${uploader?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
             <div className={isLegend(uploader?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploader?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
