@@ -1,0 +1,3 @@
+{
+  "/api/cloudflare-stream/direct-upload/route": "app/api/cloudflare-stream/direct-upload/route.js"
+}

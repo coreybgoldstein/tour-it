@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Tour It dark — used for html + body so the WebView's pre-paint state on
+     iOS Capacitor never flashes white between routes. App is dark-themed
+     end-to-end, so no light-mode fallback. */
+  --background: #07100a;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,16 +15,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 html {
   min-height: 100%;
   overflow-x: hidden;
+  background: var(--background);
 }
 
 body {

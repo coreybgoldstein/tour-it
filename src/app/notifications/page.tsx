@@ -123,7 +123,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#07100a", paddingBottom: 100, paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 680 : undefined }}>
+    <div style={{ minHeight: "100dvh", background: "#07100a", paddingBottom: 100, paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 680 : undefined }}>
       {/* Header */}
       <div style={{ padding: "52px 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)" }}>
         <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff", margin: 0 }}>

@@ -1,0 +1,3 @@
+{
+  "/api/likes/toggle/route": "app/api/likes/toggle/route.js"
+}

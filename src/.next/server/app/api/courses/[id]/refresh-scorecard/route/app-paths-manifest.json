@@ -1,0 +1,3 @@
+{
+  "/api/courses/[id]/refresh-scorecard/route": "app/api/courses/[id]/refresh-scorecard/route.js"
+}

@@ -15,19 +15,19 @@ const config: CapacitorConfig = {
     cleartext: false, // HTTPS only
   },
 
-  // White background everywhere so the WebView's pre-paint state on iPad is
-  // never the black void that triggered the App Store Review rejection.
-  // The web app's own background reapplies once content loads.
-  backgroundColor: "#ffffff",
+  // Background matches the app's dark brand color so navigation transitions
+  // don't flash white between routes. (Previously white for the App Store
+  // review fix, but caused visible flashes on every page change.)
+  backgroundColor: "#07100a",
 
   ios: {
     contentInset: "always", // web content fills behind status bar
-    backgroundColor: "#ffffff",
+    backgroundColor: "#07100a",
     preferredContentMode: "mobile",
   },
 
   android: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#07100a",
   },
 
   plugins: {
@@ -50,12 +50,14 @@ const config: CapacitorConfig = {
       // Auto-hide at 5s acts as a final safety net if JS never loads.
       launchShowDuration: 5000,
       launchAutoHide: true,
-      backgroundColor: "#ffffff",
+      // Splash bg matches the app's dark brand color so the launch image and
+      // the first-paint background are visually identical (no white flash).
+      backgroundColor: "#07100a",
       androidSplashResourceName: "splash",
       androidScaleType: "CENTER_CROP",
-      showSpinner: true,
-      iosSpinnerStyle: "small",
-      spinnerColor: "#4da862",
+      // Spinner removed — it overlapped the wordmark and looked ugly. The
+      // splash image alone reads as a clear loading state.
+      showSpinner: false,
     },
 
     StatusBar: {

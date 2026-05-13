@@ -7,33 +7,36 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    // Tour It brand dark — matches body{background:#07100a} in globals.css so
+    // there's no contrast between native chrome and the WebView's first paint.
+    // Was white for the iPad App Store Review fix on 2026-05-12, but that
+    // caused visible white flashes on every route change. Dark matches the app.
+    private static let brandDark: UIColor = UIColor(red: 7/255, green: 16/255, blue: 10/255, alpha: 1)
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Force the window + root host view + the WKWebView background to white
-        // so iPad never shows a black flash during the remote-URL bootstrap.
-        // (App Store Review rejected the build on iPad Air M3 / iPadOS 26.4.2
-        // because the WebView's empty state painted black before first content.)
         if let window = self.window {
-            window.backgroundColor = .white
-            window.rootViewController?.view.backgroundColor = .white
+            window.backgroundColor = AppDelegate.brandDark
+            window.rootViewController?.view.backgroundColor = AppDelegate.brandDark
         }
         DispatchQueue.main.async { [weak self] in
-            self?.applyWhiteBackgroundsRecursively()
+            self?.applyBrandBackgroundsRecursively()
         }
         return true
     }
 
-    /// Walk the view hierarchy a couple of times and force every WKWebView to
-    /// be white. The view tree isn't fully built at didFinishLaunching, so we
-    /// also re-apply when the app becomes active.
-    private func applyWhiteBackgroundsRecursively() {
+    /// Walk the view hierarchy and force every WKWebView's background to the
+    /// brand dark color so route changes never expose a white flash. Re-applies
+    /// on every applicationDidBecomeActive since the WebView's host can reset
+    /// its scroll view background after navigation.
+    private func applyBrandBackgroundsRecursively() {
         guard let root = window?.rootViewController?.view else { return }
-        root.backgroundColor = .white
+        root.backgroundColor = AppDelegate.brandDark
         func walk(_ v: UIView) {
-            v.backgroundColor = .white
+            v.backgroundColor = AppDelegate.brandDark
             if let web = v as? WKWebView {
                 web.isOpaque = true
-                web.backgroundColor = .white
-                web.scrollView.backgroundColor = .white
+                web.backgroundColor = AppDelegate.brandDark
+                web.scrollView.backgroundColor = AppDelegate.brandDark
             }
             v.subviews.forEach(walk)
         }
@@ -55,8 +58,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Re-apply white backgrounds once the view tree is guaranteed to be live.
-        applyWhiteBackgroundsRecursively()
+        // Re-apply brand backgrounds once the view tree is guaranteed to be live.
+        applyBrandBackgroundsRecursively()
     }
 
     func applicationWillTerminate(_ application: UIApplication) {

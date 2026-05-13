@@ -1,7 +1,7 @@
 // Notifications page skeleton
 export default function NotificationsLoading() {
   return (
-    <div style={{ background: "#07100a", minHeight: "100vh", paddingBottom: 100 }}>
+    <div style={{ background: "#07100a", minHeight: "100dvh", paddingBottom: 100 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "52px 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)" }}>
         <div style={pulse({ width: 28, height: 28, borderRadius: 8 })} />

@@ -1,0 +1,171 @@
+{
+  "app": {
+    "[project]/src/app/_not-found/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/about/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/add-course/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/admin/courses/[id]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/admin/courses/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/admin/dashboard/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/admin/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/auth/confirm/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/courses/[id]/holes/[number]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/courses/[id]/holes/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/courses/[id]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/feedback/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/forgot-password/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/invite/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/join/[username]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/leaderboards/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/lists/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/login/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/map/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/notifications/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/onboarding/intro/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/onboarding/notifications/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/onboarding/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/onboarding/profile/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/onboarding/reset/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/privacy/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/profile/[userId]/badges/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/profile/[userId]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/profile/[userId]/rounds/[roundId]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/profile/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/reset-password/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/round/[id]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/search/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/signup/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/tee-up/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/terms/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/trip-ideas/[slug]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/trips/[id]/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/trips/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ],
+    "[project]/src/app/upload/page": [
+      "static/media/2a65768255d6b625-s.p.d19752fb.woff2",
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}

@@ -1,7 +1,7 @@
 // Home feed skeleton — shown while page.tsx loads
 export default function HomeLoading() {
   return (
-    <div style={{ background: "#07100a", minHeight: "100vh", overflow: "hidden" }}>
+    <div style={{ background: "#07100a", minHeight: "100dvh", overflow: "hidden" }}>
       {/* Fake feed card — full viewport */}
       <div style={{ height: "100svh", position: "relative", background: "rgba(255,255,255,0.03)" }}>
         {/* Top bar skeleton */}

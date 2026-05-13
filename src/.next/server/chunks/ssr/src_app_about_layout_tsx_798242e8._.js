@@ -1,0 +1,3 @@
+module.exports=[65955,a=>{"use strict";var b=a.i(7997);function c({children:a}){return(0,b.jsx)(b.Fragment,{children:a})}a.s(["default",()=>c,"metadata",0,{title:"About · Tour It",description:"Built for those who golf. By those who golf. Tour It is the scouting platform built by the golf community.",openGraph:{title:"About · Tour It",description:"Built for those who golf. By those who golf. Tour It is the scouting platform built by the golf community.",siteName:"Tour It",type:"website"},twitter:{card:"summary_large_image",title:"About · Tour It",description:"Built for those who golf. By those who golf."}}])}];
+
+//# sourceMappingURL=src_app_about_layout_tsx_798242e8._.js.map
