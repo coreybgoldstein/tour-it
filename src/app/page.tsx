@@ -258,7 +258,7 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
     else { navigator.clipboard.writeText(url).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
   return (
-    <div style={{ position: "absolute", right: 12, bottom: "calc(100px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+    <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
       {/* Intel */}
       {onIntel && (
         <button onClick={onIntel} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
@@ -475,7 +475,7 @@ const SeriesCard = memo(function SeriesCardImpl({
           same spot regardless of whether you're looking at a single clip
           or a multi-shot series. */}
       {(item.username || formatClipDate(activeShot?.datePlayedAt, activeShot?.createdAt)) && (
-        <div style={{ position: "absolute", left: 16, bottom: activeShot?.mediaType === "VIDEO" ? "calc(125px + env(safe-area-inset-bottom))" : "calc(80px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ position: "absolute", left: 16, bottom: activeShot?.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={onTapUser} aria-label={`Open ${item.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
             <div className={isLegend(item.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(item.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               {item.avatarUrl
@@ -632,7 +632,7 @@ const VideoCard = memo(function VideoCardImpl({
         // clips just clear the BottomNav on Face ID phones. Both use
         // env(safe-area-inset-bottom) so home-indicator devices don't
         // bury the row behind the nav.
-        <div style={{ position: "absolute", left: 16, bottom: clip.mediaType === "VIDEO" ? "calc(125px + env(safe-area-inset-bottom))" : "calc(80px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ position: "absolute", left: 16, bottom: clip.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={onTapUser} aria-label={`Open ${clip.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
             <div className={isLegend(clip.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(clip.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               {clip.avatarUrl

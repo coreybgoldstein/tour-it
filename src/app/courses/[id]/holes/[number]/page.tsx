@@ -687,8 +687,12 @@ export default function HolePage() {
           .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .course-top-badge { width: 46px; height: 46px; border-radius: 12px; background: rgba(26,158,66,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; color: #1a9e42; flex-shrink: 0; overflow: hidden; }
-          /* Right action rail — clear BottomNav (78px + home-indicator safe area) */
-          .right-actions { position: absolute; right: 12px; bottom: calc(100px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 14px; z-index: 30; }
+          /* Right action rail — lifted to calc(150 + safe-area-inset-bottom)
+             so the bottom-most button (kebab) sits clearly above the
+             VideoScrubber, which is at calc(100 + safe-area-inset-bottom).
+             Old value put them at the same height, making the buttons feel
+             cramped against the scrubber line. */
+          .right-actions { position: absolute; right: 12px; bottom: calc(150px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 14px; z-index: 30; }
           .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
           .action-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
           .action-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,0.95); }
@@ -847,7 +851,10 @@ export default function HolePage() {
               // Avatar + username + date. left:100 clears the HoleIdentityCard
               // sitting bottom-left. Bottom lifts above the VideoScrubber on
               // video clips and clears the BottomNav on photo clips.
-              <div style={{ position: "absolute", left: 100, bottom: activeUpload.mediaType === "VIDEO" ? "calc(125px + env(safe-area-inset-bottom))" : "calc(80px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              {/* left: single digit 1-9 → 80 (hugs narrow "1" flag);
+                  double digit 10+ → 105 (hugs wider "10" flag). Keeps a
+                  ~8-12px cushion from the HoleIdentityCard's right edge. */}
+              <div style={{ position: "absolute", left: (activeUpload.holeNumber ?? holeNum ?? 0) >= 10 ? 105 : 80, bottom: activeUpload.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
                 <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
                   <div className={isLegend(uploaders[activeUpload.userId]?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaders[activeUpload.userId]?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {uploaders[activeUpload.userId]?.avatarUrl
