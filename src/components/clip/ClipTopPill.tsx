@@ -32,7 +32,9 @@ export function ClipTopPill({
     <div
       style={{
         position: "absolute",
-        top: 12,
+        // Push the pill below the iOS notch / Dynamic Island in Capacitor.
+        // On surfaces without a status bar (web desktop) this just becomes 12px.
+        top: "calc(12px + env(safe-area-inset-top))",
         left: 12,
         right: 12,
         zIndex: 20,

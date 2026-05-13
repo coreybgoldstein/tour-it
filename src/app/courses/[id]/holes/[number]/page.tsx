@@ -640,14 +640,19 @@ export default function HolePage() {
         <SeriesPlayer series={activeSeries} onClose={() => setActiveSeries(null)} />
       )}
 
-      <main style={{ height: "100dvh", background: "#000", overflow: "hidden", position: "relative" }}>
+      {/* svh (not dvh) — scroll-snap children are 100svh; keeping the parent
+          on dynamic VH would resize the snap container when the iOS WebView
+          chrome toggles and break snap alignment mid-scroll. */}
+      <main style={{ height: "100svh", background: "#000", overflow: "hidden", position: "relative" }}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
           .video-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
           .photo-el { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
           .gradient-top { position: absolute; top: 0; left: 0; right: 0; height: 140px; background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 100%); z-index: 10; pointer-events: none; }
-          .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 36px 14px 12px; z-index: 20; gap: 10px; }
+          /* Top padding combines the iOS safe-area-inset (notch / Dynamic Island)
+             with a 12px gap so the back+mute buttons never sit under the notch. */
+          .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: calc(12px + env(safe-area-inset-top)) 14px 12px; z-index: 20; gap: 10px; }
           .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
           .course-top-badge { width: 46px; height: 46px; border-radius: 12px; background: rgba(26,158,66,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; color: #1a9e42; flex-shrink: 0; overflow: hidden; }

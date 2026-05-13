@@ -29,6 +29,19 @@ body {
   overscroll-behavior-y: none;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
+  /* iOS WebView polish — crisp text, no blue tap flash, no system long-press
+     callout interfering with feed scroll/like gestures. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Inputs still need the default callout so users can paste passwords/codes */
+input, textarea {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* Prevent iOS Safari auto-zoom on input focus (requires font-size >= 16px) */

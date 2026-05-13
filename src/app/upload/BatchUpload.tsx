@@ -458,8 +458,9 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "52px 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.1)" }}>
+      {/* Header — top padding includes the iOS safe-area-inset so the back
+          button never sits under the notch in the Capacitor WebView. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "calc(20px + env(safe-area-inset-top)) 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.1)" }}>
         <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
         </button>

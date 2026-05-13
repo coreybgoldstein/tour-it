@@ -918,7 +918,9 @@ const [editDescription, setEditDescription] = useState("");
         .hole-cell-indicator { display: flex; gap: 3px; position: absolute; bottom: 6px; right: 6px; }
         .hole-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.4); }
         .hole-dot.active { background: #1a9e42; }
-        .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 36px 14px 12px; z-index: 20; gap: 10px; }
+        /* Notch-aware: pad past the iOS safe-area-inset-top so the back+mute
+           buttons clear the notch / Dynamic Island in the Capacitor WebView. */
+        .top-bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: calc(12px + env(safe-area-inset-top)) 14px 12px; z-index: 20; gap: 10px; }
         .back-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .mute-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .course-top-badge { width: 46px; height: 46px; border-radius: 12px; background: rgba(26,158,66,0.2); border: 1.5px solid rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; color: #1a9e42; flex-shrink: 0; overflow: hidden; }
@@ -1911,7 +1913,7 @@ const [editDescription, setEditDescription] = useState("");
       {/* Extended Play full-screen viewer */}
       {extendedClip && (
         <div style={{ position: "fixed", inset: 0, zIndex: 110, background: "#000", display: "flex", flexDirection: "column" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "52px 14px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)", zIndex: 10 }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "calc(20px + env(safe-area-inset-top)) 14px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)", zIndex: 10 }}>
             <button onClick={() => setExtendedClip(null)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>

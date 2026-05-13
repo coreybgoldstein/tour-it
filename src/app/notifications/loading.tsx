@@ -2,8 +2,9 @@
 export default function NotificationsLoading() {
   return (
     <div style={{ background: "#07100a", minHeight: "100dvh", paddingBottom: 100 }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "52px 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)" }}>
+      {/* Header — top padding matches the real notifications page so the
+          skeleton doesn't shift down once content loads on iOS. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "calc(20px + env(safe-area-inset-top)) 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)" }}>
         <div style={pulse({ width: 28, height: 28, borderRadius: 8 })} />
         <div style={pulse({ width: 130, height: 20, borderRadius: 8 })} />
       </div>
