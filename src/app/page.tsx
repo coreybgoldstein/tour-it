@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { useLike } from "@/hooks/useLike";
+import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import BottomNav from "@/components/BottomNav";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
@@ -339,14 +339,24 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
   );
 }
 
-function SeriesCard({
-  item, isActive, onTapCourse, onTapUser, onComment, currentUserId, followingIds, onFollow,
+// memo'd — the home feed renders 100-200 of these at once; without memo,
+// every scroll-snap tick re-renders all of them and that's what made the
+// discovery → first-clip transition judder. Callbacks are intentionally
+// excluded from the comparator: they're inline arrows that change ref
+// every render, but their closures only read stable refs (router, setters)
+// so a stale closure can't go wrong here.
+const SeriesCard = memo(function SeriesCardImpl({
+  item, isActive, onTapCourse, onTapUser, onComment, currentUserId, followingIds, onFollow, likedIds,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
   isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
   currentUserId?: string | null;
   followingIds?: Set<string>; onFollow?: (userId: string) => void;
+  // Pre-batched set of clip IDs the current user has liked — eliminates
+  // the per-clip Supabase round-trip that would otherwise make the heart
+  // flicker from unfilled to filled on mount.
+  likedIds?: Set<string>;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
@@ -357,7 +367,12 @@ function SeriesCard({
   const isDesktop = useIsDesktop();
   const router = useRouter();
   const activeShot = item.shots[shotIndex];
-  const { liked: seriesLiked, likeCount: seriesLikeCount, toggleLike: seriesToggleLike } = useLike({ uploadId: activeShot?.id || "", initialLikeCount: activeShot?.likeCount || 0 });
+  const { liked: seriesLiked, likeCount: seriesLikeCount, toggleLike: seriesToggleLike } = useLike({
+    uploadId: activeShot?.id || "",
+    initialLikeCount: activeShot?.likeCount || 0,
+    initialLiked: likedIds ? likedIds.has(activeShot?.id || "") : undefined,
+    currentUserId: currentUserId ?? null,
+  });
   const handleSeriesLike = currentUserId ? seriesToggleLike : () => router.push("/login");
   const hasNotes = !!(activeShot?.strategyNote || activeShot?.clubUsed || activeShot?.windCondition || activeShot?.datePlayedAt);
 
@@ -486,10 +501,20 @@ function SeriesCard({
       </div>{/* end inner wrapper */}
     </div>
   );
-}
+}, (prev, next) => (
+  prev.item === next.item
+  && prev.isActive === next.isActive
+  && prev.currentUserId === next.currentUserId
+  && prev.followingIds === next.followingIds
+  && prev.likedIds === next.likedIds
+));
 
-function VideoCard({
-  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow,
+// memo'd for the same reason as SeriesCard above — avoid re-rendering 100+
+// idle clips on every scroll-snap tick. The active card's own state still
+// drives its own re-renders via useState/useEffect; this only cuts the
+// "parent re-rendered, so I re-render too" cascade.
+const VideoCard = memo(function VideoCardImpl({
+  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds,
 }: {
   clip: FeedClip; isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
@@ -498,9 +523,16 @@ function VideoCard({
   onReport?: () => void;
   onEdit?: () => void;
   currentUserId?: string | null;
+  // Pre-batched set of clip IDs the current user has liked (see SeriesCard).
+  likedIds?: Set<string>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
+  const { liked, likeCount, toggleLike } = useLike({
+    uploadId: clip.id,
+    initialLikeCount: clip.likeCount || 0,
+    initialLiked: likedIds ? likedIds.has(clip.id) : undefined,
+    currentUserId: currentUserId ?? null,
+  });
   const [videoPaused, setVideoPaused] = useState(false);
   const [intelOpen, setIntelOpen] = useState(false);
   const [muted, setMuted] = useState(sessionMute.get());
@@ -615,7 +647,13 @@ function VideoCard({
       </div>{/* end inner wrapper */}
     </div>
   );
-}
+}, (prev, next) => (
+  prev.clip === next.clip
+  && prev.isActive === next.isActive
+  && prev.currentUserId === next.currentUserId
+  && prev.followingIds === next.followingIds
+  && prev.likedIds === next.likedIds
+));
 
 
 export default function Home() {
@@ -625,6 +663,11 @@ export default function Home() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [trendingCourses, setTrendingCourses] = useState<TrendingCourse[]>([]);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  // Pre-batched set of uploadIds the current user has liked across the
+  // entire visible feed. Populated by a single Supabase query after the
+  // feed and the auth user are both available; eliminates the per-clip
+  // round-trip that would otherwise make the heart flicker on mount.
+  const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [loading, setLoading] = useState(true);
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
@@ -846,6 +889,39 @@ export default function Home() {
 
     loadFeed().catch(() => setLoading(false));
   }, []);
+
+  // Batch-pre-seed the like-state cache once we have both feed clips and
+  // an authenticated user. Without this, every clip's useLike runs its
+  // own Supabase round-trip on mount and the heart visibly animates from
+  // unfilled → filled when the data lands. After this seeding, the cache
+  // is hit on every useLike mount → no flicker.
+  useEffect(() => {
+    if (!user?.id || feedItems.length === 0) return;
+    const allUploadIds: string[] = [];
+    for (const item of feedItems) {
+      if (item.type === "clip") allUploadIds.push(item.clip.id);
+      else for (const shot of item.shots) allUploadIds.push(shot.id);
+    }
+    if (allUploadIds.length === 0) return;
+    const supabase = createClient();
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("Like")
+        .select("uploadId")
+        .eq("userId", user.id)
+        .in("uploadId", allUploadIds);
+      if (cancelled || !data) return;
+      const liked = data.map(r => r.uploadId);
+      seedLikedCache(user.id, liked, allUploadIds);
+      // Also push into HomePage state so any clip cards that already
+      // mounted (rendered before this fetch landed) re-render with
+      // the correct initialLiked — useLike has a useEffect that listens
+      // to initialLiked changes.
+      setLikedIds(new Set(liked));
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, feedItems]);
 
   const handleFollow = useCallback(async (targetId: string) => {
     if (!user?.id) { router.push("/login"); return; }
@@ -1403,9 +1479,9 @@ export default function Home() {
         {!loading && feedItems.map((item, i) => (
           <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
             {item.type === "series" ? (
-              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} />
+              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} />
             )}
           </div>
         ))}
