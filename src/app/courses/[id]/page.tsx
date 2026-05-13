@@ -242,7 +242,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       <HoleIdentityCard holeNumber={holeNumber} holePar={holePar} clipCount={totalClips} />
 
       {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
-      <div style={{ position: "absolute", right: 12, bottom: "calc(100px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+      <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
         {hasNotes && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
@@ -309,7 +309,13 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         // so the row clears the HoleIdentityCard sitting bottom-left.
         // Bottom lifts above the VideoScrubber on video clips and clears
         // the BottomNav (Face ID home indicator included) on photos.
-        <div style={{ position: "absolute", left: holeNumber ? 100 : 16, bottom: clip.mediaType === "VIDEO" ? "calc(125px + env(safe-area-inset-bottom))" : "calc(80px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+        {/* left:
+              - no hole number  → 16 (flush left, no flag to dodge)
+              - single digit 1-9 → 80 (cleared the narrow "1" flag)
+              - double digit 10+ → 105 (cleared the wider "10" flag)
+            Both with ~8-12px gap from the HoleIdentityCard's right edge
+            so the row hugs the flag instead of floating in the middle. */}
+        <div style={{ position: "absolute", left: !holeNumber ? 16 : holeNumber >= 10 ? 105 : 80, bottom: clip.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={() => router.push(`/profile/${clip.userId}`)} aria-label={`Open ${uploader?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
             <div className={isLegend(uploader?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploader?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               {uploader?.avatarUrl

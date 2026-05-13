@@ -113,7 +113,7 @@ function ProfileFeedCard({
       />
 
       {/* Right rail: Intel → Avatar → Like → Comment → SEND IT → kebab */}
-      <div style={{ position: "absolute", right: 12, bottom: "calc(100px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 30 }}>
+      <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 30 }}>
         {hasNotes && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
@@ -182,7 +182,7 @@ function ProfileFeedCard({
         // Avatar + username + date. Bottom lifted above scrubber on video
         // and above BottomNav (Face ID home indicator) on photos. The
         // isTagged check on the avatar marks clips the user was tagged in.
-        <div style={{ position: "absolute", left: 16, bottom: clip.mediaType === "VIDEO" ? "calc(125px + env(safe-area-inset-bottom))" : "calc(80px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ position: "absolute", left: 16, bottom: clip.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={() => { onClose(); router.push(`/profile/${uploaderInfo.id}`); }} aria-label={`Open ${uploaderInfo.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
             <div style={{ position: "relative", width: 28, height: 28, flexShrink: 0 }}>
               <div className={isLegend(uploaderInfo.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaderInfo.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
