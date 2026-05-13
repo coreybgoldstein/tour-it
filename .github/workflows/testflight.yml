@@ -16,10 +16,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          # Next.js 16 requires Node >= 20. Was on 18 and every build failed
+          # at `next build` in <1s with no logs — fixed 2026-05-13.
+          node-version: 20
 
       - name: Install dependencies
         run: npm install
+
+      - name: Generate Prisma client
+        # `next build` imports @prisma/client; without this CI may skip the
+        # postinstall codegen and fail with "Module not found: @prisma/client".
+        run: npx prisma generate
 
       - name: Build Next.js
         run: npm run build
