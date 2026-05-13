@@ -1,0 +1,10 @@
+var R=require("../../../../../chunks/[turbopack]_runtime.js")("server/app/api/courses/[id]/refresh-scorecard/route.js")
+R.c("server/chunks/[root-of-the-server]__6197fac9._.js")
+R.c("server/chunks/node_modules_next_1402a1da._.js")
+R.c("server/chunks/_04d818c5._.js")
+R.c("server/chunks/[root-of-the-server]__8f5ebbc3._.js")
+R.c("server/chunks/node_modules_@supabase_supabase-js_dist_index_mjs_669a44bf._.js")
+R.c("server/chunks/node_modules_next_f5199d09._.js")
+R.c("server/chunks/d7ac1_server_app_api_courses_[id]_refresh-scorecard_route_actions_368f67a0.js")
+R.m(92750)
+module.exports=R.m(92750).exports

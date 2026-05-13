@@ -1,0 +1,3 @@
+module.exports=[84669,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(50944);function e(){let a=(0,d.useRouter)();return(0,c.useEffect)(()=>{localStorage.removeItem("tour-it-onboarded"),localStorage.removeItem("tour-it-splash-date"),a.replace("/onboarding/intro")},[a]),(0,b.jsx)("main",{style:{background:"#07100a",minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center"},children:(0,b.jsx)("div",{style:{color:"rgba(255,255,255,0.3)",fontSize:13,fontFamily:"'Outfit', sans-serif"},children:"Resetting…"})})}a.s(["default",()=>e])}];
+
+//# sourceMappingURL=src_app_onboarding_reset_page_tsx_4df7d307._.js.map

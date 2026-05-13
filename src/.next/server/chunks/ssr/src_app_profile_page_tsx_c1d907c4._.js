@@ -1,0 +1,3 @@
+module.exports=[70298,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(50944),e=a.i(95445);function f(){let a=(0,d.useRouter)();return(0,c.useEffect)(()=>{(0,e.createClient)().auth.getUser().then(({data:{user:b}})=>{b?a.replace(`/profile/${b.id}`):a.replace("/login")})},[a]),(0,b.jsx)("main",{style:{background:"#07100a",minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center"},children:(0,b.jsx)("div",{style:{color:"rgba(255,255,255,0.3)",fontSize:"13px",fontFamily:"'Outfit', sans-serif"},children:"Loading..."})})}a.s(["default",()=>f])}];
+
+//# sourceMappingURL=src_app_profile_page_tsx_c1d907c4._.js.map

@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,32498,e=>{"use strict";function t(e,t,o){return(3*e+5*t+1)/Math.pow((Date.now()-new Date(o).getTime())/36e5+2,1.3)}e.s(["computeRankScore",()=>t])}]);

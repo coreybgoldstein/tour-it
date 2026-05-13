@@ -1,0 +1,3 @@
+{
+  "/profile/[userId]/rounds/[roundId]/page": "app/profile/[userId]/rounds/[roundId]/page.js"
+}

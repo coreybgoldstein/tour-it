@@ -840,7 +840,7 @@ const [editDescription, setEditDescription] = useState("");
 
   if (loading) {
     return (
-      <main style={{ minHeight: "100vh", background: "#07100a", paddingLeft: isDesktop ? 72 : 0 }}>
+      <main style={{ minHeight: "100dvh", background: "#07100a", paddingLeft: isDesktop ? 72 : 0 }}>
         {/* Hero skeleton */}
         <div className="skeleton" style={{ width: "100%", height: 220 }} />
         {/* Course name + meta */}
@@ -875,7 +875,7 @@ const [editDescription, setEditDescription] = useState("");
 
   if (!course) {
     return (
-      <main style={{ minHeight: "100vh", background: "#07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <main style={{ minHeight: "100dvh", background: "#07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <button onClick={() => router.push("/search")} style={{ background: "#2d7a42", border: "none", borderRadius: 99, padding: "10px 24px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", cursor: "pointer" }}>Back to Search</button>
       </main>
     );
@@ -899,7 +899,7 @@ const [editDescription, setEditDescription] = useState("");
   })();
 
   return (
-    <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingLeft: isDesktop ? 72 : 0 }}>
+    <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingLeft: isDesktop ? 72 : 0 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

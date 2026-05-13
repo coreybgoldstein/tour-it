@@ -1,0 +1,3 @@
+{
+  "/api/cron/streak/route": "app/api/cron/streak/route.js"
+}

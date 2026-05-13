@@ -524,7 +524,7 @@ function SearchPageInner() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#07100a", color: "#fff" }}>
+    <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

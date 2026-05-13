@@ -188,7 +188,9 @@ export default function BottomNav() {
     <nav style={{
       position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
       display: "flex", alignItems: "center",
-      padding: "10px 4px 18px",
+      // Bottom padding includes the iOS home-indicator safe area so the
+      // tab bar doesn't sit on top of the swipe-up bar in Capacitor.
+      padding: "10px 4px calc(18px + env(safe-area-inset-bottom))",
       background: "rgba(4,12,6,0.98)",
       backdropFilter: "blur(16px)",
       WebkitBackdropFilter: "blur(16px)",

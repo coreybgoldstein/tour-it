@@ -14,7 +14,7 @@ export default function OnboardingReset() {
   }, [router]);
 
   return (
-    <main style={{ background: "#07100a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <main style={{ background: "#07100a", minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, fontFamily: "'Outfit', sans-serif" }}>Resetting…</div>
     </main>
   );

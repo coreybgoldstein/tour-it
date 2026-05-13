@@ -1,0 +1,3 @@
+{
+  "/api/cron/reset-leaderboard/route": "app/api/cron/reset-leaderboard/route.js"
+}

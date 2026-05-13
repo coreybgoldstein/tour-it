@@ -1,7 +1,7 @@
 // Search page skeleton
 export default function SearchLoading() {
   return (
-    <div style={{ background: "#07100a", minHeight: "100vh", padding: "52px 16px 100px" }}>
+    <div style={{ background: "#07100a", minHeight: "100dvh", padding: "52px 16px 100px" }}>
       {/* Search bar */}
       <div style={pulse({ height: 46, borderRadius: 14, marginBottom: 20 })} />
 

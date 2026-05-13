@@ -1,7 +1,7 @@
 // Course page skeleton
 export default function CourseLoading() {
   return (
-    <div style={{ background: "#07100a", minHeight: "100vh", paddingBottom: 100 }}>
+    <div style={{ background: "#07100a", minHeight: "100dvh", paddingBottom: 100 }}>
       {/* Header / cover */}
       <div style={pulse({ height: 220, width: "100%", borderRadius: 0 })} />
 

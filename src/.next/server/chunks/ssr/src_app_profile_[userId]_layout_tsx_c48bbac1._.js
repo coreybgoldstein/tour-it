@@ -1,0 +1,3 @@
+module.exports=[81724,a=>{"use strict";var b=a.i(7997),c=a.i(16349);async function d({params:a}){let{userId:b}=await a,d=await (0,c.createClient)(),{data:e}=await d.from("User").select("username, displayName").eq("id",b).single();if(!e)return{};let f=e.displayName||e.username,g=`${f} (@${e.username}) — Tour It`,h=`See ${f}'s golf clips and course intel on Tour It.`;return{title:g,description:h,openGraph:{title:g,description:h,type:"profile"},twitter:{card:"summary_large_image",title:g,description:h}}}function e({children:a}){return(0,b.jsx)(b.Fragment,{children:a})}a.s(["default",()=>e,"generateMetadata",()=>d])}];
+
+//# sourceMappingURL=src_app_profile_%5BuserId%5D_layout_tsx_c48bbac1._.js.map

@@ -1,0 +1,3 @@
+{
+  "/api/generate-course-description/route": "app/api/generate-course-description/route.js"
+}
