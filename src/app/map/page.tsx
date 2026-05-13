@@ -490,6 +490,9 @@ export default function MapPage() {
                 onFocus={() => { if (suggestions.length > 0) setShowDropdown(true); }}
                 placeholder="Search courses, cities, zip codes…"
                 autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
               />
               {searchQuery.length > 0 && (
                 <button type="button" onClick={() => { setSearchQuery(""); setSuggestions([]); setShowDropdown(false); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "flex", alignItems: "center" }}>
