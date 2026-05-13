@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { useLike } from "@/hooks/useLike";
+import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { useSave } from "@/hooks/useSave";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
@@ -132,7 +132,7 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, holeDescription, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, holeDescription, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }>;
   clipIndex: number; totalClips: number;
@@ -144,6 +144,9 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   onEnded: () => void; onReport?: () => void; onEdit?: () => void;
   currentUserId?: string | null;
   followingIds?: Set<string>; onFollow?: (userId: string) => void;
+  // Pre-batched set of clip IDs the current user has liked (see useLike).
+  // Eliminates per-clip Supabase round-trip → no heart flicker on mount.
+  likedIds?: Set<string>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -152,7 +155,12 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   const [videoPaused, setVideoPaused] = useState(false);
   const [copied, setCopied] = useState(false);
   const [intelOpen, setIntelOpen] = useState(false);
-  const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
+  const { liked, likeCount, toggleLike } = useLike({
+    uploadId: clip.id,
+    initialLikeCount: clip.likeCount || 0,
+    initialLiked: likedIds ? likedIds.has(clip.id) : undefined,
+    currentUserId: currentUserId ?? null,
+  });
   const uploader = uploaderMap[clip.userId];
   const isSystemUploader = uploader?.username === "tourit";
   // Intel button shows when EITHER the uploader added scout notes OR the course has a seeded hole description (e.g. PGA Championship hole preview)
@@ -335,6 +343,12 @@ export default function CourseProfilePage() {
   const isDesktop = useIsDesktop();
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
+  // Pre-batched set of uploadIds the current user has liked across the
+  // visible clips on this course. Populated by one Supabase query after
+  // clips + user are both ready — eliminates per-clip like-state fetches
+  // and the heart-flicker that came with them.
+  const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
+  const prefetchedLikesRef = useRef<string>("");
   const [suggestedCourses, setSuggestedCourses] = useState<SuggestedCourse[]>([]);
   const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }>>({});
   const [loading, setLoading] = useState(true);
@@ -399,6 +413,33 @@ const [editDescription, setEditDescription] = useState("");
   const commentInputRef = useRef<HTMLInputElement>(null);
   const mentionDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { saved, saveType, toggleSave, showPicker, setShowPicker } = useSave({ courseId: id as string });
+
+  // Batch-fetch the current user's like state for every visible clip on
+  // this course in a single Supabase query. Mirrors the home-feed pattern
+  // — see useLike.ts. Without this, each FeedCard runs its own auth + Like
+  // select on mount and the heart visibly flickers from unfilled to filled.
+  useEffect(() => {
+    if (!user?.id || courseClips.length === 0) return;
+    const uploadIds = courseClips.map(c => c.id);
+    // Dedupe-by-content so we don't re-run when courseClips reorders.
+    const key = user.id + ":" + uploadIds.slice().sort().join(",");
+    if (prefetchedLikesRef.current === key) return;
+    prefetchedLikesRef.current = key;
+    const supabase = createClient();
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("Like")
+        .select("uploadId")
+        .eq("userId", user.id)
+        .in("uploadId", uploadIds);
+      if (cancelled || !data) return;
+      const liked = data.map(r => r.uploadId);
+      seedLikedCache(user.id, liked, uploadIds);
+      setLikedIds(new Set(liked));
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, courseClips]);
   const [tripPickerOpen, setTripPickerOpen] = useState(false);
   const [tripStep, setTripStep] = useState<"select" | "create" | "details" | "success">("select");
   const [userTrips, setUserTrips] = useState<{ id: string; name: string; startDate: string | null; endDate: string | null }[]>([]);
@@ -1833,6 +1874,7 @@ const [editDescription, setEditDescription] = useState("");
                       onEdit={user && clip.userId === user.id ? () => setEditClipInfo({ id: clip.id, holeId: clip.holeId ?? null, holeNumber: clip.holeNumber ?? null }) : undefined}
                       currentUserId={user?.id}
                       followingIds={followingIds}
+                      likedIds={likedIds}
                       onFollow={async (targetId: string) => {
                         if (!user?.id || followingInProgress.has(targetId)) return;
                         setFollowingInProgress(s => new Set(s).add(targetId));
