@@ -221,6 +221,10 @@ export default function TourItTopBar() {
                   icon: (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="9" r="6"/>
+                      <circle cx="10" cy="7.2" r="0.6" fill="currentColor" stroke="none"/>
+                      <circle cx="14" cy="8.4" r="0.6" fill="currentColor" stroke="none"/>
+                      <circle cx="11" cy="10.8" r="0.6" fill="currentColor" stroke="none"/>
+                      <circle cx="14.4" cy="11.2" r="0.6" fill="currentColor" stroke="none"/>
                       <line x1="9.5" y1="15.5" x2="14.5" y2="15.5"/>
                       <path d="M10.5 15.5 L12 21 L13.5 15.5"/>
                     </svg>

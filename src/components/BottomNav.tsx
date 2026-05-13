@@ -105,14 +105,22 @@ export default function BottomNav() {
       label: "Tee Up",
       active: isTeeUp,
       onClick: () => router.push("/tee-up"),
-      icon: (active: boolean) => (
-        // Golf ball on a tee — bigger ball, distinct tee underneath
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="9" r="6"/>
-          <line x1="9.5" y1="15.5" x2="14.5" y2="15.5"/>
-          <path d="M10.5 15.5 L12 21 L13.5 15.5"/>
-        </svg>
-      ),
+      icon: (active: boolean) => {
+        const c = active ? "#4da862" : "rgba(255,255,255,0.85)";
+        return (
+          // Golf ball on a tee — ball gets a few scattered dimples so it reads
+          // unmistakably as a golf ball at small sizes
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="9" r="6"/>
+            <circle cx="10" cy="7.2" r="0.6" fill={c} stroke="none"/>
+            <circle cx="14" cy="8.4" r="0.6" fill={c} stroke="none"/>
+            <circle cx="11" cy="10.8" r="0.6" fill={c} stroke="none"/>
+            <circle cx="14.4" cy="11.2" r="0.6" fill={c} stroke="none"/>
+            <line x1="9.5" y1="15.5" x2="14.5" y2="15.5"/>
+            <path d="M10.5 15.5 L12 21 L13.5 15.5"/>
+          </svg>
+        );
+      },
     },
     {
       label: "Profile",
