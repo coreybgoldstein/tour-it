@@ -788,36 +788,10 @@ export default function HolePage() {
                 </button>
               )}
 
-              {/* Uploader avatar — directly below Intel */}
-              <button className="action-btn" onClick={() => activeUpload && router.push(`/profile/${activeUpload.userId}`)}>
-                <div style={{ position: "relative" }}>
-                  <div className={isLegend(uploader?.rank) ? "legend-ring" : undefined} style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploader?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {uploader?.avatarUrl
-                      ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    }
-                  </div>
-                  {activeUpload && user?.id && user.id !== activeUpload.userId && !followingIds.has(activeUpload.userId) && (
-                    <button onClick={async e => {
-                      e.stopPropagation();
-                      const targetId = activeUpload.userId;
-                      if (followingInProgress.has(targetId)) return;
-                      setFollowingInProgress(s => new Set(s).add(targetId));
-                      const sb = createClient();
-                      if (followingIds.has(targetId)) {
-                        await sb.from("Follow").delete().eq("followerId", user.id).eq("followingId", targetId);
-                        setFollowingIds(s => { const n = new Set(s); n.delete(targetId); return n; });
-                      } else {
-                        await sb.from("Follow").insert({ followerId: user.id, followingId: targetId, status: "ACTIVE", createdAt: new Date().toISOString() });
-                        setFollowingIds(s => new Set(s).add(targetId));
-                      }
-                      setFollowingInProgress(s => { const n = new Set(s); n.delete(targetId); return n; });
-                    }} style={{ position: "absolute", bottom: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: "#2d7a42", border: "1.5px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0, zIndex: 1 }}>
-                      <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
-                    </button>
-                  )}
-                </div>
-              </button>
+              {/* Uploader avatar removed from right rail — now lives inline
+                  next to the uploader's username in the bottom overlay
+                  (see below). Follow + button dropped from the avatar; the
+                  follow action still lives on the uploader's profile page. */}
 
               {/* Like */}
               <ClipActions key={activeUpload.id} upload={activeUpload} likedIds={likedIds} currentUserId={user?.id ?? null} />
@@ -870,7 +844,17 @@ export default function HolePage() {
             )}
 
             {(uploaders[activeUpload.userId]?.username || formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)) && (
-              <div style={{ position: "absolute", left: 100, bottom: activeUpload.mediaType === "VIDEO" ? 112 : 88, zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              // Avatar + username + date. left:100 clears the HoleIdentityCard
+              // sitting bottom-left. Bottom lifts above the VideoScrubber on
+              // video clips and clears the BottomNav on photo clips.
+              <div style={{ position: "absolute", left: 100, bottom: activeUpload.mediaType === "VIDEO" ? "calc(125px + env(safe-area-inset-bottom))" : "calc(80px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                  <div className={isLegend(uploaders[activeUpload.userId]?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaders[activeUpload.userId]?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {uploaders[activeUpload.userId]?.avatarUrl
+                      ? <img src={uploaders[activeUpload.userId].avatarUrl!} alt={uploaders[activeUpload.userId].username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                  </div>
+                </button>
                 {uploaders[activeUpload.userId]?.username && <span onClick={() => router.push(`/profile/${activeUpload.userId}`)} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaders[activeUpload.userId].username}</span>}
                 {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}</span>}
                 {activeUpload.mediaType !== "VIDEO" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
