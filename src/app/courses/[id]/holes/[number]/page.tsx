@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useLike } from "@/hooks/useLike";
+import { useLike, seedLikedCache } from "@/hooks/useLike";
 import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
@@ -262,10 +262,12 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
   );
 }
 
-function ClipActions({ upload }: { upload: Upload }) {
+function ClipActions({ upload, likedIds, currentUserId }: { upload: Upload; likedIds?: Set<string>; currentUserId?: string | null }) {
   const { liked, likeCount, toggleLike } = useLike({
     uploadId: upload.id,
     initialLikeCount: upload.likeCount || 0,
+    initialLiked: likedIds ? likedIds.has(upload.id) : undefined,
+    currentUserId: currentUserId ?? null,
   });
   return (
     <button className="action-btn" onClick={toggleLike}>
@@ -285,6 +287,10 @@ export default function HolePage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [hole, setHole] = useState<Hole | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
+  // Pre-batched set of upload IDs the current user has liked across this
+  // hole's visible clips. Same pattern as home/course/profile pages.
+  const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
+  const prefetchedHoleLikesRef = useRef<string>("");
   const [series, setSeries] = useState<Series[]>([]);
   const [activeSeries, setActiveSeries] = useState<Series | null>(null);
   const [loading, setLoading] = useState(true);
@@ -294,6 +300,31 @@ export default function HolePage() {
   const [copied, setCopied] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+
+  // Batch-fetch the current user's like state across the hole's visible
+  // clips so the heart icon never flickers from unfilled to filled on
+  // mount. See useLike.ts for the pattern.
+  useEffect(() => {
+    if (!user?.id || uploads.length === 0) return;
+    const uploadIds = uploads.map(u => u.id);
+    const key = user.id + ":" + uploadIds.slice().sort().join(",");
+    if (prefetchedHoleLikesRef.current === key) return;
+    prefetchedHoleLikesRef.current = key;
+    const supabase = createClient();
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("Like")
+        .select("uploadId")
+        .eq("userId", user.id)
+        .in("uploadId", uploadIds);
+      if (cancelled || !data) return;
+      const liked = data.map(r => r.uploadId);
+      seedLikedCache(user.id, liked, uploadIds);
+      setLikedIds(new Set(liked));
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, uploads]);
   const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
   const [reportClipId, setReportClipId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState<string | null>(null);
@@ -789,7 +820,7 @@ export default function HolePage() {
               </button>
 
               {/* Like */}
-              <ClipActions key={activeUpload.id} upload={activeUpload} />
+              <ClipActions key={activeUpload.id} upload={activeUpload} likedIds={likedIds} currentUserId={user?.id ?? null} />
 
               {/* Comment */}
               <button className="action-btn" onClick={() => setCommentUploadId(activeUpload.id)}>

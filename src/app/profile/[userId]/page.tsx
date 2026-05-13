@@ -4,7 +4,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { useLike } from "@/hooks/useLike";
+import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
@@ -23,7 +23,7 @@ const SHOT_LABEL: Record<string, string> = {
 };
 
 function ProfileFeedCard({
-  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId,
+  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId, likedIds,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; cloudflareVideoId?: string | null; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null };
   isActive: boolean;
@@ -37,6 +37,7 @@ function ProfileFeedCard({
   onComment: () => void;
   isOwner: boolean;
   currentUserId?: string | null;
+  likedIds?: Set<string>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -45,7 +46,12 @@ function ProfileFeedCard({
   const [videoPaused, setVideoPaused] = useState(false);
   const [copied, setCopied] = useState(false);
   const [intelOpen, setIntelOpen] = useState(false);
-  const { liked, likeCount, toggleLike } = useLike({ uploadId: clip.id, initialLikeCount: clip.likeCount || 0 });
+  const { liked, likeCount, toggleLike } = useLike({
+    uploadId: clip.id,
+    initialLikeCount: clip.likeCount || 0,
+    initialLiked: likedIds ? likedIds.has(clip.id) : undefined,
+    currentUserId: currentUserId ?? null,
+  });
   const hasNotes = !!(clip.strategyNote || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.clubUsed || clip.windCondition || clip.datePlayedAt);
 
   useEffect(() => {
@@ -321,6 +327,35 @@ export default function ProfilePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserMeta, setCurrentUserMeta] = useState<{ username: string; avatarUrl: string | null } | null>(null);
+  // Pre-batched set of upload IDs the current user has liked across this
+  // profile's visible clips. Populated by one Supabase query, mirroring
+  // the home-feed and course-page pattern. Eliminates per-clip heart
+  // flicker on mount.
+  const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
+  const prefetchedProfileLikesRef = useRef<string>("");
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    const uploadIds = [...uploads.map(u => u.id), ...taggedUploads.map(u => u.id)];
+    if (uploadIds.length === 0) return;
+    const key = currentUserId + ":" + uploadIds.slice().sort().join(",");
+    if (prefetchedProfileLikesRef.current === key) return;
+    prefetchedProfileLikesRef.current = key;
+    const supabase = createClient();
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("Like")
+        .select("uploadId")
+        .eq("userId", currentUserId)
+        .in("uploadId", uploadIds);
+      if (cancelled || !data) return;
+      const liked = data.map(r => r.uploadId);
+      seedLikedCache(currentUserId, liked, uploadIds);
+      setLikedIds(new Set(liked));
+    })();
+    return () => { cancelled = true; };
+  }, [currentUserId, uploads, taggedUploads]);
   const [profileRank, setProfileRank] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -822,6 +857,7 @@ export default function ProfilePage() {
                 onComment={() => setCommentUploadId(clip.id)}
                 isOwner={isOwner}
                 currentUserId={currentUserId}
+                likedIds={likedIds}
               />
             </div>
           ))}
