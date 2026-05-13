@@ -588,6 +588,9 @@ function SearchPageInner() {
                 onBlur={() => setFocused(false)}
                 placeholder={searchTab === "courses" ? "Course, city, state or zip…" : "Name or @username"}
                 autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
                 autoFocus
               />
               {query && (
