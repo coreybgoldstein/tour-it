@@ -223,7 +223,7 @@ type UserProfile = { id: string; username: string; displayName: string; avatarUr
 type Upload = { id: string; mediaUrl: string; cloudflareVideoId?: string | null; mediaType: string; courseId: string; holeId: string; holeNumber?: number | null; createdAt: string; userId: string; likeCount?: number; commentCount?: number; shotType?: string | null; clubUsed?: string | null; windCondition?: string | null; strategyNote?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; isTagged?: boolean };
 type CoursePlayed = { id: string; name: string; city: string; state: string; logoUrl: string | null };
 type HomeCourse = { id: string; name: string };
-type SavedCourse = { id: string; courseId: string; saveType: "PLAYED" | "BUCKET_LIST"; course: { id: string; name: string; city: string; state: string } };
+type SavedCourse = { id: string; courseId: string; saveType: "PLAYED" | "BUCKET_LIST"; course: { id: string; name: string; city: string; state: string; logoUrl: string | null } };
 type Round = { id: string; courseId: string; date: string; totalScore: number | null; fairwaysHit: number | null; putts: number | null; notes: string | null; createdAt: string };
 type EarnedBadge = import("@/types/badges").EarnedBadge;
 type EditTagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
@@ -522,7 +522,9 @@ export default function ProfilePage() {
               id: s.id,
               courseId: s.courseId,
               saveType: s.saveType as "PLAYED" | "BUCKET_LIST",
-              course: c ? { id: c.id, name: c.name, city: c.city, state: c.state } : { id: s.courseId, name: "Unknown", city: "", state: "" },
+              course: c
+                ? { id: c.id, name: c.name, city: c.city, state: c.state, logoUrl: c.logoUrl ?? null }
+                : { id: s.courseId, name: "Unknown", city: "", state: "", logoUrl: null },
             };
           }));
         }
@@ -1309,10 +1311,14 @@ export default function ProfilePage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {filtered.map(s => (
                   <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, cursor: "pointer", textAlign: "left" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>
-                        {s.course.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}
-                      </span>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: s.course.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      {s.course.logoUrl ? (
+                        <img src={s.course.logoUrl} alt={s.course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>
+                          {s.course.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}
+                        </span>
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.course.name}</div>
