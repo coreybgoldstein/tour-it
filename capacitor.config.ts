@@ -21,9 +21,18 @@ const config: CapacitorConfig = {
   backgroundColor: "#07100a",
 
   ios: {
-    contentInset: "always", // web content fills behind status bar
+    // "never" — HTML content extends to the very top of the WebView, behind
+    // the status bar. The CSS side handles the safe-area inset via
+    // env(safe-area-inset-top) inside TourItTopBar / FeedTopBar, so the
+    // green header gradient runs ALL the way up under the notch instead of
+    // leaving a dark (or white) band above it. "always" was producing a
+    // visible band on every non-home page.
+    contentInset: "never",
     backgroundColor: "#07100a",
     preferredContentMode: "mobile",
+    // AppDelegate.swift force-disables WKWebView's scrollView.bounces so
+    // there's no "scroll past the top" rubber-band that doesn't exist in
+    // real native apps.
   },
 
   android: {

@@ -32,7 +32,7 @@ export function VideoScrubber({ videoRef, left = 16 }: { videoRef: React.RefObje
   return (
     <div
       ref={trackRef}
-      style={{ position: "absolute", bottom: 80, left, right: 16, height: 28, zIndex: 110, display: "flex", alignItems: "center", cursor: "pointer", touchAction: "pan-y" }}
+      style={{ position: "absolute", bottom: "calc(100px + env(safe-area-inset-bottom))", left, right: 16, height: 28, zIndex: 110, display: "flex", alignItems: "center", cursor: "pointer", touchAction: "pan-y" }}
       onPointerDown={(e) => {
         draggingRef.current = true;
         setDragging(true);

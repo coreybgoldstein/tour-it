@@ -558,9 +558,10 @@ function SearchPageInner() {
       `}</style>
 
       <div className="search-wrap">
-        {/* Header */}
-        <div style={{ padding: "12px 0 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+        {/* Header — tight against the green TopBar above so there isn't a
+            wide black gap between the bar and "Search". */}
+        <div style={{ padding: "4px 0 12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff" }}>
               Search
             </div>
