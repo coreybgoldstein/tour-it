@@ -258,11 +258,11 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
     else { navigator.clipboard.writeText(url).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
   return (
-    <div style={{ position: "absolute", right: 12, bottom: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+    <div style={{ position: "absolute", right: 12, bottom: "calc(100px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
       {/* Intel */}
       {onIntel && (
         <button onClick={onIntel} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "rgba(77,168,98,0.4)" : "rgba(77,168,98,0.25)", backdropFilter: "blur(8px)", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
             </svg>
@@ -1227,7 +1227,7 @@ export default function Home() {
           <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", borderBottom: "1px solid rgba(77,168,98,0.35)", flexShrink: 0 }}>
             <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
             {/* 3-col row: hamburger | logo | bell */}
-            <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: "max(10px, env(safe-area-inset-top))", paddingBottom: 10, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: "calc(env(safe-area-inset-top) + 12px)", paddingBottom: 14, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
               {/* Hamburger */}
               <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: isDesktop ? "none" : "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
@@ -1249,14 +1249,14 @@ export default function Home() {
           <MayCompetitionBanner />
 
           {/* Hero text */}
-          <div style={{ padding: "14px 20px 10px", flexShrink: 0 }}>
+          <div style={{ padding: "20px 20px 14px", flexShrink: 0 }}>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#fff", lineHeight: 1.12 }}>
               Scout your next round
             </div>
           </div>
 
           {/* Search CTA */}
-          <div style={{ padding: "0 20px 14px", flexShrink: 0 }}>
+          <div style={{ padding: "0 20px 20px", flexShrink: 0 }}>
             <button
               onClick={() => router.push("/search")}
               style={{ width: "100%", display: "flex", alignItems: "center", gap: 11, background: "rgba(26,158,66,0.07)", border: "1.5px solid rgba(26,158,66,0.55)", borderRadius: 14, padding: "16px 18px", cursor: "pointer", boxShadow: "0 0 18px rgba(26,158,66,0.2), inset 0 0 10px rgba(26,158,66,0.04)" }}

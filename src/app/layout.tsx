@@ -4,6 +4,7 @@ import "./globals.css";
 import NotificationBell from "@/components/NotificationBell";
 import TourItTopBar from "@/components/TourItTopBar";
 import HideSplash from "@/components/HideSplash";
+import NativeBootstrap from "@/components/NativeBootstrap";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -61,6 +62,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${playfair.variable} ${outfit.variable} antialiased`}>
         <HideSplash />
+        <NativeBootstrap />
         <TourItTopBar />
         {/* NotificationBell intentionally NOT rendered here — TourItTopBar
             now has the bell embedded. The component file is preserved for

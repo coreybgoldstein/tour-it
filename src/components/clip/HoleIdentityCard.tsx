@@ -26,7 +26,10 @@ export function HoleIdentityCard({
     <div
       style={{
         position: "absolute",
-        bottom: "calc(78px + env(safe-area-inset-bottom))",
+        // Sits flush against the BottomNav's top edge (BottomNav height ≈
+        // 67px + safe-area-inset-bottom). Was 78 + safe-area which left a
+        // visible gap between the card and the nav.
+        bottom: "calc(68px + env(safe-area-inset-bottom))",
         left: 0,
         zIndex: 101,
         display: "flex",

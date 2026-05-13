@@ -37,6 +37,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 web.isOpaque = true
                 web.backgroundColor = AppDelegate.brandDark
                 web.scrollView.backgroundColor = AppDelegate.brandDark
+                // Kill the WKWebView's scroll-past-top rubber-band so the
+                // app feels native. Real iOS apps don't let you stretch the
+                // first screen above its top edge — without this, every
+                // page reads as "this is a website inside a shell."
+                web.scrollView.bounces = false
+                web.scrollView.alwaysBounceVertical = false
+                web.scrollView.alwaysBounceHorizontal = false
             }
             v.subviews.forEach(walk)
         }
