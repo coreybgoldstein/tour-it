@@ -13,6 +13,13 @@ const HIDDEN_EXACT = new Set<string>([
   "/notifications",
   "/login",
   "/signup",
+  // Long-form info pages — they each render their own sticky "< Page name"
+  // header with a back button, so the global TopBar was creating an awkward
+  // double-bar stack at the top.
+  "/about",
+  "/privacy",
+  "/terms",
+  "/feedback",
 ]);
 const HIDDEN_PREFIXES = ["/courses/", "/onboarding", "/admin"];
 

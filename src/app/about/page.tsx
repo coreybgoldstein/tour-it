@@ -59,12 +59,14 @@ export default function AboutPage() {
         * { box-sizing: border-box; }
       `}</style>
 
-      {/* Sticky back header */}
+      {/* Sticky back header — top padding includes env(safe-area-inset-top)
+          so the back button never sits under the iOS notch / Dynamic Island
+          now that the global TourItTopBar is hidden on info pages. */}
       <div style={{
         position: "sticky", top: 0, zIndex: 10,
         background: "rgba(7,16,10,0.95)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
-        padding: "12px 20px", display: "flex", alignItems: "center", gap: 12,
+        padding: "calc(12px + env(safe-area-inset-top)) 20px 12px", display: "flex", alignItems: "center", gap: 12,
       }}>
         <button onClick={() => router.back()} style={{
           width: 34, height: 34, borderRadius: "50%",
