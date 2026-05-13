@@ -848,12 +848,10 @@ export default function HolePage() {
             )}
 
             {(uploaders[activeUpload.userId]?.username || formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)) && (
-              // Avatar + username + date. left:100 clears the HoleIdentityCard
-              // sitting bottom-left. Bottom lifts above the VideoScrubber on
+              // Avatar + username + date. left adapts to hole digit count
+              // (80 for 1-9, 105 for 10+) so the row hugs the HoleIdentityCard
+              // without floating. Bottom lifts above the VideoScrubber on
               // video clips and clears the BottomNav on photo clips.
-              {/* left: single digit 1-9 → 80 (hugs narrow "1" flag);
-                  double digit 10+ → 105 (hugs wider "10" flag). Keeps a
-                  ~8-12px cushion from the HoleIdentityCard's right edge. */}
               <div style={{ position: "absolute", left: (activeUpload.holeNumber ?? holeNum ?? 0) >= 10 ? 105 : 80, bottom: activeUpload.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
                 <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
                   <div className={isLegend(uploaders[activeUpload.userId]?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaders[activeUpload.userId]?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
