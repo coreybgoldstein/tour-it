@@ -182,7 +182,7 @@ function ProfileFeedCard({
         // Avatar + username + date. Bottom lifted above scrubber on video
         // and above BottomNav (Face ID home indicator) on photos. The
         // isTagged check on the avatar marks clips the user was tagged in.
-        <div style={{ position: "absolute", left: 16, bottom: clip.mediaType === "VIDEO" ? "calc(150px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ position: "absolute", left: 16, bottom: clip.mediaType === "VIDEO" ? "calc(130px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={() => { onClose(); router.push(`/profile/${uploaderInfo.id}`); }} aria-label={`Open ${uploaderInfo.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
             <div style={{ position: "relative", width: 28, height: 28, flexShrink: 0 }}>
               <div className={isLegend(uploaderInfo.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaderInfo.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
