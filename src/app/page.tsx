@@ -668,6 +668,9 @@ export default function Home() {
   // feed and the auth user are both available; eliminates the per-clip
   // round-trip that would otherwise make the heart flicker on mount.
   const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
+  // Track which course routes we've already prefetched so we don't re-fire
+  // the request when the feed or near-me data refreshes.
+  const prefetchedCoursesRef = useRef<Set<string>>(new Set());
   const [activeIndex, setActiveIndex] = useState(-1);
   const [loading, setLoading] = useState(true);
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
@@ -922,6 +925,22 @@ export default function Home() {
     })();
     return () => { cancelled = true; };
   }, [user?.id, feedItems]);
+
+  // Prefetch the routes for the trending + near-me course tiles on the
+  // discovery screen so that tapping one feels instant — Next.js fetches
+  // the RSC payload + course route bundle in the background while the
+  // user is still scrolling the home feed. Without this, every course
+  // tile tap incurs a full network round-trip for the page payload.
+  useEffect(() => {
+    const ids = new Set<string>();
+    for (const c of trendingCourses) ids.add(c.id);
+    for (const c of nearMeCourses) ids.add(c.id);
+    for (const id of ids) {
+      if (prefetchedCoursesRef.current.has(id)) continue;
+      prefetchedCoursesRef.current.add(id);
+      router.prefetch(`/courses/${id}`);
+    }
+  }, [trendingCourses, nearMeCourses, router]);
 
   const handleFollow = useCallback(async (targetId: string) => {
     if (!user?.id) { router.push("/login"); return; }
