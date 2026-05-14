@@ -27,6 +27,12 @@ const sb = createClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
+// @tourit is a system poster for course intel. Never earns points and
+// never appears in any leaderboard — every award skips it, and any
+// existing ledger + progression rows are wiped at the start of every
+// resync so historical drift can't put it back on the board.
+const TOURIT_USER_ID = "ab290b8b-9d02-4acb-8a18-a84d48ffb77c";
+
 async function fetchAll(table, columns) {
   const PAGE = 1000;
   const all = [];
@@ -78,6 +84,15 @@ async function main() {
   console.log("\n🏅  Tour It — Resync leaderboard (May + All-time)");
   console.log("==================================================\n");
 
+  // ── Hard scrub of @tourit before anything else ────────────────────────────
+  // Removes any historical points + progression so the system poster
+  // can never resurface on the board even if a past run awarded points.
+  console.log("Scrubbing @tourit history…");
+  const { error: tourLedgerErr } = await sb.from("UserPointsLedger").delete().eq("userId", TOURIT_USER_ID);
+  if (tourLedgerErr) console.warn("  ledger delete:", tourLedgerErr.message);
+  const { error: tourProgErr } = await sb.from("UserProgression").delete().eq("userId", TOURIT_USER_ID);
+  if (tourProgErr) console.warn("  progression delete:", tourProgErr.message);
+
   // ── Existing ledger (dedup key: userId|action|referenceId) ────────────────
   console.log("Loading existing ledger…");
   const existingLedger = await fetchAll("UserPointsLedger", "id, userId, action, referenceId, points, createdAt");
@@ -86,6 +101,8 @@ async function main() {
 
   const newRows = [];
   function award(userId, action, referenceId, points, createdAt) {
+    // @tourit never earns points anywhere in the system.
+    if (userId === TOURIT_USER_ID) return;
     const key = `${userId}|${action}|${referenceId ?? ""}`;
     if (existsKey.has(key)) return;
     existsKey.add(key);

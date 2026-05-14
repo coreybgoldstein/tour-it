@@ -64,6 +64,11 @@ const COURSE_FIELD_ACTIONS = [
 ] as const;
 const COURSE_FIELD_DAILY_CAP = 20;
 
+// @tourit is a system poster (course intel) — never earns points and
+// never appears in leaderboards. See leaderboards/page.tsx for the UI
+// exclusion, and resync-leaderboard.mjs for the data-side zero-out.
+const TOURIT_USER_ID = "ab290b8b-9d02-4acb-8a18-a84d48ffb77c";
+
 export async function awardPoints({
   userId,
   action,
@@ -71,6 +76,11 @@ export async function awardPoints({
   metadata,
   customAmount,
 }: AwardPointsOptions): Promise<{ totalPoints: number; level: number } | null> {
+  // Hard short-circuit for the system poster — no ledger row, no
+  // progression update, no broadcast. Prevents any future point award
+  // for @tourit regardless of which API route or trigger called us.
+  if (userId === TOURIT_USER_ID) return null;
+
   const supabase = await createClient();
   const points = customAmount ?? POINT_VALUES[action];
 
