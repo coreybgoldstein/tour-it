@@ -21,8 +21,14 @@ type Entry = {
   user: { displayName: string; username: string; avatarUrl: string | null } | null;
 };
 
-// Owner of the app — excluded from public leaderboards.
+// Users excluded from every public leaderboard view (still keep their
+// own progression points so personal-profile bars stay accurate).
+//   - OWNER_USER_ID  = Corey (app owner — points show on his own profile)
+//   - TOURIT_USER_ID = @tourit (system poster for course intel —
+//                      should never earn points or appear in standings)
 const OWNER_USER_ID = "5d2dd909-65a6-44e8-8bd4-94419f7622d9";
+const TOURIT_USER_ID = "ab290b8b-9d02-4acb-8a18-a84d48ffb77c";
+const HIDDEN_LEADERBOARD_USER_IDS = [OWNER_USER_ID, TOURIT_USER_ID];
 
 function TrophyIcon() {
   return (
@@ -66,7 +72,7 @@ export default function LeaderboardsPage() {
     const { data } = await supabase
       .from("UserProgression")
       .select("userId, totalPoints, monthlyPoints, level, rank, user:userId(displayName, username, avatarUrl)")
-      .neq("userId", OWNER_USER_ID)
+      .not("userId", "in", `(${HIDDEN_LEADERBOARD_USER_IDS.join(",")})`)
       .order(sortField, { ascending: false })
       .limit(50);
     setEntries((data as unknown as Entry[]) ?? []);
@@ -116,7 +122,7 @@ export default function LeaderboardsPage() {
         const { count } = await supabase
           .from("UserProgression")
           .select("*", { count: "exact", head: true })
-          .neq("userId", OWNER_USER_ID)
+          .not("userId", "in", `(${HIDDEN_LEADERBOARD_USER_IDS.join(",")})`)
           .gt(sortField, myPts);
         setMyRank((count ?? 0) + 1);
       });
