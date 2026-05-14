@@ -1338,9 +1338,14 @@ export default function Home() {
             Join nudge and can't interact with the immersive clip feed anyway,
             so we let this section grow and scroll like a normal page — no
             overlap, nothing clipped, no awkward TOUR THE FEED button. */}
-        <div className="feed-item" style={user === null
-          ? { minHeight: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "visible", position: "relative" }
-          : { height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }
+        <div className="feed-item" style={
+          // Same shape for logged-in and logged-out now: minHeight (not fixed
+          // height) + overflow visible. iOS Capacitor's 100svh is taller than
+          // mobile web's (no URL bar) — the old fixed height fit iOS fine but
+          // clipped mobile web content + the "Tour the feed" CTA. minHeight
+          // lets the section be at least one viewport tall but grow when
+          // content needs it; scroll-snap still pins each feed-item's top.
+          { minHeight: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "visible", position: "relative" }
         }>
           {/* Green header bar */}
           <div style={{ position: "relative", background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)", borderBottom: "1px solid rgba(77,168,98,0.35)", flexShrink: 0 }}>
@@ -1494,7 +1499,7 @@ export default function Home() {
           {showScrollHint && user !== null && (
             <button
               onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-              style={{ flexShrink: 0, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 12, paddingTop: 14, paddingBottom: "calc(105px + env(safe-area-inset-bottom))", background: "none", border: "none", cursor: "pointer", gap: 8 }}
+              style={{ flexShrink: 0, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 16, paddingTop: 14, paddingBottom: "calc(20px + env(safe-area-inset-bottom))", background: "none", border: "none", cursor: "pointer", gap: 8 }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
