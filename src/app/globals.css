@@ -18,6 +18,12 @@
 html {
   min-height: 100%;
   overflow-x: hidden;
+  /* overscroll-behavior on html catches the cases where the document
+     element is the scroll container; body's same rule covers the rest.
+     Note: this only mitigates the rubber-band on mobile Safari and
+     Chrome — the iOS Capacitor WKWebView's native scrollView.bounces
+     overrides CSS, so the full fix lives in AppDelegate.swift. */
+  overscroll-behavior: none;
   background: var(--background);
 }
 
