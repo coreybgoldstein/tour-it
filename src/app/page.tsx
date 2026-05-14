@@ -164,19 +164,14 @@ function LeaderboardsButtonInline() {
 
 
 function CourseCard({ course, onClick, compact, featured }: { course: TrendingCourse; onClick: () => void; compact?: boolean; featured?: FeaturedTournament | null }) {
-  // Tile size bumped from 148x174/188 to 172x204/220 so the home discovery
-  // section fills the iOS Capacitor 100svh viewport without leaving a
-  // big dead zone above the "Tour the feed" CTA. Mobile web (with the URL
-  // bar eating some height) tightens up automatically since the row scrolls
-  // horizontally and the rest of the section flexes around it.
-  const h = compact ? 204 : 220;
+  const h = compact ? 174 : 188;
   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
   const GOLD = "#d4a017";
   return (
     <div
       onClick={onClick}
       style={{
-        width: 172, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
+        width: 148, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
         cursor: "pointer", position: "relative", background: "rgba(10,28,18,0.95)",
         border: featured ? `1.5px solid ${GOLD}` : "1px solid rgba(26,158,66,0.12)",
         boxShadow: featured ? "0 0 0 1px rgba(212,160,23,0.25), 0 0 14px rgba(212,160,23,0.22)" : undefined,
@@ -1431,7 +1426,7 @@ export default function Home() {
                       featured={featured && course.id === featured.courseId ? featured : null}
                     />
                   )) : [1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 172, height: 204, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               </div>
@@ -1472,7 +1467,7 @@ export default function Home() {
               {locationStatus === "loading" && (
                 <div className="courses-row">
                   {[1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 172, height: 204, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               )}
