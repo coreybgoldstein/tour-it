@@ -46,7 +46,7 @@ async function uploadToStorage(path, bytes, contentType) {
 }
 
 /**
- * @param {{ courseId: string, holes: Array<{holeNumber: number, imageUrl?: string|null, description?: string|null}>, courseDescription?: string|null, courseYear?: number|null }} cfg
+ * @param {{ courseId: string, holes: Array<{holeNumber: number, imageUrl?: string|null, description?: string|null, yardage?: number|null}>, courseDescription?: string|null, courseYear?: number|null }} cfg
  */
 export async function seedCourseImagery(cfg) {
   const { courseId, holes, courseDescription, courseYear } = cfg;
@@ -69,7 +69,7 @@ export async function seedCourseImagery(cfg) {
 
   const { data: holeRows, error } = await sb
     .from("Hole")
-    .select("id, holeNumber, imageUrl, description")
+    .select("id, holeNumber, imageUrl, description, yardage")
     .eq("courseId", courseId)
     .order("holeNumber");
   if (error) throw error;
@@ -104,6 +104,9 @@ export async function seedCourseImagery(cfg) {
     }
 
     if (cfgHole.description) { patch.description = cfgHole.description; intel++; }
+    // Only set yardage if the DB row doesn't already have one — preserves
+    // human-curated yardages that may have been entered after seeding.
+    if (cfgHole.yardage != null && h.yardage == null) { patch.yardage = cfgHole.yardage; }
     if (Object.keys(patch).length > 1) await sb.from("Hole").update(patch).eq("id", h.id);
 
     // Idempotent @tourit Upload row for holes with an image
