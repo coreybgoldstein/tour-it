@@ -578,10 +578,17 @@ export default function HolePage() {
     const deltaY = touchStartY.current - e.changedTouches[0].clientY;
     const deltaX = touchStartX.current - e.changedTouches[0].clientX;
 
-    // Horizontal swipe (left/right) — navigate between holes
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && !multiHoleKey) {
+    // Axes match the course page's feed-modal convention:
+    //   VERTICAL swipe   = navigate between holes (next / prev)
+    //   HORIZONTAL swipe = switch between clips on the SAME hole
+    // Previously these were reversed on the hole page, which made users
+    // re-learn the gesture every time they switched surfaces.
+
+    // VERTICAL swipe — next / prev hole
+    if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50 && !multiHoleKey) {
       const holeNum = Number(number);
-      const dir = deltaX > 0 ? "next" : "prev";
+      // swipe UP (finger up = deltaY > 0) → next hole; swipe DOWN → prev hole
+      const dir = deltaY > 0 ? "next" : "prev";
       const candidates = dir === "next"
         ? holeList.filter(h => h.holeNumber > holeNum).sort((a, b) => a.holeNumber - b.holeNumber)
         : holeList.filter(h => h.holeNumber < holeNum).sort((a, b) => b.holeNumber - a.holeNumber);
@@ -597,10 +604,10 @@ export default function HolePage() {
       return;
     }
 
-    // Vertical swipe — scroll through clips for this hole
-    if (deltaY > 50 && activeIndex < uploads.length - 1) {
+    // HORIZONTAL swipe — switch between clips on this hole
+    if (deltaX > 50 && activeIndex < uploads.length - 1) {
       setActiveIndex(prev => prev + 1);
-    } else if (deltaY < -50 && activeIndex > 0) {
+    } else if (deltaX < -50 && activeIndex > 0) {
       setActiveIndex(prev => prev - 1);
     }
   };

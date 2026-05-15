@@ -395,7 +395,9 @@ const SeriesCard = memo(function SeriesCardImpl({
   const handleTouchEnd = (e: React.TouchEvent) => {
     const dx = touchStartX.current - e.changedTouches[0].clientX;
     const dy = touchStartY.current - e.changedTouches[0].clientY;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+    // 50px threshold matches the hole-page swipe handlers — unified
+    // across surfaces so a same-strength flick produces the same result.
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
       e.stopPropagation();
       if (dx > 0 && shotIndex < item.shots.length - 1) setShotIndex(i => i + 1);
       else if (dx < 0 && shotIndex > 0) setShotIndex(i => i - 1);
@@ -1239,7 +1241,13 @@ export default function Home() {
         }
         body { overflow: hidden; }
         @keyframes pulse-ring { 0%,100% { transform: scale(1); opacity: 0.18; } 50% { transform: scale(1.18); opacity: 0.07; } }
-        .feed { height: 100svh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        /* Home feed scroller. touch-action: pan-y locks the scroll axis
+           so a horizontal pan (e.g. across SeriesCard shots) doesn't get
+           half-interpreted as a vertical scroll. overscroll-behavior:
+           contain stops scroll chaining to the body — so the iOS
+           rubber-band can't bubble out of the feed onto the page when
+           you scroll past the top/bottom. */
+        .feed { height: 100svh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; }
         .feed::-webkit-scrollbar { display: none; }
         .feed-item { scroll-snap-align: start; scroll-snap-stop: always; }
         .courses-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; }
