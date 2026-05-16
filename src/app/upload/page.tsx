@@ -1020,9 +1020,23 @@ function UploadPageInner() {
                 )}
                 <button
                   className="btn-primary"
-                  onClick={() => setStep(2)}
+                  onClick={() => {
+                    // Skip past steps the user has already filled — either
+                    // from the URL (?courseId / ?holeNumber, e.g. coming
+                    // from a round detail page) or from a previous "Upload
+                    // another" round-trip. Marc's feedback: don't make
+                    // someone select the same course + hole twice in the
+                    // same round.
+                    if (selectedCourse && selectedHole) setStep(4);
+                    else if (selectedCourse) setStep(3);
+                    else setStep(2);
+                  }}
                 >
-                  Next: Select Course →
+                  {selectedCourse && selectedHole
+                    ? "Next: Add Intel →"
+                    : selectedCourse
+                      ? "Next: Select Hole →"
+                      : "Next: Select Course →"}
                 </button>
               </>
             ) : (
@@ -1053,7 +1067,9 @@ function UploadPageInner() {
                   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                   return (
                     <button key={course.id} className="course-item" onClick={() => { setSelectedCourse(course); setStep(3); }}>
-                      <div className="course-abbr">{abbr}</div>
+                      {course.logoUrl
+                        ? <img src={course.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                        : <div className="course-abbr">{abbr}</div>}
                       <div>
                         <div className="course-name-text">{course.name}</div>
                         <div className="course-location-text">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
@@ -1084,7 +1100,9 @@ function UploadPageInner() {
                       const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                       return (
                         <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
-                          <div className="course-abbr">{abbr}</div>
+                          {course.logoUrl
+                            ? <img src={course.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                            : <div className="course-abbr">{abbr}</div>}
                           <div>
                             <div className="course-name-text">{course.name}</div>
                             <div className="course-location-text">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
@@ -1107,7 +1125,9 @@ function UploadPageInner() {
                   const abbr = selectedCourse.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                   return (
                     <button className="course-item selected" onClick={() => setStep(3)}>
-                      <div className="course-abbr">{abbr}</div>
+                      {selectedCourse.logoUrl
+                        ? <img src={selectedCourse.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                        : <div className="course-abbr">{abbr}</div>}
                       <div>
                         <div className="course-name-text">{selectedCourse.name}</div>
                         <div className="course-location-text">{[selectedCourse.city, selectedCourse.state].filter(s => s?.trim()).join(", ")}</div>
@@ -1139,7 +1159,9 @@ function UploadPageInner() {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (
                   <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
-                    <div className="course-abbr">{abbr}</div>
+                    {course.logoUrl
+                      ? <img src={course.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                      : <div className="course-abbr">{abbr}</div>}
                     <div>
                       <div className="course-name-text">{course.name}</div>
                       <div className="course-location-text">{[course.city, course.state].filter(s => s?.trim()).join(", ")}</div>
