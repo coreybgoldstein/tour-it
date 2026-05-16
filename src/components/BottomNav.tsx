@@ -125,7 +125,9 @@ export default function BottomNav() {
     {
       label: "Profile",
       active: isProfile,
-      onClick: () => router.push("/profile"),
+      // With an unread badge, tap opens the slide-in notifications panel on
+      // profile. Param is forwarded through /profile redirect → /profile/[userId].
+      onClick: () => router.push(unreadCount > 0 ? "/profile?notifications=open" : "/profile"),
       isProfile: true,
       icon: (active: boolean) => (
         <div style={{ position: "relative", width: isDesktop ? 28 : 24, height: isDesktop ? 28 : 24 }}>

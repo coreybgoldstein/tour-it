@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import NotificationsPanel from "@/components/NotificationsPanel";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
@@ -313,7 +314,19 @@ function UpcomingTripCard({ trip, onClick }: { trip: ProfileTrip; onClick: () =>
 export default function ProfilePage() {
   const { userId } = useParams();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isDesktop = useIsDesktop();
+
+  // Slide-in notifications panel — opened when ?notifications=open is in URL,
+  // closed by removing the param (preserves the rest of the query string).
+  const notificationsOpen = searchParams.get("notifications") === "open";
+  const closeNotifications = () => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("notifications");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  };
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
@@ -806,6 +819,7 @@ export default function ProfilePage() {
         ))}
       </div>
       <BottomNav />
+      <NotificationsPanel open={notificationsOpen} onClose={closeNotifications} />
     </main>
   );
 
@@ -1434,6 +1448,8 @@ export default function ProfilePage() {
       })()}
 
       <BottomNav />
+
+      <NotificationsPanel open={notificationsOpen} onClose={closeNotifications} />
 
       {/* Comment sheet */}
       {commentUploadId && (
