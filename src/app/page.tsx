@@ -815,12 +815,23 @@ export default function Home() {
         pool = allEligible;
       }
 
-      // Full shuffle — true variety on every load
-      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      // First 3 slots = the absolute freshest content (sorted createdAt DESC
+      // by the Supabase query above). After that, fall back to the shuffled
+      // pool with course-spacing for variety. This gives the TikTok-like
+      // "what's new right now" feel up top, then opens out to the wider feed.
+      const NEWEST_COUNT = 3;
+      const newestPicks = pool.slice(0, Math.min(NEWEST_COUNT, pool.length));
+      const newestIds = new Set(newestPicks.map(u => u.id));
 
-      // 5-slide course spacing: no same course within 5 consecutive slots
-      const recentCourses: string[] = [];
-      const uploads: typeof shuffled = [];
+      // Shuffle the remainder for true variety on every load
+      const remainder = pool.filter(u => !newestIds.has(u.id));
+      const shuffled = [...remainder].sort(() => Math.random() - 0.5);
+
+      // 5-slide course spacing on the shuffled tail. Seed the recent-courses
+      // window with the newest picks so the same course isn't repeated right
+      // after the freshest 3.
+      const recentCourses: string[] = newestPicks.map(u => u.courseId);
+      const uploads: typeof shuffled = [...newestPicks];
       for (const clip of shuffled) {
         if (!recentCourses.slice(-5).includes(clip.courseId)) {
           uploads.push(clip);
@@ -829,8 +840,10 @@ export default function Home() {
         if (uploads.length >= 15) break;
       }
 
-      // Fallback if course-spacing over-filtered
-      const finalUploads = uploads.length > 0 ? uploads : shuffled.slice(0, 15);
+      // Fallback if course-spacing over-filtered — keep newest at the front
+      const finalUploads = uploads.length > newestPicks.length
+        ? uploads
+        : [...newestPicks, ...shuffled.slice(0, 15 - newestPicks.length)];
 
       // Persist seen IDs for this session (cap at 100)
       sessionStorage.setItem(

@@ -1,18 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ProfileRedirect() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace(`/profile/${user.id}`);
+      // Preserve query string (e.g. ?notifications=open) when redirecting to
+      // the canonical /profile/[userId] route so the panel can open directly.
+      const qs = searchParams.toString();
+      const suffix = qs ? `?${qs}` : "";
+      if (user) router.replace(`/profile/${user.id}${suffix}`);
       else router.replace("/login");
     });
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <main style={{ background: "#07100a", minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}>
