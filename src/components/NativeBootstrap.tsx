@@ -37,38 +37,64 @@ export default function NativeBootstrap() {
     const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
     if (!cap?.isNativePlatform?.()) return;
 
-    // Reload threshold. Anything longer than this and we assume the WebView
-    // may have entered the stuck post-suspend state and force a fresh
-    // composite. 500ms covers screenshots (brief inactive state) without
-    // firing on tiny focus glitches.
-    const RESUME_RELOAD_THRESHOLD_MS = 500;
-    let hiddenAt = 0;
+    // Layered resume detection. iOS screenshots specifically don't fire
+    // visibilitychange in WKWebView (the app stays "visible"), so we also
+    // listen on window blur/focus and run an event-loop heartbeat. Any one
+    // of these tripping after a suspect interval is enough to reload.
+    const RESUME_RELOAD_THRESHOLD_MS = 150;
+    const HEARTBEAT_GAP_THRESHOLD_MS = 2000;
+    let suspendedAt = 0;
+    let reloading = false;
+    // eslint-disable-next-line @typescript-eslint/no-console -- diagnostic
+    console.log("[NativeBootstrap] resume-recovery v2 active");
 
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        hiddenAt = Date.now();
-        return;
-      }
-      if (!hiddenAt) return;
-      const awayMs = Date.now() - hiddenAt;
-      hiddenAt = 0;
-      if (awayMs > RESUME_RELOAD_THRESHOLD_MS) {
-        window.location.reload();
-      }
+    const reloadOnce = () => {
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    };
+    const markSuspended = () => {
+      if (!suspendedAt) suspendedAt = Date.now();
+    };
+    const markResumed = () => {
+      if (!suspendedAt) return;
+      const awayMs = Date.now() - suspendedAt;
+      suspendedAt = 0;
+      if (awayMs > RESUME_RELOAD_THRESHOLD_MS) reloadOnce();
     };
 
-    // pageshow with persisted=true means iOS restored the page from BFCache,
-    // which is the exact state where the suspend bug surfaces. Always reload.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") markSuspended();
+      else markResumed();
+    };
     const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) window.location.reload();
+      // persisted=true means iOS restored from BFCache — always stale.
+      if (e.persisted) reloadOnce();
     };
 
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("blur", markSuspended);
+    window.addEventListener("focus", markResumed);
+
+    // Event-loop heartbeat. If the JS engine was paused for > 2s, the
+    // WebView was almost certainly suspended by iOS — reload to recover
+    // any stuck render state. This catches the cases where no lifecycle
+    // event fires at all (e.g., the iOS app switcher snapshot capture).
+    let lastBeat = Date.now();
+    const heartbeat = window.setInterval(() => {
+      const now = Date.now();
+      const gap = now - lastBeat;
+      lastBeat = now;
+      if (gap > HEARTBEAT_GAP_THRESHOLD_MS) reloadOnce();
+    }, 1000);
 
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("blur", markSuspended);
+      window.removeEventListener("focus", markResumed);
+      clearInterval(heartbeat);
     };
   }, []);
 
