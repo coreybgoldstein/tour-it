@@ -230,6 +230,33 @@ async function main() {
     if (g.createdBy) award(g.createdBy, "create_game", g.id, 15, g.createdAt);
   }
 
+  // 10. Hero-tag transfers — clip_uploaded_for_other reward (+10) for the
+  // original uploader on every approved hero tag. Backfills the award for
+  // any transfer that happened before this action existed, AND covers
+  // tags approved while the points pipeline was momentarily down.
+  // Looks up Upload.uploadedByUserId (= the original uploader) and dedupes
+  // by uploadId so a re-claim cycle doesn't double-award.
+  console.log("Loading hero-tag transfers…");
+  const heroTags = await fetchAll("UploadTag", "uploadId, userId, approved, isHero, createdAt");
+  const approvedHeroTags = heroTags.filter((t) => t.isHero === true && t.approved === true);
+  if (approvedHeroTags.length > 0) {
+    const uploadIds = [...new Set(approvedHeroTags.map((t) => t.uploadId))];
+    // Page through Upload in chunks of 200 (Postgres IN limit) just in case
+    const transferredUploads = [];
+    for (let i = 0; i < uploadIds.length; i += 200) {
+      const chunk = uploadIds.slice(i, i + 200);
+      const { data } = await sb.from("Upload").select("id, uploadedByUserId").in("id", chunk);
+      if (data) transferredUploads.push(...data);
+    }
+    const uploadedByMap = new Map(transferredUploads.map((u) => [u.id, u.uploadedByUserId]));
+    for (const t of approvedHeroTags) {
+      const originalUploader = uploadedByMap.get(t.uploadId);
+      if (originalUploader) {
+        award(originalUploader, "clip_uploaded_for_other", t.uploadId, 10, t.createdAt);
+      }
+    }
+  }
+
   // ── Insert any new ledger rows ────────────────────────────────────────────
   const breakdown = {};
   for (const r of newRows) breakdown[r.action] = (breakdown[r.action] ?? 0) + 1;

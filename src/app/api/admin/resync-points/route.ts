@@ -198,6 +198,29 @@ export async function GET(req: NextRequest) {
     if (g.createdBy) award(g.createdBy, "create_game", g.id, 15, g.createdAt);
   }
 
+  // ── 10. Hero tag transfers: clip_uploaded_for_other (+10) ─────────────
+  // Awards the original uploader on every approved hero tag. Idempotent
+  // via the REFERENCE_DEDUPED_ACTIONS check in awardPoints + the
+  // resync's own existsKey set.
+  const heroTags = await fetchAll(sb, "UploadTag", "uploadId, userId, approved, isHero, createdAt");
+  const approvedHeroTags = (heroTags as any[]).filter(t => t.isHero === true && t.approved === true);
+  if (approvedHeroTags.length > 0) {
+    const uploadIds = [...new Set(approvedHeroTags.map(t => t.uploadId))] as string[];
+    const transferredUploads: { id: string; uploadedByUserId: string | null }[] = [];
+    for (let i = 0; i < uploadIds.length; i += 200) {
+      const chunk = uploadIds.slice(i, i + 200);
+      const { data } = await sb.from("Upload").select("id, uploadedByUserId").in("id", chunk);
+      if (data) transferredUploads.push(...(data as any[]));
+    }
+    const uploadedByMap = new Map(transferredUploads.map(u => [u.id, u.uploadedByUserId]));
+    for (const t of approvedHeroTags) {
+      const originalUploader = uploadedByMap.get(t.uploadId);
+      if (originalUploader) {
+        award(originalUploader, "clip_uploaded_for_other", t.uploadId, 10, t.createdAt);
+      }
+    }
+  }
+
   // ── Insert new ledger rows ────────────────────────────────────────────────────
   const breakdown: Record<string, number> = {};
   for (const r of newRows) breakdown[r.action] = (breakdown[r.action] ?? 0) + 1;

@@ -12,6 +12,9 @@ export const PointAction = {
   UPLOAD_CLIP:                 "upload_clip",
   UPLOAD_FIRST_FOR_COURSE:     "upload_first_for_course",
   UPLOAD_SERIES:               "upload_series",
+  // Awarded to the original uploader when the hero they tagged accepts
+  // ownership of the clip. Rewards filming for others. Once per upload.
+  CLIP_UPLOADED_FOR_OTHER:     "clip_uploaded_for_other",
 
   // Intel quality (variable amount: see calcIntelBonus)
   INTEL_BONUS:                 "intel_bonus",
@@ -83,6 +86,7 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
   [PointAction.UPLOAD_CLIP]:               20,
   [PointAction.UPLOAD_FIRST_FOR_COURSE]:  100,
   [PointAction.UPLOAD_SERIES]:             30,
+  [PointAction.CLIP_UPLOADED_FOR_OTHER]:   10,
 
   // Variable — actual amount comes from calcIntelBonus and is passed
   // through awardPoints' customAmount override.
