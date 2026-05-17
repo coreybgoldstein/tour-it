@@ -127,6 +127,18 @@ function UploadPageInner() {
   const [taggedUsers, setTaggedUsers] = useState<TagUser[]>([]);
   const tagDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Hero tag — the person who actually hit the shot in this clip. When the
+  // uploader is the hero (default), heroUser stays null and the clip lives
+  // on the uploader's profile as-is. When set to someone else, that user
+  // gets a "claim this shot" notification and on approval the upload's
+  // ownership transfers to them with a "uploaded by @uploader" attribution
+  // chip rendered on every clip surface.
+  const [heroPick, setHeroPick] = useState<"me" | "someone">("me");
+  const [heroUser, setHeroUser] = useState<TagUser | null>(null);
+  const [heroInput, setHeroInput] = useState("");
+  const [heroResults, setHeroResults] = useState<TagUser[]>([]);
+  const heroDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
@@ -177,17 +189,32 @@ function UploadPageInner() {
     }
   }, [gpsStatus]);
 
-  // Tag user search
+  // Tag user search (co-stars)
   useEffect(() => {
     if (tagDebounce.current) clearTimeout(tagDebounce.current);
     if (!tagInput.trim()) { setTagResults([]); return; }
     tagDebounce.current = setTimeout(async () => {
       const supabase = createClient();
       const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${tagInput.trim()}%`).limit(6);
-      const taggedIds = new Set(taggedUsers.map(u => u.id));
-      setTagResults((data || []).filter((u: TagUser) => !taggedIds.has(u.id)));
+      // Exclude both already-tagged co-stars and the chosen hero from the
+      // co-star results so the same user can't be added twice.
+      const excluded = new Set([...taggedUsers.map(u => u.id), ...(heroUser ? [heroUser.id] : [])]);
+      setTagResults((data || []).filter((u: TagUser) => !excluded.has(u.id)));
     }, 280);
-  }, [tagInput, taggedUsers]);
+  }, [tagInput, taggedUsers, heroUser]);
+
+  // Hero user search
+  useEffect(() => {
+    if (heroDebounce.current) clearTimeout(heroDebounce.current);
+    if (!heroInput.trim()) { setHeroResults([]); return; }
+    heroDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${heroInput.trim()}%`).limit(6);
+      // Exclude already-chosen co-stars from hero results.
+      const excluded = new Set(taggedUsers.map(u => u.id));
+      setHeroResults((data || []).filter((u: TagUser) => !excluded.has(u.id)));
+    }, 280);
+  }, [heroInput, taggedUsers]);
 
   const searchCourses = useCallback((q: string) => {
     if (courseDebounceRef.current) clearTimeout(courseDebounceRef.current);
@@ -683,27 +710,39 @@ function UploadPageInner() {
         }
       })();
 
-      // Tag notifications + UploadTag rows
-      if (taggedUsers.length > 0) {
+      // Tag notifications + UploadTag rows.
+      // - Hero tag (heroUser): the person who actually hit the shot. Their
+      //   approval transfers Upload.userId to them — different notification
+      //   copy and a distinct accept button.
+      // - Co-star tags (taggedUsers): people also in the clip. Approval
+      //   only adds the clip to their profile, no ownership transfer.
+      const allTagged: Array<{ user: TagUser; isHero: boolean }> = [
+        ...(heroUser ? [{ user: heroUser, isHero: true }] : []),
+        ...taggedUsers.map(u => ({ user: u, isHero: false })),
+      ];
+      if (allTagged.length > 0) {
         const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
         const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
         const notifNow = new Date().toISOString();
         await Promise.all([
           supabase.from("UploadTag").insert(
-            taggedUsers.map(u => ({
+            allTagged.map(({ user: u, isHero }) => ({
               id: crypto.randomUUID(),
               uploadId,
               userId: u.id,
+              isHero,
               createdAt: notifNow,
             }))
           ),
           supabase.from("Notification").insert(
-            taggedUsers.map(u => ({
+            allTagged.map(({ user: u, isHero }) => ({
               id: crypto.randomUUID(),
               userId: u.id,
               type: "clip_tag",
-              title: "You were tagged in a clip",
-              body: `${taggerName} tagged you in a clip at ${selectedCourse.name} — Hole ${selectedHole}. Allow it on your profile?`,
+              title: isHero ? `${taggerName} uploaded a clip of you` : "You were tagged in a clip",
+              body: isHero
+                ? `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${selectedHole}. Claim it on your profile?`
+                : `${taggerName} tagged you in a clip at ${selectedCourse.name} — Hole ${selectedHole}. Allow it on your profile?`,
               linkUrl: `/courses/${selectedCourse.id}`,
               referenceId: uploadId,
               read: false,
@@ -712,7 +751,7 @@ function UploadPageInner() {
             }))
           ),
         ]);
-        taggedUsers.forEach(u => sendPushToUser("tag", u.id, uploadId));
+        allTagged.forEach(({ user: u }) => sendPushToUser("tag", u.id, uploadId));
       }
 
       // Notify followers of new clip (fire-and-forget)
@@ -799,6 +838,11 @@ function UploadPageInner() {
                 setMediaFile(null);
                 setMediaPreview(null);
                 setIntel({ tee: "", datePlayed: "", shotType: "", club: "", wind: "", notes: "" });
+                setTaggedUsers([]);
+                setHeroPick("me");
+                setHeroUser(null);
+                setHeroInput("");
+                setHeroResults([]);
                 setSubmitted(false);
               }}
               style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.55)", cursor: "pointer" }}>
@@ -1396,10 +1440,84 @@ function UploadPageInner() {
                 </div>
               )}
             </div>
-            {/* Tag players */}
+            {/* Who hit this shot — hero tag */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>
-                Tag Players <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,0.2)" }}>— optional</span>
+                Who hit this shot?
+              </div>
+
+              <div style={{ display: "flex", gap: 8, marginBottom: heroPick === "someone" ? 10 : 0 }}>
+                <button
+                  onClick={() => { setHeroPick("me"); setHeroUser(null); setHeroInput(""); setHeroResults([]); }}
+                  style={{ flex: 1, padding: "10px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: heroPick === "me" ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${heroPick === "me" ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.1)"}`,
+                    color: heroPick === "me" ? "#4da862" : "rgba(255,255,255,0.6)" }}
+                >
+                  Me
+                </button>
+                <button
+                  onClick={() => setHeroPick("someone")}
+                  style={{ flex: 1, padding: "10px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: heroPick === "someone" ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${heroPick === "someone" ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.1)"}`,
+                    color: heroPick === "someone" ? "#4da862" : "rgba(255,255,255,0.6)" }}
+                >
+                  Someone else
+                </button>
+              </div>
+
+              {heroPick === "someone" && (
+                heroUser ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 10, padding: "8px 12px" }}>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {heroUser.avatarUrl ? <img src={heroUser.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{heroUser.username[0].toUpperCase()}</span>}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{heroUser.displayName}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{heroUser.username} — they'll be asked to claim it</div>
+                    </div>
+                    <button onClick={() => { setHeroUser(null); setHeroInput(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", lineHeight: 1 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      placeholder="Search the hero by username..."
+                      value={heroInput}
+                      onChange={e => setHeroInput(e.target.value)}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                    />
+                    {heroResults.length > 0 && (
+                      <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
+                        {heroResults.map(u => (
+                          <button key={u.id} onClick={() => { setHeroUser(u); setHeroInput(""); setHeroResults([]); }}
+                            style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
+                            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                            </div>
+                            <div>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff" }}>{u.displayName}</div>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+
+            {/* Tag players (co-stars in the clip — not the hero) */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>
+                Anyone else in the clip? <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,0.2)" }}>— optional</span>
               </div>
 
               {/* Tagged pills */}
