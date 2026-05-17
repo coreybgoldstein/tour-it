@@ -1324,6 +1324,84 @@ function UploadPageInner() {
             <p className="step-label">Step 4 of 5</p>
             <h1 className="step-title">Add your intel</h1>
             <p className="step-sub">All fields optional — but more intel means higher ranking.</p>
+
+            {/* Hero tag — "Who hit this shot?" — placed at the top of the
+                Intel step so it's the first thing the uploader sees. If
+                they filmed someone else hitting the shot, picking that
+                person here triggers a claim-on-your-profile notification
+                and (on approval) transfers ownership of the clip. Default
+                "Me" keeps the existing self-upload flow one tap away. */}
+            <div style={{ marginBottom: 20, padding: "14px 16px", background: "rgba(77,168,98,0.05)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 14 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 10 }}>
+                Who hit this shot?
+              </div>
+              <div style={{ display: "flex", gap: 8, marginBottom: heroPick === "someone" ? 10 : 0 }}>
+                <button
+                  onClick={() => { setHeroPick("me"); setHeroUser(null); setHeroInput(""); setHeroResults([]); }}
+                  style={{ flex: 1, padding: "10px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: heroPick === "me" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${heroPick === "me" ? "rgba(77,168,98,0.55)" : "rgba(255,255,255,0.1)"}`,
+                    color: heroPick === "me" ? "#4da862" : "rgba(255,255,255,0.6)" }}
+                >
+                  Me
+                </button>
+                <button
+                  onClick={() => setHeroPick("someone")}
+                  style={{ flex: 1, padding: "10px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    background: heroPick === "someone" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${heroPick === "someone" ? "rgba(77,168,98,0.55)" : "rgba(255,255,255,0.1)"}`,
+                    color: heroPick === "someone" ? "#4da862" : "rgba(255,255,255,0.6)" }}
+                >
+                  Someone else
+                </button>
+              </div>
+              {heroPick === "someone" && (
+                heroUser ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, padding: "8px 12px" }}>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {heroUser.avatarUrl ? <img src={heroUser.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{heroUser.username[0].toUpperCase()}</span>}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{heroUser.displayName}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>@{heroUser.username} — they&apos;ll be asked to claim it</div>
+                    </div>
+                    <button onClick={() => { setHeroUser(null); setHeroInput(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", lineHeight: 1 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      placeholder="Search the hero by username..."
+                      value={heroInput}
+                      onChange={e => setHeroInput(e.target.value)}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
+                      style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
+                    />
+                    {heroResults.length > 0 && (
+                      <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
+                        {heroResults.map(u => (
+                          <button key={u.id} onClick={() => { setHeroUser(u); setHeroInput(""); setHeroResults([]); }}
+                            style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
+                            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                              {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                            </div>
+                            <div>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff" }}>{u.displayName}</div>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+
             <div className="intel-score-bar">
               <div className="intel-score-top">
                 <span className="intel-score-label" style={{ color: intelColor }}>{intelLabel}</span>
@@ -1332,7 +1410,7 @@ function UploadPageInner() {
               <div className="intel-bar-bg">
                 <div className="intel-bar-fill" style={{ width: `${intelPct}%`, background: intelColor }} />
               </div>
-              <p className="intel-hint">Fill in more fields to boost your clip's discoverability</p>
+              <p className="intel-hint">Fill in more fields to boost your clip&apos;s discoverability</p>
             </div>
             <div className="field">
               <label className="field-label">Date Played <span className="optional-tag">OPTIONAL</span></label>
@@ -1445,80 +1523,6 @@ function UploadPageInner() {
                 </div>
               )}
             </div>
-            {/* Who hit this shot — hero tag */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>
-                Who hit this shot?
-              </div>
-
-              <div style={{ display: "flex", gap: 8, marginBottom: heroPick === "someone" ? 10 : 0 }}>
-                <button
-                  onClick={() => { setHeroPick("me"); setHeroUser(null); setHeroInput(""); setHeroResults([]); }}
-                  style={{ flex: 1, padding: "10px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                    background: heroPick === "me" ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
-                    border: `1px solid ${heroPick === "me" ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.1)"}`,
-                    color: heroPick === "me" ? "#4da862" : "rgba(255,255,255,0.6)" }}
-                >
-                  Me
-                </button>
-                <button
-                  onClick={() => setHeroPick("someone")}
-                  style={{ flex: 1, padding: "10px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                    background: heroPick === "someone" ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
-                    border: `1px solid ${heroPick === "someone" ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.1)"}`,
-                    color: heroPick === "someone" ? "#4da862" : "rgba(255,255,255,0.6)" }}
-                >
-                  Someone else
-                </button>
-              </div>
-
-              {heroPick === "someone" && (
-                heroUser ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 10, padding: "8px 12px" }}>
-                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {heroUser.avatarUrl ? <img src={heroUser.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{heroUser.username[0].toUpperCase()}</span>}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{heroUser.displayName}</div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{heroUser.username} — they'll be asked to claim it</div>
-                    </div>
-                    <button onClick={() => { setHeroUser(null); setHeroInput(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", lineHeight: 1 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type="text"
-                      placeholder="Search the hero by username..."
-                      value={heroInput}
-                      onChange={e => setHeroInput(e.target.value)}
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck={false}
-                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
-                    />
-                    {heroResults.length > 0 && (
-                      <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
-                        {heroResults.map(u => (
-                          <button key={u.id} onClick={() => { setHeroUser(u); setHeroInput(""); setHeroResults([]); }}
-                            style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
-                            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
-                            </div>
-                            <div>
-                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff" }}>{u.displayName}</div>
-                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              )}
-            </div>
-
             {/* Tag players (co-stars in the clip — not the hero) */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>
