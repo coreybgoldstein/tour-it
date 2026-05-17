@@ -818,13 +818,16 @@ export default function ProfilePage() {
       supabase.from("UploadTag").select("userId, isHero, user:User(id, username, displayName, avatarUrl)").eq("uploadId", selectedClip.id),
     ]);
     // Split hero from co-stars. Only the original uploader sees this sheet,
-    // so the hero (if any) is always someone OTHER than the viewer.
-    const heroRow = (tagRows || []).find((r: any) => r.isHero === true);
-    const heroUser: EditTagUser | null = heroRow?.user || null;
+    // so the hero (if any) is always someone OTHER than the viewer. Cast
+    // through any because PostgREST types the user:User(...) join as a
+    // tuple (single-row joins still come back wrapped) and TS can't
+    // collapse it without explicit help.
+    const heroRowRaw = (tagRows || []).find((r: any) => r.isHero === true) as any;
+    const heroUser: EditTagUser | null = (heroRowRaw?.user as EditTagUser | undefined) ?? null;
     const existingTagged: EditTagUser[] = (tagRows || [])
       .filter((r: any) => r.isHero !== true)
-      .map((r: any) => r.user)
-      .filter(Boolean);
+      .map((r: any) => r.user as EditTagUser | null)
+      .filter((u): u is EditTagUser => !!u);
     setEditData({
       holeNumber: selectedClip.holeNumber ?? null,
       shotType: data?.shotType || "",
