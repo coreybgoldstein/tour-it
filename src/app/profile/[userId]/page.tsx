@@ -1050,6 +1050,77 @@ export default function ProfilePage() {
               <div style={{ display: "flex", justifyContent: "center", padding: "24px 0" }}><div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.8s linear infinite" }} /></div>
             ) : (
               <>
+                {/* Hero of this shot — placed at the very top of the edit
+                    sheet so the retroactive ownership-transfer flow is
+                    discoverable without scrolling. Picking a different
+                    user here AND saving sends them a claim-on-your-profile
+                    notification; approval transfers Upload.userId to them. */}
+                <div style={{ marginBottom: 18, padding: "12px 14px", background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.22)", borderRadius: 12 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 8 }}>Who hit this shot?</div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: editHeroPick === "someone" ? 10 : 0 }}>
+                    <button
+                      onClick={() => { setEditHeroPick("me"); setEditData(d => d ? { ...d, heroUser: null } : d); setEditHeroInput(""); setEditHeroResults([]); }}
+                      style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        background: editHeroPick === "me" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${editHeroPick === "me" ? "rgba(77,168,98,0.55)" : "rgba(255,255,255,0.1)"}`,
+                        color: editHeroPick === "me" ? "#4da862" : "rgba(255,255,255,0.6)" }}
+                    >
+                      Me
+                    </button>
+                    <button
+                      onClick={() => setEditHeroPick("someone")}
+                      style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        background: editHeroPick === "someone" ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${editHeroPick === "someone" ? "rgba(77,168,98,0.55)" : "rgba(255,255,255,0.1)"}`,
+                        color: editHeroPick === "someone" ? "#4da862" : "rgba(255,255,255,0.6)" }}
+                    >
+                      Someone else
+                    </button>
+                  </div>
+                  {editHeroPick === "someone" && (
+                    editData.heroUser ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, padding: "8px 12px" }}>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {editData.heroUser.avatarUrl ? <img src={editData.heroUser.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={editData.heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{editData.heroUser.username[0].toUpperCase()}</span>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{editData.heroUser.username}</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{editData.heroUser.id === editData.originalHeroUserId ? "Already claimed" : "Will be asked to claim it on save"}</div>
+                        </div>
+                        <button onClick={() => { setEditData(d => d ? { ...d, heroUser: null } : d); setEditHeroInput(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ position: "relative" }}>
+                        <input
+                          value={editHeroInput}
+                          onChange={e => setEditHeroInput(e.target.value)}
+                          placeholder="Search the hero by username…"
+                          autoCorrect="off" autoCapitalize="off" spellCheck={false}
+                          style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
+                        />
+                        {editHeroResults.length > 0 && (
+                          <div style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 10, overflow: "hidden" }}>
+                            {editHeroResults.map(u => (
+                              <button key={u.id} onClick={() => { setEditData(d => d ? { ...d, heroUser: u } : d); setEditHeroInput(""); setEditHeroResults([]); }}
+                                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                                <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 10, color: "#4da862", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
+                                </div>
+                                <div>
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
+                                  {u.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{u.displayName}</div>}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+                </div>
+
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Hole</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
@@ -1086,75 +1157,6 @@ export default function ProfilePage() {
                         style={{ padding: "6px 12px", borderRadius: 99, border: `1px solid ${editData.windCondition === w.value ? "rgba(26,158,66,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.windCondition === w.value ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.windCondition === w.value ? "#1a9e42" : "rgba(255,255,255,0.45)", cursor: "pointer", whiteSpace: "nowrap" }}>{w.label}</button>
                     ))}
                   </div>
-                </div>
-                {/* Hero of this shot — retroactive hero tagging. Sends a
-                    "claim this clip" notification to the picked user that
-                    on approval transfers Upload.userId to them. Save flow
-                    only fires the notification if the picked hero changed. */}
-                <div style={{ marginBottom: 18 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Who hit this shot?</div>
-                  <div style={{ display: "flex", gap: 8, marginBottom: editHeroPick === "someone" ? 10 : 0 }}>
-                    <button
-                      onClick={() => { setEditHeroPick("me"); setEditData(d => d ? { ...d, heroUser: null } : d); setEditHeroInput(""); setEditHeroResults([]); }}
-                      style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer",
-                        background: editHeroPick === "me" ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${editHeroPick === "me" ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.1)"}`,
-                        color: editHeroPick === "me" ? "#4da862" : "rgba(255,255,255,0.6)" }}
-                    >
-                      Me
-                    </button>
-                    <button
-                      onClick={() => setEditHeroPick("someone")}
-                      style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer",
-                        background: editHeroPick === "someone" ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${editHeroPick === "someone" ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.1)"}`,
-                        color: editHeroPick === "someone" ? "#4da862" : "rgba(255,255,255,0.6)" }}
-                    >
-                      Someone else
-                    </button>
-                  </div>
-                  {editHeroPick === "someone" && (
-                    editData.heroUser ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 10, padding: "8px 12px" }}>
-                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {editData.heroUser.avatarUrl ? <img src={editData.heroUser.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={editData.heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{editData.heroUser.username[0].toUpperCase()}</span>}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{editData.heroUser.username}</div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{editData.heroUser.id === editData.originalHeroUserId ? "Already claimed" : "Will be asked to claim it on save"}</div>
-                        </div>
-                        <button onClick={() => { setEditData(d => d ? { ...d, heroUser: null } : d); setEditHeroInput(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                        </button>
-                      </div>
-                    ) : (
-                      <div style={{ position: "relative" }}>
-                        <input
-                          value={editHeroInput}
-                          onChange={e => setEditHeroInput(e.target.value)}
-                          placeholder="Search the hero by username…"
-                          autoCorrect="off" autoCapitalize="off" spellCheck={false}
-                          style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
-                        />
-                        {editHeroResults.length > 0 && (
-                          <div style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 10, overflow: "hidden" }}>
-                            {editHeroResults.map(u => (
-                              <button key={u.id} onClick={() => { setEditData(d => d ? { ...d, heroUser: u } : d); setEditHeroInput(""); setEditHeroResults([]); }}
-                                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                                <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 10, color: "#4da862", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
-                                </div>
-                                <div>
-                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
-                                  {u.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{u.displayName}</div>}
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  )}
                 </div>
 
                 <div style={{ marginBottom: 24 }}>
