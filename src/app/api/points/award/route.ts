@@ -55,20 +55,8 @@ export async function POST(req: NextRequest) {
   // Badge checks run async — don't block the response
   checkBadgesForAction(targetUserId, action as PointActionKey, referenceId).catch(() => {});
 
-  // Broadcast to leaderboard subscribers so the UI refreshes immediately
-  if (result) {
-    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/realtime/v1/api/broadcast`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-        "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      },
-      body: JSON.stringify({
-        messages: [{ topic: "realtime:leaderboard-updates", event: "points-awarded", payload: {} }],
-      }),
-    }).catch(() => {});
-  }
+  // Broadcast handled inside awardPoints() — fires on every code path now,
+  // not just this route.
 
   return NextResponse.json({ ok: true, result });
 }

@@ -77,12 +77,31 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
 
   useEffect(() => {
     const supabase = createClient();
-    supabase
-      .from("UserProgression")
-      .select("totalPoints, level, rank, streakWeeks")
-      .eq("userId", userId)
-      .maybeSingle()
-      .then(({ data }) => { if (data) setProg(data); });
+    let cancelled = false;
+
+    const load = () => {
+      supabase
+        .from("UserProgression")
+        .select("totalPoints, level, rank, streakWeeks")
+        .eq("userId", userId)
+        .maybeSingle()
+        .then(({ data }) => { if (data && !cancelled) setProg(data); });
+    };
+    load();
+
+    // Live: refresh the moment any of this user's points are awarded.
+    // awardPoints() emits to both "leaderboard-updates" (global) and
+    // "user-progression:<userId>" (per-user). We listen to the per-user
+    // channel so a profile bar doesn't refetch on every other user's award.
+    const channel = supabase
+      .channel(`user-progression:${userId}`)
+      .on("broadcast", { event: "points-awarded" }, () => load())
+      .subscribe();
+
+    // Polling fallback in case a broadcast is missed (network blip, etc).
+    const id = setInterval(load, 15_000);
+
+    return () => { cancelled = true; supabase.removeChannel(channel); clearInterval(id); };
   }, [userId]);
 
   async function loadLedger(page: number) {
