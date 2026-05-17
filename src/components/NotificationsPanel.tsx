@@ -19,6 +19,10 @@ export interface NotificationRow {
   read: boolean;
   createdAt: string;
   tagStatus?: "pending" | "approved" | "denied";
+  // True when this is a hero tag — approval also transfers ownership of
+  // the Upload to the current user (vs co-star approve which just shows
+  // it on their profile). Drives the different button copy.
+  isHeroTag?: boolean;
 }
 
 function NotifIcon({ type }: { type: string }) {
@@ -83,15 +87,17 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
 
       const tagNotifs = notifs.filter(n => n.type === "clip_tag" && n.referenceId);
       const tagStatusMap: Record<string, "pending" | "approved" | "denied"> = {};
+      const tagIsHeroMap: Record<string, boolean> = {};
       if (tagNotifs.length > 0) {
         const uploadIds = tagNotifs.map(n => n.referenceId!);
         const { data: tagRows } = await supabase
           .from("UploadTag")
-          .select("uploadId, approved")
+          .select("uploadId, approved, isHero")
           .eq("userId", user.id)
           .in("uploadId", uploadIds);
-        (tagRows || []).forEach((r: { uploadId: string; approved: boolean | null }) => {
+        (tagRows || []).forEach((r: { uploadId: string; approved: boolean | null; isHero: boolean | null }) => {
           tagStatusMap[r.uploadId] = r.approved === true ? "approved" : r.approved === false ? "denied" : "pending";
+          tagIsHeroMap[r.uploadId] = !!r.isHero;
         });
       }
 
@@ -99,6 +105,7 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
       setNotifications(notifs.map(n => ({
         ...n,
         tagStatus: n.type === "clip_tag" && n.referenceId ? (tagStatusMap[n.referenceId] ?? "pending") : undefined,
+        isHeroTag: n.type === "clip_tag" && n.referenceId ? !!tagIsHeroMap[n.referenceId] : undefined,
       })));
       setLoading(false);
 
@@ -110,16 +117,38 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
     return () => { cancelled = true; };
   }, [open]);
 
-  async function handleTagAction(notifId: string, uploadId: string, approve: boolean) {
+  async function handleTagAction(notifId: string, uploadId: string, approve: boolean, isHero: boolean) {
     if (!userId || acting) return;
     setActing(notifId);
     const supabase = createClient();
     const { count } = await supabase.from("UploadTag").update({ approved: approve }, { count: "exact" }).eq("userId", userId).eq("uploadId", uploadId);
     if ((count ?? 0) === 0) {
       setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: "denied" } : n));
-    } else {
-      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: approve ? "approved" : "denied" } : n));
+      setActing(null);
+      return;
     }
+
+    // Hero approval = ownership transfer. Move Upload.userId to this user
+    // and stamp the original uploader on uploadedByUserId so the
+    // attribution chip renders everywhere the clip is shown.
+    if (approve && isHero) {
+      const { data: upload } = await supabase
+        .from("Upload")
+        .select("userId, uploadedByUserId")
+        .eq("id", uploadId)
+        .maybeSingle();
+      if (upload && upload.userId !== userId) {
+        // Preserve the very first uploader if this clip has been transferred
+        // before — uploadedByUserId stays pointing at the original creator.
+        const originalUploader = upload.uploadedByUserId ?? upload.userId;
+        await supabase
+          .from("Upload")
+          .update({ userId, uploadedByUserId: originalUploader, updatedAt: new Date().toISOString() })
+          .eq("id", uploadId);
+      }
+    }
+
+    setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: approve ? "approved" : "denied" } : n));
     setActing(null);
   }
 
@@ -217,21 +246,21 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
                           <div style={{ marginTop: 10 }}>
                             {n.tagStatus === "pending" ? (
                               <div style={{ display: "flex", gap: 8 }}>
-                                <button onClick={(e) => { e.stopPropagation(); handleTagAction(n.id, n.referenceId!, true); }} disabled={acting === n.id} style={{ flex: 1, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}>
-                                  {acting === n.id ? "..." : "Add to my profile"}
+                                <button onClick={(e) => { e.stopPropagation(); handleTagAction(n.id, n.referenceId!, true, !!n.isHeroTag); }} disabled={acting === n.id} style={{ flex: 1, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}>
+                                  {acting === n.id ? "..." : n.isHeroTag ? "Yes, this is my shot" : "Add to my profile"}
                                 </button>
-                                <button onClick={(e) => { e.stopPropagation(); handleTagAction(n.id, n.referenceId!, false); }} disabled={acting === n.id} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}>
-                                  Decline
+                                <button onClick={(e) => { e.stopPropagation(); handleTagAction(n.id, n.referenceId!, false, !!n.isHeroTag); }} disabled={acting === n.id} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}>
+                                  {n.isHeroTag ? "Not me" : "Decline"}
                                 </button>
                               </div>
                             ) : n.tagStatus === "approved" ? (
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>Added to your profile</span>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>{n.isHeroTag ? "Claimed on your profile" : "Added to your profile"}</span>
                                 <button onClick={(e) => { e.stopPropagation(); if (n.linkUrl?.startsWith("/")) { onClose(); router.push(n.linkUrl); } }} style={{ marginLeft: "auto", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "underline" }}>View clip</button>
                               </div>
                             ) : (
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>Declined</span>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>{n.isHeroTag ? "Marked not me" : "Declined"}</span>
                             )}
                           </div>
                         )}
