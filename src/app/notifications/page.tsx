@@ -140,6 +140,17 @@ export default function NotificationsPage() {
           .from("Upload")
           .update({ userId, uploadedByUserId: originalUploader, updatedAt: new Date().toISOString() })
           .eq("id", uploadId);
+        // Reward the uploader for filming for someone else (once per
+        // uploadId, dedupe lives in awardPoints REFERENCE_DEDUPED_ACTIONS).
+        fetch("/api/points/award", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "clip_uploaded_for_other",
+            recipientUserId: originalUploader,
+            referenceId: uploadId,
+          }),
+        }).catch(() => {});
       }
     }
 

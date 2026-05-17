@@ -145,6 +145,18 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
           .from("Upload")
           .update({ userId, uploadedByUserId: originalUploader, updatedAt: new Date().toISOString() })
           .eq("id", uploadId);
+        // Reward the original uploader for filming for someone else.
+        // Routes through /api/points/award so the leaderboard broadcast
+        // fires; REFERENCE_DEDUPED_ACTIONS keeps it once per uploadId.
+        fetch("/api/points/award", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "clip_uploaded_for_other",
+            recipientUserId: originalUploader,
+            referenceId: uploadId,
+          }),
+        }).catch(() => {});
       }
     }
 

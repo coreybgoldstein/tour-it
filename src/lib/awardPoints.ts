@@ -49,6 +49,9 @@ const REFERENCE_DEDUPED_ACTIONS = new Set<PointActionKey>([
   PointAction.ADD_ZIP_CODE,
   PointAction.ADD_WEBSITE_URL,
   PointAction.ADD_COURSE_DESCRIPTION,
+  // Filming-for-others award. Dedupe by uploadId so multiple hero
+  // claims (transfer → disown → re-claim) don't double-award.
+  PointAction.CLIP_UPLOADED_FOR_OTHER,
 ]);
 
 // Course field actions share a group cap of 20/day
