@@ -174,9 +174,14 @@ export async function awardPoints({
   const oldRank  = prog?.rank  ?? "CADDIE";
 
   // Self-healing period rollover: if the stored weekly/monthly counter is
-  // older than the current period boundary, treat the base as 0 so the new
-  // award starts the fresh period correctly. Avoids the bug where
-  // monthlyPoints accumulated April + May totals between scheduled resyncs.
+  // potentially stale (last reset is older than the current period boundary,
+  // OR the marker is missing entirely), recompute the correct base from the
+  // ledger so we don't drop accumulated in-period points on first award.
+  //
+  // The earlier version of this fix wrongly treated `monthReset is null` as
+  // "stale → reset to 0", which would zero out users like jlutt who joined
+  // mid-month and never had a monthReset stamped. Now we always derive the
+  // truthful base from the ledger when potentially stale.
   const nowDate     = new Date();
   const monthStart  = new Date(Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), 1));
   const weekStart   = new Date(nowDate.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -185,9 +190,21 @@ export async function awardPoints({
   const weeklyStale   = !weekResetAt  || weekResetAt  < weekStart;
   const monthlyStale  = !monthResetAt || monthResetAt < monthStart;
 
-  const totalPoints   = Math.max(0, (prog?.totalPoints   ?? 0) + points);
-  const weeklyPoints  = Math.max(0, (weeklyStale  ? 0 : (prog?.weeklyPoints  ?? 0)) + points);
-  const monthlyPoints = Math.max(0, (monthlyStale ? 0 : (prog?.monthlyPoints ?? 0)) + points);
+  async function ledgerSumSince(periodStart: Date): Promise<number> {
+    const { data: rows } = await supabase
+      .from("UserPointsLedger")
+      .select("points")
+      .eq("userId", userId)
+      .gte("createdAt", periodStart.toISOString());
+    return (rows ?? []).reduce((s: number, r: { points: number }) => s + r.points, 0);
+  }
+
+  const weeklyBase  = weeklyStale  ? await ledgerSumSince(weekStart)  : (prog?.weeklyPoints  ?? 0);
+  const monthlyBase = monthlyStale ? await ledgerSumSince(monthStart) : (prog?.monthlyPoints ?? 0);
+
+  const totalPoints   = Math.max(0, (prog?.totalPoints ?? 0) + points);
+  const weeklyPoints  = Math.max(0, weeklyBase  + points);
+  const monthlyPoints = Math.max(0, monthlyBase + points);
   const level         = computeLevel(totalPoints);
   const rank          = computeRank(level);
   const now           = nowDate.toISOString();
