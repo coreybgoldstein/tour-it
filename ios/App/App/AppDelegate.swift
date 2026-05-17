@@ -13,6 +13,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // caused visible white flashes on every route change. Dark matches the app.
     private static let brandDark: UIColor = UIColor(red: 7/255, green: 16/255, blue: 10/255, alpha: 1)
 
+    // Timestamp of the most recent applicationWillResignActive. Compared
+    // against applicationDidBecomeActive to decide whether to reload the
+    // WebView — sub-millisecond focus blips (Control Center peek, brief
+    // banner) are skipped; anything longer reloads to clear post-suspend
+    // corruption that JS-level lifecycle hooks don't catch.
+    private var resignedActiveAt: Date?
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         if let window = self.window {
             window.backgroundColor = AppDelegate.brandDark
@@ -21,6 +28,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.applyBrandBackgroundsRecursively()
         }
+
+        // iOS screenshot capture leaves the WebView in a state where the
+        // content area renders blank on return while the BottomNav layout
+        // stays alive. visibilitychange / blur / focus do NOT reliably fire
+        // for screenshots in WKWebView, so the JS-side recovery in
+        // NativeBootstrap.tsx can't catch this case. Recover natively:
+        // listen for the screenshot notification and reload the WebView.
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.userDidTakeScreenshotNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Let iOS finish its snapshot capture before we yank the view.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                self?.reloadAllWebViewsFromOrigin()
+            }
+        }
+
         return true
     }
 
@@ -50,23 +75,49 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         walk(root)
     }
 
+    /// Walk the view hierarchy and reload every WKWebView from origin. Unlike
+    /// `webView.reload()` (which keeps the cache + URLSession), this
+    /// bypasses the local cache and tears down stuck in-flight requests in
+    /// the WebView's URLSession. That URLSession is the layer iOS suspend
+    /// corrupts, and the layer JS-side `window.location.reload()` can't
+    /// recover because it reuses the same session.
+    private func reloadAllWebViewsFromOrigin() {
+        guard let root = window?.rootViewController?.view else { return }
+        func walk(_ v: UIView) {
+            if let web = v as? WKWebView {
+                web.reloadFromOrigin()
+            }
+            v.subviews.forEach(walk)
+        }
+        walk(root)
+    }
+
     func applicationWillResignActive(_ application: UIApplication) {
-        // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-        // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
+        // Mark when we lost active state so applicationDidBecomeActive can
+        // decide whether the gap was long enough to warrant a reload.
+        resignedActiveAt = Date()
     }
 
-    func applicationDidEnterBackground(_ application: UIApplication) {
-        // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
-        // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-    }
+    func applicationDidEnterBackground(_ application: UIApplication) { }
 
-    func applicationWillEnterForeground(_ application: UIApplication) {
-        // Called as part of the transition from the background to the active state; here you can undo many of the changes made on entering the background.
-    }
+    func applicationWillEnterForeground(_ application: UIApplication) { }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Re-apply brand backgrounds once the view tree is guaranteed to be live.
         applyBrandBackgroundsRecursively()
+
+        // If the app was inactive for > 500ms, the WebView's URLSession +
+        // render state may be corrupted (the bug where content goes blank
+        // on resume while BottomNav stays alive). Reload from origin to
+        // recover. 500ms threshold skips trivial focus blips like a
+        // Control Center peek so users don't lose state on every glance.
+        if let resignedAt = resignedActiveAt {
+            let awayMs = Date().timeIntervalSince(resignedAt) * 1000
+            resignedActiveAt = nil
+            if awayMs > 500 {
+                reloadAllWebViewsFromOrigin()
+            }
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
