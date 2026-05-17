@@ -69,6 +69,12 @@ type FeedClip = {
   yardageOverlay: string | null;
   datePlayedAt: string | null;
   createdAt: string;
+  // Original uploader's user id + username, set only when ownership has
+  // been transferred via an approved hero tag. Renders the
+  // "uploaded by @x" attribution chip beneath the username row on the
+  // clip overlay, and the chip is tappable into the uploader's profile.
+  uploadedByUserId?: string | null;
+  uploadedByUsername?: string | null;
 };
 
 type FeedItem =
@@ -239,7 +245,7 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow }: {
+function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow, hasAttribution }: {
   userId: string; avatarUrl: string | null; username: string; rank?: string | null;
   courseId: string; courseName: string;
   liked: boolean; onLike: () => void; likeCount: number;
@@ -250,6 +256,10 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
   onEdit?: () => void;
   isFollowing?: boolean;
   onFollow?: () => void;
+  // When true, the username overlay grew a second row (attribution chip).
+  // Shift the right rail's bottom up so the bottommost button clears the
+  // new taller overlay block on the left.
+  hasAttribution?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
@@ -258,7 +268,7 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
     else { navigator.clipboard.writeText(url).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
   return (
-    <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+    <div style={{ position: "absolute", right: 12, bottom: `calc(${hasAttribution ? 180 : 150}px + env(safe-area-inset-bottom))`, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
       {/* Intel */}
       {onIntel && (
         <button onClick={onIntel} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
@@ -484,23 +494,41 @@ const SeriesCard = memo(function SeriesCardImpl({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
 
       {/* Bottom overlay — series uploader avatar + name + active-shot date.
           Mirrors the single-clip overlay so the identity row is in the
           same spot regardless of whether you're looking at a single clip
           or a multi-shot series. */}
       {(item.username || formatClipDate(activeShot?.datePlayedAt, activeShot?.createdAt)) && (
-        <div style={{ position: "absolute", left: 16, bottom: activeShot?.mediaType === "VIDEO" ? "calc(130px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          <button onClick={onTapUser} aria-label={`Open ${item.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-            <div className={isLegend(item.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(item.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              {item.avatarUrl
-                ? <img src={item.avatarUrl} alt={item.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-            </div>
-          </button>
-          {item.username && <span onClick={onTapUser} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{item.username}</span>}
-          {formatClipDate(activeShot?.datePlayedAt, activeShot?.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(activeShot?.datePlayedAt, activeShot?.createdAt)}</span>}
+        <div style={{ position: "absolute", left: 16, right: 80,
+          bottom: activeShot?.mediaType === "VIDEO"
+            ? `calc(${activeShot?.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
+            : `calc(${activeShot?.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+          zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={onTapUser} aria-label={`Open ${item.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+              <div className={isLegend(item.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(item.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {item.avatarUrl
+                  ? <img src={item.avatarUrl} alt={item.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+              </div>
+            </button>
+            {item.username && <span onClick={onTapUser} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{item.username}</span>}
+            {formatClipDate(activeShot?.datePlayedAt, activeShot?.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(activeShot?.datePlayedAt, activeShot?.createdAt)}</span>}
+          </div>
+          {activeShot?.uploadedByUsername && (
+            <button
+              onClick={(e) => { e.stopPropagation(); router.push(`/profile/${activeShot.uploadedByUserId ?? ""}`); }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "3px 9px 3px 7px", cursor: "pointer", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>
+                uploaded by @{activeShot.uploadedByUsername}
+              </span>
+            </button>
+          )}
         </div>
       )}
 
@@ -648,25 +676,44 @@ const VideoCard = memo(function VideoCardImpl({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
 
       {(clip.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
         // Bottom overlay — avatar + username + date + (photo icon).
         // Bottom: video clips clear the scrubber (+8px cushion); photo
-        // clips just clear the BottomNav on Face ID phones. Both use
-        // env(safe-area-inset-bottom) so home-indicator devices don't
-        // bury the row behind the nav.
-        <div style={{ position: "absolute", left: 16, bottom: clip.mediaType === "VIDEO" ? "calc(130px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          <button onClick={onTapUser} aria-label={`Open ${clip.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-            <div className={isLegend(clip.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(clip.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              {clip.avatarUrl
-                ? <img src={clip.avatarUrl} alt={clip.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-            </div>
-          </button>
-          {clip.username && <span onClick={onTapUser} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{clip.username}</span>}
-          {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
-          {clip.mediaType !== "VIDEO" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
+        // clips just clear the BottomNav on Face ID phones. When the
+        // attribution chip is present, the whole stack shifts up by
+        // 30px (video) / 30px (photo) so the chip slots in BELOW the
+        // username row without overlapping the scrubber.
+        <div style={{ position: "absolute", left: 16, right: 80,
+          bottom: clip.mediaType === "VIDEO"
+            ? `calc(${clip.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
+            : `calc(${clip.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+          zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={onTapUser} aria-label={`Open ${clip.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+              <div className={isLegend(clip.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(clip.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {clip.avatarUrl
+                  ? <img src={clip.avatarUrl} alt={clip.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+              </div>
+            </button>
+            {clip.username && <span onClick={onTapUser} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{clip.username}</span>}
+            {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
+            {clip.mediaType !== "VIDEO" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
+          </div>
+          {clip.uploadedByUsername && (
+            <button
+              onClick={(e) => { e.stopPropagation(); router.push(`/profile/${clip.uploadedByUserId ?? ""}`); }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "3px 9px 3px 7px", cursor: "pointer", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>
+                uploaded by @{clip.uploadedByUsername}
+              </span>
+            </button>
+          )}
         </div>
       )}
 
@@ -845,7 +892,7 @@ export default function Home() {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUid = session?.user?.id ?? null;
 
-      const SELECT = "id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt";
+      const SELECT = "id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, uploadedByUserId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt";
       const { data: allUploads } = await supabase
         .from("Upload").select(SELECT).eq("moderationStatus", "APPROVED")
         .eq("mediaType", "VIDEO")
@@ -903,11 +950,13 @@ export default function Home() {
 
       const courseIds = [...new Set(finalUploads.map((u: any) => u.courseId))];
       const userIds = [...new Set(finalUploads.map((u: any) => u.userId))];
+      const uploaderIds = [...new Set(finalUploads.map((u: any) => u.uploadedByUserId).filter(Boolean) as string[])];
+      const allUserIds = [...new Set([...userIds, ...uploaderIds])];
       const holeIds = [...new Set(finalUploads.map((u: any) => u.holeId).filter(Boolean))];
 
       const [{ data: courses }, { data: users }, { data: holes }, { data: progressions }] = await Promise.all([
         supabase.from("Course").select("id, name, logoUrl, city, state").in("id", courseIds),
-        supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
+        supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", allUserIds),
         supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds),
         supabase.from("UserProgression").select("userId, rank").in("userId", userIds),
       ]);
@@ -919,6 +968,11 @@ export default function Home() {
         const hole = holes?.find((h: any) => h.id === u.holeId);
         const user = users?.find((usr: any) => usr.id === u.userId);
         const course = courses?.find((c: any) => c.id === u.courseId);
+        // Attribution chip — only render when ownership was transferred
+        // AND the original uploader is distinct from the current owner.
+        const originalUploader = u.uploadedByUserId && u.uploadedByUserId !== u.userId
+          ? users?.find((usr: any) => usr.id === u.uploadedByUserId)
+          : null;
         return {
           ...u,
           commentCount: u.commentCount || 0,
@@ -933,6 +987,7 @@ export default function Home() {
           holeNumber: hole?.holeNumber || undefined,
           holePar: hole?.par ?? null,
           holeYardage: hole?.yardage ?? null,
+          uploadedByUsername: originalUploader?.username ?? null,
         };
       });
 
