@@ -723,21 +723,47 @@ export default function Home() {
   const hasMoreRef = useRef(true);
   const loadingMoreRef = useRef(false);
 
-  // Auto-fetch near-me if geolocation permission already granted (no prompt)
+  // Auto-fetch near-me if the user has previously enabled location.
+  //
+  // Source of truth: cached coords in localStorage. Capacitor's WKWebView
+  // returns "prompt" from navigator.permissions.query() even after the
+  // user has granted location, so the Permissions API can't be trusted to
+  // remember a past grant on iOS. The cached coords from any prior
+  // successful getCurrentPosition() call are the durable signal of "user
+  // already said yes" — and fetchNearMe() refreshes them in the background
+  // every load, so they stay current as long as the grant is still valid.
+  // If the user revoked location in iOS Settings since the last grant,
+  // getCurrentPosition() inside fetchNearMe() will fail and the Enable
+  // button reappears automatically.
   useEffect(() => {
     if (!navigator.geolocation) return;
+
+    let hasCachedLocation = false;
+    try {
+      const raw = localStorage.getItem("tour-it-location");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.lat === "number" && typeof parsed.lng === "number") {
+          hasCachedLocation = true;
+        }
+      }
+    } catch {}
+
+    if (hasCachedLocation) {
+      fetchNearMe();
+      return;
+    }
+
+    // First-time visitor (no cached grant): fall back to the Permissions
+    // API to detect a grant that might exist from another path (e.g.,
+    // /map page already prompted). Otherwise leave as "idle" so the
+    // Enable affordance renders.
     navigator.permissions?.query({ name: "geolocation" as PermissionName })
       .then(result => {
         if (result.state === "granted") fetchNearMe();
         else if (result.state === "denied") setLocationStatus("denied");
       })
-      .catch(() => {
-        // Permissions API unavailable — auto-fetch if we have cached coords
-        try {
-          const raw = localStorage.getItem("tour-it-location");
-          if (raw) { const { ts } = JSON.parse(raw); if (Date.now() - ts < 86400000 * 7) fetchNearMe(); }
-        } catch {}
-      });
+      .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
