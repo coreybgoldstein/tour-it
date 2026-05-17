@@ -132,7 +132,7 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, holeDescription, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds }: {
+function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, holeDescription, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds, commentOpen }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }>;
   clipIndex: number; totalClips: number;
@@ -147,6 +147,9 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   // Pre-batched set of clip IDs the current user has liked (see useLike).
   // Eliminates per-clip Supabase round-trip → no heart flicker on mount.
   likedIds?: Set<string>;
+  // When true, the parent's comment sheet is open. Pauses the video so
+  // onEnded can't fire and auto-advance to the next clip while the user types.
+  commentOpen?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -169,9 +172,19 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (isActive) { v.play().catch(() => {}); setVideoPaused(false); }
-    else { v.pause(); v.currentTime = 0; setIntelOpen(false); }
-  }, [isActive]);
+    if (isActive && !commentOpen) {
+      v.play().catch(() => {});
+      setVideoPaused(false);
+    } else if (isActive && commentOpen) {
+      // Comment sheet open — pause without reset; resumes on close.
+      v.pause();
+      setVideoPaused(true);
+    } else {
+      v.pause();
+      v.currentTime = 0;
+      setIntelOpen(false);
+    }
+  }, [isActive, commentOpen]);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
@@ -1852,6 +1865,7 @@ const [editDescription, setEditDescription] = useState("");
                       isActive={isHoleActive && clipIdx === activeClipIdx}
                       onClose={() => setFeedOpen(false)}
                       onComment={() => setCommentUploadId(clip.id)}
+                      commentOpen={!!commentUploadId}
                       course={course}
                       uploaderMap={uploaders}
                       clipIndex={clipIdx}
