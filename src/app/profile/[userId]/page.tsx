@@ -26,7 +26,7 @@ const SHOT_LABEL: Record<string, string> = {
 function ProfileFeedCard({
   clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId, likedIds, commentOpen,
 }: {
-  clip: { id: string; mediaUrl: string; mediaType: string; cloudflareVideoId?: string | null; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null };
+  clip: { id: string; mediaUrl: string; mediaType: string; cloudflareVideoId?: string | null; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null; uploadedByUserId?: string | null; uploadedByUsername?: string | null };
   isActive: boolean;
   courseName: string | null;
   courseLogoUrl: string | null;
@@ -125,8 +125,10 @@ function ProfileFeedCard({
         visible={true}
       />
 
-      {/* Right rail: Intel → Avatar → Like → Comment → SEND IT → kebab */}
-      <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 30 }}>
+      {/* Right rail: Intel → Avatar → Like → Comment → SEND IT → kebab.
+          Shifts up 30px when the attribution chip is present so the
+          bottommost button clears the now-taller username block. */}
+      <div style={{ position: "absolute", right: 12, bottom: `calc(${clip.uploadedByUsername ? 180 : 150}px + env(safe-area-inset-bottom))`, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 30 }}>
         {hasNotes && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
@@ -195,24 +197,44 @@ function ProfileFeedCard({
         // Avatar + username + date. Bottom lifted above scrubber on video
         // and above BottomNav (Face ID home indicator) on photos. The
         // isTagged check on the avatar marks clips the user was tagged in.
-        <div style={{ position: "absolute", left: 16, bottom: clip.mediaType === "VIDEO" ? "calc(130px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          <button onClick={() => { onClose(); router.push(`/profile/${uploaderInfo.id}`); }} aria-label={`Open ${uploaderInfo.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-            <div style={{ position: "relative", width: 28, height: 28, flexShrink: 0 }}>
-              <div className={isLegend(uploaderInfo.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaderInfo.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {uploaderInfo.avatarUrl
-                  ? <img src={uploaderInfo.avatarUrl} alt={uploaderInfo.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-              </div>
-              {clip.isTagged && (
-                <div style={{ position: "absolute", bottom: -1, right: -1, width: 12, height: 12, borderRadius: "50%", background: "#4da862", border: "1.5px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        // When the attribution chip is present the whole stack shifts up
+        // so the chip slots in BELOW the username row.
+        <div style={{ position: "absolute", left: 16, right: 80,
+          bottom: clip.mediaType === "VIDEO"
+            ? `calc(${clip.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
+            : `calc(${clip.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+          zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => { onClose(); router.push(`/profile/${uploaderInfo.id}`); }} aria-label={`Open ${uploaderInfo.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+              <div style={{ position: "relative", width: 28, height: 28, flexShrink: 0 }}>
+                <div className={isLegend(uploaderInfo.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaderInfo.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {uploaderInfo.avatarUrl
+                    ? <img src={uploaderInfo.avatarUrl} alt={uploaderInfo.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                 </div>
-              )}
-            </div>
-          </button>
-          {uploaderInfo.username && <span onClick={() => { onClose(); router.push(`/profile/${uploaderInfo.id}`); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaderInfo.username}</span>}
-          {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
-          {clip.mediaType !== "VIDEO" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
+                {clip.isTagged && (
+                  <div style={{ position: "absolute", bottom: -1, right: -1, width: 12, height: 12, borderRadius: "50%", background: "#4da862", border: "1.5px solid #07100a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                  </div>
+                )}
+              </div>
+            </button>
+            {uploaderInfo.username && <span onClick={() => { onClose(); router.push(`/profile/${uploaderInfo.id}`); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaderInfo.username}</span>}
+            {formatClipDate(clip.datePlayedAt, clip.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(clip.datePlayedAt, clip.createdAt)}</span>}
+            {clip.mediaType !== "VIDEO" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
+          </div>
+          {clip.uploadedByUsername && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(); router.push(`/profile/${clip.uploadedByUserId ?? ""}`); }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "3px 9px 3px 7px", cursor: "pointer", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>
+                uploaded by @{clip.uploadedByUsername}
+              </span>
+            </button>
+          )}
         </div>
       )}
       </div>{/* end inner wrapper */}
@@ -246,7 +268,7 @@ const BADGE_EMOJI: Record<string, string> = {
 
 
 type UserProfile = { id: string; username: string; displayName: string; avatarUrl: string | null; handicapIndex: number | null; homeCourseId: string | null; uploadCount: number; bio: string | null };
-type Upload = { id: string; mediaUrl: string; cloudflareVideoId?: string | null; mediaType: string; courseId: string; holeId: string; holeNumber?: number | null; createdAt: string; userId: string; likeCount?: number; commentCount?: number; shotType?: string | null; clubUsed?: string | null; windCondition?: string | null; strategyNote?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; isTagged?: boolean };
+type Upload = { id: string; mediaUrl: string; cloudflareVideoId?: string | null; mediaType: string; courseId: string; holeId: string; holeNumber?: number | null; createdAt: string; userId: string; likeCount?: number; commentCount?: number; shotType?: string | null; clubUsed?: string | null; windCondition?: string | null; strategyNote?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; isTagged?: boolean; uploadedByUserId?: string | null; uploadedByUsername?: string | null };
 type CoursePlayed = { id: string; name: string; city: string; state: string; logoUrl: string | null };
 type HomeCourse = { id: string; name: string };
 type SavedCourse = { id: string; courseId: string; saveType: "PLAYED" | "BUCKET_LIST"; course: { id: string; name: string; city: string; state: string; logoUrl: string | null } };
@@ -501,8 +523,8 @@ export default function ProfilePage() {
 
       const [{ data: rawUploads }, { count: followers }, { count: following }] = await Promise.all([
         owner
-          ? supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).order("createdAt", { ascending: false })
-          : supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).eq("moderationStatus", "APPROVED").order("createdAt", { ascending: false }),
+          ? supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, uploadedByUserId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).order("createdAt", { ascending: false })
+          : supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, uploadedByUserId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).eq("moderationStatus", "APPROVED").order("createdAt", { ascending: false }),
         supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", userId).eq("status", "ACTIVE"),
         supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", userId).eq("status", "ACTIVE"),
       ]);
@@ -523,7 +545,28 @@ export default function ProfilePage() {
         setCoursesPlayed(courses || []);
       }
 
-      setUploads(userUploads.map((u: any) => ({ ...u, isTagged: false })));
+      // For any uploads with uploadedByUserId set (clip was transferred to
+      // this user via an approved hero tag), fetch the original uploader's
+      // username so the "uploaded by @x" attribution chip can render on
+      // the clip overlay.
+      const originalUploaderIds = [...new Set(
+        userUploads
+          .map((u: any) => u.uploadedByUserId)
+          .filter((id: string | null | undefined): id is string => !!id && id !== userId)
+      )];
+      let originalUploaderMap: Record<string, string> = {};
+      if (originalUploaderIds.length > 0) {
+        const { data: origUsers } = await supabase
+          .from("User")
+          .select("id, username")
+          .in("id", originalUploaderIds);
+        (origUsers || []).forEach((u: any) => { originalUploaderMap[u.id] = u.username; });
+      }
+      setUploads(userUploads.map((u: any) => ({
+        ...u,
+        isTagged: false,
+        uploadedByUsername: u.uploadedByUserId ? (originalUploaderMap[u.uploadedByUserId] ?? null) : null,
+      })));
       setFollowerCount(followers || 0);
       setFollowingCount(following || 0);
 
@@ -542,7 +585,7 @@ export default function ProfilePage() {
         const { data: tagRows } = await supabase.from("UploadTag").select("uploadId").eq("userId", authUser.id).eq("approved", true);
         if (tagRows && tagRows.length > 0) {
           const taggedUploadIds = tagRows.map((t: any) => t.uploadId);
-          const { data: taggedData } = await supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").in("id", taggedUploadIds).order("createdAt", { ascending: false });
+          const { data: taggedData } = await supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, uploadedByUserId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").in("id", taggedUploadIds).order("createdAt", { ascending: false });
           if (taggedData && taggedData.length > 0) {
             const taggedHoleIds = [...new Set(taggedData.map((u: any) => u.holeId).filter(Boolean))];
             const { data: taggedHoles } = await supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", taggedHoleIds);

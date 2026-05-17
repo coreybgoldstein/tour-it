@@ -67,6 +67,8 @@ type Upload = {
   yardageOverlay: string | null;
   likeCount: number;
   commentCount: number;
+  uploadedByUserId?: string | null;
+  uploadedByUsername?: string | null;
 };
 
 type CommentItem = {
@@ -480,14 +482,18 @@ export default function HolePage() {
           const singleClips = uploadsData.filter((u: Upload) => !u.seriesId);
           const seriesClips = uploadsData.filter((u: Upload) => u.seriesId);
 
-          setUploads(singleClips);
-
-          // Fetch uploader info for single clips
+          // Fetch uploader info for single clips. Also fetches the
+          // original uploaders for any transferred clips so the
+          // attribution chip can show their @handle.
           if (singleClips.length > 0) {
-            const userIds = [...new Set(singleClips.map((u: Upload) => u.userId))];
+            const ownerIds = [...new Set(singleClips.map((u: Upload) => u.userId))];
+            const originalUploaderIds = [...new Set(
+              singleClips.map((u: Upload) => u.uploadedByUserId).filter((id): id is string => !!id)
+            )];
+            const allUserIds = [...new Set([...ownerIds, ...originalUploaderIds])];
             const [{ data: users }, { data: progs }] = await Promise.all([
-              supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds as string[]),
-              supabase.from("UserProgression").select("userId, rank").in("userId", userIds as string[]),
+              supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", allUserIds as string[]),
+              supabase.from("UserProgression").select("userId, rank").in("userId", ownerIds as string[]),
             ]);
             if (users) {
               const rankMap: Record<string, string> = {};
@@ -495,8 +501,18 @@ export default function HolePage() {
               const map: Record<string, {username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null}> = {};
               users.forEach((u: any) => { map[u.id] = { username: u.username, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex ?? null, rank: rankMap[u.id] || null }; });
               setUploaders(map);
+              // Stamp uploadedByUsername on each clip so the chip can
+              // render without an extra lookup at render time.
+              for (const c of singleClips) {
+                if (c.uploadedByUserId && c.uploadedByUserId !== c.userId) {
+                  const orig = users.find((u: any) => u.id === c.uploadedByUserId);
+                  c.uploadedByUsername = orig?.username ?? null;
+                }
+              }
             }
           }
+
+          setUploads(singleClips);
 
           // Group series clips by seriesId
           const seriesMap: Record<string, Upload[]> = {};
@@ -795,7 +811,7 @@ export default function HolePage() {
             })()}
 
             {/* Right sidebar — Intel → Avatar → Like → Comment → SEND IT → Report */}
-            <div className="right-actions">
+            <div className="right-actions" style={activeUpload?.uploadedByUsername ? { bottom: "calc(180px + env(safe-area-inset-bottom))" } : undefined}>
 
               {/* Intel */}
               {hasIntel && (
@@ -866,18 +882,38 @@ export default function HolePage() {
               // Avatar + username + date. left adapts to hole digit count
               // (80 for 1-9, 105 for 10+) so the row hugs the HoleIdentityCard
               // without floating. Bottom lifts above the VideoScrubber on
-              // video clips and clears the BottomNav on photo clips.
-              <div style={{ position: "absolute", left: (holeNum ?? 0) >= 10 ? 105 : 80, bottom: activeUpload.mediaType === "VIDEO" ? "calc(130px + env(safe-area-inset-bottom))" : "calc(85px + env(safe-area-inset-bottom))", zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
-                <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-                  <div className={isLegend(uploaders[activeUpload.userId]?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaders[activeUpload.userId]?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {uploaders[activeUpload.userId]?.avatarUrl
-                      ? <img src={uploaders[activeUpload.userId].avatarUrl!} alt={uploaders[activeUpload.userId].username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-                  </div>
-                </button>
-                {uploaders[activeUpload.userId]?.username && <span onClick={() => router.push(`/profile/${activeUpload.userId}`)} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaders[activeUpload.userId].username}</span>}
-                {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}</span>}
-                {activeUpload.mediaType !== "VIDEO" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
+              // video clips and clears the BottomNav on photo clips. When
+              // the attribution chip is present, the whole stack shifts up
+              // so the chip slots in BELOW the username row.
+              <div style={{ position: "absolute", left: (holeNum ?? 0) >= 10 ? 105 : 80, right: 80,
+                bottom: activeUpload.mediaType === "VIDEO"
+                  ? `calc(${activeUpload.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
+                  : `calc(${activeUpload.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+                zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                    <div className={isLegend(uploaders[activeUpload.userId]?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaders[activeUpload.userId]?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {uploaders[activeUpload.userId]?.avatarUrl
+                        ? <img src={uploaders[activeUpload.userId].avatarUrl!} alt={uploaders[activeUpload.userId].username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                    </div>
+                  </button>
+                  {uploaders[activeUpload.userId]?.username && <span onClick={() => router.push(`/profile/${activeUpload.userId}`)} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)", cursor: "pointer" }}>{uploaders[activeUpload.userId].username}</span>}
+                  {formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt) && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", pointerEvents: "none" }}>{formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)}</span>}
+                  {activeUpload.mediaType !== "VIDEO" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, pointerEvents: "none" }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>}
+                </div>
+                {activeUpload.uploadedByUsername && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); router.push(`/profile/${activeUpload.uploadedByUserId ?? ""}`); }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "3px 9px 3px 7px", cursor: "pointer", textShadow: "0 1px 3px rgba(0,0,0,0.7)" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                    </svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.75)" }}>
+                      uploaded by @{activeUpload.uploadedByUsername}
+                    </span>
+                  </button>
+                )}
               </div>
             )}
 
