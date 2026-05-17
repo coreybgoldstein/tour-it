@@ -301,7 +301,15 @@ model TeeBox {
 
 model Upload {
   id                   String           @id @default(cuid())
+  // The current owner of this clip — appears on their profile, gets points
+  // for engagement. May change when a hero tag is approved (transfer from
+  // uploader -> hero). Always a real user id.
   userId               String
+  // The ORIGINAL uploader of this clip, set only when ownership has been
+  // transferred via an approved hero tag. NULL means the current userId
+  // is also the uploader (no transfer ever happened). Used to render the
+  // small "uploaded by @user" attribution chip on the clip.
+  uploadedByUserId     String?
   courseId             String
   holeId               String
   teeBoxId             String?
@@ -719,7 +727,13 @@ model UploadTag {
   id        String   @id @default(cuid())
   uploadId  String
   userId    String
+  // null = pending, true = approved (on-profile), false = declined
   approved  Boolean?
+  // When true, an approval also transfers Upload.userId to this user
+  // (ownership handoff for "you filmed me hitting this shot" flow).
+  // Multiple co-star (isHero=false) tags allowed per upload; only one
+  // hero tag enforced by the upload UI (no DB-level constraint).
+  isHero    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
