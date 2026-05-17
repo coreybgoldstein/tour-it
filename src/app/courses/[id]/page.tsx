@@ -1259,6 +1259,42 @@ const [editDescription, setEditDescription] = useState("");
         </div>
       </div>
 
+{/* Course-completion nudge — shows when key fields are still null so users
+    know there's something useful (and points-earning) they can do. Counts
+    logo, cover, description, year, and zip as the "completion" set; one
+    pill per missing field collapses into a single summary at >=3 missing. */}
+{(() => {
+  const missing: string[] = [];
+  if (!course.logoUrl) missing.push("logo");
+  if (!course.coverImageUrl) missing.push("cover photo");
+  if (!course.description) missing.push("description");
+  if (!course.yearEstablished) missing.push("year");
+  if (!course.zipCode) missing.push("zip");
+  if (missing.length === 0) return null;
+  const label = missing.length >= 3
+    ? `Help complete this course profile — ${missing.length} fields missing`
+    : `Add the ${missing.join(" & ")} to complete this profile`;
+  // Earnable points per the points config: cover/logo/year/zip/desc each
+  // grant a course-field action (10-25 pts). Conservatively cite the
+  // ballpark for the visible missing count.
+  const ptsEstimate = missing.length * 15;
+  return (
+    <button
+      onClick={openContribute}
+      style={{ width: "calc(100% - 40px)", margin: "0 20px 10px", display: "flex", alignItems: "center", gap: 10, background: "rgba(212,160,23,0.08)", border: "1px solid rgba(212,160,23,0.35)", borderRadius: 12, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}
+    >
+      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(212,160,23,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d4a017" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(212,160,23,0.85)", marginTop: 1 }}>~{ptsEstimate} pts available</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  );
+})()}
+
 {/* Action bar — compact horizontal pills (icon + label on one row) */}
 <div style={{ padding: "10px 20px 12px", display: "flex", gap: 8 }}>
   <button

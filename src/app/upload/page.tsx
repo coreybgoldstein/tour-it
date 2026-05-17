@@ -754,6 +754,11 @@ function UploadPageInner() {
         allTagged.forEach(({ user: u }) => sendPushToUser("tag", u.id, uploadId));
       }
 
+      // Auto-seed logo + cover for under-seeded courses (fire-and-forget).
+      // No-op if the course is already complete. Runs server-side so we
+      // can use the Supabase service-role key for storage uploads.
+      fetch(`/api/courses/${selectedCourse.id}/auto-seed`, { method: "POST" }).catch(() => {});
+
       // Notify followers of new clip (fire-and-forget)
       ;(async () => {
         const { data: followers } = await supabase.from("Follow").select("followerId").eq("followingId", user.id).eq("status", "ACTIVE");

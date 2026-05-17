@@ -15,6 +15,10 @@
     {
       "path": "/api/admin/resync-points",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/auto-seed-courses",
+      "schedule": "0 5 * * *"
     }
   ]
 }
