@@ -7,12 +7,24 @@ fixes it.
 
 Two triggers handled:
 
-1. App was inactive > 500 ms (backgrounded, app switcher, phone call, etc).
-   On return → `reloadFromOrigin()` on the WebView, which tears down the
-   stuck URLSession that iOS suspend corrupts.
+1. App was truly backgrounded (`applicationDidEnterBackground` fired) and
+   the gap on return is > **1.5 s**. On return → `stopLoading()` then
+   `reloadFromOrigin()` on every WebView. Tears down the stuck URLSession
+   that iOS suspend corrupts. The 1.5s threshold (raised from an earlier
+   500ms after two reviewer agents flagged it as too aggressive) skips
+   notification shade, Face ID, Control Center, and Siri overlays — none
+   of which corrupt the WebView, so reloading on them would just wipe UI
+   state without benefit.
 
 2. Screenshot taken (`userDidTakeScreenshotNotification`). Same recovery
    path, but with a 250 ms delay so iOS finishes its snapshot capture first.
+
+Both paths share a **3 s cooldown** so rapid retriggers (multiple
+screenshots, multi-step interruption) don't compound into multiple reloads.
+
+Every recovery event is logged via `NSLog` with reason + elapsed gap, so
+you can see in Console.app (or Xcode's device log) whether the fix is
+firing on the actual triggers in production.
 
 No Capacitor plugin or config changed. Only `AppDelegate.swift` is new.
 
@@ -63,8 +75,11 @@ In Xcode:
   re-sign in to Apple ID. Then re-try archive.
 - **"Build number must be greater than previous" error on upload**: bump
   to 401, 402, etc. until it accepts.
-- **App reloads constantly** (e.g., every time you tap a banner): the 500ms
-  threshold in `AppDelegate.swift` is too low. Bump it to 1500 and re-archive.
+- **App reloads constantly** (e.g., every time you tap a banner): the
+  `backgroundedThreshold` in `AppDelegate.swift` is too low. Bump it (e.g.,
+  from `1.5` to `3.0`) and re-archive. Note: with the move to
+  `applicationDidEnterBackground` (vs the earlier `applicationWillResignActive`),
+  this shouldn't fire on shallow interrupts anymore.
 
 ## What's still JS-side
 
