@@ -1281,16 +1281,16 @@ const [editDescription, setEditDescription] = useState("");
   return (
     <button
       onClick={openContribute}
-      style={{ width: "calc(100% - 40px)", margin: "0 20px 10px", display: "flex", alignItems: "center", gap: 10, background: "rgba(212,160,23,0.08)", border: "1px solid rgba(212,160,23,0.35)", borderRadius: 12, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}
+      style={{ width: "calc(100% - 40px)", margin: "0 20px 10px", display: "flex", alignItems: "center", gap: 10, background: "rgba(212,160,23,0.08)", border: "1px solid rgba(212,160,23,0.35)", borderRadius: 12, padding: "9px 12px", cursor: "pointer", textAlign: "left" }}
     >
-      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(212,160,23,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d4a017" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(212,160,23,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d4a017" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(212,160,23,0.85)", marginTop: 1 }}>~{ptsEstimate} pts available</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.25 }}>{label}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, color: "rgba(212,160,23,0.85)", marginTop: 1, letterSpacing: "0.01em" }}>Earn up to {ptsEstimate} pts</div>
       </div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
     </button>
   );
 })()}
