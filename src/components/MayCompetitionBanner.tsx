@@ -14,18 +14,18 @@ export default function MayCompetitionBanner() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 16px",
-        height: 32,
+        padding: "0 18px",
+        height: 44,
         cursor: "pointer",
-        gap: 10,
+        gap: 12,
         overflow: "hidden",
       }}>
         {/* Dot pattern overlay — matches the TopBar green sections for visual consistency */}
         <div aria-hidden style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
-        <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1, position: "relative", zIndex: 1 }}>🏆</span>
+        <span style={{ fontSize: 17, flexShrink: 0, lineHeight: 1, position: "relative", zIndex: 1 }}>🏆</span>
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 600,
           color: "#fff",
           whiteSpace: "nowrap",
@@ -42,7 +42,7 @@ export default function MayCompetitionBanner() {
         </div>
         <span style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 18,
+          fontSize: 22,
           fontWeight: 300,
           color: "rgba(255,255,255,0.7)",
           flexShrink: 0,
