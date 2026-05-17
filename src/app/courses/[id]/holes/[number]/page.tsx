@@ -554,20 +554,28 @@ export default function HolePage() {
     if (idx > 0) setActiveIndex(idx);
   }, [uploads]);
 
-  // Manage video playback for single clips
+  // Manage video playback for single clips. When the comment sheet is
+  // open, pause the active video so it doesn't keep playing under the
+  // sheet (and on surfaces with auto-advance, doesn't fire onEnded and
+  // scroll past the clip the user is commenting on).
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([clipId, videoEl]) => {
       if (!videoEl) return;
       const clipIndex = uploads.findIndex(u => u.id === clipId);
       if (clipIndex === activeIndex) {
-        videoEl.play().catch(() => {});
+        if (commentUploadId) {
+          // Pause without resetting — resumes from same point on close.
+          videoEl.pause();
+        } else {
+          videoEl.play().catch(() => {});
+        }
       } else {
         videoEl.pause();
         videoEl.currentTime = 0;
       }
     });
     setIntelOpen(false);
-  }, [activeIndex, uploads]);
+  }, [activeIndex, uploads, commentUploadId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;

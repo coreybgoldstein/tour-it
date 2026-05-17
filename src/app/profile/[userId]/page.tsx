@@ -24,7 +24,7 @@ const SHOT_LABEL: Record<string, string> = {
 };
 
 function ProfileFeedCard({
-  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId, likedIds,
+  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId, likedIds, commentOpen,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; cloudflareVideoId?: string | null; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null };
   isActive: boolean;
@@ -39,6 +39,9 @@ function ProfileFeedCard({
   isOwner: boolean;
   currentUserId?: string | null;
   likedIds?: Set<string>;
+  // When true, the parent's comment sheet is open — pause the video so the
+  // user can read/type without the looping playback running in the background.
+  commentOpen?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
@@ -57,9 +60,18 @@ function ProfileFeedCard({
 
   useEffect(() => {
     const v = videoRef.current; if (!v) return;
-    if (isActive) { v.play().catch(() => {}); setVideoPaused(false); }
-    else { v.pause(); v.currentTime = 0; setIntelOpen(false); }
-  }, [isActive]);
+    if (isActive && !commentOpen) {
+      v.play().catch(() => {});
+      setVideoPaused(false);
+    } else if (isActive && commentOpen) {
+      v.pause();
+      setVideoPaused(true);
+    } else {
+      v.pause();
+      v.currentTime = 0;
+      setIntelOpen(false);
+    }
+  }, [isActive, commentOpen]);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
@@ -876,6 +888,7 @@ export default function ProfilePage() {
                 onReport={!isOwner && currentUserId ? () => { setFeedOpen(false); setReportClipId(clip.id); } : undefined}
                 uploaderInfo={{ id: profile.id, username: profile.username, avatarUrl: profile.avatarUrl, handicapIndex: profile.handicapIndex, rank: profileRank }}
                 onComment={() => setCommentUploadId(clip.id)}
+                commentOpen={!!commentUploadId}
                 isOwner={isOwner}
                 currentUserId={currentUserId}
                 likedIds={likedIds}

@@ -335,7 +335,7 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
 // every render, but their closures only read stable refs (router, setters)
 // so a stale closure can't go wrong here.
 const SeriesCard = memo(function SeriesCardImpl({
-  item, isActive, onTapCourse, onTapUser, onComment, currentUserId, followingIds, onFollow, likedIds,
+  item, isActive, onTapCourse, onTapUser, onComment, currentUserId, followingIds, onFollow, likedIds, commentOpen,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
   isActive: boolean;
@@ -346,6 +346,9 @@ const SeriesCard = memo(function SeriesCardImpl({
   // the per-clip Supabase round-trip that would otherwise make the heart
   // flicker from unfilled to filled on mount.
   likedIds?: Set<string>;
+  // When true, the parent's comment sheet is open. Pauses the active shot
+  // so it doesn't reach `onEnded` and auto-advance while the user types.
+  commentOpen?: boolean;
 }) {
   const [shotIndex, setShotIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
@@ -378,10 +381,21 @@ const SeriesCard = memo(function SeriesCardImpl({
     item.shots.forEach((shot, i) => {
       const el = videoRefs.current[shot.id];
       if (!el) return;
-      if (i === shotIndex) { el.currentTime = 0; el.play().catch(() => {}); }
-      else { el.pause(); el.currentTime = 0; }
+      if (i === shotIndex) {
+        // Comment open: pause without resetting so playback resumes from
+        // the same point when the sheet closes. Otherwise: reset + play.
+        if (commentOpen) {
+          el.pause();
+        } else {
+          el.currentTime = 0;
+          el.play().catch(() => {});
+        }
+      } else {
+        el.pause();
+        el.currentTime = 0;
+      }
     });
-  }, [isActive, shotIndex, item.shots]);
+  }, [isActive, shotIndex, item.shots, commentOpen]);
 
   useEffect(() => {
     Object.values(videoRefs.current).forEach(v => { if (v) v.muted = muted; });
@@ -523,7 +537,7 @@ const SeriesCard = memo(function SeriesCardImpl({
 // drives its own re-renders via useState/useEffect; this only cuts the
 // "parent re-rendered, so I re-render too" cascade.
 const VideoCard = memo(function VideoCardImpl({
-  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds,
+  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds, commentOpen,
 }: {
   clip: FeedClip; isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
@@ -534,6 +548,9 @@ const VideoCard = memo(function VideoCardImpl({
   currentUserId?: string | null;
   // Pre-batched set of clip IDs the current user has liked (see SeriesCard).
   likedIds?: Set<string>;
+  // When true, the parent's comment sheet is open. We pause the video so the
+  // user can read/type without onEnded auto-advancing to the next clip.
+  commentOpen?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { liked, likeCount, toggleLike } = useLike({
@@ -553,18 +570,23 @@ const VideoCard = memo(function VideoCardImpl({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (isActive) {
+    if (isActive && !commentOpen) {
       const currentMuted = sessionMute.get();
       setMuted(currentMuted);
       video.muted = currentMuted;
       video.play().catch(() => {});
       setVideoPaused(false);
+    } else if (isActive && commentOpen) {
+      // Comment sheet open — pause but DON'T reset position so playback
+      // resumes from where the user paused once the sheet closes.
+      video.pause();
+      setVideoPaused(true);
     } else {
       video.pause();
       video.currentTime = 0;
       setIntelOpen(false);
     }
-  }, [isActive]);
+  }, [isActive, commentOpen]);
 
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
@@ -1569,9 +1591,9 @@ export default function Home() {
         {!loading && feedItems.map((item, i) => (
           <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
             {item.type === "series" ? (
-              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} />
+              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentOpen={!!commentUploadId} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentOpen={!!commentUploadId} />
             )}
           </div>
         ))}
