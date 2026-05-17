@@ -166,19 +166,31 @@ export async function awardPoints({
   // active competitions, so this MUST stay in sync with totalPoints.
   const { data: prog } = await supabase
     .from("UserProgression")
-    .select("totalPoints, weeklyPoints, monthlyPoints, level, rank")
+    .select("totalPoints, weeklyPoints, monthlyPoints, level, rank, weekReset, monthReset")
     .eq("userId", userId)
     .maybeSingle();
 
   const oldLevel = prog?.level ?? 1;
   const oldRank  = prog?.rank  ?? "CADDIE";
 
+  // Self-healing period rollover: if the stored weekly/monthly counter is
+  // older than the current period boundary, treat the base as 0 so the new
+  // award starts the fresh period correctly. Avoids the bug where
+  // monthlyPoints accumulated April + May totals between scheduled resyncs.
+  const nowDate     = new Date();
+  const monthStart  = new Date(Date.UTC(nowDate.getUTCFullYear(), nowDate.getUTCMonth(), 1));
+  const weekStart   = new Date(nowDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weekResetAt   = prog?.weekReset  ? new Date(prog.weekReset)  : null;
+  const monthResetAt  = prog?.monthReset ? new Date(prog.monthReset) : null;
+  const weeklyStale   = !weekResetAt  || weekResetAt  < weekStart;
+  const monthlyStale  = !monthResetAt || monthResetAt < monthStart;
+
   const totalPoints   = Math.max(0, (prog?.totalPoints   ?? 0) + points);
-  const weeklyPoints  = Math.max(0, (prog?.weeklyPoints  ?? 0) + points);
-  const monthlyPoints = Math.max(0, (prog?.monthlyPoints ?? 0) + points);
+  const weeklyPoints  = Math.max(0, (weeklyStale  ? 0 : (prog?.weeklyPoints  ?? 0)) + points);
+  const monthlyPoints = Math.max(0, (monthlyStale ? 0 : (prog?.monthlyPoints ?? 0)) + points);
   const level         = computeLevel(totalPoints);
   const rank          = computeRank(level);
-  const now           = new Date().toISOString();
+  const now           = nowDate.toISOString();
 
   // Award level-up bonuses for each new level reached
   let bonusPoints = 0;
@@ -245,6 +257,11 @@ export async function awardPoints({
       monthlyPoints: finalMonthly,
       level:         finalLevel,
       rank:          finalRank,
+      // Stamp the period markers whenever we reset the counter. This is what
+      // makes the rollover detection above self-healing: once we've zeroed the
+      // stale counter, the next award in the same period reads a fresh marker.
+      ...(weeklyStale  ? { weekReset:  now } : {}),
+      ...(monthlyStale ? { monthReset: now } : {}),
       updatedAt:     now,
     },
     { onConflict: "userId" }
@@ -253,6 +270,27 @@ export async function awardPoints({
   if (progErr) {
     console.error("[awardPoints] progression upsert failed", progErr);
     return null;
+  }
+
+  // Broadcast to the leaderboard + profile subscribers so every UI surface
+  // refreshes instantly — not just the /api/points/award path. All
+  // direct-callers (referrals, contributions, streak cron, badges) now push
+  // updates too. Fire-and-forget; failure must not block the points write.
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/realtime/v1/api/broadcast`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({
+        messages: [
+          { topic: "realtime:leaderboard-updates", event: "points-awarded", payload: { userId } },
+          { topic: `realtime:user-progression:${userId}`, event: "points-awarded", payload: { userId } },
+        ],
+      }),
+    }).catch(() => {});
   }
 
   return { totalPoints: finalTotal, level: finalLevel };
