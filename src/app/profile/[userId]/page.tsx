@@ -434,7 +434,23 @@ export default function ProfilePage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showEditSheet, setShowEditSheet] = useState(false);
-  const [editData, setEditData] = useState<{ holeNumber: number | null; shotType: string; strategyNote: string; clubUsed: string; windCondition: string; landingZoneNote: string; whatCameraDoesntShow: string; taggedUsers: EditTagUser[]; originalTagIds: Set<string> } | null>(null);
+  const [editData, setEditData] = useState<{ holeNumber: number | null; shotType: string; strategyNote: string; clubUsed: string; windCondition: string; landingZoneNote: string; whatCameraDoesntShow: string; taggedUsers: EditTagUser[]; originalTagIds: Set<string>; heroUser: EditTagUser | null; originalHeroUserId: string | null } | null>(null);
+  // Hero search inside the edit sheet — mirrors the upload-flow picker.
+  const [editHeroPick, setEditHeroPick] = useState<"me" | "someone">("me");
+  const [editHeroInput, setEditHeroInput] = useState("");
+  const [editHeroResults, setEditHeroResults] = useState<EditTagUser[]>([]);
+  const editHeroDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (editHeroDebounce.current) clearTimeout(editHeroDebounce.current);
+    if (!editHeroInput.trim()) { setEditHeroResults([]); return; }
+    editHeroDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${editHeroInput.trim()}%`).limit(6);
+      const excluded = new Set(editData?.taggedUsers.map(u => u.id) || []);
+      setEditHeroResults((data || []).filter((u: EditTagUser) => !excluded.has(u.id)));
+    }, 280);
+  }, [editHeroInput, editData?.taggedUsers]);
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editTagInput, setEditTagInput] = useState("");
@@ -799,10 +815,32 @@ export default function ProfilePage() {
     const supabase = createClient();
     const [{ data }, { data: tagRows }] = await Promise.all([
       supabase.from("Upload").select("shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow").eq("id", selectedClip.id).single(),
-      supabase.from("UploadTag").select("userId, user:User(id, username, displayName, avatarUrl)").eq("uploadId", selectedClip.id),
+      supabase.from("UploadTag").select("userId, isHero, user:User(id, username, displayName, avatarUrl)").eq("uploadId", selectedClip.id),
     ]);
-    const existingTagged: EditTagUser[] = (tagRows || []).map((r: any) => r.user).filter(Boolean);
-    setEditData({ holeNumber: selectedClip.holeNumber ?? null, shotType: data?.shotType || "", strategyNote: data?.strategyNote || "", clubUsed: data?.clubUsed || "", windCondition: data?.windCondition || "", landingZoneNote: data?.landingZoneNote || "", whatCameraDoesntShow: data?.whatCameraDoesntShow || "", taggedUsers: existingTagged, originalTagIds: new Set(existingTagged.map(u => u.id)) });
+    // Split hero from co-stars. Only the original uploader sees this sheet,
+    // so the hero (if any) is always someone OTHER than the viewer.
+    const heroRow = (tagRows || []).find((r: any) => r.isHero === true);
+    const heroUser: EditTagUser | null = heroRow?.user || null;
+    const existingTagged: EditTagUser[] = (tagRows || [])
+      .filter((r: any) => r.isHero !== true)
+      .map((r: any) => r.user)
+      .filter(Boolean);
+    setEditData({
+      holeNumber: selectedClip.holeNumber ?? null,
+      shotType: data?.shotType || "",
+      strategyNote: data?.strategyNote || "",
+      clubUsed: data?.clubUsed || "",
+      windCondition: data?.windCondition || "",
+      landingZoneNote: data?.landingZoneNote || "",
+      whatCameraDoesntShow: data?.whatCameraDoesntShow || "",
+      taggedUsers: existingTagged,
+      originalTagIds: new Set(existingTagged.map(u => u.id)),
+      heroUser,
+      originalHeroUserId: heroUser?.id ?? null,
+    });
+    setEditHeroPick(heroUser ? "someone" : "me");
+    setEditHeroInput("");
+    setEditHeroResults([]);
     setEditLoading(false);
   }
 
@@ -826,8 +864,48 @@ export default function ProfilePage() {
     if (removedIds.length > 0) await supabase.from("UploadTag").delete().eq("uploadId", selectedClip.id).in("userId", removedIds);
     if (addedUsers.length > 0) {
       const now = new Date().toISOString();
-      await supabase.from("UploadTag").insert(addedUsers.map(u => ({ id: crypto.randomUUID(), uploadId: selectedClip.id, userId: u.id, createdAt: now })));
+      await supabase.from("UploadTag").insert(addedUsers.map(u => ({ id: crypto.randomUUID(), uploadId: selectedClip.id, userId: u.id, isHero: false, createdAt: now })));
     }
+
+    // Hero tag retroactive assignment. If the uploader picked a NEW hero
+    // (different from any pre-existing hero), upsert the UploadTag with
+    // isHero=true and send a hero-claim notification. The (uploadId, userId)
+    // unique index means a co-star tag on the same person gets upgraded
+    // in place — no duplicate row.
+    const newHeroId = editHeroPick === "someone" ? editData.heroUser?.id ?? null : null;
+    if (newHeroId && newHeroId !== editData.originalHeroUserId) {
+      const now = new Date().toISOString();
+      // Upsert via insert-with-onConflict so an existing co-star tag for
+      // this user gets upgraded to isHero=true rather than colliding.
+      await supabase.from("UploadTag").upsert(
+        { id: crypto.randomUUID(), uploadId: selectedClip.id, userId: newHeroId, isHero: true, approved: null, createdAt: now },
+        { onConflict: "uploadId,userId" }
+      );
+      // If a previous hero existed, demote them back to co-star (don't
+      // delete — they may want their notification history). Only flip the
+      // isHero flag.
+      if (editData.originalHeroUserId && editData.originalHeroUserId !== newHeroId) {
+        await supabase.from("UploadTag").update({ isHero: false }).eq("uploadId", selectedClip.id).eq("userId", editData.originalHeroUserId);
+      }
+      // Fire the hero notification + push.
+      const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", currentUserId).single();
+      const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
+      const courseName = coursesPlayed.find(c => c.id === selectedClip.courseId)?.name || "a course";
+      const holeText = (editData.holeNumber ?? selectedClip.holeNumber) ? ` — Hole ${editData.holeNumber ?? selectedClip.holeNumber}` : "";
+      await supabase.from("Notification").insert({
+        id: crypto.randomUUID(),
+        userId: newHeroId,
+        type: "clip_tag",
+        title: `${taggerName} uploaded a clip of you`,
+        body: `${taggerName} says this is your shot at ${courseName}${holeText}. Claim it on your profile?`,
+        linkUrl: `/courses/${selectedClip.courseId}`,
+        referenceId: selectedClip.id,
+        read: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
     setUploads(prev => prev.map(u => u.id === selectedClip.id ? { ...u, holeNumber: editData.holeNumber ?? u.holeNumber, holeId } : u));
     setEditSaving(false); setShowEditSheet(false);
   }
@@ -1006,6 +1084,76 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 </div>
+                {/* Hero of this shot — retroactive hero tagging. Sends a
+                    "claim this clip" notification to the picked user that
+                    on approval transfers Upload.userId to them. Save flow
+                    only fires the notification if the picked hero changed. */}
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Who hit this shot?</div>
+                  <div style={{ display: "flex", gap: 8, marginBottom: editHeroPick === "someone" ? 10 : 0 }}>
+                    <button
+                      onClick={() => { setEditHeroPick("me"); setEditData(d => d ? { ...d, heroUser: null } : d); setEditHeroInput(""); setEditHeroResults([]); }}
+                      style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        background: editHeroPick === "me" ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${editHeroPick === "me" ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.1)"}`,
+                        color: editHeroPick === "me" ? "#4da862" : "rgba(255,255,255,0.6)" }}
+                    >
+                      Me
+                    </button>
+                    <button
+                      onClick={() => setEditHeroPick("someone")}
+                      style={{ flex: 1, padding: "9px 12px", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                        background: editHeroPick === "someone" ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${editHeroPick === "someone" ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.1)"}`,
+                        color: editHeroPick === "someone" ? "#4da862" : "rgba(255,255,255,0.6)" }}
+                    >
+                      Someone else
+                    </button>
+                  </div>
+                  {editHeroPick === "someone" && (
+                    editData.heroUser ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 10, padding: "8px 12px" }}>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {editData.heroUser.avatarUrl ? <img src={editData.heroUser.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={editData.heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{editData.heroUser.username[0].toUpperCase()}</span>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{editData.heroUser.username}</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{editData.heroUser.id === editData.originalHeroUserId ? "Already claimed" : "Will be asked to claim it on save"}</div>
+                        </div>
+                        <button onClick={() => { setEditData(d => d ? { ...d, heroUser: null } : d); setEditHeroInput(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ position: "relative" }}>
+                        <input
+                          value={editHeroInput}
+                          onChange={e => setEditHeroInput(e.target.value)}
+                          placeholder="Search the hero by username…"
+                          autoCorrect="off" autoCapitalize="off" spellCheck={false}
+                          style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
+                        />
+                        {editHeroResults.length > 0 && (
+                          <div style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 10, overflow: "hidden" }}>
+                            {editHeroResults.map(u => (
+                              <button key={u.id} onClick={() => { setEditData(d => d ? { ...d, heroUser: u } : d); setEditHeroInput(""); setEditHeroResults([]); }}
+                                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                                <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 10, color: "#4da862", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
+                                </div>
+                                <div>
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
+                                  {u.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{u.displayName}</div>}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
+                </div>
+
                 <div style={{ marginBottom: 24 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Tag players</div>
                   {editData.taggedUsers.length > 0 && (
