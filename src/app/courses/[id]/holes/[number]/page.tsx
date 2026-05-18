@@ -811,7 +811,7 @@ export default function HolePage() {
             })()}
 
             {/* Right sidebar — Intel → Avatar → Like → Comment → SEND IT → Report */}
-            <div className="right-actions" style={activeUpload?.uploadedByUsername ? { bottom: "calc(180px + env(safe-area-inset-bottom))" } : undefined}>
+            <div className="right-actions">
 
               {/* Intel */}
               {hasIntel && (
@@ -887,8 +887,8 @@ export default function HolePage() {
               // so the chip slots in BELOW the username row.
               <div style={{ position: "absolute", left: (holeNum ?? 0) >= 10 ? 105 : 80, right: 80,
                 bottom: activeUpload.mediaType === "VIDEO"
-                  ? `calc(${activeUpload.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
-                  : `calc(${activeUpload.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+                  ? `calc(${activeUpload.uploadedByUsername ? 138 : 130}px + env(safe-area-inset-bottom))`
+                  : `calc(${activeUpload.uploadedByUsername ? 100 : 85}px + env(safe-area-inset-bottom))`,
                 zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
