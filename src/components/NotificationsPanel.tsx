@@ -338,7 +338,7 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
                               </span>
                             </button>
                             {n.courseLogoUrl && (
-                              <img src={n.courseLogoUrl} alt="" style={{ position: "absolute", bottom: -4, right: -4, width: 22, height: 22, borderRadius: "50%", border: "1.5px solid #07100a", background: "#fff", objectFit: "cover", boxShadow: "0 1px 3px rgba(0,0,0,0.4)", pointerEvents: "none" }} />
+                              <img src={n.courseLogoUrl} alt="" style={{ position: "absolute", bottom: -5, right: -5, width: 28, height: 28, borderRadius: "50%", border: "2px solid #07100a", background: "#fff", objectFit: "cover", boxShadow: "0 1px 4px rgba(0,0,0,0.5)", pointerEvents: "none" }} />
                             )}
                           </>
                         ) : (

@@ -13,6 +13,19 @@ import type { ReactNode } from "react";
 //   • Each entry exposes an `accent` color so callers can match borders
 //     and rings to the icon family without re-deriving the value.
 const ICONS: Record<string, { bg: string; accent: string; svg: ReactNode }> = {
+  // Far and away the most common notification type — followers getting
+  // pinged when someone they follow uploads a clip. Use a play-circle so
+  // the row reads instantly as "video content," not as a generic alert.
+  new_clip: {
+    bg: "rgba(77,168,98,0.15)",
+    accent: "#4da862",
+    svg: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polygon points="10 8 16 12 10 16" fill="#4da862" stroke="none" />
+      </svg>
+    ),
+  },
   clip_tag: {
     bg: "rgba(77,168,98,0.15)",
     accent: "#4da862",
@@ -53,6 +66,18 @@ const ICONS: Record<string, { bg: string; accent: string; svg: ReactNode }> = {
       </svg>
     ),
   },
+  // Mentions inside comments — same visual family as plain mentions so
+  // users learn a single "teal @ = someone tagged you" pattern.
+  comment_mention: {
+    bg: "rgba(80,200,200,0.15)",
+    accent: "#50c8c8",
+    svg: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#50c8c8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" />
+      </svg>
+    ),
+  },
   follow: {
     bg: "rgba(180,120,255,0.15)",
     accent: "#b478ff",
@@ -71,6 +96,27 @@ const ICONS: Record<string, { bg: string; accent: string; svg: ReactNode }> = {
     svg: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff5a5a" stroke="#ff5a5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+    ),
+  },
+  course_request: {
+    bg: "rgba(77,168,98,0.15)",
+    accent: "#4da862",
+    svg: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="8 12 11 15 16 9" />
+      </svg>
+    ),
+  },
+  admin_alert: {
+    bg: "rgba(255,170,60,0.15)",
+    accent: "#ffaa3c",
+    svg: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffaa3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
       </svg>
     ),
   },
@@ -129,15 +175,15 @@ export function NotifIcon({
           alt=""
           style={{
             position: "absolute",
-            bottom: -3,
-            right: -3,
-            width: 16,
-            height: 16,
+            bottom: -4,
+            right: -4,
+            width: 22,
+            height: 22,
             borderRadius: "50%",
-            border: "1.5px solid #07100a",
+            border: "2px solid #07100a",
             background: "#fff",
             objectFit: "cover",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.5)",
           }}
         />
       )}
