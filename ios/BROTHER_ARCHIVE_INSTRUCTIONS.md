@@ -1,8 +1,21 @@
-# Mac archive — build 401
+# Mac archive — Version 1.0.2, Build 401
+
+## Version + Build at a glance
+
+| | Value |
+|---|---|
+| Version (CFBundleShortVersionString) | **1.0.2** |
+| Build (CFBundleVersion) | **401** |
+| Previous live | 1.0.1 (live on App Store) |
+
+App Store Connect already has a **1.0.2** version slot opened with the
+new screenshots and app icon metadata. The archive MUST match — if you
+upload a 1.0.1 build now, App Store Connect will reject it (1.0.1 is
+already live, can't submit another build under that version).
 
 ## What's different about this build
 
-The previous live build (b400) had a fix that overcorrected. It reloaded
+The previous live build (1.0.1 b400) had a fix that overcorrected. It reloaded
 the WebView every time the app came back from being backgrounded for
 more than 1.5 seconds, AND it reloaded after every screenshot. Net
 effect: every quick app switch wiped UI state, and every screenshot
@@ -56,6 +69,12 @@ grep -q "probeAndRecoverIfNeeded" ios/App/App/AppDelegate.swift \
 grep -q "CURRENT_PROJECT_VERSION = 401" ios/App/App.xcodeproj/project.pbxproj \
   && echo "PRESENT: build 401" || echo "MISSING: build is not 401"
 
+grep -q "MARKETING_VERSION = 1.0.2" ios/App/App.xcodeproj/project.pbxproj \
+  && echo "PRESENT: version 1.0.2" || echo "MISSING: version is not 1.0.2"
+
+ls ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png > /dev/null 2>&1 \
+  && echo "PRESENT: new app icon" || echo "MISSING: app icon"
+
 grep -q "heartbeat-only resume-recovery active" src/components/NativeBootstrap.tsx \
   && echo "PRESENT: JS heartbeat-only path" || echo "MISSING: JS still has old reload paths"
 
@@ -73,8 +92,9 @@ open ios/App/App.xcworkspace
 
 1. Top toolbar: select **Any iOS Device (arm64)** as the destination.
 2. Click the **App** target → **General** tab.
-3. **Build** is **401** (already bumped in the repo — confirm it shows
-   401 in the General tab, NOT 373/400). **Version** stays **1.0.1**.
+3. Confirm **Version = 1.0.2** and **Build = 401**. Both are already
+   bumped in the repo — if the General tab shows 1.0.1 or 373/400,
+   something's wrong with the checkout. Stop and let Corey know.
 4. **Product → Archive**. Wait 3-5 minutes.
 5. Organizer opens → **Distribute App** → **TestFlight & App Store** →
    **Upload**. Use automatic signing.
