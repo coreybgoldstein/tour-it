@@ -1,15 +1,33 @@
-# Mac archive — CRITICAL: must pull main before building
+# Mac archive — build 401
 
-## What went wrong last time
+## What's different about this build
 
-Whatever got archived and shipped to the App Store this round did NOT
-include the native AppDelegate WebView-recovery code or the regenerated
-splash assets. Result: the public app has the white-screen-on-screenshot
-bug and the broken splash. Both fixes have been in `main` for over a week.
+The previous live build (b400) had a fix that overcorrected. It reloaded
+the WebView every time the app came back from being backgrounded for
+more than 1.5 seconds, AND it reloaded after every screenshot. Net
+effect: every quick app switch wiped UI state, and every screenshot
+caused a visible stutter.
 
-The most likely cause is the archive being built from a stale local
-checkout that hadn't pulled `main`. Below are foolproof steps + a
-sanity check so this can't happen again.
+This build (b401):
+
+- **Drops the screenshot listener entirely.** Screenshots are no longer
+  treated as recovery events. Modern iOS does not corrupt the WebView
+  on screenshot capture.
+- **Raises the background-recovery threshold from 1.5s to 60s.** Quick
+  context switches (Messages, Control Center, notification banners)
+  no longer trigger a reload.
+- **Probes before reloading.** Even after 60s+ of backgrounding, we
+  first evaluate a trivial JS expression in the WebView. If it responds
+  within 500ms the WebView is alive and we skip the reload. Only a
+  failed/timed-out probe triggers reload.
+- **Trims the JS-side recovery code** to a heartbeat-only check (event
+  loop paused >60s → reload). The visibilitychange/blur/pageshow
+  reload paths are gone — they were the JS-side equivalent of the
+  same over-aggressive recovery.
+
+Result: the user can leave the app and return without losing scroll
+position, video playback state, or modal state. Screenshots no longer
+cause a stutter.
 
 ## Steps
 
@@ -20,87 +38,107 @@ cd ~/path/to/tour-it
 # 2. Make sure you're on main
 git checkout main
 
-# 3. PULL — do not skip this step
+# 3. PULL — do not skip
 git pull origin main
 
-# 4. SANITY CHECK — must print "PRESENT" twice. If either prints
-#    "MISSING", stop and let Corey know.
-grep -l "recoverWebViews" ios/App/App/AppDelegate.swift && echo "PRESENT: AppDelegate native recovery" || echo "MISSING: AppDelegate native recovery"
-ls ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png > /dev/null && echo "PRESENT: Splash asset (446KB)" || echo "MISSING: Splash asset"
+# 4. SANITY CHECKS — every line must print "PRESENT".
+#    If any prints "MISSING", stop and let Corey know.
 
-# 5. Sync Capacitor (safety, in case Capacitor config drifted)
+grep -q "backgroundedThreshold: TimeInterval = 60.0" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: 60s threshold" || echo "MISSING: 60s threshold"
+
+grep -q "probeAndRecoverIfNeeded" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: probe path" || echo "MISSING: probe path"
+
+! grep -q "userDidTakeScreenshotNotification" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: screenshot listener removed" || echo "MISSING: screenshot listener still in file"
+
+grep -q "CURRENT_PROJECT_VERSION = 401" ios/App/App.xcodeproj/project.pbxproj \
+  && echo "PRESENT: build 401" || echo "MISSING: build is not 401"
+
+grep -q "heartbeat-only resume-recovery active" src/components/NativeBootstrap.tsx \
+  && echo "PRESENT: JS heartbeat-only path" || echo "MISSING: JS still has old reload paths"
+
+ls ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png > /dev/null 2>&1 \
+  && echo "PRESENT: Splash asset" || echo "MISSING: Splash asset"
+
+# 5. Sync Capacitor
 npx cap sync ios
 
-# 6. Open Xcode workspace (NOT the .xcodeproj file)
+# 6. Open Xcode workspace (NOT the .xcodeproj)
 open ios/App/App.xcworkspace
 ```
 
 ## In Xcode
 
 1. Top toolbar: select **Any iOS Device (arm64)** as the destination.
-2. Click the **App** target in the left sidebar → **General** tab.
-3. **Build** number is currently **373** in `project.pbxproj`. Bump to
-   **400** to leave headroom (the previously-rejected TestFlight build
-   may have used 373 or higher). **Version** stays **1.0.1**.
-4. **Product → Archive** (top menu). Wait ~3-5 minutes.
-5. When the Organizer window opens, click **Distribute App** →
-   **TestFlight & App Store** → **Upload**. Use automatic signing.
-6. Wait for the **"Upload Successful"** toast.
+2. Click the **App** target → **General** tab.
+3. **Build** is **401** (already bumped in the repo — confirm it shows
+   401 in the General tab, NOT 373/400). **Version** stays **1.0.1**.
+4. **Product → Archive**. Wait 3-5 minutes.
+5. Organizer opens → **Distribute App** → **TestFlight & App Store** →
+   **Upload**. Use automatic signing.
+6. Wait for **"Upload Successful"**.
 
-## How to verify on your phone before submitting to App Review
+## Test plan on TestFlight before submitting to App Review
 
-1. App Store Connect → TestFlight → wait for the build to finish
-   processing (5-15 min, you'll get an email).
-2. Install the TestFlight build on your iPhone.
-3. **Three tests** — all must pass before submitting to App Review:
+All four tests must pass.
 
-   a. **Splash test.** Force close the TestFlight app. Open it. The
-      green Tour It splash should display cleanly with the full logo
-      visible, then transition smoothly to the app. No white flash, no
-      sparkle, no wrong aspect ratio.
+### Test 1 — Splash (unchanged from b400)
 
-   b. **Screenshot test.** With the app open on the home feed, press
-      power + volume-up to take a screenshot. The app should briefly
-      flash + reload, then come back to a working state. Content area
-      should NOT stay blank.
+Force close the TestFlight app. Open it. Green Tour It splash with the
+full logo, smooth transition to the app. No white flash, no wrong
+aspect ratio.
 
-   c. **Background test.** Lock your phone for 30 seconds, then
-      unlock and return to the app. Same expected behavior — brief
-      reload, content restored.
+### Test 2 — Quick app switch (NEW BEHAVIOR — most important)
 
-4. **Optional but recommended diagnostic:** plug your phone into a Mac,
-   open **Console.app**, select your iPhone in the left sidebar, filter
-   on `TourIt`. Trigger the screenshot/background tests. You should see
-   lines like:
-   - `[TourIt] recoverWebViews reason=screenshot`
-   - `[TourIt] background gap 4823ms — triggering recovery`
+Open the app and scroll partway down the home feed. Take note of which
+clip is on screen. Press the home button (or swipe up) to leave the
+app. Open Messages, wait ~10 seconds, return to Tour It.
 
-   If you see these lines, the native fix is firing correctly. If you
-   don't, something is wrong and we need to investigate.
+**Expected:** the app comes back to the EXACT clip you left on. No
+reload, no scroll-jump, no visible flash. This is the test that proves
+the over-recovery is gone.
+
+### Test 3 — Screenshot (NEW BEHAVIOR)
+
+With the app open on any screen, press power + volume-up to take a
+screenshot. The app should remain on the same screen with no flash,
+no reload, no stutter. Just the standard iOS screenshot animation.
+
+### Test 4 — Long backgrounding (recovery still works)
+
+Open the app, then lock the phone or switch to another app and leave
+it for at least **two minutes**. Return to Tour It.
+
+**Expected:** the app remains responsive. You may or may not see a
+brief reload — that's fine and correct (it means the probe detected
+a dead WebView and recovered). What you should NOT see: a permanently
+blank screen, a frozen UI, or content that never loads.
+
+### Optional Console.app diagnostic
+
+Plug phone into Mac, open Console.app, filter on `TourIt`. Trigger the
+tests above. You should see:
+
+- Test 2 (10s switch): `[TourIt] background gap 10nnnms — below threshold, skipping probe`
+- Test 3 (screenshot): no `[TourIt]` recovery log lines at all
+- Test 4 (long backgrounding, healthy): `[TourIt] background gap NNNms — probing WebView`
+  followed by `[TourIt] probe ok — WebView alive, skip reload`
+- Test 4 (long backgrounding, dead): same as above but ends with
+  `[TourIt] probe failed — reload` and `[TourIt] recoverWebViews reason=didBecomeActive`
+
+If you see `[TourIt] recoverWebViews` during Test 2 or Test 3, something
+is wrong and we need to look at it before submitting to App Review.
 
 ## Submitting to App Review
 
-Only submit to App Review after all three tests above pass on your own
-iPhone via TestFlight. The previous round shipped without these fixes
-because the binary that got archived didn't have them — so manual
-verification before submitting is critical.
+Only submit after all four tests pass. If anything fails, ping Corey.
 
 ## What's in this archive
 
-- Native AppDelegate WebView recovery (`d084e1ec`, refined in
-  `810ac11c`): `reloadFromOrigin()` on every WKWebView when the app
-  resumes after >1.5s of backgrounding, or on a screenshot. 3s cooldown
-  to prevent thrashing.
-- Regenerated splash PNGs (`449f9d89`): three 446KB images at
-  2732×2732 with the correct logo + no sparkle / inset issues.
-- All the JS-side fixes (Supabase fetch timeouts, hero tagging,
-  notifications panel, course logos on thumbnails, etc.) come along
-  for free since the WebView loads `server.url` from
-  https://www.touritgolf.com on each launch.
-
-## If anything else breaks
-
-Let Corey know immediately so he can iterate. Don't submit a build to
-App Review that has any of the three test failures above. Submitting a
-broken build delays launch further than waiting 24 hours to fix the
-issue.
+- `e8...` (this commit): probe-before-reload, 60s threshold, screenshot
+  listener dropped, JS reduced to heartbeat-only
+- Earlier b400 changes that stay in place: brand-dark backgrounds,
+  scroll-bounce kill, splash asset regen, app icon
+- All web-side improvements come along for free via `server.url`
