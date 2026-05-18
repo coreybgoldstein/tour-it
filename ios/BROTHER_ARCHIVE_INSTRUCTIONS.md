@@ -1,91 +1,106 @@
-# Mac archive — WebView resume-recovery patch
+# Mac archive — CRITICAL: must pull main before building
 
-What this build ships: a native fix in `AppDelegate.swift` that reloads the
-WKWebView when the app comes back from being backgrounded or screenshotted.
-This recovers from the bug where content goes blank and only force-close
-fixes it.
+## What went wrong last time
 
-Two triggers handled:
+Whatever got archived and shipped to the App Store this round did NOT
+include the native AppDelegate WebView-recovery code or the regenerated
+splash assets. Result: the public app has the white-screen-on-screenshot
+bug and the broken splash. Both fixes have been in `main` for over a week.
 
-1. App was truly backgrounded (`applicationDidEnterBackground` fired) and
-   the gap on return is > **1.5 s**. On return → `stopLoading()` then
-   `reloadFromOrigin()` on every WebView. Tears down the stuck URLSession
-   that iOS suspend corrupts. The 1.5s threshold (raised from an earlier
-   500ms after two reviewer agents flagged it as too aggressive) skips
-   notification shade, Face ID, Control Center, and Siri overlays — none
-   of which corrupt the WebView, so reloading on them would just wipe UI
-   state without benefit.
-
-2. Screenshot taken (`userDidTakeScreenshotNotification`). Same recovery
-   path, but with a 250 ms delay so iOS finishes its snapshot capture first.
-
-Both paths share a **3 s cooldown** so rapid retriggers (multiple
-screenshots, multi-step interruption) don't compound into multiple reloads.
-
-Every recovery event is logged via `NSLog` with reason + elapsed gap, so
-you can see in Console.app (or Xcode's device log) whether the fix is
-firing on the actual triggers in production.
-
-No Capacitor plugin or config changed. Only `AppDelegate.swift` is new.
+The most likely cause is the archive being built from a stale local
+checkout that hadn't pulled `main`. Below are foolproof steps + a
+sanity check so this can't happen again.
 
 ## Steps
 
 ```bash
-# 1. Pull latest from main
+# 1. Get to the repo
 cd ~/path/to/tour-it
+
+# 2. Make sure you're on main
+git checkout main
+
+# 3. PULL — do not skip this step
 git pull origin main
 
-# 2. (Optional but safe) sync Capacitor — no-op since no plugin changes,
-#    but won't hurt.
+# 4. SANITY CHECK — must print "PRESENT" twice. If either prints
+#    "MISSING", stop and let Corey know.
+grep -l "recoverWebViews" ios/App/App/AppDelegate.swift && echo "PRESENT: AppDelegate native recovery" || echo "MISSING: AppDelegate native recovery"
+ls ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png > /dev/null && echo "PRESENT: Splash asset (446KB)" || echo "MISSING: Splash asset"
+
+# 5. Sync Capacitor (safety, in case Capacitor config drifted)
 npx cap sync ios
 
-# 3. Open Xcode workspace (NOT the project file)
+# 6. Open Xcode workspace (NOT the .xcodeproj file)
 open ios/App/App.xcworkspace
 ```
 
-In Xcode:
+## In Xcode
 
 1. Top toolbar: select **Any iOS Device (arm64)** as the destination.
 2. Click the **App** target in the left sidebar → **General** tab.
-3. Bump **Build** number. The last live App Store build was **346**. Local
-   pbxproj is at **347**. **Bump to 400** to leave headroom for any prior
-   TestFlight uploads we don't know about. Leave **Version** at **1.0.1**.
-4. **Product → Archive** (top menu). Wait ~3-5 min for the archive.
+3. **Build** number is currently **373** in `project.pbxproj`. Bump to
+   **400** to leave headroom (the previously-rejected TestFlight build
+   may have used 373 or higher). **Version** stays **1.0.1**.
+4. **Product → Archive** (top menu). Wait ~3-5 minutes.
 5. When the Organizer window opens, click **Distribute App** →
    **TestFlight & App Store** → **Upload**. Use automatic signing.
-6. Wait for the "Upload Successful" toast.
+6. Wait for the **"Upload Successful"** toast.
 
-## Verify
+## How to verify on your phone before submitting to App Review
 
-1. App Store Connect → TestFlight → wait for the build to finish processing
-   (usually 5-15 min, you'll get an email).
-2. Build appears in TestFlight on iPhone — install the update.
-3. Test:
-   - Open the app.
-   - Take a screenshot. The app should briefly flash and reload — content
-     comes back working, not blank.
-   - Lock phone for 10s, unlock, return to app. Same — quick reload,
-     working app.
-   - Long-background (phone call, app switcher to another app for 30s+).
-     Return. Should reload and recover.
+1. App Store Connect → TestFlight → wait for the build to finish
+   processing (5-15 min, you'll get an email).
+2. Install the TestFlight build on your iPhone.
+3. **Three tests** — all must pass before submitting to App Review:
 
-## If something goes wrong
+   a. **Splash test.** Force close the TestFlight app. Open it. The
+      green Tour It splash should display cleanly with the full logo
+      visible, then transition smoothly to the app. No white flash, no
+      sparkle, no wrong aspect ratio.
 
-- **Archive fails with signing error**: Xcode → Preferences → Accounts →
-  re-sign in to Apple ID. Then re-try archive.
-- **"Build number must be greater than previous" error on upload**: bump
-  to 401, 402, etc. until it accepts.
-- **App reloads constantly** (e.g., every time you tap a banner): the
-  `backgroundedThreshold` in `AppDelegate.swift` is too low. Bump it (e.g.,
-  from `1.5` to `3.0`) and re-archive. Note: with the move to
-  `applicationDidEnterBackground` (vs the earlier `applicationWillResignActive`),
-  this shouldn't fire on shallow interrupts anymore.
+   b. **Screenshot test.** With the app open on the home feed, press
+      power + volume-up to take a screenshot. The app should briefly
+      flash + reload, then come back to a working state. Content area
+      should NOT stay blank.
 
-## What's still JS-side
+   c. **Background test.** Lock your phone for 30 seconds, then
+      unlock and return to the app. Same expected behavior — brief
+      reload, content restored.
 
-The web bundle (`src/components/NativeBootstrap.tsx`) still has the older
-visibility / blur / focus / heartbeat reload handler. It's harmless — most
-of its triggers won't fire for the iOS lifecycle events that the native
-fix now handles. They stay as a defense-in-depth for any iOS scenario
-the native fix misses (and as the only fallback for older TestFlight
-builds that haven't been updated yet).
+4. **Optional but recommended diagnostic:** plug your phone into a Mac,
+   open **Console.app**, select your iPhone in the left sidebar, filter
+   on `TourIt`. Trigger the screenshot/background tests. You should see
+   lines like:
+   - `[TourIt] recoverWebViews reason=screenshot`
+   - `[TourIt] background gap 4823ms — triggering recovery`
+
+   If you see these lines, the native fix is firing correctly. If you
+   don't, something is wrong and we need to investigate.
+
+## Submitting to App Review
+
+Only submit to App Review after all three tests above pass on your own
+iPhone via TestFlight. The previous round shipped without these fixes
+because the binary that got archived didn't have them — so manual
+verification before submitting is critical.
+
+## What's in this archive
+
+- Native AppDelegate WebView recovery (`d084e1ec`, refined in
+  `810ac11c`): `reloadFromOrigin()` on every WKWebView when the app
+  resumes after >1.5s of backgrounding, or on a screenshot. 3s cooldown
+  to prevent thrashing.
+- Regenerated splash PNGs (`449f9d89`): three 446KB images at
+  2732×2732 with the correct logo + no sparkle / inset issues.
+- All the JS-side fixes (Supabase fetch timeouts, hero tagging,
+  notifications panel, course logos on thumbnails, etc.) come along
+  for free since the WebView loads `server.url` from
+  https://www.touritgolf.com on each launch.
+
+## If anything else breaks
+
+Let Corey know immediately so he can iterate. Don't submit a build to
+App Review that has any of the three test failures above. Submitting a
+broken build delays launch further than waiting 24 hours to fix the
+issue.
