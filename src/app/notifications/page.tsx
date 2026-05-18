@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { getClipThumbnail } from "@/lib/getVideoSrc";
+import { NotifIcon, extractCourseIdFromLink } from "@/components/NotifIcon";
 
 interface Notification {
   id: string;
@@ -20,44 +21,7 @@ interface Notification {
   isHeroTag?: boolean; // resolved client-side; true = hero tag, ownership transfers on approve
   clipThumbnail?: string | null; // resolved client-side; static thumb URL
   clipDeepLink?: string | null;  // resolved client-side; routes to the exact clip
-}
-
-function NotifIcon({ type }: { type: string }) {
-  const icons: Record<string, { bg: string; svg: React.ReactNode }> = {
-    clip_tag: {
-      bg: "rgba(77,168,98,0.15)",
-      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>,
-    },
-    trip_invite: {
-      bg: "rgba(100,160,255,0.15)",
-      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64a0ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.9 13.5a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.81 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
-    },
-    comment: {
-      bg: "rgba(255,200,80,0.15)",
-      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffc850" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-    },
-    mention: {
-      bg: "rgba(255,200,80,0.15)",
-      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffc850" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>,
-    },
-    follow: {
-      bg: "rgba(180,120,255,0.15)",
-      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b478ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>,
-    },
-    like: {
-      bg: "rgba(255,90,90,0.15)",
-      svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff5a5a" stroke="#ff5a5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
-    },
-  };
-  const { bg, svg } = icons[type] ?? {
-    bg: "rgba(255,255,255,0.08)",
-    svg: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
-  };
-  return (
-    <div style={{ width: 32, height: 32, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      {svg}
-    </div>
-  );
+  courseLogoUrl?: string | null; // resolved client-side; shown as a crest on the icon
 }
 
 
@@ -84,12 +48,23 @@ export default function NotificationsPage() {
 
       const notifs = data ?? [];
 
+      // Collect every course id referenced by linkUrls so we can batch
+      // fetch their logos in a single query. clip_tag rows resolve their
+      // course from the Upload row later, so we union both sources.
+      const courseIdsFromLinks = new Set<string>();
+      for (const n of notifs) {
+        const id = extractCourseIdFromLink(n.linkUrl);
+        if (id) courseIdsFromLinks.add(id);
+      }
+
       // For clip_tag notifications, look up current approval status
       const tagNotifs = notifs.filter(n => n.type === "clip_tag" && n.referenceId);
       let tagStatusMap: Record<string, "pending" | "approved" | "denied"> = {};
       let tagIsHeroMap: Record<string, boolean> = {};
       let clipThumbMap: Record<string, string | null> = {};
       let clipLinkMap: Record<string, string | null> = {};
+      // Upload.id -> Course.id, used to look up the logo for clip_tag rows.
+      let clipCourseIdMap: Record<string, string> = {};
       if (tagNotifs.length > 0) {
         const uploadIds = tagNotifs.map(n => n.referenceId!);
         const [{ data: tagRows }, { data: clipRows }] = await Promise.all([
@@ -113,6 +88,8 @@ export default function NotificationsPage() {
         }
         (clipRows || []).forEach((c: any) => {
           clipThumbMap[c.id] = getClipThumbnail(c.mediaType, c.mediaUrl, c.cloudflareVideoId, c.thumbnailUrl);
+          clipCourseIdMap[c.id] = c.courseId;
+          courseIdsFromLinks.add(c.courseId);
           const holeNum = holeNumberById.get(c.holeId);
           clipLinkMap[c.id] = holeNum
             ? `/courses/${c.courseId}/holes/${holeNum}?clip=${c.id}`
@@ -120,13 +97,33 @@ export default function NotificationsPage() {
         });
       }
 
-      setNotifications(notifs.map(n => ({
-        ...n,
-        tagStatus: n.type === "clip_tag" && n.referenceId ? (tagStatusMap[n.referenceId] ?? "pending") : undefined,
-        isHeroTag: n.type === "clip_tag" && n.referenceId ? !!tagIsHeroMap[n.referenceId] : undefined,
-        clipThumbnail: n.type === "clip_tag" && n.referenceId ? (clipThumbMap[n.referenceId] ?? null) : undefined,
-        clipDeepLink: n.type === "clip_tag" && n.referenceId ? (clipLinkMap[n.referenceId] ?? n.linkUrl) : undefined,
-      })));
+      // Single batched logo fetch covers both link-derived and clip-derived
+      // course references.
+      const courseLogoMap: Record<string, string | null> = {};
+      if (courseIdsFromLinks.size > 0) {
+        const { data: courseRows } = await supabase
+          .from("Course")
+          .select("id, logoUrl")
+          .in("id", [...courseIdsFromLinks]);
+        (courseRows || []).forEach((c: any) => {
+          courseLogoMap[c.id] = c.logoUrl;
+        });
+      }
+
+      setNotifications(notifs.map(n => {
+        const isClipTag = n.type === "clip_tag" && n.referenceId;
+        const courseId = isClipTag
+          ? clipCourseIdMap[n.referenceId!]
+          : extractCourseIdFromLink(n.linkUrl);
+        return {
+          ...n,
+          tagStatus: isClipTag ? (tagStatusMap[n.referenceId!] ?? "pending") : undefined,
+          isHeroTag: isClipTag ? !!tagIsHeroMap[n.referenceId!] : undefined,
+          clipThumbnail: isClipTag ? (clipThumbMap[n.referenceId!] ?? null) : undefined,
+          clipDeepLink: isClipTag ? (clipLinkMap[n.referenceId!] ?? n.linkUrl) : undefined,
+          courseLogoUrl: courseId ? (courseLogoMap[courseId] ?? null) : null,
+        };
+      }));
       setLoading(false);
 
       // Mark all as read
@@ -233,20 +230,25 @@ export default function NotificationsPage() {
                 {/* Type icon OR clip thumbnail */}
                 <div style={{ position: "relative", flexShrink: 0 }}>
                   {n.type === "clip_tag" && n.clipThumbnail ? (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); previewClip(); }}
-                      aria-label="Preview clip"
-                      style={{ width: 56, height: 56, borderRadius: 10, overflow: "hidden", background: "rgba(255,255,255,0.05)", border: `1.5px solid ${accent}`, padding: 0, cursor: "pointer", display: "block", position: "relative" }}
-                    >
-                      <img src={n.clipThumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.45) 100%)" }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,255,255,0.92)" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }}>
-                          <polygon points="6 4 20 12 6 20" />
-                        </svg>
-                      </span>
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); previewClip(); }}
+                        aria-label="Preview clip"
+                        style={{ width: 56, height: 56, borderRadius: 10, overflow: "hidden", background: "rgba(255,255,255,0.05)", border: `1.5px solid ${accent}`, padding: 0, cursor: "pointer", display: "block", position: "relative" }}
+                      >
+                        <img src={n.clipThumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.45) 100%)" }}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,255,255,0.92)" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }}>
+                            <polygon points="6 4 20 12 6 20" />
+                          </svg>
+                        </span>
+                      </button>
+                      {n.courseLogoUrl && (
+                        <img src={n.courseLogoUrl} alt="" style={{ position: "absolute", bottom: -4, right: -4, width: 22, height: 22, borderRadius: "50%", border: "1.5px solid #07100a", background: "#fff", objectFit: "cover", boxShadow: "0 1px 3px rgba(0,0,0,0.4)", pointerEvents: "none" }} />
+                      )}
+                    </>
                   ) : (
-                    <NotifIcon type={n.type} />
+                    <NotifIcon type={n.type} courseLogoUrl={n.courseLogoUrl} />
                   )}
                   {!n.read && <div style={{ position: "absolute", top: 0, right: 0, width: 8, height: 8, borderRadius: "50%", background: "#4da862", border: "1.5px solid #07100a" }} />}
                 </div>
