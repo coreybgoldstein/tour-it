@@ -449,7 +449,8 @@ export default function TripPage() {
     if (inviteDebounce.current) clearTimeout(inviteDebounce.current);
     inviteDebounce.current = setTimeout(async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${inviteQuery}%`).limit(8);
+      const q = inviteQuery.replace(/[,()]/g, "");
+      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").or(`username.ilike.%${q}%,displayName.ilike.%${q}%`).limit(8);
       const memberIds = new Set(members.map(m => m.userId));
       setInviteResults((data || []).filter((u: any) => !memberIds.has(u.id)));
     }, 280);

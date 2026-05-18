@@ -81,7 +81,8 @@ export default function EditClipSheet({
     if (!tagInput.trim()) { setTagResults([]); return; }
     tagDebounce.current = setTimeout(async () => {
       const taggedIds = new Set(editData?.taggedUsers.map(u => u.id) || []);
-      const { data } = await createClient().from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${tagInput.trim()}%`).limit(6);
+      const q = tagInput.trim().replace(/[,()]/g, "");
+      const { data } = await createClient().from("User").select("id, username, displayName, avatarUrl").or(`username.ilike.%${q}%,displayName.ilike.%${q}%`).limit(6);
       setTagResults((data || []).filter((u: TagUser) => !taggedIds.has(u.id)));
     }, 280);
   }, [tagInput, editData?.taggedUsers]);
