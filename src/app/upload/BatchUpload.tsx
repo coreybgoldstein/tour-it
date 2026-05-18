@@ -392,39 +392,29 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         // (kept on the row in case we want to reintroduce hole-pioneer badges)
         void isFirstForHole;
 
-        // Tags + notifications — hero + co-stars merged into one list
-        // with the isHero flag so each gets the right copy in the
-        // recipient's notification and the right UploadTag row.
-        const allTagged: Array<{ user: TagUser; isHero: boolean }> = [
-          ...(clip.heroUser ? [{ user: clip.heroUser, isHero: true }] : []),
-          ...clip.taggedUsers.map(u => ({ user: u, isHero: false })),
-        ];
-        if (allTagged.length > 0) {
+        // Hero tag — the user who hit the shot. Approval transfers
+        // Upload.userId to them with the "uploaded by @uploader" chip.
+        // Co-star tagging was retired in favor of just this one signal.
+        if (clip.heroUser) {
           const notifNow = new Date().toISOString();
           await Promise.all([
-            supabase.from("UploadTag").insert(
-              allTagged.map(({ user: u, isHero }) => ({
-                id: crypto.randomUUID(), uploadId, userId: u.id, isHero, createdAt: notifNow,
-              }))
-            ),
-            supabase.from("Notification").insert(
-              allTagged.map(({ user: u, isHero }) => ({
-                id: crypto.randomUUID(),
-                userId: u.id,
-                type: "clip_tag",
-                title: isHero ? `${taggerName} uploaded a clip of you` : `${taggerName} tagged you in a clip`,
-                body: isHero
-                  ? `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${clip.holeNumber}. Claim it on your profile?`
-                  : `${selectedCourse.name} · Hole ${clip.holeNumber}`,
-                linkUrl: `/courses/${selectedCourse.id}`,
-                referenceId: uploadId,
-                read: false,
-                createdAt: notifNow,
-                updatedAt: notifNow,
-              }))
-            ),
+            supabase.from("UploadTag").insert([{
+              id: crypto.randomUUID(), uploadId, userId: clip.heroUser.id, isHero: true, createdAt: notifNow,
+            }]),
+            supabase.from("Notification").insert([{
+              id: crypto.randomUUID(),
+              userId: clip.heroUser.id,
+              type: "clip_tag",
+              title: `${taggerName} uploaded a clip of you`,
+              body: `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${clip.holeNumber}. Claim it on your profile?`,
+              linkUrl: `/courses/${selectedCourse.id}`,
+              referenceId: uploadId,
+              read: false,
+              createdAt: notifNow,
+              updatedAt: notifNow,
+            }]),
           ]);
-          allTagged.forEach(({ user: u }) => sendPushToUser("tag", u.id, uploadId));
+          sendPushToUser("tag", clip.heroUser.id, uploadId);
         }
 
         done++;
@@ -770,71 +760,6 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
                   </div>
                 )}
 
-                {/* Tagged users */}
-                {clip.taggedUsers.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                    {clip.taggedUsers.map(u => (
-                      <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 8px 3px 5px" }}>
-                        <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {u.avatarUrl
-                            ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                          }
-                        </div>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>@{u.username}</span>
-                        <button onClick={() => removeTag(clip.id, u.id)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", marginLeft: 1 }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Tag input (expanded) */}
-                {tagClipId === clip.id ? (
-                  <div>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <input
-                        autoFocus
-                        value={tagInput}
-                        onChange={e => setTagInput(e.target.value)}
-                        placeholder="Search username…"
-                        style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", outline: "none" }}
-                      />
-                      <button onClick={() => { setTagClipId(null); setTagInput(""); setTagResults([]); }}
-                        style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: "0 4px" }}>
-                        Done
-                      </button>
-                    </div>
-                    {tagResults.length > 0 && (
-                      <div style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 8, overflow: "hidden" }}>
-                        {tagResults.map(u => (
-                          <button key={u.id} onClick={() => addTag(clip.id, u)}
-                            style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                            <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              {u.avatarUrl
-                                ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                              }
-                            </div>
-                            <div>
-                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
-                              {u.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{u.displayName}</div>}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => { setTagClipId(clip.id); setTagInput(""); setTagResults([]); }}
-                    style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.6)" }}>Tag a player</span>
-                  </button>
-                )}
               </div>
             )}
           </div>
