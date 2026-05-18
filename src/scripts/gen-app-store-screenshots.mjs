@@ -53,7 +53,8 @@ const SCREENSHOT_GEO = { latitude: 40.9176, longitude: -73.7782 };
 // Known good content IDs (verified via src/scripts/find-trip-and-map.mjs).
 const PROFILE_USER_ID  = "5d2dd909-65a6-44e8-8bd4-94419f7622d9"; // Corey
 const ARONIMINK_ID     = "bef620c6-48f3-456e-a1c4-7d096303bb34"; // 18 uploads, PGA-week
-const SEAWANE_ID       = "82c6b4c6-b517-4a59-920e-5e66b5b3169a"; // 7 uploads, waterfront LI
+const SEAWANE_ID       = "82c6b4c6-b517-4a59-920e-5e66b5b3169a"; // 7 uploads, waterfront LI (kept for fallback)
+const BOCA_GRC_ID      = "74ca1ea2-2550-4c22-89d7-cc522f170393"; // 7 uploads, fully seeded PUBLIC muni
 const SOMERSET_HILLS_ID = "d7f33ed6-873a-4f70-9bcf-ddd19c3056b4"; // 18 uploads, gorgeous
 const CADDY_DADDY_TRIP_ID = "92d40aef-1b8c-4e6a-9538-efc02cd325f3";
 
@@ -165,17 +166,21 @@ const SCREENS = [
     },
   },
 
-  // ── iPhone: 8. Seawane Club — waterfront LI marquee ─────────────────────
-  // Swapped from Bethpage because Bethpage's cover photo has a "WARNING"
-  // sign visible in the frame that reads poorly in App Store marketing.
+  // ── iPhone: 8. Boca Raton G&RC — fully seeded PUBLIC muni ────────────────
+  // Replaces Seawane to round out the course-page lineup with a high-end
+  // PUBLIC option (the other two course shots — Aronimink + Somerset Hills
+  // — are private). Fully seeded: description, cover, logo, 1985
+  // founding, par 72 / 6,714y from the tips, 18 holes of intel + yardages.
+  // Shows that Tour It works for muni players too, not just country club
+  // members.
   {
-    name: "08-seawane",
+    name: "08-boca-grc",
     target: "iphone",
-    url: `/courses/${SEAWANE_ID}`,
+    url: `/courses/${BOCA_GRC_ID}`,
     requiresAuth: false,
     setup: async (page) => {
       await page.waitForSelector("h1, img[src*='supabase']", { timeout: 8000 }).catch(() => {});
-      await page.waitForTimeout(4000);
+      await page.waitForTimeout(4500);
     },
   },
 
