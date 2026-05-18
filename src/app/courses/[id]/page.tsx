@@ -1087,10 +1087,15 @@ const [editDescription, setEditDescription] = useState("");
           </button>
         )}
 
-        {/* Top left: course logo badge — tap to expand if logo exists, else go back */}
+        {/* Top left: course logo badge — tap to expand if logo exists, else go back.
+            Matches the crest treatment on home + profile thumbnails: white bg,
+            subtle white-18% border, classy drop shadow. The previous green-tinted
+            backplate looked muddy against the cover photo — clean white gives the
+            crest itself room to read and the shadow makes it feel lifted off the
+            cover. */}
         <button
           onClick={() => course.logoUrl ? setLogoLightboxOpen(true) : router.back()}
-          style={{ position: "absolute", top: 52, left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.35)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
+          style={{ position: "absolute", top: 52, left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 3px 10px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
         >
           {course.logoUrl ? (
             <img
