@@ -196,10 +196,11 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
       const supabase = createClient();
       const activeClip = clips.find(c => c.id === tagClipId);
       const taggedIds = new Set(activeClip?.taggedUsers.map(u => u.id) || []);
+      const q = tagInput.trim().replace(/[,()]/g, "");
       const { data } = await supabase
         .from("User")
         .select("id, username, displayName, avatarUrl")
-        .ilike("username", `%${tagInput.trim()}%`)
+        .or(`username.ilike.%${q}%,displayName.ilike.%${q}%`)
         .limit(6);
       setTagResults((data || []).filter((u: TagUser) => !taggedIds.has(u.id)));
     }, 280);

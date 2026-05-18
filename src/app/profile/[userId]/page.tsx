@@ -446,7 +446,8 @@ export default function ProfilePage() {
     if (!editHeroInput.trim()) { setEditHeroResults([]); return; }
     editHeroDebounce.current = setTimeout(async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${editHeroInput.trim()}%`).limit(6);
+      const q = editHeroInput.trim().replace(/[,()]/g, "");
+      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").or(`username.ilike.%${q}%,displayName.ilike.%${q}%`).limit(6);
       const excluded = new Set(editData?.taggedUsers.map(u => u.id) || []);
       setEditHeroResults((data || []).filter((u: EditTagUser) => !excluded.has(u.id)));
     }, 280);
@@ -506,7 +507,8 @@ export default function ProfilePage() {
     if (!editTagInput.trim()) { setEditTagResults([]); return; }
     editTagDebounce.current = setTimeout(async () => {
       const taggedIds = new Set(editData?.taggedUsers.map(u => u.id) || []);
-      const { data } = await createClient().from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${editTagInput.trim()}%`).limit(6);
+      const q = editTagInput.trim().replace(/[,()]/g, "");
+      const { data } = await createClient().from("User").select("id, username, displayName, avatarUrl").or(`username.ilike.%${q}%,displayName.ilike.%${q}%`).limit(6);
       setEditTagResults((data || []).filter((u: EditTagUser) => !taggedIds.has(u.id)));
     }, 280);
   }, [editTagInput, editData?.taggedUsers]);

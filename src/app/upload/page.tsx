@@ -195,7 +195,11 @@ function UploadPageInner() {
     if (!tagInput.trim()) { setTagResults([]); return; }
     tagDebounce.current = setTimeout(async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${tagInput.trim()}%`).limit(6);
+      // Match either username OR displayName so users can find friends
+      // by real name as well as @handle. Strip commas/parens so they
+      // can't break PostgREST's .or() filter syntax.
+      const q = tagInput.trim().replace(/[,()]/g, "");
+      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").or(`username.ilike.%${q}%,displayName.ilike.%${q}%`).limit(6);
       // Exclude both already-tagged co-stars and the chosen hero from the
       // co-star results so the same user can't be added twice.
       const excluded = new Set([...taggedUsers.map(u => u.id), ...(heroUser ? [heroUser.id] : [])]);
@@ -209,7 +213,8 @@ function UploadPageInner() {
     if (!heroInput.trim()) { setHeroResults([]); return; }
     heroDebounce.current = setTimeout(async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").ilike("username", `%${heroInput.trim()}%`).limit(6);
+      const q = heroInput.trim().replace(/[,()]/g, "");
+      const { data } = await supabase.from("User").select("id, username, displayName, avatarUrl").or(`username.ilike.%${q}%,displayName.ilike.%${q}%`).limit(6);
       // Exclude already-chosen co-stars from hero results.
       const excluded = new Set(taggedUsers.map(u => u.id));
       setHeroResults((data || []).filter((u: TagUser) => !excluded.has(u.id)));
@@ -1402,6 +1407,53 @@ function UploadPageInner() {
               )}
             </div>
 
+            {/* Co-stars — anyone else IN the clip but not the hero. Sits
+                right below the hero picker so all tagging-related fields
+                live in one place on the Intel step. */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>
+                Anyone else in the clip? <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,0.2)" }}>— optional</span>
+              </div>
+              {taggedUsers.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                  {taggedUsers.map(u => (
+                    <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "4px 10px 4px 8px" }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>@{u.username}</span>
+                      <button onClick={() => setTaggedUsers(prev => prev.filter(t => t.id !== u.id))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", lineHeight: 1 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ position: "relative" }}>
+                <input
+                  type="text"
+                  placeholder="Search by name or username..."
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  autoCorrect="off" autoCapitalize="off" spellCheck={false}
+                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
+                />
+                {tagResults.length > 0 && (
+                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
+                    {tagResults.map(u => (
+                      <button key={u.id} onClick={() => { setTaggedUsers(prev => [...prev, u]); setTagInput(""); setTagResults([]); }}
+                        style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
+                        <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                        </div>
+                        <div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff" }}>{u.displayName}</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="intel-score-bar">
               <div className="intel-score-top">
                 <span className="intel-score-label" style={{ color: intelColor }}>{intelLabel}</span>
@@ -1523,54 +1575,6 @@ function UploadPageInner() {
                 </div>
               )}
             </div>
-            {/* Tag players (co-stars in the clip — not the hero) */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>
-                Anyone else in the clip? <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,0.2)" }}>— optional</span>
-              </div>
-
-              {/* Tagged pills */}
-              {taggedUsers.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                  {taggedUsers.map(u => (
-                    <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "4px 10px 4px 8px" }}>
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>@{u.username}</span>
-                      <button onClick={() => setTaggedUsers(prev => prev.filter(t => t.id !== u.id))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", lineHeight: 1 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Search input */}
-              <div style={{ position: "relative" }}>
-                <input
-                  type="text"
-                  placeholder="Search by username..."
-                  value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
-                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
-                />
-                {tagResults.length > 0 && (
-                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
-                    {tagResults.map(u => (
-                      <button key={u.id} onClick={() => { setTaggedUsers(prev => [...prev, u]); setTagInput(""); setTagResults([]); }}
-                        style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
-                        <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
-                        </div>
-                        <div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff" }}>{u.displayName}</div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
             {compressing && !uploading && (
               <div style={{ background: "rgba(77,168,98,0.07)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
