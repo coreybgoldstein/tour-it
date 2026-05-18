@@ -198,6 +198,21 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
         </div>
       )}
 
+      {/* Course logo crest — top-left corner. Adds brand identity to the
+          rail of cards and helps quick visual scanning across courses.
+          Only renders when the course has BOTH a cover photo AND a
+          logoUrl — on cover-less cards the existing centered fallback
+          logo already serves as the identity, so a corner version
+          would duplicate. Initials at 28px would read as clutter, so
+          we never fall back to abbreviated text here. Top-LEFT
+          intentionally — top-right is reserved for the featured/PGA
+          badge so they coexist. */}
+      {course.coverImageUrl && course.logoUrl && (
+        <div style={{ position: "absolute", top: 6, left: 6, width: 28, height: 28, borderRadius: 7, background: "#fff", border: "1.5px solid rgba(255,255,255,0.18)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+          <img src={course.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+      )}
+
       {/* PGA Championship badge — top-right corner of the thumbnail.
           Tries the tournament logo asset; falls back to a gold text crest
           when the image isn't present in /public yet. */}

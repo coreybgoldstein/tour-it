@@ -1585,7 +1585,10 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
-              {allClips.map((upload, i) => (
+              {allClips.map((upload, i) => {
+                const courseLogoUrl = coursesPlayed.find(c => c.id === upload.courseId)?.logoUrl ?? null;
+                const courseName = coursesPlayed.find(c => c.id === upload.courseId)?.name || "";
+                return (
                 <div key={upload.id + (upload.isTagged ? "-t" : "")} className="clip-thumb" onClick={() => openFeed(i)}
                   style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}>
                   {upload.mediaType === "PHOTO"
@@ -1594,13 +1597,24 @@ export default function ProfilePage() {
                       ? <img src={`https://videodelivery.net/${upload.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400`} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg></div>
                   }
+                  {/* Course crest — top-left corner. Quick visual context so
+                      you can scan a grid of clips and identify which course
+                      each is from without reading the small bottom label.
+                      Only renders when the course has a logoUrl; no initials
+                      fallback at 24px (would read as clutter). */}
+                  {courseLogoUrl && (
+                    <div style={{ position: "absolute", top: 4, left: 4, width: 24, height: 24, borderRadius: 6, background: "#fff", border: "1.5px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 5px rgba(0,0,0,0.4)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+                      <img src={courseLogoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  )}
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
                   <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.9)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1, marginRight: 4 }}>{coursesPlayed.find(c => c.id === upload.courseId)?.name || ""}</div>
+                    <div style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.9)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1, marginRight: 4 }}>{courseName}</div>
                     <FlagBadge label={upload.holeNumber ?? "·"} />
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
