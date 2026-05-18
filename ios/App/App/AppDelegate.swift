@@ -27,13 +27,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // quick succession.
     private var lastRecoveryAt: Date?
 
-    // Recovery thresholds, tuned with the ChatGPT/Gemini reviews in mind.
-    // 1.5s "real backgrounding" is the sweet spot — short enough to catch
-    // every iOS lifecycle that corrupts the WebView, long enough to skip
-    // tap-then-back interactions. 3s cooldown means rapid retriggers don't
-    // pile up reloads.
-    private let backgroundedThreshold: TimeInterval = 1.5
+    // Recovery thresholds. 60s is intentionally conservative — only triggers
+    // recovery after the app's been backgrounded long enough that iOS may
+    // actually have suspended the WebView's URLSession. Brief context
+    // switches (open Messages, glance at a notification, take a screenshot)
+    // fall under this floor and pass through with no reload, preserving UI
+    // state. We also probe the WebView before reloading; if JS responds,
+    // the WebView is alive and we skip the reload entirely.
+    //
+    // History: an earlier 1.5s threshold caused a visible reload on every
+    // brief app switch — false-positive recovery was worse than the
+    // original blank-screen bug it was solving.
+    private let backgroundedThreshold: TimeInterval = 60.0
     private let minRecoveryInterval: TimeInterval = 3.0
+    private let probeTimeout: TimeInterval = 0.5
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         if let window = self.window {
@@ -44,22 +51,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             self?.applyBrandBackgroundsRecursively()
         }
 
-        // iOS screenshot capture leaves the WebView in a state where the
-        // content area renders blank on return while the BottomNav layout
-        // stays alive. visibilitychange / blur / focus do NOT reliably fire
-        // for screenshots in WKWebView, so the JS-side recovery in
-        // NativeBootstrap.tsx can't catch this case. Recover natively:
-        // listen for the screenshot notification and reload the WebView.
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.userDidTakeScreenshotNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            // Let iOS finish its snapshot capture before we yank the view.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                self?.recoverWebViews(reason: "screenshot")
-            }
-        }
+        // Screenshot listener intentionally NOT registered. Earlier theory
+        // was that iOS screenshots corrupt the WKWebView render tree, but
+        // testing showed the symptom was the recovery firing on every
+        // screenshot, not the screenshot causing damage. Modern iOS does
+        // not need this hook.
 
         return true
     }
@@ -98,8 +94,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ///      navigation. This is the layer iOS suspend corrupts and the
     ///      layer JS-side window.location.reload() can't recover because
     ///      it reuses the same session.
-    /// Honors a cooldown so rapid retriggers (multiple screenshots, multi-
-    /// step interruption) don't compound.
+    /// Honors a cooldown so rapid retriggers don't compound.
     private func recoverWebViews(reason: String) {
         if let last = lastRecoveryAt,
            Date().timeIntervalSince(last) < minRecoveryInterval {
@@ -119,6 +114,58 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         walk(root)
     }
 
+    /// Find the first WKWebView in the view hierarchy. Used by the probe
+    /// path — we only need to test one because iOS suspends them
+    /// collectively; if one is alive, they all are.
+    private func findFirstWebView() -> WKWebView? {
+        guard let root = window?.rootViewController?.view else { return nil }
+        var found: WKWebView?
+        func walk(_ v: UIView) {
+            if found != nil { return }
+            if let w = v as? WKWebView { found = w; return }
+            v.subviews.forEach(walk)
+        }
+        walk(root)
+        return found
+    }
+
+    /// Liveness check before reload. Evaluates a trivial JS expression in
+    /// the WebView; if it returns within probeTimeout the WebView is alive
+    /// and we skip the reload entirely. Only if the probe fails or times
+    /// out do we fall through to recoverWebViews.
+    ///
+    /// This is the layer that prevents the over-eager-reload UX bug: a
+    /// long backgrounding that DIDN'T actually break the WebView no
+    /// longer wipes the user's in-memory state on return.
+    private func probeAndRecoverIfNeeded(reason: String) {
+        guard let web = findFirstWebView() else {
+            NSLog("[TourIt] probe skipped — no WKWebView found reason=\(reason)")
+            return
+        }
+
+        // Resolved guard: the JS callback and the timeout race each other;
+        // whichever fires first wins, the other is a no-op.
+        var resolved = false
+        let resolve: (Bool) -> Void = { [weak self] alive in
+            if resolved { return }
+            resolved = true
+            if alive {
+                NSLog("[TourIt] probe ok — WebView alive, skip reload reason=\(reason)")
+            } else {
+                NSLog("[TourIt] probe failed — reload reason=\(reason)")
+                self?.recoverWebViews(reason: reason)
+            }
+        }
+
+        web.evaluateJavaScript("1") { result, error in
+            resolve(error == nil && result != nil)
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + probeTimeout) {
+            resolve(false)
+        }
+    }
+
     func applicationWillResignActive(_ application: UIApplication) {
         // Intentionally empty — resignActive fires for shallow interrupts
         // (Control Center peek, Face ID prompt, brief banner) that don't
@@ -136,19 +183,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Re-apply brand backgrounds once the view tree is guaranteed to be live.
         applyBrandBackgroundsRecursively()
 
-        // Only recover if the app was truly backgrounded (didEnterBackground
-        // fired) AND for longer than the threshold. Shallow resignActive
-        // interruptions (notification shade, Face ID, control center) are
-        // skipped because they don't corrupt the WebView's network stack
-        // and reloading on every one would wipe in-progress UI state.
+        // Only consider recovery when the app was truly backgrounded
+        // (didEnterBackground fired) AND for longer than the threshold.
+        // Even then we don't reload directly — we probe the WebView first
+        // and only reload if the probe fails. Below the threshold we
+        // unconditionally trust the WebView, since brief context switches
+        // (Messages, screenshot, glance at a banner) don't corrupt it.
         guard let backgroundedAt = enteredBackgroundAt else { return }
         let awayMs = Date().timeIntervalSince(backgroundedAt) * 1000
         enteredBackgroundAt = nil
         if awayMs >= backgroundedThreshold * 1000 {
-            NSLog("[TourIt] background gap %.0fms — triggering recovery", awayMs)
-            recoverWebViews(reason: "didBecomeActive")
+            NSLog("[TourIt] background gap %.0fms — probing WebView", awayMs)
+            probeAndRecoverIfNeeded(reason: "didBecomeActive")
         } else {
-            NSLog("[TourIt] background gap %.0fms — below threshold, skipping recovery", awayMs)
+            NSLog("[TourIt] background gap %.0fms — below threshold, skipping probe", awayMs)
         }
     }
 
