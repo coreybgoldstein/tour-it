@@ -260,7 +260,7 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
       <HoleIdentityCard holeNumber={holeNumber} holePar={holePar} clipCount={totalClips} />
 
       {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
-      <div style={{ position: "absolute", right: 12, bottom: `calc(${clip.uploadedByUsername ? 180 : 150}px + env(safe-area-inset-bottom))`, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+      <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
         {hasNotes && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
@@ -332,8 +332,8 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         // the scrubber.
         <div style={{ position: "absolute", left: !holeNumber ? 16 : holeNumber >= 10 ? 105 : 80, right: 80,
           bottom: clip.mediaType === "VIDEO"
-            ? `calc(${clip.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
-            : `calc(${clip.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+            ? `calc(${clip.uploadedByUsername ? 138 : 130}px + env(safe-area-inset-bottom))`
+            : `calc(${clip.uploadedByUsername ? 100 : 85}px + env(safe-area-inset-bottom))`,
           zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => router.push(`/profile/${clip.userId}`)} aria-label={`Open ${uploader?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>

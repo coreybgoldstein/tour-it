@@ -268,7 +268,7 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
     else { navigator.clipboard.writeText(url).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
   return (
-    <div style={{ position: "absolute", right: 12, bottom: `calc(${hasAttribution ? 180 : 150}px + env(safe-area-inset-bottom))`, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+    <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
       {/* Intel */}
       {onIntel && (
         <button onClick={onIntel} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
@@ -503,8 +503,8 @@ const SeriesCard = memo(function SeriesCardImpl({
       {(item.username || formatClipDate(activeShot?.datePlayedAt, activeShot?.createdAt)) && (
         <div style={{ position: "absolute", left: 16, right: 80,
           bottom: activeShot?.mediaType === "VIDEO"
-            ? `calc(${activeShot?.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
-            : `calc(${activeShot?.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+            ? `calc(${activeShot?.uploadedByUsername ? 138 : 130}px + env(safe-area-inset-bottom))`
+            : `calc(${activeShot?.uploadedByUsername ? 100 : 85}px + env(safe-area-inset-bottom))`,
           zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={onTapUser} aria-label={`Open ${item.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
@@ -687,8 +687,8 @@ const VideoCard = memo(function VideoCardImpl({
         // username row without overlapping the scrubber.
         <div style={{ position: "absolute", left: 16, right: 80,
           bottom: clip.mediaType === "VIDEO"
-            ? `calc(${clip.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
-            : `calc(${clip.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+            ? `calc(${clip.uploadedByUsername ? 138 : 130}px + env(safe-area-inset-bottom))`
+            : `calc(${clip.uploadedByUsername ? 100 : 85}px + env(safe-area-inset-bottom))`,
           zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={onTapUser} aria-label={`Open ${clip.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>

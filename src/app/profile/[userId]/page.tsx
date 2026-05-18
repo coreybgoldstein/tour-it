@@ -128,7 +128,7 @@ function ProfileFeedCard({
       {/* Right rail: Intel → Avatar → Like → Comment → SEND IT → kebab.
           Shifts up 30px when the attribution chip is present so the
           bottommost button clears the now-taller username block. */}
-      <div style={{ position: "absolute", right: 12, bottom: `calc(${clip.uploadedByUsername ? 180 : 150}px + env(safe-area-inset-bottom))`, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 30 }}>
+      <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 30 }}>
         {hasNotes && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
@@ -201,8 +201,8 @@ function ProfileFeedCard({
         // so the chip slots in BELOW the username row.
         <div style={{ position: "absolute", left: 16, right: 80,
           bottom: clip.mediaType === "VIDEO"
-            ? `calc(${clip.uploadedByUsername ? 160 : 130}px + env(safe-area-inset-bottom))`
-            : `calc(${clip.uploadedByUsername ? 115 : 85}px + env(safe-area-inset-bottom))`,
+            ? `calc(${clip.uploadedByUsername ? 138 : 130}px + env(safe-area-inset-bottom))`
+            : `calc(${clip.uploadedByUsername ? 100 : 85}px + env(safe-area-inset-bottom))`,
           zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => { onClose(); router.push(`/profile/${uploaderInfo.id}`); }} aria-label={`Open ${uploaderInfo.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
