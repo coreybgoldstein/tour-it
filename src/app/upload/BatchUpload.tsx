@@ -407,7 +407,9 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
               type: "clip_tag",
               title: `${taggerName} uploaded a clip of you`,
               body: `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${clip.holeNumber}. Claim it on your profile?`,
-              linkUrl: `/courses/${selectedCourse.id}`,
+              linkUrl: clip.holeNumber
+                ? `/courses/${selectedCourse.id}/holes/${clip.holeNumber}?clip=${uploadId}`
+                : `/courses/${selectedCourse.id}`,
               referenceId: uploadId,
               read: false,
               createdAt: notifNow,

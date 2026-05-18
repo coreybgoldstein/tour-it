@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getClipThumbnail } from "@/lib/getVideoSrc";
 
 export interface NotificationRow {
   id: string;
@@ -23,6 +24,16 @@ export interface NotificationRow {
   // the Upload to the current user (vs co-star approve which just shows
   // it on their profile). Drives the different button copy.
   isHeroTag?: boolean;
+  // Thumbnail of the clip the notification refers to. Used to render a
+  // visual preview right inside the notification row so the user can
+  // see what they're being asked to claim BEFORE tapping approve.
+  // Resolved at fetch-time for any notification with a referenceId
+  // pointing to an Upload row.
+  clipThumbnail?: string | null;
+  // Deep link to the specific clip — built from courseId + holeNumber +
+  // clip id at fetch-time so tapping the thumbnail lands the user
+  // EXACTLY on the clip they need to evaluate.
+  clipDeepLink?: string | null;
 }
 
 function NotifIcon({ type }: { type: string }) {
@@ -88,17 +99,47 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
       const tagNotifs = notifs.filter(n => n.type === "clip_tag" && n.referenceId);
       const tagStatusMap: Record<string, "pending" | "approved" | "denied"> = {};
       const tagIsHeroMap: Record<string, boolean> = {};
+      const clipThumbMap: Record<string, string | null> = {};
+      const clipLinkMap: Record<string, string | null> = {};
       if (tagNotifs.length > 0) {
         const uploadIds = tagNotifs.map(n => n.referenceId!);
-        const { data: tagRows } = await supabase
-          .from("UploadTag")
-          .select("uploadId, approved, isHero")
-          .eq("userId", user.id)
-          .in("uploadId", uploadIds);
+        const [{ data: tagRows }, { data: clipRows }] = await Promise.all([
+          supabase.from("UploadTag")
+            .select("uploadId, approved, isHero")
+            .eq("userId", user.id)
+            .in("uploadId", uploadIds),
+          // Pull clip media + course context so the notification can
+          // show a thumbnail and deep-link to the specific clip.
+          supabase.from("Upload")
+            .select("id, mediaType, mediaUrl, cloudflareVideoId, thumbnailUrl, courseId, holeId")
+            .in("id", uploadIds),
+        ]);
         (tagRows || []).forEach((r: { uploadId: string; approved: boolean | null; isHero: boolean | null }) => {
           tagStatusMap[r.uploadId] = r.approved === true ? "approved" : r.approved === false ? "denied" : "pending";
           tagIsHeroMap[r.uploadId] = !!r.isHero;
         });
+
+        // Resolve hole numbers for each clip so we can deep-link to the
+        // /holes/{n} route (the hole page is the most context-rich
+        // single-clip view in the app).
+        const clipsByUploadId = new Map((clipRows || []).map((c: { id: string }) => [c.id, c]));
+        const holeIds = [...new Set((clipRows || []).map((c: { holeId: string }) => c.holeId).filter(Boolean))];
+        let holeNumberById = new Map<string, number>();
+        if (holeIds.length > 0) {
+          const { data: holes } = await supabase
+            .from("Hole")
+            .select("id, holeNumber")
+            .in("id", holeIds);
+          holeNumberById = new Map((holes || []).map((h: { id: string; holeNumber: number }) => [h.id, h.holeNumber]));
+        }
+        (clipRows || []).forEach((c: { id: string; mediaType: string; mediaUrl: string; cloudflareVideoId: string | null; thumbnailUrl: string | null; courseId: string; holeId: string }) => {
+          clipThumbMap[c.id] = getClipThumbnail(c.mediaType, c.mediaUrl, c.cloudflareVideoId, c.thumbnailUrl);
+          const holeNum = holeNumberById.get(c.holeId);
+          clipLinkMap[c.id] = holeNum
+            ? `/courses/${c.courseId}/holes/${holeNum}?clip=${c.id}`
+            : `/courses/${c.courseId}`;
+        });
+        void clipsByUploadId;
       }
 
       if (cancelled) return;
@@ -106,6 +147,8 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
         ...n,
         tagStatus: n.type === "clip_tag" && n.referenceId ? (tagStatusMap[n.referenceId] ?? "pending") : undefined,
         isHeroTag: n.type === "clip_tag" && n.referenceId ? !!tagIsHeroMap[n.referenceId] : undefined,
+        clipThumbnail: n.type === "clip_tag" && n.referenceId ? (clipThumbMap[n.referenceId] ?? null) : undefined,
+        clipDeepLink: n.type === "clip_tag" && n.referenceId ? (clipLinkMap[n.referenceId] ?? n.linkUrl) : undefined,
       })));
       setLoading(false);
 
@@ -233,15 +276,47 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
           ) : (
             <div>
               {notifications.map((n) => {
-                const clickable = n.type !== "clip_tag" && !!n.linkUrl && n.linkUrl.startsWith("/");
+                // Whole row is tappable for non-clip_tag notifications; for
+                // clip_tag, the thumbnail itself is the tap target so the
+                // approve/decline buttons stay isolated.
+                const rowLink = n.type === "clip_tag"
+                  ? (n.clipDeepLink ?? n.linkUrl)
+                  : n.linkUrl;
+                const rowClickable = n.type !== "clip_tag" && !!n.linkUrl && n.linkUrl.startsWith("/");
+                const previewClip = () => {
+                  const url = rowLink;
+                  if (url && url.startsWith("/")) { onClose(); router.push(url); }
+                };
+                // Hero tags get a gold accent on the thumbnail border,
+                // co-star tags get green — visual cue for "this is an
+                // ownership claim" vs "this is just a heads up."
+                const accent = n.type === "clip_tag"
+                  ? (n.isHeroTag ? "rgba(212,160,23,0.6)" : "rgba(77,168,98,0.55)")
+                  : "transparent";
                 return (
                   <div key={n.id} style={{ background: n.read ? "transparent" : "rgba(77,168,98,0.06)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "14px 18px" }}>
                     <div
-                      onClick={() => { if (clickable) { onClose(); router.push(n.linkUrl!); } }}
-                      style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: clickable ? "pointer" : "default" }}
+                      onClick={() => { if (rowClickable) { onClose(); router.push(n.linkUrl!); } }}
+                      style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: rowClickable ? "pointer" : "default" }}
                     >
                       <div style={{ position: "relative", flexShrink: 0 }}>
-                        <NotifIcon type={n.type} />
+                        {n.type === "clip_tag" && n.clipThumbnail ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); previewClip(); }}
+                            aria-label="Preview clip"
+                            style={{ width: 56, height: 56, borderRadius: 10, overflow: "hidden", background: "rgba(255,255,255,0.05)", border: `1.5px solid ${accent}`, padding: 0, cursor: "pointer", display: "block", position: "relative" }}
+                          >
+                            <img src={n.clipThumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            {/* Play-glyph overlay so users know it's a clip they can preview */}
+                            <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.45) 100%)" }}>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,255,255,0.92)" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }}>
+                                <polygon points="6 4 20 12 6 20" />
+                              </svg>
+                            </span>
+                          </button>
+                        ) : (
+                          <NotifIcon type={n.type} />
+                        )}
                         {!n.read && <div style={{ position: "absolute", top: 0, right: 0, width: 8, height: 8, borderRadius: "50%", background: "#4da862", border: "1.5px solid #07100a" }} />}
                       </div>
 
@@ -257,19 +332,30 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
                         {n.type === "clip_tag" && n.referenceId && (
                           <div style={{ marginTop: 10 }}>
                             {n.tagStatus === "pending" ? (
-                              <div style={{ display: "flex", gap: 8 }}>
-                                <button onClick={(e) => { e.stopPropagation(); handleTagAction(n.id, n.referenceId!, true, !!n.isHeroTag); }} disabled={acting === n.id} style={{ flex: 1, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}>
-                                  {acting === n.id ? "..." : n.isHeroTag ? "Yes, this is my shot" : "Add to my profile"}
-                                </button>
-                                <button onClick={(e) => { e.stopPropagation(); handleTagAction(n.id, n.referenceId!, false, !!n.isHeroTag); }} disabled={acting === n.id} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}>
-                                  {n.isHeroTag ? "Not me" : "Decline"}
-                                </button>
-                              </div>
+                              <>
+                                {n.clipThumbnail && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); previewClip(); }}
+                                    style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", padding: "0 0 6px", cursor: "pointer", color: "rgba(255,255,255,0.45)", fontFamily: "'Outfit', sans-serif", fontSize: 11, textDecoration: "underline" }}
+                                  >
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20" /></svg>
+                                    Preview clip before deciding
+                                  </button>
+                                )}
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <button onClick={(e) => { e.stopPropagation(); handleTagAction(n.id, n.referenceId!, true, !!n.isHeroTag); }} disabled={acting === n.id} style={{ flex: 1, background: n.isHeroTag ? "rgba(212,160,23,0.15)" : "rgba(77,168,98,0.15)", border: `1px solid ${n.isHeroTag ? "rgba(212,160,23,0.5)" : "rgba(77,168,98,0.4)"}`, borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: n.isHeroTag ? "#d4a017" : "#4da862", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}>
+                                    {acting === n.id ? "..." : n.isHeroTag ? "Yes, this is my shot" : "Add to my profile"}
+                                  </button>
+                                  <button onClick={(e) => { e.stopPropagation(); handleTagAction(n.id, n.referenceId!, false, !!n.isHeroTag); }} disabled={acting === n.id} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}>
+                                    {n.isHeroTag ? "Not me" : "Decline"}
+                                  </button>
+                                </div>
+                              </>
                             ) : n.tagStatus === "approved" ? (
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>{n.isHeroTag ? "Claimed on your profile" : "Added to your profile"}</span>
-                                <button onClick={(e) => { e.stopPropagation(); if (n.linkUrl?.startsWith("/")) { onClose(); router.push(n.linkUrl); } }} style={{ marginLeft: "auto", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "underline" }}>View clip</button>
+                                <button onClick={(e) => { e.stopPropagation(); previewClip(); }} style={{ marginLeft: "auto", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "underline" }}>View clip</button>
                               </div>
                             ) : (
                               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>{n.isHeroTag ? "Marked not me" : "Declined"}</span>

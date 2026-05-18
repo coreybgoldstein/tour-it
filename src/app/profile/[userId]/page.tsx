@@ -895,13 +895,16 @@ export default function ProfilePage() {
       const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
       const courseName = coursesPlayed.find(c => c.id === selectedClip.courseId)?.name || "a course";
       const holeText = (editData.holeNumber ?? selectedClip.holeNumber) ? ` — Hole ${editData.holeNumber ?? selectedClip.holeNumber}` : "";
+      const heroHoleNumber = editData.holeNumber ?? selectedClip.holeNumber;
       await supabase.from("Notification").insert({
         id: crypto.randomUUID(),
         userId: newHeroId,
         type: "clip_tag",
         title: `${taggerName} uploaded a clip of you`,
         body: `${taggerName} says this is your shot at ${courseName}${holeText}. Claim it on your profile?`,
-        linkUrl: `/courses/${selectedClip.courseId}`,
+        linkUrl: heroHoleNumber
+          ? `/courses/${selectedClip.courseId}/holes/${heroHoleNumber}?clip=${selectedClip.id}`
+          : `/courses/${selectedClip.courseId}`,
         referenceId: selectedClip.id,
         read: false,
         createdAt: now,
