@@ -1352,7 +1352,22 @@ const [editDescription, setEditDescription] = useState("");
       <div style={{ padding: "0 16px", maxWidth: isDesktop ? 600 : undefined }}>
         {isEmpty ? (
           <div style={{ textAlign: "center", padding: "28px 20px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>⛳</div>
+            {/* Flag-on-pin icon — replaces the ⛳ emoji that was rendering
+                as a bright red iOS flag. Stroke-style SVG in the Tour It
+                green palette so it sits inside the rest of the app's
+                visual language. Subtle circular green-tinted backdrop
+                gives it presence without dominating the empty state. */}
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                {/* Pin */}
+                <line x1="7" y1="3" x2="7" y2="22" />
+                {/* Flag */}
+                <path d="M7 4 L17 4 L14.5 7.5 L17 11 L7 11" fill="rgba(77,168,98,0.25)" />
+                {/* Ground line + dot at base */}
+                <line x1="3.5" y1="21" x2="14" y2="21" strokeWidth="1.2" />
+                <circle cx="7" cy="21" r="1" fill="#4da862" stroke="none" />
+              </svg>
+            </div>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 900, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>No intel on this course yet.</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.38)", lineHeight: 1.65, marginBottom: 20, maxWidth: 270 }}>Every golfer who plays here knows something the next one needs to know. Be the first to put it on record.</div>
             <button onClick={() => router.push(`/upload?courseId=${id}`)} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "13px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer", boxShadow: "0 2px 14px rgba(45,122,66,0.35)" }}>
