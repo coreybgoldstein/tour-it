@@ -715,48 +715,36 @@ function UploadPageInner() {
         }
       })();
 
-      // Tag notifications + UploadTag rows.
-      // - Hero tag (heroUser): the person who actually hit the shot. Their
-      //   approval transfers Upload.userId to them — different notification
-      //   copy and a distinct accept button.
-      // - Co-star tags (taggedUsers): people also in the clip. Approval
-      //   only adds the clip to their profile, no ownership transfer.
-      const allTagged: Array<{ user: TagUser; isHero: boolean }> = [
-        ...(heroUser ? [{ user: heroUser, isHero: true }] : []),
-        ...taggedUsers.map(u => ({ user: u, isHero: false })),
-      ];
-      if (allTagged.length > 0) {
+      // Hero tag — the person who hit the shot. Their approval triggers
+      // an ownership transfer to them with the "uploaded by @uploader"
+      // attribution chip. Co-star tagging was retired in favor of just
+      // this one signal.
+      if (heroUser) {
         const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
         const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
         const notifNow = new Date().toISOString();
         await Promise.all([
-          supabase.from("UploadTag").insert(
-            allTagged.map(({ user: u, isHero }) => ({
-              id: crypto.randomUUID(),
-              uploadId,
-              userId: u.id,
-              isHero,
-              createdAt: notifNow,
-            }))
-          ),
-          supabase.from("Notification").insert(
-            allTagged.map(({ user: u, isHero }) => ({
-              id: crypto.randomUUID(),
-              userId: u.id,
-              type: "clip_tag",
-              title: isHero ? `${taggerName} uploaded a clip of you` : "You were tagged in a clip",
-              body: isHero
-                ? `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${selectedHole}. Claim it on your profile?`
-                : `${taggerName} tagged you in a clip at ${selectedCourse.name} — Hole ${selectedHole}. Allow it on your profile?`,
-              linkUrl: `/courses/${selectedCourse.id}`,
-              referenceId: uploadId,
-              read: false,
-              createdAt: notifNow,
-              updatedAt: notifNow,
-            }))
-          ),
+          supabase.from("UploadTag").insert([{
+            id: crypto.randomUUID(),
+            uploadId,
+            userId: heroUser.id,
+            isHero: true,
+            createdAt: notifNow,
+          }]),
+          supabase.from("Notification").insert([{
+            id: crypto.randomUUID(),
+            userId: heroUser.id,
+            type: "clip_tag",
+            title: `${taggerName} uploaded a clip of you`,
+            body: `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${selectedHole}. Claim it on your profile?`,
+            linkUrl: `/courses/${selectedCourse.id}`,
+            referenceId: uploadId,
+            read: false,
+            createdAt: notifNow,
+            updatedAt: notifNow,
+          }]),
         ]);
-        allTagged.forEach(({ user: u }) => sendPushToUser("tag", u.id, uploadId));
+        sendPushToUser("tag", heroUser.id, uploadId);
       }
 
       // Auto-seed logo + cover for under-seeded courses (fire-and-forget).
@@ -1405,53 +1393,6 @@ function UploadPageInner() {
                   </div>
                 )
               )}
-            </div>
-
-            {/* Co-stars — anyone else IN the clip but not the hero. Sits
-                right below the hero picker so all tagging-related fields
-                live in one place on the Intel step. */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10 }}>
-                Anyone else in the clip? <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "rgba(255,255,255,0.2)" }}>— optional</span>
-              </div>
-              {taggedUsers.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                  {taggedUsers.map(u => (
-                    <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "4px 10px 4px 8px" }}>
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>@{u.username}</span>
-                      <button onClick={() => setTaggedUsers(prev => prev.filter(t => t.id !== u.id))} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", lineHeight: 1 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div style={{ position: "relative" }}>
-                <input
-                  type="text"
-                  placeholder="Search by name or username..."
-                  value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
-                  autoCorrect="off" autoCapitalize="off" spellCheck={false}
-                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
-                />
-                {tagResults.length > 0 && (
-                  <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
-                    {tagResults.map(u => (
-                      <button key={u.id} onClick={() => { setTaggedUsers(prev => [...prev, u]); setTagInput(""); setTagResults([]); }}
-                        style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
-                        <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
-                        </div>
-                        <div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff" }}>{u.displayName}</div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>@{u.username}</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
 
             <div className="intel-score-bar">

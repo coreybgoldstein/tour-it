@@ -863,14 +863,12 @@ export default function ProfilePage() {
       }
     }
     await supabase.from("Upload").update({ holeId, shotType: editData.shotType || null, clubUsed: editData.clubUsed || null, windCondition: editData.windCondition || null, strategyNote: editData.strategyNote || null, landingZoneNote: editData.landingZoneNote || null, whatCameraDoesntShow: editData.whatCameraDoesntShow || null, updatedAt: new Date().toISOString() }).eq("id", selectedClip.id).eq("userId", currentUserId);
-    const currentIds = new Set(editData.taggedUsers.map(u => u.id));
-    const removedIds = [...editData.originalTagIds].filter(id => !currentIds.has(id));
-    const addedUsers = editData.taggedUsers.filter(u => !editData.originalTagIds.has(u.id));
-    if (removedIds.length > 0) await supabase.from("UploadTag").delete().eq("uploadId", selectedClip.id).in("userId", removedIds);
-    if (addedUsers.length > 0) {
-      const now = new Date().toISOString();
-      await supabase.from("UploadTag").insert(addedUsers.map(u => ({ id: crypto.randomUUID(), uploadId: selectedClip.id, userId: u.id, isHero: false, createdAt: now })));
-    }
+
+    // Co-star tagging was retired; the edit sheet no longer accepts new
+    // co-stars and any existing ones are left untouched (visible only on
+    // legacy profile "tagged clips" sections until that surface is also
+    // retired). Hero retroactive assignment is the only tag-write that
+    // runs here now.
 
     // Hero tag retroactive assignment. If the uploader picked a NEW hero
     // (different from any pre-existing hero), upsert the UploadTag with
@@ -1161,39 +1159,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Tag players</div>
-                  {editData.taggedUsers.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-                      {editData.taggedUsers.map(u => (
-                        <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(26,158,66,0.12)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 99, padding: "3px 8px 3px 5px" }}>
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#1a9e42" }}>@{u.username}</span>
-                          <button onClick={() => setEditData(d => d ? { ...d, taggedUsers: d.taggedUsers.filter(t => t.id !== u.id) } : d)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <input value={editTagInput} onChange={e => setEditTagInput(e.target.value)} placeholder="Search by username…"
-                    style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }} />
-                  {editTagResults.length > 0 && (
-                    <div style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 10, overflow: "hidden" }}>
-                      {editTagResults.map(u => (
-                        <button key={u.id} onClick={() => { setEditData(d => d ? { ...d, taggedUsers: [...d.taggedUsers, u] } : d); setEditTagInput(""); setEditTagResults([]); }}
-                          style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                          <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(26,158,66,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
-                          </div>
-                          <div>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
-                            {u.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{u.displayName}</div>}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
                 <button onClick={saveClipEdit} disabled={editSaving}
                   style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "15px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: editSaving ? 0.6 : 1 }}>
                   {editSaving ? "Saving…" : "Save changes"}
