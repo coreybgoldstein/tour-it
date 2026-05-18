@@ -1420,47 +1420,77 @@ export default function ProfilePage() {
       {/* Identity band — matches the trip page pattern. Avatar is vertically
           centered in the band so it sits cleanly between the green top bar
           and the progression card below */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px 10px" }}>
-        {/* Avatar — rank-colored ring */}
-        <div
-          className={isLegend(profileRank) ? "legend-ring" : undefined}
-          onClick={() => setShowAvatarModal(true)}
-          style={{ width: 72, height: 72, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: "pointer", flexShrink: 0 }}
-        >
-          {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 11 }}>…</span> : initials)}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px 12px" }}>
+        {/* Avatar + username nameplate. The wrapper is position:relative so
+            the @username pill can sit on the lower quarter of the avatar
+            without being clipped by the avatar's overflow:hidden. */}
+        <div style={{ position: "relative", flexShrink: 0, paddingBottom: 4 }}>
+          <div
+            className={isLegend(profileRank) ? "legend-ring" : undefined}
+            onClick={() => setShowAvatarModal(true)}
+            style={{ width: 72, height: 72, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: "pointer" }}
+          >
+            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 11 }}>…</span> : initials)}
+          </div>
+          {/* @username nameplate — rank-colored pill that doubles as the
+              level indicator. Dark text reads cleanly on every rank color
+              (CADDIE through LEGEND are all bright). The dark border
+              matches page bg so the chip looks die-cut against the avatar. */}
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: -2,
+              transform: "translateX(-50%)",
+              background: getRankColor(profileRank),
+              color: "#07100a",
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: "0.02em",
+              padding: "2px 9px",
+              borderRadius: 999,
+              border: "2px solid #07100a",
+              maxWidth: 92,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              lineHeight: 1.25,
+              boxShadow: "0 1px 4px rgba(0,0,0,0.55)",
+              pointerEvents: "none",
+            }}
+          >
+            @{profile.username}
+          </div>
         </div>
 
         {/* Identity stack */}
         <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
-          {/* Eyebrow: @username + inline EDIT pill */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
-              @{profile.username}
+          {/* Owner controls — bell + Edit. Now stand-alone since the
+              @username eyebrow moved onto the avatar nameplate. */}
+          {isOwner && (
+            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <button
+                onClick={() => {
+                  const next = new URLSearchParams(searchParams.toString());
+                  next.set("notifications", "open");
+                  router.replace(`${pathname}?${next.toString()}`);
+                }}
+                aria-label="View notifications"
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", padding: 0, cursor: "pointer", color: "rgba(255,255,255,0.85)" }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              </button>
+              <button
+                onClick={() => setShowEdit(true)}
+                aria-label="Edit profile"
+                style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer" }}
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit
+              </button>
             </div>
-            {isOwner && (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                <button
-                  onClick={() => {
-                    const next = new URLSearchParams(searchParams.toString());
-                    next.set("notifications", "open");
-                    router.replace(`${pathname}?${next.toString()}`);
-                  }}
-                  aria-label="View notifications"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", padding: 0, cursor: "pointer", color: "rgba(255,255,255,0.85)" }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-                </button>
-                <button
-                  onClick={() => setShowEdit(true)}
-                  aria-label="Edit profile"
-                  style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer" }}
-                >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  Edit
-                </button>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Display name — Playfair big heading. lineHeight 1.3 + paddingBottom 2 give descenders (j/g/p/q/y) room without getting clipped by overflow: hidden */}
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 6, paddingBottom: 2 }}>
