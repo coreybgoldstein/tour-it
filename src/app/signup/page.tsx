@@ -15,6 +15,8 @@ const randomAvatar = () => DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AV
 
 export default function SignUpPage() {
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName]   = useState("");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -26,7 +28,10 @@ export default function SignUpPage() {
     setError("");
     setLoading(true);
 
-    if (!email || !password || !username) {
+    const trimmedFirst = firstName.trim();
+    const trimmedLast = lastName.trim();
+
+    if (!email || !password || !username || !trimmedFirst || !trimmedLast) {
       setError("All fields are required.");
       setLoading(false);
       return;
@@ -45,13 +50,17 @@ export default function SignUpPage() {
     }
 
     const supabase = createClient();
+    // displayName is now derived from first + last so the rest of the app
+    // doesn't need to know about the split — every existing surface that
+    // reads displayName still works without changes.
+    const computedDisplayName = `${trimmedFirst} ${trimmedLast}`;
 
     // Step 1 — Create auth user
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { username, display_name: username },
+        data: { username, display_name: computedDisplayName },
       },
     });
 
@@ -69,7 +78,9 @@ export default function SignUpPage() {
         id: userId,
         email: email,
         username: username,
-        displayName: username,
+        firstName: trimmedFirst,
+        lastName: trimmedLast,
+        displayName: computedDisplayName,
         avatarUrl: randomAvatar(),
         createdAt: now,
         updatedAt: now,
@@ -220,6 +231,31 @@ export default function SignUpPage() {
           </div>
         ) : (
           <>
+            <div className="field" style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <label className="field-label">First name</label>
+                <input
+                  className="field-input"
+                  type="text"
+                  placeholder="Corey"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  autoComplete="given-name"
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="field-label">Last name</label>
+                <input
+                  className="field-input"
+                  type="text"
+                  placeholder="Goldstein"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  autoComplete="family-name"
+                />
+              </div>
+            </div>
+
             <div className="field">
               <label className="field-label">Username</label>
               <input
