@@ -244,7 +244,7 @@ function ProfileFeedCard({
 
 function FlagBadge({ label }: { label: string | number }) {
   return (
-    <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1), 0 1px 4px rgba(0,0,0,0.4)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
       <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, color: "#fff" }}>{label}</span>
     </div>
   );

@@ -18,7 +18,7 @@ import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 function FlagBadge({ label }: { label: string | number }) {
   return (
-    <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1)" }}>
+    <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 6px rgba(0,0,0,0.4)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <div style={{ width: 10, height: 1, background: "rgba(255,255,255,0.5)" }} />
         <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1, userSelect: "none" }}>{label}</span>
