@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
+import { getClipThumbnail } from "@/lib/getVideoSrc";
 
 interface Notification {
   id: string;
@@ -17,6 +18,8 @@ interface Notification {
   createdAt: string;
   tagStatus?: "pending" | "approved" | "denied"; // resolved client-side for clip_tag
   isHeroTag?: boolean; // resolved client-side; true = hero tag, ownership transfers on approve
+  clipThumbnail?: string | null; // resolved client-side; static thumb URL
+  clipDeepLink?: string | null;  // resolved client-side; routes to the exact clip
 }
 
 function NotifIcon({ type }: { type: string }) {
@@ -85,16 +88,35 @@ export default function NotificationsPage() {
       const tagNotifs = notifs.filter(n => n.type === "clip_tag" && n.referenceId);
       let tagStatusMap: Record<string, "pending" | "approved" | "denied"> = {};
       let tagIsHeroMap: Record<string, boolean> = {};
+      let clipThumbMap: Record<string, string | null> = {};
+      let clipLinkMap: Record<string, string | null> = {};
       if (tagNotifs.length > 0) {
         const uploadIds = tagNotifs.map(n => n.referenceId!);
-        const { data: tagRows } = await supabase
-          .from("UploadTag")
-          .select("uploadId, approved, isHero")
-          .eq("userId", user.id)
-          .in("uploadId", uploadIds);
+        const [{ data: tagRows }, { data: clipRows }] = await Promise.all([
+          supabase.from("UploadTag")
+            .select("uploadId, approved, isHero")
+            .eq("userId", user.id)
+            .in("uploadId", uploadIds),
+          supabase.from("Upload")
+            .select("id, mediaType, mediaUrl, cloudflareVideoId, thumbnailUrl, courseId, holeId")
+            .in("id", uploadIds),
+        ]);
         (tagRows || []).forEach((r: any) => {
           tagStatusMap[r.uploadId] = r.approved === true ? "approved" : r.approved === false ? "denied" : "pending";
           tagIsHeroMap[r.uploadId] = !!r.isHero;
+        });
+        const holeIds = [...new Set((clipRows || []).map((c: any) => c.holeId).filter(Boolean))];
+        let holeNumberById = new Map<string, number>();
+        if (holeIds.length > 0) {
+          const { data: holes } = await supabase.from("Hole").select("id, holeNumber").in("id", holeIds);
+          holeNumberById = new Map((holes || []).map((h: any) => [h.id, h.holeNumber]));
+        }
+        (clipRows || []).forEach((c: any) => {
+          clipThumbMap[c.id] = getClipThumbnail(c.mediaType, c.mediaUrl, c.cloudflareVideoId, c.thumbnailUrl);
+          const holeNum = holeNumberById.get(c.holeId);
+          clipLinkMap[c.id] = holeNum
+            ? `/courses/${c.courseId}/holes/${holeNum}?clip=${c.id}`
+            : `/courses/${c.courseId}`;
         });
       }
 
@@ -102,6 +124,8 @@ export default function NotificationsPage() {
         ...n,
         tagStatus: n.type === "clip_tag" && n.referenceId ? (tagStatusMap[n.referenceId] ?? "pending") : undefined,
         isHeroTag: n.type === "clip_tag" && n.referenceId ? !!tagIsHeroMap[n.referenceId] : undefined,
+        clipThumbnail: n.type === "clip_tag" && n.referenceId ? (clipThumbMap[n.referenceId] ?? null) : undefined,
+        clipDeepLink: n.type === "clip_tag" && n.referenceId ? (clipLinkMap[n.referenceId] ?? n.linkUrl) : undefined,
       })));
       setLoading(false);
 
@@ -188,18 +212,42 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div>
-          {notifications.map((n) => (
+          {notifications.map((n) => {
+            const rowClickable = n.type !== "clip_tag" && !!n.linkUrl && n.linkUrl.startsWith("/");
+            const previewClip = () => {
+              const url = n.type === "clip_tag" ? (n.clipDeepLink ?? n.linkUrl) : n.linkUrl;
+              if (url && url.startsWith("/")) router.push(url);
+            };
+            const accent = n.type === "clip_tag"
+              ? (n.isHeroTag ? "rgba(212,160,23,0.6)" : "rgba(77,168,98,0.55)")
+              : "transparent";
+            return (
             <div
               key={n.id}
               style={{ background: n.read ? "transparent" : "rgba(77,168,98,0.06)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "16px 20px" }}
             >
               <div
-                onClick={() => { if (n.type !== "clip_tag" && n.linkUrl) { const url = n.linkUrl; if (url.startsWith("/")) router.push(url); } }}
-                style={{ display: "flex", alignItems: "flex-start", gap: 14, cursor: n.type !== "clip_tag" && n.linkUrl ? "pointer" : "default" }}
+                onClick={() => { if (rowClickable) { const url = n.linkUrl!; if (url.startsWith("/")) router.push(url); } }}
+                style={{ display: "flex", alignItems: "flex-start", gap: 14, cursor: rowClickable ? "pointer" : "default" }}
               >
-                {/* Type icon */}
+                {/* Type icon OR clip thumbnail */}
                 <div style={{ position: "relative", flexShrink: 0 }}>
-                  <NotifIcon type={n.type} />
+                  {n.type === "clip_tag" && n.clipThumbnail ? (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); previewClip(); }}
+                      aria-label="Preview clip"
+                      style={{ width: 56, height: 56, borderRadius: 10, overflow: "hidden", background: "rgba(255,255,255,0.05)", border: `1.5px solid ${accent}`, padding: 0, cursor: "pointer", display: "block", position: "relative" }}
+                    >
+                      <img src={n.clipThumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, rgba(0,0,0,0.0) 40%, rgba(0,0,0,0.45) 100%)" }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(255,255,255,0.92)" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }}>
+                          <polygon points="6 4 20 12 6 20" />
+                        </svg>
+                      </span>
+                    </button>
+                  ) : (
+                    <NotifIcon type={n.type} />
+                  )}
                   {!n.read && <div style={{ position: "absolute", top: 0, right: 0, width: 8, height: 8, borderRadius: "50%", background: "#4da862", border: "1.5px solid #07100a" }} />}
                 </div>
 
@@ -218,27 +266,38 @@ export default function NotificationsPage() {
                   {n.type === "clip_tag" && n.referenceId && (
                     <div style={{ marginTop: 10 }}>
                       {n.tagStatus === "pending" ? (
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button
-                            onClick={() => handleTagAction(n.id, n.referenceId!, true, !!n.isHeroTag)}
-                            disabled={acting === n.id}
-                            style={{ flex: 1, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}
-                          >
-                            {acting === n.id ? "..." : n.isHeroTag ? "Yes, this is my shot" : "Add to my profile"}
-                          </button>
-                          <button
-                            onClick={() => handleTagAction(n.id, n.referenceId!, false, !!n.isHeroTag)}
-                            disabled={acting === n.id}
-                            style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}
-                          >
-                            {n.isHeroTag ? "Not me" : "Decline"}
-                          </button>
-                        </div>
+                        <>
+                          {n.clipThumbnail && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); previewClip(); }}
+                              style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", padding: "0 0 6px", cursor: "pointer", color: "rgba(255,255,255,0.45)", fontFamily: "'Outfit', sans-serif", fontSize: 11, textDecoration: "underline" }}
+                            >
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20" /></svg>
+                              Preview clip before deciding
+                            </button>
+                          )}
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => handleTagAction(n.id, n.referenceId!, true, !!n.isHeroTag)}
+                              disabled={acting === n.id}
+                              style={{ flex: 1, background: n.isHeroTag ? "rgba(212,160,23,0.15)" : "rgba(77,168,98,0.15)", border: `1px solid ${n.isHeroTag ? "rgba(212,160,23,0.5)" : "rgba(77,168,98,0.4)"}`, borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: n.isHeroTag ? "#d4a017" : "#4da862", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}
+                            >
+                              {acting === n.id ? "..." : n.isHeroTag ? "Yes, this is my shot" : "Add to my profile"}
+                            </button>
+                            <button
+                              onClick={() => handleTagAction(n.id, n.referenceId!, false, !!n.isHeroTag)}
+                              disabled={acting === n.id}
+                              style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}
+                            >
+                              {n.isHeroTag ? "Not me" : "Decline"}
+                            </button>
+                          </div>
+                        </>
                       ) : n.tagStatus === "approved" ? (
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>{n.isHeroTag ? "Claimed on your profile" : "Added to your profile"}</span>
-                          <button onClick={() => { if (n.linkUrl?.startsWith("/")) router.push(n.linkUrl); }} style={{ marginLeft: "auto", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "underline" }}>View clip</button>
+                          <button onClick={previewClip} style={{ marginLeft: "auto", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "underline" }}>View clip</button>
                         </div>
                       ) : (
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>{n.isHeroTag ? "Marked not me" : "Declined"}</span>
@@ -248,7 +307,8 @@ export default function NotificationsPage() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
       <BottomNav />

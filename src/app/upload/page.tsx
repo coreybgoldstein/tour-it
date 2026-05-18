@@ -737,7 +737,11 @@ function UploadPageInner() {
             type: "clip_tag",
             title: `${taggerName} uploaded a clip of you`,
             body: `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${selectedHole}. Claim it on your profile?`,
-            linkUrl: `/courses/${selectedCourse.id}`,
+            // Deep link to the exact clip so tapping the notification's
+            // thumbnail / preview lands on the right hole + clip view.
+            linkUrl: selectedHole
+              ? `/courses/${selectedCourse.id}/holes/${selectedHole}?clip=${uploadId}`
+              : `/courses/${selectedCourse.id}`,
             referenceId: uploadId,
             read: false,
             createdAt: notifNow,
