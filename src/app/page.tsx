@@ -229,10 +229,15 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
             </span>
           </div>
         )}
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#fff", lineHeight: 1.35, marginBottom: 3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#fff", lineHeight: 1.35, marginBottom: 3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, textShadow: "0 1px 2px rgba(0,0,0,0.65)" }}>
           {course.name}
         </div>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.35)" }}>
+        {/* City/state — bumped from 9px / 35% white to 10px / 78% white +
+            medium weight + text-shadow. Old version was getting lost
+            against bright sections of cover photos; this keeps a clear
+            visual hierarchy (course name still primary) while reading
+            cleanly on every card we ship. */}
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.78)", textShadow: "0 1px 2px rgba(0,0,0,0.6)", letterSpacing: "0.01em" }}>
           {[course.city, course.state].filter(s => s?.trim()).join(", ")}
         </div>
         {course.uploadCount > 0 && !featured && (
