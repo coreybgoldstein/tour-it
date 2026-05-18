@@ -50,6 +50,11 @@ type BatchClip = {
   status: ClipStatus;
   errorMsg: string | null;
   taggedUsers: TagUser[];
+  // Hero tag — the user who actually hit the shot. NULL = uploader is
+  // the hero (default). When set, the picked user will get a claim-on-
+  // your-profile notification, and on approval Upload.userId transfers
+  // to them with the "uploaded by @uploader" attribution chip.
+  heroUser: TagUser | null;
 };
 
 const SKIP_MB = 30;
@@ -108,6 +113,13 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
   const [tagResults, setTagResults] = useState<TagUser[]>([]);
   const tagDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Hero search state — also one active clip at a time, separate from
+  // co-star search so opening one doesn't close the other.
+  const [heroClipId, setHeroClipId] = useState<string | null>(null);
+  const [heroInput, setHeroInput] = useState("");
+  const [heroResults, setHeroResults] = useState<TagUser[]>([]);
+  const heroDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const courseDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize clips, generate thumbnails, kick off compression
@@ -141,6 +153,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
       status: (file.type.startsWith("video/") && file.size >= SKIP_MB * 1024 * 1024) ? "compressing" : "pending",
       errorMsg: null,
       taggedUsers: [],
+      heroUser: null,
     }));
     setClips(initial);
 
@@ -202,9 +215,28 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         .select("id, username, displayName, avatarUrl")
         .or(`username.ilike.%${q}%,displayName.ilike.%${q}%`)
         .limit(6);
-      setTagResults((data || []).filter((u: TagUser) => !taggedIds.has(u.id)));
+      setTagResults((data || []).filter((u: TagUser) => !taggedIds.has(u.id) && u.id !== (activeClip?.heroUser?.id ?? "")));
     }, 280);
   }, [tagInput, tagClipId, clips]);
+
+  // Hero user search — separate debounce, excludes the clip's existing
+  // co-stars so the same user can't be both hero AND co-star.
+  useEffect(() => {
+    if (heroDebounce.current) clearTimeout(heroDebounce.current);
+    if (!heroInput.trim()) { setHeroResults([]); return; }
+    heroDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const activeClip = clips.find(c => c.id === heroClipId);
+      const excluded = new Set(activeClip?.taggedUsers.map(u => u.id) || []);
+      const q = heroInput.trim().replace(/[,()]/g, "");
+      const { data } = await supabase
+        .from("User")
+        .select("id, username, displayName, avatarUrl")
+        .or(`username.ilike.%${q}%,displayName.ilike.%${q}%`)
+        .limit(6);
+      setHeroResults((data || []).filter((u: TagUser) => !excluded.has(u.id)));
+    }, 280);
+  }, [heroInput, heroClipId, clips]);
 
   function updateClip(id: string, patch: Partial<BatchClip>) {
     setClips(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
@@ -222,6 +254,17 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
     setClips(prev => prev.map(c =>
       c.id === clipId ? { ...c, taggedUsers: c.taggedUsers.filter(u => u.id !== userId) } : c
     ));
+  }
+
+  function setClipHero(clipId: string, user: TagUser) {
+    setClips(prev => prev.map(c => c.id === clipId ? { ...c, heroUser: user } : c));
+    setHeroClipId(null);
+    setHeroInput("");
+    setHeroResults([]);
+  }
+
+  function clearClipHero(clipId: string) {
+    setClips(prev => prev.map(c => c.id === clipId ? { ...c, heroUser: null } : c));
   }
 
   async function uploadAll() {
@@ -349,22 +392,30 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         // (kept on the row in case we want to reintroduce hole-pioneer badges)
         void isFirstForHole;
 
-        // Tags + notifications
-        if (clip.taggedUsers.length > 0) {
+        // Tags + notifications — hero + co-stars merged into one list
+        // with the isHero flag so each gets the right copy in the
+        // recipient's notification and the right UploadTag row.
+        const allTagged: Array<{ user: TagUser; isHero: boolean }> = [
+          ...(clip.heroUser ? [{ user: clip.heroUser, isHero: true }] : []),
+          ...clip.taggedUsers.map(u => ({ user: u, isHero: false })),
+        ];
+        if (allTagged.length > 0) {
           const notifNow = new Date().toISOString();
           await Promise.all([
             supabase.from("UploadTag").insert(
-              clip.taggedUsers.map(u => ({
-                id: crypto.randomUUID(), uploadId, userId: u.id, createdAt: notifNow,
+              allTagged.map(({ user: u, isHero }) => ({
+                id: crypto.randomUUID(), uploadId, userId: u.id, isHero, createdAt: notifNow,
               }))
             ),
             supabase.from("Notification").insert(
-              clip.taggedUsers.map(u => ({
+              allTagged.map(({ user: u, isHero }) => ({
                 id: crypto.randomUUID(),
                 userId: u.id,
                 type: "clip_tag",
-                title: `${taggerName} tagged you in a clip`,
-                body: `${selectedCourse.name} · Hole ${clip.holeNumber}`,
+                title: isHero ? `${taggerName} uploaded a clip of you` : `${taggerName} tagged you in a clip`,
+                body: isHero
+                  ? `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${clip.holeNumber}. Claim it on your profile?`
+                  : `${selectedCourse.name} · Hole ${clip.holeNumber}`,
                 linkUrl: `/courses/${selectedCourse.id}`,
                 referenceId: uploadId,
                 read: false,
@@ -373,7 +424,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
               }))
             ),
           ]);
-          clip.taggedUsers.forEach(u => sendPushToUser("tag", u.id, uploadId));
+          allTagged.forEach(({ user: u }) => sendPushToUser("tag", u.id, uploadId));
         }
 
         done++;
@@ -655,6 +706,70 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
             {/* Tagging section */}
             {clip.status !== "done" && (
               <div style={{ padding: "8px 14px 14px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                {/* Hero — who hit the shot. Compact row so the batch view
+                    stays scannable. Defaults to "Me"; tapping the chip
+                    opens an inline search. Picking a user marks them as
+                    the hero and sends a claim-on-profile notification on
+                    submit (ownership transfers when they approve). */}
+                <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(212,160,23,0.9)", flexShrink: 0 }}>Hero:</span>
+                  {clip.heroUser ? (
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(212,160,23,0.12)", border: "1px solid rgba(212,160,23,0.4)", borderRadius: 99, padding: "3px 8px 3px 5px" }}>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", background: "rgba(212,160,23,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {clip.heroUser.avatarUrl
+                          ? <img src={clip.heroUser.avatarUrl} alt={clip.heroUser.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <span style={{ fontSize: 9, color: "#d4a017", fontWeight: 700 }}>{clip.heroUser.username[0]?.toUpperCase()}</span>}
+                      </div>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#d4a017" }}>@{clip.heroUser.username}</span>
+                      <button onClick={() => clearClipHero(clip.id)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center", marginLeft: 1 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(212,160,23,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+                  ) : heroClipId === clip.id ? (
+                    <div style={{ flex: 1 }}>
+                      <input
+                        autoFocus
+                        value={heroInput}
+                        onChange={e => setHeroInput(e.target.value)}
+                        placeholder="Search hero by name or username…"
+                        autoCorrect="off" autoCapitalize="off" spellCheck={false}
+                        style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(212,160,23,0.4)", borderRadius: 8, padding: "6px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#fff", outline: "none", boxSizing: "border-box" }}
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setHeroClipId(clip.id); setHeroInput(""); setHeroResults([]); }}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "3px 9px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}
+                    >
+                      Me — change?
+                    </button>
+                  )}
+                  {heroClipId === clip.id && !clip.heroUser && (
+                    <button onClick={() => { setHeroClipId(null); setHeroInput(""); setHeroResults([]); }}
+                      style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: "0 4px", flexShrink: 0 }}>
+                      Done
+                    </button>
+                  )}
+                </div>
+                {heroClipId === clip.id && heroResults.length > 0 && (
+                  <div style={{ marginBottom: 10, background: "rgba(0,0,0,0.3)", borderRadius: 8, overflow: "hidden" }}>
+                    {heroResults.map(u => (
+                      <button key={u.id} onClick={() => setClipHero(clip.id, u)}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                        <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", background: "rgba(212,160,23,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {u.avatarUrl
+                            ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <span style={{ fontSize: 10, color: "#d4a017", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
+                        </div>
+                        <div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
+                          {u.displayName && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{u.displayName}</div>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Tagged users */}
                 {clip.taggedUsers.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
