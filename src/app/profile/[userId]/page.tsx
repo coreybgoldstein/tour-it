@@ -267,7 +267,7 @@ const BADGE_EMOJI: Record<string, string> = {
 };
 
 
-type UserProfile = { id: string; username: string; displayName: string; avatarUrl: string | null; handicapIndex: number | null; homeCourseId: string | null; uploadCount: number; bio: string | null };
+type UserProfile = { id: string; username: string; displayName: string; firstName: string | null; lastName: string | null; avatarUrl: string | null; handicapIndex: number | null; homeCourseId: string | null; uploadCount: number; bio: string | null };
 type Upload = { id: string; mediaUrl: string; cloudflareVideoId?: string | null; mediaType: string; courseId: string; holeId: string; holeNumber?: number | null; createdAt: string; userId: string; likeCount?: number; commentCount?: number; shotType?: string | null; clubUsed?: string | null; windCondition?: string | null; strategyNote?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; isTagged?: boolean; uploadedByUserId?: string | null; uploadedByUsername?: string | null };
 type CoursePlayed = { id: string; name: string; city: string; state: string; logoUrl: string | null };
 type HomeCourse = { id: string; name: string };
@@ -418,7 +418,9 @@ export default function ProfilePage() {
   // Owner: edit profile
   const [showEdit, setShowEdit] = useState(false);
   const [editHandicap, setEditHandicap] = useState("");
-  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [nameNudgeDismissed, setNameNudgeDismissed] = useState(false);
   const [editBio, setEditBio] = useState("");
   const [editHomeCourseSearch, setEditHomeCourseSearch] = useState("");
   const [editHomeCourseResults, setEditHomeCourseResults] = useState<HomeCourse[]>([]);
@@ -527,7 +529,7 @@ export default function ProfilePage() {
       }
 
       const [{ data: profileData, error }, { data: progData }] = await Promise.all([
-        supabase.from("User").select("id, username, displayName, avatarUrl, handicapIndex, homeCourseId, uploadCount, bio").eq("id", userId).single(),
+        supabase.from("User").select("id, username, displayName, firstName, lastName, avatarUrl, handicapIndex, homeCourseId, uploadCount, bio").eq("id", userId).single(),
         supabase.from("UserProgression").select("rank").eq("userId", userId).single(),
       ]);
       if (error || !profileData) { setNotFound(true); setLoading(false); return; }
@@ -535,7 +537,8 @@ export default function ProfilePage() {
       if (progData?.rank) setProfileRank(progData.rank);
       if (owner) {
         setEditHandicap(profileData.handicapIndex?.toString() || "");
-        setEditDisplayName(profileData.displayName || "");
+        setEditFirstName(profileData.firstName || "");
+        setEditLastName(profileData.lastName || "");
         setEditBio(profileData.bio || "");
       }
 
@@ -805,9 +808,23 @@ export default function ProfilePage() {
     if (!profile || !isOwner) return;
     setSaving(true);
     const hcp = editHandicap ? parseFloat(editHandicap) : null;
-    const dn = editDisplayName.trim() || profile.displayName;
-    await createClient().from("User").update({ handicapIndex: isNaN(hcp!) ? null : hcp, displayName: dn, bio: editBio.trim() || null, homeCourseId: homeCourse?.id ?? null, updatedAt: new Date().toISOString() }).eq("id", profile.id);
-    setProfile(p => p ? { ...p, handicapIndex: isNaN(hcp!) ? null : hcp, displayName: dn, bio: editBio.trim() || null } : p);
+    const first = editFirstName.trim();
+    const last = editLastName.trim();
+    // displayName is the derived, single source of truth for "what the
+    // app calls this person." Fall back to the existing displayName if
+    // both inputs are empty so an in-progress edit doesn't blank the
+    // user's profile.
+    const dn = first && last ? `${first} ${last}` : (first || last || profile.displayName);
+    await createClient().from("User").update({
+      handicapIndex: isNaN(hcp!) ? null : hcp,
+      firstName: first || null,
+      lastName: last || null,
+      displayName: dn,
+      bio: editBio.trim() || null,
+      homeCourseId: homeCourse?.id ?? null,
+      updatedAt: new Date().toISOString(),
+    }).eq("id", profile.id);
+    setProfile(p => p ? { ...p, handicapIndex: isNaN(hcp!) ? null : hcp, firstName: first || null, lastName: last || null, displayName: dn, bio: editBio.trim() || null } : p);
     setSaving(false); setShowEdit(false); setEditHomeCourseSearch(""); setEditHomeCourseResults([]);
   }
 
@@ -1219,10 +1236,17 @@ export default function ProfilePage() {
               </button>
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Display name</label>
-              <input value={editDisplayName} onChange={e => setEditDisplayName(e.target.value)} placeholder="Your name or nickname"
-                style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }} />
+            <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>First name</label>
+                <input value={editFirstName} onChange={e => setEditFirstName(e.target.value)} placeholder="Corey" autoComplete="given-name"
+                  style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Last name</label>
+                <input value={editLastName} onChange={e => setEditLastName(e.target.value)} placeholder="Goldstein" autoComplete="family-name"
+                  style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }} />
+              </div>
             </div>
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Bio</label>
@@ -1413,6 +1437,27 @@ export default function ProfilePage() {
         <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={() => router.back()} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+        </div>
+      )}
+
+      {/* Missing-real-name nudge — only the profile owner sees this, and
+          only if firstName OR lastName is still null. We added the
+          columns mid-flight, so the vast majority of existing users will
+          land here. Dismissable per-session via local state; it returns
+          next visit until they actually fill it in. */}
+      {isOwner && !nameNudgeDismissed && (!profile.firstName || !profile.lastName) && (
+        <div style={{ margin: "12px 16px 0", display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.28)", borderRadius: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Add your real name</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 1 }}>Helps friends find you on Tour It.</div>
+          </div>
+          <button onClick={() => setShowEdit(true)} style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 99, background: "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Add</button>
+          <button onClick={() => setNameNudgeDismissed(true)} aria-label="Dismiss" style={{ flexShrink: 0, width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
       )}

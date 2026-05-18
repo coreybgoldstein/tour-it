@@ -151,6 +151,8 @@ model User {
   email            String   @unique
   username         String   @unique
   displayName      String
+  firstName        String?
+  lastName         String?
   avatarUrl        String?
   bannerUrl        String?
   bio              String?
