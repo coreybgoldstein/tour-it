@@ -2,10 +2,55 @@ import UIKit
 import Capacitor
 import WebKit
 
+/// Forwarding wrapper for the WebView's existing WKNavigationDelegate (owned
+/// by Capacitor's bridge). We intercept ONE method —
+/// `webViewWebContentProcessDidTerminate(_:)` — and transparently pass every
+/// other navigation-delegate message through to the wrapped delegate via
+/// Objective-C message forwarding.
+///
+/// Why we can't just set ourselves as the delegate: Capacitor's bridge needs
+/// to receive `decidePolicyFor`, `didStartProvisionalNavigation`,
+/// `didFinish`, `didFail`, server-redirect callbacks, etc. to keep plugins
+/// (deep links, URL scheme handlers) working. Stealing the delegate slot
+/// without forwarding would break those.
+///
+/// How the forwarding works: `responds(to:)` reports true if either we or
+/// the wrapped delegate implements the selector. For selectors we don't
+/// implement, `forwardingTarget(for:)` hands the message off to the wrapped
+/// delegate so it runs as if it were the original delegate. For the one
+/// selector we DO implement, we run our handler AND then explicitly call
+/// the wrapped delegate's implementation if it exists (so Capacitor still
+/// gets to react to the termination if it cares).
+private class WebViewDelegateWrapper: NSObject, WKNavigationDelegate {
+    var wrapped: WKNavigationDelegate?
+    var onContentProcessDidTerminate: ((WKWebView) -> Void)?
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        onContentProcessDidTerminate?(webView)
+        wrapped?.webViewWebContentProcessDidTerminate?(webView)
+    }
+
+    override func responds(to aSelector: Selector!) -> Bool {
+        if super.responds(to: aSelector) { return true }
+        return wrapped?.responds(to: aSelector) ?? false
+    }
+
+    override func forwardingTarget(for aSelector: Selector!) -> Any? {
+        if super.responds(to: aSelector) { return nil }
+        if wrapped?.responds(to: aSelector) ?? false { return wrapped }
+        return nil
+    }
+}
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+
+    // Retained navigation-delegate wrapper. UIView's navigationDelegate is a
+    // weak ref, so we have to hold the wrapper alive ourselves or it'll be
+    // deallocated immediately after we install it.
+    private var delegateWrapper: WebViewDelegateWrapper?
 
     // Tour It brand dark — matches body{background:#07100a} in globals.css so
     // there's no contrast between native chrome and the WebView's first paint.
@@ -49,6 +94,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         DispatchQueue.main.async { [weak self] in
             self?.applyBrandBackgroundsRecursively()
+            // Install our nav-delegate wrapper as soon as Capacitor has built
+            // the bridge view controller and assigned its delegate. The async
+            // bump to the main queue ensures we run after the storyboard's
+            // initial view controller has finished viewDidLoad, which is when
+            // Capacitor creates the WKWebView.
+            self?.installContentProcessTerminationHandlerIfNeeded()
         }
 
         // Re-register the screenshot listener. The previous version pulled it
@@ -69,6 +120,35 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     @objc private func handleScreenshot() {
         nudgeRender(reason: "screenshot")
+    }
+
+    /// Install our WKNavigationDelegate wrapper on the live WebView so we
+    /// receive `webViewWebContentProcessDidTerminate(_:)` when iOS kills the
+    /// WebContent render process (Jetsam under memory pressure, content-
+    /// process crash, etc.). Without this hook the WebView's render surface
+    /// goes permanently blank — JS is dead so our nudgeRender no-ops, and
+    /// our probe-and-reload path only checks on `applicationDidBecomeActive`
+    /// so a foreground Jetsam leaves the user stuck.
+    ///
+    /// Idempotent: if our wrapper is already the WebView's delegate, no-op.
+    /// Also safe if Capacitor swaps out its bridge view controller and a
+    /// new WebView appears — next call re-wraps the new one.
+    private func installContentProcessTerminationHandlerIfNeeded() {
+        guard let web = findFirstWebView() else {
+            NSLog("[TourIt] terminate-handler install skipped — no WKWebView yet")
+            return
+        }
+        if web.navigationDelegate === delegateWrapper { return }
+
+        let wrapper = WebViewDelegateWrapper()
+        wrapper.wrapped = web.navigationDelegate
+        wrapper.onContentProcessDidTerminate = { webView in
+            NSLog("[TourIt] WebContent process terminated — reloadFromOrigin")
+            webView.reloadFromOrigin()
+        }
+        delegateWrapper = wrapper
+        web.navigationDelegate = wrapper
+        NSLog("[TourIt] installed WebContent-process termination handler")
     }
 
     /// Force a GPU layer recomposite on the live WebView without reloading.
@@ -229,6 +309,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Re-apply brand backgrounds once the view tree is guaranteed to be live.
         applyBrandBackgroundsRecursively()
+
+        // Belt-and-suspenders: re-install the WebContent-process termination
+        // handler in case (a) it wasn't installed at launch because the
+        // WebView wasn't ready yet, or (b) Capacitor swapped out the
+        // WebView while we were backgrounded. Idempotent.
+        installContentProcessTerminationHandlerIfNeeded()
 
         // ALWAYS nudge the compositor on resume. Cheap, state-preserving,
         // and fixes the "JS alive but visually black" rendering hiccup that

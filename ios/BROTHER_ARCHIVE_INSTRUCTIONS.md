@@ -1,11 +1,11 @@
-# Mac archive — Version 1.0.2, Build 402
+# Mac archive — Version 1.0.2, Build 403
 
 ## Version + Build at a glance
 
 | | Value |
 |---|---|
 | Version (CFBundleShortVersionString) | **1.0.2** |
-| Build (CFBundleVersion) | **402** |
+| Build (CFBundleVersion) | **403** |
 | Previous live | 1.0.1 (live on App Store) |
 
 App Store Connect already has a **1.0.2** version slot opened with the
@@ -29,23 +29,40 @@ so the existing probe+reload path never fires. reloadFromOrigin() WOULD
 fix it, but obliterates in-memory state on every screenshot — worse UX
 than the bug.
 
-This build (b402):
+This build (b403) ships TWO fixes in one archive so we cover both
+candidate root causes without waiting for diagnosis:
 
-- **Re-adds the screenshot listener**, but it no longer reloads. Instead
+**Fix 1 — Compositor hiccup (most likely cause):**
+- Re-adds the screenshot listener, but it no longer reloads. Instead
   it calls `nudgeRender()`: evaluates a tiny JS snippet that appends a
   `translateZ(0)` transform to `document.body`, forces a synchronous
   reflow, then restores the original transform on the next animation
   frame. This forces a GPU layer recomposite without disrupting any
   state. Visually a no-op.
-- **Also nudges on every `applicationDidBecomeActive`** — covers the
+- Also nudges on every `applicationDidBecomeActive` — covers the
   short-backgrounding case the 60s probe threshold deliberately misses.
-- **Keeps the 60s probe+reload path intact** for the genuinely-suspended
-  case (URLSession zombie after long backgrounding).
-- **Keeps the JS-side heartbeat path** unchanged.
 
-Result: screenshots and brief backgroundings preserve state AND no
-longer leave the WebView visually black. Long backgroundings (>60s)
-still trigger the probe+reload safety net.
+**Fix 2 — WebContent process Jetsam (less common but real):**
+- Installs a `WKNavigationDelegate` forwarding wrapper that intercepts
+  `webViewWebContentProcessDidTerminate(_:)`. When iOS kills the
+  WebContent render process under memory pressure, we now catch that
+  signal and call `reloadFromOrigin()` to spin up a fresh process.
+  Without this hook, JS is dead and `nudgeRender` no-ops — the user is
+  stuck on a permanently black WebView until they force-quit.
+- The wrapper transparently forwards every OTHER navigation-delegate
+  message (`decidePolicyFor`, `didStartProvisionalNavigation`, etc.) to
+  Capacitor's bridge via Objective-C message forwarding, so plugin
+  routing (deep links, URL handlers) keeps working unchanged. No
+  swizzling, no Capacitor subclassing — Capacitor never knows we wrapped
+  its delegate.
+
+**Unchanged from before:**
+- 60s probe+reload path for genuinely-suspended (URLSession zombie) case
+- JS-side heartbeat-only resume detection
+
+Result: screenshots, brief backgroundings, AND iOS memory kills all
+recover the WebView. The compositor-hiccup paths preserve state; the
+Jetsam path has to reload (no choice — the process is dead).
 
 ## Steps
 
@@ -74,8 +91,14 @@ grep -q "userDidTakeScreenshotNotification" ios/App/App/AppDelegate.swift \
 grep -q "func nudgeRender" ios/App/App/AppDelegate.swift \
   && echo "PRESENT: nudgeRender path" || echo "MISSING: nudgeRender path"
 
-grep -q "CURRENT_PROJECT_VERSION = 402" ios/App/App.xcodeproj/project.pbxproj \
-  && echo "PRESENT: build 402" || echo "MISSING: build is not 402"
+grep -q "WebViewDelegateWrapper" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: nav-delegate wrapper class" || echo "MISSING: wrapper class"
+
+grep -q "webViewWebContentProcessDidTerminate" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: Jetsam handler" || echo "MISSING: Jetsam handler"
+
+grep -q "CURRENT_PROJECT_VERSION = 403" ios/App/App.xcodeproj/project.pbxproj \
+  && echo "PRESENT: build 403" || echo "MISSING: build is not 403"
 
 grep -q "MARKETING_VERSION = 1.0.2" ios/App/App.xcodeproj/project.pbxproj \
   && echo "PRESENT: version 1.0.2" || echo "MISSING: version is not 1.0.2"
@@ -100,7 +123,7 @@ open ios/App/App.xcworkspace
 
 1. Top toolbar: select **Any iOS Device (arm64)** as the destination.
 2. Click the **App** target → **General** tab.
-3. Confirm **Version = 1.0.2** and **Build = 402**. Both are already
+3. Confirm **Version = 1.0.2** and **Build = 403**. Both are already
    bumped in the repo — if the General tab shows 1.0.1 or 373/400,
    something's wrong with the checkout. Stop and let Corey know.
 4. **Product → Archive**. Wait 3-5 minutes.
@@ -152,6 +175,9 @@ blank screen, a frozen UI, or content that never loads.
 Plug phone into Mac, open Console.app, filter on `TourIt`. Trigger the
 tests above. You should see:
 
+- **App launch:** `[TourIt] installed WebContent-process termination handler`
+  (proves the Jetsam hook installed correctly — if this line never
+  appears, Fix 2 isn't active)
 - Test 2 (10s switch): `[TourIt] nudgeRender reason=didBecomeActive` and
   `[TourIt] background gap 10nnnms — below threshold, skipping probe`
 - Test 3 (screenshot): `[TourIt] nudgeRender reason=screenshot` per
@@ -162,9 +188,24 @@ tests above. You should see:
   `[TourIt] probe ok — WebView alive, skip reload`
 - Test 4 (long backgrounding, dead): same as above but ends with
   `[TourIt] probe failed — reload` and `[TourIt] recoverWebViews reason=didBecomeActive`
+- **If a Jetsam happens (rare, memory-pressure):**
+  `[TourIt] WebContent process terminated — reloadFromOrigin` —
+  this proves Fix 2 caught it. The WebView will reload (state lost).
 
 If you see `[TourIt] recoverWebViews` during Test 2 or Test 3, something
 is wrong and we need to look at it before submitting to App Review.
+
+**If the black-WebView bug still happens** despite this build:
+1. Capture the Console.app log from the moment of failure
+2. Check for `[TourIt] nudgeRender` lines — if they fire but bug persists,
+   the CSS reflow trick isn't strong enough; we'll need to escalate to
+   `removeFromSuperview` + re-add
+3. Check for `[TourIt] WebContent process terminated` — if it fires but
+   the screen doesn't recover, `reloadFromOrigin` isn't working in this
+   case and we'll need to investigate the new WebView instance
+4. If NEITHER line appears around the failure, our hooks aren't firing
+   at all — the bug is something we haven't predicted (e.g., scene
+   lifecycle, third-party plugin interaction)
 
 ## Submitting to App Review
 
@@ -172,10 +213,16 @@ Only submit after all four tests pass. If anything fails, ping Corey.
 
 ## What's in this archive
 
-- b402 (this commit): screenshot listener re-added with non-destructive
-  `nudgeRender` (CSS transform reflow), `nudgeRender` also called on every
-  `applicationDidBecomeActive`. Probe-before-reload (60s threshold) and
-  JS heartbeat path unchanged.
+- b403 (this commit):
+  - Screenshot listener re-added with non-destructive `nudgeRender`
+    (CSS transform reflow). Also nudges on every
+    `applicationDidBecomeActive`.
+  - `WebViewDelegateWrapper` class added — transparent forwarder that
+    intercepts `webViewWebContentProcessDidTerminate(_:)` so we can
+    recover from iOS Jetsam kills. Installs in
+    `didFinishLaunchingWithOptions` and re-installs on every
+    `applicationDidBecomeActive` as a safety net.
+  - Probe-before-reload (60s threshold) and JS heartbeat path unchanged.
 - Earlier changes that stay in place: brand-dark backgrounds,
   scroll-bounce kill, splash asset regen, app icon
 - All web-side improvements come along for free via `server.url`
