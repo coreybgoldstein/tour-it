@@ -215,6 +215,7 @@ model Course {
   phone         String?
   description   String?
   holeCount     Int      @default(18)
+  /// Admin-only moderation flag — set false to hide a record from all listings (e.g. duplicates). NOT the course access type; use `courseType` for PUBLIC/SEMI_PRIVATE/PRIVATE.
   isPublic      Boolean  @default(true)
   courseType    CourseType?
   zipCode       String?
