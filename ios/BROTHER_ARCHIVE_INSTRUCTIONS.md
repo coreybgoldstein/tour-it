@@ -1,14 +1,14 @@
-# Mac archive — Version 1.0.2, Build 424
+# Mac archive — Version 1.0.3, Build 424
 
 ## Version + Build at a glance
 
 | | Value |
 |---|---|
-| Version (CFBundleShortVersionString) | **1.0.2** |
+| Version (CFBundleShortVersionString) | **1.0.3** |
 | Build (CFBundleVersion) | **424** |
 | Previous live | 1.0.1 (live on App Store) |
 
-App Store Connect already has a **1.0.2** version slot opened with the
+App Store Connect already has a **1.0.3** version slot opened with the
 new screenshots and app icon metadata. The archive MUST match — if you
 upload a 1.0.1 build now, App Store Connect will reject it (1.0.1 is
 already live, can't submit another build under that version).
@@ -100,8 +100,8 @@ grep -q "webViewWebContentProcessDidTerminate" ios/App/App/AppDelegate.swift \
 grep -q "CURRENT_PROJECT_VERSION = 424" ios/App/App.xcodeproj/project.pbxproj \
   && echo "PRESENT: build 424" || echo "MISSING: build is not 424"
 
-grep -q "MARKETING_VERSION = 1.0.2" ios/App/App.xcodeproj/project.pbxproj \
-  && echo "PRESENT: version 1.0.2" || echo "MISSING: version is not 1.0.2"
+grep -q "MARKETING_VERSION = 1.0.3" ios/App/App.xcodeproj/project.pbxproj \
+  && echo "PRESENT: version 1.0.3" || echo "MISSING: version is not 1.0.3"
 
 ls ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png > /dev/null 2>&1 \
   && echo "PRESENT: new app icon" || echo "MISSING: app icon"
@@ -123,7 +123,7 @@ open ios/App/App.xcworkspace
 
 1. Top toolbar: select **Any iOS Device (arm64)** as the destination.
 2. Click the **App** target → **General** tab.
-3. Confirm **Version = 1.0.2** and **Build = 424**. Both are already
+3. Confirm **Version = 1.0.3** and **Build = 424**. Both are already
    bumped in the repo — if the General tab shows 1.0.1 or 373/400,
    something's wrong with the checkout. Stop and let Corey know.
 4. **Product → Archive**. Wait 3-5 minutes.
