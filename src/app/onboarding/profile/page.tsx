@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 
 const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos";
 
@@ -38,7 +37,6 @@ const courseAbbr = (name: string) =>
 
 export default function OnboardingProfilePage() {
   const router = useRouter();
-  useKeyboardAwareSheet(true, "ob-cta");
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
@@ -522,9 +520,8 @@ export default function OnboardingProfilePage() {
         </div>
       </main>
 
-      {/* Floating CTA — rides above the on-screen keyboard via
-          useKeyboardAwareSheet so users can advance steps without dismissing it */}
-      <div id="ob-cta" style={{
+      {/* Floating CTA */}
+      <div style={{
         position: "fixed",
         bottom: 0,
         left: 0,
