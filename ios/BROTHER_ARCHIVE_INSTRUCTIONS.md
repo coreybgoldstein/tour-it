@@ -1,11 +1,11 @@
-# Mac archive — Version 1.0.2, Build 403
+# Mac archive — Version 1.0.2, Build 424
 
 ## Version + Build at a glance
 
 | | Value |
 |---|---|
 | Version (CFBundleShortVersionString) | **1.0.2** |
-| Build (CFBundleVersion) | **403** |
+| Build (CFBundleVersion) | **424** |
 | Previous live | 1.0.1 (live on App Store) |
 
 App Store Connect already has a **1.0.2** version slot opened with the
@@ -29,7 +29,7 @@ so the existing probe+reload path never fires. reloadFromOrigin() WOULD
 fix it, but obliterates in-memory state on every screenshot — worse UX
 than the bug.
 
-This build (b403) ships TWO fixes in one archive so we cover both
+This build (b424) ships TWO fixes in one archive so we cover both
 candidate root causes without waiting for diagnosis:
 
 **Fix 1 — Compositor hiccup (most likely cause):**
@@ -97,8 +97,8 @@ grep -q "WebViewDelegateWrapper" ios/App/App/AppDelegate.swift \
 grep -q "webViewWebContentProcessDidTerminate" ios/App/App/AppDelegate.swift \
   && echo "PRESENT: Jetsam handler" || echo "MISSING: Jetsam handler"
 
-grep -q "CURRENT_PROJECT_VERSION = 403" ios/App/App.xcodeproj/project.pbxproj \
-  && echo "PRESENT: build 403" || echo "MISSING: build is not 403"
+grep -q "CURRENT_PROJECT_VERSION = 424" ios/App/App.xcodeproj/project.pbxproj \
+  && echo "PRESENT: build 424" || echo "MISSING: build is not 424"
 
 grep -q "MARKETING_VERSION = 1.0.2" ios/App/App.xcodeproj/project.pbxproj \
   && echo "PRESENT: version 1.0.2" || echo "MISSING: version is not 1.0.2"
@@ -123,7 +123,7 @@ open ios/App/App.xcworkspace
 
 1. Top toolbar: select **Any iOS Device (arm64)** as the destination.
 2. Click the **App** target → **General** tab.
-3. Confirm **Version = 1.0.2** and **Build = 403**. Both are already
+3. Confirm **Version = 1.0.2** and **Build = 424**. Both are already
    bumped in the repo — if the General tab shows 1.0.1 or 373/400,
    something's wrong with the checkout. Stop and let Corey know.
 4. **Product → Archive**. Wait 3-5 minutes.
@@ -213,7 +213,7 @@ Only submit after all four tests pass. If anything fails, ping Corey.
 
 ## What's in this archive
 
-- b403 (this commit):
+- b424 (this commit):
   - Screenshot listener re-added with non-destructive `nudgeRender`
     (CSS transform reflow). Also nudges on every
     `applicationDidBecomeActive`.
