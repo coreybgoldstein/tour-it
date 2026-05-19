@@ -103,7 +103,7 @@ Examples:
     }
 
     if (params.isPublic === true) {
-      dbQuery = dbQuery.eq("isPublic", true);
+      dbQuery = dbQuery.or("courseType.is.null,courseType.neq.PRIVATE");
     }
 
     if (params.hasClipsOnly) {

@@ -502,7 +502,7 @@ function SearchPageInner() {
     const { data, error } = await supabase.from("Course").insert({
       id: crypto.randomUUID(),
       name: newName.trim(), city: newCity.trim(), state: newState.trim().toUpperCase(),
-      country: "US", holeCount: parseInt(newHoles) || 18, isPublic: newPublic,
+      country: "US", holeCount: parseInt(newHoles) || 18, courseType: newPublic ? "PUBLIC" : "PRIVATE",
       slug, uploadCount: 0, saveCount: 0, viewCount: 0,
       ...(latitude != null && longitude != null ? { latitude, longitude } : {}),
       createdAt: now, updatedAt: now,

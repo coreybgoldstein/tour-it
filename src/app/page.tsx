@@ -1332,7 +1332,7 @@ export default function Home() {
         .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl, isPublic")
         .gte("latitude", lat - RANGE).lte("latitude", lat + RANGE)
         .gte("longitude", lng - RANGE).lte("longitude", lng + RANGE);
-      if (onlyPublic) query = query.eq("isPublic", true);
+      if (onlyPublic) query = query.or("courseType.is.null,courseType.neq.PRIVATE");
       const { data } = await query.order("uploadCount", { ascending: false }).limit(20);
       setNearMeCourses(data || []);
       setLocationStatus("granted");
