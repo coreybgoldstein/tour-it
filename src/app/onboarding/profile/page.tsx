@@ -30,7 +30,10 @@ const POINTS_EXAMPLES = [
 ];
 
 
-type Course = { id: string; name: string; city: string; state: string };
+type Course = { id: string; name: string; city: string; state: string; logoUrl: string | null };
+
+const courseAbbr = (name: string) =>
+  name.split(" ").filter(w => w.length > 2).map(w => w[0]).join("").slice(0, 3).toUpperCase();
 
 export default function OnboardingProfilePage() {
   const router = useRouter();
@@ -103,9 +106,8 @@ export default function OnboardingProfilePage() {
       const safe = courseSearch.replace(/[(),]/g, "");
       const { data } = await createClient()
         .from("Course")
-        .select("id, name, city, state")
+        .select("id, name, city, state, logoUrl")
         .or(`name.ilike.%${safe}%,city.ilike.%${safe}%`)
-        .eq("isPublic", true)
         .order("uploadCount", { ascending: false })
         .limit(10);
       setCourseResults(data || []);
@@ -401,12 +403,16 @@ export default function OnboardingProfilePage() {
           {step === 4 && (
             <div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, lineHeight: 1.15, marginBottom: 8, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>Where do you<br />call home?</div>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 28, lineHeight: 1.6 }}>Your home course shows on your profile with a flag badge. You can always change this later.</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", marginBottom: 28, lineHeight: 1.6 }}>Your home course shows on your profile. You can always change this later.</div>
 
               {homeCourse ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(77,168,98,0.12)", border: "1.5px solid rgba(77,168,98,0.4)", borderRadius: 14, padding: "14px 16px" }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <span style={{ fontSize: 22 }}>🚩</span>
+                  <div style={{ width: 44, height: 44, borderRadius: 10, background: homeCourse.logoUrl ? "#fff" : "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                    {homeCourse.logoUrl ? (
+                      <img src={homeCourse.logoUrl} alt={homeCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", letterSpacing: "0.04em" }}>{courseAbbr(homeCourse.name)}</span>
+                    )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff" }}>{homeCourse.name}</div>
@@ -434,8 +440,12 @@ export default function OnboardingProfilePage() {
                     <div style={{ background: "rgba(10,25,16,0.96)", backdropFilter: "blur(12px)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, overflow: "hidden", marginBottom: 8 }}>
                       {courseResults.map(c => (
                         <div key={c.id} className="course-row" onClick={() => { setHomeCourse(c); setCourseSearch(""); setCourseResults([]); }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <span style={{ fontSize: 16 }}>🚩</span>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, background: c.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                            {c.logoUrl ? (
+                              <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ) : (
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862", letterSpacing: "0.04em" }}>{courseAbbr(c.name)}</span>
+                            )}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
