@@ -2781,9 +2781,9 @@ export default function TripPage() {
                   return (
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                       {/* Scorecard accuracy note + quick edit button */}
-                      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "9px 12px", display: "flex", alignItems: "center", gap: 10 }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,170,0,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.5, flex: 1, minWidth: 0 }}>Verify <span style={{ color: "rgba(255,255,255,0.65)" }}>{viewGame.courseName}</span>'s scorecard for correct stroke allocation.</span>
+                      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "11px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,170,0,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.5, flex: 1, minWidth: 0 }}>Verify <span style={{ color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>{viewGame.courseName}</span>&apos;s scorecard for correct stroke allocation.</span>
                         <button
                           onClick={() => openScorecardSheet(viewGame.courseId)}
                           style={{
@@ -2791,9 +2791,9 @@ export default function TripPage() {
                             background: "rgba(77,168,98,0.12)",
                             border: "1px solid rgba(77,168,98,0.4)",
                             borderRadius: 8,
-                            padding: "5px 10px",
+                            padding: "7px 12px",
                             fontFamily: "'Outfit', sans-serif",
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: 600,
                             color: "#4da862",
                             cursor: "pointer",
@@ -2806,13 +2806,13 @@ export default function TripPage() {
 
                       {/* Teams */}
                       {teamGroups.length > 1 && (
-                        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "12px 14px" }}>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Teams</div>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "14px 16px" }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>Teams</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             {teamGroups.map(({ team, members }) => (
                               <div key={team} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                <div style={{ width: 24, height: 24, borderRadius: 7, background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{team}</div>
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.75)" }}>{members.join(" & ")}</span>
+                                <div style={{ width: 28, height: 28, borderRadius: 8, background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{team}</div>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.85)" }}>{members.join(" & ")}</span>
                               </div>
                             ))}
                           </div>
@@ -2821,14 +2821,14 @@ export default function TripPage() {
 
                       {/* Players */}
                       {viewGame.players?.map((p: any, i: number) => (
-                        <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 14px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", flex: 1 }}>{p.displayName}</div>
+                        <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "14px 16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#fff", flex: 1 }}>{p.displayName}</div>
                             {p.teamId && p.teamId !== "Solo" && (
-                              <div style={{ padding: "2px 8px", borderRadius: 6, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>Team {p.teamId}</div>
+                              <div style={{ padding: "3px 10px", borderRadius: 7, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>Team {p.teamId}</div>
                             )}
                           </div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: p.strokeHoles?.length > 0 ? 8 : 0 }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: p.strokeHoles?.length > 0 ? 10 : 0 }}>
                             {[
                               { label: "HI", value: p.handicapIndex },
                               { label: "Course HCP", value: p.courseHandicap },
@@ -2836,17 +2836,17 @@ export default function TripPage() {
                             ].map(({ label, value }) => {
                               const isNoStrokes = label === "Net Shots" && value === "No Strokes";
                               return (
-                                <div key={label} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "7px 8px", textAlign: "center" }}>
-                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: isNoStrokes ? 12 : 15, fontWeight: 700, color: label === "Net Shots" ? "#4da862" : "#fff", whiteSpace: "nowrap" }}>{value}</div>
+                                <div key={label} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "9px 8px", textAlign: "center" }}>
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: isNoStrokes ? 13 : 18, fontWeight: 700, color: label === "Net Shots" ? "#4da862" : "#fff", whiteSpace: "nowrap" }}>{value}</div>
                                 </div>
                               );
                             })}
                           </div>
                           {p.strokeHoles?.length > 0 && (
-                            <div style={{ background: "rgba(77,168,98,0.06)", borderRadius: 8, padding: "6px 10px" }}>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", marginRight: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Strokes on holes:</span>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{p.strokeHoles.join(", ")}</span>
+                            <div style={{ background: "rgba(77,168,98,0.06)", borderRadius: 8, padding: "8px 12px" }}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginRight: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Strokes on holes:</span>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862" }}>{p.strokeHoles.join(", ")}</span>
                             </div>
                           )}
                         </div>
@@ -2854,24 +2854,24 @@ export default function TripPage() {
 
                       {/* Rules */}
                       {sheetData.rules && (
-                        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "12px 14px" }}>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Format Rules</div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.72)", lineHeight: 1.65 }}>{sheetData.rules}</div>
+                        <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "14px 16px" }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Format Rules</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.85)", lineHeight: 1.65 }}>{sheetData.rules}</div>
                         </div>
                       )}
 
                       {/* Tip */}
                       {sheetData.tip && (
-                        <div style={{ background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, padding: "10px 14px", marginBottom: 4 }}>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>Pro Tip</div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.5 }}>{sheetData.tip}</div>
+                        <div style={{ background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, padding: "12px 16px", marginBottom: 4 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Pro Tip</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.78)", lineHeight: 1.55 }}>{sheetData.tip}</div>
                         </div>
                       )}
                     </div>
                   );
                 }
 
-                return <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{viewGame.gameSheet}</div>;
+                return <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.85)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{viewGame.gameSheet}</div>;
               })()}
             </div>
             <div style={{ padding: "12px 20px 28px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 10, flexShrink: 0 }}>
@@ -2883,14 +2883,14 @@ export default function TripPage() {
                     navigator.clipboard.writeText(viewGame.shareText);
                   }
                 }}
-                style={{ flex: 1, padding: "13px", borderRadius: 12, border: "none", background: "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                style={{ flex: 1, padding: "14px", borderRadius: 12, border: "none", background: "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 Send to Group
               </button>
               <button
                 onClick={() => { navigator.clipboard.writeText(viewGame.shareText); }}
-                style={{ padding: "13px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
+                style={{ padding: "14px 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", background: "transparent", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.75)", cursor: "pointer" }}
               >
                 Copy
               </button>
