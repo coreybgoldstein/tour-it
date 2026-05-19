@@ -207,7 +207,7 @@ export default function OnboardingProfilePage() {
     if (cErr) { setAddCourseError(cErr.message); setAddingCourse(false); return; }
     const holeTotal = parseInt(newHoles) || 18;
     await supabase.from("Hole").insert(Array.from({ length: holeTotal }, (_, i) => ({ id: crypto.randomUUID(), courseId, holeNumber: i + 1, par: 4, uploadCount: 0, createdAt: now, updatedAt: now })));
-    setHomeCourse({ id: courseId, name, city: newCity.trim(), state: newState.trim().toUpperCase() });
+    setHomeCourse({ id: courseId, name, city: newCity.trim(), state: newState.trim().toUpperCase(), logoUrl: null });
     setAddCourseOpen(false);
     setAddingCourse(false);
   };
