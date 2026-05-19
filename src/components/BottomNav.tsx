@@ -4,14 +4,15 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
+import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const isDesktop = useIsDesktop();
+  const keyboardOpen = useKeyboardOpen();
 
   useEffect(() => {
     const supabase = createClient();
@@ -27,17 +28,6 @@ export default function BottomNav() {
       setUnreadCount(count ?? 0);
     });
   }, [pathname]);
-
-  // Hide nav when software keyboard is open (visual viewport shrinks) — mobile only
-  useEffect(() => {
-    if (isDesktop) return;
-    const vv = (window as any).visualViewport;
-    if (!vv) return;
-    const threshold = window.innerHeight * 0.75;
-    const handler = () => setKeyboardOpen(vv.height < threshold);
-    vv.addEventListener("resize", handler);
-    return () => vv.removeEventListener("resize", handler);
-  }, [isDesktop]);
 
   const isHome = pathname === "/";
   const isSearch = pathname === "/search";
