@@ -51,13 +51,60 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             self?.applyBrandBackgroundsRecursively()
         }
 
-        // Screenshot listener intentionally NOT registered. Earlier theory
-        // was that iOS screenshots corrupt the WKWebView render tree, but
-        // testing showed the symptom was the recovery firing on every
-        // screenshot, not the screenshot causing damage. Modern iOS does
-        // not need this hook.
+        // Re-register the screenshot listener. The previous version pulled it
+        // out because the recovery (a full reload) was destroying in-memory
+        // UI state on every screenshot. The new path calls nudgeRender(),
+        // which forces a GPU layer recomposite without reloading — so users
+        // can screenshot all day without losing state OR seeing a black
+        // WebView. See nudgeRender() doc comment for the mechanism.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleScreenshot),
+            name: UIApplication.userDidTakeScreenshotNotification,
+            object: nil
+        )
 
         return true
+    }
+
+    @objc private func handleScreenshot() {
+        nudgeRender(reason: "screenshot")
+    }
+
+    /// Force a GPU layer recomposite on the live WebView without reloading.
+    ///
+    /// The bug this addresses: WKWebView's compositor can hiccup after iOS
+    /// captures the screen (screenshot, app-switcher snapshot, brief
+    /// backgrounding). JS keeps running — so any JS-execution probe falsely
+    /// reports the WebView healthy — but the visible CALayer goes black.
+    /// reloadFromOrigin() fixes it but obliterates in-memory state, which
+    /// is worse than the bug.
+    ///
+    /// The trick: append " translateZ(0)" to body.style.transform, force a
+    /// layout, then restore the original next frame. translateZ(0) is the
+    /// standard GPU-promote hint; appending it bumps body into its own
+    /// composite layer momentarily, which clears render-pipeline glitches.
+    /// Visually a no-op (the transform is restored before any frame paints
+    /// the modified value). State-preserving and cheap.
+    ///
+    /// Safe to fire-and-forget: if JS is genuinely dead (which is what the
+    /// probe+reload path catches), the eval just no-ops; no completion
+    /// handler is registered.
+    private func nudgeRender(reason: String) {
+        guard let web = findFirstWebView() else { return }
+        NSLog("[TourIt] nudgeRender reason=\(reason)")
+        let js = """
+        (function() {
+          var b = document.body;
+          if (!b) return;
+          var prev = b.style.transform || '';
+          b.style.transform = prev + ' translateZ(0)';
+          // Force a synchronous reflow so the compositor reads the new layer.
+          void b.offsetHeight;
+          requestAnimationFrame(function() { b.style.transform = prev; });
+        })();
+        """
+        web.evaluateJavaScript(js, completionHandler: nil)
     }
 
     /// Walk the view hierarchy and force every WKWebView's background to the
@@ -183,12 +230,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Re-apply brand backgrounds once the view tree is guaranteed to be live.
         applyBrandBackgroundsRecursively()
 
-        // Only consider recovery when the app was truly backgrounded
-        // (didEnterBackground fired) AND for longer than the threshold.
-        // Even then we don't reload directly — we probe the WebView first
-        // and only reload if the probe fails. Below the threshold we
-        // unconditionally trust the WebView, since brief context switches
-        // (Messages, screenshot, glance at a banner) don't corrupt it.
+        // ALWAYS nudge the compositor on resume. Cheap, state-preserving,
+        // and fixes the "JS alive but visually black" rendering hiccup that
+        // iOS produces on brief backgroundings — the case the 60s probe
+        // threshold deliberately misses to avoid over-eager reloads.
+        nudgeRender(reason: "didBecomeActive")
+
+        // Then, for the long-suspend case (>60s), separately probe + reload
+        // if the WebView's URLSession actually went zombie. State loss is
+        // acceptable here because the alternative is a permanently-broken
+        // app the user has to force-quit.
         guard let backgroundedAt = enteredBackgroundAt else { return }
         let awayMs = Date().timeIntervalSince(backgroundedAt) * 1000
         enteredBackgroundAt = nil
