@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 
 type TagUser = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
 
@@ -49,6 +50,7 @@ export default function EditClipSheet({
   const [tagInput, setTagInput] = useState("");
   const [tagResults, setTagResults] = useState<TagUser[]>([]);
   const tagDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useKeyboardAwareSheet(!!uploadId, "edit-clip-sheet");
 
   useEffect(() => {
     if (!uploadId) { setEditData(null); return; }
@@ -126,6 +128,7 @@ export default function EditClipSheet({
 
   return (
     <div
+      id="edit-clip-sheet"
       style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }}
       onClick={onClose}
     >
