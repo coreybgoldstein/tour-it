@@ -2832,13 +2832,16 @@ export default function TripPage() {
                             {[
                               { label: "HI", value: p.handicapIndex },
                               { label: "Course HCP", value: p.courseHandicap },
-                              { label: "Net Shots", value: p.netStrokes > 0 ? `+${p.netStrokes}` : String(p.netStrokes) },
-                            ].map(({ label, value }) => (
-                              <div key={label} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "7px 8px", textAlign: "center" }}>
-                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: label === "Net Shots" ? "#4da862" : "#fff" }}>{value}</div>
-                              </div>
-                            ))}
+                              { label: "Net Shots", value: p.netStrokes > 0 ? `+${p.netStrokes}` : "No Strokes" },
+                            ].map(({ label, value }) => {
+                              const isNoStrokes = label === "Net Shots" && value === "No Strokes";
+                              return (
+                                <div key={label} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 8, padding: "7px 8px", textAlign: "center" }}>
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: isNoStrokes ? 12 : 15, fontWeight: 700, color: label === "Net Shots" ? "#4da862" : "#fff", whiteSpace: "nowrap" }}>{value}</div>
+                                </div>
+                              );
+                            })}
                           </div>
                           {p.strokeHoles?.length > 0 && (
                             <div style={{ background: "rgba(77,168,98,0.06)", borderRadius: 8, padding: "6px 10px" }}>
