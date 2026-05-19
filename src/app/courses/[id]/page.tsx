@@ -1143,10 +1143,10 @@ const [editDescription, setEditDescription] = useState("");
                 {mapsUrl ? (
                   <a href={mapsUrl} target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.85 }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    <span>{[course.city, course.state].filter(s => s?.trim()).join(", ")}{course.city || course.state ? " · " : ""}{course.courseType === "SEMI_PRIVATE" ? "Semi-Private" : course.courseType === "PRIVATE" ? "Private" : "Public"}</span>
+                    <span>{[[course.city, course.state].filter(s => s?.trim()).join(", "), course.courseType === "SEMI_PRIVATE" ? "Semi-Private" : course.courseType === "PRIVATE" ? "Private" : course.courseType === "PUBLIC" ? "Public" : ""].filter(Boolean).join(" · ")}</span>
                   </a>
                 ) : (
-                  <span>{[course.city, course.state].filter(s => s?.trim()).join(", ")}{course.city || course.state ? " · " : ""}{course.courseType === "SEMI_PRIVATE" ? "Semi-Private" : course.courseType === "PRIVATE" ? "Private" : "Public"}</span>
+                  <span>{[[course.city, course.state].filter(s => s?.trim()).join(", "), course.courseType === "SEMI_PRIVATE" ? "Semi-Private" : course.courseType === "PRIVATE" ? "Private" : course.courseType === "PUBLIC" ? "Public" : ""].filter(Boolean).join(" · ")}</span>
                 )}
                 {(course.description || hero.description) && (
                   <button onClick={() => setAboutOpen(true)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex", alignItems: "center" }}>
