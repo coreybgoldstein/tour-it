@@ -1,11 +1,11 @@
-# Mac archive — Version 1.0.2, Build 401
+# Mac archive — Version 1.0.2, Build 402
 
 ## Version + Build at a glance
 
 | | Value |
 |---|---|
 | Version (CFBundleShortVersionString) | **1.0.2** |
-| Build (CFBundleVersion) | **401** |
+| Build (CFBundleVersion) | **402** |
 | Previous live | 1.0.1 (live on App Store) |
 
 App Store Connect already has a **1.0.2** version slot opened with the
@@ -15,32 +15,37 @@ already live, can't submit another build under that version).
 
 ## What's different about this build
 
-The previous live build (1.0.1 b400) had a fix that overcorrected. It reloaded
-the WebView every time the app came back from being backgrounded for
-more than 1.5 seconds, AND it reloaded after every screenshot. Net
-effect: every quick app switch wiped UI state, and every screenshot
-caused a visible stutter.
+The previous attempted fix (b401, code lived in the repo) went too far in
+the other direction — it dropped the screenshot listener completely and
+raised the background threshold to 60s. Result: post-screenshot and
+short-backgrounding black-WebView bugs that users have been hitting in
+production.
 
-This build (b401):
+The root cause those builds missed: WKWebView's compositor can hiccup
+after iOS captures the screen (screenshot, app-switcher snapshot, brief
+backgrounding) — the JS thread keeps running but the visible CALayer
+goes black. A JS-execution probe falsely reports the WebView healthy,
+so the existing probe+reload path never fires. reloadFromOrigin() WOULD
+fix it, but obliterates in-memory state on every screenshot — worse UX
+than the bug.
 
-- **Drops the screenshot listener entirely.** Screenshots are no longer
-  treated as recovery events. Modern iOS does not corrupt the WebView
-  on screenshot capture.
-- **Raises the background-recovery threshold from 1.5s to 60s.** Quick
-  context switches (Messages, Control Center, notification banners)
-  no longer trigger a reload.
-- **Probes before reloading.** Even after 60s+ of backgrounding, we
-  first evaluate a trivial JS expression in the WebView. If it responds
-  within 500ms the WebView is alive and we skip the reload. Only a
-  failed/timed-out probe triggers reload.
-- **Trims the JS-side recovery code** to a heartbeat-only check (event
-  loop paused >60s → reload). The visibilitychange/blur/pageshow
-  reload paths are gone — they were the JS-side equivalent of the
-  same over-aggressive recovery.
+This build (b402):
 
-Result: the user can leave the app and return without losing scroll
-position, video playback state, or modal state. Screenshots no longer
-cause a stutter.
+- **Re-adds the screenshot listener**, but it no longer reloads. Instead
+  it calls `nudgeRender()`: evaluates a tiny JS snippet that appends a
+  `translateZ(0)` transform to `document.body`, forces a synchronous
+  reflow, then restores the original transform on the next animation
+  frame. This forces a GPU layer recomposite without disrupting any
+  state. Visually a no-op.
+- **Also nudges on every `applicationDidBecomeActive`** — covers the
+  short-backgrounding case the 60s probe threshold deliberately misses.
+- **Keeps the 60s probe+reload path intact** for the genuinely-suspended
+  case (URLSession zombie after long backgrounding).
+- **Keeps the JS-side heartbeat path** unchanged.
+
+Result: screenshots and brief backgroundings preserve state AND no
+longer leave the WebView visually black. Long backgroundings (>60s)
+still trigger the probe+reload safety net.
 
 ## Steps
 
@@ -63,11 +68,14 @@ grep -q "backgroundedThreshold: TimeInterval = 60.0" ios/App/App/AppDelegate.swi
 grep -q "probeAndRecoverIfNeeded" ios/App/App/AppDelegate.swift \
   && echo "PRESENT: probe path" || echo "MISSING: probe path"
 
-! grep -q "userDidTakeScreenshotNotification" ios/App/App/AppDelegate.swift \
-  && echo "PRESENT: screenshot listener removed" || echo "MISSING: screenshot listener still in file"
+grep -q "userDidTakeScreenshotNotification" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: screenshot listener" || echo "MISSING: screenshot listener"
 
-grep -q "CURRENT_PROJECT_VERSION = 401" ios/App/App.xcodeproj/project.pbxproj \
-  && echo "PRESENT: build 401" || echo "MISSING: build is not 401"
+grep -q "func nudgeRender" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: nudgeRender path" || echo "MISSING: nudgeRender path"
+
+grep -q "CURRENT_PROJECT_VERSION = 402" ios/App/App.xcodeproj/project.pbxproj \
+  && echo "PRESENT: build 402" || echo "MISSING: build is not 402"
 
 grep -q "MARKETING_VERSION = 1.0.2" ios/App/App.xcodeproj/project.pbxproj \
   && echo "PRESENT: version 1.0.2" || echo "MISSING: version is not 1.0.2"
@@ -92,7 +100,7 @@ open ios/App/App.xcworkspace
 
 1. Top toolbar: select **Any iOS Device (arm64)** as the destination.
 2. Click the **App** target → **General** tab.
-3. Confirm **Version = 1.0.2** and **Build = 401**. Both are already
+3. Confirm **Version = 1.0.2** and **Build = 402**. Both are already
    bumped in the repo — if the General tab shows 1.0.1 or 373/400,
    something's wrong with the checkout. Stop and let Corey know.
 4. **Product → Archive**. Wait 3-5 minutes.
@@ -120,11 +128,14 @@ app. Open Messages, wait ~10 seconds, return to Tour It.
 reload, no scroll-jump, no visible flash. This is the test that proves
 the over-recovery is gone.
 
-### Test 3 — Screenshot (NEW BEHAVIOR)
+### Test 3 — Screenshot (the bug this build is fixing)
 
 With the app open on any screen, press power + volume-up to take a
 screenshot. The app should remain on the same screen with no flash,
-no reload, no stutter. Just the standard iOS screenshot animation.
+no reload, no stutter — and critically, **no black WebView**. The
+screen content stays visible the whole time; the iOS screenshot
+animation plays over it. Repeat 3-5 times in a row to make sure each
+screenshot still leaves the WebView visible.
 
 ### Test 4 — Long backgrounding (recovery still works)
 
@@ -141,10 +152,14 @@ blank screen, a frozen UI, or content that never loads.
 Plug phone into Mac, open Console.app, filter on `TourIt`. Trigger the
 tests above. You should see:
 
-- Test 2 (10s switch): `[TourIt] background gap 10nnnms — below threshold, skipping probe`
-- Test 3 (screenshot): no `[TourIt]` recovery log lines at all
-- Test 4 (long backgrounding, healthy): `[TourIt] background gap NNNms — probing WebView`
-  followed by `[TourIt] probe ok — WebView alive, skip reload`
+- Test 2 (10s switch): `[TourIt] nudgeRender reason=didBecomeActive` and
+  `[TourIt] background gap 10nnnms — below threshold, skipping probe`
+- Test 3 (screenshot): `[TourIt] nudgeRender reason=screenshot` per
+  screenshot. No `recoverWebViews` lines — those would mean we regressed
+  to the state-wiping behavior.
+- Test 4 (long backgrounding, healthy): `[TourIt] nudgeRender` +
+  `[TourIt] background gap NNNms — probing WebView` followed by
+  `[TourIt] probe ok — WebView alive, skip reload`
 - Test 4 (long backgrounding, dead): same as above but ends with
   `[TourIt] probe failed — reload` and `[TourIt] recoverWebViews reason=didBecomeActive`
 
@@ -157,8 +172,10 @@ Only submit after all four tests pass. If anything fails, ping Corey.
 
 ## What's in this archive
 
-- `e8...` (this commit): probe-before-reload, 60s threshold, screenshot
-  listener dropped, JS reduced to heartbeat-only
-- Earlier b400 changes that stay in place: brand-dark backgrounds,
+- b402 (this commit): screenshot listener re-added with non-destructive
+  `nudgeRender` (CSS transform reflow), `nudgeRender` also called on every
+  `applicationDidBecomeActive`. Probe-before-reload (60s threshold) and
+  JS heartbeat path unchanged.
+- Earlier changes that stay in place: brand-dark backgrounds,
   scroll-bounce kill, splash asset regen, app icon
 - All web-side improvements come along for free via `server.url`
