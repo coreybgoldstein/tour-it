@@ -265,7 +265,7 @@ export default function OnboardingProfilePage() {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
             <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 34, width: "auto" }} />
             {step > 1 && (
-              <button onClick={() => setStep(step - 1)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: 4 }}>
+              <button onClick={() => setStep(step - 1)} aria-label="Back" style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: "10px 12px", margin: "-10px -12px" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
                 Back
               </button>
@@ -340,6 +340,7 @@ export default function OnboardingProfilePage() {
                   <input
                     className="ob-input"
                     type="number"
+                    inputMode="decimal"
                     step="0.1"
                     min="0"
                     max="54"
