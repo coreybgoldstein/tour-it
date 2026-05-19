@@ -2278,17 +2278,19 @@ const [editDescription, setEditDescription] = useState("");
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Plan Your Round</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>at {course.name}</div>
 
-            {/* Path 1 — add to upcoming rounds (live) */}
+            {/* Path 1 — single round → Tee Up's Quick Round flow, pre-loaded
+                with this course. Trip picker stays available via Save → Trip
+                for multi-day itineraries. */}
             <button
-              onClick={() => { setPlanOpen(false); openTripPicker(); }}
+              onClick={() => { setPlanOpen(false); router.push(`/tee-up?openQuickRound=${course.id}`); }}
               style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "16px 14px", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 14, cursor: "pointer", textAlign: "left", marginBottom: 12 }}
             >
               <div style={{ width: 42, height: 42, borderRadius: 11, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff" }}>Add to Upcoming Rounds</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>Pick a date, invite players, build your itinerary</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff" }}>Add to Your Upcoming Rounds Page</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>Schedule a single round, invite friends</div>
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
             </button>

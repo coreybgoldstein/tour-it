@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { DirectionsButton } from "@/components/DirectionsButton";
@@ -64,6 +64,7 @@ function fmtSingleDate(iso: string | null): string | null {
 
 export default function TeeUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [pastRounds, setPastRounds] = useState<RoundRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -269,6 +270,28 @@ export default function TeeUpPage() {
       setQuickOpen(true);
     }
   }
+
+  // Deep-link from a course page's "Add to your upcoming rounds page" button:
+  // ?openQuickRound=<courseId> opens Quick Round pre-loaded with that course.
+  useEffect(() => {
+    const courseId = searchParams.get("openQuickRound");
+    if (!courseId) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("Course")
+        .select("id, name, city, state, logoUrl")
+        .eq("id", courseId)
+        .single();
+      if (cancelled || !data) return;
+      setQuickCourse(data as CourseSearchRow);
+      setQuickOpen(true);
+      // Strip the param so back-nav doesn't keep reopening the sheet
+      router.replace("/tee-up");
+    })();
+    return () => { cancelled = true; };
+  }, [searchParams, router]);
 
   useEffect(() => {
     const supabase = createClient();
