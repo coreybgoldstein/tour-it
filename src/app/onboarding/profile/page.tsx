@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 
 const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos";
 
@@ -37,6 +38,7 @@ const courseAbbr = (name: string) =>
 
 export default function OnboardingProfilePage() {
   const router = useRouter();
+  useKeyboardAwareSheet(true, "ob-cta");
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
@@ -437,7 +439,7 @@ export default function OnboardingProfilePage() {
                   </div>
 
                   {courseResults.length > 0 && (
-                    <div style={{ background: "rgba(10,25,16,0.96)", backdropFilter: "blur(12px)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, overflow: "hidden", marginBottom: 8 }}>
+                    <div style={{ position: "relative", zIndex: 20, background: "rgba(10,25,16,0.96)", backdropFilter: "blur(12px)", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, overflow: "hidden auto", maxHeight: "40vh", marginBottom: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
                       {courseResults.map(c => (
                         <div key={c.id} className="course-row" onClick={() => { setHomeCourse(c); setCourseSearch(""); setCourseResults([]); }}>
                           <div style={{ width: 32, height: 32, borderRadius: 8, background: c.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
@@ -519,8 +521,9 @@ export default function OnboardingProfilePage() {
         </div>
       </main>
 
-      {/* Floating CTA */}
-      <div style={{
+      {/* Floating CTA — rides above the on-screen keyboard via
+          useKeyboardAwareSheet so users can advance steps without dismissing it */}
+      <div id="ob-cta" style={{
         position: "fixed",
         bottom: 0,
         left: 0,

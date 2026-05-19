@@ -7,6 +7,8 @@ import BottomNav from "@/components/BottomNav";
 import { sendPushToUser } from "@/lib/sendPush";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
+import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
+import { DirectionsButton } from "@/components/DirectionsButton";
 
 type Trip = {
   id: string;
@@ -33,8 +35,8 @@ type TripCourse = {
   teeTime: string | null;
   accommodation: string | null;
   sortOrder: number;
-  course: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; coverImageUrl: string | null; holeCount?: number };
-  secondaryCourse?: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; coverImageUrl: string | null; holeCount?: number } | null;
+  course: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; coverImageUrl: string | null; holeCount?: number; latitude?: number | null; longitude?: number | null };
+  secondaryCourse?: { id: string; name: string; city: string; state: string; uploadCount: number; logoUrl: string | null; coverImageUrl: string | null; holeCount?: number; latitude?: number | null; longitude?: number | null } | null;
 };
 
 type Member = {
@@ -309,6 +311,7 @@ export default function TripPage() {
   // Games
   const [games, setGames] = useState<TripGameRecord[]>([]);
   const [gameOpen, setGameOpen] = useState(false);
+  useKeyboardAwareSheet(gameOpen, "trip-game-creator");
   const [gameStep, setGameStep] = useState(1);
   const [generatingGame, setGeneratingGame] = useState(false);
   const [viewGameOpen, setViewGameOpen] = useState(false);
@@ -373,7 +376,7 @@ export default function TripPage() {
           ...tcData.map((tc: any) => tc.courseId),
           ...tcData.map((tc: any) => tc.secondaryCourseId).filter(Boolean),
         ];
-        const { data: coursesData } = await supabase.from("Course").select("id, name, city, state, uploadCount, logoUrl, coverImageUrl, holeCount").in("id", allCourseIds);
+        const { data: coursesData } = await supabase.from("Course").select("id, name, city, state, uploadCount, logoUrl, coverImageUrl, holeCount, latitude, longitude").in("id", allCourseIds);
         const mapped = tcData.map((tc: any) => ({
           ...tc,
           course: coursesData?.find((c: any) => c.id === tc.courseId) || { id: tc.courseId, name: "Unknown", city: "", state: "", uploadCount: 0, logoUrl: null, coverImageUrl: null },
@@ -1640,9 +1643,12 @@ export default function TripPage() {
                                 ) : (
                                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>no time</div>
                                 )}
-                                <button onClick={e => { e.stopPropagation(); openEditCourse(tc); }} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                </button>
+                                <div style={{ display: "flex", gap: 6 }}>
+                                  <DirectionsButton course={tc.course} />
+                                  <button onClick={e => { e.stopPropagation(); openEditCourse(tc); }} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -2420,7 +2426,7 @@ export default function TripPage() {
 
       {/* Game creator sheet */}
       {gameOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column" }}>
+        <div id="trip-game-creator" style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column" }}>
           <div onClick={() => { if (!generatingGame) setGameOpen(false); }} style={{ flex: 1, background: "rgba(0,0,0,0.5)" }} />
           <div style={{ background: "#0d1f14", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", maxHeight: "90vh" }}>
             {/* Header */}
