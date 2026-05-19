@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -56,6 +57,8 @@ function SearchPageInner() {
 
   const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
 
+  useKeyboardAwareSheet(addOpen, "search-create-course-sheet");
+
   // Filters — initialized from URL params so they survive navigation
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterState, setFilterState] = useState(searchParams.get("state") || "");
@@ -63,6 +66,7 @@ function SearchPageInner() {
   const [filterZip, setFilterZip] = useState(searchParams.get("zip") || "");
   const [filterHoles, setFilterHoles] = useState<"all" | "9" | "18">((searchParams.get("holes") as "9" | "18") || "all");
   const [filterCourseType, setFilterCourseType] = useState<"" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE">((searchParams.get("type") as "" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE") || "");
+  useKeyboardAwareSheet(filterOpen, "search-filter-sheet");
   const [filterRadius, setFilterRadius] = useState<"10" | "25" | "50">((searchParams.get("radius") as "10" | "25" | "50") || "25");
   const [zipCoords, setZipCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [zipLoading, setZipLoading] = useState(false);
@@ -946,7 +950,7 @@ function SearchPageInner() {
       {filterOpen && (
         <>
           <div onClick={() => setFilterOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 110, background: "rgba(0,0,0,0.5)" }} />
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 120, background: "#0d2318", border: "1px solid rgba(77,168,98,0.15)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", maxHeight: "85vh", overflowY: "auto" }}>
+          <div id="search-filter-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 120, background: "#0d2318", border: "1px solid rgba(77,168,98,0.15)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", maxHeight: "85vh", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Filter Courses</div>
@@ -1038,7 +1042,7 @@ function SearchPageInner() {
       {addOpen && (
         <>
           <div onClick={() => setAddOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.5)" }} />
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 48px" }}>
+          <div id="search-create-course-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 48px", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Add a Course</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 20 }}>Help the community scout it</div>
