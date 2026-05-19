@@ -712,7 +712,7 @@ function TripCard({ trip, onClick }: { trip: TripRow; onClick: () => void }) {
           )}
         </div>
       </div>
-      {trip.isRound && !trip.isPast && trip.firstCourseName && (
+      {!trip.isPast && trip.firstCourseName && (
         <DirectionsButton course={{ name: trip.firstCourseName, city: trip.firstCourseCity, state: trip.firstCourseState, latitude: trip.firstCourseLat, longitude: trip.firstCourseLng }} />
       )}
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
