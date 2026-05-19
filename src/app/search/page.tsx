@@ -50,7 +50,7 @@ function SearchPageInner() {
   const [newCity, setNewCity] = useState("");
   const [newState, setNewState] = useState("");
   const [newHoles, setNewHoles] = useState("18");
-  const [newPublic, setNewPublic] = useState(true);
+  const [newCourseType, setNewCourseType] = useState<"PUBLIC" | "SEMI_PRIVATE" | "PRIVATE" | "">("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
@@ -502,7 +502,7 @@ function SearchPageInner() {
     const { data, error } = await supabase.from("Course").insert({
       id: crypto.randomUUID(),
       name: newName.trim(), city: newCity.trim(), state: newState.trim().toUpperCase(),
-      country: "US", holeCount: parseInt(newHoles) || 18, courseType: newPublic ? "PUBLIC" : "PRIVATE",
+      country: "US", holeCount: parseInt(newHoles) || 18, courseType: newCourseType || null,
       slug, uploadCount: 0, saveCount: 0, viewCount: 0,
       ...(latitude != null && longitude != null ? { latitude, longitude } : {}),
       createdAt: now, updatedAt: now,
@@ -1062,9 +1062,17 @@ function SearchPageInner() {
                 </div>
                 <div>
                   <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 5 }}>Access</label>
-                  <button onClick={() => setNewPublic(p => !p)} style={{ width: "100%", background: newPublic ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.06)", border: `1px solid ${newPublic ? "rgba(77,168,98,0.35)" : "rgba(255,255,255,0.1)"}`, borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: newPublic ? "#4da862" : "rgba(255,255,255,0.5)", cursor: "pointer" }}>
-                    {newPublic ? "Public" : "Private"}
-                  </button>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {(["PUBLIC", "SEMI_PRIVATE", "PRIVATE"] as const).map(t => (
+                      <button
+                        key={t}
+                        onClick={() => setNewCourseType(newCourseType === t ? "" : t)}
+                        style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: `1px solid ${newCourseType === t ? "rgba(77,168,98,0.35)" : "rgba(255,255,255,0.1)"}`, background: newCourseType === t ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.06)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: newCourseType === t ? "#4da862" : "rgba(255,255,255,0.5)", cursor: "pointer" }}
+                      >
+                        {t === "SEMI_PRIVATE" ? "Semi" : t === "PUBLIC" ? "Public" : "Private"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               {createError && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#ef4444" }}>{createError}</div>}
