@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { compressVideo } from "@/lib/compressVideo";
 import BatchUpload from "./BatchUpload";
 import { sendPushToUser } from "@/lib/sendPush";
+import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 import { calcIntelBonus } from "@/config/points-system";
 import exifr from "exifr";
 
@@ -70,6 +71,7 @@ const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "notes"];
 function UploadPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const keyboardOpen = useKeyboardOpen();
   const preselectedCourseId = searchParams.get("courseId");
   const preselectedHoleNumber = searchParams.get("holeNumber") ? Number(searchParams.get("holeNumber")) : null;
   const preselectedTripId = searchParams.get("tripId");
@@ -1379,7 +1381,7 @@ function UploadPageInner() {
                       style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }}
                     />
                     {heroResults.length > 0 && (
-                      <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
+                      <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#0d1f12", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 10, overflow: "hidden auto", maxHeight: "40vh", zIndex: 60, boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}>
                         {heroResults.map(u => (
                           <button key={u.id} onClick={() => { setHeroUser(u); setHeroInput(""); setHeroResults([]); }}
                             style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
@@ -1467,13 +1469,17 @@ function UploadPageInner() {
               <label className="field-label" style={{ color: "#4da862" }}>Notes <span className="optional-tag">OPTIONAL</span></label>
               <textarea className="field-textarea" rows={4} placeholder="Share anything golfers should know — strategy, landing zones, blind spots, elevation changes, tricky pins..." value={intel.notes} onChange={e => setIntel({ ...intel, notes: e.target.value })} />
             </div>
-            <div style={{ height: 90 }} />
+            {/* Bottom spacer — clear the BottomNav (~96px w/ home indicator) +
+                the floating CTA above it (~62px) + breathing room. */}
+            <div style={{ height: "calc(env(safe-area-inset-bottom) + 170px)" }} />
           </div>
         )}
 
-        {/* Floating submit button — stays on screen while scrolling Intel step */}
-        {step === 4 && (
-          <div style={{ position: "fixed", bottom: 80, left: 0, right: 0, padding: "0 20px", zIndex: 50 }}>
+        {/* Floating submit button — stays on screen while scrolling Intel step.
+            Hidden while the keyboard is up so it never covers an input or
+            autocomplete dropdown. */}
+        {step === 4 && !keyboardOpen && (
+          <div style={{ position: "fixed", bottom: "calc(env(safe-area-inset-bottom) + 100px)", left: 0, right: 0, padding: "0 20px", zIndex: 50 }}>
             <button
               className="btn-primary"
               onClick={() => setStep(5)}
