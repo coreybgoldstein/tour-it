@@ -479,6 +479,9 @@ const [editDescription, setEditDescription] = useState("");
     return () => { cancelled = true; };
   }, [user?.id, courseClips]);
   const [tripPickerOpen, setTripPickerOpen] = useState(false);
+  useKeyboardAwareSheet(tripPickerOpen, "course-trip-picker");
+  const [planOpen, setPlanOpen] = useState(false);
+  useKeyboardAwareSheet(planOpen, "course-plan-sheet");
   const [tripStep, setTripStep] = useState<"select" | "create" | "details" | "success">("select");
   const [userTrips, setUserTrips] = useState<{ id: string; name: string; startDate: string | null; endDate: string | null }[]>([]);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
@@ -772,6 +775,25 @@ const [editDescription, setEditDescription] = useState("");
     }
     setLoadingMoreClips(false);
   }, [loadingMoreClips, hasMoreClips, id, courseClips]);
+
+  const openTripPicker = useCallback(async () => {
+    setTripStep("select");
+    setNewTripName(""); setNewTripStart(""); setNewTripEnd("");
+    setTripPlayDate(""); setTripTeeTime(""); setTripAccommodation("");
+    setSelectedTripId(null); setSelectedTripName("");
+    if (user) {
+      const supabase = createClient();
+      const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id);
+      if (memberData && memberData.length > 0) {
+        const tripIds = memberData.map((m: { tripId: string }) => m.tripId);
+        const { data: tripsData } = await supabase.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).order("createdAt", { ascending: false });
+        setUserTrips(tripsData || []);
+      } else {
+        setUserTrips([]);
+      }
+    }
+    setTripPickerOpen(true);
+  }, [user]);
 
   const openContribute = useCallback(() => {
     if (!course) return;
@@ -1196,6 +1218,16 @@ const [editDescription, setEditDescription] = useState("");
                 </a>
               );
             })()}
+            {/* Plan Round — opens the dual-path planning sheet */}
+            <button
+              onClick={() => setPlanOpen(true)}
+              style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "4px 10px", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5 }}
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Plan Round
+            </button>
             {/* Save button — bottom right of hero */}
             <button
               onClick={() => setShowPicker(!showPicker)}
@@ -1230,25 +1262,7 @@ const [editDescription, setEditDescription] = useState("");
                     </div>
                   </button>
                   <button
-                    onClick={async () => {
-                      setShowPicker(false);
-                      setTripStep("select");
-                      setNewTripName(""); setNewTripStart(""); setNewTripEnd("");
-                      setTripPlayDate(""); setTripTeeTime(""); setTripAccommodation("");
-                      setSelectedTripId(null); setSelectedTripName("");
-                      if (user) {
-                        const supabase = createClient();
-                        const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id);
-                        if (memberData && memberData.length > 0) {
-                          const tripIds = memberData.map((m: any) => m.tripId);
-                          const { data: tripsData } = await supabase.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).order("createdAt", { ascending: false });
-                          setUserTrips(tripsData || []);
-                        } else {
-                          setUserTrips([]);
-                        }
-                      }
-                      setTripPickerOpen(true);
-                    }}
+                    onClick={() => { setShowPicker(false); openTripPicker(); }}
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "14px 12px", background: "transparent", border: "1px solid transparent", borderRadius: 12, cursor: "pointer", textAlign: "left" }}
                   >
                     <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -2256,8 +2270,46 @@ const [editDescription, setEditDescription] = useState("");
       )}
 
       {/* Golf Trip picker modal */}
+      {/* Plan Your Round sheet — dual path: schedule (live) or book (coming soon) */}
+      {planOpen && (
+        <div id="course-plan-sheet" onClick={() => setPlanOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px calc(28px + env(safe-area-inset-bottom))" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Plan Your Round</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>at {course.name}</div>
+
+            {/* Path 1 — add to upcoming rounds (live) */}
+            <button
+              onClick={() => { setPlanOpen(false); openTripPicker(); }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "16px 14px", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 14, cursor: "pointer", textAlign: "left", marginBottom: 12 }}
+            >
+              <div style={{ width: 42, height: 42, borderRadius: 11, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff" }}>Add to Upcoming Rounds</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2 }}>Pick a date, invite players, build your itinerary</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+
+            {/* Path 2 — book through external platform (coming soon placeholder) */}
+            <div style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "16px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, opacity: 0.75 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 11, background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>Book a Tee Time</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>GolfNow and other partners — coming soon</div>
+              </div>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#fbbf24", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 99, padding: "3px 8px", flexShrink: 0 }}>Soon</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {tripPickerOpen && (
-        <div onClick={() => setTripPickerOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+        <div id="course-trip-picker" onClick={() => setTripPickerOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
           <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px", maxHeight: "85vh", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
 
