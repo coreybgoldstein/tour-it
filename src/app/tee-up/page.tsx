@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { DirectionsButton } from "@/components/DirectionsButton";
 
 type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
 type FriendRow = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
@@ -19,6 +20,13 @@ type TripRow = {
   memberCount: number;
   gameCount: number;
   firstCourseLogo: string | null;
+  // Populated for single-course rounds so we can render a Directions button
+  // straight from the round card without navigating into the trip first.
+  firstCourseName: string | null;
+  firstCourseCity: string | null;
+  firstCourseState: string | null;
+  firstCourseLat: number | null;
+  firstCourseLng: number | null;
   isRound: boolean;       // 1 day, 1 course-stop
   isPast: boolean;
 };
@@ -295,10 +303,10 @@ export default function TeeUpPage() {
           tcByTrip.get(r.tripId)!.push(r);
         }
         const courseIds = Array.from(new Set(((tcRows ?? []) as any[]).flatMap(r => [r.courseId, r.secondaryCourseId]).filter(Boolean)));
-        const courseInfo = new Map<string, { logoUrl: string | null; holeCount: number | null }>();
+        const courseInfo = new Map<string, { logoUrl: string | null; holeCount: number | null; name: string | null; city: string | null; state: string | null; latitude: number | null; longitude: number | null }>();
         if (courseIds.length > 0) {
-          const { data: courseRows } = await supabase.from("Course").select("id, logoUrl, holeCount").in("id", courseIds);
-          for (const c of (courseRows ?? []) as any[]) courseInfo.set(c.id, { logoUrl: c.logoUrl, holeCount: c.holeCount });
+          const { data: courseRows } = await supabase.from("Course").select("id, logoUrl, holeCount, name, city, state, latitude, longitude").in("id", courseIds);
+          for (const c of (courseRows ?? []) as any[]) courseInfo.set(c.id, { logoUrl: c.logoUrl, holeCount: c.holeCount, name: c.name, city: c.city, state: c.state, latitude: c.latitude, longitude: c.longitude });
         }
         const today = new Date().toISOString().slice(0, 10);
         built = ((tripRows ?? []) as any[]).map(t => {
@@ -308,7 +316,8 @@ export default function TeeUpPage() {
             const b = tc.secondaryCourseId ? (courseInfo.get(tc.secondaryCourseId)?.holeCount ?? 0) : 0;
             return sum + a + b;
           }, 0);
-          const firstCourseLogo = tcs.length > 0 ? (courseInfo.get(tcs[0].courseId)?.logoUrl ?? null) : null;
+          const firstCourse = tcs.length > 0 ? courseInfo.get(tcs[0].courseId) : null;
+          const firstCourseLogo = firstCourse?.logoUrl ?? null;
           const endRef = t.endDate || t.startDate;
           const isPast = !!endRef && endRef < today;
           // Round = exactly one stop (no paired secondary course) on a single day.
@@ -328,7 +337,13 @@ export default function TeeUpPage() {
             courseCount: tcs.length, totalHoles,
             memberCount: memberByTrip.get(t.id) ?? 0,
             gameCount: gameByTrip.get(t.id) ?? 0,
-            firstCourseLogo, isRound, isPast,
+            firstCourseLogo,
+            firstCourseName: firstCourse?.name ?? null,
+            firstCourseCity: firstCourse?.city ?? null,
+            firstCourseState: firstCourse?.state ?? null,
+            firstCourseLat: firstCourse?.latitude ?? null,
+            firstCourseLng: firstCourse?.longitude ?? null,
+            isRound, isPast,
           };
         });
       }
@@ -670,7 +685,7 @@ function TripCard({ trip, onClick }: { trip: TripRow; onClick: () => void }) {
   if (trip.totalHoles > 0) meta.push(`${trip.totalHoles} holes`);
   if (trip.memberCount > 0) meta.push(`${trip.memberCount} ${trip.memberCount === 1 ? "golfer" : "golfers"}`);
   return (
-    <button onClick={onClick} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, boxSizing: "border-box" }}>
       <div style={{ width: 44, height: 44, borderRadius: 10, background: trip.imageUrl || trip.firstCourseLogo ? "transparent" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {trip.imageUrl
           ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -697,7 +712,10 @@ function TripCard({ trip, onClick }: { trip: TripRow; onClick: () => void }) {
           )}
         </div>
       </div>
+      {trip.isRound && !trip.isPast && trip.firstCourseName && (
+        <DirectionsButton course={{ name: trip.firstCourseName, city: trip.firstCourseCity, state: trip.firstCourseState, latitude: trip.firstCourseLat, longitude: trip.firstCourseLng }} />
+      )}
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
-    </button>
+    </div>
   );
 }
