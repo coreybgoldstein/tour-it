@@ -420,6 +420,8 @@ export default function ProfilePage() {
   const [editHandicap, setEditHandicap] = useState("");
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [usernameError, setUsernameError] = useState<string | null>(null);
   const [nameNudgeDismissed, setNameNudgeDismissed] = useState(false);
   const [editBio, setEditBio] = useState("");
   const [editHomeCourseSearch, setEditHomeCourseSearch] = useState("");
@@ -539,6 +541,10 @@ export default function ProfilePage() {
         setEditHandicap(profileData.handicapIndex?.toString() || "");
         setEditFirstName(profileData.firstName || "");
         setEditLastName(profileData.lastName || "");
+        // Pre-strip @-shaped usernames so the editor opens with a clean
+        // default (everything before the first @, minus whitespace). Users
+        // who already have a clean username see it unchanged.
+        setEditUsername((profileData.username || "").split("@")[0].replace(/\s/g, ""));
         setEditBio(profileData.bio || "");
       }
 
@@ -806,6 +812,10 @@ export default function ProfilePage() {
 
   async function handleSaveProfile() {
     if (!profile || !isOwner) return;
+    const username = editUsername.trim();
+    if (username.length < 3) { setUsernameError("Username must be at least 3 characters"); return; }
+    if (/[@\s]/.test(username)) { setUsernameError("Username can't contain @ or spaces"); return; }
+    setUsernameError(null);
     setSaving(true);
     const hcp = editHandicap ? parseFloat(editHandicap) : null;
     const first = editFirstName.trim();
@@ -815,16 +825,27 @@ export default function ProfilePage() {
     // both inputs are empty so an in-progress edit doesn't blank the
     // user's profile.
     const dn = first && last ? `${first} ${last}` : (first || last || profile.displayName);
-    await createClient().from("User").update({
+    const usernameChanged = username !== profile.username;
+    const { error } = await createClient().from("User").update({
       handicapIndex: isNaN(hcp!) ? null : hcp,
       firstName: first || null,
       lastName: last || null,
       displayName: dn,
+      username,
       bio: editBio.trim() || null,
       homeCourseId: homeCourse?.id ?? null,
       updatedAt: new Date().toISOString(),
     }).eq("id", profile.id);
-    setProfile(p => p ? { ...p, handicapIndex: isNaN(hcp!) ? null : hcp, firstName: first || null, lastName: last || null, displayName: dn, bio: editBio.trim() || null } : p);
+    if (error) {
+      setSaving(false);
+      if (usernameChanged && (error.code === "23505" || /unique|duplicate/i.test(error.message))) {
+        setUsernameError("That username is already taken");
+      } else {
+        setUsernameError(error.message);
+      }
+      return;
+    }
+    setProfile(p => p ? { ...p, handicapIndex: isNaN(hcp!) ? null : hcp, firstName: first || null, lastName: last || null, displayName: dn, username, bio: editBio.trim() || null } : p);
     setSaving(false); setShowEdit(false); setEditHomeCourseSearch(""); setEditHomeCourseResults([]);
   }
 
@@ -1236,6 +1257,22 @@ export default function ProfilePage() {
               </button>
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Username</label>
+              <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.06)", border: `1px solid ${usernameError ? "rgba(240,120,90,0.6)" : "rgba(255,255,255,0.1)"}`, borderRadius: 10, paddingLeft: 12 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginRight: 2 }}>@</span>
+                <input
+                  value={editUsername}
+                  onChange={e => { setEditUsername(e.target.value.toLowerCase().replace(/[@\s]/g, "")); if (usernameError) setUsernameError(null); }}
+                  placeholder="e.g. jgoldstein"
+                  autoComplete="username"
+                  style={{ flex: 1, background: "transparent", border: "none", padding: "10px 12px 10px 0", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }}
+                />
+              </div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: usernameError ? "rgba(240,120,90,0.85)" : "rgba(255,255,255,0.35)", marginTop: 5 }}>
+                {usernameError ?? "Lowercase, no spaces — not your email"}
+              </div>
+            </div>
             <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>First name</label>
@@ -1438,6 +1475,23 @@ export default function ProfilePage() {
           <button onClick={() => router.back()} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
+        </div>
+      )}
+
+      {/* Email-as-username warning — only the profile owner sees this, and
+          only if their username contains an @ (almost certainly the email
+          they signed up with). Persistent — no dismiss — until they pick
+          a real username. */}
+      {isOwner && profile.username?.includes("@") && (
+        <div style={{ margin: "12px 16px 0", display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "rgba(240,197,90,0.10)", border: "1px solid rgba(240,197,90,0.40)", borderRadius: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(240,197,90,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f0c55a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Your username looks like an email</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", marginTop: 1 }}>Pick something cleaner — @{profile.username} will show across the app.</div>
+          </div>
+          <button onClick={() => setShowEdit(true)} style={{ flexShrink: 0, padding: "6px 12px", borderRadius: 99, background: "#f0c55a", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a1408", cursor: "pointer" }}>Fix</button>
         </div>
       )}
 

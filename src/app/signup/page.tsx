@@ -261,11 +261,11 @@ export default function SignUpPage() {
               <input
                 className="field-input"
                 type="text"
-                placeholder="e.g. jgoldstein"
+                placeholder="e.g. jgoldstein — not your email"
                 value={username}
-                onChange={e => setUsername(e.target.value.toLowerCase().replace(/\s/g, ""))}
+                onChange={e => setUsername(e.target.value.toLowerCase().replace(/[\s@]/g, ""))}
               />
-              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Lowercase only, no spaces</p>
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Lowercase, no spaces — not your email</p>
             </div>
 
             <div className="field">
