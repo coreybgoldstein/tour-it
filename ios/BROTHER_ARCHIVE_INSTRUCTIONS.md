@@ -1,68 +1,48 @@
-# Mac archive — Version 1.0.3, Build 424
+# Mac archive — Version 1.0.4, Build 500
 
 ## Version + Build at a glance
 
 | | Value |
 |---|---|
-| Version (CFBundleShortVersionString) | **1.0.3** |
-| Build (CFBundleVersion) | **424** |
-| Previous live | 1.0.1 (live on App Store) |
+| Version (CFBundleShortVersionString) | **1.0.4** |
+| Build (CFBundleVersion) | **500** |
+| Previous live | 1.0.3 build 444 (live on App Store) |
 
-App Store Connect already has a **1.0.3** version slot opened with the
-new screenshots and app icon metadata. The archive MUST match — if you
-upload a 1.0.1 build now, App Store Connect will reject it (1.0.1 is
-already live, can't submit another build under that version).
+Open a **1.0.4** version slot in App Store Connect before archiving if
+one doesn't exist. The archive will reject if you try to upload 1.0.4
+without the matching ASC slot. If the slot exists with a different
+required build number, use that — but it must be > 444.
 
-## What's different about this build
+## What this build fixes
 
-The previous attempted fix (b401, code lived in the repo) went too far in
-the other direction — it dropped the screenshot listener completely and
-raised the background threshold to 60s. Result: post-screenshot and
-short-backgrounding black-WebView bugs that users have been hitting in
-production.
+**The bug:** In 1.0.3 build 444, after a screenshot OR a brief
+background-and-return, every tab EXCEPT Home goes blank and blinks
+rapidly when scrolled. Home stays fine. Hard-close and reopen recovers.
 
-The root cause those builds missed: WKWebView's compositor can hiccup
-after iOS captures the screen (screenshot, app-switcher snapshot, brief
-backgrounding) — the JS thread keeps running but the visible CALayer
-goes black. A JS-execution probe falsely reports the WebView healthy,
-so the existing probe+reload path never fires. reloadFromOrigin() WOULD
-fix it, but obliterates in-memory state on every screenshot — worse UX
-than the bug.
+**Root cause:** The `nudgeRender()` we added to fix the post-screenshot
+black-WebView issue was appending `translateZ(0)` to `document.body`'s
+transform style and restoring it on the next animation frame. On iOS
+WKWebView, even a one-frame transform on `<body>` promotes body to its
+own composite layer AND makes body the containing block for every
+`position: fixed` descendant. WebKit doesn't tear the promotion down
+promptly when the transform is restored to empty — fixed elements stay
+re-anchored to body for some window after. Home's scroll-snap feed is
+layout-invariant under that swap; every other route has full-page
+fixed/sticky chrome that breaks.
 
-This build (b424) ships TWO fixes in one archive so we cover both
-candidate root causes without waiting for diagnosis:
+There was also a re-entrancy bug: if two nudges fired within one frame
+(possible on certain screenshot+background sequences), the rAF restore
+would capture the stale `translateZ(0)` as its baseline and re-apply it
+permanently.
 
-**Fix 1 — Compositor hiccup (most likely cause):**
-- Re-adds the screenshot listener, but it no longer reloads. Instead
-  it calls `nudgeRender()`: evaluates a tiny JS snippet that appends a
-  `translateZ(0)` transform to `document.body`, forces a synchronous
-  reflow, then restores the original transform on the next animation
-  frame. This forces a GPU layer recomposite without disrupting any
-  state. Visually a no-op.
-- Also nudges on every `applicationDidBecomeActive` — covers the
-  short-backgrounding case the 60s probe threshold deliberately misses.
+**The fix:** Replaced the body-transform trick with a 1px window scroll
+nudge that restores on rAF, plus a 100ms throttle to prevent
+accumulation. Same callers, same NSLog telemetry. Window scroll position
+is not a stacking-context or containing-block input, so the entire
+side-effect class goes away.
 
-**Fix 2 — WebContent process Jetsam (less common but real):**
-- Installs a `WKNavigationDelegate` forwarding wrapper that intercepts
-  `webViewWebContentProcessDidTerminate(_:)`. When iOS kills the
-  WebContent render process under memory pressure, we now catch that
-  signal and call `reloadFromOrigin()` to spin up a fresh process.
-  Without this hook, JS is dead and `nudgeRender` no-ops — the user is
-  stuck on a permanently black WebView until they force-quit.
-- The wrapper transparently forwards every OTHER navigation-delegate
-  message (`decidePolicyFor`, `didStartProvisionalNavigation`, etc.) to
-  Capacitor's bridge via Objective-C message forwarding, so plugin
-  routing (deep links, URL handlers) keeps working unchanged. No
-  swizzling, no Capacitor subclassing — Capacitor never knows we wrapped
-  its delegate.
-
-**Unchanged from before:**
-- 60s probe+reload path for genuinely-suspended (URLSession zombie) case
-- JS-side heartbeat-only resume detection
-
-Result: screenshots, brief backgroundings, AND iOS memory kills all
-recover the WebView. The compositor-hiccup paths preserve state; the
-Jetsam path has to reload (no choice — the process is dead).
+Everything else (probe+reload at >60s, WebContent-process Jetsam handler,
+brand-dark backgrounds) is unchanged.
 
 ## Steps
 
@@ -79,6 +59,20 @@ git pull origin main
 # 4. SANITY CHECKS — every line must print "PRESENT".
 #    If any prints "MISSING", stop and let Corey know.
 
+# The new scroll-based nudge:
+grep -q "window.scrollTo(0, y + 1)" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: scroll-based nudgeRender" || echo "MISSING: scroll nudge"
+
+grep -q "__tiLastNudge" ios/App/App/AppDelegate.swift \
+  && echo "PRESENT: nudge throttle" || echo "MISSING: nudge throttle"
+
+# The body-transform trick MUST be gone — if this prints PRESENT, the
+# checkout is wrong:
+grep -q "translateZ(0)" ios/App/App/AppDelegate.swift \
+  && echo "REGRESSION: body-transform path still in AppDelegate" \
+  || echo "PRESENT: body-transform path removed"
+
+# Unchanged paths still in place:
 grep -q "backgroundedThreshold: TimeInterval = 60.0" ios/App/App/AppDelegate.swift \
   && echo "PRESENT: 60s threshold" || echo "MISSING: 60s threshold"
 
@@ -88,29 +82,18 @@ grep -q "probeAndRecoverIfNeeded" ios/App/App/AppDelegate.swift \
 grep -q "userDidTakeScreenshotNotification" ios/App/App/AppDelegate.swift \
   && echo "PRESENT: screenshot listener" || echo "MISSING: screenshot listener"
 
-grep -q "func nudgeRender" ios/App/App/AppDelegate.swift \
-  && echo "PRESENT: nudgeRender path" || echo "MISSING: nudgeRender path"
-
 grep -q "WebViewDelegateWrapper" ios/App/App/AppDelegate.swift \
   && echo "PRESENT: nav-delegate wrapper class" || echo "MISSING: wrapper class"
 
 grep -q "webViewWebContentProcessDidTerminate" ios/App/App/AppDelegate.swift \
   && echo "PRESENT: Jetsam handler" || echo "MISSING: Jetsam handler"
 
-grep -q "CURRENT_PROJECT_VERSION = 424" ios/App/App.xcodeproj/project.pbxproj \
-  && echo "PRESENT: build 424" || echo "MISSING: build is not 424"
+# Version + build numbers in pbxproj:
+grep -q "CURRENT_PROJECT_VERSION = 500" ios/App/App.xcodeproj/project.pbxproj \
+  && echo "PRESENT: build 500" || echo "MISSING: build is not 500"
 
-grep -q "MARKETING_VERSION = 1.0.3" ios/App/App.xcodeproj/project.pbxproj \
-  && echo "PRESENT: version 1.0.3" || echo "MISSING: version is not 1.0.3"
-
-ls ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png > /dev/null 2>&1 \
-  && echo "PRESENT: new app icon" || echo "MISSING: app icon"
-
-grep -q "heartbeat-only resume-recovery active" src/components/NativeBootstrap.tsx \
-  && echo "PRESENT: JS heartbeat-only path" || echo "MISSING: JS still has old reload paths"
-
-ls ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png > /dev/null 2>&1 \
-  && echo "PRESENT: Splash asset" || echo "MISSING: Splash asset"
+grep -q "MARKETING_VERSION = 1.0.4" ios/App/App.xcodeproj/project.pbxproj \
+  && echo "PRESENT: version 1.0.4" || echo "MISSING: version is not 1.0.4"
 
 # 5. Sync Capacitor
 npx cap sync ios
@@ -123,89 +106,88 @@ open ios/App/App.xcworkspace
 
 1. Top toolbar: select **Any iOS Device (arm64)** as the destination.
 2. Click the **App** target → **General** tab.
-3. Confirm **Version = 1.0.3** and **Build = 424**. Both are already
-   bumped in the repo — if the General tab shows 1.0.1 or 373/400,
-   something's wrong with the checkout. Stop and let Corey know.
-4. **Product → Archive**. Wait 3-5 minutes.
-5. Organizer opens → **Distribute App** → **TestFlight & App Store** →
+3. Confirm **Version = 1.0.4** and **Build = 500**. Both are already
+   bumped in the repo — if the General tab shows 1.0.3 or 444 or
+   anything lower, something's wrong with the checkout. Stop and let
+   Corey know.
+4. If you've built locally since the last TestFlight upload and the
+   build number ASC expects is higher than 500 (rare but possible),
+   bump Build in the General tab to one above the most recent ASC
+   build number. Anything > 444 is acceptable as long as it's also
+   higher than any prior TestFlight upload under 1.0.4.
+5. **Product → Archive**. Wait 3-5 minutes.
+6. Organizer opens → **Distribute App** → **TestFlight & App Store** →
    **Upload**. Use automatic signing.
-6. Wait for **"Upload Successful"**.
+7. Wait for **"Upload Successful"**.
 
 ## Test plan on TestFlight before submitting to App Review
 
-All four tests must pass.
+All four tests must pass — Test 3 is the bug-fix verification.
 
-### Test 1 — Splash (unchanged from b400)
+### Test 1 — Splash (regression check)
 
 Force close the TestFlight app. Open it. Green Tour It splash with the
 full logo, smooth transition to the app. No white flash, no wrong
 aspect ratio.
 
-### Test 2 — Quick app switch (NEW BEHAVIOR — most important)
+### Test 2 — Quick app switch (regression check)
 
-Open the app and scroll partway down the home feed. Take note of which
-clip is on screen. Press the home button (or swipe up) to leave the
-app. Open Messages, wait ~10 seconds, return to Tour It.
+Open the app and scroll partway down the home feed. Press home / swipe
+up to leave. Open Messages, wait ~10 seconds, return to Tour It.
 
 **Expected:** the app comes back to the EXACT clip you left on. No
-reload, no scroll-jump, no visible flash. This is the test that proves
-the over-recovery is gone.
+reload, no scroll-jump, no flash.
 
-### Test 3 — Screenshot (the bug this build is fixing)
+### Test 3 — Screenshot, then navigate (THE BUG FIX)
 
-With the app open on any screen, press power + volume-up to take a
-screenshot. The app should remain on the same screen with no flash,
-no reload, no stutter — and critically, **no black WebView**. The
-screen content stays visible the whole time; the iOS screenshot
-animation plays over it. Repeat 3-5 times in a row to make sure each
-screenshot still leaves the WebView visible.
+Open the app on Home. Take a screenshot (power + volume-up).
+Then tap each bottom-tab in turn: **Search**, **Lists**, **Profile**.
+
+**Expected on 1.0.4 b500:** every tab loads and scrolls normally with no
+blinking. Scroll up and down on each tab — no flicker, no blank patches.
+
+**What was broken in 1.0.3 b444:** Search/Lists/Profile/etc. went blank
+and blinked rapidly when scrolled. Home was fine. If you see that
+behavior on this build, the fix didn't land — capture a Console.app log
+and ping Corey.
+
+Repeat the same flow after backgrounding for 5-15 seconds and returning
+(this hits the same code path as the screenshot).
 
 ### Test 4 — Long backgrounding (recovery still works)
 
 Open the app, then lock the phone or switch to another app and leave
 it for at least **two minutes**. Return to Tour It.
 
-**Expected:** the app remains responsive. You may or may not see a
-brief reload — that's fine and correct (it means the probe detected
-a dead WebView and recovered). What you should NOT see: a permanently
-blank screen, a frozen UI, or content that never loads.
+**Expected:** the app remains responsive. You may see a brief reload —
+that's fine and correct (probe detected a dead WebView and recovered).
+What you should NOT see: a permanently blank screen or frozen UI.
 
 ### Optional Console.app diagnostic
 
-Plug phone into Mac, open Console.app, filter on `TourIt`. Trigger the
-tests above. You should see:
+Plug phone into Mac, open Console.app, filter on `TourIt`. Run the
+tests above. Expected lines:
 
 - **App launch:** `[TourIt] installed WebContent-process termination handler`
-  (proves the Jetsam hook installed correctly — if this line never
-  appears, Fix 2 isn't active)
-- Test 2 (10s switch): `[TourIt] nudgeRender reason=didBecomeActive` and
+- **Test 2 (10s switch):** `[TourIt] nudgeRender reason=didBecomeActive` and
   `[TourIt] background gap 10nnnms — below threshold, skipping probe`
-- Test 3 (screenshot): `[TourIt] nudgeRender reason=screenshot` per
-  screenshot. No `recoverWebViews` lines — those would mean we regressed
-  to the state-wiping behavior.
-- Test 4 (long backgrounding, healthy): `[TourIt] nudgeRender` +
-  `[TourIt] background gap NNNms — probing WebView` followed by
-  `[TourIt] probe ok — WebView alive, skip reload`
-- Test 4 (long backgrounding, dead): same as above but ends with
-  `[TourIt] probe failed — reload` and `[TourIt] recoverWebViews reason=didBecomeActive`
-- **If a Jetsam happens (rare, memory-pressure):**
-  `[TourIt] WebContent process terminated — reloadFromOrigin` —
-  this proves Fix 2 caught it. The WebView will reload (state lost).
+- **Test 3 (screenshot):** `[TourIt] nudgeRender reason=screenshot` per
+  screenshot. No `recoverWebViews` lines.
+- **Test 4 (long bg):** `[TourIt] nudgeRender` +
+  `[TourIt] background gap NNNms — probing WebView` followed by either
+  `probe ok — WebView alive, skip reload` (healthy) or
+  `probe failed — reload` + `recoverWebViews reason=didBecomeActive` (suspended).
 
-If you see `[TourIt] recoverWebViews` during Test 2 or Test 3, something
-is wrong and we need to look at it before submitting to App Review.
-
-**If the black-WebView bug still happens** despite this build:
-1. Capture the Console.app log from the moment of failure
-2. Check for `[TourIt] nudgeRender` lines — if they fire but bug persists,
-   the CSS reflow trick isn't strong enough; we'll need to escalate to
-   `removeFromSuperview` + re-add
-3. Check for `[TourIt] WebContent process terminated` — if it fires but
-   the screen doesn't recover, `reloadFromOrigin` isn't working in this
-   case and we'll need to investigate the new WebView instance
-4. If NEITHER line appears around the failure, our hooks aren't firing
-   at all — the bug is something we haven't predicted (e.g., scene
-   lifecycle, third-party plugin interaction)
+**If Test 3 still fails after this build lands:**
+1. Capture the Console.app log from the moment Search/Lists/Profile
+   blinks.
+2. Confirm `[TourIt] nudgeRender reason=screenshot` fires when you take
+   the screenshot. If it doesn't, the build wasn't archived from this
+   commit — re-check the SANITY CHECKS output.
+3. If the nudge fires but the tabs still blink, the second-rank suspect
+   is `applyBrandBackgroundsRecursively` walking into the WKWebView's
+   internal subviews on every resume. Ping Corey with the log; we'll
+   patch that next.
 
 ## Submitting to App Review
 
@@ -213,16 +195,16 @@ Only submit after all four tests pass. If anything fails, ping Corey.
 
 ## What's in this archive
 
-- b424 (this commit):
-  - Screenshot listener re-added with non-destructive `nudgeRender`
-    (CSS transform reflow). Also nudges on every
-    `applicationDidBecomeActive`.
-  - `WebViewDelegateWrapper` class added — transparent forwarder that
-    intercepts `webViewWebContentProcessDidTerminate(_:)` so we can
-    recover from iOS Jetsam kills. Installs in
-    `didFinishLaunchingWithOptions` and re-installs on every
-    `applicationDidBecomeActive` as a safety net.
-  - Probe-before-reload (60s threshold) and JS heartbeat path unchanged.
-- Earlier changes that stay in place: brand-dark backgrounds,
-  scroll-bounce kill, splash asset regen, app icon
-- All web-side improvements come along for free via `server.url`
+- b500 (this commit):
+  - `nudgeRender` rewritten to use a 1px scroll-and-restore + 100ms
+    throttle. Replaces the body.style.transform trick that was making
+    Home survive but other tabs go blank after screenshots / brief
+    backgroundings.
+- Everything else unchanged from b444:
+  - Screenshot listener that calls `nudgeRender` (now safe)
+  - `nudgeRender` also fires on every `applicationDidBecomeActive`
+  - Probe-before-reload at 60s threshold
+  - `WebViewDelegateWrapper` for WebContent-process Jetsam recovery
+  - Brand-dark backgrounds, scroll-bounce kill, splash assets, app icon
+- All web-side improvements (scorecard OCR, username editor + email-as-
+  username banner, AI hole detection) come along for free via `server.url`.
