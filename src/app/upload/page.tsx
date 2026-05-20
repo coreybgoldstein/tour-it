@@ -92,6 +92,9 @@ function UploadPageInner() {
   const [holePars, setHolePars] = useState<Record<number, number>>({});
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedHole, setSelectedHole] = useState<number | null>(null);
+  const [detectingHole, setDetectingHole] = useState(false);
+  const [holeCandidates, setHoleCandidates] = useState<Array<{ holeNumber: number; confidence: "high" | "medium" | "low"; reason: "adjacency" | "gps" | "popularity"; detail?: string }>>([]);
+  const [detectionError, setDetectionError] = useState<string | null>(null);
   const [contentFormat, setContentFormat] = useState<string>("");
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -1292,6 +1295,124 @@ function UploadPageInner() {
             {/* Hole picker for Single Shot or Full Hole */}
             {(contentFormat === "SHOT" || contentFormat === "FULL_HOLE") && (
               <div>
+                {/* Tour It hole detection */}
+                {selectedCourse && (
+                  <div style={{ marginBottom: 16 }}>
+                    <button
+                      type="button"
+                      disabled={detectingHole}
+                      onClick={async () => {
+                        if (!selectedCourse) return;
+                        setDetectingHole(true);
+                        setDetectionError(null);
+                        setHoleCandidates([]);
+                        try {
+                          const supabase = createClient();
+                          const { data: { session } } = await supabase.auth.getSession();
+                          const token = session?.access_token;
+                          if (!token) throw new Error("Not signed in");
+                          const res = await fetch(`/api/upload/detect-hole`, {
+                            method: "POST",
+                            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              courseId: selectedCourse.id,
+                              gpsLat: gpsCoords?.lat ?? null,
+                              gpsLng: gpsCoords?.lng ?? null,
+                            }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok || !data?.ok) {
+                            setDetectionError(data?.error ?? "Couldn't detect");
+                            return;
+                          }
+                          if (!Array.isArray(data.candidates) || data.candidates.length === 0) {
+                            setDetectionError("Not enough signal yet — pick a hole below");
+                            return;
+                          }
+                          setHoleCandidates(data.candidates);
+                        } catch (err) {
+                          setDetectionError(err instanceof Error ? err.message : "Detection failed");
+                        } finally {
+                          setDetectingHole(false);
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        background: detectingHole ? "rgba(77,168,98,0.08)" : "rgba(77,168,98,0.12)",
+                        border: "1px solid rgba(77,168,98,0.4)",
+                        borderRadius: 12,
+                        padding: "12px 14px",
+                        fontFamily: "'Outfit', sans-serif",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#4da862",
+                        cursor: detectingHole ? "default" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
+                      }}
+                    >
+                      {detectingHole && (
+                        <span
+                          aria-hidden
+                          style={{
+                            width: 12,
+                            height: 12,
+                            border: "2px solid rgba(77,168,98,0.35)",
+                            borderTopColor: "#4da862",
+                            borderRadius: "50%",
+                            animation: "tourit-detect-spin 0.7s linear infinite",
+                          }}
+                        />
+                      )}
+                      <span>{detectingHole ? "Tour It is figuring it out…" : "Let Tour It pick the hole"}</span>
+                      <style>{`@keyframes tourit-detect-spin { to { transform: rotate(360deg); } }`}</style>
+                    </button>
+
+                    {detectionError && (
+                      <div style={{ marginTop: 8, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", textAlign: "center" }}>{detectionError}</div>
+                    )}
+
+                    {holeCandidates.length > 0 && (
+                      <div style={{ marginTop: 12 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>Tour It suggests</div>
+                        <div style={{ display: "grid", gridTemplateColumns: `repeat(${holeCandidates.length}, 1fr)`, gap: 8 }}>
+                          {holeCandidates.map(c => {
+                            const ringColor = c.confidence === "high" ? "rgba(77,168,98,0.7)" : c.confidence === "medium" ? "rgba(240,197,90,0.5)" : "rgba(255,255,255,0.18)";
+                            const tintBg = c.confidence === "high" ? "rgba(77,168,98,0.12)" : c.confidence === "medium" ? "rgba(240,197,90,0.08)" : "rgba(255,255,255,0.04)";
+                            const reasonLabel = c.reason === "adjacency" ? "Recent" : c.reason === "gps" ? "GPS" : "Popular";
+                            return (
+                              <button
+                                key={c.holeNumber}
+                                type="button"
+                                onClick={() => { setSelectedHole(c.holeNumber); setStep(4); }}
+                                style={{
+                                  background: tintBg,
+                                  border: `1px solid ${ringColor}`,
+                                  borderRadius: 12,
+                                  padding: "10px 6px",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  alignItems: "center",
+                                  gap: 4,
+                                }}
+                              >
+                                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1 }}>{c.holeNumber}</div>
+                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: c.confidence === "high" ? "#4da862" : c.confidence === "medium" ? "#f0c55a" : "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>{reasonLabel}</div>
+                                {c.detail && (
+                                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.4)", textAlign: "center", lineHeight: 1.3 }}>{c.detail}</div>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <p className="nine-label" style={{ marginTop: 0 }}>Front Nine</p>
                 <div className="holes-grid">
                   {frontNine.map(n => (
