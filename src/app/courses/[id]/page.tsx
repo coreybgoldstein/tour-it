@@ -1716,7 +1716,7 @@ const [editDescription, setEditDescription] = useState("");
                   const data = await res.json();
                   if (!res.ok || !data?.ok) {
                     setExtractionMessage(data?.error ?? "Couldn't read that scorecard");
-                    window.setTimeout(() => setExtractionMessage(null), 4500);
+                    window.setTimeout(() => setExtractionMessage(null), 12000);
                     return;
                   }
 
@@ -1730,6 +1730,11 @@ const [editDescription, setEditDescription] = useState("");
                     confByNum[h.holeNumber] = h.confidence ?? { par: "low", yardage: "low", handicapRank: "low" };
                   }
 
+                  // Photo is treated as source of truth. AI-extracted values
+                  // overwrite existing scorecard data when present; existing
+                  // values are only preserved when AI returned null for that
+                  // field. User can still revert any cell in edit mode before
+                  // tapping Save.
                   const merged: typeof editedHoles = [];
                   for (let n = 1; n <= holeCount; n++) {
                     const existing = holes.find(h => h.holeNumber === n);
@@ -1747,8 +1752,9 @@ const [editDescription, setEditDescription] = useState("");
                     } else {
                       merged.push({
                         ...existing,
-                        yardage: existing.yardage ?? (typeof ex?.yardage === "number" ? ex.yardage : null),
-                        handicapRank: existing.handicapRank ?? (typeof ex?.handicapRank === "number" ? ex.handicapRank : (null as unknown as number)),
+                        par: typeof ex?.par === "number" ? ex.par : existing.par,
+                        yardage: typeof ex?.yardage === "number" ? ex.yardage : existing.yardage,
+                        handicapRank: typeof ex?.handicapRank === "number" ? ex.handicapRank : existing.handicapRank,
                       });
                     }
                   }

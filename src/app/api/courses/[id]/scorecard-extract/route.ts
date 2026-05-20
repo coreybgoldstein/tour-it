@@ -35,7 +35,7 @@ Return JSON only — no commentary, no markdown, no code fences. Schema:
 }
 
 Rules:
-- Yardage: pick ONE tee column. Prefer the longest/championship tee if multiple are visible. Identify which color/label in the top-level "tee" field.
+- Yardage: ALWAYS use the tips (the LONGEST tee column on the card). It may be labeled "Black", "Tips", "Championship", "Champ", "Tournament", "Gold", "Pro", or similar — but always the one with the highest yardages. NEVER use middle or forward tees. If only one tee is visible, use that one. Identify which column you used in the top-level "tee" field.
 - Handicap rank (also called HCP, HDCP, or Stroke Index) is a row with values 1-18, each appearing exactly once across all 18 holes.
 - Ignore total / Out / In / 9 / 18 totals columns — only return per-hole values.
 - If a cell is illegible or absent, return null for that field with confidence "low".
