@@ -414,6 +414,9 @@ export default function CourseProfilePage() {
   const [scorecardView, setScorecardView] = useState<"digital" | "photo">("digital");
   const [uploadingScorecardPhoto, setUploadingScorecardPhoto] = useState(false);
   const scorecardPhotoRef = useRef<HTMLInputElement>(null);
+  const [extractingScorecard, setExtractingScorecard] = useState(false);
+  const [extractionMessage, setExtractionMessage] = useState<string | null>(null);
+  const [extractionConfidence, setExtractionConfidence] = useState<Record<number, { par?: string; yardage?: string; handicapRank?: string }>>({});
   const [contributeOpen, setContributeOpen] = useState(false);
   useKeyboardAwareSheet(contributeOpen, "course-contribute-sheet");
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -1635,6 +1638,43 @@ const [editDescription, setEditDescription] = useState("");
               </div>
             )}
 
+            {/* AI extraction banner */}
+            {(extractingScorecard || extractionMessage) && (
+              <div
+                role="status"
+                style={{
+                  marginBottom: 16,
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  background: extractingScorecard ? "rgba(77,168,98,0.12)" : "rgba(240,197,90,0.10)",
+                  border: `1px solid ${extractingScorecard ? "rgba(77,168,98,0.35)" : "rgba(240,197,90,0.30)"}`,
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 12,
+                  color: extractingScorecard ? "#4da862" : "rgba(255,255,255,0.75)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                {extractingScorecard && (
+                  <span
+                    aria-hidden
+                    style={{
+                      width: 12,
+                      height: 12,
+                      border: "2px solid rgba(77,168,98,0.35)",
+                      borderTopColor: "#4da862",
+                      borderRadius: "50%",
+                      animation: "tourit-spin 0.7s linear infinite",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+                <span>{extractionMessage ?? "Tour It is reading your scorecard…"}</span>
+                <style>{`@keyframes tourit-spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+            )}
+
             {/* Hidden file input */}
             <input
               ref={scorecardPhotoRef}
@@ -1649,13 +1689,83 @@ const [editDescription, setEditDescription] = useState("");
                 const ext = file.name.split(".").pop();
                 const path = `scorecards/${course.id}.${ext}`;
                 const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: true });
+                let publicUrl: string | null = null;
                 if (!upErr) {
-                  const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+                  publicUrl = supabase.storage.from("tour-it-photos").getPublicUrl(path).data.publicUrl;
                   await supabase.from("Course").update({ scorecardImageUrl: publicUrl }).eq("id", course.id);
                   setCourse(c => c ? { ...c, scorecardImageUrl: publicUrl } : c);
                 }
                 setUploadingScorecardPhoto(false);
                 e.target.value = "";
+
+                if (!publicUrl) return;
+
+                // Kick off AI extraction. Fill nulls on existing holes, full-fill new ones.
+                setExtractingScorecard(true);
+                setExtractionMessage("Tour It is reading your scorecard…");
+                try {
+                  const { data: { session } } = await supabase.auth.getSession();
+                  const token = session?.access_token;
+                  if (!token) throw new Error("Not signed in");
+
+                  const res = await fetch(`/api/courses/${course.id}/scorecard-extract`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ imageUrl: publicUrl }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok || !data?.ok) {
+                    setExtractionMessage(data?.error ?? "Couldn't read that scorecard");
+                    window.setTimeout(() => setExtractionMessage(null), 4500);
+                    return;
+                  }
+
+                  const holeCount: number = data.holeCount === 9 ? 9 : 18;
+                  type ExtractedHole = { holeNumber: number; par: number | null; handicapRank: number | null; yardage: number | null; confidence?: { par?: string; yardage?: string; handicapRank?: string } };
+                  const byNum: Record<number, ExtractedHole> = {};
+                  const confByNum: Record<number, { par?: string; yardage?: string; handicapRank?: string }> = {};
+                  for (const h of (data.holes as ExtractedHole[])) {
+                    if (typeof h?.holeNumber !== "number" || h.holeNumber < 1 || h.holeNumber > 18) continue;
+                    byNum[h.holeNumber] = h;
+                    confByNum[h.holeNumber] = h.confidence ?? { par: "low", yardage: "low", handicapRank: "low" };
+                  }
+
+                  const merged: typeof editedHoles = [];
+                  for (let n = 1; n <= holeCount; n++) {
+                    const existing = holes.find(h => h.holeNumber === n);
+                    const ex = byNum[n];
+                    if (!existing) {
+                      merged.push({
+                        id: "__new__",
+                        holeNumber: n,
+                        par: typeof ex?.par === "number" ? ex.par : 4,
+                        yardage: typeof ex?.yardage === "number" ? ex.yardage : null,
+                        handicapRank: typeof ex?.handicapRank === "number" ? ex.handicapRank : (null as unknown as number),
+                        imageUrl: null,
+                        description: null,
+                      });
+                    } else {
+                      merged.push({
+                        ...existing,
+                        yardage: existing.yardage ?? (typeof ex?.yardage === "number" ? ex.yardage : null),
+                        handicapRank: existing.handicapRank ?? (typeof ex?.handicapRank === "number" ? ex.handicapRank : (null as unknown as number)),
+                      });
+                    }
+                  }
+
+                  setEditedHoles(merged);
+                  setExtractionConfidence(confByNum);
+                  setScorecardView("digital");
+                  setScorecardEditMode(true);
+                  setExtractionMessage(`Filled from photo — review and save${data.tee ? ` (yardages from ${data.tee} tee)` : ""}`);
+                  window.setTimeout(() => setExtractionMessage(null), 6000);
+                } catch (err) {
+                  const msg = err instanceof Error ? err.message : "Extraction failed";
+                  setExtractionMessage(msg);
+                  window.setTimeout(() => setExtractionMessage(null), 4500);
+                } finally {
+                  setExtractingScorecard(false);
+                }
               }}
             />
 
@@ -1674,7 +1784,8 @@ const [editDescription, setEditDescription] = useState("");
                 ) : (
                   <div style={{ textAlign: "center", padding: "40px 20px", border: "1.5px dashed rgba(255,255,255,0.1)", borderRadius: 16 }}>
                     <div style={{ fontSize: 32, marginBottom: 12 }}>📷</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 16 }}>Upload a photo of the official scorecard</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Upload a photo of the scorecard</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 16 }}>Tour It will read it and fill the digital scorecard for you</div>
                     <button
                       onClick={() => scorecardPhotoRef.current?.click()}
                       disabled={uploadingScorecardPhoto}
@@ -1704,12 +1815,18 @@ const [editDescription, setEditDescription] = useState("");
                       </div>
                       {nine.map((h, idx) => {
                         const globalIdx = start + idx;
+                        const conf = extractionConfidence[h.holeNumber];
+                        const confStyle = (level: string | undefined) =>
+                          level === "low" ? { borderColor: "rgba(240,197,90,0.6)", background: "rgba(240,197,90,0.05)" } as const :
+                          level === "medium" ? { borderColor: "rgba(240,197,90,0.3)" } as const :
+                          undefined;
                         return (
                           <div key={h.holeNumber} style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 1fr", gap: 6, marginBottom: 6, alignItems: "center" }}>
                             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.5)", textAlign: "center" }}>{h.holeNumber}</div>
                             <select
                               className="sc-input"
                               value={h.par}
+                              style={confStyle(conf?.par)}
                               onChange={e => {
                                 const v = parseInt(e.target.value);
                                 setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, par: v } : eh));
@@ -1722,6 +1839,7 @@ const [editDescription, setEditDescription] = useState("");
                               type="number" min={1}
                               value={h.yardage ?? ""}
                               placeholder="—"
+                              style={confStyle(conf?.yardage)}
                               onChange={e => {
                                 const v = e.target.value === "" ? null : parseInt(e.target.value) || null;
                                 setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, yardage: v } : eh));
@@ -1730,6 +1848,7 @@ const [editDescription, setEditDescription] = useState("");
                             <select
                               className="sc-input"
                               value={h.handicapRank ?? ""}
+                              style={confStyle(conf?.handicapRank)}
                               onChange={e => {
                                 const v = e.target.value === "" ? null : parseInt(e.target.value);
                                 setEditedHoles(prev => prev.map((eh, i) => i === globalIdx ? { ...eh, handicapRank: v as any } : eh));
