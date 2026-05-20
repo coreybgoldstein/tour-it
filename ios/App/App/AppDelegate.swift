@@ -160,12 +160,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     /// reloadFromOrigin() fixes it but obliterates in-memory state, which
     /// is worse than the bug.
     ///
-    /// The trick: append " translateZ(0)" to body.style.transform, force a
-    /// layout, then restore the original next frame. translateZ(0) is the
-    /// standard GPU-promote hint; appending it bumps body into its own
-    /// composite layer momentarily, which clears render-pipeline glitches.
-    /// Visually a no-op (the transform is restored before any frame paints
-    /// the modified value). State-preserving and cheap.
+    /// The mechanism: scroll the document by 1px and restore on the next
+    /// animation frame. This forces the compositor to recomposite without
+    /// touching styles, transforms, or stacking contexts.
+    ///
+    /// Why not body.style.transform: the original implementation appended
+    /// `translateZ(0)` to body's transform and restored it on rAF. That
+    /// worked as a nudge but had two costs on iOS WKWebView:
+    ///   (a) Any transform on body — even briefly — makes body the
+    ///       containing block for `position: fixed` descendants. WebKit
+    ///       keeps the layer-promotion of body active for some time after
+    ///       the transform is restored, which leaves fixed elements
+    ///       resolved against body instead of viewport. Routes whose
+    ///       layout is invariant under that swap (e.g. Home's scroll-snap
+    ///       feed) survive; routes with full-page fixed/sticky chrome go
+    ///       blank or blink on scroll until the layer is torn down.
+    ///   (b) Re-entrancy bug: the rAF restore captured `prev` from the
+    ///       current style. Two nudges within one frame would have the
+    ///       second one capture the not-yet-restored `translateZ(0)` as
+    ///       its `prev`, then restore body to that stale value
+    ///       permanently. Persistent transform = persistent (a).
+    ///
+    /// Scroll-based nudge sidesteps both: window scroll position is not a
+    /// stacking-context or containing-block input, and the 100ms throttle
+    /// prevents accumulation if multiple triggers fire close together.
     ///
     /// Safe to fire-and-forget: if JS is genuinely dead (which is what the
     /// probe+reload path catches), the eval just no-ops; no completion
@@ -175,13 +193,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         NSLog("[TourIt] nudgeRender reason=\(reason)")
         let js = """
         (function() {
-          var b = document.body;
-          if (!b) return;
-          var prev = b.style.transform || '';
-          b.style.transform = prev + ' translateZ(0)';
-          // Force a synchronous reflow so the compositor reads the new layer.
-          void b.offsetHeight;
-          requestAnimationFrame(function() { b.style.transform = prev; });
+          var now = Date.now();
+          if (window.__tiLastNudge && now - window.__tiLastNudge < 100) return;
+          window.__tiLastNudge = now;
+          var y = window.scrollY || 0;
+          window.scrollTo(0, y + 1);
+          requestAnimationFrame(function() { window.scrollTo(0, y); });
         })();
         """
         web.evaluateJavaScript(js, completionHandler: nil)
