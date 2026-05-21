@@ -258,8 +258,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillEnterForeground(_ application: UIApplication) { }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Re-apply brand backgrounds once the view tree is guaranteed to be live.
-        applyBrandBackgroundsRecursively()
+        // EXPERIMENT b511: applyBrandBackgroundsRecursively() call removed
+        // from the resume path. b510 removed nudgeRender and the dark-screen
+        // bug persisted, so the next-rank suspect is this walk recursing
+        // into the WKWebView's internal compositor subviews on every resume
+        // and mutating their backgroundColor. didFinishLaunching still
+        // calls it once at app startup; we just don't re-run it on every
+        // foreground. If the dark-screen bug stops, this was the cause.
 
         // Belt-and-suspenders: re-install the WebContent-process termination
         // handler in case (a) it wasn't installed at launch because the
