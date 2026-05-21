@@ -7,12 +7,19 @@ import { useEffect, useState } from "react";
 // goes dark after a screenshot or background return. Ships safely behind
 // a localStorage toggle.
 //
-// Enable on a device:  https://www.touritgolf.com/?debug=1
-// Disable:             https://www.touritgolf.com/?debug=0
+// Two ways to toggle:
 //
-// Once flipped on, the flag persists across launches until explicitly
-// disabled. The `?debug=` param is stripped from the URL after it's
-// applied so links can be shared without leaking the toggle state.
+//   1. From inside the Capacitor app (no URL bar): tap anywhere on the
+//      screen 5 times within 1 second. Toggles the overlay on/off.
+//   2. From a browser with a URL bar (Safari, Chrome):
+//        https://www.touritgolf.com/?debug=1   to enable
+//        https://www.touritgolf.com/?debug=0   to disable
+//
+// The flag persists in localStorage across launches until toggled off.
+// The `?debug=` param is stripped from the URL after it's applied so
+// shared links don't leak the toggle state. Storage is per-origin and
+// is NOT shared between Safari and the Capacitor WebView, so the
+// 5-tap gesture is the only way to enable inside the installed app.
 
 const STORAGE_KEY = "tourit-debug-overlay";
 const MAX_EVENTS = 5;
@@ -44,6 +51,32 @@ export default function DebugEventOverlay() {
       window.history.replaceState(window.history.state, "", clean);
     }
     try { setEnabled(localStorage.getItem(STORAGE_KEY) === "1"); } catch {}
+  }, []);
+
+  // 5-taps-in-1s gesture to toggle. Listens on touchstart globally but
+  // doesn't preventDefault/stopPropagation — each tap still hits whatever
+  // element is underneath, so no UI is blocked. This is the only way to
+  // toggle from inside the Capacitor app, which has no URL bar.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const taps: number[] = [];
+    const handler = () => {
+      const now = Date.now();
+      taps.push(now);
+      while (taps.length > 5) taps.shift();
+      if (taps.length === 5 && now - taps[0] < 1000) {
+        let isOn = false;
+        try { isOn = localStorage.getItem(STORAGE_KEY) === "1"; } catch {}
+        try {
+          if (isOn) localStorage.removeItem(STORAGE_KEY);
+          else localStorage.setItem(STORAGE_KEY, "1");
+        } catch {}
+        setEnabled(!isOn);
+        taps.length = 0;
+      }
+    };
+    document.addEventListener("touchstart", handler, { passive: true });
+    return () => document.removeEventListener("touchstart", handler);
   }, []);
 
   // Wire up listeners only when enabled.
