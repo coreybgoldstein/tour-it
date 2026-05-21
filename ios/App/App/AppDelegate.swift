@@ -102,33 +102,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             self?.installContentProcessTerminationHandlerIfNeeded()
         }
 
-        // Re-register the screenshot listener. The previous version pulled it
-        // out because the recovery (a full reload) was destroying in-memory
-        // UI state on every screenshot. The new path calls nudgeRender(),
-        // which forces a GPU layer recomposite without reloading — so users
-        // can screenshot all day without losing state OR seeing a black
-        // WebView. See nudgeRender() doc comment for the mechanism.
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleScreenshot),
-            name: UIApplication.userDidTakeScreenshotNotification,
-            object: nil
-        )
+        // Screenshot listener intentionally NOT registered. The previous
+        // path called nudgeRender() which we've removed — see below for the
+        // diagnostic plan.
 
         return true
-    }
-
-    @objc private func handleScreenshot() {
-        nudgeRender(reason: "screenshot")
     }
 
     /// Install our WKNavigationDelegate wrapper on the live WebView so we
     /// receive `webViewWebContentProcessDidTerminate(_:)` when iOS kills the
     /// WebContent render process (Jetsam under memory pressure, content-
     /// process crash, etc.). Without this hook the WebView's render surface
-    /// goes permanently blank — JS is dead so our nudgeRender no-ops, and
-    /// our probe-and-reload path only checks on `applicationDidBecomeActive`
-    /// so a foreground Jetsam leaves the user stuck.
+    /// goes permanently blank — JS is dead, and our probe-and-reload path
+    /// only checks on `applicationDidBecomeActive`, so a foreground Jetsam
+    /// leaves the user stuck.
     ///
     /// Idempotent: if our wrapper is already the WebView's delegate, no-op.
     /// Also safe if Capacitor swaps out its bridge view controller and a
@@ -149,59 +136,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         delegateWrapper = wrapper
         web.navigationDelegate = wrapper
         NSLog("[TourIt] installed WebContent-process termination handler")
-    }
-
-    /// Force a GPU layer recomposite on the live WebView without reloading.
-    ///
-    /// The bug this addresses: WKWebView's compositor can hiccup after iOS
-    /// captures the screen (screenshot, app-switcher snapshot, brief
-    /// backgrounding). JS keeps running — so any JS-execution probe falsely
-    /// reports the WebView healthy — but the visible CALayer goes black.
-    /// reloadFromOrigin() fixes it but obliterates in-memory state, which
-    /// is worse than the bug.
-    ///
-    /// The mechanism: scroll the document by 1px and restore on the next
-    /// animation frame. This forces the compositor to recomposite without
-    /// touching styles, transforms, or stacking contexts.
-    ///
-    /// Why not body.style.transform: the original implementation appended
-    /// `translateZ(0)` to body's transform and restored it on rAF. That
-    /// worked as a nudge but had two costs on iOS WKWebView:
-    ///   (a) Any transform on body — even briefly — makes body the
-    ///       containing block for `position: fixed` descendants. WebKit
-    ///       keeps the layer-promotion of body active for some time after
-    ///       the transform is restored, which leaves fixed elements
-    ///       resolved against body instead of viewport. Routes whose
-    ///       layout is invariant under that swap (e.g. Home's scroll-snap
-    ///       feed) survive; routes with full-page fixed/sticky chrome go
-    ///       blank or blink on scroll until the layer is torn down.
-    ///   (b) Re-entrancy bug: the rAF restore captured `prev` from the
-    ///       current style. Two nudges within one frame would have the
-    ///       second one capture the not-yet-restored `translateZ(0)` as
-    ///       its `prev`, then restore body to that stale value
-    ///       permanently. Persistent transform = persistent (a).
-    ///
-    /// Scroll-based nudge sidesteps both: window scroll position is not a
-    /// stacking-context or containing-block input, and the 100ms throttle
-    /// prevents accumulation if multiple triggers fire close together.
-    ///
-    /// Safe to fire-and-forget: if JS is genuinely dead (which is what the
-    /// probe+reload path catches), the eval just no-ops; no completion
-    /// handler is registered.
-    private func nudgeRender(reason: String) {
-        guard let web = findFirstWebView() else { return }
-        NSLog("[TourIt] nudgeRender reason=\(reason)")
-        let js = """
-        (function() {
-          var now = Date.now();
-          if (window.__tiLastNudge && now - window.__tiLastNudge < 100) return;
-          window.__tiLastNudge = now;
-          var y = window.scrollY || 0;
-          window.scrollTo(0, y + 1);
-          requestAnimationFrame(function() { window.scrollTo(0, y); });
-        })();
-        """
-        web.evaluateJavaScript(js, completionHandler: nil)
     }
 
     /// Walk the view hierarchy and force every WKWebView's background to the
@@ -333,11 +267,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // WebView while we were backgrounded. Idempotent.
         installContentProcessTerminationHandlerIfNeeded()
 
-        // ALWAYS nudge the compositor on resume. Cheap, state-preserving,
-        // and fixes the "JS alive but visually black" rendering hiccup that
-        // iOS produces on brief backgroundings — the case the 60s probe
-        // threshold deliberately misses to avoid over-eager reloads.
-        nudgeRender(reason: "didBecomeActive")
+        // nudgeRender() call deliberately removed. Live testing of 1.0.4 b450
+        // showed the screen still goes dark after screenshot / brief
+        // background-return, with the diagnostic overlay tracing the failure
+        // to within ~60ms of the JS-side `resume` event — which is exactly
+        // when `evaluateJavaScript` queued from this method would run. By
+        // removing the call entirely, the next archive becomes a clean
+        // experiment: if the dark-screen bug stops, nudgeRender was the
+        // cause; if it continues, the next-rank suspect is
+        // applyBrandBackgroundsRecursively recursing into the WKWebView's
+        // internal subviews on every resume.
 
         // Then, for the long-suspend case (>60s), separately probe + reload
         // if the WebView's URLSession actually went zombie. State loss is
