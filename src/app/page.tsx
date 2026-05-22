@@ -809,6 +809,11 @@ export default function Home() {
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
   const feedRef = useRef<HTMLDivElement>(null);
+  const peekRailRef = useRef<HTMLDivElement>(null);
+  // Index of the leftmost-visible card in the Tour the Feed rail. Only
+  // that card mounts a <video> element; others show their poster image.
+  // Computed from the rail's scrollLeft on every scroll tick.
+  const [activePeekIdx, setActivePeekIdx] = useState(0);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedCursorRef = useRef<string | null>(null);
   const hasMoreRef = useRef(true);
@@ -1051,6 +1056,30 @@ export default function Home() {
 
     loadFeed().catch(() => setLoading(false));
   }, []);
+
+  // Track the leftmost-visible card in the Tour the Feed peek rail so
+  // only that card mounts a <video> (others show their poster image).
+  // rAF-throttled so rapid scroll ticks don't cause excessive re-renders.
+  useEffect(() => {
+    const rail = peekRailRef.current;
+    if (!rail) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const cardWidth = 96 + 8; // .feed-peek-card width + gap
+      const idx = Math.max(0, Math.round(rail.scrollLeft / cardWidth));
+      setActivePeekIdx(idx);
+    };
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(update);
+    };
+    rail.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      rail.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [feedItems.length]);
 
   // Batch-pre-seed the like-state cache once we have both feed clips and
   // an authenticated user. Without this, every clip's useLike runs its
@@ -1387,6 +1416,13 @@ export default function Home() {
            you scroll past the top/bottom. */
         .feed { height: 100svh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; }
         .feed::-webkit-scrollbar { display: none; }
+        /* Tour the Feed peek rail — horizontal scroll of 9:16 vertical
+           video cards. Snap-x so each card aligns to the rail start
+           cleanly. Cards are aspect-ratio-controlled, not fixed-height,
+           so they keep their 9:16 ratio even if the rail height shifts. */
+        .feed-peek-rail { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; scroll-snap-type: x proximity; touch-action: pan-x; }
+        .feed-peek-rail::-webkit-scrollbar { display: none; }
+        .feed-peek-card { width: 96px; aspect-ratio: 9 / 16; flex-shrink: 0; border-radius: 12px; overflow: hidden; position: relative; cursor: pointer; background: rgba(10,28,18,0.95); border: 1px solid rgba(26,158,66,0.12); scroll-snap-align: start; }
         .feed-item { scroll-snap-align: start; scroll-snap-stop: always; }
         .courses-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; }
         .courses-row::-webkit-scrollbar { display: none; }
@@ -1668,45 +1704,106 @@ export default function Home() {
             </div>
           )}
 
-          {/* Bridge to feed — a large static green chevron with the
-              "Tour the Feed" headline overlaid. No animation. The V
-              shape itself is the affordance: an oversized downward
-              arrow that reads as "scroll for more" without needing
-              motion. Tap the whole block to scroll into the feed. */}
-          {showScrollHint && user !== null && (
-            <button
-              type="button"
-              onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-              style={{
-                flexShrink: 0,
-                background: "transparent",
-                border: "none",
-                width: "100%",
-                padding: "0 20px calc(84px + env(safe-area-inset-bottom))",
-                marginTop: 8,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                cursor: "pointer",
-              }}
-            >
-              <div style={{ position: "relative", width: "min(340px, 86%)", aspectRatio: "340 / 110" }}>
-                {/* The V — viewBox is wider than tall so the chevron
-                    stretches across the block. strokeLinecap="round"
-                    softens the tips so it reads as an editorial mark,
-                    not a hard arrow. */}
-                <svg viewBox="0 0 340 110" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
-                  <polyline points="14,18 170,96 326,18" stroke="#4da862" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {/* Headline floats in the upper interior of the V so the
-                    arms of the chevron flow downward from beneath the
-                    text — text reads first, V pulls the eye down toward
-                    the feed. */}
-                <div style={{ position: "absolute", top: "8%", left: 0, right: 0, textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, letterSpacing: "-0.01em", textShadow: "0 1px 6px rgba(0,0,0,0.55)" }}>
+          {/* Tour the Feed — a left-aligned Playfair section label
+              followed by a horizontal rail of vertical 9:16 video
+              cards peeking up from the bottom of the discovery
+              section. The leftmost visible card autoplays muted+looped;
+              other cards show their poster thumbnail. The motion of
+              the playing clip is the invitation to scroll — no
+              arrows, no banners. Tapping any card scrolls the parent
+              feed to that clip. */}
+          {showScrollHint && user !== null && feedItems.length > 0 && (
+            <div style={{ flexShrink: 0, marginTop: 16, paddingBottom: "calc(96px + env(safe-area-inset-bottom))", position: "relative" }}>
+              {/* Section label — left-aligned to match the other rails
+                  (Popular / Near Me) but kept in Playfair to read as a
+                  display-font moment, not a label. */}
+              <div style={{ padding: "0 20px 8px" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.005em" }}>
                   Tour the Feed
                 </div>
               </div>
-            </button>
+
+              {/* Rail of 9:16 vertical clip cards */}
+              <div style={{ position: "relative" }}>
+                <div
+                  ref={peekRailRef}
+                  className="feed-peek-rail"
+                  onClick={() => {
+                    // Tapping any non-card area in the rail also scrolls
+                    // into the feed — the rail itself is the affordance.
+                    const target = feedRef.current?.children[1] as HTMLElement | undefined;
+                    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  {feedItems.slice(0, 10).map((item, i) => {
+                    const clip = item.type === "clip" ? item.clip : item.shots[0];
+                    const key = item.type === "clip" ? clip.id : item.seriesId;
+                    const poster = clip.cloudflareVideoId
+                      ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400`
+                      : null;
+                    const isActive = i === activePeekIdx;
+                    return (
+                      <div
+                        key={key}
+                        className="feed-peek-card"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const target = feedRef.current?.children[i + 1] as HTMLElement | undefined;
+                          target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                      >
+                        {isActive ? (
+                          <video
+                            src={clip.mediaUrl}
+                            poster={poster ?? undefined}
+                            muted
+                            autoPlay
+                            loop
+                            playsInline
+                            preload="auto"
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          poster
+                            ? <img src={poster} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                            : clip.courseLogoUrl
+                              ? <img src={clip.courseLogoUrl} alt="" style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%, -50%)", width: 48, height: 32, objectFit: "cover", borderRadius: 5, backgroundColor: "#fff" }} />
+                              : null
+                        )}
+                        {/* Bottom gradient + overlay */}
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%)" }} />
+                        {clip.courseLogoUrl && (
+                          <div style={{ position: "absolute", top: 5, left: 5, width: 20, height: 20, borderRadius: 5, background: "#fff", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.18)", zIndex: 2 }}>
+                            <img src={clip.courseLogoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          </div>
+                        )}
+                        <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", flexDirection: "column", gap: 1, zIndex: 2 }}>
+                          {clip.holeNumber && (
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#4da862" }}>Hole {clip.holeNumber}</div>
+                          )}
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{clip.courseName}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Soft top-fade so the rail doesn't read as a hard cut
+                    from the Courses Near Me row above. */}
+                <div
+                  aria-hidden
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 24,
+                    background: "linear-gradient(to bottom, #07100a 0%, rgba(7,16,10,0) 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
+              </div>
+            </div>
           )}
 
         </div>
