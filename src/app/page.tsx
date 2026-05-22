@@ -1686,18 +1686,22 @@ export default function Home() {
                 background: "transparent",
                 border: "none",
                 width: "100%",
-                padding: "28px 20px calc(28px + env(safe-area-inset-bottom))",
-                marginTop: 6,
+                // Bottom padding clears the fixed BottomNav (~72px) +
+                // safe-area, so the text never slips behind the tab bar.
+                // Top padding kept small so the whole block reads as
+                // a quiet bottom-anchored signpost, not a stretched
+                // hero.
+                padding: "12px 20px calc(96px + env(safe-area-inset-bottom))",
+                marginTop: 0,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 14,
+                gap: 10,
                 cursor: "pointer",
               }}
             >
               <style>{`
                 .feed-cta:active .feed-cta-divider { opacity: 1; }
-                .feed-cta:active .feed-cta-chevron { animation-duration: 0.4s !important; }
                 .feed-cta-divider {
                   width: 64%;
                   max-width: 320px;
@@ -1714,14 +1718,14 @@ export default function Home() {
                 }
                 .feed-cta-chevron {
                   display: inline-flex;
-                  animation: feed-cta-bounce 1.6s ease-in-out infinite;
+                  /* All three chevrons share the same delay so they
+                     bounce in tandem. Slow, subtle — barely 3px of
+                     travel, 3.4s loop. */
+                  animation: feed-cta-bounce 3.4s ease-in-out infinite;
                 }
-                .feed-cta-chevron:nth-child(1) { animation-delay: 0s; }
-                .feed-cta-chevron:nth-child(2) { animation-delay: 0.18s; }
-                .feed-cta-chevron:nth-child(3) { animation-delay: 0.36s; }
                 @keyframes feed-cta-bounce {
-                  0%, 60%, 100% { transform: translateY(0); opacity: 0.55; }
-                  30% { transform: translateY(6px); opacity: 1; }
+                  0%, 100% { transform: translateY(0); opacity: 0.7; }
+                  50% { transform: translateY(3px); opacity: 1; }
                 }
               `}</style>
 
