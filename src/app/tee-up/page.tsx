@@ -87,6 +87,18 @@ export default function TeeUpPage() {
   const [invitedFriends, setInvitedFriends] = useState<FriendRow[]>([]);
   const friendDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // New Trip sheet — separate from Quick Round. Trips are multi-day with
+  // no course attached at creation time; the user adds courses on the
+  // trip detail page after creation.
+  const [newTripOpen, setNewTripOpen] = useState(false);
+  const [newTripName, setNewTripName] = useState("");
+  const [newTripStart, setNewTripStart] = useState("");
+  const [newTripEnd, setNewTripEnd] = useState("");
+  const [newTripSaving, setNewTripSaving] = useState(false);
+
+  // Archive sub-filter
+  const [archiveFilter, setArchiveFilter] = useState<"all" | "rounds" | "trips">("all");
+
   // Lock body scroll + size the Quick Round overlay to the visualViewport so
   // iOS Safari's keyboard doesn't push the top of the sheet off-screen when an
   // input is focused near the bottom. dvh alone wasn't enough — the layout
@@ -131,6 +143,47 @@ export default function TeeUpPage() {
       }
     };
   }, [quickOpen]);
+
+  // Same body-scroll-lock + visualViewport sync for the New Trip sheet.
+  useEffect(() => {
+    if (!newTripOpen) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width, overflow: body.style.overflow };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    const vv = window.visualViewport;
+    const sync = () => {
+      const el = document.getElementById("new-trip-overlay");
+      if (!el || !vv) return;
+      el.style.height = `${vv.height}px`;
+      el.style.transform = `translateY(${vv.offsetTop}px)`;
+    };
+    if (vv) {
+      sync();
+      vv.addEventListener("resize", sync);
+      vv.addEventListener("scroll", sync);
+    }
+
+    return () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+      if (vv) {
+        vv.removeEventListener("resize", sync);
+        vv.removeEventListener("scroll", sync);
+      }
+    };
+  }, [newTripOpen]);
 
   // Debounced friend search — match BOTH username and displayName so "Marc"
   // finds the user whose username is "mzl" but displayName is "Marc". Uses
@@ -262,10 +315,46 @@ export default function TeeUpPage() {
     router.push(`/trips/${tripId}`);
   }
 
+  async function submitNewTrip() {
+    if (!newTripName.trim() || !userId || newTripSaving) return;
+    setNewTripSaving(true);
+    const supabase = createClient();
+    const tripId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await supabase.from("GolfTrip").insert({
+      id: tripId,
+      name: newTripName.trim(),
+      createdBy: userId,
+      startDate: newTripStart || null,
+      endDate: newTripEnd || null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await supabase.from("GolfTripMember").insert({
+      id: crypto.randomUUID(),
+      tripId,
+      userId,
+      role: "owner",
+      createdAt: now,
+    });
+    fetch("/api/points/award", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create_trip", referenceId: tripId }),
+    }).catch(() => {});
+    setNewTripSaving(false);
+    setNewTripOpen(false);
+    setNewTripName("");
+    setNewTripStart("");
+    setNewTripEnd("");
+    router.push(`/trips/${tripId}`);
+  }
+
   function handleNewClick() {
-    // Future Trips → long-form trip create at /trips. Everything else (rounds + archive) → Quick Round.
+    // Future Trips → New Trip sheet (multi-day, no course attached yet — user
+    // adds courses on the trip detail page). Rounds + archive → Quick Round.
     if (tab === "trips") {
-      router.push("/trips");
+      setNewTripOpen(true);
     } else {
       setQuickOpen(true);
     }
@@ -410,7 +499,16 @@ export default function TeeUpPage() {
 
   return (
     <main style={{ background: "#07100a", minHeight: "100dvh", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 100 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; }`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap');
+        * { box-sizing: border-box; }
+        /* iOS WKWebView renders empty <input type="time"> as a tiny pill
+           that doesn't fill the container, causing the misaligned look
+           next to <input type="date">. Force consistent height + left-
+           aligned inner value across both, on iOS and desktop. */
+        .tee-dt-input { min-height: 44px; box-sizing: border-box; }
+        .tee-dt-input::-webkit-date-and-time-value { text-align: left; line-height: 22px; }
+      `}</style>
 
       {/* Header */}
       <div style={{ padding: "12px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -471,7 +569,7 @@ export default function TeeUpPage() {
           )}
           {tab === "trips" && (
             futureTrips.length === 0
-              ? <EmptyState title="No upcoming trips" subtitle="Plan a multi-day buddy trip with multiple courses." ctaLabel="Plan a trip" onCta={() => router.push("/trips")} />
+              ? <EmptyState title="No upcoming trips" subtitle="Plan a multi-day buddy trip with multiple courses." ctaLabel="Plan a trip" onCta={() => setNewTripOpen(true)} />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {futureTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
                 </div>
@@ -480,8 +578,43 @@ export default function TeeUpPage() {
             pastTrips.length === 0 && pastRounds.length === 0
               ? <EmptyState title="Nothing in the archive yet" subtitle="Past trips and logged rounds will appear here." />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {pastTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
-                  {pastRounds.map(r => (
+                  {/* Archive sub-filter */}
+                  <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
+                    {([
+                      { key: "all" as const, label: "All", count: pastTrips.length + pastRounds.length },
+                      { key: "rounds" as const, label: "Rounds", count: pastRounds.length },
+                      { key: "trips" as const, label: "Trips", count: pastTrips.length },
+                    ]).map(f => {
+                      const active = archiveFilter === f.key;
+                      return (
+                        <button
+                          key={f.key}
+                          onClick={() => setArchiveFilter(f.key)}
+                          style={{
+                            flex: 1,
+                            background: active ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
+                            border: `1px solid ${active ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.08)"}`,
+                            borderRadius: 99,
+                            padding: "7px 10px",
+                            fontFamily: "'Outfit', sans-serif",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: active ? "#4da862" : "rgba(255,255,255,0.45)",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 5,
+                          }}
+                        >
+                          <span>{f.label}</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.7 }}>{f.count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {(archiveFilter === "all" || archiveFilter === "trips") && pastTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
+                  {(archiveFilter === "all" || archiveFilter === "rounds") && pastRounds.map(r => (
                     <button key={r.id} onClick={() => router.push(`/courses/${r.courseId}`)} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 44, height: 44, borderRadius: 10, background: r.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {r.courseLogoUrl ? <img src={r.courseLogoUrl} alt={r.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
@@ -574,11 +707,11 @@ export default function TeeUpPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 18 }}>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Date</div>
-                <input type="date" value={quickDate} onChange={e => setQuickDate(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: quickDate ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
+                <input className="tee-dt-input" type="date" value={quickDate} onChange={e => setQuickDate(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: quickDate ? "#fff" : "rgba(255,255,255,0.45)", outline: "none", colorScheme: "dark" }} />
               </div>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Tee Time <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(opt)</span></div>
-                <input type="time" value={quickTime} onChange={e => setQuickTime(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: quickTime ? "#fff" : "rgba(255,255,255,0.3)", outline: "none", colorScheme: "dark" }} />
+                <input className="tee-dt-input" type="time" value={quickTime} onChange={e => setQuickTime(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: quickTime ? "#fff" : "rgba(255,255,255,0.45)", outline: "none", colorScheme: "dark" }} />
               </div>
             </div>
 
@@ -669,6 +802,69 @@ export default function TeeUpPage() {
             </button>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.32)", textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
               Games and accommodations get added on the round's page next.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Trip sheet — multi-day buddy trip. No course is attached at
+          creation; the user adds courses, members, and accommodations on
+          the trip detail page after creation. */}
+      {newTripOpen && (
+        <div id="new-trip-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", zIndex: 200, display: "flex", flexDirection: "column", willChange: "transform" }} onClick={() => { if (!newTripSaving) setNewTripOpen(false); }}>
+          <div onClick={() => { if (!newTripSaving) setNewTripOpen(false); }} style={{ flex: 1, background: "rgba(0,0,0,0.6)", minHeight: 40 }} />
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "14px 20px calc(28px + env(safe-area-inset-bottom))", maxHeight: "92%", overflowY: "auto", flexShrink: 0 }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 16px" }} />
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 2 }}>New Trip</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>Plan a Trip</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>Name your trip and set the dates. You'll add courses, friends, and games on the next screen.</div>
+            </div>
+
+            {/* Trip Name */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Trip Name *</div>
+              <input
+                value={newTripName}
+                onChange={e => setNewTripName(e.target.value)}
+                placeholder="e.g. Myrtle Beach 2026"
+                style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
+              />
+            </div>
+
+            {/* Start + End dates */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
+              <div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Start Date</div>
+                <input className="tee-dt-input" type="date" value={newTripStart} onChange={e => setNewTripStart(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: newTripStart ? "#fff" : "rgba(255,255,255,0.45)", outline: "none", colorScheme: "dark" }} />
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>End Date</div>
+                <input className="tee-dt-input" type="date" value={newTripEnd} onChange={e => setNewTripEnd(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: newTripEnd ? "#fff" : "rgba(255,255,255,0.45)", outline: "none", colorScheme: "dark" }} />
+              </div>
+            </div>
+
+            <button
+              onClick={submitNewTrip}
+              disabled={!newTripName.trim() || newTripSaving}
+              style={{
+                width: "100%",
+                padding: "14px",
+                background: !newTripName.trim() ? "rgba(45,122,66,0.4)" : "#2d7a42",
+                border: "none",
+                borderRadius: 14,
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#fff",
+                cursor: !newTripName.trim() || newTripSaving ? "default" : "pointer",
+              }}
+            >
+              {newTripSaving ? "Creating…" : "Create Trip"}
+            </button>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.32)", textAlign: "center", marginTop: 10, lineHeight: 1.5 }}>
+              Courses, members, and accommodations get added on the trip's page next.
             </div>
           </div>
         </div>
