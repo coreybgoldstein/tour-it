@@ -59,16 +59,24 @@ export function ClipTopPill({
           background: "rgba(0,0,0,0.55)",
           backdropFilter: "blur(8px)",
           borderRadius: 999,
-          padding: "5px 12px 5px 5px",
+          // Reduced vertical padding from 5px to 2px to keep the pill at
+          // its original height (36px) even with the larger 32px badge
+          // (up from 26px). Text fields stay at their existing font
+          // sizes and align to pill center.
+          padding: "2px 12px 2px 5px",
           overflow: "hidden",
           border: "none",
           cursor: "pointer",
         }}
       >
-        <div style={{ width: 26, height: 26, borderRadius: 7, background: "rgba(26,158,66,0.2)", border: "1px solid rgba(26,158,66,0.3)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {/* Course badge — white background + white-tinted border + drop
+            shadow, matching the larger crest treatment on the course
+            profile page. Sits inside the same pill geometry; the pill's
+            text fields stay at their current sizes. */}
+        <div style={{ width: 32, height: 32, borderRadius: 9, background: "#fff", border: "1.5px solid rgba(255,255,255,0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {courseLogoUrl
             ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
-            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#1a9e42" }}>{abbr}</span>
+            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#1a5c30" }}>{abbr}</span>
           }
         </div>
         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
