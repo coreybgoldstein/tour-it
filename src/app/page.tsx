@@ -1741,13 +1741,8 @@ export default function Home() {
                 ))}
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
-                  Tour the Feed
-                </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontStyle: "italic", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>
-                  Real intel, hole by hole
-                </div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
+                Tour the Feed
               </div>
 
               <div className="feed-cta-divider" />
