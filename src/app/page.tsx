@@ -266,11 +266,15 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow, hasAttribution }: {
+function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, commented, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow, hasAttribution }: {
   userId: string; avatarUrl: string | null; username: string; rank?: string | null;
   courseId: string; courseName: string;
   liked: boolean; onLike: () => void; likeCount: number;
   onComment: () => void; commentCount: number;
+  // True when the current user has at least one comment on this clip —
+  // drives the green "you commented" state on the comment button,
+  // mirroring how `liked` drives the heart's green state.
+  commented?: boolean;
   onTapUser: () => void;
   onIntel: (() => void) | null; intelOpen: boolean;
   onReport?: () => void;
@@ -329,8 +333,8 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
         }}
         style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}
       >
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: commented ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${commented ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill={commented ? "#fff" : "none"} stroke={commented ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{commentCount}</span>
       </button>
@@ -380,7 +384,7 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
 // every render, but their closures only read stable refs (router, setters)
 // so a stale closure can't go wrong here.
 const SeriesCard = memo(function SeriesCardImpl({
-  item, isActive, onTapCourse, onTapUser, onComment, currentUserId, followingIds, onFollow, likedIds, commentOpen,
+  item, isActive, onTapCourse, onTapUser, onComment, currentUserId, followingIds, onFollow, likedIds, commentedIds, commentOpen,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
   isActive: boolean;
@@ -391,6 +395,9 @@ const SeriesCard = memo(function SeriesCardImpl({
   // the per-clip Supabase round-trip that would otherwise make the heart
   // flicker from unfilled to filled on mount.
   likedIds?: Set<string>;
+  // Same pattern as likedIds — pre-batched set of clip IDs the current
+  // user has commented on. Drives the green state on the comment button.
+  commentedIds?: Set<string>;
   // When true, the parent's comment sheet is open. Pauses the active shot
   // so it doesn't reach `onEnded` and auto-advance while the user types.
   commentOpen?: boolean;
@@ -529,7 +536,7 @@ const SeriesCard = memo(function SeriesCardImpl({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={item.shots[0]?.commentCount || 0} commented={!!(activeShot?.id && commentedIds?.has(activeShot.id))} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
 
       {/* Bottom overlay — series uploader avatar + name + active-shot date.
           Mirrors the single-clip overlay so the identity row is in the
@@ -600,7 +607,7 @@ const SeriesCard = memo(function SeriesCardImpl({
 // drives its own re-renders via useState/useEffect; this only cuts the
 // "parent re-rendered, so I re-render too" cascade.
 const VideoCard = memo(function VideoCardImpl({
-  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds, commentOpen,
+  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds, commentedIds, commentOpen,
 }: {
   clip: FeedClip; isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
@@ -611,6 +618,8 @@ const VideoCard = memo(function VideoCardImpl({
   currentUserId?: string | null;
   // Pre-batched set of clip IDs the current user has liked (see SeriesCard).
   likedIds?: Set<string>;
+  // Pre-batched set of clip IDs the current user has commented on (see SeriesCard).
+  commentedIds?: Set<string>;
   // When true, the parent's comment sheet is open. We pause the video so the
   // user can read/type without onEnded auto-advancing to the next clip.
   commentOpen?: boolean;
@@ -711,7 +720,7 @@ const VideoCard = memo(function VideoCardImpl({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={clip.commentCount} commented={!!commentedIds?.has(clip.id)} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
 
       {(clip.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
         // Bottom overlay — avatar + username + date + (photo icon).
@@ -793,6 +802,10 @@ export default function Home() {
   // feed and the auth user are both available; eliminates the per-clip
   // round-trip that would otherwise make the heart flicker on mount.
   const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
+  // Same pattern as likedIds — pre-batched set of uploadIds the current
+  // user has commented on. Drives the green "you commented" state on
+  // the comment button in the feed-clip right rail.
+  const [commentedIds, setCommentedIds] = useState<Set<string> | undefined>(undefined);
   // Track which course routes we've already prefetched so we don't re-fire
   // the request when the feed or near-me data refreshes.
   const prefetchedCoursesRef = useRef<Set<string>>(new Set());
@@ -1121,19 +1134,25 @@ export default function Home() {
     const supabase = createClient();
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("Like")
-        .select("uploadId")
-        .eq("userId", user.id)
-        .in("uploadId", allUploadIds);
-      if (cancelled || !data) return;
-      const liked = data.map(r => r.uploadId);
-      seedLikedCache(user.id, liked, allUploadIds);
-      // Also push into HomePage state so any clip cards that already
-      // mounted (rendered before this fetch landed) re-render with
-      // the correct initialLiked — useLike has a useEffect that listens
-      // to initialLiked changes.
-      setLikedIds(new Set(liked));
+      const [{ data: likeData }, { data: commentData }] = await Promise.all([
+        supabase.from("Like").select("uploadId").eq("userId", user.id).in("uploadId", allUploadIds),
+        supabase.from("Comment").select("uploadId").eq("userId", user.id).in("uploadId", allUploadIds),
+      ]);
+      if (cancelled) return;
+      if (likeData) {
+        const liked = likeData.map(r => r.uploadId);
+        seedLikedCache(user.id, liked, allUploadIds);
+        // Also push into HomePage state so any clip cards that already
+        // mounted (rendered before this fetch landed) re-render with
+        // the correct initialLiked — useLike has a useEffect that listens
+        // to initialLiked changes.
+        setLikedIds(new Set(liked));
+      }
+      if (commentData) {
+        // Dedupe — a user can have multiple comments on the same clip.
+        // We only care about "has commented at least once."
+        setCommentedIds(new Set(commentData.map(r => r.uploadId)));
+      }
     })();
     return () => { cancelled = true; };
   }, [user?.id, feedItems]);
@@ -1368,6 +1387,12 @@ export default function Home() {
         }
         return item;
       }));
+      // Flip the right-rail comment button to green immediately on post.
+      setCommentedIds(prev => {
+        const next = new Set(prev ?? []);
+        next.add(commentUploadId);
+        return next;
+      });
       setCommentText("");
     }
     setSubmittingComment(false);
@@ -1844,9 +1869,9 @@ export default function Home() {
         {!loading && feedItems.map((item, i) => (
           <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
             {item.type === "series" ? (
-              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => { const id = item.shots[0]?.id; if (id) openCommentSheet(id); }} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentOpen={!!commentUploadId} />
+              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => { const id = item.shots[0]?.id; if (id) openCommentSheet(id); }} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentedIds={commentedIds} commentOpen={!!commentUploadId} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => openCommentSheet(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentOpen={!!commentUploadId} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => openCommentSheet(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentedIds={commentedIds} commentOpen={!!commentUploadId} />
             )}
           </div>
         ))}
