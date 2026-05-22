@@ -314,7 +314,21 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
       </button>
       {/* Comment */}
-      <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
+      <button
+        onClick={(e) => {
+          // Belt-and-suspenders for the iOS WKWebView bug where the
+          // comment sheet would mount mid-tick at the touch point and
+          // immediately receive its own click via the overlay's
+          // close-on-tap handler. stopPropagation prevents the click
+          // from bubbling up through any ancestors after we handle it
+          // here; preventDefault stops the browser from doing anything
+          // extra with the touch (focus shifts, double-fire, etc.).
+          e.stopPropagation();
+          e.preventDefault();
+          onComment();
+        }}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}
+      >
         <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </div>
@@ -785,6 +799,17 @@ export default function Home() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [loading, setLoading] = useState(true);
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
+  // 250ms grace flag — set true the moment commentUploadId becomes
+  // truthy, false 250ms later. The sheet's outer onClick checks this
+  // before closing so the same tap that opened the sheet can't
+  // immediately close it via an iOS WKWebView click re-fire.
+  const commentJustOpenedRef = useRef(false);
+  useEffect(() => {
+    if (!commentUploadId) return;
+    commentJustOpenedRef.current = true;
+    const t = window.setTimeout(() => { commentJustOpenedRef.current = false; }, 250);
+    return () => window.clearTimeout(t);
+  }, [commentUploadId]);
   useKeyboardAwareSheet(!!commentUploadId, "home-comment-sheet");
   const [commentItems, setCommentItems] = useState<CommentItem[]>([]);
   const [commentText, setCommentText] = useState("");
@@ -1850,7 +1875,25 @@ export default function Home() {
 
       {/* Comment sheet */}
       {commentUploadId && (
-        <div id="home-comment-sheet" style={{ position: "fixed", inset: 0, zIndex: 150 }} onClick={() => { setCommentUploadId(null); setCommentText(""); }}>
+        <div
+          id="home-comment-sheet"
+          // z-index pushed to 1000 — well above IntelPanel (150) and any
+          // other overlay on the page, so the sheet definitively renders
+          // on top regardless of stacking-context quirks.
+          style={{ position: "fixed", inset: 0, zIndex: 1000 }}
+          // Only close when the user clicks the dim overlay itself, not
+          // when a click bubbles up from the sheet contents. Also
+          // ignore clicks within the first 250ms of the sheet opening
+          // (commentJustOpenedRef) so the same touch that opened the
+          // sheet can't immediately close it via the iOS WKWebView
+          // re-fire path.
+          onClick={(e) => {
+            if (e.target !== e.currentTarget) return;
+            if (commentJustOpenedRef.current) return;
+            setCommentUploadId(null);
+            setCommentText("");
+          }}
+        >
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
           <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", maxHeight: "72vh", display: "flex", flexDirection: "column" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "12px auto 8px" }} />
