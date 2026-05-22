@@ -1220,7 +1220,11 @@ export default function TripPage() {
       }
     }
 
-    return Array.from(totals.values()).filter(r => r.amount > 0).sort((a, b) => b.amount - a.amount);
+    // Show winners AND losers. Only hide true $0 balances (players who
+    // played in staked games but didn't win or lose anything). Sort
+    // descending so the biggest winner is at the top and the biggest
+    // loser is at the bottom.
+    return Array.from(totals.values()).filter(r => r.amount !== 0).sort((a, b) => b.amount - a.amount);
   }, [games]);
 
   const deleteGame = async (gameId: string) => {
@@ -2003,46 +2007,67 @@ export default function TripPage() {
           )}
         </div>
 
-        {/* Winnings — net per player across all CTP/LD games with a
-            stake. Hidden when nobody is up money yet (every player
-            either even, down, or no staked CTP/LD games on the trip). */}
-        {winningsByPlayer.length > 0 && (
-          <div style={{ padding: "20px 20px 0" }}>
-            <div className="section-label" style={{ marginBottom: 10 }}>
-              Winnings
-              <span className="count">${winningsByPlayer.reduce((s, r) => s + r.amount, 0)}</span>
+        {/* Settle Up — net balance per player across all wagered games on
+            the trip (CTP, Longest Drive, Best Ball). Winners appear first
+            in green / gold; players who owe money appear at the bottom in
+            red. Players at exactly $0 are hidden. Section is suppressed
+            entirely when no one is up or down. */}
+        {winningsByPlayer.length > 0 && (() => {
+          const totalPot = winningsByPlayer.reduce((s, r) => s + (r.amount > 0 ? r.amount : 0), 0);
+          // Index of the first row whose amount is negative — used to
+          // drop a subtle divider between winners and losers.
+          const firstNegativeIdx = winningsByPlayer.findIndex(r => r.amount < 0);
+          return (
+            <div style={{ padding: "20px 20px 0" }}>
+              <div className="section-label" style={{ marginBottom: 10 }}>
+                Settle Up
+                <span className="count">${totalPot}</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {winningsByPlayer.map((row, i) => {
+                  const isPositive = row.amount > 0;
+                  const isTopWinner = isPositive && i === 0;
+                  const showDivider = firstNegativeIdx > 0 && i === firstNegativeIdx;
+                  return (
+                    <div key={row.userId} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {showDivider && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0 0" }}>
+                          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.32)" }}>Owes</div>
+                          <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          background: isTopWinner ? "rgba(212,160,23,0.08)" : isPositive ? "rgba(255,255,255,0.03)" : "rgba(220,80,80,0.06)",
+                          border: isTopWinner ? "1px solid rgba(212,160,23,0.30)" : isPositive ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(220,80,80,0.22)",
+                          borderRadius: 12,
+                          padding: "10px 14px",
+                        }}
+                      >
+                        <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: isPositive ? "rgba(77,168,98,0.18)" : "rgba(220,80,80,0.15)", flexShrink: 0 }}>
+                          {row.avatarUrl
+                            ? <img src={row.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: 8 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          }
+                        </div>
+                        <div style={{ flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {row.name}
+                        </div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: isTopWinner ? "#d4a017" : isPositive ? "#4da862" : "#e57b7b", letterSpacing: "0.01em" }}>
+                          {isPositive ? `+$${row.amount}` : `−$${Math.abs(row.amount)}`}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {winningsByPlayer.map((row, i) => (
-                <div
-                  key={row.userId}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    background: i === 0 ? "rgba(212,160,23,0.08)" : "rgba(255,255,255,0.03)",
-                    border: i === 0 ? "1px solid rgba(212,160,23,0.30)" : "1px solid rgba(255,255,255,0.07)",
-                    borderRadius: 12,
-                    padding: "10px 14px",
-                  }}
-                >
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.18)", flexShrink: 0 }}>
-                    {row.avatarUrl
-                      ? <img src={row.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: 8 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    }
-                  </div>
-                  <div style={{ flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {row.name}
-                  </div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: i === 0 ? "#d4a017" : "#4da862", letterSpacing: "0.01em" }}>
-                    +${row.amount}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Trip Clips */}
         <div style={{ padding: "24px 20px 0" }}>
