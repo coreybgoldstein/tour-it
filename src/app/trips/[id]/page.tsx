@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -364,6 +364,10 @@ export default function TripPage() {
   // played on (subset of 1–18). Stored in TripGame.formatConfig.holes
   // on submit.
   const [gameSelectedHoles, setGameSelectedHoles] = useState<number[]>([]);
+  // Per-hole stake for CTP / Longest Drive. Winner of each hole takes
+  // this amount from every other player. Default $5 matches the
+  // Nassau / Skins defaults. Stored in formatConfig.stake.
+  const [gameHoleStake, setGameHoleStake] = useState("5");
   // Winner-picker bottom sheet — captures the game + key (e.g. "hole-7"
   // for CTP/LD, "overall" for everything else) that we're declaring a
   // winner for. Null = sheet closed.
@@ -872,6 +876,7 @@ export default function TripPage() {
     setGameHoleHandicaps(Array(18).fill(0));
     setGameHoleHandicapsKnown(false);
     setGameSelectedHoles([]);
+    setGameHoleStake("5");
     setGameError("");
     // Pre-populate players from members with their handicap indexes
     const supabase = createClient();
@@ -1030,15 +1035,18 @@ export default function TripPage() {
       const holesText = gameSelectedHoles.length === 1
         ? `Hole ${gameSelectedHoles[0]}`
         : `Holes ${gameSelectedHoles.slice(0, -1).join(", ")} & ${gameSelectedHoles[gameSelectedHoles.length - 1]}`;
+      const stakeText = stakeNum > 0 ? ` $${stakeNum}/hole — winner takes ${stakeNum} from every other player on each hole.` : "";
       const rules = gameFormat === "closest_to_pin"
-        ? `Closest to the pin on ${holesText.toLowerCase()} wins that hole. Track your own — anyone in the group can declare the winner per hole here in the app after each one.`
-        : `Longest drive in the fairway on ${holesText.toLowerCase()} wins that hole. Tee shots only — anyone in the group can declare the winner per hole here in the app after each one.`;
+        ? `Closest to the pin on ${holesText.toLowerCase()} wins that hole.${stakeText} Track your own — anyone in the group can declare the winner per hole here in the app after each one.`
+        : `Longest drive in the fairway on ${holesText.toLowerCase()} wins that hole.${stakeText} Tee shots only — anyone in the group can declare the winner per hole here in the app after each one.`;
       const tip = gameFormat === "closest_to_pin"
         ? "Commit to your number — most CTPs are decided in the last 30 yards."
         : "Take an extra club off the tee — out-of-bounds doesn't count for longest drive.";
-      const shareText = `${gameCourseName} — ${formatName}\n${holesText}\n${gamePlayers.map(p => p.displayName).join(", ")}\nDeclare winners in Tour It after the round.`;
+      const stakeLine = stakeNum > 0 ? `\nStakes: $${stakeNum}/hole` : "";
+      const shareText = `${gameCourseName} — ${formatName}\n${holesText}${stakeLine}\n${gamePlayers.map(p => p.displayName).join(", ")}\nDeclare winners in Tour It after the round.`;
 
-      const formatConfig = { holes: gameSelectedHoles, winners: {} as Record<string, string> };
+      const stakeNum = Math.max(0, parseFloat(gameHoleStake) || 0);
+      const formatConfig = { holes: gameSelectedHoles, winners: {} as Record<string, string>, stake: stakeNum };
       // NOTE: TripGame schema (prisma/schema.prisma) has no updatedAt
       // column. Including one in the insert causes Postgres to reject
       // the row silently. Stick to the columns that exist.
@@ -1139,6 +1147,43 @@ export default function TripPage() {
     setGames(prev => prev.map(g => g.id === gameId ? { ...g, formatConfig: nextCfg } : g));
     setWinnerPicker(null);
   };
+
+  // Per-player NET winnings across all CTP / Longest Drive games on
+  // this trip. Each declared hole-winner takes (stake × n_other_players)
+  // and each non-winner on that hole loses (stake). Players with net
+  // amount <= 0 are hidden — only the players who are UP money show
+  // in the winnings leaderboard.
+  const winningsByPlayer = useMemo(() => {
+    type Row = { userId: string; name: string; avatarUrl: string | null; amount: number };
+    const totals = new Map<string, Row>();
+    for (const g of games) {
+      if (!HOLE_PICKED_FORMATS.has(g.format)) continue;
+      const cfg = (g.formatConfig as { stake?: number; winners?: Record<string, string> } | null) ?? {};
+      const stake = Number(cfg.stake) || 0;
+      if (!stake) continue;
+      const players: Array<{ userId: string; displayName: string; avatarUrl: string | null }> =
+        Array.isArray(g.players) ? g.players : [];
+      const winners = cfg.winners ?? {};
+      for (const winnerId of Object.values(winners)) {
+        if (!winnerId) continue;
+        const otherCount = players.length - 1;
+        if (otherCount <= 0) continue;
+        const winner = players.find(p => p.userId === winnerId);
+        if (winner) {
+          const row = totals.get(winnerId) ?? { userId: winnerId, name: winner.displayName, avatarUrl: winner.avatarUrl, amount: 0 };
+          row.amount += stake * otherCount;
+          totals.set(winnerId, row);
+        }
+        for (const p of players) {
+          if (p.userId === winnerId) continue;
+          const row = totals.get(p.userId) ?? { userId: p.userId, name: p.displayName, avatarUrl: p.avatarUrl, amount: 0 };
+          row.amount -= stake;
+          totals.set(p.userId, row);
+        }
+      }
+    }
+    return Array.from(totals.values()).filter(r => r.amount > 0).sort((a, b) => b.amount - a.amount);
+  }, [games]);
 
   const deleteGame = async (gameId: string) => {
     if (deletingGameId) return;
@@ -1796,7 +1841,12 @@ export default function TripPage() {
                 const fmt = GAME_FORMATS.find(f => f.id === g.format);
                 const cfg = g.formatConfig as any;
                 const isHolePicked = HOLE_PICKED_FORMATS.has(g.format);
-                const sub = g.format === "nassau" ? `$${cfg?.frontAmount}/$${cfg?.backAmount}/$${cfg?.totalAmount}` : g.format === "skins" ? `$${cfg?.skinsAmount}/skin` : isHolePicked && cfg?.holes?.length ? `${cfg.holes.length} hole${cfg.holes.length === 1 ? "" : "s"}` : fmt?.desc || "";
+                const sub =
+                  g.format === "nassau" ? `$${cfg?.frontAmount}/$${cfg?.backAmount}/$${cfg?.totalAmount}`
+                  : g.format === "skins" ? `$${cfg?.skinsAmount}/skin`
+                  : isHolePicked && cfg?.holes?.length
+                    ? `${cfg.holes.length} hole${cfg.holes.length === 1 ? "" : "s"}${Number(cfg?.stake) > 0 ? ` · $${cfg.stake}/hole` : ""}`
+                    : fmt?.desc || "";
                 const winners = (cfg?.winners ?? {}) as Record<string, string>;
                 const playerName = (uid?: string) => uid ? (g.players?.find((p: any) => p.userId === uid)?.displayName ?? "@?") : null;
                 return (
@@ -1897,6 +1947,47 @@ export default function TripPage() {
             </div>
           )}
         </div>
+
+        {/* Winnings — net per player across all CTP/LD games with a
+            stake. Hidden when nobody is up money yet (every player
+            either even, down, or no staked CTP/LD games on the trip). */}
+        {winningsByPlayer.length > 0 && (
+          <div style={{ padding: "20px 20px 0" }}>
+            <div className="section-label" style={{ marginBottom: 10 }}>
+              Winnings
+              <span className="count">${winningsByPlayer.reduce((s, r) => s + r.amount, 0)}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {winningsByPlayer.map((row, i) => (
+                <div
+                  key={row.userId}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    background: i === 0 ? "rgba(212,160,23,0.08)" : "rgba(255,255,255,0.03)",
+                    border: i === 0 ? "1px solid rgba(212,160,23,0.30)" : "1px solid rgba(255,255,255,0.07)",
+                    borderRadius: 12,
+                    padding: "10px 14px",
+                  }}
+                >
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.18)", flexShrink: 0 }}>
+                    {row.avatarUrl
+                      ? <img src={row.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: 8 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    }
+                  </div>
+                  <div style={{ flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {row.name}
+                  </div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 800, color: i === 0 ? "#d4a017" : "#4da862", letterSpacing: "0.01em" }}>
+                    +${row.amount}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Trip Clips */}
         <div style={{ padding: "24px 20px 0" }}>
@@ -2896,6 +2987,29 @@ export default function TripPage() {
                         {gameSelectedHoles.length} hole{gameSelectedHoles.length === 1 ? "" : "s"} selected · {gameSelectedHoles.join(" · ")}
                       </div>
                     )}
+                  </div>
+
+                  {/* Per-hole stake */}
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>Stake per hole</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, paddingLeft: 12, maxWidth: 160 }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.55)", marginRight: 2 }}>$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        inputMode="decimal"
+                        value={gameHoleStake}
+                        onChange={(e) => setGameHoleStake(e.target.value)}
+                        placeholder="0"
+                        style={{ flex: 1, background: "transparent", border: "none", padding: "10px 12px 10px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", outline: "none", minWidth: 0 }}
+                      />
+                    </div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 6, lineHeight: 1.45 }}>
+                      {Number(gameHoleStake) > 0
+                        ? `Winner of each hole takes $${gameHoleStake} from every other player. Set to $0 if you're playing for bragging rights.`
+                        : "Set a dollar amount above if you're playing for money. Otherwise leave at $0."}
+                    </div>
                   </div>
                 </div>
               )}
