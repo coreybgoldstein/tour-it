@@ -81,7 +81,15 @@ const GAME_FORMATS = [
   { id: "stableford", name: "Stableford", desc: "Points per hole: bogey=1, par=2, birdie=3+" },
   { id: "best_ball", name: "Best Ball", desc: "Team: best net score per hole counts" },
   { id: "scramble", name: "Scramble", desc: "All play from the best shot" },
+  { id: "closest_to_pin", name: "Closest to the Pin", desc: "Closest to the flag on chosen holes wins each" },
+  { id: "longest_drive", name: "Longest Drive", desc: "Longest tee shot in the fairway on chosen holes" },
 ];
+
+// Formats where the user picks a SUBSET of holes that the game is played
+// on (vs. running the full 18). Skip the Step 5 hole-handicap rankings
+// entirely — no handicap math applies for closest-to-pin or longest
+// drive. formatConfig stores the chosen holes + winners declared per hole.
+const HOLE_PICKED_FORMATS = new Set(["closest_to_pin", "longest_drive"]);
 
 // ── Inline date-range calendar ──────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -352,6 +360,14 @@ export default function TripPage() {
   const [gameSkinsCarryover, setGameSkinsCarryover] = useState(true);
   const [gameHoleHandicaps, setGameHoleHandicaps] = useState<number[]>(Array(18).fill(0));
   const [gameHoleHandicapsKnown, setGameHoleHandicapsKnown] = useState(false);
+  // For closest-to-pin / longest-drive formats: which holes the game is
+  // played on (subset of 1–18). Stored in TripGame.formatConfig.holes
+  // on submit.
+  const [gameSelectedHoles, setGameSelectedHoles] = useState<number[]>([]);
+  // Winner-picker bottom sheet — captures the game + key (e.g. "hole-7"
+  // for CTP/LD, "overall" for everything else) that we're declaring a
+  // winner for. Null = sheet closed.
+  const [winnerPicker, setWinnerPicker] = useState<{ gameId: string; key: string; label: string } | null>(null);
   const [gameHandicapWarning, setGameHandicapWarning] = useState(false);
   const [tripImageExpanded, setTripImageExpanded] = useState(false);
   const [gameError, setGameError] = useState("");
@@ -855,6 +871,7 @@ export default function TripPage() {
     setGameSkinsAmt("5"); setGameSkinsCarryover(true);
     setGameHoleHandicaps(Array(18).fill(0));
     setGameHoleHandicapsKnown(false);
+    setGameSelectedHoles([]);
     setGameError("");
     // Pre-populate players from members with their handicap indexes
     const supabase = createClient();
@@ -995,6 +1012,69 @@ export default function TripPage() {
 
   const generateGame = async () => {
     if (generatingGame) return;
+
+    // Closest-to-pin / longest-drive run their own path — no handicap
+    // math, no Claude call, inserted directly via Supabase.
+    if (HOLE_PICKED_FORMATS.has(gameFormat)) {
+      if (gameSelectedHoles.length === 0) {
+        setGameError("Pick at least one hole to play this game on.");
+        return;
+      }
+      setGameError("");
+      setGeneratingGame(true);
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setGeneratingGame(false); return; }
+
+      const formatName = gameFormat === "closest_to_pin" ? "Closest to the Pin" : "Longest Drive";
+      const holesText = gameSelectedHoles.length === 1
+        ? `Hole ${gameSelectedHoles[0]}`
+        : `Holes ${gameSelectedHoles.slice(0, -1).join(", ")} & ${gameSelectedHoles[gameSelectedHoles.length - 1]}`;
+      const rules = gameFormat === "closest_to_pin"
+        ? `Closest to the pin on ${holesText.toLowerCase()} wins that hole. Track your own — anyone in the group can declare the winner per hole here in the app after each one.`
+        : `Longest drive in the fairway on ${holesText.toLowerCase()} wins that hole. Tee shots only — anyone in the group can declare the winner per hole here in the app after each one.`;
+      const tip = gameFormat === "closest_to_pin"
+        ? "Commit to your number — most CTPs are decided in the last 30 yards."
+        : "Take an extra club off the tee — out-of-bounds doesn't count for longest drive.";
+      const shareText = `${gameCourseName} — ${formatName}\n${holesText}\n${gamePlayers.map(p => p.displayName).join(", ")}\nDeclare winners in Tour It after the round.`;
+
+      const formatConfig = { holes: gameSelectedHoles, winners: {} as Record<string, string> };
+      // NOTE: TripGame schema (prisma/schema.prisma) has no updatedAt
+      // column. Including one in the insert causes Postgres to reject
+      // the row silently. Stick to the columns that exist.
+      const tripGameRow = {
+        id: crypto.randomUUID(),
+        tripId: id as string,
+        courseId: gameCourseId,
+        courseName: gameCourseName,
+        format: gameFormat,
+        formatConfig,
+        players: gamePlayers,
+        holeHandicaps: [] as number[],
+        gameSheet: JSON.stringify({ rules, tip, shareText }),
+        shareText,
+        createdBy: user?.id ?? "",
+        createdAt: new Date().toISOString(),
+      };
+      const { error } = await supabase.from("TripGame").insert(tripGameRow);
+      if (error) {
+        setGameError(error.message);
+        setGeneratingGame(false);
+        return;
+      }
+      const logoUrl = tripCourses.find(tc => tc.courseId === gameCourseId)?.course.logoUrl ?? null;
+      const hydrated = { ...tripGameRow, courseLogoUrl: logoUrl } as TripGameRecord;
+      setGames(prev => [hydrated, ...prev]);
+      setGameOpen(false);
+      setGeneratingGame(false);
+      fetch("/api/points/award", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create_game", referenceId: tripGameRow.id }),
+      }).catch(() => {});
+      return;
+    }
+
     if (gameHoleHandicaps.some(r => r <= 0)) {
       setGameError("Please enter a handicap rank (1–18) for all 18 holes.");
       return;
@@ -1039,6 +1119,25 @@ export default function TripPage() {
       }
     } catch { setGameError("Network error. Try again."); }
     setGeneratingGame(false);
+  };
+
+  // Declare (or clear) the winner for a specific game + key. The key is
+  // "overall" for non-hole-picked formats, or "hole-N" (1..18) for CTP /
+  // Longest Drive. Anyone on the trip can declare and overwrite winners.
+  const declareWinner = async (gameId: string, key: string, winnerUserId: string | null) => {
+    const game = games.find(g => g.id === gameId);
+    if (!game) return;
+    const supabase = createClient();
+    const existingCfg = (game.formatConfig as Record<string, unknown> | null) ?? {};
+    const existingWinners = ((existingCfg as { winners?: Record<string, string> }).winners ?? {}) as Record<string, string>;
+    const nextWinners: Record<string, string> = { ...existingWinners };
+    if (winnerUserId) nextWinners[key] = winnerUserId;
+    else delete nextWinners[key];
+    const nextCfg = { ...existingCfg, winners: nextWinners };
+    const { error } = await supabase.from("TripGame").update({ formatConfig: nextCfg }).eq("id", gameId);
+    if (error) return;
+    setGames(prev => prev.map(g => g.id === gameId ? { ...g, formatConfig: nextCfg } : g));
+    setWinnerPicker(null);
   };
 
   const deleteGame = async (gameId: string) => {
@@ -1696,40 +1795,103 @@ export default function TripPage() {
               {games.map(g => {
                 const fmt = GAME_FORMATS.find(f => f.id === g.format);
                 const cfg = g.formatConfig as any;
-                const sub = g.format === "nassau" ? `$${cfg?.frontAmount}/$${cfg?.backAmount}/$${cfg?.totalAmount}` : g.format === "skins" ? `$${cfg?.skinsAmount}/skin` : fmt?.desc || "";
+                const isHolePicked = HOLE_PICKED_FORMATS.has(g.format);
+                const sub = g.format === "nassau" ? `$${cfg?.frontAmount}/$${cfg?.backAmount}/$${cfg?.totalAmount}` : g.format === "skins" ? `$${cfg?.skinsAmount}/skin` : isHolePicked && cfg?.holes?.length ? `${cfg.holes.length} hole${cfg.holes.length === 1 ? "" : "s"}` : fmt?.desc || "";
+                const winners = (cfg?.winners ?? {}) as Record<string, string>;
+                const playerName = (uid?: string) => uid ? (g.players?.find((p: any) => p.userId === uid)?.displayName ?? "@?") : null;
                 return (
-                  <button key={g.id} onClick={() => { setViewGame(g); setViewGameOpen(true); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "13px 14px", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-                    {/* Round-mode: skip the course icon + name (same course everywhere on this page). Game format becomes the title. */}
-                    {!isRound && (
-                      <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
-                        {g.courseLogoUrl
-                          ? <img src={g.courseLogoUrl} alt={g.courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
-                          : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{abbr(g.courseName)}</span>
-                        }
+                  <div key={g.id} onClick={() => { setViewGame(g); setViewGameOpen(true); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "13px 14px", cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 0 }}>
+                    {/* Top row — existing summary */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {/* Round-mode: skip the course icon + name (same course everywhere on this page). */}
+                      {!isRound && (
+                        <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                          {g.courseLogoUrl
+                            ? <img src={g.courseLogoUrl} alt={g.courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>{abbr(g.courseName)}</span>
+                          }
+                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {isRound ? (
+                          <>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
+                              {fmt?.name || g.format}
+                              {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>· {sub}</span>}
+                            </div>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>{g.players?.length || 0} players · tap for details</div>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.courseName}</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{fmt?.name || g.format}</span>
+                              {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>· {sub}</span>}
+                            </div>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{g.players?.length || 0} players</div>
+                          </>
+                        )}
+                      </div>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </div>
+
+                    {/* CTP / Longest Drive — per-hole declare-winner pills */}
+                    {isHolePicked && Array.isArray(cfg?.holes) && cfg.holes.length > 0 && (
+                      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {cfg.holes.map((h: number) => {
+                          const winnerId = winners[`hole-${h}`];
+                          const name = playerName(winnerId);
+                          return (
+                            <button
+                              key={h}
+                              onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: `hole-${h}`, label: `Hole ${h}` }); }}
+                              style={{
+                                padding: "6px 10px",
+                                borderRadius: 99,
+                                border: name ? "1px solid rgba(212,160,23,0.45)" : "1px solid rgba(77,168,98,0.35)",
+                                background: name ? "rgba(212,160,23,0.10)" : "rgba(77,168,98,0.08)",
+                                color: name ? "#d4a017" : "#4da862",
+                                fontFamily: "'Outfit', sans-serif",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {name ? `🏆 H${h}: ${name}` : `H${h} · Declare`}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      {isRound ? (
-                        <>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
-                            {fmt?.name || g.format}
-                            {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>· {sub}</span>}
-                          </div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>{g.players?.length || 0} players · tap for details</div>
-                        </>
-                      ) : (
-                        <>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.courseName}</div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{fmt?.name || g.format}</span>
-                            {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>· {sub}</span>}
-                          </div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{g.players?.length || 0} players</div>
-                        </>
-                      )}
-                    </div>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                  </button>
+
+                    {/* Other formats — single overall winner pill */}
+                    {!isHolePicked && (() => {
+                      const winnerId = winners.overall;
+                      const name = playerName(winnerId);
+                      return (
+                        <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: "overall", label: "Winner" }); }}
+                            style={{
+                              padding: "7px 14px",
+                              borderRadius: 99,
+                              border: name ? "1px solid rgba(212,160,23,0.45)" : "1px solid rgba(77,168,98,0.35)",
+                              background: name ? "rgba(212,160,23,0.10)" : "rgba(77,168,98,0.08)",
+                              color: name ? "#d4a017" : "#4da862",
+                              fontFamily: "'Outfit', sans-serif",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {name ? `🏆 Winner: ${name}` : "🏆 Declare winner"}
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 );
               })}
             </div>
@@ -2439,6 +2601,84 @@ export default function TripPage() {
         </div>
       )}
 
+      {/* Winner picker sheet — opened from the per-hole "Declare" pills
+          (CTP/LD) or the single "Declare winner" pill (other formats).
+          Any trip member can pick or change the winner. Picking the
+          already-declared name clears it. */}
+      {winnerPicker && (() => {
+        const game = games.find(g => g.id === winnerPicker.gameId);
+        if (!game) return null;
+        const currentWinnerId = ((game.formatConfig as any)?.winners ?? {})[winnerPicker.key] as string | undefined;
+        const players: any[] = Array.isArray(game.players) ? game.players : [];
+        return (
+          <div
+            onClick={() => setWinnerPicker(null)}
+            style={{ position: "fixed", inset: 0, zIndex: 210, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: "100%",
+                maxWidth: 480,
+                background: "#0d1f14",
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                border: "1px solid rgba(255,255,255,0.08)",
+                padding: "12px 18px 22px",
+                marginBottom: "calc(70px + env(safe-area-inset-bottom))",
+                maxHeight: "calc(100dvh - 140px - env(safe-area-inset-bottom))",
+                overflowY: "auto",
+              }}
+            >
+              <div aria-hidden style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "0 auto 14px" }} />
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#4da862", marginBottom: 2 }}>{winnerPicker.label}</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 900, color: "#fff", marginBottom: 14 }}>Who won?</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {players.map((p) => {
+                  const isCurrent = p.userId === currentWinnerId;
+                  return (
+                    <button
+                      key={p.userId}
+                      onClick={() => declareWinner(winnerPicker.gameId, winnerPicker.key, isCurrent ? null : p.userId)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 12px",
+                        borderRadius: 12,
+                        border: `1px solid ${isCurrent ? "rgba(212,160,23,0.55)" : "rgba(255,255,255,0.08)"}`,
+                        background: isCurrent ? "rgba(212,160,23,0.10)" : "rgba(255,255,255,0.03)",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0 }}>
+                        {p.avatarUrl
+                          ? <img src={p.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: 8 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        }
+                      </div>
+                      <div style={{ flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{p.displayName}</div>
+                      {isCurrent && (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#d4a017", letterSpacing: "0.06em" }}>🏆 WINNER · TAP TO CLEAR</div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {currentWinnerId && (
+                <button
+                  onClick={() => declareWinner(winnerPicker.gameId, winnerPicker.key, null)}
+                  style={{ width: "100%", marginTop: 14, padding: "10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "rgba(255,255,255,0.55)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                >
+                  Clear this winner
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Game creator sheet — bottom-anchored, sits ABOVE the BottomNav
           (marginBottom clears it) so the nav stays visible and the
           modal feels like it slides up from the bottom. Outer div is
@@ -2597,7 +2837,52 @@ export default function TripPage() {
               )}
 
               {/* Step 4: Configure */}
-              {!generatingGame && gameStep === 4 && (
+              {!generatingGame && gameStep === 4 && HOLE_PICKED_FORMATS.has(gameFormat) && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>Select holes</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 12, lineHeight: 1.45 }}>
+                      {gameFormat === "closest_to_pin"
+                        ? "Tap the par-3s (or any holes) you're playing Closest to the Pin on. Anyone on the trip can declare a winner per hole after the round."
+                        : "Tap the holes you're playing Longest Drive on — typically par 4s and 5s. Anyone on the trip can declare a winner per hole after."}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+                      {Array.from({ length: 18 }, (_, i) => i + 1).map(h => {
+                        const selected = gameSelectedHoles.includes(h);
+                        return (
+                          <button
+                            key={h}
+                            onClick={() => setGameSelectedHoles(prev =>
+                              selected ? prev.filter(x => x !== h) : [...prev, h].sort((a, b) => a - b)
+                            )}
+                            style={{
+                              padding: "10px 0",
+                              borderRadius: 10,
+                              border: `1.5px solid ${selected ? "#4da862" : "rgba(255,255,255,0.1)"}`,
+                              background: selected ? "rgba(77,168,98,0.16)" : "rgba(255,255,255,0.03)",
+                              color: selected ? "#4da862" : "#fff",
+                              fontFamily: "'Outfit', sans-serif",
+                              fontSize: 14,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {h}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {gameSelectedHoles.length > 0 && (
+                      <div style={{ marginTop: 12, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.85)" }}>
+                        {gameSelectedHoles.length} hole{gameSelectedHoles.length === 1 ? "" : "s"} selected · {gameSelectedHoles.join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Configure — regular formats */}
+              {!generatingGame && gameStep === 4 && !HOLE_PICKED_FORMATS.has(gameFormat) && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                   {gameFormat !== "skins" && (
                     <div>
@@ -2754,15 +3039,21 @@ export default function TripPage() {
                       if (gameStep === 1 && !gameCourseId) return;
                       if (gameStep === 3 && !gameFormat) return;
                       if (gameStep === 4) {
-                        // Skip step 5 if hole handicaps already known
+                        // CTP / Longest Drive skip step 5 (no hole-handicap rankings).
+                        if (HOLE_PICKED_FORMATS.has(gameFormat)) { generateGame(); return; }
+                        // Other formats: also skip if hole handicaps already known.
                         if (gameHoleHandicapsKnown) { generateGame(); return; }
                       }
                       setGameStep(s => s + 1);
                     }}
-                    disabled={(gameStep === 1 && !gameCourseId) || (gameStep === 3 && !gameFormat)}
-                    style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: (gameStep === 1 && !gameCourseId) || (gameStep === 3 && !gameFormat) ? "rgba(255,255,255,0.06)" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer" }}
+                    disabled={
+                      (gameStep === 1 && !gameCourseId) ||
+                      (gameStep === 3 && !gameFormat) ||
+                      (gameStep === 4 && HOLE_PICKED_FORMATS.has(gameFormat) && gameSelectedHoles.length === 0)
+                    }
+                    style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: (gameStep === 1 && !gameCourseId) || (gameStep === 3 && !gameFormat) || (gameStep === 4 && HOLE_PICKED_FORMATS.has(gameFormat) && gameSelectedHoles.length === 0) ? "rgba(255,255,255,0.06)" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer" }}
                   >
-                    {gameStep === 4 && gameHoleHandicapsKnown ? "Generate Game Sheet" : "Continue"}
+                    {gameStep === 4 && (gameHoleHandicapsKnown || HOLE_PICKED_FORMATS.has(gameFormat)) ? "Create Game" : "Continue"}
                   </button>
                 ) : (
                   <button
