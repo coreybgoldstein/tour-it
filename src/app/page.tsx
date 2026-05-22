@@ -799,17 +799,16 @@ export default function Home() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [loading, setLoading] = useState(true);
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
-  // 250ms grace flag — set true the moment commentUploadId becomes
-  // truthy, false 250ms later. The sheet's outer onClick checks this
-  // before closing so the same tap that opened the sheet can't
-  // immediately close it via an iOS WKWebView click re-fire.
+  // Synchronously set 500ms grace flag the moment a clip's comment
+  // button is tapped — BEFORE the React state update fires. Avoids the
+  // race where the iOS WKWebView could re-dispatch the touch to the
+  // newly-mounted sheet's dim overlay and close it instantly.
   const commentJustOpenedRef = useRef(false);
-  useEffect(() => {
-    if (!commentUploadId) return;
+  const openCommentSheet = useCallback((uploadId: string) => {
     commentJustOpenedRef.current = true;
-    const t = window.setTimeout(() => { commentJustOpenedRef.current = false; }, 250);
-    return () => window.clearTimeout(t);
-  }, [commentUploadId]);
+    window.setTimeout(() => { commentJustOpenedRef.current = false; }, 500);
+    setCommentUploadId(uploadId);
+  }, []);
   useKeyboardAwareSheet(!!commentUploadId, "home-comment-sheet");
   const [commentItems, setCommentItems] = useState<CommentItem[]>([]);
   const [commentText, setCommentText] = useState("");
@@ -1845,9 +1844,9 @@ export default function Home() {
         {!loading && feedItems.map((item, i) => (
           <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
             {item.type === "series" ? (
-              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => setCommentUploadId(item.shots[0]?.id || null)} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentOpen={!!commentUploadId} />
+              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => { const id = item.shots[0]?.id; if (id) openCommentSheet(id); }} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentOpen={!!commentUploadId} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => setCommentUploadId(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentOpen={!!commentUploadId} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => openCommentSheet(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentOpen={!!commentUploadId} />
             )}
           </div>
         ))}
@@ -1873,29 +1872,33 @@ export default function Home() {
         </div>
       )}
 
-      {/* Comment sheet */}
+      {/* Comment sheet — same flex-end pattern as the trips bottom
+          sheet. zIndex 1000 sits above every other overlay on the page.
+          Outer div is the dim backdrop + the close target; inner sheet
+          stops propagation. Grace flag (commentJustOpenedRef) is set
+          SYNCHRONOUSLY in openCommentSheet so the same touch that
+          mounted the sheet can't immediately close it via an iOS
+          WKWebView re-fire. */}
       {commentUploadId && (
         <div
           id="home-comment-sheet"
-          // z-index pushed to 1000 — well above IntelPanel (150) and any
-          // other overlay on the page, so the sheet definitively renders
-          // on top regardless of stacking-context quirks.
-          style={{ position: "fixed", inset: 0, zIndex: 1000 }}
-          // Only close when the user clicks the dim overlay itself, not
-          // when a click bubbles up from the sheet contents. Also
-          // ignore clicks within the first 250ms of the sheet opening
-          // (commentJustOpenedRef) so the same touch that opened the
-          // sheet can't immediately close it via the iOS WKWebView
-          // re-fire path.
-          onClick={(e) => {
-            if (e.target !== e.currentTarget) return;
+          onClick={() => {
             if (commentJustOpenedRef.current) return;
             setCommentUploadId(null);
             setCommentText("");
           }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            paddingTop: "calc(env(safe-area-inset-top) + 24px)",
+          }}
         >
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
-          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", maxHeight: "72vh", display: "flex", flexDirection: "column" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "12px auto 8px" }} />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
             <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
