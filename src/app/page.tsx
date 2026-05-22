@@ -822,7 +822,43 @@ export default function Home() {
     window.setTimeout(() => { commentJustOpenedRef.current = false; }, 500);
     setCommentUploadId(uploadId);
   }, []);
-  useKeyboardAwareSheet(!!commentUploadId, "home-comment-sheet");
+
+  // Track on-screen keyboard height via visualViewport so we can lift
+  // the INNER comment sheet above it (instead of constraining the outer
+  // backdrop, which would render the sheet "in the middle" of the
+  // viewport with the video peeking out below it).
+  const [commentKeyboardHeight, setCommentKeyboardHeight] = useState(0);
+  useEffect(() => {
+    if (!commentUploadId) { setCommentKeyboardHeight(0); return; }
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const sync = () => {
+      const kh = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
+      setCommentKeyboardHeight(kh > 50 ? kh : 0);
+    };
+    sync();
+    vv.addEventListener("resize", sync);
+    vv.addEventListener("scroll", sync);
+    return () => {
+      vv.removeEventListener("resize", sync);
+      vv.removeEventListener("scroll", sync);
+      setCommentKeyboardHeight(0);
+    };
+  }, [commentUploadId]);
+
+  // Auto-focus the comment input when the sheet opens — iOS requires
+  // the focus() call to happen close to the originating user gesture;
+  // we get it via the React commit that mounts the input.
+  const commentInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!commentUploadId) return;
+    const t = window.setTimeout(() => { commentInputRef.current?.focus(); }, 50);
+    return () => window.clearTimeout(t);
+  }, [commentUploadId]);
+  // useKeyboardAwareSheet intentionally NOT used here — it constrained
+  // the outer container which broke the bottom-anchored layout when the
+  // keyboard opened. Replaced by the visualViewport tracker above
+  // (commentKeyboardHeight) which adjusts the INNER sheet's margin.
   const [commentItems, setCommentItems] = useState<CommentItem[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
@@ -1923,7 +1959,22 @@ export default function Home() {
             paddingTop: "calc(env(safe-area-inset-top) + 24px)",
           }}
         >
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: "100%",
+            maxWidth: 480,
+            background: "#0d2318",
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            display: "flex",
+            flexDirection: "column",
+            // Lift above the on-screen keyboard. When the keyboard is
+            // closed, marginBottom is 0 and the sheet hugs the bottom.
+            // When open, marginBottom pushes the sheet up by exactly
+            // the keyboard height so the input sits just above it.
+            marginBottom: commentKeyboardHeight,
+            maxHeight: `calc(100% - ${commentKeyboardHeight}px)`,
+            minHeight: 0,
+          }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "12px auto 8px" }} />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
             <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
@@ -1952,7 +2003,7 @@ export default function Home() {
               )}
               {user && (
                 <div style={{ display: "flex", gap: 8 }}>
-                  <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..." style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
+                  <input ref={commentInputRef} value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..." autoFocus style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
                   <button onClick={submitComment} disabled={!commentText.trim() || submittingComment} style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: !commentText.trim() ? 0.4 : 1 }}>
                     {submittingComment ? "..." : "Post"}
                   </button>
