@@ -14,35 +14,38 @@ export default function MayCompetitionBanner() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 18px",
+        padding: "0 14px",
         height: 44,
         cursor: "pointer",
-        gap: 12,
+        gap: 8,
         overflow: "hidden",
       }}>
         {/* Dot pattern overlay — matches the TopBar green sections for visual consistency */}
         <div aria-hidden style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
-        <span style={{ fontSize: 17, flexShrink: 0, lineHeight: 1, position: "relative", zIndex: 1 }}>🏆</span>
+        <span style={{ fontSize: 16, flexShrink: 0, lineHeight: 1, position: "relative", zIndex: 1 }}>🏆</span>
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 15,
+          // Scale with viewport so the full string fits from 360px iPhones
+          // up through Pro Max. Caps at 14px so it never gets larger than
+          // the previous design on big screens.
+          fontSize: "clamp(11.5px, 3.4vw, 14px)",
           fontWeight: 600,
           color: "#fff",
           whiteSpace: "nowrap",
           overflow: "hidden",
           flex: 1,
           minWidth: 0,
-          letterSpacing: "0.02em",
+          letterSpacing: 0,
           position: "relative",
           zIndex: 1,
         }}>
           May Competition —{" "}
-          <span style={{ color: "#d4a017", fontWeight: 700 }}>$100 GolfNow gift card</span>
+          <span style={{ color: "#d4a017", fontWeight: 800, letterSpacing: "0.01em" }}>$100 GOLFNOW CREDIT</span>
           {" "}on the line
         </div>
         <span style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 22,
+          fontSize: 20,
           fontWeight: 300,
           color: "rgba(255,255,255,0.7)",
           flexShrink: 0,
