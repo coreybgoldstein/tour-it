@@ -171,14 +171,14 @@ function LeaderboardsButtonInline() {
 
 
 function CourseCard({ course, onClick, compact, featured }: { course: TrendingCourse; onClick: () => void; compact?: boolean; featured?: FeaturedTournament | null }) {
-  const h = compact ? 196 : 210;
+  const h = compact ? 174 : 188;
   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
   const GOLD = "#d4a017";
   return (
     <div
       onClick={onClick}
       style={{
-        width: 172, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
+        width: 148, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
         cursor: "pointer", position: "relative", background: "rgba(10,28,18,0.95)",
         border: featured ? `1.5px solid ${GOLD}` : "1px solid rgba(26,158,66,0.12)",
         boxShadow: featured ? "0 0 0 1px rgba(212,160,23,0.25), 0 0 14px rgba(212,160,23,0.22)" : undefined,
@@ -1608,7 +1608,7 @@ export default function Home() {
                       featured={featured && course.id === featured.courseId ? featured : null}
                     />
                   )) : [1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 172, height: 196, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               </div>
@@ -1649,7 +1649,7 @@ export default function Home() {
               {locationStatus === "loading" && (
                 <div className="courses-row">
                   {[1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 172, height: 196, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               )}
@@ -1668,42 +1668,62 @@ export default function Home() {
             </div>
           )}
 
-          {/* Bridge to feed — promoted from a small pill to a hero-style
-              CTA card so the empty space between the courses rail and the
-              feed below is doing real work pulling people into discovery. */}
-          {showScrollHint && user !== null && (
-            <div
-              onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-              style={{
-                flexShrink: 0,
-                margin: "20px 20px calc(24px + env(safe-area-inset-bottom))",
-                padding: "22px 20px 18px",
-                background: "linear-gradient(160deg, rgba(77,168,98,0.16) 0%, rgba(77,168,98,0.04) 60%, rgba(77,168,98,0.02) 100%)",
-                border: "1px solid rgba(77,168,98,0.32)",
-                borderRadius: 18,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 10,
-                cursor: "pointer",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(77,168,98,0.92)" }}>
-                The Feed
+          {/* Bridge to feed — a "From the Feed" thumbnail strip showing
+              real clips from the actual feed below. Matches the visual
+              pattern of "Popular on Tour It" and "Courses Near Me" (same
+              section header style + horizontal rail) so it reads as a
+              tasteful editorial section, not a marketing CTA. Real
+              content does the selling. Tapping any thumbnail scrolls
+              into the feed at full height. */}
+          {showScrollHint && user !== null && feedItems.length > 0 && (
+            <div style={{ flexShrink: 0, marginTop: 10, paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
+              <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
+                  From the Feed
+                </div>
+                <div style={{ flex: 1 }} />
+                <button
+                  onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
+                  style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", borderRadius: 99, padding: "3px 10px", cursor: "pointer" }}
+                >
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Tour</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
               </div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textAlign: "center", lineHeight: 1.15 }}>
-                Real intel from real golfers
-              </div>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", textAlign: "center", lineHeight: 1.5, maxWidth: 320 }}>
-                Strategy, clubs, lines, conditions — straight from the people who've played it. Swipe through clips hole by hole.
-              </div>
-              <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, padding: "9px 18px", background: "rgba(77,168,98,0.22)", border: "1px solid rgba(77,168,98,0.5)", borderRadius: 99 }}>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#4da862" }}>Scroll to start</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
+              <div className="courses-row">
+                {feedItems.slice(0, 8).map(item => {
+                  const clip = item.type === "clip" ? item.clip : item.shots[0];
+                  const key = item.type === "clip" ? clip.id : item.seriesId;
+                  const thumb = clip.cloudflareVideoId
+                    ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=300`
+                    : null;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
+                      style={{ width: 100, height: 140, borderRadius: 12, flexShrink: 0, overflow: "hidden", position: "relative", cursor: "pointer", background: "rgba(10,28,18,0.95)", border: "1px solid rgba(26,158,66,0.12)" }}
+                    >
+                      {thumb && (
+                        <img src={thumb} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                      )}
+                      {!thumb && clip.courseLogoUrl && (
+                        <img src={clip.courseLogoUrl} alt="" style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%, -50%)", width: 56, height: 36, objectFit: "cover", borderRadius: 6, backgroundColor: "#fff" }} />
+                      )}
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.90) 100%)" }} />
+                      {clip.courseLogoUrl && thumb && (
+                        <div style={{ position: "absolute", top: 5, left: 5, width: 22, height: 22, borderRadius: 5, background: "#fff", border: "1px solid rgba(255,255,255,0.18)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+                          <img src={clip.courseLogoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        </div>
+                      )}
+                      <div style={{ position: "absolute", bottom: 8, left: 8, right: 8, display: "flex", flexDirection: "column", gap: 1 }}>
+                        {clip.holeNumber && (
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(77,168,98,0.95)" }}>Hole {clip.holeNumber}</div>
+                        )}
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{clip.username}</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
