@@ -117,8 +117,13 @@ export function IntelPanel({
           backdropFilter: "blur(20px)",
           borderRadius: "18px 18px 0 0",
           borderTop: "1px solid rgba(77,168,98,0.2)",
-          padding: "18px 18px 28px",
-          maxHeight: "70vh",
+          // Bottom padding deliberately oversized so the last data row
+          // (typically the uploader attribution chip) never slips behind
+          // the fixed BottomNav. BottomNav is ~70-80px tall + safe-area
+          // inset; we add ~96px on top of the 28px design padding to
+          // give content room above it.
+          padding: "18px 18px calc(96px + env(safe-area-inset-bottom))",
+          maxHeight: "calc(85vh - env(safe-area-inset-bottom))",
           overflowY: "auto",
         }}
       >

@@ -515,7 +515,7 @@ const SeriesCard = memo(function SeriesCardImpl({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={onComment} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={item.shots[0]?.commentCount || 0} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
 
       {/* Bottom overlay — series uploader avatar + name + active-shot date.
           Mirrors the single-clip overlay so the identity row is in the
@@ -697,7 +697,7 @@ const VideoCard = memo(function VideoCardImpl({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={onComment} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={clip.commentCount} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
 
       {(clip.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
         // Bottom overlay — avatar + username + date + (photo icon).
@@ -1668,84 +1668,44 @@ export default function Home() {
             </div>
           )}
 
-          {/* Bridge to feed — single editorial CTA in the page's existing
-              typographic language. Two thin green-tinted gradient
-              dividers frame three staggered chevrons that bounce in
-              sequence (cascading downward to suggest scroll), with a
-              Playfair headline and a quiet Outfit subtitle. Whole block
-              is tappable; on press the chevrons sync-flash and the area
-              briefly highlights. No imagery, no marketing — same kind of
-              restraint as the Scout-your-next-round hero up top. */}
+          {/* Bridge to feed — a large static green chevron with the
+              "Tour the Feed" headline overlaid. No animation. The V
+              shape itself is the affordance: an oversized downward
+              arrow that reads as "scroll for more" without needing
+              motion. Tap the whole block to scroll into the feed. */}
           {showScrollHint && user !== null && (
             <button
               type="button"
               onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-              className="feed-cta"
               style={{
                 flexShrink: 0,
                 background: "transparent",
                 border: "none",
                 width: "100%",
-                // Bottom padding clears the fixed BottomNav (~72px) +
-                // safe-area, so the text never slips behind the tab bar.
-                // Top padding kept small so the whole block reads as
-                // a quiet bottom-anchored signpost, not a stretched
-                // hero.
-                padding: "12px 20px calc(96px + env(safe-area-inset-bottom))",
-                marginTop: 0,
+                padding: "0 20px calc(84px + env(safe-area-inset-bottom))",
+                marginTop: 8,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 10,
                 cursor: "pointer",
               }}
             >
-              <style>{`
-                .feed-cta:active .feed-cta-divider { opacity: 1; }
-                .feed-cta-divider {
-                  width: 64%;
-                  max-width: 320px;
-                  height: 1px;
-                  background: linear-gradient(to right, transparent 0%, rgba(77,168,98,0.45) 50%, transparent 100%);
-                  opacity: 0.7;
-                  transition: opacity 0.18s ease;
-                }
-                .feed-cta-chevron-row {
-                  display: flex;
-                  gap: 4px;
-                  align-items: center;
-                  justify-content: center;
-                }
-                .feed-cta-chevron {
-                  display: inline-flex;
-                  /* All three chevrons share the same delay so they
-                     bounce in tandem. Slow, subtle — barely 3px of
-                     travel, 3.4s loop. */
-                  animation: feed-cta-bounce 3.4s ease-in-out infinite;
-                }
-                @keyframes feed-cta-bounce {
-                  0%, 100% { transform: translateY(0); opacity: 0.7; }
-                  50% { transform: translateY(3px); opacity: 1; }
-                }
-              `}</style>
-
-              <div className="feed-cta-divider" />
-
-              <div className="feed-cta-chevron-row" aria-hidden>
-                {[0, 1, 2].map(i => (
-                  <span key={i} className="feed-cta-chevron">
-                    <svg width="22" height="14" viewBox="0 0 24 14" fill="none" stroke="#4da862" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="4 3 12 11 20 3"/>
-                    </svg>
-                  </span>
-                ))}
+              <div style={{ position: "relative", width: "min(340px, 86%)", aspectRatio: "340 / 110" }}>
+                {/* The V — viewBox is wider than tall so the chevron
+                    stretches across the block. strokeLinecap="round"
+                    softens the tips so it reads as an editorial mark,
+                    not a hard arrow. */}
+                <svg viewBox="0 0 340 110" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}>
+                  <polyline points="14,18 170,96 326,18" stroke="#4da862" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {/* Headline floats in the upper interior of the V so the
+                    arms of the chevron flow downward from beneath the
+                    text — text reads first, V pulls the eye down toward
+                    the feed. */}
+                <div style={{ position: "absolute", top: "8%", left: 0, right: 0, textAlign: "center", fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, letterSpacing: "-0.01em", textShadow: "0 1px 6px rgba(0,0,0,0.55)" }}>
+                  Tour the Feed
+                </div>
               </div>
-
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
-                Tour the Feed
-              </div>
-
-              <div className="feed-cta-divider" />
             </button>
           )}
 
