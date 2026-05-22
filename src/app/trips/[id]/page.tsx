@@ -1043,6 +1043,7 @@ export default function TripPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setGeneratingGame(false); return; }
 
+      const stakeNum = Math.max(0, parseFloat(gameHoleStake) || 0);
       const formatName = gameFormat === "closest_to_pin" ? "Closest to the Pin" : "Longest Drive";
       const holesText = gameSelectedHoles.length === 1
         ? `Hole ${gameSelectedHoles[0]}`
@@ -1057,7 +1058,6 @@ export default function TripPage() {
       const stakeLine = stakeNum > 0 ? `\nStakes: $${stakeNum}/hole` : "";
       const shareText = `${gameCourseName} — ${formatName}\n${holesText}${stakeLine}\n${gamePlayers.map(p => p.displayName).join(", ")}\nDeclare winners in Tour It after the round.`;
 
-      const stakeNum = Math.max(0, parseFloat(gameHoleStake) || 0);
       const formatConfig = { holes: gameSelectedHoles, winners: {} as Record<string, string>, stake: stakeNum };
       // NOTE: TripGame schema (prisma/schema.prisma) has no updatedAt
       // column. Including one in the insert causes Postgres to reject
