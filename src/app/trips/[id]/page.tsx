@@ -868,6 +868,21 @@ export default function TripPage() {
       teamId: "A",
     }));
     setGamePlayers(initialPlayers);
+
+    // Auto-skip step 1 (Select Course) when the trip has exactly one
+    // course — the round/trip already established the course, no reason
+    // to ask again. Pre-fills course state and jumps to Step 2 Players.
+    if (tripCourses.length === 1) {
+      const tc = tripCourses[0];
+      await handleSelectGameCourse(
+        tc.courseId,
+        tc.course.name,
+        tc.secondaryCourseId,
+        tc.secondaryCourse?.name
+      );
+      setGameStep(2);
+    }
+
     setGameOpen(true);
   };
 
@@ -1458,7 +1473,7 @@ export default function TripPage() {
               style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)", border: "none", borderRadius: 14, padding: "14px", marginBottom: 10, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", letterSpacing: "0.04em", boxShadow: "0 6px 20px rgba(45,122,66,0.45)" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              Send the Round
+              Share the Round
             </button>
           )}
 
@@ -2080,7 +2095,7 @@ export default function TripPage() {
         <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.55)" }} onClick={() => !sendingMode && setSendRoundChooserOpen(false)}>
           <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 20px calc(28px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 6px" }} />
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", textAlign: "center" }}>Send the Round</div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", textAlign: "center" }}>Share the Round</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)", textAlign: "center", marginBottom: 6 }}>Pick how you want to share it.</div>
 
             {/* Option 1: Send the image */}
@@ -2424,11 +2439,41 @@ export default function TripPage() {
         </div>
       )}
 
-      {/* Game creator sheet */}
+      {/* Game creator sheet — bottom-anchored, sits ABOVE the BottomNav
+          (marginBottom clears it) so the nav stays visible and the
+          modal feels like it slides up from the bottom. Outer div is
+          the dim backdrop AND the click-out-to-close target;
+          inner content stops propagation. */}
       {gameOpen && (
-        <div id="trip-game-creator" style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", flexDirection: "column" }}>
-          <div onClick={() => { if (!generatingGame) setGameOpen(false); }} style={{ flex: 1, background: "rgba(0,0,0,0.5)" }} />
-          <div style={{ background: "#0d1f14", borderRadius: "20px 20px 0 0", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", maxHeight: "90vh" }}>
+        <div
+          id="trip-game-creator"
+          onClick={() => { if (!generatingGame) setGameOpen(false); }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{
+            width: "100%",
+            maxWidth: 520,
+            background: "#0d1f14",
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            border: "1px solid rgba(255,255,255,0.08)",
+            display: "flex",
+            flexDirection: "column",
+            // Clamped to dvh so iOS Safari's address-bar quirks don't
+            // make the sheet overshoot. Reserves ~70px for BottomNav.
+            maxHeight: "calc(100dvh - 100px - env(safe-area-inset-bottom))",
+            marginBottom: "calc(70px + env(safe-area-inset-bottom))",
+          }}>
+            {/* Drag handle */}
+            <div aria-hidden style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "10px auto 6px", flexShrink: 0 }} />
             {/* Header */}
             <div style={{ padding: "14px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
               {gameStep > 1 && !generatingGame && (
