@@ -2613,7 +2613,17 @@ export default function TripPage() {
         return (
           <div
             onClick={() => setWinnerPicker(null)}
-            style={{ position: "fixed", inset: 0, zIndex: 210, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 210,
+              background: "rgba(0,0,0,0.55)",
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
+              paddingTop: "calc(env(safe-area-inset-top) + 24px)",
+              paddingBottom: "calc(70px + env(safe-area-inset-bottom))",
+            }}
           >
             <div
               onClick={e => e.stopPropagation()}
@@ -2625,8 +2635,8 @@ export default function TripPage() {
                 borderTopRightRadius: 20,
                 border: "1px solid rgba(255,255,255,0.08)",
                 padding: "12px 18px 22px",
-                marginBottom: "calc(70px + env(safe-area-inset-bottom))",
-                maxHeight: "calc(100dvh - 140px - env(safe-area-inset-bottom))",
+                maxHeight: "100%",
+                minHeight: 0,
                 overflowY: "auto",
               }}
             >
@@ -2679,11 +2689,11 @@ export default function TripPage() {
         );
       })()}
 
-      {/* Game creator sheet — bottom-anchored, sits ABOVE the BottomNav
-          (marginBottom clears it) so the nav stays visible and the
-          modal feels like it slides up from the bottom. Outer div is
-          the dim backdrop AND the click-out-to-close target;
-          inner content stops propagation. */}
+      {/* Game creator sheet — bottom-anchored bottom sheet. Top boundary
+          uses paddingTop on the outer flex container (safe-area-inset-top
+          + extra buffer) so the sheet's top edge can never grow into
+          the Dynamic Island / camera notch. Bottom margin clears the
+          fixed BottomNav so the tab bar stays visible and tappable. */}
       {gameOpen && (
         <div
           id="trip-game-creator"
@@ -2696,6 +2706,14 @@ export default function TripPage() {
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
+            // Reserves the Dynamic Island / status-bar zone at the top.
+            // The sheet anchored to flex-end cannot grow above this.
+            paddingTop: "calc(env(safe-area-inset-top) + 24px)",
+            // Reserves the BottomNav zone at the bottom — covered by the
+            // backdrop dim, but the sheet sits above it (see marginBottom
+            // on the inner panel) so the nav stays untouched-looking
+            // through the dim.
+            paddingBottom: "calc(70px + env(safe-area-inset-bottom))",
           }}
         >
           <div onClick={e => e.stopPropagation()} style={{
@@ -2707,10 +2725,11 @@ export default function TripPage() {
             border: "1px solid rgba(255,255,255,0.08)",
             display: "flex",
             flexDirection: "column",
-            // Clamped to dvh so iOS Safari's address-bar quirks don't
-            // make the sheet overshoot. Reserves ~70px for BottomNav.
-            maxHeight: "calc(100dvh - 100px - env(safe-area-inset-bottom))",
-            marginBottom: "calc(70px + env(safe-area-inset-bottom))",
+            // Fills the flex container (capped by outer paddingTop and
+            // paddingBottom). The body inside is overflow-y: auto so
+            // content scrolls when it exceeds available height.
+            maxHeight: "100%",
+            minHeight: 0,
           }}>
             {/* Drag handle */}
             <div aria-hidden style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "10px auto 6px", flexShrink: 0 }} />
