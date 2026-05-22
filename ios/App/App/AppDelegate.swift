@@ -164,6 +164,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         walk(root)
     }
 
+    /// Lightweight resume-only background paint. Unlike
+    /// applyBrandBackgroundsRecursively (which runs once at launch), this is
+    /// safe to call on every applicationDidBecomeActive: it only sets the
+    /// brand background color on the root view and the top-level WKWebView,
+    /// preventing the flash during the resume transition. It deliberately
+    /// does NOT set isOpaque, does NOT touch the scrollView config, and does
+    /// NOT recurse into the WKWebView's internal subviews — doing any of
+    /// those on a live, just-resumed WebView forces the compositor to drop
+    /// and rebuild the content layer, which left the screen dark until a
+    /// scroll/tap forced a relayout (confirmed on 1.0.4 b511).
+    private func paintResumeBackground() {
+        guard let root = window?.rootViewController?.view else { return }
+        root.backgroundColor = AppDelegate.brandDark
+        if let web = findFirstWebView() {
+            web.backgroundColor = AppDelegate.brandDark
+            web.scrollView.backgroundColor = AppDelegate.brandDark
+        }
+    }
+
     /// Walk the view hierarchy and recover every WKWebView. Two-step:
     ///   1. stopLoading() — tears down stuck in-flight requests that
     ///      otherwise compete with the reload for the URLSession slot.
@@ -258,6 +277,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillEnterForeground(_ application: UIApplication) { }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
+        // b512: narrow background paint on resume. Only sets backgroundColor
+        // on the root view and the top-level WKWebView — does not toggle
+        // isOpaque, does not touch scrollView config, does not recurse into
+        // the WebView's internal compositor subviews. Prevents the white/
+        // black flash on resume without re-triggering the dark-screen bug
+        // that b511 confirmed was caused by the full recursive walk.
+        paintResumeBackground()
+
         // EXPERIMENT b511: applyBrandBackgroundsRecursively() call removed
         // from the resume path. b510 removed nudgeRender and the dark-screen
         // bug persisted, so the next-rank suspect is this walk recursing

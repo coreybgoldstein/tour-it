@@ -6,7 +6,10 @@ import TourItTopBar from "@/components/TourItTopBar";
 import HideSplash from "@/components/HideSplash";
 import NativeBootstrap from "@/components/NativeBootstrap";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
-import DebugEventOverlay from "@/components/DebugEventOverlay";
+// b512: import commented out with the unmounted overlay below to avoid
+// an unused-import lint error. Component file kept in repo — uncomment
+// both lines to restore on-device diagnostics.
+// import DebugEventOverlay from "@/components/DebugEventOverlay";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -66,7 +69,10 @@ export default function RootLayout({
         <HideSplash />
         <NativeBootstrap />
         <ServiceWorkerRegister />
-        <DebugEventOverlay />
+        {/* b512: debug overlay unmounted for ship candidate. Dark-screen bug
+            confirmed fixed in b511, flicker fix added in b512. Re-mount this
+            line to restore on-device diagnostics if needed. */}
+        {/* <DebugEventOverlay /> */}
         <TourItTopBar />
         {/* NotificationBell intentionally NOT rendered here — TourItTopBar
             now has the bell embedded. The component file is preserved for
