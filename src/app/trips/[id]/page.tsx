@@ -91,6 +91,13 @@ const GAME_FORMATS = [
 // drive. formatConfig stores the chosen holes + winners declared per hole.
 const HOLE_PICKED_FORMATS = new Set(["closest_to_pin", "longest_drive"]);
 
+// Formats where the winner is a TEAM (not an individual player) and the
+// stake is a per-team wager. formatConfig.wager stores the dollar amount
+// each team puts up; winners.team stores the winning teamId ("A", "B"…).
+// On settle, the winning team takes the pot from the losing team(s),
+// split per teammate.
+const TEAM_WAGER_FORMATS = new Set(["best_ball"]);
+
 // ── Inline date-range calendar ──────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -368,6 +375,10 @@ export default function TripPage() {
   // this amount from every other player. Default $5 matches the
   // Nassau / Skins defaults. Stored in formatConfig.stake.
   const [gameHoleStake, setGameHoleStake] = useState("5");
+  // Per-team wager for Best Ball (and any future team-wager formats).
+  // Each team puts up this amount; winning team takes the pot.
+  // Stored in formatConfig.wager.
+  const [gameTeamWager, setGameTeamWager] = useState("20");
   // Winner-picker bottom sheet — captures the game + key (e.g. "hole-7"
   // for CTP/LD, "overall" for everything else) that we're declaring a
   // winner for. Null = sheet closed.
@@ -877,6 +888,7 @@ export default function TripPage() {
     setGameHoleHandicapsKnown(false);
     setGameSelectedHoles([]);
     setGameHoleStake("5");
+    setGameTeamWager("20");
     setGameError("");
     // Pre-populate players from members with their handicap indexes
     const supabase = createClient();
@@ -1096,6 +1108,7 @@ export default function TripPage() {
     const formatConfig: Record<string, unknown> =
       gameFormat === "nassau" ? { frontAmount: gameNassauFront, backAmount: gameNassauBack, totalAmount: gameNassauTotal }
       : gameFormat === "skins" ? { skinsAmount: gameSkinsAmt, carryover: gameSkinsCarryover }
+      : gameFormat === "best_ball" ? { wager: Math.max(0, parseFloat(gameTeamWager) || 0) }
       : {};
 
     try {
@@ -1148,40 +1161,65 @@ export default function TripPage() {
     setWinnerPicker(null);
   };
 
-  // Per-player NET winnings across all CTP / Longest Drive games on
-  // this trip. Each declared hole-winner takes (stake × n_other_players)
-  // and each non-winner on that hole loses (stake). Players with net
-  // amount <= 0 are hidden — only the players who are UP money show
-  // in the winnings leaderboard.
+  // Per-player NET winnings across all wagered games on this trip:
+  //   - CTP / Longest Drive: per-hole stake. Winner takes stake from
+  //     every other player on each hole they won.
+  //   - Best Ball: per-team wager. Winning team takes the pot from
+  //     each losing team; split evenly among teammates.
+  // Players with net amount <= 0 are hidden — only those UP money show.
   const winningsByPlayer = useMemo(() => {
     type Row = { userId: string; name: string; avatarUrl: string | null; amount: number };
+    type Player = { userId: string; displayName: string; avatarUrl: string | null; teamId?: string };
     const totals = new Map<string, Row>();
+    const bump = (p: Player, delta: number) => {
+      const row = totals.get(p.userId) ?? { userId: p.userId, name: p.displayName, avatarUrl: p.avatarUrl, amount: 0 };
+      row.amount += delta;
+      totals.set(p.userId, row);
+    };
+
     for (const g of games) {
-      if (!HOLE_PICKED_FORMATS.has(g.format)) continue;
-      const cfg = (g.formatConfig as { stake?: number; winners?: Record<string, string> } | null) ?? {};
-      const stake = Number(cfg.stake) || 0;
-      if (!stake) continue;
-      const players: Array<{ userId: string; displayName: string; avatarUrl: string | null }> =
-        Array.isArray(g.players) ? g.players : [];
+      const cfg = (g.formatConfig as { stake?: number; wager?: number; winners?: Record<string, string> } | null) ?? {};
       const winners = cfg.winners ?? {};
-      for (const winnerId of Object.values(winners)) {
-        if (!winnerId) continue;
-        const otherCount = players.length - 1;
-        if (otherCount <= 0) continue;
-        const winner = players.find(p => p.userId === winnerId);
-        if (winner) {
-          const row = totals.get(winnerId) ?? { userId: winnerId, name: winner.displayName, avatarUrl: winner.avatarUrl, amount: 0 };
-          row.amount += stake * otherCount;
-          totals.set(winnerId, row);
+      const players: Player[] = Array.isArray(g.players) ? g.players : [];
+
+      // CTP / Longest Drive — per-hole stake
+      if (HOLE_PICKED_FORMATS.has(g.format)) {
+        const stake = Number(cfg.stake) || 0;
+        if (!stake) continue;
+        for (const winnerId of Object.values(winners)) {
+          if (!winnerId) continue;
+          const otherCount = players.length - 1;
+          if (otherCount <= 0) continue;
+          const winner = players.find(p => p.userId === winnerId);
+          if (winner) bump(winner, stake * otherCount);
+          for (const p of players) {
+            if (p.userId !== winnerId) bump(p, -stake);
+          }
         }
-        for (const p of players) {
-          if (p.userId === winnerId) continue;
-          const row = totals.get(p.userId) ?? { userId: p.userId, name: p.displayName, avatarUrl: p.avatarUrl, amount: 0 };
-          row.amount -= stake;
-          totals.set(p.userId, row);
+        continue;
+      }
+
+      // Best Ball — team wager
+      if (TEAM_WAGER_FORMATS.has(g.format)) {
+        const wager = Number(cfg.wager) || 0;
+        if (!wager) continue;
+        const winningTeamId = winners.team;
+        if (!winningTeamId) continue;
+        const winningPlayers = players.filter(p => (p.teamId || "A") === winningTeamId);
+        const losingPlayers = players.filter(p => (p.teamId || "A") !== winningTeamId);
+        if (winningPlayers.length === 0 || losingPlayers.length === 0) continue;
+        const losingTeamIds = new Set(losingPlayers.map(p => p.teamId || "A"));
+        const perWinner = (wager * losingTeamIds.size) / winningPlayers.length;
+        for (const p of winningPlayers) bump(p, perWinner);
+        for (const p of losingPlayers) {
+          const theirTeam = p.teamId || "A";
+          const theirTeamSize = losingPlayers.filter(lp => (lp.teamId || "A") === theirTeam).length;
+          bump(p, -(wager / theirTeamSize));
         }
+        continue;
       }
     }
+
     return Array.from(totals.values()).filter(r => r.amount > 0).sort((a, b) => b.amount - a.amount);
   }, [games]);
 
@@ -1844,6 +1882,7 @@ export default function TripPage() {
                 const sub =
                   g.format === "nassau" ? `$${cfg?.frontAmount}/$${cfg?.backAmount}/$${cfg?.totalAmount}`
                   : g.format === "skins" ? `$${cfg?.skinsAmount}/skin`
+                  : g.format === "best_ball" && Number(cfg?.wager) > 0 ? `$${cfg.wager}/team`
                   : isHolePicked && cfg?.holes?.length
                     ? `${cfg.holes.length} hole${cfg.holes.length === 1 ? "" : "s"}${Number(cfg?.stake) > 0 ? ` · $${cfg.stake}/hole` : ""}`
                     : fmt?.desc || "";
@@ -1915,28 +1954,44 @@ export default function TripPage() {
                       </div>
                     )}
 
-                    {/* Other formats — single overall winner pill */}
+                    {/* Other formats — overall winner pill. For team-wager
+                        formats (Best Ball) the "winner" is a TEAM identified
+                        by teamId; the pill shows "Team A" + member names. */}
                     {!isHolePicked && (() => {
-                      const winnerId = winners.overall;
-                      const name = playerName(winnerId);
+                      const isTeamWager = TEAM_WAGER_FORMATS.has(g.format);
+                      const winnerKey = isTeamWager ? "team" : "overall";
+                      const winnerId = winners[winnerKey];
+                      let label = "";
+                      if (winnerId) {
+                        if (isTeamWager) {
+                          const members = (g.players ?? []).filter((p: any) => (p.teamId || "A") === winnerId);
+                          label = `Team ${winnerId}${members.length > 0 ? ` (${members.map((m: any) => m.displayName).join(" + ")})` : ""}`;
+                        } else {
+                          label = playerName(winnerId) || "";
+                        }
+                      }
+                      const pillLabel = isTeamWager ? "Winning Team" : "Winner";
                       return (
                         <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                           <button
-                            onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: "overall", label: "Winner" }); }}
+                            onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: winnerKey, label: pillLabel }); }}
                             style={{
                               padding: "7px 14px",
                               borderRadius: 99,
-                              border: name ? "1px solid rgba(212,160,23,0.45)" : "1px solid rgba(77,168,98,0.35)",
-                              background: name ? "rgba(212,160,23,0.10)" : "rgba(77,168,98,0.08)",
-                              color: name ? "#d4a017" : "#4da862",
+                              border: label ? "1px solid rgba(212,160,23,0.45)" : "1px solid rgba(77,168,98,0.35)",
+                              background: label ? "rgba(212,160,23,0.10)" : "rgba(77,168,98,0.08)",
+                              color: label ? "#d4a017" : "#4da862",
                               fontFamily: "'Outfit', sans-serif",
                               fontSize: 12,
                               fontWeight: 700,
                               cursor: "pointer",
                               whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: "100%",
                             }}
                           >
-                            {name ? `🏆 Winner: ${name}` : "🏆 Declare winner"}
+                            {label ? `🏆 ${label}` : isTeamWager ? "🏆 Declare winning team" : "🏆 Declare winner"}
                           </button>
                         </div>
                       );
@@ -2701,6 +2756,21 @@ export default function TripPage() {
         if (!game) return null;
         const currentWinnerId = ((game.formatConfig as any)?.winners ?? {})[winnerPicker.key] as string | undefined;
         const players: any[] = Array.isArray(game.players) ? game.players : [];
+        // For team-wager formats (Best Ball), group players by teamId
+        // and render TEAM rows instead of individual players. The "id"
+        // we save is the teamId ("A", "B" …) not a userId.
+        const isTeamWager = TEAM_WAGER_FORMATS.has(game.format) && winnerPicker.key === "team";
+        const teams: Array<{ id: string; members: any[] }> = isTeamWager
+          ? (() => {
+              const m = new Map<string, any[]>();
+              for (const p of players) {
+                const tid = p.teamId || "A";
+                if (!m.has(tid)) m.set(tid, []);
+                m.get(tid)!.push(p);
+              }
+              return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([id, members]) => ({ id, members }));
+            })()
+          : [];
         return (
           <div
             onClick={() => setWinnerPicker(null)}
@@ -2733,9 +2803,41 @@ export default function TripPage() {
             >
               <div aria-hidden style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "0 auto 14px" }} />
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#4da862", marginBottom: 2 }}>{winnerPicker.label}</div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 900, color: "#fff", marginBottom: 14 }}>Who won?</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 900, color: "#fff", marginBottom: 14 }}>{isTeamWager ? "Which team won?" : "Who won?"}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {players.map((p) => {
+                {isTeamWager ? teams.map((t) => {
+                  const isCurrent = t.id === currentWinnerId;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => declareWinner(winnerPicker.gameId, winnerPicker.key, isCurrent ? null : t.id)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "12px 14px",
+                        borderRadius: 12,
+                        border: `1px solid ${isCurrent ? "rgba(212,160,23,0.55)" : "rgba(255,255,255,0.08)"}`,
+                        background: isCurrent ? "rgba(212,160,23,0.10)" : "rgba(255,255,255,0.03)",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#4da862" }}>
+                        {t.id}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", letterSpacing: "0.02em" }}>Team {t.id}</div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {t.members.map((m: any) => m.displayName).join(" + ") || "—"}
+                        </div>
+                      </div>
+                      {isCurrent && (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#d4a017", letterSpacing: "0.06em" }}>🏆 WINNER · TAP TO CLEAR</div>
+                      )}
+                    </button>
+                  );
+                }) : players.map((p) => {
                   const isCurrent = p.userId === currentWinnerId;
                   return (
                     <button
@@ -3069,6 +3171,30 @@ export default function TripPage() {
                         </div>
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Carryover on ties</span>
                       </button>
+                    </div>
+                  )}
+
+                  {gameFormat === "best_ball" && (
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>Team wager</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, paddingLeft: 12, maxWidth: 160 }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.55)", marginRight: 2 }}>$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          inputMode="decimal"
+                          value={gameTeamWager}
+                          onChange={(e) => setGameTeamWager(e.target.value)}
+                          placeholder="0"
+                          style={{ flex: 1, background: "transparent", border: "none", padding: "10px 12px 10px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", outline: "none", minWidth: 0 }}
+                        />
+                      </div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 6, lineHeight: 1.45 }}>
+                        {Number(gameTeamWager) > 0
+                          ? `Each team puts up $${gameTeamWager}. Winning team takes the pot, split evenly among teammates. Set to $0 for bragging rights only.`
+                          : "Set a dollar amount above if you're playing for money. Otherwise leave at $0."}
+                      </div>
                     </div>
                   )}
 
