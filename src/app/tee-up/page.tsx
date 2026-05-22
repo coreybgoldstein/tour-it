@@ -62,6 +62,47 @@ function fmtSingleDate(iso: string | null): string | null {
   return d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
 
+// iOS WKWebView renders <input type="date"> and <input type="time"> with
+// native controls whose width is decided by the OS, not by our CSS — empty
+// time inputs collapse to a small pill that doesn't fill the container,
+// and on some iOS versions the picker chip overflows its grid cell. We
+// stack an invisible native input on top of a visible custom-styled div
+// that we control completely. Tapping the area still opens the iOS picker
+// (the input is hit-target-sized), but the visual is consistent across
+// platforms regardless of empty/filled state.
+function DateField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const display = value
+    ? new Date(value + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "Select date";
+  return (
+    <div style={{ position: "relative", width: "100%", height: 44 }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "0 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: value ? "#fff" : "rgba(255,255,255,0.42)" }}>
+        {display}
+      </div>
+      <input type="date" value={value} onChange={e => onChange(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, border: 0, padding: 0, margin: 0, cursor: "pointer", background: "transparent", colorScheme: "dark" }} />
+    </div>
+  );
+}
+
+function TimeField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const display = value
+    ? (() => {
+        const [h, m] = value.split(":").map(Number);
+        const period = h >= 12 ? "PM" : "AM";
+        const h12 = h % 12 || 12;
+        return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+      })()
+    : "Tee time";
+  return (
+    <div style={{ position: "relative", width: "100%", height: 44 }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "0 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: value ? "#fff" : "rgba(255,255,255,0.42)" }}>
+        {display}
+      </div>
+      <input type="time" value={value} onChange={e => onChange(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, border: 0, padding: 0, margin: 0, cursor: "pointer", background: "transparent", colorScheme: "dark" }} />
+    </div>
+  );
+}
+
 export default function TeeUpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -499,16 +540,7 @@ export default function TeeUpPage() {
 
   return (
     <main style={{ background: "#07100a", minHeight: "100dvh", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 100 }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap');
-        * { box-sizing: border-box; }
-        /* iOS WKWebView renders empty <input type="time"> as a tiny pill
-           that doesn't fill the container, causing the misaligned look
-           next to <input type="date">. Force consistent height + left-
-           aligned inner value across both, on iOS and desktop. */
-        .tee-dt-input { min-height: 44px; box-sizing: border-box; }
-        .tee-dt-input::-webkit-date-and-time-value { text-align: left; line-height: 22px; }
-      `}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; }`}</style>
 
       {/* Header */}
       <div style={{ padding: "12px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -707,11 +739,11 @@ export default function TeeUpPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 18 }}>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Date</div>
-                <input className="tee-dt-input" type="date" value={quickDate} onChange={e => setQuickDate(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: quickDate ? "#fff" : "rgba(255,255,255,0.45)", outline: "none", colorScheme: "dark" }} />
+                <DateField value={quickDate} onChange={setQuickDate} />
               </div>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Tee Time <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(opt)</span></div>
-                <input className="tee-dt-input" type="time" value={quickTime} onChange={e => setQuickTime(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: quickTime ? "#fff" : "rgba(255,255,255,0.45)", outline: "none", colorScheme: "dark" }} />
+                <TimeField value={quickTime} onChange={setQuickTime} />
               </div>
             </div>
 
@@ -837,11 +869,11 @@ export default function TeeUpPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Start Date</div>
-                <input className="tee-dt-input" type="date" value={newTripStart} onChange={e => setNewTripStart(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: newTripStart ? "#fff" : "rgba(255,255,255,0.45)", outline: "none", colorScheme: "dark" }} />
+                <DateField value={newTripStart} onChange={setNewTripStart} />
               </div>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>End Date</div>
-                <input className="tee-dt-input" type="date" value={newTripEnd} onChange={e => setNewTripEnd(e.target.value)} style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: newTripEnd ? "#fff" : "rgba(255,255,255,0.45)", outline: "none", colorScheme: "dark" }} />
+                <DateField value={newTripEnd} onChange={setNewTripEnd} />
               </div>
             </div>
 

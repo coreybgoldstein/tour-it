@@ -171,14 +171,14 @@ function LeaderboardsButtonInline() {
 
 
 function CourseCard({ course, onClick, compact, featured }: { course: TrendingCourse; onClick: () => void; compact?: boolean; featured?: FeaturedTournament | null }) {
-  const h = compact ? 174 : 188;
+  const h = compact ? 196 : 210;
   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
   const GOLD = "#d4a017";
   return (
     <div
       onClick={onClick}
       style={{
-        width: 148, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
+        width: 172, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
         cursor: "pointer", position: "relative", background: "rgba(10,28,18,0.95)",
         border: featured ? `1.5px solid ${GOLD}` : "1px solid rgba(26,158,66,0.12)",
         boxShadow: featured ? "0 0 0 1px rgba(212,160,23,0.25), 0 0 14px rgba(212,160,23,0.22)" : undefined,
@@ -1608,7 +1608,7 @@ export default function Home() {
                       featured={featured && course.id === featured.courseId ? featured : null}
                     />
                   )) : [1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} style={{ width: 172, height: 196, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               </div>
@@ -1649,7 +1649,7 @@ export default function Home() {
               {locationStatus === "loading" && (
                 <div className="courses-row">
                   {[1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} style={{ width: 172, height: 196, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               )}
@@ -1668,26 +1668,44 @@ export default function Home() {
             </div>
           )}
 
-          {/* Bridge to feed — only shown to signed-in users. The discovery
-              section is already cramped for logged-out viewers (extra Join
-              nudge at top), and the immersive clip feed below requires login
-              for liking/saving/commenting anyway. The scroll-down hint
-              previously overlapped the courses-near-me row on smaller phones. */}
+          {/* Bridge to feed — promoted from a small pill to a hero-style
+              CTA card so the empty space between the courses rail and the
+              feed below is doing real work pulling people into discovery. */}
           {showScrollHint && user !== null && (
-            <button
+            <div
               onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-              style={{ flexShrink: 0, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 16, paddingTop: 14, paddingBottom: "calc(20px + env(safe-area-inset-bottom))", background: "none", border: "none", cursor: "pointer", gap: 8 }}
+              style={{
+                flexShrink: 0,
+                margin: "20px 20px calc(24px + env(safe-area-inset-bottom))",
+                padding: "22px 20px 18px",
+                background: "linear-gradient(160deg, rgba(77,168,98,0.16) 0%, rgba(77,168,98,0.04) 60%, rgba(77,168,98,0.02) 100%)",
+                border: "1px solid rgba(77,168,98,0.32)",
+                borderRadius: 18,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 10,
+                cursor: "pointer",
+                position: "relative",
+                overflow: "hidden",
+              }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "2.8px", textTransform: "uppercase", color: "rgba(255,255,255,0.72)" }}>
-                Tour the feed
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(77,168,98,0.92)" }}>
+                The Feed
               </div>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.92)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textAlign: "center", lineHeight: 1.15 }}>
+                Real intel from real golfers
+              </div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", textAlign: "center", lineHeight: 1.5, maxWidth: 320 }}>
+                Strategy, clubs, lines, conditions — straight from the people who've played it. Swipe through clips hole by hole.
+              </div>
+              <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8, padding: "9px 18px", background: "rgba(77,168,98,0.22)", border: "1px solid rgba(77,168,98,0.5)", borderRadius: 99 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#4da862" }}>Scroll to start</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </div>
+            </div>
           )}
 
         </div>
