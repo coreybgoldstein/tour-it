@@ -1668,64 +1668,86 @@ export default function Home() {
             </div>
           )}
 
-          {/* Bridge to feed — a "From the Feed" thumbnail strip showing
-              real clips from the actual feed below. Matches the visual
-              pattern of "Popular on Tour It" and "Courses Near Me" (same
-              section header style + horizontal rail) so it reads as a
-              tasteful editorial section, not a marketing CTA. Real
-              content does the selling. Tapping any thumbnail scrolls
-              into the feed at full height. */}
-          {showScrollHint && user !== null && feedItems.length > 0 && (
-            <div style={{ flexShrink: 0, marginTop: 10, paddingBottom: "calc(16px + env(safe-area-inset-bottom))" }}>
-              <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
-                  From the Feed
+          {/* Bridge to feed — single editorial CTA in the page's existing
+              typographic language. Two thin green-tinted gradient
+              dividers frame three staggered chevrons that bounce in
+              sequence (cascading downward to suggest scroll), with a
+              Playfair headline and a quiet Outfit subtitle. Whole block
+              is tappable; on press the chevrons sync-flash and the area
+              briefly highlights. No imagery, no marketing — same kind of
+              restraint as the Scout-your-next-round hero up top. */}
+          {showScrollHint && user !== null && (
+            <button
+              type="button"
+              onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
+              className="feed-cta"
+              style={{
+                flexShrink: 0,
+                background: "transparent",
+                border: "none",
+                width: "100%",
+                padding: "28px 20px calc(28px + env(safe-area-inset-bottom))",
+                marginTop: 6,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 14,
+                cursor: "pointer",
+              }}
+            >
+              <style>{`
+                .feed-cta:active .feed-cta-divider { opacity: 1; }
+                .feed-cta:active .feed-cta-chevron { animation-duration: 0.4s !important; }
+                .feed-cta-divider {
+                  width: 64%;
+                  max-width: 320px;
+                  height: 1px;
+                  background: linear-gradient(to right, transparent 0%, rgba(77,168,98,0.45) 50%, transparent 100%);
+                  opacity: 0.7;
+                  transition: opacity 0.18s ease;
+                }
+                .feed-cta-chevron-row {
+                  display: flex;
+                  gap: 4px;
+                  align-items: center;
+                  justify-content: center;
+                }
+                .feed-cta-chevron {
+                  display: inline-flex;
+                  animation: feed-cta-bounce 1.6s ease-in-out infinite;
+                }
+                .feed-cta-chevron:nth-child(1) { animation-delay: 0s; }
+                .feed-cta-chevron:nth-child(2) { animation-delay: 0.18s; }
+                .feed-cta-chevron:nth-child(3) { animation-delay: 0.36s; }
+                @keyframes feed-cta-bounce {
+                  0%, 60%, 100% { transform: translateY(0); opacity: 0.55; }
+                  30% { transform: translateY(6px); opacity: 1; }
+                }
+              `}</style>
+
+              <div className="feed-cta-divider" />
+
+              <div className="feed-cta-chevron-row" aria-hidden>
+                {[0, 1, 2].map(i => (
+                  <span key={i} className="feed-cta-chevron">
+                    <svg width="22" height="14" viewBox="0 0 24 14" fill="none" stroke="#4da862" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="4 3 12 11 20 3"/>
+                    </svg>
+                  </span>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
+                  Tour the Feed
                 </div>
-                <div style={{ flex: 1 }} />
-                <button
-                  onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-                  style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", borderRadius: 99, padding: "3px 10px", cursor: "pointer" }}
-                >
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Tour</span>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontStyle: "italic", fontSize: 12, color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>
+                  Real intel, hole by hole
+                </div>
               </div>
-              <div className="courses-row">
-                {feedItems.slice(0, 8).map(item => {
-                  const clip = item.type === "clip" ? item.clip : item.shots[0];
-                  const key = item.type === "clip" ? clip.id : item.seriesId;
-                  const thumb = clip.cloudflareVideoId
-                    ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=300`
-                    : null;
-                  return (
-                    <div
-                      key={key}
-                      onClick={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })}
-                      style={{ width: 100, height: 140, borderRadius: 12, flexShrink: 0, overflow: "hidden", position: "relative", cursor: "pointer", background: "rgba(10,28,18,0.95)", border: "1px solid rgba(26,158,66,0.12)" }}
-                    >
-                      {thumb && (
-                        <img src={thumb} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                      )}
-                      {!thumb && clip.courseLogoUrl && (
-                        <img src={clip.courseLogoUrl} alt="" style={{ position: "absolute", top: "30%", left: "50%", transform: "translate(-50%, -50%)", width: 56, height: 36, objectFit: "cover", borderRadius: 6, backgroundColor: "#fff" }} />
-                      )}
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.10) 0%, rgba(0,0,0,0.10) 50%, rgba(0,0,0,0.90) 100%)" }} />
-                      {clip.courseLogoUrl && thumb && (
-                        <div style={{ position: "absolute", top: 5, left: 5, width: 22, height: 22, borderRadius: 5, background: "#fff", border: "1px solid rgba(255,255,255,0.18)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
-                          <img src={clip.courseLogoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        </div>
-                      )}
-                      <div style={{ position: "absolute", bottom: 8, left: 8, right: 8, display: "flex", flexDirection: "column", gap: 1 }}>
-                        {clip.holeNumber && (
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(77,168,98,0.95)" }}>Hole {clip.holeNumber}</div>
-                        )}
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{clip.username}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+
+              <div className="feed-cta-divider" />
+            </button>
           )}
 
         </div>
