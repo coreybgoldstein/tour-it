@@ -485,6 +485,12 @@ const [editDescription, setEditDescription] = useState("");
   useKeyboardAwareSheet(tripPickerOpen, "course-trip-picker");
   const [planOpen, setPlanOpen] = useState(false);
   useKeyboardAwareSheet(planOpen, "course-plan-sheet");
+  // Brief "Sent!" confirmation state for the Send pill in the hero.
+  // navigator.share opens the iOS share sheet directly (no app feedback
+  // needed since the OS provides it); the fallback path that copies the
+  // course URL to clipboard uses this flag to show the user something
+  // actually happened.
+  const [courseShared, setCourseShared] = useState(false);
   const [tripStep, setTripStep] = useState<"select" | "create" | "details" | "success">("select");
   const [userTrips, setUserTrips] = useState<{ id: string; name: string; startDate: string | null; endDate: string | null }[]>([]);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
@@ -1238,6 +1244,43 @@ const [editDescription, setEditDescription] = useState("");
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill={saved ? "#1a9e42" : "none"} stroke={saved ? "#1a9e42" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
               <span style={{ color: saved ? "#1a9e42" : "rgba(255,255,255,0.5)" }}>{saved ? "Saved" : "Save"}</span>
+            </button>
+            {/* Send pill — opens the native share sheet so the course
+                page can be sent the same way clips already can. Falls
+                back to clipboard with a brief "Sent!" toast in the pill
+                when navigator.share is unavailable (desktop browsers,
+                some embedded webviews). The course URL the OS attaches
+                is what unfurls into the OG card we ship today. */}
+            <button
+              onClick={async () => {
+                if (!course) return;
+                const url = `${window.location.origin}/courses/${course.id}`;
+                const text = `${course.name} on Tour It`;
+                try {
+                  if (typeof navigator !== "undefined" && (navigator as Navigator & { share?: (data: ShareData) => Promise<void> }).share) {
+                    await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({ title: course.name, text, url });
+                  } else {
+                    await navigator.clipboard.writeText(url);
+                    setCourseShared(true);
+                    setTimeout(() => setCourseShared(false), 2000);
+                  }
+                } catch {
+                  // User cancelled the share sheet — no-op.
+                }
+              }}
+              style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, background: courseShared ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.06)", border: `1px solid ${courseShared ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: 99, padding: "4px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
+            >
+              {courseShared ? (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span style={{ color: "#1a9e42" }}>Sent</span>
+                </>
+              ) : (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Send</span>
+                </>
+              )}
             </button>
             {/* Save picker — fixed bottom sheet */}
             {showPicker && (
