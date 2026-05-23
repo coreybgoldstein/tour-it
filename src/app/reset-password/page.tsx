@@ -39,12 +39,16 @@ export default function ResetPasswordPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) { setReady(true); return; }
 
-      // Hash-based flow fallback
+      // Hash-based flow fallback. 6 seconds was firing on slow cellular
+      // before Supabase could fire PASSWORD_RECOVERY — friends would see
+      // "link expired" when the link was actually still loading. 20s is
+      // generous enough to survive a 3G/Edge connection while still
+      // catching genuinely-broken links inside a reasonable window.
       const { data } = supabase.auth.onAuthStateChange((event) => {
         if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
       });
       subscription = data.subscription;
-      timer = setTimeout(() => setLinkInvalid(true), 6000);
+      timer = setTimeout(() => setLinkInvalid(true), 20000);
     });
 
     return () => {

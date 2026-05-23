@@ -14,7 +14,19 @@ export default function ForgotPasswordPage() {
     if (!email.trim()) { setError("Please enter your email address."); return; }
     setLoading(true);
     const supabase = createClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim());
+    // CRITICAL: explicitly direct Supabase to send the user to /auth/callback
+    // after they click the link in email. Without this, Supabase falls back
+    // to the project's Site URL — which points at the homepage and leaves
+    // the PKCE `code` query param dangling un-exchanged. The user lands on
+    // the home feed, the code times out, and the next visit to
+    // /reset-password shows "link invalid". This was the original cause of
+    // every "reset link didn't work" report. /auth/callback exchanges the
+    // code server-side, sets the session cookie, and forwards to
+    // /reset-password where the user actually picks their new password.
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      email.trim(),
+      { redirectTo: `${window.location.origin}/auth/callback?next=/reset-password` },
+    );
     if (resetError) {
       setError(resetError.message || "Something went wrong. Please try again.");
       setLoading(false);
