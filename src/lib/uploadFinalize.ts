@@ -36,13 +36,24 @@ export type FinalizeUploadResult = {
   courseUploadCount: number;
 };
 
+// Optional progress hook. Fires once before each attempt with the
+// 1-indexed attempt number and the total number planned. Useful for
+// surfacing a "retrying…" indicator in the UI when the first attempt
+// failed and we're backing off before another try.
+export type FinalizeProgress = (info: { attempt: number; total: number }) => void;
+
 // Retry on network failures and 5xx responses. 4xx responses (validation,
 // auth) are surfaced immediately — they will not succeed on retry.
-export async function finalizeUpload(input: FinalizeUploadInput): Promise<FinalizeUploadResult> {
+export async function finalizeUpload(
+  input: FinalizeUploadInput,
+  onProgress?: FinalizeProgress,
+): Promise<FinalizeUploadResult> {
   const delays = [0, 1500, 4000]; // up to 3 attempts
   let lastError: Error | null = null;
-  for (const delay of delays) {
+  for (let i = 0; i < delays.length; i++) {
+    const delay = delays[i];
     if (delay) await new Promise(r => setTimeout(r, delay));
+    onProgress?.({ attempt: i + 1, total: delays.length });
     try {
       const res = await fetch("/api/uploads/create", {
         method: "POST",

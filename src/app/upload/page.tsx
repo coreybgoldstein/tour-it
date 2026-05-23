@@ -119,7 +119,10 @@ function UploadPageInner() {
     notes: "",
   });
 
-  const [uploadStage, setUploadStage] = useState<"idle" | "compressing" | "uploading">("idle");
+  const [uploadStage, setUploadStage] = useState<"idle" | "compressing" | "uploading" | "saving">("idle");
+  // saveAttempt: which finalizeUpload retry we're on. >1 means the first
+  // attempt failed and we're retrying. Drives the "retrying… (n/3)" copy.
+  const [saveAttempt, setSaveAttempt] = useState(0);
   const [uploadPct, setUploadPct] = useState(0);
   const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -651,26 +654,33 @@ function UploadPageInner() {
         setUploading(false);
         return;
       }
+      // Switch from "uploading" (file upload progress) to "saving" (server
+      // route finalize). The progress bar UI swaps to retry-aware copy.
+      setUploadStage("saving");
+      setSaveAttempt(0);
       let finalize;
       try {
-        finalize = await finalizeUpload({
-          uploadId,
-          courseId: selectedCourse.id,
-          holeId,
-          mediaType,
-          mediaUrl,
-          cloudflareVideoId,
-          shotType: resolvedShotType,
-          yardageOverlay: contentFormat === "THREE_HOLE" ? selectedGroup : null,
-          clubUsed: intel.club || null,
-          windCondition: intel.wind || null,
-          strategyNote: intel.notes || null,
-          datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
-          clipLat: gpsCoords?.lat ?? null,
-          clipLng: gpsCoords?.lng ?? null,
-          tripId: preselectedTripId || null,
-          tripPublic: preselectedTripId ? tripPublic : true,
-        });
+        finalize = await finalizeUpload(
+          {
+            uploadId,
+            courseId: selectedCourse.id,
+            holeId,
+            mediaType,
+            mediaUrl,
+            cloudflareVideoId,
+            shotType: resolvedShotType,
+            yardageOverlay: contentFormat === "THREE_HOLE" ? selectedGroup : null,
+            clubUsed: intel.club || null,
+            windCondition: intel.wind || null,
+            strategyNote: intel.notes || null,
+            datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
+            clipLat: gpsCoords?.lat ?? null,
+            clipLng: gpsCoords?.lng ?? null,
+            tripId: preselectedTripId || null,
+            tripPublic: preselectedTripId ? tripPublic : true,
+          },
+          ({ attempt }) => setSaveAttempt(attempt),
+        );
       } catch (err) {
         setError(err instanceof Error ? err.message : "Couldn't save your clip — please try again.");
         setUploading(false);
@@ -1651,7 +1661,7 @@ function UploadPageInner() {
               {uploading && (
                 <div style={{
                   position: "absolute", left: 0, top: 0, bottom: 0,
-                  width: `${uploadStage === "uploading" ? uploadPct : compressPct}%`,
+                  width: `${uploadStage === "uploading" ? uploadPct : uploadStage === "saving" ? 100 : compressPct}%`,
                   background: "rgba(255,255,255,0.18)",
                   transition: "width 0.4s ease",
                   pointerEvents: "none",
@@ -1662,6 +1672,8 @@ function UploadPageInner() {
                   ? `Compressing… ${compressPct}%`
                   : uploadStage === "uploading"
                   ? `Uploading… ${uploadPct}%`
+                  : uploadStage === "saving"
+                  ? (saveAttempt > 1 ? `Retrying… (${saveAttempt}/3)` : "Saving…")
                   : "Submit clip"}
               </span>
             </button>
@@ -1682,24 +1694,42 @@ function UploadPageInner() {
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>
-              {uploadStage === "compressing" ? "Compressing video…" : "Uploading to servers…"}
+              {uploadStage === "compressing"
+                ? "Compressing video…"
+                : uploadStage === "saving"
+                ? (saveAttempt > 1 ? `Hit a connection hiccup — retrying… (${saveAttempt}/3)` : "Saving your clip…")
+                : "Uploading to servers…"}
             </span>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862" }}>
-              {uploadStage === "compressing" ? compressPct : uploadPct}%
-            </span>
+            {uploadStage !== "saving" && (
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862" }}>
+                {uploadStage === "compressing" ? compressPct : uploadPct}%
+              </span>
+            )}
           </div>
-          <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden" }}>
-            <div style={{
-              height: "100%",
-              width: `${uploadStage === "compressing" ? compressPct : uploadPct}%`,
-              background: "linear-gradient(90deg, #2d7a42, #4da862)",
-              borderRadius: 99,
-              transition: "width 0.4s ease",
-            }} />
+          <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden", position: "relative" }}>
+            {uploadStage === "saving" ? (
+              // Indeterminate animated bar — we don't have a percentage to
+              // report during the server-side finalize step, so show motion
+              // instead of a frozen full bar.
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(90deg, transparent 0%, #4da862 50%, transparent 100%)",
+                animation: "tourit-shimmer 1.4s linear infinite",
+              }} />
+            ) : (
+              <div style={{
+                height: "100%",
+                width: `${uploadStage === "compressing" ? compressPct : uploadPct}%`,
+                background: "linear-gradient(90deg, #2d7a42, #4da862)",
+                borderRadius: 99,
+                transition: "width 0.4s ease",
+              }} />
+            )}
           </div>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 7 }}>
             Don't close this page until the upload finishes
           </div>
+          <style>{`@keyframes tourit-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }`}</style>
         </div>
       )}
 
