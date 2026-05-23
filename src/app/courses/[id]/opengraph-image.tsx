@@ -46,17 +46,40 @@ function sb() {
 
 /**
  * Fetch a Google Font's woff2 bytes for use as an ImageResponse font.
- * The User-Agent header forces Google Fonts to serve woff2 (its CSS
- * varies by UA — newer browsers get woff2, older get woff/ttf).
+ * Google Fonts varies its CSS response by User-Agent — a modern
+ * Chrome UA forces it to serve woff2. A short `Mozilla/5.0` was
+ * insufficient on the edge runtime (it returned a different CSS
+ * shape my regex didn't catch, so fonts silently failed to load
+ * and ImageResponse crashed with "No fonts are loaded").
  */
+const FONT_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
+
 async function loadGoogleFont(family: string, weight: number): Promise<ArrayBuffer | null> {
   try {
-    const url = `https://fonts.googleapis.com/css2?family=${family.replace(/ /g, "+")}:wght@${weight}`;
-    const css = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } }).then(r => r.text());
-    const match = css.match(/src: url\(([^)]+)\) format\(['"](woff2)['"]\)/);
-    if (!match) return null;
-    return await fetch(match[1]).then(r => r.arrayBuffer());
-  } catch {
+    const url = `https://fonts.googleapis.com/css2?family=${family.replace(/ /g, "+")}:wght@${weight}&display=swap`;
+    const cssRes = await fetch(url, { headers: { "User-Agent": FONT_UA } });
+    if (!cssRes.ok) {
+      console.warn(`[og-image] Google Fonts CSS fetch failed for ${family}:${weight} — status ${cssRes.status}`);
+      return null;
+    }
+    const css = await cssRes.text();
+    // Match any URL inside src: url(...) — Google's CSS sometimes
+    // wraps URLs in quotes, sometimes not. Both shapes valid.
+    const match = css.match(/src:\s*url\(([^)]+)\)\s*format\(['"]?woff2['"]?\)/);
+    if (!match) {
+      console.warn(`[og-image] No woff2 src URL found in Google Fonts CSS for ${family}:${weight}`);
+      return null;
+    }
+    const fontRes = await fetch(match[1].replace(/['"]/g, ""));
+    if (!fontRes.ok) {
+      console.warn(`[og-image] Font woff2 fetch failed for ${family}:${weight} — status ${fontRes.status}`);
+      return null;
+    }
+    return await fontRes.arrayBuffer();
+  } catch (err) {
+    console.warn(`[og-image] loadGoogleFont threw for ${family}:${weight}:`, err);
     return null;
   }
 }
@@ -233,14 +256,18 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
     ),
     {
       ...size,
-      fonts: [
-        ...(playfairBold
-          ? [{ name: "Playfair Display", data: playfairBold, weight: 900 as const, style: "normal" as const }]
-          : []),
-        ...(outfitMedium
-          ? [{ name: "Outfit", data: outfitMedium, weight: 500 as const, style: "normal" as const }]
-          : []),
-      ],
+      // Only pass `fonts` when at least one loaded. Passing
+      // `fonts: []` makes ImageResponse error with "No fonts are
+      // loaded" — omitting the key entirely lets it fall back to
+      // its built-in Inter font.
+      ...buildFontsOption(playfairBold, outfitMedium),
     }
   );
+}
+
+function buildFontsOption(playfair: ArrayBuffer | null, outfit: ArrayBuffer | null) {
+  const fonts: { name: string; data: ArrayBuffer; weight: 900 | 500; style: "normal" }[] = [];
+  if (playfair) fonts.push({ name: "Playfair Display", data: playfair, weight: 900, style: "normal" });
+  if (outfit) fonts.push({ name: "Outfit", data: outfit, weight: 500, style: "normal" });
+  return fonts.length > 0 ? { fonts } : {};
 }
