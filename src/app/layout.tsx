@@ -48,14 +48,11 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     apple: "/icon.png",
   },
-  // Google Search Console domain verification. Replace the placeholder
-  // below with the content="…" value from search.google.com/search-console
-  // → Add property → URL prefix → HTML tag method. This emits
-  // <meta name="google-site-verification" …> on every page so Google
-  // accepts the verification check.
-  verification: {
-    google: "TODO-replace-with-search-console-token",
-  },
+  // Google Search Console verification is handled via the HTML-file
+  // method instead of the meta-tag method: see
+  // public/google16842fb000b55941.html, which Vercel serves at
+  // https://www.touritgolf.com/google16842fb000b55941.html and which
+  // Google fetches to confirm ownership. No meta-tag entry needed.
   openGraph: {
     title: "Tour It — Scout Before You Play",
     description: "Scout any golf course before you play. Real hole-by-hole clips from golfers who've been there.",
