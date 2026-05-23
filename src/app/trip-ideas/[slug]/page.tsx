@@ -44,7 +44,7 @@ type Itinerary = {
   stops: Stop[];
 };
 
-const SITE_URL = "https://touritgolf.com";
+const SITE_URL = "https://www.touritgolf.com";
 
 const BUDGET_RANGES: Record<string, { low: number; high: number; label: string }> = {
   "$$":   { low: 600,  high: 1000, label: "Budget-friendly" },

@@ -7,6 +7,7 @@ import HideSplash from "@/components/HideSplash";
 import NativeBootstrap from "@/components/NativeBootstrap";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AppDownloadBanner from "@/components/AppDownloadBanner";
+import { CANONICAL_HOST, DEFAULT_OG_IMAGE, websiteSchema, organizationSchema, jsonLdScript } from "@/lib/seo";
 // b512: import commented out with the unmounted overlay below to avoid
 // an unused-import lint error. Component file kept in repo — uncomment
 // both lines to restore on-device diagnostics.
@@ -37,8 +38,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Tour It — Scout Before You Play",
+  metadataBase: new URL(CANONICAL_HOST),
+  title: { default: "Tour It — Scout Before You Play", template: "%s | Tour It" },
   description: "Scout any golf course before you play. Real hole-by-hole clips from golfers who've been there.",
+  alternates: { canonical: CANONICAL_HOST },
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",
@@ -46,16 +49,16 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Tour It — Scout Before You Play",
     description: "Scout any golf course before you play. Real hole-by-hole clips from golfers who've been there.",
-    url: "https://touritgolf.com",
+    url: CANONICAL_HOST,
     siteName: "Tour It",
     type: "website",
-    images: [{ url: "https://touritgolf.com/og-image.png", width: 780, height: 370, alt: "Tour It — Scout Before You Play" }],
+    images: [{ url: DEFAULT_OG_IMAGE, width: 780, height: 370, alt: "Tour It — Scout Before You Play" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Tour It — Scout Before You Play",
     description: "Scout any golf course before you play. Real hole-by-hole clips from golfers who've been there.",
-    images: ["https://touritgolf.com/og-image.png"],
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
@@ -67,6 +70,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${playfair.variable} ${outfit.variable} antialiased`}>
+        {/* Site-wide JSON-LD — WebSite + SearchAction lets Google render
+            the search box in results; Organization enables a Knowledge
+            Panel for the Tour It brand once we link social profiles. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLdScript([websiteSchema(), organizationSchema()]) }}
+        />
         <HideSplash />
         <NativeBootstrap />
         <ServiceWorkerRegister />

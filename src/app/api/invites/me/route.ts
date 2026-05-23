@@ -45,7 +45,7 @@ export async function GET() {
   const totalPointsEarned = invites.reduce((s: number, r: any) => s + r.pointsEarned, 0);
 
   return NextResponse.json({
-    inviteLink: `https://touritgolf.com/join/${username}`,
+    inviteLink: `https://www.touritgolf.com/join/${username}`,
     totalPointsEarned,
     invites,
   });

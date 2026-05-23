@@ -1,8 +1,9 @@
 import { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { CANONICAL_HOST } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://touritgolf.com";
+  const baseUrl = CANONICAL_HOST;
 
   try {
     const supabase = await createClient();
@@ -20,18 +21,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .not("holeId", "is", null)
       .order("createdAt", { ascending: false });
 
-    // Deduplicate to unique courseId + holeNumber combos
-    // We need hole number — fetch holes for courses that have uploads
+    // Build a set of holeIds with uploads so we can filter the Hole
+    // table down to only the ones actually worth crawling.
+    const uploadHoleIds = new Set((uploads || []).map((u) => u.holeId));
     const courseIds = [...new Set((uploads || []).map((u) => u.courseId))];
+
+    // NOTE: Hole schema field is `holeNumber`, not `number`. Earlier
+    // sitemap version selected `number` which silently came back
+    // undefined, generating URLs like /courses/.../holes/undefined.
+    // Verified against prisma/schema.prisma:252.
     const { data: holes } = courseIds.length
       ? await supabase
           .from("Hole")
-          .select("id, number, courseId, updatedAt")
+          .select("id, holeNumber, courseId, updatedAt")
           .in("courseId", courseIds)
       : { data: [] };
 
-    // Build a set of holeIds that have uploads
-    const uploadHoleIds = new Set((uploads || []).map((u) => u.holeId));
     const holesWithContent = (holes || []).filter((h) => uploadHoleIds.has(h.id));
 
     const courseUrls: MetadataRoute.Sitemap = (courses || []).map((c) => ({
@@ -42,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     const holeUrls: MetadataRoute.Sitemap = holesWithContent.map((h) => ({
-      url: `${baseUrl}/courses/${h.courseId}/holes/${h.number}`,
+      url: `${baseUrl}/courses/${h.courseId}/holes/${h.holeNumber}`,
       lastModified: h.updatedAt ? new Date(h.updatedAt) : new Date(),
       changeFrequency: "weekly",
       priority: 0.7,
@@ -66,7 +71,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
   } catch (err) {
     console.error("[sitemap] error:", err);
-    // Return minimal sitemap on error
+    // Return minimal sitemap on error so we don't 500 the route
+    // (Google will retry; better to serve the homepage than nothing).
     return [
       { url: baseUrl, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
       { url: `${baseUrl}/search`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },

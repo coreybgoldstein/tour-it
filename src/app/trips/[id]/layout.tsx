@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { DEFAULT_OG_IMAGE, canonical } from "@/lib/seo";
 
 function formatDateRange(start: string | null | undefined, end: string | null | undefined): string | null {
   if (!start) return null;
@@ -62,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       ?? null;
   }
 
-  const image = trip.imageUrl || courseCoverImage || "https://touritgolf.com/og-image.png";
+  const image = trip.imageUrl || courseCoverImage || DEFAULT_OG_IMAGE;
 
   const dateRange = formatDateRange(trip.startDate, trip.endDate);
   const parts: string[] = [];
@@ -76,7 +77,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     : teaser || "A golf trip on Tour It.";
 
   const title = `${trip.name} — Tour It`;
-  const url = `https://touritgolf.com/trips/${id}`;
+  const url = canonical(`/trips/${id}`);
 
   return {
     title,
