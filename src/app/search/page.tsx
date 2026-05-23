@@ -530,6 +530,22 @@ function SearchPageInner() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
         .search-wrap { max-width: 600px; margin: 0 auto; padding: 0 20px 120px; }
+        /* Unified bottom-sheet pattern — same chrome for Filter + Create Course.
+           Sheet sits above all nav chrome (200/210). The 60vh min-height
+           keeps the sheet from collapsing to its content and looking like a
+           thin strip glued to the bottom edge. */
+        .tourit-sheet-backdrop { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.65); }
+        .tourit-sheet {
+          position: fixed; bottom: 0; left: 0; right: 0; z-index: 210;
+          background: #0d2318; border: 1px solid rgba(77,168,98,0.2);
+          border-top: 1px solid rgba(77,168,98,0.3);
+          border-radius: 20px 20px 0 0;
+          padding: 18px 20px calc(32px + env(safe-area-inset-bottom));
+          overflow-y: auto;
+          min-height: 60vh; max-height: 90vh;
+          box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+        }
+        .tourit-sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18); margin: 0 auto 16px; }
         .search-box { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px 18px; transition: border-color 0.2s, box-shadow 0.2s; }
         .search-box.focused { border-color: rgba(77,168,98,0.5); box-shadow: 0 0 0 4px rgba(77,168,98,0.07); }
         .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Outfit', sans-serif; font-size: 16px; color: #fff; }
@@ -916,14 +932,13 @@ function SearchPageInner() {
         </>}
       </div>
 
-      {/* Filter bottom sheet — z-index 200/210 to clear both the mobile
-          BottomNav (z-index 100) and the desktop side nav (z-index 110).
-          Same range used for the Create Course sheet below. */}
+      {/* Filter bottom sheet — uses the shared .tourit-sheet pattern so its
+          height, padding, backdrop and z-index match the Create Course sheet. */}
       {filterOpen && (
         <>
-          <div onClick={() => setFilterOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)" }} />
-          <div id="search-filter-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 210, background: "#0d2318", border: "1px solid rgba(77,168,98,0.15)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", maxHeight: "85vh", overflowY: "auto" }}>
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
+          <div onClick={() => setFilterOpen(false)} className="tourit-sheet-backdrop" />
+          <div id="search-filter-sheet" className="tourit-sheet">
+            <div className="tourit-sheet-grip" />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Filter Courses</div>
               <button onClick={() => { clearFilters(); setFilterOpen(false); }} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.35)", background: "none", border: "none", cursor: "pointer" }}>Clear all</button>
@@ -1010,16 +1025,12 @@ function SearchPageInner() {
         </>
       )}
 
-      {/* Create course bottom sheet — z-index 110/120 to stack above the
-          BottomNav (z-index 100), which was previously covering the bottom
-          half of the form and the "Add Course" submit button. Bottom padding
-          also reserves room for the BottomNav + iOS safe-area inset so the
-          submit button is comfortably reachable on every device. */}
+      {/* Create course bottom sheet — uses the shared .tourit-sheet pattern. */}
       {addOpen && (
         <>
-          <div onClick={() => setAddOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)" }} />
-          <div id="search-create-course-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 210, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px calc(28px + env(safe-area-inset-bottom))", overflowY: "auto", maxHeight: "calc(90vh - env(safe-area-inset-top))" }}>
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
+          <div onClick={() => setAddOpen(false)} className="tourit-sheet-backdrop" />
+          <div id="search-create-course-sheet" className="tourit-sheet">
+            <div className="tourit-sheet-grip" />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Add a Course</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 20 }}>Help the community scout it</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
