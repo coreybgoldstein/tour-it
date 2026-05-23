@@ -48,11 +48,17 @@ export const metadata: Metadata = {
     icon: "/icon.png",
     apple: "/icon.png",
   },
-  // Google Search Console verification is handled via the HTML-file
-  // method instead of the meta-tag method: see
-  // public/google16842fb000b55941.html, which Vercel serves at
-  // https://www.touritgolf.com/google16842fb000b55941.html and which
-  // Google fetches to confirm ownership. No meta-tag entry needed.
+  // Google Search Console verification — wired with BOTH methods so
+  // ownership verifies regardless of which one Corey clicks in the
+  // Search Console UI:
+  //   - HTML file:  public/google16842fb000b55941.html
+  //   - HTML tag:   emitted by this `verification.google` entry as
+  //                 <meta name="google-site-verification" content="…">
+  // Either path is sufficient; Google accepts the first one it can
+  // confirm. Keep both so removing one doesn't break verification.
+  verification: {
+    google: "j-ehMKQ7bIqhc7TRk3sGT4AqMd6oNd_K6_EJTqCPvnU",
+  },
   openGraph: {
     title: "Tour It — Scout Before You Play",
     description: "Scout any golf course before you play. Real hole-by-hole clips from golfers who've been there.",
