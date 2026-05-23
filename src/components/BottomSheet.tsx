@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * Single source of truth for every bottom sheet in the app. Pairs with
@@ -41,16 +42,18 @@ export type BottomSheetProps = {
 };
 
 export function BottomSheet({ open, onClose, variant = "default", footer, id, children }: BottomSheetProps) {
+  const [mounted, setMounted] = useState(false);
   // Lock body scroll while the sheet is open so background content
   // doesn't bleed through swipes that should target the sheet itself.
   useEffect(() => {
+    setMounted(true);
     if (!open) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const sheetClass = [
     "tourit-sheet",
@@ -58,7 +61,13 @@ export function BottomSheet({ open, onClose, variant = "default", footer, id, ch
     variant === "full" ? "tourit-sheet--full" : "",
   ].filter(Boolean).join(" ");
 
-  return (
+  // Portal the sheet to document.body so it escapes any parent that
+  // creates a CSS stacking context (transform, filter, will-change,
+  // position: sticky, etc). Without this, the sheet's z-index 210 is
+  // scoped to that local context — and the BottomNav at z-index 100,
+  // which sits at the page root, ends up rendering ABOVE the sheet.
+  // That was the bug Corey hit on the course Save picker on 2026-05-23.
+  return createPortal(
     <>
       <div className="tourit-sheet-backdrop" onClick={onClose} />
       <div className={sheetClass} id={id} onClick={e => e.stopPropagation()}>
@@ -70,6 +79,7 @@ export function BottomSheet({ open, onClose, variant = "default", footer, id, ch
           </>
         ) : children}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }

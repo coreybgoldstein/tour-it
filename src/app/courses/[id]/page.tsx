@@ -13,6 +13,7 @@ import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
+import { SheetPortal } from "@/components/SheetPortal";
 import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
@@ -1312,9 +1313,11 @@ const [editDescription, setEditDescription] = useState("");
                 </>
               )}
             </button>
-            {/* Save picker — bottom sheet */}
+            {/* Save picker — bottom sheet. Portaled so it escapes the
+                course-hero's stacking context (transforms on parent
+                blocks were trapping the sheet under the BottomNav). */}
             {showPicker && (
-              <>
+              <SheetPortal>
                 <div className="tourit-sheet-backdrop" onClick={() => setShowPicker(false)} />
                 <div className="tourit-sheet tourit-sheet--auto">
                   <div className="tourit-sheet-grip" />
@@ -1350,7 +1353,7 @@ const [editDescription, setEditDescription] = useState("");
                     </div>
                   </button>
                 </div>
-              </>
+              </SheetPortal>
             )}
           </div>
         </div>
