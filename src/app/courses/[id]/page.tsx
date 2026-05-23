@@ -1206,11 +1206,10 @@ const [editDescription, setEditDescription] = useState("");
             {courseClips.length > 0 && <><span style={{ color: "rgba(255,255,255,0.35)" }}>·</span><span>{courseClips.length} clips</span></>}
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
-            {hero.year && (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "4px 12px" }}>
-                Est. {hero.year}
-              </span>
-            )}
+            {/* Est. {year} pill removed from the hero on 2026-05-23 —
+                it competed for attention with Directions / Plan Round /
+                Save / SEND IT. The year now lives in the course info
+                line further down ("Designed by X · Est. YYYY"). */}
             {(course.city || course.state || course.zipCode) && (() => {
               const mapsQuery = [course.name, course.city, course.state, course.zipCode].filter(Boolean).join(", ");
               const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
@@ -2017,11 +2016,23 @@ const [editDescription, setEditDescription] = useState("");
         </div>
       )}
 
-{/* Contribute modal */}
+{/* Contribute modal — portaled out of the hero's stacking context so
+        it sits above BottomNav. Uses the .tourit-sheet--full variant
+        since the form has many fields. */}
       {contributeOpen && (
-        <div id="course-contribute-sheet" onClick={() => setContributeOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "85vh", overflowY: "auto" }}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+        <SheetPortal>
+          <div className="tourit-sheet-backdrop" onClick={() => setContributeOpen(false)} />
+          <div id="course-contribute-sheet" className="tourit-sheet tourit-sheet--full" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
+            {/* Small round close button — tap target separate from the
+                drag handle so users always have an explicit exit. */}
+            <button
+              onClick={() => setContributeOpen(false)}
+              aria-label="Close"
+              style={{ position: "absolute", top: 12, right: 14, width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 1 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Contribute</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>Help keep {course.name} accurate and beautiful</div>
 
@@ -2180,7 +2191,7 @@ const [editDescription, setEditDescription] = useState("");
               </>
             )}
           </div>
-        </div>
+        </SheetPortal>
       )}
 
       {/* Full-screen feed modal — vertical = next hole, horizontal = other clips from same hole */}
@@ -2405,7 +2416,7 @@ const [editDescription, setEditDescription] = useState("");
 
       {/* Comment sheet */}
       {commentUploadId && (
-        <>
+        <SheetPortal>
           <div className="tourit-sheet-backdrop" onClick={() => { setCommentUploadId(null); setCommentText(""); }} />
           <div className="tourit-sheet" onClick={e => e.stopPropagation()}>
             <div className="tourit-sheet-grip" />
@@ -2468,15 +2479,16 @@ const [editDescription, setEditDescription] = useState("");
               </div>
             </div>
           </div>
-        </>
+        </SheetPortal>
       )}
 
       {/* Golf Trip picker modal */}
       {/* Plan Your Round sheet — dual path: schedule (live) or book (coming soon) */}
       {planOpen && (
-        <div id="course-plan-sheet" onClick={() => setPlanOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px calc(28px + env(safe-area-inset-bottom))" }}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+        <SheetPortal>
+          <div className="tourit-sheet-backdrop" onClick={() => setPlanOpen(false)} />
+          <div id="course-plan-sheet" className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Plan Your Round</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>at {course.name}</div>
 
@@ -2509,13 +2521,14 @@ const [editDescription, setEditDescription] = useState("");
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "#fbbf24", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 99, padding: "3px 8px", flexShrink: 0 }}>Soon</span>
             </div>
           </div>
-        </div>
+        </SheetPortal>
       )}
 
       {tripPickerOpen && (
-        <div id="course-trip-picker" onClick={() => setTripPickerOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px", maxHeight: "85vh", overflowY: "auto" }}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+        <SheetPortal>
+          <div id="course-trip-picker" className="tourit-sheet-backdrop" onClick={() => setTripPickerOpen(false)} />
+          <div className="tourit-sheet" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
 
             {tripStep === "select" && (
               <>
@@ -2651,7 +2664,7 @@ const [editDescription, setEditDescription] = useState("");
               </>
             )}
           </div>
-        </div>
+        </SheetPortal>
       )}
 
       <BottomNav />
