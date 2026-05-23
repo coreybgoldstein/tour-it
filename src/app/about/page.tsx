@@ -64,7 +64,7 @@ export default function AboutPage() {
           now that the global TourItTopBar is hidden on info pages. */}
       <div style={{
         position: "sticky", top: 0, zIndex: 10,
-        background: "rgba(7,16,10,0.95)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+        background: "#07100a",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
         padding: "calc(12px + env(safe-area-inset-top)) 20px 12px", display: "flex", alignItems: "center", gap: 12,
       }}>
