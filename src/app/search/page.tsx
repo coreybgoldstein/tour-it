@@ -746,6 +746,34 @@ function SearchPageInner() {
             </div>
           )}
 
+          {/* Places row — pulled out of the results block so a ZIP query
+              (which usually doesn't match any course names) still surfaces
+              the "Near 90210" chip even when the courses list is empty. */}
+          {!loading && showResults && locationSuggestions.length > 0 && (
+            <>
+              <p className="section-label" style={{ marginTop: 18 }}>Places</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 6 }}>
+                {locationSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => applyLocationSuggestion(s)}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 10, cursor: "pointer", textAlign: "left" }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff", flex: 1 }}>
+                      {s.type === "zip" ? `Near ${s.zip}` : `${s.city}, ${s.state}`}
+                    </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(77,168,98,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0 }}>
+                      {s.type === "zip" ? "Zip" : "City"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
           {!loading && showResults && displayList.length === 0 && closestCourses.length === 0 && (
             <div className="empty-hint">
               No courses found<br/>
@@ -783,33 +811,6 @@ function SearchPageInner() {
 
           {!loading && showResults && displayList.length > 0 && (
             <>
-              {/* Places row — city/state/ZIP chips that scope the course list
-                  to that area on tap. Inline above the courses (not a
-                  floating dropdown) so users can see both at once. */}
-              {locationSuggestions.length > 0 && (
-                <>
-                  <p className="section-label" style={{ marginTop: 18 }}>Places</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 6 }}>
-                    {locationSuggestions.map((s, i) => (
-                      <button
-                        key={i}
-                        onClick={() => applyLocationSuggestion(s)}
-                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 10, cursor: "pointer", textAlign: "left" }}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-                        </svg>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff", flex: 1 }}>
-                          {s.type === "zip" ? `Near ${s.zip}` : `${s.city}, ${s.state}`}
-                        </span>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(77,168,98,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0 }}>
-                          {s.type === "zip" ? "Zip" : "City"}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
               {(() => {
                 const q = query.trim().toLowerCase();
                 const byName = q ? displayList.filter(c => c.name.toLowerCase().includes(q)).length : 0;

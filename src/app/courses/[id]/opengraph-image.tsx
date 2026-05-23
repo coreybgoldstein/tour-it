@@ -141,14 +141,17 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
     .eq("id", id)
     .single();
 
-  // Pre-fetch fonts, cover, and logo all in parallel. Done in one
-  // Promise.all so they all share the function's wall-clock budget
-  // instead of being serialised behind the DB hit above.
-  const [playfairBold, outfitMedium, coverDataUri, logoDataUri] = await Promise.all([
+  // Pre-fetch fonts, cover, course logo, and the Tour It wordmark
+  // logo all in parallel so they share the function's wall-clock
+  // budget instead of being serialised behind the DB hit above.
+  const [playfairBold, outfitMedium, coverDataUri, logoDataUri, brandLogoDataUri] = await Promise.all([
     loadBundledFont("/fonts/PlayfairDisplay-900.ttf"),
     loadBundledFont("/fonts/Outfit-500.ttf"),
     fetchImageAsDataUri(course?.coverImageUrl ?? null),
     fetchImageAsDataUri(course?.logoUrl ?? null),
+    // The unified pin + TOUR IT wordmark — single PNG used wherever
+    // the brand needs to appear as one mark instead of icon+text.
+    fetchImageAsDataUri(`${CANONICAL_HOST}/tour-it-logo-full.png`),
   ]);
 
   const name = course?.name ?? "Tour It";
@@ -199,7 +202,13 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
           }}
         />
 
-        {/* Top-left: Tour It icon + wordmark */}
+        {/* Top-left: unified Tour It brand mark (pin + TOUR IT wordmark
+            in one PNG). Replaces the earlier white-tile icon + separate
+            Playfair "TOUR IT" text which looked like two disconnected
+            elements in iMessage previews. Sized to ~94px tall so the
+            wordmark reads clearly without competing with the course
+            name below. Falls back to a Playfair text wordmark if the
+            brand-logo fetch fails so the card never ships unbranded. */}
         <div
           style={{
             position: "absolute",
@@ -207,39 +216,29 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
             left: 56,
             display: "flex",
             alignItems: "center",
-            gap: 14,
           }}
         >
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 13,
-              background: "#fff",
-              border: "1.5px solid rgba(255,255,255,0.25)",
-              display: "flex",
-              overflow: "hidden",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+          {brandLogoDataUri ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
-              src={`${CANONICAL_HOST}/icon.png`}
+              src={brandLogoDataUri}
               alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{ height: 94, width: "auto" }}
             />
-          </div>
-          <div
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 38,
-              fontWeight: 900,
-              color: "#fff",
-              letterSpacing: "-0.01em",
-              lineHeight: 1,
-            }}
-          >
-            TOUR IT
-          </div>
+          ) : (
+            <div
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 44,
+                fontWeight: 900,
+                color: "#fff",
+                letterSpacing: "-0.01em",
+                lineHeight: 1,
+              }}
+            >
+              TOUR IT
+            </div>
+          )}
         </div>
 
         {/* Bottom-left: course name + location */}
