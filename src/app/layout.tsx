@@ -6,6 +6,7 @@ import TourItTopBar from "@/components/TourItTopBar";
 import HideSplash from "@/components/HideSplash";
 import NativeBootstrap from "@/components/NativeBootstrap";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import AppDownloadBanner from "@/components/AppDownloadBanner";
 // b512: import commented out with the unmounted overlay below to avoid
 // an unused-import lint error. Component file kept in repo — uncomment
 // both lines to restore on-device diagnostics.
@@ -69,6 +70,7 @@ export default function RootLayout({
         <HideSplash />
         <NativeBootstrap />
         <ServiceWorkerRegister />
+        <AppDownloadBanner />
         {/* b512: debug overlay unmounted for ship candidate. Dark-screen bug
             confirmed fixed in b511, flicker fix added in b512. Re-mount this
             line to restore on-device diagnostics if needed. */}
