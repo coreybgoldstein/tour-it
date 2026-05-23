@@ -962,9 +962,10 @@ export default function HolePage() {
 
       {/* Report clip sheet */}
       {reportClipId && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }} onClick={() => { setReportClipId(null); setReportReason(null); setReportDone(false); }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 44px" }}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 18px" }} />
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => { setReportClipId(null); setReportReason(null); setReportDone(false); }} />
+          <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
             {reportDone ? (
               <div style={{ textAlign: "center", padding: "20px 0" }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>Report submitted</div>
@@ -1004,14 +1005,15 @@ export default function HolePage() {
               </>
             )}
           </div>
-        </div>
+        </>
       )}
 
       {/* Comment sheet */}
       {commentUploadId && (
-        <div id="hole-comment-sheet" style={{ position: "fixed", inset: 0, zIndex: 150 }} onClick={() => { setCommentUploadId(null); setCommentText(""); }}>
-          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(13,35,24,0.98)", backdropFilter: "blur(20px)", borderRadius: "20px 20px 0 0", padding: "16px 16px 32px", maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 16px" }} />
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => { setCommentUploadId(null); setCommentText(""); }} />
+          <div id="hole-comment-sheet" className="tourit-sheet" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
             <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
               {loadingComments ? (
@@ -1051,7 +1053,7 @@ export default function HolePage() {
               </button>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {activeUpload && (

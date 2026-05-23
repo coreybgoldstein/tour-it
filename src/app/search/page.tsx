@@ -530,22 +530,9 @@ function SearchPageInner() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
         .search-wrap { max-width: 600px; margin: 0 auto; padding: 0 20px 120px; }
-        /* Unified bottom-sheet pattern — same chrome for Filter + Create Course.
-           Sheet sits above all nav chrome (200/210). The 60vh min-height
-           keeps the sheet from collapsing to its content and looking like a
-           thin strip glued to the bottom edge. */
-        .tourit-sheet-backdrop { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.65); }
-        .tourit-sheet {
-          position: fixed; bottom: 0; left: 0; right: 0; z-index: 210;
-          background: #0d2318; border: 1px solid rgba(77,168,98,0.2);
-          border-top: 1px solid rgba(77,168,98,0.3);
-          border-radius: 20px 20px 0 0;
-          padding: 18px 20px calc(32px + env(safe-area-inset-bottom));
-          overflow-y: auto;
-          min-height: 60vh; max-height: 90vh;
-          box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
-        }
-        .tourit-sheet-grip { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.18); margin: 0 auto 16px; }
+        /* Bottom-sheet styles (.tourit-sheet, .tourit-sheet-backdrop,
+           .tourit-sheet-grip, .tourit-sheet-footer) live in globals.css
+           so every sheet across the app stays uniform. */
         .search-box { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px 18px; transition: border-color 0.2s, box-shadow 0.2s; }
         .search-box.focused { border-color: rgba(77,168,98,0.5); box-shadow: 0 0 0 4px rgba(77,168,98,0.07); }
         .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Outfit', sans-serif; font-size: 16px; color: #fff; }

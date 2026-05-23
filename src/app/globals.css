@@ -92,3 +92,110 @@ input, textarea, select {
     width: calc(100vw - 72px) !important;
   }
 }
+
+/* ────────────────────────────────────────────────────────────────────
+   Bottom-sheet design system
+   ────────────────────────────────────────────────────────────────────
+
+   Single source of truth for every modal/bottom sheet in the app —
+   filter sheets, add-course, profile edit, save-to-trip, report,
+   game/team sheets in trips, etc.
+
+   Why these specific numbers:
+     - z-index 200 / 210: clears mobile BottomNav (100) AND the
+       desktop side nav (110) so sheets never sit behind chrome.
+     - Backdrop opacity 0.65: strong enough to read as a real modal
+       (was 0.5 in the old per-page styles; too subtle next to live
+       content behind).
+     - min-height 60vh: prevents sheets from collapsing to content
+       size and looking like a thin strip glued to the bottom edge.
+       max-height 90vh keeps the sheet from covering the whole screen
+       so users can still see the page underneath.
+     - padding-bottom calc(28px + env(safe-area-inset-bottom)): leaves
+       comfortable space below the last form field and clears the iOS
+       home-indicator strip on every device.
+     - border-top accent rgba(77,168,98,0.3): subtle green edge that
+       reads as "this is a Tour It surface" without being loud.
+     - box-shadow -8px 32px rgba(0,0,0,0.4): lifts the sheet so it
+       reads as floating rather than flush.
+
+   Use .tourit-sheet for sheets with forms / multiple inputs.
+   Use .tourit-sheet--auto for short confirmation sheets that should
+   hug content (e.g. avatar picker, share menu).
+   Pair with .tourit-sheet-backdrop (the dimmed scrim) and
+   .tourit-sheet-grip (the drag handle pill at the top).
+
+   .tourit-sheet-body — apply to the scrollable content area when you
+   want a sticky submit row at the bottom. Use with .tourit-sheet-footer.
+   .tourit-sheet-footer — sticky submit row, always visible even when
+   the form scrolls. Critical for sheets where the user might not find
+   the submit button otherwise (long forms, keyboard up).
+*/
+
+.tourit-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.tourit-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 210;
+  background: #0d2318;
+  border: 1px solid rgba(77, 168, 98, 0.2);
+  border-top: 1px solid rgba(77, 168, 98, 0.3);
+  border-radius: 20px 20px 0 0;
+  padding: 18px 20px calc(28px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  min-height: 60vh;
+  max-height: 90vh;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Compact variant — content-sized, for short confirmation sheets that
+   shouldn't be a full half-sheet (avatar picker, share menu, etc.). */
+.tourit-sheet--auto {
+  min-height: 0;
+}
+
+/* Full variant — for sheets with lots of content that benefit from
+   the extra vertical room (filter sheets with many fields). */
+.tourit-sheet--full {
+  min-height: 80vh;
+}
+
+.tourit-sheet-grip {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  margin: 0 auto 16px;
+  flex-shrink: 0;
+}
+
+/* Scrollable middle area — pairs with .tourit-sheet-footer to keep a
+   sticky submit row visible while the form content scrolls. */
+.tourit-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  /* Leave room below for the sticky footer so the last form field
+     isn't visually mashed against the submit button. */
+  padding-bottom: 12px;
+}
+
+/* Sticky submit row — sits flush at the bottom of the sheet. Visible
+   even when the form's content area is scrolled. Includes a subtle
+   top border so it reads as a separate region from the form above. */
+.tourit-sheet-footer {
+  flex-shrink: 0;
+  margin: 12px -20px calc(-28px - env(safe-area-inset-bottom));
+  padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(13, 35, 24, 0) 0%, #0d2318 35%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}

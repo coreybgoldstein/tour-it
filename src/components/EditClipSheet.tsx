@@ -127,14 +127,11 @@ export default function EditClipSheet({
   if (!uploadId) return null;
 
   return (
-    <div
-      id="edit-clip-sheet"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "flex-end", zIndex: 200 }}
-      onClick={onClose}
-    >
+    <>
       <style>{`@keyframes editSpinSheet { to { transform: rotate(360deg); } }`}</style>
-      <div onClick={e => e.stopPropagation()} style={{ width: "100%", background: "#0d1f12", borderRadius: "20px 20px 0 0", padding: "20px 20px 40px", maxHeight: "82vh", overflowY: "auto" }}>
-        <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 20px" }} />
+      <div className="tourit-sheet-backdrop" onClick={onClose} />
+      <div id="edit-clip-sheet" className="tourit-sheet" onClick={e => e.stopPropagation()}>
+        <div className="tourit-sheet-grip" />
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 20 }}>Edit clip</div>
 
         {loading || !editData ? (
@@ -243,6 +240,6 @@ export default function EditClipSheet({
           </>
         )}
       </div>
-    </div>
+    </>
   );
 }
