@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Associated Domains for Universal Links + Shared Web Credentials.
+
+	  Apple matches the registered "applinks:" entries against the
+	  domain of any link tapped on iOS, then fetches that domain's
+	  /.well-known/apple-app-site-association file and consults the
+	  "paths" rules in there to decide whether to open the app.
+
+	  We declare BOTH apex and www because:
+	    - the live site canonicalizes on https://www.touritgolf.com
+	      (Capacitor server.url, og:url, Vercel domain config)
+	    - links shared from outside the app can land on either host
+	      (e.g. an iMessage preview of touritgolf.com without "www")
+
+	  AASA route handler in src/app/.well-known/apple-app-site-association/route.ts
+	  serves the same JSON from both hosts because Vercel maps both
+	  to this Next.js app.
+
+	  "webcredentials:" enables Shared Web Credentials so passwords
+	  saved in iCloud Keychain on the web autofill in the app and
+	  vice versa. AASA declares the matching capability on the
+	  domain side.
+	-->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:touritgolf.com</string>
+		<string>applinks:www.touritgolf.com</string>
+		<string>webcredentials:touritgolf.com</string>
+		<string>webcredentials:www.touritgolf.com</string>
+	</array>
+</dict>
+</plist>
