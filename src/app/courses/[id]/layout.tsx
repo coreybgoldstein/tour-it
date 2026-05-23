@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   CANONICAL_HOST,
   SITE_NAME,
-  DEFAULT_OG_IMAGE,
   canonical,
   golfCourseSchema,
   breadcrumbSchema,
@@ -35,21 +34,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const description = data.description
     ? data.description.length > 160 ? data.description.slice(0, 157) + "..." : data.description
     : `Scout ${data.name}${location ? ` in ${location}` : ""} before you play. Watch real hole-by-hole videos and tips from golfers who've already played it.`;
-  const image = data.coverImageUrl || data.logoUrl || DEFAULT_OG_IMAGE;
   const url = canonical(`/courses/${id}`);
 
+  // og:image + twitter:image are emitted automatically by the
+  // sibling opengraph-image.tsx file convention. Do not duplicate
+  // them here — Next.js would emit two competing <meta> tags and
+  // social platforms cache whichever they see first.
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      url,
-      siteName: SITE_NAME,
-      type: "website",
-      images: [{ url: image, width: 1200, height: 630, alt: `${data.name} golf course` }],
-    },
-    twitter: { card: "summary_large_image", title, description, images: [image] },
+    openGraph: { title, description, url, siteName: SITE_NAME, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
     alternates: { canonical: url },
   };
 }

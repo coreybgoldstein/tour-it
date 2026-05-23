@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   CANONICAL_HOST,
   SITE_NAME,
-  DEFAULT_OG_IMAGE,
   canonical,
   breadcrumbSchema,
   jsonLdScript,
@@ -32,21 +31,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const parYards = hole ? [hole.par ? `par ${hole.par}` : null, hole.yardage ? `${hole.yardage} yds` : null].filter(Boolean).join(", ") : "";
   const title = `${course.name} — ${holeLabel}${parYards ? ` (${parYards})` : ""} | ${SITE_NAME}`;
   const description = `Watch real clips of ${holeLabel} at ${course.name}${location ? ` in ${location}` : ""}. Scout the hole before you play.`;
-  const image = course.coverImageUrl || course.logoUrl || DEFAULT_OG_IMAGE;
   const url = canonical(`/courses/${id}/holes/${number}`);
 
+  // og:image + twitter:image are inherited from the parent course
+  // segment's opengraph-image.tsx (Next.js applies file-convention
+  // metadata to all routes within a segment). Don't emit images
+  // here — would produce duplicate competing meta tags.
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      url,
-      siteName: SITE_NAME,
-      type: "website",
-      images: [{ url: image, width: 1200, height: 630, alt: `${course.name} ${holeLabel}` }],
-    },
-    twitter: { card: "summary_large_image", title, description, images: [image] },
+    openGraph: { title, description, url, siteName: SITE_NAME, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
     alternates: { canonical: url },
   };
 }
