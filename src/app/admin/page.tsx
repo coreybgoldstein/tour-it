@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SeoTab from "./SeoTab";
 
-type Tab = "overview" | "clips" | "reports" | "requests";
+type Tab = "overview" | "clips" | "reports" | "requests" | "seo";
 
 type ClipRow = {
   id: string;
@@ -319,7 +320,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 8, padding: "16px 16px 0", overflowX: "auto" }}>
-        {(["overview", "clips", "reports", "requests"] as Tab[]).map(t => (
+        {(["overview", "clips", "reports", "requests", "seo"] as Tab[]).map(t => (
           <button key={t} className={`admin-tab ${tab === t ? "admin-tab-active" : "admin-tab-inactive"}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
             {t === "reports" && (stats?.pendingReports ?? 0) > 0 && (
@@ -500,6 +501,12 @@ export default function AdminPage() {
               </div>
             ))}
             {requests.length === 0 && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", paddingTop: 40 }}>No course requests</div>}
+          </div>
+        )}
+
+        {tab === "seo" && (
+          <div style={{ padding: "16px 0 60px" }}>
+            <SeoTab />
           </div>
         )}
 
