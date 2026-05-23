@@ -91,6 +91,16 @@ function SearchPageInner() {
   const [closestLabel, setClosestLabel] = useState("");
   const prevLoadingRef = useRef(false);
 
+  // Inline location suggestions — small "Places" row that appears at the top
+  // of the results list when the user is mid-typing. Locations (city/state)
+  // and ZIPs only — course-name suggestions live in the main results list
+  // below since they're redundant otherwise.
+  type LocationSuggestion =
+    | { type: "location"; city: string; state: string }
+    | { type: "zip"; zip: string; lat: number; lng: number };
+  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
+  const locSuggestRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const activeFilterCount = [filterState, filterCity, filterZip, filterHoles !== "all", filterCourseType].filter(Boolean).length;
   const hasFilters = activeFilterCount > 0;
 
@@ -190,6 +200,66 @@ function SearchPageInner() {
     } catch {
       clearTimeout(timeout);
       return null;
+    }
+  }
+
+  // Inline location/ZIP suggestions — populates the "Places" row that
+  // appears above the course results. Course-name matching already happens
+  // in the main search query, so we deliberately exclude course hits here.
+  useEffect(() => {
+    if (searchTab !== "courses") { setLocationSuggestions([]); return; }
+    const q = query.trim();
+    if (locSuggestRef.current) clearTimeout(locSuggestRef.current);
+    if (q.length < 2) { setLocationSuggestions([]); return; }
+
+    locSuggestRef.current = setTimeout(async () => {
+      const result: LocationSuggestion[] = [];
+      if (/^\d{5}$/.test(q)) {
+        const coords = await geocodeZip(q);
+        if (coords) result.push({ type: "zip", zip: q, lat: coords.lat, lng: coords.lng });
+      } else {
+        const supabase = createClient();
+        const safeQ = q.replace(/[(),]/g, "");
+        const { data } = await supabase
+          .from("Course")
+          .select("city, state")
+          .ilike("city", `%${safeQ}%`)
+          .order("uploadCount", { ascending: false })
+          .limit(30);
+        if (data) {
+          const seen = new Set<string>();
+          for (const c of data) {
+            if (!c.city || !c.state) continue;
+            const key = `${c.city.toLowerCase()}|${c.state}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            result.push({ type: "location", city: c.city, state: c.state });
+            if (result.length >= 4) break;
+          }
+        }
+      }
+      setLocationSuggestions(result);
+    }, 200);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, searchTab]);
+
+  // Applying a Places suggestion: scope the course list to that city/state
+  // (or ZIP + radius), clear the freeform query, and update the URL so the
+  // back button works the way users expect.
+  function applyLocationSuggestion(s: LocationSuggestion) {
+    setLocationSuggestions([]);
+    if (s.type === "location") {
+      setQuery("");
+      setFilterCity(s.city);
+      setFilterState(s.state);
+      setDraftCity(s.city);
+      setDraftState(s.state);
+      setFilterZip(""); setDraftZip(""); setZipCoords(null);
+    } else {
+      setQuery("");
+      setFilterZip(s.zip);
+      setDraftZip(s.zip);
+      setZipCoords({ lat: s.lat, lng: s.lng });
     }
   }
 
@@ -459,7 +529,7 @@ function SearchPageInner() {
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
-        .search-wrap { max-width: 600px; margin: 0 auto; padding: env(safe-area-inset-top) 20px 120px; }
+        .search-wrap { max-width: 600px; margin: 0 auto; padding: 0 20px 120px; }
         .search-box { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px 18px; transition: border-color 0.2s, box-shadow 0.2s; }
         .search-box.focused { border-color: rgba(77,168,98,0.5); box-shadow: 0 0 0 4px rgba(77,168,98,0.07); }
         .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Outfit', sans-serif; font-size: 16px; color: #fff; }
@@ -697,6 +767,33 @@ function SearchPageInner() {
 
           {!loading && showResults && displayList.length > 0 && (
             <>
+              {/* Places row — city/state/ZIP chips that scope the course list
+                  to that area on tap. Inline above the courses (not a
+                  floating dropdown) so users can see both at once. */}
+              {locationSuggestions.length > 0 && (
+                <>
+                  <p className="section-label" style={{ marginTop: 18 }}>Places</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 6 }}>
+                    {locationSuggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        onClick={() => applyLocationSuggestion(s)}
+                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 10, cursor: "pointer", textAlign: "left" }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 500, color: "#fff", flex: 1 }}>
+                          {s.type === "zip" ? `Near ${s.zip}` : `${s.city}, ${s.state}`}
+                        </span>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(77,168,98,0.7)", textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0 }}>
+                          {s.type === "zip" ? "Zip" : "City"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
               {(() => {
                 const q = query.trim().toLowerCase();
                 const byName = q ? displayList.filter(c => c.name.toLowerCase().includes(q)).length : 0;
@@ -819,11 +916,13 @@ function SearchPageInner() {
         </>}
       </div>
 
-      {/* Filter bottom sheet */}
+      {/* Filter bottom sheet — z-index 200/210 to clear both the mobile
+          BottomNav (z-index 100) and the desktop side nav (z-index 110).
+          Same range used for the Create Course sheet below. */}
       {filterOpen && (
         <>
-          <div onClick={() => setFilterOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 110, background: "rgba(0,0,0,0.5)" }} />
-          <div id="search-filter-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 120, background: "#0d2318", border: "1px solid rgba(77,168,98,0.15)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", maxHeight: "85vh", overflowY: "auto" }}>
+          <div onClick={() => setFilterOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)" }} />
+          <div id="search-filter-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 210, background: "#0d2318", border: "1px solid rgba(77,168,98,0.15)", borderRadius: "20px 20px 0 0", padding: "20px 20px 100px", maxHeight: "85vh", overflowY: "auto" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Filter Courses</div>
@@ -918,8 +1017,8 @@ function SearchPageInner() {
           submit button is comfortably reachable on every device. */}
       {addOpen && (
         <>
-          <div onClick={() => setAddOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 110, background: "rgba(0,0,0,0.5)" }} />
-          <div id="search-create-course-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 120, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px calc(28px + env(safe-area-inset-bottom))", overflowY: "auto", maxHeight: "calc(90vh - env(safe-area-inset-top))" }}>
+          <div onClick={() => setAddOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.5)" }} />
+          <div id="search-create-course-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 210, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px calc(28px + env(safe-area-inset-bottom))", overflowY: "auto", maxHeight: "calc(90vh - env(safe-area-inset-top))" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Add a Course</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 20 }}>Help the community scout it</div>
