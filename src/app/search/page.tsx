@@ -25,11 +25,6 @@ type Course = {
   logoUrl: string | null;
 };
 
-type Suggestion =
-  | { type: "location"; city: string; state: string }
-  | { type: "zip"; zip: string; lat: number; lng: number }
-  | { type: "course"; id: string; name: string; city: string; state: string; logoUrl: string | null };
-
 function SearchPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -92,13 +87,9 @@ function SearchPageInner() {
   const [loadingMore, setLoadingMore] = useState(false);
   const lastQueryRef = useRef<{ q: string; coords: { lat: number; lng: number } | null; state: string; city: string; holes: string; courseType: string; radius: string } | null>(null);
 
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [closestCourses, setClosestCourses] = useState<Course[]>([]);
   const [closestLabel, setClosestLabel] = useState("");
-  const suggestRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevLoadingRef = useRef(false);
-  const suggestionBoxRef = useRef<HTMLDivElement>(null);
 
   const activeFilterCount = [filterState, filterCity, filterZip, filterHoles !== "all", filterCourseType].filter(Boolean).length;
   const hasFilters = activeFilterCount > 0;
@@ -202,51 +193,6 @@ function SearchPageInner() {
     }
   }
 
-  // Autocomplete suggestions — DB-backed city/state locations + course names + ZIP detection
-  useEffect(() => {
-    if (searchTab !== "courses") { setSuggestions([]); setShowSuggestions(false); return; }
-    const q = query.trim();
-    if (suggestRef.current) clearTimeout(suggestRef.current);
-    if (q.length < 1) { setSuggestions([]); setShowSuggestions(false); return; }
-
-    suggestRef.current = setTimeout(async () => {
-      const result: Suggestion[] = [];
-      if (/^\d{5}$/.test(q)) {
-        const coords = await geocodeZip(q);
-        if (coords) result.push({ type: "zip", zip: q, lat: coords.lat, lng: coords.lng });
-      } else {
-        const supabase = createClient();
-        const safeQ = q.replace(/[(),]/g, "");
-        const { data } = await supabase
-          .from("Course")
-          .select("id, name, city, state, logoUrl")
-          .or(`city.ilike.%${safeQ}%,name.ilike.%${safeQ}%`)
-          .order("uploadCount", { ascending: false })
-          .limit(18);
-        if (data) {
-          const seen = new Set<string>();
-          for (const c of data) {
-            if (c.city && c.state && c.city.toLowerCase().includes(safeQ.toLowerCase())) {
-              const key = `${c.city.toLowerCase()}|${c.state}`;
-              if (!seen.has(key)) { seen.add(key); result.push({ type: "location", city: c.city, state: c.state }); }
-              if (seen.size >= 4) break;
-            }
-          }
-          let cc = 0;
-          for (const c of data) {
-            if (c.name.toLowerCase().includes(safeQ.toLowerCase())) {
-              result.push({ type: "course", id: c.id, name: c.name, city: c.city, state: c.state, logoUrl: c.logoUrl });
-              if (++cc >= 5) break;
-            }
-          }
-        }
-      }
-      setSuggestions(result);
-      setShowSuggestions(result.length > 0);
-    }, 150);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, searchTab]);
-
   // Closest courses fallback — when search returns empty, geocode the query and find nearby
   useEffect(() => {
     const wasLoading = prevLoadingRef.current;
@@ -281,39 +227,6 @@ function SearchPageInner() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, results.length, query]);
-
-  // Close suggestion dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (suggestionBoxRef.current && !suggestionBoxRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  function applySuggestion(s: Suggestion) {
-    setShowSuggestions(false);
-    setSuggestions([]);
-    if (s.type === "location") {
-      setQuery("");
-      setFilterCity(s.city);
-      setFilterState(s.state);
-      setDraftCity(s.city);
-      setDraftState(s.state);
-      setFilterZip("");
-      setDraftZip("");
-      setZipCoords(null);
-    } else if (s.type === "zip") {
-      setQuery("");
-      setFilterZip(s.zip);
-      setDraftZip(s.zip);
-      setZipCoords({ lat: s.lat, lng: s.lng });
-    } else {
-      router.push(`/courses/${s.id}`);
-    }
-  }
 
   // Course search — runs on query or filter change
   const search = useCallback((q: string, coords: { lat: number; lng: number } | null, state: string, city: string, holes: string, courseType: string, radius: string) => {
@@ -546,7 +459,7 @@ function SearchPageInner() {
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
-        .search-wrap { max-width: 600px; margin: 0 auto; padding: 0 20px 120px; }
+        .search-wrap { max-width: 600px; margin: 0 auto; padding: env(safe-area-inset-top) 20px 120px; }
         .search-box { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px 18px; transition: border-color 0.2s, box-shadow 0.2s; }
         .search-box.focused { border-color: rgba(77,168,98,0.5); box-shadow: 0 0 0 4px rgba(77,168,98,0.07); }
         .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Outfit', sans-serif; font-size: 16px; color: #fff; }
@@ -590,74 +503,34 @@ function SearchPageInner() {
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862" }}>Map</span>
             </button>
           </div>
-          <div style={{ position: "relative" }} ref={suggestionBoxRef}>
-            <div className={`search-box ${focused ? "focused" : ""}`}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
-              <input
-                ref={setInputRef}
-                className="search-input"
-                type="text"
-                inputMode="search"
-                enterKeyHint="search"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onFocus={() => { setFocused(true); if (suggestions.length > 0) setShowSuggestions(true); }}
-                onBlur={() => setFocused(false)}
-                onKeyDown={e => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
-                placeholder={searchTab === "courses" ? "Course, city, state or zip…" : "Name or @username"}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                autoFocus
-              />
-              {query && (
-                <button className="clear-btn" onClick={() => { setQuery(""); setSuggestions([]); setShowSuggestions(false); inputRef.current?.focus(); }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M18 6 6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            {/* Autocomplete dropdown */}
-            {showSuggestions && suggestions.length > 0 && !filterOpen && (
-              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 200, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: 12, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.6)" }}>
-                {suggestions.filter(s => s.type === "location" || s.type === "zip").map((s, i) => (
-                  <button
-                    key={i}
-                    onMouseDown={e => { e.preventDefault(); applySuggestion(s); }}
-                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff" }}>
-                      {s.type === "zip" ? `Near ${s.zip}` : `${s.city}, ${s.state}`}
-                    </span>
-                    {s.type === "zip" && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>zip code</span>}
-                  </button>
-                ))}
-                {suggestions.filter(s => s.type === "course").map(s => {
-                  if (s.type !== "course") return null;
-                  const abbr = s.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
-                  return (
-                    <button
-                      key={s.id}
-                      onMouseDown={e => { e.preventDefault(); applySuggestion(s); }}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-                    >
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, fontFamily: "'Outfit', sans-serif", color: "rgba(77,168,98,0.7)" }}>
-                        {s.logoUrl ? <img src={s.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : abbr}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.9)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{[s.city, s.state].filter(Boolean).join(", ")}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+          <div className={`search-box ${focused ? "focused" : ""}`}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              ref={setInputRef}
+              className="search-input"
+              type="text"
+              inputMode="search"
+              enterKeyHint="search"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onKeyDown={e => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
+              placeholder={searchTab === "courses" ? "Course, city, state or zip…" : "Name or @username"}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              autoFocus
+            />
+            {query && (
+              <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
             )}
           </div>
 
@@ -938,7 +811,7 @@ function SearchPageInner() {
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Don&apos;t see your course?</div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>Add it so others can scout it</div>
               </div>
-              <button onClick={() => { setNewName(query); setAddOpen(true); }} style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, padding: "9px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", cursor: "pointer", whiteSpace: "nowrap" }}>
+              <button onClick={() => { setNewName(query); setAddOpen(true); }} style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, padding: "13px 18px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#4da862", cursor: "pointer", whiteSpace: "nowrap", minHeight: 44 }}>
                 + Add Course
               </button>
             </div>
@@ -1038,11 +911,15 @@ function SearchPageInner() {
         </>
       )}
 
-      {/* Create course bottom sheet */}
+      {/* Create course bottom sheet — z-index 110/120 to stack above the
+          BottomNav (z-index 100), which was previously covering the bottom
+          half of the form and the "Add Course" submit button. Bottom padding
+          also reserves room for the BottomNav + iOS safe-area inset so the
+          submit button is comfortably reachable on every device. */}
       {addOpen && (
         <>
-          <div onClick={() => setAddOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.5)" }} />
-          <div id="search-create-course-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px 48px", overflowY: "auto" }}>
+          <div onClick={() => setAddOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 110, background: "rgba(0,0,0,0.5)" }} />
+          <div id="search-create-course-sheet" style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 120, background: "#0d2318", border: "1px solid rgba(77,168,98,0.2)", borderRadius: "20px 20px 0 0", padding: "20px 20px calc(28px + env(safe-area-inset-bottom))", overflowY: "auto", maxHeight: "calc(90vh - env(safe-area-inset-top))" }}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.15)", margin: "0 auto 20px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Add a Course</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 20 }}>Help the community scout it</div>
