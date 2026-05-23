@@ -97,15 +97,13 @@ async function fetchImageAsDataUri(url: string | null): Promise<string | null> {
       return null;
     }
     const contentType = res.headers.get("content-type") ?? "image/jpeg";
-    const bytes = new Uint8Array(await res.arrayBuffer());
-    // Base64-encode in chunks to avoid String.fromCharCode argument
-    // overflow on very large images (~64K char arg limit on V8).
-    let binary = "";
-    const CHUNK = 0x8000;
-    for (let i = 0; i < bytes.length; i += CHUNK) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-    }
-    return `data:${contentType};base64,${btoa(binary)}`;
+    const buf = await res.arrayBuffer();
+    // Buffer is polyfilled in Vercel's edge runtime via Next.js.
+    // Using it avoids the chunked String.fromCharCode approach,
+    // which threw RangeError "Offset is outside the bounds of the
+    // Uint8Array" on large covers in the previous attempt.
+    const base64 = Buffer.from(buf).toString("base64");
+    return `data:${contentType};base64,${base64}`;
   } catch (err) {
     console.warn(`[og-image] fetchImageAsDataUri threw for ${url}:`, err);
     return null;
