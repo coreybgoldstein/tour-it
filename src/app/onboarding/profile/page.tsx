@@ -40,6 +40,11 @@ export default function OnboardingProfilePage() {
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
+  // Separate "pending" handle for Google sign-ups that need to claim a
+  // username at onboarding time (the existing `username` state mirrors
+  // what's in the DB; for new OAuth users it starts null and we promote
+  // pendingUsername to it after the DB write succeeds).
+  const [pendingUsername, setPendingUsername] = useState("");
 
   const [displayName, setDisplayName] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -126,9 +131,26 @@ export default function OnboardingProfilePage() {
 
   const saveStep1 = async () => {
     if (!displayName.trim()) { setError("Please enter a display name."); return; }
+    // Username gate — only enforced when the DB-side username is still
+    // null (Google sign-up). Email/password users already set one.
+    if (!username && !pendingUsername.trim()) { setError("Please pick a username."); return; }
     setError("");
     setSaving(true);
     const supabase = createClient();
+
+    // If we're claiming a brand-new username, check availability first
+    // so we surface a clear error instead of a generic DB conflict.
+    if (!username && pendingUsername.trim()) {
+      const handle = pendingUsername.trim().toLowerCase();
+      const { data: taken } = await supabase
+        .from("User")
+        .select("id")
+        .eq("username", handle)
+        .neq("id", userId)
+        .maybeSingle();
+      if (taken) { setError("That username is taken. Try another."); setSaving(false); return; }
+    }
+
     let avatarUrl: string | undefined;
 
     if (selectedDefault) {
@@ -147,7 +169,11 @@ export default function OnboardingProfilePage() {
 
     const updates: Record<string, string> = { displayName: displayName.trim() };
     if (avatarUrl) updates.avatarUrl = avatarUrl;
+    if (!username && pendingUsername.trim()) {
+      updates.username = pendingUsername.trim().toLowerCase();
+    }
     await supabase.from("User").update(updates).eq("id", userId);
+    if (updates.username) setUsername(updates.username); // local mirror
     setSaving(false);
     setStep(2);
   };
@@ -227,7 +253,9 @@ export default function OnboardingProfilePage() {
     return "Next →";
   };
 
-  const nextDisabled = saving || (step === 1 && !displayName.trim());
+  // Step 1 requires a display name AND (if the user landed here from
+  // OAuth without a username) a pending username before they can advance.
+  const nextDisabled = saving || (step === 1 && (!displayName.trim() || (!username && !pendingUsername.trim())));
 
   const progress = ((step - 1) / TOTAL_STEPS) * 100;
 
@@ -283,10 +311,34 @@ export default function OnboardingProfilePage() {
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 900, lineHeight: 1.15, marginBottom: 6 }}>Let&apos;s set up<br />your profile</div>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.55)", marginBottom: 24, lineHeight: 1.6 }}>{username ? `Welcome, @${username}. ` : ""}Tell the golf community who you are.</div>
 
-              {/* Display name — first */}
+              {/* Username — only shown when missing. Google sign-up lands
+                  here with username: null since OAuth never asked for a
+                  handle, so we collect it the first time the user touches
+                  the profile-setup step. Email/password signups already
+                  set a username in /signup and skip this field. */}
+              {!username && (
+                <div style={{ marginBottom: 24 }}>
+                  <label className="ob-label">Username *</label>
+                  <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.09)", borderRadius: 12, paddingLeft: 14 }}>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.4)", marginRight: 2 }}>@</span>
+                    <input
+                      className="ob-input"
+                      style={{ background: "transparent", border: "none", padding: "13px 16px 13px 0" }}
+                      placeholder="e.g. boomer"
+                      value={pendingUsername}
+                      onChange={e => { setPendingUsername(e.target.value.toLowerCase().replace(/[\s@]/g, "")); setError(""); }}
+                      autoComplete="username"
+                      autoFocus
+                    />
+                  </div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>Lowercase, no spaces — this is your handle. Pick something you'd want on the leaderboard.</div>
+                </div>
+              )}
+
+              {/* Display name */}
               <div style={{ marginBottom: 24 }}>
                 <label className="ob-label">Display Name *</label>
-                <input className="ob-input" placeholder="Your name or nickname" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(""); }} autoFocus />
+                <input className="ob-input" placeholder="Your name or nickname" value={displayName} onChange={e => { setDisplayName(e.target.value); setError(""); }} autoFocus={!!username} />
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>This is what other golfers see — can be your real name or a nickname.</div>
               </div>
 
