@@ -81,15 +81,16 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
     .eq("id", id)
     .single();
 
-  // DEBUG bee1673d->next: bundle-font path errored "Unsupported
-  // OpenType" even with verified-static woff2. Bypassing font loading
-  // entirely — ImageResponse will use its built-in Inter font for all
-  // text. Once we confirm the rest of the pipeline renders, we'll
-  // re-introduce fonts via a different format (TTF or otf).
-  const playfairBold: ArrayBuffer | null = null;
-  const outfitMedium: ArrayBuffer | null = null;
-  // suppress unused-helper lint while we A/B-test font loading
-  void loadBundledFont;
+  // Load brand fonts in parallel with the DB hit. We use TTF instead
+  // of woff2 — Fontsource woff2 with Brotli compression triggered
+  // "Unsupported OpenType" in Satori on the edge runtime (debugged
+  // commits bee1673d → 18c56343). Static TTF works; the ~2-3x size
+  // hit is fine since these load from same-origin and Vercel's CDN
+  // caches them after the first request per region.
+  const [playfairBold, outfitMedium] = await Promise.all([
+    loadBundledFont("/fonts/PlayfairDisplay-900.ttf"),
+    loadBundledFont("/fonts/Outfit-500.ttf"),
+  ]);
 
   const name = course?.name ?? "Tour It";
   const location = [course?.city, course?.state].filter(Boolean).join(", ");
