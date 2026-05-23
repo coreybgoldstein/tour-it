@@ -1,6 +1,6 @@
 "use client";
 import { Suspense } from "react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, startTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -384,7 +384,14 @@ function SearchPageInner() {
     if (draftHoles !== "all") params.set("holes", draftHoles);
     if (draftCourseType) params.set("type", draftCourseType);
     if (draftZip) params.set("radius", draftRadius);
-    router.replace(`/search?${params.toString()}`, { scroll: false });
+    // Wrap router.replace in startTransition so that useSearchParams
+    // doesn't suspend the page on the URL update — without this, every
+    // filter toggle / clear briefly unmounted the page into the
+    // Suspense fallback, which read as a flash showing whatever was
+    // behind the page in the iOS WebView.
+    startTransition(() => {
+      router.replace(`/search?${params.toString()}`, { scroll: false });
+    });
   }
 
   function clearFilters() {
@@ -395,7 +402,9 @@ function SearchPageInner() {
     setZipError("");
     const params = new URLSearchParams();
     if (query) params.set("q", query);
-    router.replace(`/search?${params.toString()}`, { scroll: false });
+    startTransition(() => {
+      router.replace(`/search?${params.toString()}`, { scroll: false });
+    });
   }
 
   async function loadMore() {
@@ -1070,7 +1079,13 @@ function SearchPageInner() {
 
 export default function SearchPage() {
   return (
-    <Suspense>
+    // Suspense fallback intentionally renders the same #07100a brand
+    // background so that any moment when useSearchParams() suspends
+    // (e.g. when a filter triggers router.replace) the page doesn't
+    // briefly unmount into transparency and flash the previous-route
+    // WebView state through — that was the "I see the page behind it"
+    // glitch on iOS Capacitor.
+    <Suspense fallback={<div style={{ minHeight: "100dvh", background: "#07100a" }} />}>
       <SearchPageInner />
     </Suspense>
   );
