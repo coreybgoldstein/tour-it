@@ -102,6 +102,14 @@ async function loadBundledFont(path: string): Promise<ArrayBuffer | null> {
  */
 const MAX_EMBED_BYTES = 400_000;
 
+// Satori (the engine behind ImageResponse) can only decode JPEG and
+// PNG. Handing it a WebP / AVIF / HEIC data URI doesn't error loudly —
+// the whole render returns 200 OK with Content-Length: 0 and iMessage
+// then falls back to the favicon-only compact preview. Polo Club Boca
+// Raton — Club Course was the canary on 2026-05-23: its cover was
+// uploaded as WebP via the contribute flow that bypasses optimizeCover.
+const SATORI_SUPPORTED = new Set(["image/jpeg", "image/jpg", "image/png"]);
+
 async function fetchImageAsDataUri(url: string | null): Promise<string | null> {
   if (!url) return null;
   try {
@@ -115,7 +123,14 @@ async function fetchImageAsDataUri(url: string | null): Promise<string | null> {
       console.warn(`[og-image] Skipping oversize cover (${declared}B > ${MAX_EMBED_BYTES}B): ${url}`);
       return null;
     }
-    const contentType = res.headers.get("content-type") ?? "image/jpeg";
+    const contentType = (res.headers.get("content-type") ?? "image/jpeg").toLowerCase().split(";")[0].trim();
+    if (!SATORI_SUPPORTED.has(contentType)) {
+      // Skip with a fallback to the brand-gradient background so the
+      // OG card still ships SOMETHING readable instead of a 0-byte
+      // response that iMessage interprets as "no preview available."
+      console.warn(`[og-image] Skipping unsupported image format ${contentType}: ${url}`);
+      return null;
+    }
     const buf = await res.arrayBuffer();
     // Double-check the actual body in case Content-Length was missing
     // or wrong — same ceiling applies to the bytes we'd embed.
