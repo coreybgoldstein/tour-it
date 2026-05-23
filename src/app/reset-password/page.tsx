@@ -39,16 +39,17 @@ export default function ResetPasswordPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) { setReady(true); return; }
 
-      // Hash-based flow fallback. 6 seconds was firing on slow cellular
-      // before Supabase could fire PASSWORD_RECOVERY — friends would see
-      // "link expired" when the link was actually still loading. 20s is
-      // generous enough to survive a 3G/Edge connection while still
-      // catching genuinely-broken links inside a reasonable window.
+      // Hash-based flow fallback. 6s was firing prematurely on slow
+      // cellular — friends saw "link expired" while the link was
+      // actually still loading. 5 minutes matches Supabase's own PKCE
+      // token TTL, so this only marks the link invalid AFTER the
+      // server-side token would already have expired anyway. There's
+      // no upside to bailing out sooner.
       const { data } = supabase.auth.onAuthStateChange((event) => {
         if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
       });
       subscription = data.subscription;
-      timer = setTimeout(() => setLinkInvalid(true), 20000);
+      timer = setTimeout(() => setLinkInvalid(true), 5 * 60 * 1000);
     });
 
     return () => {
