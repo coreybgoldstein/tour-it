@@ -45,41 +45,29 @@ function sb() {
 }
 
 /**
- * Fetch a Google Font's woff2 bytes for use as an ImageResponse font.
- * Google Fonts varies its CSS response by User-Agent — a modern
- * Chrome UA forces it to serve woff2. A short `Mozilla/5.0` was
- * insufficient on the edge runtime (it returned a different CSS
- * shape my regex didn't catch, so fonts silently failed to load
- * and ImageResponse crashed with "No fonts are loaded").
+ * Fetch a bundled static woff2 from this site's /public/fonts dir.
+ *
+ * We bundle Playfair Display 900 and Outfit 500 as single-weight
+ * static woff2 files because Satori (which powers ImageResponse)
+ * does NOT support variable fonts. The existing public/fonts/*.ttf
+ * files are variable fonts used by the web app via next/font and
+ * can't be passed to ImageResponse — they'd error with
+ * "Unsupported OpenType". The -900.woff2 / -500.woff2 files are
+ * single-instance statics downloaded from Fontsource.
+ *
+ * Same-origin fetch on the edge is cached at Vercel's CDN so this
+ * costs ~1 RTT on first request per region and is free after.
  */
-const FONT_UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-  "(KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36";
-
-async function loadGoogleFont(family: string, weight: number): Promise<ArrayBuffer | null> {
+async function loadBundledFont(path: string): Promise<ArrayBuffer | null> {
   try {
-    const url = `https://fonts.googleapis.com/css2?family=${family.replace(/ /g, "+")}:wght@${weight}&display=swap`;
-    const cssRes = await fetch(url, { headers: { "User-Agent": FONT_UA } });
-    if (!cssRes.ok) {
-      console.warn(`[og-image] Google Fonts CSS fetch failed for ${family}:${weight} — status ${cssRes.status}`);
+    const res = await fetch(`${CANONICAL_HOST}${path}`);
+    if (!res.ok) {
+      console.warn(`[og-image] Font fetch failed: ${path} — status ${res.status}`);
       return null;
     }
-    const css = await cssRes.text();
-    // Match any URL inside src: url(...) — Google's CSS sometimes
-    // wraps URLs in quotes, sometimes not. Both shapes valid.
-    const match = css.match(/src:\s*url\(([^)]+)\)\s*format\(['"]?woff2['"]?\)/);
-    if (!match) {
-      console.warn(`[og-image] No woff2 src URL found in Google Fonts CSS for ${family}:${weight}`);
-      return null;
-    }
-    const fontRes = await fetch(match[1].replace(/['"]/g, ""));
-    if (!fontRes.ok) {
-      console.warn(`[og-image] Font woff2 fetch failed for ${family}:${weight} — status ${fontRes.status}`);
-      return null;
-    }
-    return await fontRes.arrayBuffer();
+    return await res.arrayBuffer();
   } catch (err) {
-    console.warn(`[og-image] loadGoogleFont threw for ${family}:${weight}:`, err);
+    console.warn(`[og-image] loadBundledFont threw for ${path}:`, err);
     return null;
   }
 }
@@ -94,11 +82,11 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
     .single();
 
   // Load brand fonts in parallel with the DB hit. Each falls back to
-  // `null` silently if the Google Fonts fetch fails — ImageResponse
+  // `null` silently if the same-origin fetch fails — ImageResponse
   // then uses its built-in sans-serif (Inter) for that span.
   const [playfairBold, outfitMedium] = await Promise.all([
-    loadGoogleFont("Playfair Display", 900),
-    loadGoogleFont("Outfit", 500),
+    loadBundledFont("/fonts/PlayfairDisplay-900.woff2"),
+    loadBundledFont("/fonts/Outfit-500.woff2"),
   ]);
 
   const name = course?.name ?? "Tour It";
