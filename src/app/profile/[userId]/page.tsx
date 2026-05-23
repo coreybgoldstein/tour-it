@@ -1264,7 +1264,7 @@ export default function ProfilePage() {
                 <input
                   value={editUsername}
                   onChange={e => { setEditUsername(e.target.value.toLowerCase().replace(/[@\s]/g, "")); if (usernameError) setUsernameError(null); }}
-                  placeholder="e.g. jgoldstein"
+                  placeholder="e.g. boomer"
                   autoComplete="username"
                   style={{ flex: 1, background: "transparent", border: "none", padding: "10px 12px 10px 0", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }}
                 />
@@ -1276,12 +1276,12 @@ export default function ProfilePage() {
             <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>First name</label>
-                <input value={editFirstName} onChange={e => setEditFirstName(e.target.value)} placeholder="Corey" autoComplete="given-name"
+                <input value={editFirstName} onChange={e => setEditFirstName(e.target.value)} placeholder="Chris" autoComplete="given-name"
                   style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }} />
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Last name</label>
-                <input value={editLastName} onChange={e => setEditLastName(e.target.value)} placeholder="Goldstein" autoComplete="family-name"
+                <input value={editLastName} onChange={e => setEditLastName(e.target.value)} placeholder="Berman" autoComplete="family-name"
                   style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }} />
               </div>
             </div>

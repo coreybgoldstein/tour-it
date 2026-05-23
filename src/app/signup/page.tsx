@@ -237,7 +237,7 @@ export default function SignUpPage() {
                 <input
                   className="field-input"
                   type="text"
-                  placeholder="Corey"
+                  placeholder="Chris"
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
                   autoComplete="given-name"
@@ -248,7 +248,7 @@ export default function SignUpPage() {
                 <input
                   className="field-input"
                   type="text"
-                  placeholder="Goldstein"
+                  placeholder="Berman"
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
                   autoComplete="family-name"
@@ -261,7 +261,7 @@ export default function SignUpPage() {
               <input
                 className="field-input"
                 type="text"
-                placeholder="e.g. jgoldstein — not your email"
+                placeholder="e.g. boomer — not your email"
                 value={username}
                 onChange={e => setUsername(e.target.value.toLowerCase().replace(/[\s@]/g, ""))}
               />
