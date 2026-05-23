@@ -81,13 +81,15 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
     .eq("id", id)
     .single();
 
-  // Load brand fonts in parallel with the DB hit. Each falls back to
-  // `null` silently if the same-origin fetch fails — ImageResponse
-  // then uses its built-in sans-serif (Inter) for that span.
-  const [playfairBold, outfitMedium] = await Promise.all([
-    loadBundledFont("/fonts/PlayfairDisplay-900.woff2"),
-    loadBundledFont("/fonts/Outfit-500.woff2"),
-  ]);
+  // DEBUG bee1673d->next: bundle-font path errored "Unsupported
+  // OpenType" even with verified-static woff2. Bypassing font loading
+  // entirely — ImageResponse will use its built-in Inter font for all
+  // text. Once we confirm the rest of the pipeline renders, we'll
+  // re-introduce fonts via a different format (TTF or otf).
+  const playfairBold: ArrayBuffer | null = null;
+  const outfitMedium: ArrayBuffer | null = null;
+  // suppress unused-helper lint while we A/B-test font loading
+  void loadBundledFont;
 
   const name = course?.name ?? "Tour It";
   const location = [course?.city, course?.state].filter(Boolean).join(", ");
