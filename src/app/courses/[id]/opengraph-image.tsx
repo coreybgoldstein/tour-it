@@ -72,6 +72,46 @@ async function loadBundledFont(path: string): Promise<ArrayBuffer | null> {
   }
 }
 
+/**
+ * Pre-fetch an external image and return it as a data: URI so Satori
+ * never has to make its own network request at render time. Two
+ * problems we're solving:
+ *
+ *  1. Satori's built-in image fetcher silently fails for images that
+ *     take more than a few seconds to download. Rodeo Dunes' 579KB
+ *     cover (vs ~250KB for the others) hit this limit and the whole
+ *     OG response came back empty with "Can't load image" in logs.
+ *  2. Embedding the bytes inline removes one variable on every cold
+ *     render — once we've fetched the course row from Supabase, the
+ *     image bytes ride along inside the same edge function.
+ *
+ * Uses AbortSignal.timeout for a 6s ceiling, returns null on failure
+ * so the OG card falls back to the brand-gradient background.
+ */
+async function fetchImageAsDataUri(url: string | null): Promise<string | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) {
+      console.warn(`[og-image] Cover image fetch failed: status ${res.status}`);
+      return null;
+    }
+    const contentType = res.headers.get("content-type") ?? "image/jpeg";
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    // Base64-encode in chunks to avoid String.fromCharCode argument
+    // overflow on very large images (~64K char arg limit on V8).
+    let binary = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+    }
+    return `data:${contentType};base64,${btoa(binary)}`;
+  } catch (err) {
+    console.warn(`[og-image] fetchImageAsDataUri threw for ${url}:`, err);
+    return null;
+  }
+}
+
 export default async function OG({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
@@ -81,21 +121,24 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
     .eq("id", id)
     .single();
 
-  // Load brand fonts in parallel with the DB hit. We use TTF instead
-  // of woff2 — Fontsource woff2 with Brotli compression triggered
-  // "Unsupported OpenType" in Satori on the edge runtime (debugged
-  // commits bee1673d → 18c56343). Static TTF works; the ~2-3x size
-  // hit is fine since these load from same-origin and Vercel's CDN
-  // caches them after the first request per region.
-  const [playfairBold, outfitMedium] = await Promise.all([
+  // Pre-fetch fonts, cover, and logo all in parallel. Done in one
+  // Promise.all so they all share the function's wall-clock budget
+  // instead of being serialised behind the DB hit above.
+  const [playfairBold, outfitMedium, coverDataUri, logoDataUri] = await Promise.all([
     loadBundledFont("/fonts/PlayfairDisplay-900.ttf"),
     loadBundledFont("/fonts/Outfit-500.ttf"),
+    fetchImageAsDataUri(course?.coverImageUrl ?? null),
+    fetchImageAsDataUri(course?.logoUrl ?? null),
   ]);
 
   const name = course?.name ?? "Tour It";
   const location = [course?.city, course?.state].filter(Boolean).join(", ");
-  const coverUrl = course?.coverImageUrl ?? null;
-  const logoUrl = course?.logoUrl ?? null;
+  // We hand Satori a base64 data: URI instead of the Supabase URL so
+  // it never tries to fetch externally — its internal fetcher times
+  // out on larger covers (~500KB+) and the whole response comes back
+  // empty. If the pre-fetch failed, fall back to the brand gradient.
+  const coverUrl = coverDataUri;
+  const logoUrl = logoDataUri;
 
   // Long names need a smaller headline so they don't wrap into the
   // logo zone. Tested visually: 25+ chars at 68px gets tight.
