@@ -7,6 +7,8 @@ import HideSplash from "@/components/HideSplash";
 import NativeBootstrap from "@/components/NativeBootstrap";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import AppDownloadBanner from "@/components/AppDownloadBanner";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CANONICAL_HOST, DEFAULT_OG_IMAGE, websiteSchema, organizationSchema, jsonLdScript } from "@/lib/seo";
 // b512: import commented out with the unmounted overlay below to avoid
 // an unused-import lint error. Component file kept in repo — uncomment
@@ -45,6 +47,14 @@ export const metadata: Metadata = {
   icons: {
     icon: "/icon.png",
     apple: "/icon.png",
+  },
+  // Google Search Console domain verification. Replace the placeholder
+  // below with the content="…" value from search.google.com/search-console
+  // → Add property → URL prefix → HTML tag method. This emits
+  // <meta name="google-site-verification" …> on every page so Google
+  // accepts the verification check.
+  verification: {
+    google: "TODO-replace-with-search-console-token",
   },
   openGraph: {
     title: "Tour It — Scout Before You Play",
@@ -90,6 +100,17 @@ export default function RootLayout({
             now has the bell embedded. The component file is preserved for
             re-use on pages where the top bar is hidden. */}
         {children}
+        {/* Vercel Web Analytics — visitor counts, top pages, countries,
+            devices. No cookies, privacy-friendly. Requires that you also
+            flip the toggle in the Vercel dashboard
+            (Project → Analytics → Enable Web Analytics) for the data to
+            start flowing. The script auto-skips when not running on
+            Vercel infra. */}
+        <Analytics />
+        {/* Vercel Speed Insights — Core Web Vitals (LCP, INP, CLS)
+            sampled from real user sessions. Same dashboard toggle
+            required. Same script-skip behavior off-Vercel. */}
+        <SpeedInsights />
       </body>
     </html>
   );
