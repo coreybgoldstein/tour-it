@@ -61,12 +61,30 @@ export function CropModal({ file, aspect, label, onDone, onClose }: {
 
   const confirm = () => {
     if (!imgRef.current || !imgSrc) return;
+    // Output at a real downstream resolution rather than the 300px
+    // preview width. 1600px is the OG image generator's source
+    // ceiling; 600px is plenty for a logo crest. Quality 0.85 keeps
+    // most covers comfortably under the 400KB ceiling enforced in
+    // app/courses/[id]/opengraph-image.tsx without visible artifacts.
+    const targetW = aspect >= 1 ? 1600 : 1200;
+    const targetH = Math.round(targetW / aspect);
+    const factor = targetW / FW;
     const canvas = document.createElement("canvas");
-    canvas.width = FW; canvas.height = FH;
+    canvas.width = targetW; canvas.height = targetH;
     const ctx = canvas.getContext("2d")!;
-    const sw = nat.w * scale, sh = nat.h * scale;
-    ctx.drawImage(imgRef.current, (FW - sw) / 2 + pos.x, (FH - sh) / 2 + pos.y, sw, sh);
-    canvas.toBlob(blob => { if (blob) onDone(blob); }, "image/jpeg", 0.92);
+    // Smoother downscale when the source is much larger than target
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    const sw = nat.w * scale * factor;
+    const sh = nat.h * scale * factor;
+    ctx.drawImage(
+      imgRef.current,
+      (targetW - sw) / 2 + pos.x * factor,
+      (targetH - sh) / 2 + pos.y * factor,
+      sw,
+      sh,
+    );
+    canvas.toBlob(blob => { if (blob) onDone(blob); }, "image/jpeg", 0.85);
   };
 
   return (

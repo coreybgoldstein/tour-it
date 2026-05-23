@@ -17,6 +17,7 @@
 //   src/app/api/cron/auto-seed-courses/route.ts   (daily sweep)
 
 import { createClient } from "@supabase/supabase-js";
+import { optimizeCover, optimizeLogo } from "@/lib/optimizeCover";
 
 const UA = "Mozilla/5.0 (compatible; tour-it-autoseed/1.0)";
 const BUCKET = "tour-it-photos";
@@ -159,10 +160,16 @@ export async function autoSeedCourse(courseId: string): Promise<AutoSeedResult> 
       () => scraped.favicon,
     ]);
     if (logoResult) {
-      const ext = extFromContentType(logoResult.contentType);
+      // Resize+recompress before upload so the OG image generator can
+      // safely embed it later. See src/lib/optimizeCover.ts for the
+      // sizing rationale.
+      const optimized = await optimizeLogo(logoResult.bytes).catch(() => null);
+      const finalBytes = optimized?.bytes ?? logoResult.bytes;
+      const finalCT = optimized?.contentType ?? logoResult.contentType;
+      const ext = extFromContentType(finalCT);
       const path = `course-images/${courseId}-logo.${ext}`;
-      const { error } = await sb.storage.from(BUCKET).upload(path, logoResult.bytes, {
-        contentType: logoResult.contentType,
+      const { error } = await sb.storage.from(BUCKET).upload(path, finalBytes, {
+        contentType: finalCT,
         upsert: true,
       });
       if (!error) {
@@ -179,10 +186,15 @@ export async function autoSeedCourse(courseId: string): Promise<AutoSeedResult> 
       () => scraped.ogImage,
     ]);
     if (coverResult) {
-      const ext = extFromContentType(coverResult.contentType);
+      // Same optimisation pass — keeps every auto-seeded cover under
+      // the OG generator's ~400KB ceiling.
+      const optimized = await optimizeCover(coverResult.bytes).catch(() => null);
+      const finalBytes = optimized?.bytes ?? coverResult.bytes;
+      const finalCT = optimized?.contentType ?? coverResult.contentType;
+      const ext = extFromContentType(finalCT);
       const path = `course-images/${courseId}-cover.${ext}`;
-      const { error } = await sb.storage.from(BUCKET).upload(path, coverResult.bytes, {
-        contentType: coverResult.contentType,
+      const { error } = await sb.storage.from(BUCKET).upload(path, finalBytes, {
+        contentType: finalCT,
         upsert: true,
       });
       if (!error) {
