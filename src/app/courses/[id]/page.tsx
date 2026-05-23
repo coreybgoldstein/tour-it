@@ -1261,10 +1261,16 @@ const [editDescription, setEditDescription] = useState("");
               onClick={async () => {
                 if (!course) return;
                 const url = `${window.location.origin}/courses/${course.id}`;
-                const text = `${course.name} on Tour It`;
                 try {
+                  // Share JUST the url (no text/title). When iMessage gets
+                  // a URL bundled with body text it sometimes drops the
+                  // rich Open Graph preview and renders the URL as plain
+                  // text — and the OG card is the whole point. Sending
+                  // url-only lets iMessage cleanly unfurl into the
+                  // course preview card we render at
+                  // /courses/[id]/opengraph-image.
                   if (typeof navigator !== "undefined" && (navigator as Navigator & { share?: (data: ShareData) => Promise<void> }).share) {
-                    await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({ title: course.name, text, url });
+                    await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({ url });
                   } else {
                     await navigator.clipboard.writeText(url);
                     setCourseShared(true);
