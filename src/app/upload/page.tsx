@@ -9,6 +9,7 @@ import BatchUpload from "./BatchUpload";
 import { sendPushToUser } from "@/lib/sendPush";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 import { calcIntelBonus } from "@/config/points-system";
+import { finalizeUpload } from "@/lib/uploadFinalize";
 import exifr from "exifr";
 
 type Course = {
@@ -639,67 +640,49 @@ function UploadPageInner() {
         : contentFormat || null;
 
       const uploadId = crypto.randomUUID();
-      const { error: dbError } = await supabase.from("Upload").insert({
-        id: uploadId,
-        userId: user.id,
-        courseId: selectedCourse.id,
-        holeId,
-        mediaType: mediaType,
-        mediaUrl,
-        cloudflareVideoId,
-        teeBoxId: null,
-        shotType: resolvedShotType,
-        yardageOverlay: contentFormat === "THREE_HOLE" ? selectedGroup : null,
-        clubUsed: intel.club || null,
-        windCondition: intel.wind || null,
-        strategyNote: intel.notes || null,
-        handicapRange: null,
-        datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
-        rankScore: 1 / Math.pow(2, 1.3), // base score for new clip, ~0.41
-        clipLat: gpsCoords?.lat ?? null,
-        clipLng: gpsCoords?.lng ?? null,
-        tripId: preselectedTripId || null,
-        tripPublic: preselectedTripId ? tripPublic : true,
-        moderationStatus: "APPROVED",
-        likeCount: 0,
-        commentCount: 0,
-        viewCount: 0,
-        saveCount: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-
-      if (dbError) { setError(`Failed to save: ${dbError.message}`); setUploading(false); return; }
-
-      // Auto-link to round
-      const roundDate = intel.datePlayed
-        ? new Date(intel.datePlayed).toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0];
-      const { data: existingRound } = await supabase.from("Round").select("id").eq("userId", user.id).eq("courseId", selectedCourse.id).eq("date", roundDate).single();
-      if (existingRound) {
-        await supabase.from("Upload").update({ roundId: existingRound.id }).eq("id", uploadId);
-      } else {
-        const newRoundId = crypto.randomUUID();
-        await supabase.from("Round").insert({ id: newRoundId, userId: user.id, courseId: selectedCourse.id, date: roundDate, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-        await supabase.from("Upload").update({ roundId: newRoundId }).eq("id", uploadId);
+      // Atomic server-side finalize — single round-trip writes the Upload row,
+      // links/creates the Round, and bumps Course/User/Hole counters. The
+      // route is idempotent on uploadId and retries on transient failures,
+      // so a network blip no longer leaves the storage file orphaned with
+      // no DB record (the Taylor Muth FULL_ROUND failure mode on 2026-05-23).
+      // mediaType is narrowed by the early returns above (file required, etc.)
+      if (mediaType !== "VIDEO" && mediaType !== "PHOTO") {
+        setError("Please choose a video or photo first.");
+        setUploading(false);
+        return;
       }
-
-      // Increment upload counters
-      const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
-      await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
-      const { data: uRow } = await supabase.from("User").select("uploadCount").eq("id", user.id).single();
-      await supabase.from("User").update({ uploadCount: (uRow?.uploadCount || 0) + 1 }).eq("id", user.id);
-      let hRow: { uploadCount: number } | null = null;
-      if (holeId) {
-        const { data: holeRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
-        hRow = holeRow;
-        await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);
+      let finalize;
+      try {
+        finalize = await finalizeUpload({
+          uploadId,
+          courseId: selectedCourse.id,
+          holeId,
+          mediaType,
+          mediaUrl,
+          cloudflareVideoId,
+          shotType: resolvedShotType,
+          yardageOverlay: contentFormat === "THREE_HOLE" ? selectedGroup : null,
+          clubUsed: intel.club || null,
+          windCondition: intel.wind || null,
+          strategyNote: intel.notes || null,
+          datePlayedAt: intel.datePlayed ? new Date(intel.datePlayed).toISOString() : null,
+          clipLat: gpsCoords?.lat ?? null,
+          clipLng: gpsCoords?.lng ?? null,
+          tripId: preselectedTripId || null,
+          tripPublic: preselectedTripId ? tripPublic : true,
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Couldn't save your clip — please try again.");
+        setUploading(false);
+        return;
       }
 
       // Award contribution points + upsert CourseContribution (fire-and-forget)
       ;(async () => {
         const actions: string[] = ["upload_clip"];
-        if ((cRow?.uploadCount || 0) === 0) actions.push("upload_first_for_course");
+        // courseUploadCount is the post-bump value, so ===1 means this is
+        // the first upload for the course.
+        if (finalize.courseUploadCount === 1) actions.push("upload_first_for_course");
         for (const action of actions) {
           await fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, referenceId: uploadId }) }).catch(() => {});
         }
@@ -709,8 +692,6 @@ function UploadPageInner() {
           await fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "intel_bonus", referenceId: uploadId, customAmount: intelBonus }) }).catch(() => {});
         }
         fetch("/api/referral/first-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId }) }).catch(() => {});
-        // hRow is no longer used for points but kept for future references
-        void hRow;
         const now = new Date().toISOString();
         const { data: contrib } = await supabase.from("CourseContribution").select("id, uploadCount").eq("userId", user.id).eq("courseId", selectedCourse.id).maybeSingle();
         if (contrib) {

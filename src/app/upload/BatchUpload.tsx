@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { compressVideo } from "@/lib/compressVideo";
 import { sendPushToUser } from "@/lib/sendPush";
 import { calcIntelBonus } from "@/config/points-system";
+import { finalizeUpload } from "@/lib/uploadFinalize";
 
 type Course = { id: string; name: string; city: string; state: string; holeCount: number };
 type TagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
@@ -334,44 +335,27 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         }
 
         const uploadId = crypto.randomUUID();
-        const now = new Date().toISOString();
-
-        await supabase.from("Upload").insert({
-          id: uploadId, userId: user.id, courseId: selectedCourse.id, holeId,
-          mediaType: isVideo ? "VIDEO" : "PHOTO", mediaUrl, cloudflareVideoId,
-          teeBoxId: null, shotType: clip.shotType, yardageOverlay: null,
+        // Atomic server-side finalize — single round-trip writes the Upload
+        // row, links the Round, and bumps Course/User/Hole counters. See
+        // /api/uploads/create for the failure mode this protects against.
+        const finalize = await finalizeUpload({
+          uploadId,
+          courseId: selectedCourse.id,
+          holeId,
+          mediaType: isVideo ? "VIDEO" : "PHOTO",
+          mediaUrl,
+          cloudflareVideoId,
+          shotType: clip.shotType,
+          yardageOverlay: null,
           clubUsed: clip.clubUsed.trim() || null,
           windCondition: clip.windCondition || null,
           strategyNote: clip.strategyNote.trim() || null,
-          landingZoneNote: null, whatCameraDoesntShow: null, handicapRange: null,
           datePlayedAt: new Date(clip.file.lastModified).toISOString(),
-          rankScore: 0, tripId: null, tripPublic: true,
-          moderationStatus: "APPROVED", likeCount: 0, commentCount: 0,
-          viewCount: 0, saveCount: 0, createdAt: now, updatedAt: now,
+          clipLat: null,
+          clipLng: null,
+          tripId: null,
+          tripPublic: true,
         });
-
-        // Auto-link to round
-        const roundDate = new Date(clip.file.lastModified).toISOString().split("T")[0];
-        const { data: existingRound } = await supabase.from("Round").select("id").eq("userId", user.id).eq("courseId", selectedCourse.id).eq("date", roundDate).single();
-        if (existingRound) {
-          await supabase.from("Upload").update({ roundId: existingRound.id }).eq("id", uploadId);
-        } else {
-          const newRoundId = crypto.randomUUID();
-          await supabase.from("Round").insert({ id: newRoundId, userId: user.id, courseId: selectedCourse.id, date: roundDate, createdAt: now, updatedAt: now });
-          await supabase.from("Upload").update({ roundId: newRoundId }).eq("id", uploadId);
-        }
-
-        // Increment counters
-        const { data: cRow } = await supabase.from("Course").select("uploadCount").eq("id", selectedCourse.id).single();
-        await supabase.from("Course").update({ uploadCount: (cRow?.uploadCount || 0) + 1 }).eq("id", selectedCourse.id);
-        const { data: uRow } = await supabase.from("User").select("uploadCount").eq("id", user.id).single();
-        await supabase.from("User").update({ uploadCount: (uRow?.uploadCount || 0) + 1 }).eq("id", user.id);
-        let isFirstForHole = false;
-        if (holeId) {
-          const { data: hRow } = await supabase.from("Hole").select("uploadCount").eq("id", holeId).single();
-          await supabase.from("Hole").update({ uploadCount: (hRow?.uploadCount || 0) + 1 }).eq("id", holeId);
-          isFirstForHole = (hRow?.uploadCount || 0) === 0;
-        }
 
         // Award points (fire-and-forget — don't block the upload flow)
         const awardFetch = (action: string, refId = uploadId, customAmount?: number) => fetch("/api/points/award", {
@@ -379,7 +363,8 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
           body: JSON.stringify({ action, referenceId: refId, ...(customAmount !== undefined ? { customAmount } : {}) }),
         }).catch(() => {});
         awardFetch("upload_clip");
-        if ((cRow?.uploadCount || 0) === 0) awardFetch("upload_first_for_course");
+        // courseUploadCount is post-bump, so ===1 means first upload for course.
+        if (finalize.courseUploadCount === 1) awardFetch("upload_first_for_course");
         // Single variable-amount intel bonus based on how many of the
         // three intel fields the user filled in.
         const club  = clip.clubUsed.trim();
@@ -388,9 +373,6 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         const intelBonus = calcIntelBonus(club, wind, note);
         if (intelBonus > 0) awardFetch("intel_bonus", uploadId, intelBonus);
         fetch("/api/referral/first-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId }) }).catch(() => {});
-        // Mark `isFirstForHole` as referenced so unused-var lint stays quiet
-        // (kept on the row in case we want to reintroduce hole-pioneer badges)
-        void isFirstForHole;
 
         // Hero tag — the user who hit the shot. Approval transfers
         // Upload.userId to them with the "uploaded by @uploader" chip.
