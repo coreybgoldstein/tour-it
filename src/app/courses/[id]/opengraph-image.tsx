@@ -88,6 +88,20 @@ async function loadBundledFont(path: string): Promise<ArrayBuffer | null> {
  * Uses AbortSignal.timeout for a 6s ceiling, returns null on failure
  * so the OG card falls back to the brand-gradient background.
  */
+/**
+ * Largest cover/logo we'll embed as a data URI. Satori's image
+ * parser silently throws RangeError when handed JPEGs above this
+ * range — even when the bytes are valid and we hand them inline as
+ * a data URI. Below this size the parser is reliable. Above it,
+ * the safer move is to skip the image entirely so the card falls
+ * back to the brand-gradient design instead of returning an empty
+ * 200 (which looks broken in iMessage / Slack previews).
+ *
+ * Long-term fix: compress course covers to <300KB at upload time so
+ * this ceiling is moot. Tracked separately.
+ */
+const MAX_EMBED_BYTES = 400_000;
+
 async function fetchImageAsDataUri(url: string | null): Promise<string | null> {
   if (!url) return null;
   try {
@@ -96,12 +110,20 @@ async function fetchImageAsDataUri(url: string | null): Promise<string | null> {
       console.warn(`[og-image] Cover image fetch failed: status ${res.status}`);
       return null;
     }
+    const declared = parseInt(res.headers.get("content-length") ?? "0", 10);
+    if (declared && declared > MAX_EMBED_BYTES) {
+      console.warn(`[og-image] Skipping oversize cover (${declared}B > ${MAX_EMBED_BYTES}B): ${url}`);
+      return null;
+    }
     const contentType = res.headers.get("content-type") ?? "image/jpeg";
     const buf = await res.arrayBuffer();
+    // Double-check the actual body in case Content-Length was missing
+    // or wrong — same ceiling applies to the bytes we'd embed.
+    if (buf.byteLength > MAX_EMBED_BYTES) {
+      console.warn(`[og-image] Skipping oversize cover (${buf.byteLength}B body > ${MAX_EMBED_BYTES}B): ${url}`);
+      return null;
+    }
     // Buffer is polyfilled in Vercel's edge runtime via Next.js.
-    // Using it avoids the chunked String.fromCharCode approach,
-    // which threw RangeError "Offset is outside the bounds of the
-    // Uint8Array" on large covers in the previous attempt.
     const base64 = Buffer.from(buf).toString("base64");
     return `data:${contentType};base64,${base64}`;
   } catch (err) {
