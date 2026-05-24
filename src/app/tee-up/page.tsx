@@ -123,6 +123,10 @@ export default function TeeUpPage() {
     trips: false,
   });
   const [userId, setUserId] = useState<string | null>(null);
+  // Current user's avatar — used by the Play-a-Game wizard's Step 3
+  // host row so "You" actually shows YOUR face, not a generic icon.
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
   // Quick Round sheet
   const [quickOpen, setQuickOpen] = useState(false);
@@ -488,6 +492,21 @@ export default function TeeUpPage() {
       if (!data.user) { router.replace("/login"); return; }
       const uid = data.user.id;
       setUserId(uid);
+
+      // Fetch the user's profile so Play-a-Game's Step 3 host row can
+      // render their actual avatar + display name instead of a generic
+      // placeholder. One query, fire-and-forget.
+      supabase
+        .from("User")
+        .select("avatarUrl, displayName, username")
+        .eq("id", uid)
+        .maybeSingle()
+        .then(({ data: profile }) => {
+          if (profile) {
+            setUserAvatar(profile.avatarUrl ?? null);
+            setUserDisplayName(profile.displayName || profile.username || null);
+          }
+        });
 
       // 1) Trip IDs where user is a member
       const { data: memberRows } = await supabase
@@ -1249,13 +1268,17 @@ export default function TeeUpPage() {
                 <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Playing</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {/* Host row */}
+                    {/* Host row — pulls the current user's actual avatar
+                        + display name so the host slot reads as "you"
+                        with your face, not a generic person icon. */}
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {userAvatar
+                          ? <img src={userAvatar} alt={userDisplayName || "you"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>You</div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{userDisplayName || "You"}</div>
                         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Host</div>
                       </div>
                     </div>
