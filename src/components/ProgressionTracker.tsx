@@ -20,7 +20,35 @@ type LedgerEntry = {
   action: string;
   points: number;
   createdAt: string;
+  // referenceId points at the source row that triggered the points
+  // event. Shape depends on action: uploadId for clip-related actions,
+  // userId for follow/referral. Resolves to a deep link via
+  // resolveLink() so users can tap a ledger row and land on the
+  // thing that earned them the points.
+  referenceId: string | null;
 };
+
+// Action types whose referenceId points to an Upload row. Tap a row of
+// these types and we resolve uploadId → courseId + holeNumber and
+// route to /courses/[courseId]/holes/[holeNumber]?clip=[uploadId].
+const CLIP_LINKED_ACTIONS = new Set([
+  "comment_received",
+  "like_received",
+  "upload_clip",
+  "upload_first_for_course",
+  "upload_series",
+  "intel_bonus",
+  "milestone_10_likes",
+  "milestone_100_likes",
+  "milestone_1000_likes",
+]);
+
+// referenceId is a userId for these → /profile/[id].
+const USER_LINKED_ACTIONS = new Set([
+  "follow_received",
+  "referral_signup",
+  "referral_first_upload",
+]);
 
 const ACTION_LABELS: Record<string, string> = {
   signup:                      "Joined Tour It",
@@ -110,16 +138,53 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
     const supabase = createClient();
     const { data } = await supabase
       .from("UserPointsLedger")
-      .select("action, points, createdAt")
+      .select("action, points, createdAt, referenceId")
       .eq("userId", userId)
       .order("createdAt", { ascending: false })
       .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
     if (data) {
-      setLedger(prev => page === 0 ? data : [...prev, ...data]);
+      setLedger(prev => page === 0 ? (data as LedgerEntry[]) : [...prev, ...(data as LedgerEntry[])]);
       setHasMore(data.length === PAGE_SIZE);
       setLedgerPage(page);
     }
     setLedgerLoading(false);
+  }
+
+  // Lazy-resolve uploadId → deep link as the ledger grows. One batch
+  // query per ledger page; results merged into a cumulative map so we
+  // never re-fetch a clip we've already resolved.
+  const [clipLinks, setClipLinks] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const missing = Array.from(new Set(
+      ledger
+        .filter(e => CLIP_LINKED_ACTIONS.has(e.action) && e.referenceId)
+        .map(e => e.referenceId as string)
+        .filter(id => !(id in clipLinks))
+    ));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await createClient()
+        .from("Upload")
+        .select("id, courseId, holeNumber")
+        .in("id", missing);
+      if (cancelled || !data) return;
+      const map: Record<string, string> = {};
+      for (const row of data as { id: string; courseId: string; holeNumber: number | null }[]) {
+        map[row.id] = row.holeNumber
+          ? `/courses/${row.courseId}/holes/${row.holeNumber}?clip=${row.id}`
+          : `/courses/${row.courseId}`;
+      }
+      setClipLinks(prev => ({ ...prev, ...map }));
+    })();
+    return () => { cancelled = true; };
+  }, [ledger, clipLinks]);
+
+  function resolveLink(entry: LedgerEntry): string | null {
+    if (!entry.referenceId) return null;
+    if (CLIP_LINKED_ACTIONS.has(entry.action)) return clipLinks[entry.referenceId] ?? null;
+    if (USER_LINKED_ACTIONS.has(entry.action)) return `/profile/${entry.referenceId}`;
+    return null;
   }
 
   function openLedger(e: React.MouseEvent) {
@@ -260,24 +325,41 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
                 </div>
               ) : (
                 <>
-                  {ledger.map((entry, i) => (
-                    <div
-                      key={i}
-                      style={{ display: "flex", alignItems: "center", padding: "11px 20px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {ACTION_LABELS[entry.action] ?? entry.action}
+                  {ledger.map((entry, i) => {
+                    const link = resolveLink(entry);
+                    const tappable = !!link;
+                    return (
+                      <div
+                        key={i}
+                        onClick={tappable ? () => { setShowLedger(false); router.push(link); } : undefined}
+                        role={tappable ? "button" : undefined}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          padding: "11px 20px",
+                          borderBottom: "1px solid rgba(255,255,255,0.04)",
+                          cursor: tappable ? "pointer" : "default",
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {ACTION_LABELS[entry.action] ?? entry.action}
+                          </div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+                            {formatTimeAgo(entry.createdAt)}
+                          </div>
                         </div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
-                          {formatTimeAgo(entry.createdAt)}
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: entry.points >= 0 ? "#4da862" : "#f87171", marginLeft: 14, flexShrink: 0 }}>
+                          {entry.points > 0 ? "+" : ""}{entry.points}
                         </div>
+                        {tappable && (
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 10, flexShrink: 0 }}>
+                            <path d="m9 18 6-6-6-6"/>
+                          </svg>
+                        )}
                       </div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: entry.points >= 0 ? "#4da862" : "#f87171", marginLeft: 14, flexShrink: 0 }}>
-                        {entry.points > 0 ? "+" : ""}{entry.points}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {hasMore && (
                     <button
                       onClick={() => loadLedger(ledgerPage + 1)}

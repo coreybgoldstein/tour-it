@@ -269,15 +269,19 @@ export default function NotificationsPage() {
                     <div style={{ marginTop: 10 }}>
                       {n.tagStatus === "pending" ? (
                         <>
-                          {n.clipThumbnail && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); previewClip(); }}
-                              style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", padding: "0 0 6px", cursor: "pointer", color: "rgba(255,255,255,0.45)", fontFamily: "'Outfit', sans-serif", fontSize: 11, textDecoration: "underline" }}
-                            >
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20" /></svg>
-                              Preview clip before deciding
-                            </button>
-                          )}
+                          {/* Always show the preview link in pending state
+                              — users were stuck having to accept before
+                              they could see the clip (feedback 2026-05-24).
+                              We have a navigable URL even when the
+                              thumbnail isn't resolved, so wire it up
+                              regardless of clipThumbnail. */}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); previewClip(); }}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "none", border: "none", padding: "0 0 6px", cursor: "pointer", color: "rgba(255,255,255,0.45)", fontFamily: "'Outfit', sans-serif", fontSize: 11, textDecoration: "underline" }}
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20" /></svg>
+                            Preview clip before deciding
+                          </button>
                           <div style={{ display: "flex", gap: 8 }}>
                             <button
                               onClick={() => handleTagAction(n.id, n.referenceId!, true, !!n.isHeroTag)}

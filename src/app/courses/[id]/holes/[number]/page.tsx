@@ -410,9 +410,31 @@ export default function HolePage() {
       userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
     });
     if (!error) {
-      const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId").eq("id", commentUploadId).single();
+      const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId, holeNumber, courseId").eq("id", commentUploadId).single();
       await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
       if (uploadData?.userId && uploadData.userId !== user.id) {
+        // Insert the in-app Notification row + push + points. The
+        // hole-page comment handler used to only award points which
+        // meant the clip owner never saw the comment in the bell
+        // (caught 2026-05-24 from user feedback).
+        const { data: commenterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
+        const commenterName = commenterProfile?.displayName || commenterProfile?.username || "Someone";
+        const notifNow = new Date().toISOString();
+        const clipLink = uploadData.holeNumber
+          ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}`
+          : `/courses/${uploadData.courseId}`;
+        supabase.from("Notification").insert({
+          id: crypto.randomUUID(),
+          userId: uploadData.userId,
+          type: "comment",
+          title: "New comment",
+          body: `${commenterName} commented on your clip`,
+          linkUrl: clipLink,
+          read: false,
+          createdAt: notifNow,
+          updatedAt: notifNow,
+        }).then(() => {});
+        fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
         fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
       }
       setCommentItems(prev => [...prev, {
