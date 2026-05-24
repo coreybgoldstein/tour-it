@@ -25,7 +25,7 @@ const SHOT_LABEL: Record<string, string> = {
 };
 
 function ProfileFeedCard({
-  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId, likedIds, commentOpen,
+  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId, likedIds, commentedIds, commentOpen,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; cloudflareVideoId?: string | null; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null; uploadedByUserId?: string | null; uploadedByUsername?: string | null };
   isActive: boolean;
@@ -40,10 +40,15 @@ function ProfileFeedCard({
   isOwner: boolean;
   currentUserId?: string | null;
   likedIds?: Set<string>;
+  // Mirrors home-feed: set of upload IDs the current user has commented
+  // on. Drives the green "you commented" state on the comment button
+  // for visual parity with the like heart's "you liked" treatment.
+  commentedIds?: Set<string>;
   // When true, the parent's comment sheet is open — pause the video so the
   // user can read/type without the looping playback running in the background.
   commentOpen?: boolean;
 }) {
+  const commented = !!(commentedIds && commentedIds.has(clip.id));
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
   const isDesktop = useIsDesktop();
@@ -148,10 +153,17 @@ function ProfileFeedCard({
           </div>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
         </button>
-        {/* Comment */}
-        <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        {/* Comment — same belt-and-suspenders against the iOS WKWebView
+            phantom-tap bug as the home feed. Without stopPropagation +
+            preventDefault, the touch that opens the comment sheet can
+            propagate up and immediately hit the new backdrop's
+            close-on-tap handler. */}
+        <button
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); onComment(); }}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}
+        >
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: commented ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${commented ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill={commented ? "#fff" : "none"} stroke={commented ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{clip.commentCount || 0}</span>
         </button>
@@ -387,6 +399,9 @@ export default function ProfilePage() {
   // the home-feed and course-page pattern. Eliminates per-clip heart
   // flicker on mount.
   const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
+  // Mirrors likedIds for the comment button's "you commented" green
+  // state. Loaded in the same batch query so we hit the DB once.
+  const [commentedIds, setCommentedIds] = useState<Set<string> | undefined>(undefined);
   const prefetchedProfileLikesRef = useRef<string>("");
 
   useEffect(() => {
@@ -399,15 +414,24 @@ export default function ProfilePage() {
     const supabase = createClient();
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("Like")
-        .select("uploadId")
-        .eq("userId", currentUserId)
-        .in("uploadId", uploadIds);
-      if (cancelled || !data) return;
-      const liked = data.map(r => r.uploadId);
-      seedLikedCache(currentUserId, liked, uploadIds);
-      setLikedIds(new Set(liked));
+      // Single round-trip: pull both Like + Comment rows for this user
+      // across the visible clips. Same pattern as the home feed at
+      // src/app/page.tsx — keeps profile clip UX in lockstep.
+      const [{ data: likeData }, { data: commentData }] = await Promise.all([
+        supabase.from("Like").select("uploadId").eq("userId", currentUserId).in("uploadId", uploadIds),
+        supabase.from("Comment").select("uploadId").eq("userId", currentUserId).in("uploadId", uploadIds),
+      ]);
+      if (cancelled) return;
+      if (likeData) {
+        const liked = likeData.map(r => r.uploadId);
+        seedLikedCache(currentUserId, liked, uploadIds);
+        setLikedIds(new Set(liked));
+      }
+      if (commentData) {
+        // Dedupe — a user can have multiple comments on the same clip.
+        // We only care about "has commented at least once."
+        setCommentedIds(new Set(commentData.map(r => r.uploadId)));
+      }
     })();
     return () => { cancelled = true; };
   }, [currentUserId, uploads, taggedUploads]);
@@ -755,6 +779,14 @@ export default function ProfilePage() {
     }
     setCommentItems(prev => [...prev, { id: newId, body: commentText.trim(), createdAt: now, username: currentUserMeta?.username || "you", avatarUrl: currentUserMeta?.avatarUrl || null }]);
     setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: (u.commentCount || 0) + 1 } : u));
+    setTaggedUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: (u.commentCount || 0) + 1 } : u));
+    // Flip the comment button to its "you commented" green state
+    // immediately, same optimistic pattern the home feed uses.
+    setCommentedIds(prev => {
+      const next = new Set(prev ?? []);
+      next.add(commentUploadId);
+      return next;
+    });
     setCommentText(""); setSubmittingComment(false);
   }
 
@@ -1058,6 +1090,7 @@ export default function ProfilePage() {
                 isOwner={isOwner}
                 currentUserId={currentUserId}
                 likedIds={likedIds}
+                commentedIds={commentedIds}
               />
             </div>
           ))}
