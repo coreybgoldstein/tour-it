@@ -8,6 +8,7 @@ Golf course discovery + UGC platform. Golfers upload short hole clips with scout
 - Keep responses short — no narration, no summary of what was just done
 - Read only the section of a file needed, not the whole file
 - Mobile-first always
+- **All popups slide up from the bottom.** Every sheet/modal/picker in Tour It uses the bottom-sheet pattern — never center-screen modals, never top-anchored dialogs. Prefer `.tourit-sheet` (`src/app/globals.css`) for content-sized sheets and the custom-overlay pattern (`position:fixed; inset:0; display:flex; alignItems:stretch; flex:1` on the panel) for full-height wizards/forms. Never use `useKeyboardAwareSheet` alongside the custom overlay — it sets inline bottom/maxHeight that collapse the sheet back to content height.
 
 ## Tech stack
 - Next.js App Router (TypeScript), React 19

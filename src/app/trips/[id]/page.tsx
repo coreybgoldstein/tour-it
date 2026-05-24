@@ -331,7 +331,11 @@ export default function TripPage() {
   // Games
   const [games, setGames] = useState<TripGameRecord[]>([]);
   const [gameOpen, setGameOpen] = useState(false);
-  useKeyboardAwareSheet(gameOpen, "trip-game-creator");
+  // NOTE: do NOT call useKeyboardAwareSheet here — the inline
+  // bottom/maxHeight it sets fights with the custom-overlay design
+  // (alignItems:stretch + flex:1) and collapses the sheet back to
+  // content height. The global KeyboardSync + flex stretch already
+  // handle keyboard + height correctly.
   const [gameStep, setGameStep] = useState(1);
   const [generatingGame, setGeneratingGame] = useState(false);
   const [viewGameOpen, setViewGameOpen] = useState(false);
