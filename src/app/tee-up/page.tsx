@@ -1140,9 +1140,46 @@ export default function TeeUpPage() {
           global KeyboardSync handles the keyboard lift uniformly with
           every other sheet in the app. */}
       {playGameOpen && (
-        <>
-          <div className="tourit-sheet-backdrop" onClick={() => { if (!playGameCreating) setPlayGameOpen(false); }} />
-          <div className="tourit-sheet tourit-sheet--full" onClick={e => e.stopPropagation()}>
+        // Custom-overlay sheet (not .tourit-sheet) — same pattern used
+        // by the trip-page Create Game sheet. Forces the panel to
+        // stretch full-height so the tee-up page (Active/Archive
+        // tabs, empty-state Play-a-Game button) can't bleed through
+        // beneath a short Step 1 sheet. The global .tourit-sheet
+        // class shrinks with the keyboard via min-height calc, which
+        // collapses to content height on short steps and leaves a
+        // visible gap to the keyboard.
+        <div
+          onClick={() => { if (!playGameCreating) setPlayGameOpen(false); }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "rgba(0,0,0,0.78)",
+            display: "flex",
+            alignItems: "stretch",
+            justifyContent: "center",
+            paddingTop: "calc(env(safe-area-inset-top) + 24px)",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 520,
+              background: "#0d2318",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderTop: "1px solid rgba(77,168,98,0.3)",
+              display: "flex",
+              flexDirection: "column",
+              flex: 1,
+              minHeight: 0,
+              padding: "18px 20px calc(28px + env(safe-area-inset-bottom))",
+              overflowY: "auto",
+              boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+            }}
+          >
             <div className="tourit-sheet-grip" />
 
             {/* Header — eyebrow + title + step indicator. Two steps
@@ -1405,7 +1442,7 @@ export default function TeeUpPage() {
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       <BottomNav />
