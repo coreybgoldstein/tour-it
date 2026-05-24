@@ -836,12 +836,32 @@ export default function Home() {
       const kh = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
       setCommentKeyboardHeight(kh > 50 ? kh : 0);
     };
+    // Anticipate the keyboard the instant the input is focused. iOS's
+    // keyboard rise takes ~280ms, and visualViewport.resize fires DURING
+    // that animation in discrete steps. If we wait for those events, the
+    // sheet lifts in jumps that lag the keyboard. Setting the height to
+    // a sensible iPhone estimate (290px) on focusin means the sheet
+    // starts moving up at the same instant the keyboard does — the CSS
+    // transition then carries it smoothly. visualViewport.resize still
+    // refines the value to the device-exact keyboard height as it
+    // settles, so the final position is always accurate.
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
+        setCommentKeyboardHeight(prev => (prev > 0 ? prev : 290));
+      }
+    };
+    const onFocusOut = () => setCommentKeyboardHeight(0);
     sync();
     vv.addEventListener("resize", sync);
     vv.addEventListener("scroll", sync);
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
     return () => {
       vv.removeEventListener("resize", sync);
       vv.removeEventListener("scroll", sync);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
       setCommentKeyboardHeight(0);
     };
   }, [commentUploadId]);
