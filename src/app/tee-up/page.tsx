@@ -112,6 +112,23 @@ export default function TeeUpPage() {
   const searchParams = useSearchParams();
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [pastRounds, setPastRounds] = useState<RoundRow[]>([]);
+  // Games tab data — TripGame rows for trips the current user is in,
+  // joined with course logo + trip date for the card display.
+  type GameRow = {
+    id: string;
+    tripId: string;
+    courseId: string;
+    courseName: string;
+    courseLogoUrl: string | null;
+    format: string;
+    formatConfig: { winner?: string | null; winners?: Record<string, string> } | null;
+    players: { userId: string; displayName: string; avatarUrl: string | null }[] | null;
+    tripDate: string | null;
+    tripName: string | null;
+    tripIsPast: boolean;
+    isArchived: boolean; // a "winner" field on formatConfig means the user declared a result
+  };
+  const [games, setGames] = useState<GameRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("games");
   // Per-tab "show archive" toggle. Lets users flip between active
@@ -410,38 +427,13 @@ export default function TeeUpPage() {
   // user flow skips date/time (the game starts now) and ends on the
   // trip page with the game-creation modal pre-opened.
   const [playGameOpen, setPlayGameOpen] = useState(false);
-  const [playGameStep, setPlayGameStep] = useState<1 | 2 | 3>(1);
+  // Two steps now (was three) so the user lands directly in the
+  // existing game-creation modal after step 2 — one continuous
+  // journey from Tee Up to game start.
+  const [playGameStep, setPlayGameStep] = useState<1 | 2>(1);
   const [playGameCourse, setPlayGameCourse] = useState<CourseSearchRow | null>(null);
   const [playGameFriends, setPlayGameFriends] = useState<FriendRow[]>([]);
   const [playGameCreating, setPlayGameCreating] = useState(false);
-  // Per-course aggregates for Step 3's summary card. Fetched once after
-  // a course is picked so we don't block the user advancing through
-  // the wizard.
-  const [playGameCourseStats, setPlayGameCourseStats] = useState<{ par: number | null; yardage: number | null; holeCount: number | null }>({ par: null, yardage: null, holeCount: null });
-
-  // Fetch par/yardage/holeCount once a course is selected. Sum Hole.par
-  // and Hole.yardage across all holes for the course. If yardage is
-  // missing on some holes we still show what we have.
-  useEffect(() => {
-    if (!playGameCourse) { setPlayGameCourseStats({ par: null, yardage: null, holeCount: null }); return; }
-    let cancelled = false;
-    const supabase = createClient();
-    (async () => {
-      const { data } = await supabase.from("Hole").select("par, yardage").eq("courseId", playGameCourse.id);
-      if (cancelled) return;
-      if (!data || data.length === 0) {
-        setPlayGameCourseStats({ par: null, yardage: null, holeCount: null });
-        return;
-      }
-      const par = data.reduce((s: number, h: { par: number | null }) => s + (h.par ?? 0), 0);
-      const yardageVals = data.filter((h: { yardage: number | null }) => h.yardage != null);
-      const yardage = yardageVals.length > 0
-        ? yardageVals.reduce((s: number, h: { yardage: number | null }) => s + (h.yardage ?? 0), 0)
-        : null;
-      setPlayGameCourseStats({ par: par || null, yardage, holeCount: data.length });
-    })();
-    return () => { cancelled = true; };
-  }, [playGameCourse]);
 
   function openPlayAGame() {
     setPlayGameCourse(null);
@@ -577,6 +569,51 @@ export default function TeeUpPage() {
             isRound, isPast,
           };
         });
+
+        // ── Games tab — pull TripGame rows for these trips and attach
+        // course logo + trip date so cards render rich context without
+        // an N+1 fetch. Lives inside this `if (tripIds.length > 0)`
+        // block because it depends on `tripRows` and `courseInfo` for
+        // the joins. Active = trip in the future and no winner declared
+        // yet; archived = trip in the past OR winner has been set. Same
+        // heuristic the trip-detail page uses for its game cards.
+        const { data: gameRowsFull } = await supabase
+          .from("TripGame")
+          .select("id, tripId, courseId, courseName, format, formatConfig, players, createdAt")
+          .in("tripId", tripIds)
+          .order("createdAt", { ascending: false });
+        const tripById = new Map<string, { name: string | null; startDate: string | null; endDate: string | null }>();
+        for (const t of (tripRows ?? []) as any[]) tripById.set(t.id, { name: t.name, startDate: t.startDate, endDate: t.endDate });
+        const gameList: GameRow[] = ((gameRowsFull ?? []) as any[]).map((g) => {
+          const tripInfo = tripById.get(g.tripId);
+          const endRef = tripInfo?.endDate || tripInfo?.startDate || null;
+          const tripIsPast = !!endRef && endRef.slice(0, 10) < today;
+          const cfg = g.formatConfig as { winner?: string | null; winners?: Record<string, string> } | null;
+          // Hole-picked games (CTP, Long Drive) use `winners` dict; flat
+          // games (Nassau, Skins, Best Ball) use `winner` string. Either
+          // signals the user has declared a result → archive.
+          const hasWinner = !!cfg && (
+            !!cfg.winner ||
+            (!!cfg.winners && Object.keys(cfg.winners).length > 0)
+          );
+          return {
+            id: g.id,
+            tripId: g.tripId,
+            courseId: g.courseId,
+            courseName: g.courseName,
+            courseLogoUrl: courseInfo.get(g.courseId)?.logoUrl ?? null,
+            format: g.format,
+            formatConfig: cfg,
+            players: g.players ?? [],
+            tripDate: tripInfo?.startDate ?? null,
+            tripName: tripInfo?.name ?? null,
+            tripIsPast,
+            isArchived: !!(tripIsPast || hasWinner),
+          };
+        });
+        setGames(gameList);
+      } else {
+        setGames([]);
       }
 
       // 3) Past logged rounds (from Round table, scored play)
@@ -602,6 +639,7 @@ export default function TeeUpPage() {
 
       setTrips(built);
       setPastRounds(rounds);
+
       setLoading(false);
     });
   }, [router]);
@@ -610,8 +648,11 @@ export default function TeeUpPage() {
   const futureTrips = trips.filter(t => !t.isRound && !t.isPast).sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
   const pastTrips = trips.filter(t => t.isPast).sort((a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? ""));
 
+  const activeGames = games.filter(g => !g.isArchived).sort((a, b) => (b.tripDate ?? "").localeCompare(a.tripDate ?? ""));
+  const archivedGames = games.filter(g => g.isArchived).sort((a, b) => (b.tripDate ?? "").localeCompare(a.tripDate ?? ""));
+
   const counts: Record<Tab, number> = {
-    games: 0, // populated once we wire up TripGame query below
+    games: activeGames.length,
     rounds: futureRounds.length,
     trips: futureTrips.length,
   };
@@ -726,7 +767,7 @@ export default function TeeUpPage() {
               tab. Counts hint at how much is in each bucket. */}
           {(() => {
             const archiveCounts: Record<Tab, number> = {
-              games: 0, // wired to TripGame archive query in a follow-up
+              games: archivedGames.length,
               rounds: pastRounds.length,
               trips: pastTrips.length,
             };
@@ -773,20 +814,28 @@ export default function TeeUpPage() {
             );
           })()}
 
-          {/* GAMES TAB — new in 2026-05-24. Empty state pushes users
-              into the Play-a-Game wizard which creates a one-day
-              round + game in a single flow. Active games (in-progress
-              TripGame rows) will list here once the query is wired. */}
+          {/* GAMES TAB — lists every TripGame the user is part of.
+              Active games (future-dated trips with no winner declared)
+              get hero treatment; archived games (past trips or declared
+              winners) live under the Archive toggle. */}
           {tab === "games" && !archiveOpen.games && (
-            <EmptyState
-              title="No active games"
-              subtitle="Pick a course, invite friends, and start a game in seconds. We'll spin up a round automatically."
-              ctaLabel="Play a Game"
-              onCta={() => openPlayAGame()}
-            />
+            activeGames.length === 0
+              ? <EmptyState
+                  title="No active games"
+                  subtitle="Pick a course, invite friends, and start a game in seconds. We'll spin up a round automatically."
+                  ctaLabel="Play a Game"
+                  onCta={() => openPlayAGame()}
+                />
+              : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {activeGames.map(g => <GameCard key={g.id} game={g} onClick={() => router.push(`/trips/${g.tripId}`)} />)}
+                </div>
           )}
           {tab === "games" && archiveOpen.games && (
-            <EmptyState title="No archived games yet" subtitle="Finished games will land here." />
+            archivedGames.length === 0
+              ? <EmptyState title="No archived games yet" subtitle="Finished games will land here." />
+              : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {archivedGames.map(g => <GameCard key={g.id} game={g} onClick={() => router.push(`/trips/${g.tripId}`)} archived />)}
+                </div>
           )}
 
           {/* ROUNDS TAB */}
@@ -1085,23 +1134,26 @@ export default function TeeUpPage() {
           <div className="tourit-sheet tourit-sheet--full" onClick={e => e.stopPropagation()}>
             <div className="tourit-sheet-grip" />
 
-            {/* Header — eyebrow + title + step indicator */}
+            {/* Header — eyebrow + title + step indicator. Two steps
+                only: Course → Friends. After step 2 the user lands
+                directly in the existing game-creation modal on the
+                trip page (game type, players & handicaps, format
+                rules, confirm) — one continuous journey instead of
+                bouncing between two separate wizards. */}
             <div style={{ marginBottom: 18 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 4 }}>Play a Game · Step {playGameStep} of 3</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 4 }}>Play a Game · Step {playGameStep} of 2</div>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
-                {playGameStep === 1 ? "Pick a course" : playGameStep === 2 ? "Who's playing?" : "Ready to tee it up?"}
+                {playGameStep === 1 ? "Pick a course" : "Who's playing?"}
               </div>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
                 {playGameStep === 1
                   ? "Where are you playing? Search by name, city, or state."
-                  : playGameStep === 2
-                    ? "Add friends to the game. You can skip and play solo."
-                    : "We'll create the round and drop you into the game setup."}
+                  : "Add friends to the game. You can skip and play solo — next up: format and stakes."}
               </div>
 
-              {/* Step dots */}
+              {/* Step dots — two dots since we only have two steps now. */}
               <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
-                {[1, 2, 3].map(n => (
+                {[1, 2].map(n => (
                   <div
                     key={n}
                     style={{
@@ -1217,99 +1269,13 @@ export default function TeeUpPage() {
               </div>
             )}
 
-            {/* STEP 3 — confirm. Course card on top (logo + name + par
-                + yardage + hole count). Players below as a vertical
-                list with avatars so users can scan who's joining. */}
-            {playGameStep === 3 && (
-              <div style={{ marginBottom: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                {/* Course card */}
-                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Course</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 12, background: playGameCourse?.logoUrl ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {playGameCourse?.logoUrl
-                        ? <img src={playGameCourse.logoUrl} alt={playGameCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{playGameCourse?.name}</div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{[playGameCourse?.city, playGameCourse?.state].filter(Boolean).join(", ")}</div>
-                    </div>
-                  </div>
-                  {/* Quick stats — par / yardage / hole count. Suppress
-                      individual cells when the data is missing. */}
-                  {(playGameCourseStats.par || playGameCourseStats.yardage || playGameCourseStats.holeCount) && (
-                    <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                      {playGameCourseStats.par != null && (
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Par</div>
-                          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginTop: 2 }}>{playGameCourseStats.par}</div>
-                        </div>
-                      )}
-                      {playGameCourseStats.yardage != null && (
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Yards</div>
-                          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginTop: 2 }}>{playGameCourseStats.yardage.toLocaleString()}</div>
-                        </div>
-                      )}
-                      {playGameCourseStats.holeCount != null && (
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Holes</div>
-                          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginTop: 2 }}>{playGameCourseStats.holeCount}</div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Players list — vertical rows with avatar + username
-                    instead of a comma-separated string so each player
-                    reads as their own entity. Host (you) pinned at top. */}
-                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Playing</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {/* Host row — pulls the current user's actual avatar
-                        + display name so the host slot reads as "you"
-                        with your face, not a generic person icon. */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {userAvatar
-                          ? <img src={userAvatar} alt={userDisplayName || "you"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{userDisplayName || "You"}</div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Host</div>
-                      </div>
-                    </div>
-                    {/* Invited friends */}
-                    {playGameFriends.map(f => (
-                      <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {f.avatarUrl
-                            ? <img src={f.avatarUrl} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.displayName || f.username}</div>
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>@{f.username}</div>
-                        </div>
-                      </div>
-                    ))}
-                    {playGameFriends.length === 0 && (
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>Playing solo — invite friends from step 2 to join.</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Sticky footer — Back / Next pair */}
+            {/* Sticky footer — Back / Next pair. Step 1 advances to 2;
+                step 2 fires the create flow immediately (no step 3). */}
             <div style={{ display: "flex", gap: 10, marginTop: "auto" }}>
               <button
                 onClick={() => {
                   if (playGameStep === 1) setPlayGameOpen(false);
-                  else setPlayGameStep(s => (s === 3 ? 2 : 1) as 1 | 2 | 3);
+                  else setPlayGameStep(1);
                 }}
                 disabled={playGameCreating}
                 style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}
@@ -1323,11 +1289,7 @@ export default function TeeUpPage() {
                     setPlayGameStep(2);
                     return;
                   }
-                  if (playGameStep === 2) {
-                    setPlayGameStep(3);
-                    return;
-                  }
-                  // Step 3 — create the round and route into the game wizard.
+                  // Step 2 — create the round and route into the game wizard.
                   // Schema field names match the existing Quick Round insert
                   // in this same file (GolfTrip.createdBy, GolfTripCourse
                   // with sortOrder, GolfTripMember role lowercase "owner"/
@@ -1428,7 +1390,7 @@ export default function TeeUpPage() {
                   cursor: playGameCreating ? "default" : "pointer",
                 }}
               >
-                {playGameCreating ? "Creating…" : playGameStep === 3 ? "Start Game →" : "Next"}
+                {playGameCreating ? "Creating…" : playGameStep === 2 ? "Start Game →" : "Next"}
               </button>
             </div>
           </div>
@@ -1437,6 +1399,113 @@ export default function TeeUpPage() {
 
       <BottomNav />
     </main>
+  );
+}
+
+// GameCard — Tee Up's Games-tab card. Hero treatment for active
+// games (green gradient + drop shadow + big play chevron), muted
+// treatment for archived games. Mirrors the round-mode game card
+// on the trip-detail page so a game reads consistently wherever
+// it appears in the app.
+function GameCard({
+  game,
+  onClick,
+  archived,
+}: {
+  game: {
+    id: string;
+    courseName: string;
+    courseLogoUrl: string | null;
+    format: string;
+    formatConfig: { winner?: string | null; winners?: Record<string, string> } | null;
+    players: { userId: string; displayName: string; avatarUrl: string | null }[] | null;
+    tripDate: string | null;
+  };
+  onClick: () => void;
+  archived?: boolean;
+}) {
+  // Format → friendly label. Keep in sync with the GAME_FORMATS array
+  // in /trips/[id]/page.tsx — if a new format is added there, drop it
+  // in here too.
+  const FORMAT_LABELS: Record<string, string> = {
+    nassau: "Nassau",
+    skins: "Skins",
+    best_ball: "Best Ball",
+    ctp: "Closest to Pin",
+    long_drive: "Long Drive",
+    match_play: "Match Play",
+    stroke_play: "Stroke Play",
+    scramble: "Scramble",
+  };
+  const formatLabel = FORMAT_LABELS[game.format] ?? game.format;
+  const cfg = game.formatConfig as { frontAmount?: number; backAmount?: number; totalAmount?: number; skinsAmount?: number; wager?: number; holes?: number[]; stake?: number } | null;
+  const sub =
+    game.format === "nassau" && cfg ? `$${cfg.frontAmount}/$${cfg.backAmount}/$${cfg.totalAmount}`
+    : game.format === "skins" && cfg ? `$${cfg.skinsAmount}/skin`
+    : game.format === "best_ball" && cfg && Number(cfg.wager) > 0 ? `$${cfg.wager}/team`
+    : cfg && Array.isArray(cfg.holes) && cfg.holes.length > 0
+      ? `${cfg.holes.length} hole${cfg.holes.length === 1 ? "" : "s"}${Number(cfg.stake) > 0 ? ` · $${cfg.stake}/hole` : ""}`
+      : "";
+  const players = game.players ?? [];
+  const dateLabel = game.tripDate ? new Date(game.tripDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        textAlign: "left",
+        cursor: "pointer",
+        background: archived
+          ? "rgba(255,255,255,0.03)"
+          : "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)",
+        border: `1px solid ${archived ? "rgba(255,255,255,0.07)" : "rgba(77,168,98,0.35)"}`,
+        borderRadius: 16,
+        padding: "14px 16px",
+        boxShadow: archived ? "none" : "0 6px 20px rgba(0,0,0,0.22)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 11, background: game.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {game.courseLogoUrl
+            ? <img src={game.courseLogoUrl} alt={game.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: archived ? "rgba(255,255,255,0.35)" : "rgba(77,168,98,0.85)", marginBottom: 3 }}>
+            {archived ? "Played" : "Game"}{dateLabel ? ` · ${dateLabel}` : ""}
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{formatLabel}</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {game.courseName}{sub && ` · `}<span style={{ color: archived ? "rgba(255,255,255,0.5)" : "#4da862", fontWeight: 600 }}>{sub}</span>
+          </div>
+        </div>
+        {!archived && (
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 12px rgba(45,122,66,0.4)" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        )}
+      </div>
+      {players.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${archived ? "rgba(255,255,255,0.06)" : "rgba(77,168,98,0.18)"}` }}>
+          <div style={{ display: "flex" }}>
+            {players.slice(0, 5).map((p, i) => (
+              <div key={p.userId} style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "2px solid #0d2318", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -7 : 0, zIndex: players.length - i, flexShrink: 0 }}>
+                {p.avatarUrl
+                  ? <img src={p.avatarUrl} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
+              </div>
+            ))}
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {players.slice(0, 2).map(p => p.displayName || "@?").join(" · ")}
+            {players.length > 2 && ` +${players.length - 2}`}
+          </div>
+        </div>
+      )}
+    </button>
   );
 }
 
