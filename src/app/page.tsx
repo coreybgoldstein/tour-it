@@ -1968,12 +1968,16 @@ export default function Home() {
             display: "flex",
             flexDirection: "column",
             // Lift above the on-screen keyboard. When the keyboard is
-            // closed, marginBottom is 0 and the sheet hugs the bottom.
-            // When open, marginBottom pushes the sheet up by exactly
-            // the keyboard height so the input sits just above it.
+            // closed, marginBottom is 0 and the sheet sits at 50vh —
+            // ~half the screen — showing the latest comments with
+            // internal scroll. When the user taps the input, the
+            // keyboard rises and marginBottom pushes the sheet up by
+            // exactly the keyboard height so the input stays visible
+            // just above it.
             marginBottom: commentKeyboardHeight,
-            maxHeight: `calc(100% - ${commentKeyboardHeight}px)`,
+            height: commentKeyboardHeight > 0 ? `calc(100% - ${commentKeyboardHeight}px)` : "50vh",
             minHeight: 0,
+            maxHeight: `calc(100% - ${commentKeyboardHeight}px)`,
           }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "12px auto 8px" }} />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
@@ -2003,7 +2007,11 @@ export default function Home() {
               )}
               {user && (
                 <div style={{ display: "flex", gap: 8 }}>
-                  <input ref={commentInputRef} value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..." autoFocus style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
+                  {/* No autoFocus — sheet rises with comments visible
+                      first. Keyboard only appears when the user taps
+                      the input themselves, per the consistent comment-
+                      sheet UX across the app. */}
+                  <input ref={commentInputRef} value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..." style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} onKeyDown={e => { if (e.key === "Enter" && commentText.trim()) submitComment(); }} />
                   <button onClick={submitComment} disabled={!commentText.trim() || submittingComment} style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: !commentText.trim() ? 0.4 : 1 }}>
                     {submittingComment ? "..." : "Post"}
                   </button>

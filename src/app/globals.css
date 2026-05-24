@@ -170,6 +170,15 @@ input, textarea, select {
   min-height: 80vh;
 }
 
+/* Comments variant — half-sheet so the comment thread doesn't dominate
+   the screen on tap. Sized between auto and default so users see ~5-7
+   comments at once with internal scroll for longer threads. Keyboard
+   should NOT auto-open — the input only focuses when tapped. */
+.tourit-sheet--comments {
+  min-height: 50vh;
+  max-height: 50vh;
+}
+
 .tourit-sheet-grip {
   width: 40px;
   height: 4px;

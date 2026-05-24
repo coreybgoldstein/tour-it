@@ -134,7 +134,7 @@ export default function LeaderboardsPage() {
   const showCompetitionBanner = isMayActive() && period === "monthly";
 
   return (
-    <main style={{ minHeight: "100svh", background: "#07100a", paddingBottom: 90, color: "#fff" }}>
+    <main style={{ minHeight: "100svh", background: "#07100a", paddingBottom: "calc(120px + env(safe-area-inset-bottom))", color: "#fff" }}>
       {/* Header */}
       <div style={{ padding: "16px 20px 0", display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>

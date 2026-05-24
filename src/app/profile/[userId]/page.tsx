@@ -1792,11 +1792,13 @@ export default function ProfilePage() {
 
       <NotificationsPanel open={notificationsOpen} onClose={closeNotifications} />
 
-      {/* Comment sheet */}
+      {/* Comment sheet — comments variant (50vh) so the thread doesn't
+          dominate the screen on tap. Keyboard appears only when the
+          user taps the input, not on sheet open. */}
       {commentUploadId && (
         <>
           <div className="tourit-sheet-backdrop" onClick={() => { setCommentUploadId(null); setCommentText(""); }} />
-          <div className="tourit-sheet" onClick={e => e.stopPropagation()}>
+          <div className="tourit-sheet tourit-sheet--comments" onClick={e => e.stopPropagation()}>
             <div className="tourit-sheet-grip" />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
             <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
