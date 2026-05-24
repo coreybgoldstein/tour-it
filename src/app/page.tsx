@@ -827,44 +827,11 @@ export default function Home() {
   // the INNER comment sheet above it (instead of constraining the outer
   // backdrop, which would render the sheet "in the middle" of the
   // viewport with the video peeking out below it).
-  const [commentKeyboardHeight, setCommentKeyboardHeight] = useState(0);
-  useEffect(() => {
-    if (!commentUploadId) { setCommentKeyboardHeight(0); return; }
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const sync = () => {
-      const kh = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
-      setCommentKeyboardHeight(kh > 50 ? kh : 0);
-    };
-    // Anticipate the keyboard the instant the input is focused. iOS's
-    // keyboard rise takes ~280ms, and visualViewport.resize fires DURING
-    // that animation in discrete steps. If we wait for those events, the
-    // sheet lifts in jumps that lag the keyboard. Setting the height to
-    // a sensible iPhone estimate (290px) on focusin means the sheet
-    // starts moving up at the same instant the keyboard does — the CSS
-    // transition then carries it smoothly. visualViewport.resize still
-    // refines the value to the device-exact keyboard height as it
-    // settles, so the final position is always accurate.
-    const onFocusIn = (e: FocusEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
-        setCommentKeyboardHeight(prev => (prev > 0 ? prev : 290));
-      }
-    };
-    const onFocusOut = () => setCommentKeyboardHeight(0);
-    sync();
-    vv.addEventListener("resize", sync);
-    vv.addEventListener("scroll", sync);
-    document.addEventListener("focusin", onFocusIn);
-    document.addEventListener("focusout", onFocusOut);
-    return () => {
-      vv.removeEventListener("resize", sync);
-      vv.removeEventListener("scroll", sync);
-      document.removeEventListener("focusin", onFocusIn);
-      document.removeEventListener("focusout", onFocusOut);
-      setCommentKeyboardHeight(0);
-    };
-  }, [commentUploadId]);
+  // Keyboard tracking for the comment sheet is now driven by the
+  // global --keyboard-height CSS variable set by <KeyboardSync> at
+  // the app root. The sheet uses .tourit-sheet which already reads
+  // that variable and transitions with iOS's keyboard curve. No
+  // local state required.
 
   // Comment input ref. We intentionally do NOT auto-focus on sheet
   // open — the keyboard should only appear when the user explicitly
@@ -1959,52 +1926,18 @@ export default function Home() {
           mounted the sheet can't immediately close it via an iOS
           WKWebView re-fire. */}
       {commentUploadId && (
-        <div
-          id="home-comment-sheet"
-          onClick={() => {
-            if (commentJustOpenedRef.current) return;
-            setCommentUploadId(null);
-            setCommentText("");
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1000,
-            background: "rgba(0,0,0,0.55)",
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            paddingTop: "calc(env(safe-area-inset-top) + 24px)",
-          }}
-        >
-          <div onClick={e => e.stopPropagation()} style={{
-            width: "100%",
-            maxWidth: 480,
-            background: "#0d2318",
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            display: "flex",
-            flexDirection: "column",
-            // Lift above the on-screen keyboard. When closed, the
-            // sheet sits at 50vh — showing comments with internal
-            // scroll. When the user taps the input, the keyboard
-            // rises and marginBottom pushes the sheet up by exactly
-            // the keyboard height so the input stays visible.
-            //
-            // The transition is critical for the "smooth lift" feel:
-            // without it, every visualViewport.resize event (which
-            // fires continuously during iOS's ~280ms keyboard rise)
-            // would snap the sheet to a new position. With a 200ms
-            // ease-out transition that matches the keyboard's own
-            // animation curve, the sheet visibly tracks the keyboard
-            // top instead of strobing up in discrete jumps.
-            marginBottom: commentKeyboardHeight,
-            height: commentKeyboardHeight > 0 ? `calc(100% - ${commentKeyboardHeight}px)` : "50vh",
-            minHeight: 0,
-            maxHeight: `calc(100% - ${commentKeyboardHeight}px)`,
-            transition: "margin-bottom 0.2s ease-out, height 0.2s ease-out, max-height 0.2s ease-out",
-          }}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "12px auto 8px" }} />
+        <>
+          <div
+            className="tourit-sheet-backdrop"
+            id="home-comment-sheet"
+            onClick={() => {
+              if (commentJustOpenedRef.current) return;
+              setCommentUploadId(null);
+              setCommentText("");
+            }}
+          />
+          <div onClick={e => e.stopPropagation()} className="tourit-sheet tourit-sheet--comments">
+            <div className="tourit-sheet-grip" />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
             <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
               {loadingComments ? (
@@ -2044,7 +1977,7 @@ export default function Home() {
               )}
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Welcome moment — shown after signup/onboarding */}
