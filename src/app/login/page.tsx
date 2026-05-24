@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,6 +10,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
+  // Suppress the Google sign-in button when running inside Capacitor's
+  // iOS/Android WebView. The web OAuth flow opens Google in Safari,
+  // signs the user in there, and never returns to the app — so the
+  // button presents a broken path on native. Tracked for proper fix
+  // with @capacitor/browser + Universal Links; until then, native
+  // users see email/password only.
+  const [isNativeApp, setIsNativeApp] = useState(false);
+  useEffect(() => {
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+    if (cap?.isNativePlatform?.()) setIsNativeApp(true);
+  }, []);
 
   const handleGoogle = async () => {
     setError("");
@@ -196,20 +207,23 @@ export default function LoginPage() {
 
         {error && <div className="error-box">{error}</div>}
 
-        {/* Google sign-in — primary alternative path. Above the email
-            fields per the "tap-to-sign-in is the headline" pattern;
-            email/password stays available below for users who prefer it. */}
-        <button className="btn-google" onClick={handleGoogle} disabled={loading} type="button">
-          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-            <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
-            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
-          </svg>
-          Continue with Google
-        </button>
+        {/* Google sign-in — hidden on native iOS/Android until the
+            Capacitor-aware OAuth flow lands (see isNativeApp comment). */}
+        {!isNativeApp && (
+          <>
+            <button className="btn-google" onClick={handleGoogle} disabled={loading} type="button">
+              <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                <path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/>
+                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/>
+              </svg>
+              Continue with Google
+            </button>
 
-        <div className="or-divider">or</div>
+            <div className="or-divider">or</div>
+          </>
+        )}
 
         <div className="field">
           <label className="field-label">Email</label>

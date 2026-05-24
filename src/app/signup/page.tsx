@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -23,6 +23,14 @@ export default function SignUpPage() {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
   const [success, setSuccess]   = useState(false);
+  // Suppress Google sign-up inside the iOS/Android WebView until the
+  // Capacitor-aware OAuth flow ships — web flow bounces out to Safari
+  // and never returns to the app. Native users see email/password only.
+  const [isNativeApp, setIsNativeApp] = useState(false);
+  useEffect(() => {
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+    if (cap?.isNativePlatform?.()) setIsNativeApp(true);
+  }, []);
 
   const handleGoogle = async () => {
     setError("");
@@ -251,11 +259,13 @@ export default function SignUpPage() {
 
         {error && <div className="error-box">{error}</div>}
 
-        {!success && (
+        {!success && !isNativeApp && (
           <>
-            {/* Google sign-up — fastest path for first-time users. Bypasses
-                the username/first/last fields below; we collect those in the
-                onboarding flow after the OAuth callback lands. */}
+            {/* Google sign-up — fastest path for first-time users on web.
+                Hidden on native iOS/Android until the Capacitor-aware
+                OAuth flow ships (web flow bounces out to Safari and
+                never returns to the app). Collects username/firstName/
+                lastName in onboarding after the OAuth callback lands. */}
             <button className="btn-google" onClick={handleGoogle} disabled={loading} type="button">
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
                 <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
