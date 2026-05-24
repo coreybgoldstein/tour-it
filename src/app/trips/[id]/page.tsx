@@ -68,8 +68,6 @@ type TripMessageWithUser = {
   user: { id: string; displayName: string; avatarUrl: string | null };
 };
 
-type TeeBox = { id: string; color: string; customLabel: string | null; slope: number | null; rating: number | null };
-
 type GamePlayer = { userId: string; displayName: string; avatarUrl: string | null; handicapIndex: number; teamId: string };
 
 type TripGameRecord = {
@@ -340,8 +338,6 @@ export default function TripPage() {
   // (alignItems:stretch + flex:1) and collapses the sheet back to
   // content height. The global KeyboardSync + flex stretch already
   // handle keyboard + height correctly.
-  const [gameStep, setGameStep] = useState(1);
-  const [generatingGame, setGeneratingGame] = useState(false);
   const [viewGameOpen, setViewGameOpen] = useState(false);
   const [viewGame, setViewGame] = useState<TripGameRecord | null>(null);
   // Scorecard verify sheet — opens over the game view so users can confirm
@@ -364,41 +360,11 @@ export default function TripPage() {
     setScorecardHoles((data as any) ?? []);
     setScorecardLoading(false);
   }
-  const [gameCourseId, setGameCourseId] = useState("");
-  const [gameCourseName, setGameCourseName] = useState("");
-  const [gameTeeBoxes, setGameTeeBoxes] = useState<TeeBox[]>([]);
-  const [gameTeeId, setGameTeeId] = useState("");
-  const [gameTeeSlope, setGameTeeSlope] = useState(113);
-  const [gameTeeRating, setGameTeeRating] = useState(72.0);
-  const [gameCoursePar, setGameCoursePar] = useState(72);
-  const [gamePlayers, setGamePlayers] = useState<GamePlayer[]>([]);
-  const [gameFormat, setGameFormat] = useState("");
-  const [gameNassauFront, setGameNassauFront] = useState("5");
-  const [gameNassauBack, setGameNassauBack] = useState("5");
-  const [gameNassauTotal, setGameNassauTotal] = useState("5");
-  const [gameSkinsAmt, setGameSkinsAmt] = useState("5");
-  const [gameSkinsCarryover, setGameSkinsCarryover] = useState(true);
-  const [gameHoleHandicaps, setGameHoleHandicaps] = useState<number[]>(Array(18).fill(0));
-  const [gameHoleHandicapsKnown, setGameHoleHandicapsKnown] = useState(false);
-  // For closest-to-pin / longest-drive formats: which holes the game is
-  // played on (subset of 1–18). Stored in TripGame.formatConfig.holes
-  // on submit.
-  const [gameSelectedHoles, setGameSelectedHoles] = useState<number[]>([]);
-  // Per-hole stake for CTP / Longest Drive. Winner of each hole takes
-  // this amount from every other player. Default $5 matches the
-  // Nassau / Skins defaults. Stored in formatConfig.stake.
-  const [gameHoleStake, setGameHoleStake] = useState("5");
-  // Per-team wager for Best Ball (and any future team-wager formats).
-  // Each team puts up this amount; winning team takes the pot.
-  // Stored in formatConfig.wager.
-  const [gameTeamWager, setGameTeamWager] = useState("20");
   // Winner-picker bottom sheet — captures the game + key (e.g. "hole-7"
   // for CTP/LD, "overall" for everything else) that we're declaring a
   // winner for. Null = sheet closed.
   const [winnerPicker, setWinnerPicker] = useState<{ gameId: string; key: string; label: string } | null>(null);
-  const [gameHandicapWarning, setGameHandicapWarning] = useState(false);
   const [tripImageExpanded, setTripImageExpanded] = useState(false);
-  const [gameError, setGameError] = useState("");
   const [coursesWithHandicaps, setCoursesWithHandicaps] = useState<Set<string>>(new Set());
   const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
 
@@ -916,227 +882,6 @@ export default function TripPage() {
     setGameOpen(true);
   };
 
-  const handleSelectGameCourse = async (courseId: string, courseName: string, secondaryCourseId?: string | null, secondaryName?: string | null) => {
-    setGameCourseId(courseId);
-    // Combined name for paired stops
-    setGameCourseName(secondaryCourseId && secondaryName ? `${courseName} + ${secondaryName}` : courseName);
-    setGameTeeBoxes([]);
-    setGameTeeId("");
-    const supabase = createClient();
-    // Fetch tee boxes for this course (primary only — pairing tees aren't a concept)
-    const { data: teeBoxes } = await supabase.from("TeeBox").select("id, color, customLabel, slope, rating").eq("courseId", courseId).order("slope", { ascending: false });
-    if (teeBoxes && teeBoxes.length > 0) {
-      setGameTeeBoxes(teeBoxes as TeeBox[]);
-      const firstTee = teeBoxes[0] as TeeBox;
-      setGameTeeId(firstTee.id);
-      setGameTeeSlope(firstTee.slope ?? 113);
-      setGameTeeRating(firstTee.rating ?? 72.0);
-    }
-
-    if (secondaryCourseId) {
-      // ── Paired 9+9 round ─────────────────────────────────────────────
-      const [primaryRes, secondaryRes] = await Promise.all([
-        supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", courseId).order("holeNumber"),
-        supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", secondaryCourseId).order("holeNumber"),
-      ]);
-      const primaryHoles = (primaryRes.data ?? []).slice(0, 9);
-      const secondaryHoles = (secondaryRes.data ?? []).slice(0, 9);
-
-      if (primaryHoles.length === 9 && secondaryHoles.length === 9) {
-        const stitchedPar = [...primaryHoles, ...secondaryHoles].reduce((s, h) => s + (h.par || 4), 0);
-        setGameCoursePar(stitchedPar);
-
-        // Stitch handicap ranks: front 9 = odd (1,3,5,7,9,11,13,15,17), back 9 = even.
-        // Front rank R becomes (R*2 - 1), back rank R becomes (R*2).
-        const stitchedRanks: number[] = [];
-        for (const h of primaryHoles) {
-          const r = h.handicapRank;
-          stitchedRanks.push(r && r >= 1 && r <= 9 ? r * 2 - 1 : 0);
-        }
-        for (const h of secondaryHoles) {
-          const r = h.handicapRank;
-          stitchedRanks.push(r && r >= 1 && r <= 9 ? r * 2 : 0);
-        }
-
-        const isComplete = stitchedRanks.every((r) => r >= 1 && r <= 18);
-        const sortedSet = [...stitchedRanks].sort((a, b) => a - b);
-        const isValid1to18 = isComplete && sortedSet.every((v, i) => v === i + 1);
-
-        setGameHoleHandicaps(stitchedRanks);
-        setGameHoleHandicapsKnown(isValid1to18);
-        setGameHandicapWarning(stitchedRanks.some((r) => r > 0) && !isValid1to18);
-      } else {
-        setGameCoursePar(72);
-        setGameHoleHandicaps(Array(18).fill(0));
-        setGameHoleHandicapsKnown(false);
-      }
-      return;
-    }
-
-    // ── Single 18-hole course (existing behavior) ─────────────────────
-    const { data: holes } = await supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", courseId).order("holeNumber");
-    if (holes && holes.length === 18) {
-      const par = holes.reduce((sum: number, h: any) => sum + (h.par || 4), 0);
-      setGameCoursePar(par);
-      const ranks = holes.map((h: any) => h.handicapRank || 0);
-      const hasAnyData = ranks.some((r: number) => r > 0);
-      const sortedRanks = [...ranks].sort((a: number, b: number) => a - b);
-      const isCompleteSet = ranks.length === 18 && sortedRanks.every((v: number, i: number) => v === i + 1);
-      const isSequentialSentinel = isCompleteSet && ranks.every((v: number, i: number) => v === i + 1);
-      const isValid = isCompleteSet && !isSequentialSentinel;
-
-      setGameHoleHandicaps(isSequentialSentinel ? Array(18).fill(0) : ranks);
-      setGameHoleHandicapsKnown(isValid);
-      setGameHandicapWarning((hasAnyData && !isCompleteSet) || isSequentialSentinel);
-    } else {
-      setGameCoursePar(72);
-      setGameHoleHandicaps(Array(18).fill(0));
-      setGameHoleHandicapsKnown(false);
-    }
-
-    // If the scorecard is missing yardage, kick off an on-demand API fetch
-    // in the background. When it returns, re-load the holes so step 5 (and
-    // anyone else looking at the scorecard) gets fresh data without the
-    // user having to do anything.
-    const { data: existingHoles } = await supabase.from("Hole").select("yardage, handicapRank").eq("courseId", courseId);
-    const yardageGap = (existingHoles ?? []).some(h => h.yardage == null);
-    if (yardageGap) {
-      fetch(`/api/courses/${courseId}/refresh-scorecard`, { method: "POST" })
-        .then(r => r.json())
-        .then(result => {
-          if (!result?.matched) return;
-          // Re-pull the now-filled hole data
-          supabase.from("Hole").select("holeNumber, par, handicapRank").eq("courseId", courseId).order("holeNumber")
-            .then(({ data: refreshed }) => {
-              if (!refreshed || refreshed.length !== 18) return;
-              const par = refreshed.reduce((s, h) => s + (h.par || 4), 0);
-              setGameCoursePar(par);
-              const ranks = refreshed.map(h => h.handicapRank || 0);
-              const sorted = [...ranks].sort((a, b) => a - b);
-              const valid = ranks.length === 18 && sorted.every((v, i) => v === i + 1) && !ranks.every((v, i) => v === i + 1);
-              setGameHoleHandicaps(ranks);
-              setGameHoleHandicapsKnown(valid);
-              setGameHandicapWarning(false);
-            });
-        })
-        .catch(() => {});
-    }
-  };
-
-  const generateGame = async () => {
-    if (generatingGame) return;
-
-    // Closest-to-pin / longest-drive run their own path — no handicap
-    // math, no Claude call, inserted directly via Supabase.
-    if (HOLE_PICKED_FORMATS.has(gameFormat)) {
-      if (gameSelectedHoles.length === 0) {
-        setGameError("Pick at least one hole to play this game on.");
-        return;
-      }
-      setGameError("");
-      setGeneratingGame(true);
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setGeneratingGame(false); return; }
-
-      const stakeNum = Math.max(0, parseFloat(gameHoleStake) || 0);
-      const formatName = gameFormat === "closest_to_pin" ? "Closest to the Pin" : "Longest Drive";
-      const holesText = gameSelectedHoles.length === 1
-        ? `Hole ${gameSelectedHoles[0]}`
-        : `Holes ${gameSelectedHoles.slice(0, -1).join(", ")} & ${gameSelectedHoles[gameSelectedHoles.length - 1]}`;
-      const stakeText = stakeNum > 0 ? ` $${stakeNum}/hole — winner takes ${stakeNum} from every other player on each hole.` : "";
-      const rules = gameFormat === "closest_to_pin"
-        ? `Closest to the pin on ${holesText.toLowerCase()} wins that hole.${stakeText} Track your own — anyone in the group can declare the winner per hole here in the app after each one.`
-        : `Longest drive in the fairway on ${holesText.toLowerCase()} wins that hole.${stakeText} Tee shots only — anyone in the group can declare the winner per hole here in the app after each one.`;
-      const tip = gameFormat === "closest_to_pin"
-        ? "Commit to your number — most CTPs are decided in the last 30 yards."
-        : "Take an extra club off the tee — out-of-bounds doesn't count for longest drive.";
-      const stakeLine = stakeNum > 0 ? `\nStakes: $${stakeNum}/hole` : "";
-      const shareText = `${gameCourseName} — ${formatName}\n${holesText}${stakeLine}\n${gamePlayers.map(p => p.displayName).join(", ")}\nDeclare winners in Tour It after the round.`;
-
-      const formatConfig = { holes: gameSelectedHoles, winners: {} as Record<string, string>, stake: stakeNum };
-      // NOTE: TripGame schema (prisma/schema.prisma) has no updatedAt
-      // column. Including one in the insert causes Postgres to reject
-      // the row silently. Stick to the columns that exist.
-      const tripGameRow = {
-        id: crypto.randomUUID(),
-        tripId: id as string,
-        courseId: gameCourseId,
-        courseName: gameCourseName,
-        format: gameFormat,
-        formatConfig,
-        players: gamePlayers,
-        holeHandicaps: [] as number[],
-        gameSheet: JSON.stringify({ rules, tip, shareText }),
-        shareText,
-        createdBy: user?.id ?? "",
-        createdAt: new Date().toISOString(),
-      };
-      const { error } = await supabase.from("TripGame").insert(tripGameRow);
-      if (error) {
-        setGameError(error.message);
-        setGeneratingGame(false);
-        return;
-      }
-      const logoUrl = tripCourses.find(tc => tc.courseId === gameCourseId)?.course.logoUrl ?? null;
-      const hydrated = { ...tripGameRow, courseLogoUrl: logoUrl } as TripGameRecord;
-      setGames(prev => [hydrated, ...prev]);
-      setGameOpen(false);
-      setGeneratingGame(false);
-      fetch("/api/points/award", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create_game", referenceId: tripGameRow.id }),
-      }).catch(() => {});
-      return;
-    }
-
-    if (gameHoleHandicaps.some(r => r <= 0)) {
-      setGameError("Please enter a handicap rank (1–18) for all 18 holes.");
-      return;
-    }
-    setGameError("");
-    setGeneratingGame(true);
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setGeneratingGame(false); return; }
-
-    const formatConfig: Record<string, unknown> =
-      gameFormat === "nassau" ? { frontAmount: gameNassauFront, backAmount: gameNassauBack, totalAmount: gameNassauTotal }
-      : gameFormat === "skins" ? { skinsAmount: gameSkinsAmt, carryover: gameSkinsCarryover }
-      : gameFormat === "best_ball" ? { wager: Math.max(0, parseFloat(gameTeamWager) || 0) }
-      : {};
-
-    try {
-      const res = await fetch(`/api/trips/${id}/game`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ courseId: gameCourseId, courseName: gameCourseName, coursePar: gameCoursePar, teeSlope: gameTeeSlope, teeRating: gameTeeRating, format: gameFormat, formatConfig, players: gamePlayers, holeHandicaps: gameHoleHandicaps }),
-      });
-      const json = await res.json();
-      if (json.game) {
-        // Hydrate courseLogoUrl from tripCourses since the API response
-        // doesn't include it. The list view picks it up on next page load
-        // via the logo lookup; this is just for the immediate view sheet.
-        const logoUrl = tripCourses.find(tc => tc.courseId === gameCourseId)?.course.logoUrl ?? null;
-        const hydrated = { ...json.game, courseLogoUrl: logoUrl };
-        setGames(prev => [hydrated, ...prev]);
-        setGameOpen(false);
-        setViewGame(hydrated);
-        setViewGameOpen(true);
-
-        // +15 pts for generating a game — once per gameId
-        fetch("/api/points/award", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "create_game", referenceId: json.game.id }),
-        }).catch(() => {});
-      } else {
-        setGameError(json.error || "Generation failed. Try again.");
-      }
-    } catch { setGameError("Network error. Try again."); }
-    setGeneratingGame(false);
-  };
 
   // Declare (or clear) the winner for a specific game + key. The key is
   // "overall" for non-hole-picked formats, or "hole-N" (1..18) for CTP /
