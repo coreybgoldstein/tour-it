@@ -1319,6 +1319,18 @@ export default function TripPage() {
     && _start === _end;
   const roundCourse = isRound ? tripCourses[0]?.course : null;
 
+  // Page "flavor" — drives every contextual label on this page so a
+  // GolfTrip that was created via Play-a-Game reads as a Game (not a
+  // Round), a single-day round reads as a Round, and a multi-day
+  // outing reads as a Trip. Same data, three different framings.
+  //   - Has at least one game attached → "game"
+  //   - Single day, single course, no games → "round"
+  //   - Anything else → "trip"
+  const flavor: "game" | "round" | "trip" = games.length > 0
+    ? "game"
+    : isRound ? "round" : "trip";
+  const flavorUpper = flavor === "game" ? "Game" : flavor === "round" ? "Round" : "Trip";
+
   async function cloneAsNewRound() {
     if (!isRound || !roundCourse || !user?.id) return;
     const supabase = createClient();
@@ -1496,7 +1508,7 @@ export default function TripPage() {
 
               <div style={{ flex: 1, minWidth: 0, paddingTop: 3 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 3 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{isRound ? "Upcoming Round" : "Golf Trip"}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)" }}>{flavor === "game" ? "Upcoming Game" : flavor === "round" ? "Upcoming Round" : "Golf Trip"}</div>
                   {isOwner && (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                       {isRound && (
@@ -1686,7 +1698,7 @@ export default function TripPage() {
               style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)", border: "none", borderRadius: 14, padding: "14px", marginBottom: 10, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", letterSpacing: "0.04em", boxShadow: "0 6px 20px rgba(45,122,66,0.45)" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              Share the Round
+              Share the {flavorUpper}
             </button>
           )}
 
@@ -1920,7 +1932,30 @@ export default function TripPage() {
                 const winners = (cfg?.winners ?? {}) as Record<string, string>;
                 const playerName = (uid?: string) => uid ? (g.players?.find((p: any) => p.userId === uid)?.displayName ?? "@?") : null;
                 return (
-                  <div key={g.id} onClick={() => { setViewGame(g); setViewGameOpen(true); }} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "13px 14px", cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: 0 }}>
+                  <div
+                    key={g.id}
+                    onClick={() => { setViewGame(g); setViewGameOpen(true); }}
+                    style={{
+                      /* Game card — gamier, hero treatment when the page
+                         flavor is "game" (this is a one-day Play-a-Game
+                         round). Gradient background + green accent border +
+                         drop-shadow gives the card a deliberate "this is
+                         the main event" feel. Multi-game trip cards keep
+                         the older compact look. */
+                      background: isRound
+                        ? "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)"
+                        : "rgba(255,255,255,0.03)",
+                      border: `1px solid ${isRound ? "rgba(77,168,98,0.35)" : "rgba(255,255,255,0.07)"}`,
+                      borderRadius: 16,
+                      padding: isRound ? "16px 16px 14px" : "13px 14px",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 0,
+                      boxShadow: isRound ? "0 6px 20px rgba(0,0,0,0.25)" : "none",
+                    }}
+                  >
                     {/* Top row — existing summary */}
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       {/* Round-mode: skip the course icon + name (same course everywhere on this page). */}
@@ -1935,11 +1970,16 @@ export default function TripPage() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         {isRound ? (
                           <>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 8 }}>
+                            {/* Eyebrow + big Playfair title for the gamey
+                                hero feel. Stakes get their own line with
+                                a green accent so they stand out. */}
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 4 }}>Game · {g.players?.length || 0} {(g.players?.length || 0) === 1 ? "player" : "players"}</div>
+                            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>
                               {fmt?.name || g.format}
-                              {sub && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>· {sub}</span>}
                             </div>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 3 }}>{g.players?.length || 0} players · tap for details</div>
+                            {sub && (
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862", marginTop: 4, letterSpacing: "0.02em" }}>{sub}</div>
+                            )}
                           </>
                         ) : (
                           <>
@@ -1952,8 +1992,37 @@ export default function TripPage() {
                           </>
                         )}
                       </div>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      {/* Hero card gets a green chevron pill to read more
+                          like a "play" CTA than a passive arrow. */}
+                      {isRound ? (
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 12px rgba(45,122,66,0.4)" }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </div>
+                      ) : (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      )}
                     </div>
+
+                    {/* Players row — round mode shows the players as a
+                        stacked-avatar pill so users see WHO's in the game,
+                        not just a count. Tappable in the parent card. */}
+                    {isRound && Array.isArray(g.players) && g.players.length > 0 && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(77,168,98,0.15)" }}>
+                        <div style={{ display: "flex" }}>
+                          {g.players.slice(0, 5).map((p: any, i: number) => (
+                            <div key={p.userId} style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "2px solid #0d2318", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -8 : 0, zIndex: (g.players?.length || 0) - i, flexShrink: 0 }}>
+                              {p.avatarUrl
+                                ? <img src={p.avatarUrl} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {g.players.slice(0, 2).map((p: any) => p.displayName || "@?").join(" · ")}
+                          {g.players.length > 2 && ` +${g.players.length - 2}`}
+                        </div>
+                      </div>
+                    )}
 
                     {/* CTP / Longest Drive — per-hole declare-winner pills */}
                     {isHolePicked && Array.isArray(cfg?.holes) && cfg.holes.length > 0 && (
@@ -2096,10 +2165,13 @@ export default function TripPage() {
           );
         })()}
 
-        {/* Trip Clips */}
+        {/* Clips section — label flips with page flavor so a game page
+            says "Game Clips", a round page says "Round Clips", a trip
+            page says "Trip Clips". Matches the framing decision in the
+            page header. */}
         <div style={{ padding: "24px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <div className="section-label" style={{ marginBottom: 0 }}>Trip Clips{clips.length > 0 && <span className="count">{clips.length}</span>}</div>
+            <div className="section-label" style={{ marginBottom: 0 }}>{flavorUpper} Clips{clips.length > 0 && <span className="count">{clips.length}</span>}</div>
             <button
               onClick={() => router.push(`/upload${primaryCourseId ? `?courseId=${primaryCourseId}&tripId=${id}` : `?tripId=${id}`}`)}
               style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
