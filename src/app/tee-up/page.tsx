@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { DirectionsButton } from "@/components/DirectionsButton";
+import CreateGameSheet from "@/components/CreateGameSheet";
 
 type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
 type FriendRow = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
@@ -143,6 +144,7 @@ export default function TeeUpPage() {
     trips: false,
   });
   const [userId, setUserId] = useState<string | null>(null);
+  const [userHandicap, setUserHandicap] = useState<number | null>(null);
   // Current user's avatar — used by the Play-a-Game wizard's Step 3
   // host row so "You" actually shows YOUR face, not a generic icon.
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -429,20 +431,14 @@ export default function TeeUpPage() {
   // Play a Game wizard state — separate from Quick Round because the
   // user flow skips date/time (the game starts now) and ends on the
   // trip page with the game-creation modal pre-opened.
-  const [playGameOpen, setPlayGameOpen] = useState(false);
-  // Two steps now (was three) so the user lands directly in the
-  // existing game-creation modal after step 2 — one continuous
-  // journey from Tee Up to game start.
-  const [playGameStep, setPlayGameStep] = useState<1 | 2>(1);
-  const [playGameCourse, setPlayGameCourse] = useState<CourseSearchRow | null>(null);
-  const [playGameFriends, setPlayGameFriends] = useState<FriendRow[]>([]);
-  const [playGameCreating, setPlayGameCreating] = useState(false);
+  // Unified Create Game sheet (2026-05-24 refactor) — single bottom
+  // sheet replaces the 2-step Play-a-Game wizard. Course, date,
+  // players, format, and stakes are all in one form; submit creates
+  // the round + game atomically and routes to /games/[id].
+  const [createGameOpen, setCreateGameOpen] = useState(false);
 
   function openPlayAGame() {
-    setPlayGameCourse(null);
-    setPlayGameFriends([]);
-    setPlayGameStep(1);
-    setPlayGameOpen(true);
+    setCreateGameOpen(true);
   }
 
   function handleNewClick() {
@@ -493,13 +489,14 @@ export default function TeeUpPage() {
       // placeholder. One query, fire-and-forget.
       supabase
         .from("User")
-        .select("avatarUrl, displayName, username")
+        .select("avatarUrl, displayName, username, handicapIndex")
         .eq("id", uid)
         .maybeSingle()
         .then(({ data: profile }) => {
           if (profile) {
             setUserAvatar(profile.avatarUrl ?? null);
             setUserDisplayName(profile.displayName || profile.username || null);
+            setUserHandicap(profile.handicapIndex ?? null);
           }
         });
 
@@ -1133,317 +1130,25 @@ export default function TeeUpPage() {
         </div>
       )}
 
-      {/* Play a Game wizard — three-step flow that creates a one-day
-          round (GolfTrip with startDate = today, endDate = today) plus
-          drops the user on the trip page with the game-creation modal
-          pre-opened. Uses the shared .tourit-sheet pattern so the
-          global KeyboardSync handles the keyboard lift uniformly with
-          every other sheet in the app. */}
-      {playGameOpen && (
-        // Custom-overlay sheet (not .tourit-sheet) — same pattern used
-        // by the trip-page Create Game sheet. Forces the panel to
-        // stretch full-height so the tee-up page (Active/Archive
-        // tabs, empty-state Play-a-Game button) can't bleed through
-        // beneath a short Step 1 sheet. The global .tourit-sheet
-        // class shrinks with the keyboard via min-height calc, which
-        // collapses to content height on short steps and leaves a
-        // visible gap to the keyboard.
-        <div
-          onClick={() => { if (!playGameCreating) setPlayGameOpen(false); }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 200,
-            background: "rgba(0,0,0,0.78)",
-            display: "flex",
-            alignItems: "stretch",
-            justifyContent: "center",
-            paddingTop: "calc(env(safe-area-inset-top) + 24px)",
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: "100%",
-              maxWidth: 520,
-              background: "#0d2318",
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderTop: "1px solid rgba(77,168,98,0.3)",
-              display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              minHeight: 0,
-              padding: "18px 20px calc(28px + env(safe-area-inset-bottom))",
-              overflowY: "auto",
-              boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
-            }}
-          >
-            <div className="tourit-sheet-grip" />
-
-            {/* Header — eyebrow + title + step indicator. Two steps
-                only: Course → Friends. After step 2 the user lands
-                directly in the existing game-creation modal on the
-                trip page (game type, players & handicaps, format
-                rules, confirm) — one continuous journey instead of
-                bouncing between two separate wizards. */}
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 4 }}>Play a Game · Step {playGameStep} of 2</div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
-                {playGameStep === 1 ? "Pick a course" : "Who's playing?"}
-              </div>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
-                {playGameStep === 1
-                  ? "Where are you playing? Search by name, city, or state."
-                  : "Add friends to the game. You can skip and play solo — next up: format and stakes."}
-              </div>
-
-              {/* Step dots — two dots since we only have two steps now. */}
-              <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
-                {[1, 2].map(n => (
-                  <div
-                    key={n}
-                    style={{
-                      flex: 1,
-                      height: 3,
-                      borderRadius: 99,
-                      background: n <= playGameStep ? "#4da862" : "rgba(255,255,255,0.08)",
-                      transition: "background 0.2s",
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* STEP 1 — course */}
-            {playGameStep === 1 && (
-              <div style={{ marginBottom: 18 }}>
-                {playGameCourse ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(77,168,98,0.10)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 12 }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 10, background: playGameCourse.logoUrl ? "#fff" : "rgba(77,168,98,0.18)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {playGameCourse.logoUrl ? <img src={playGameCourse.logoUrl} alt={playGameCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{playGameCourse.name}</div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{[playGameCourse.city, playGameCourse.state].filter(Boolean).join(", ")}</div>
-                    </div>
-                    <button onClick={() => setPlayGameCourse(null)} aria-label="Clear course" style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <input
-                      value={quickSearch}
-                      onChange={e => setQuickSearch(e.target.value)}
-                      placeholder="Search a course"
-                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
-                    />
-                    {quickResults.length > 0 && (
-                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, maxHeight: 320, overflowY: "auto" }}>
-                        {quickResults.map(c => (
-                          <button
-                            key={c.id}
-                            onClick={() => { setPlayGameCourse(c); setQuickSearch(""); setQuickResults([]); }}
-                            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, textAlign: "left" }}
-                          >
-                            <div style={{ width: 34, height: 34, borderRadius: 8, background: c.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              {c.logoUrl ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
-                            </div>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
-                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{[c.city, c.state].filter(Boolean).join(", ")}</div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* STEP 2 — friends */}
-            {playGameStep === 2 && (
-              <div style={{ marginBottom: 18 }}>
-                <input
-                  value={friendSearch}
-                  onChange={e => setFriendSearch(e.target.value)}
-                  placeholder="Add friends by username"
-                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none", marginBottom: 10 }}
-                />
-                {friendResults.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 200, overflowY: "auto", marginBottom: 10 }}>
-                    {friendResults.map(f => {
-                      const already = playGameFriends.some(x => x.id === f.id);
-                      return (
-                        <button
-                          key={f.id}
-                          onClick={() => { if (!already) setPlayGameFriends(prev => [...prev, f]); setFriendSearch(""); setFriendResults([]); }}
-                          disabled={already}
-                          style={{ width: "100%", background: already ? "rgba(77,168,98,0.10)" : "rgba(255,255,255,0.04)", border: `1px solid ${already ? "rgba(77,168,98,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, padding: "10px 12px", cursor: already ? "default" : "pointer", display: "flex", alignItems: "center", gap: 10, textAlign: "left", opacity: already ? 0.7 : 1 }}
-                        >
-                          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.18)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {f.avatarUrl ? <img src={f.avatarUrl} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
-                          </div>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{f.displayName || f.username}</div>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>@{f.username}</div>
-                          </div>
-                          {already && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Added</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                {playGameFriends.length > 0 && (
-                  <>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Playing with</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {playGameFriends.map(f => (
-                        <button
-                          key={f.id}
-                          onClick={() => setPlayGameFriends(prev => prev.filter(x => x.id !== f.id))}
-                          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.14)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 10px", cursor: "pointer" }}
-                        >
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>@{f.username}</span>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Sticky footer — Back / Next pair. Step 1 advances to 2;
-                step 2 fires the create flow immediately (no step 3). */}
-            <div style={{ display: "flex", gap: 10, marginTop: "auto" }}>
-              <button
-                onClick={() => {
-                  if (playGameStep === 1) setPlayGameOpen(false);
-                  else setPlayGameStep(1);
-                }}
-                disabled={playGameCreating}
-                style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}
-              >
-                {playGameStep === 1 ? "Cancel" : "Back"}
-              </button>
-              <button
-                onClick={async () => {
-                  if (playGameStep === 1) {
-                    if (!playGameCourse) return;
-                    setPlayGameStep(2);
-                    return;
-                  }
-                  // Step 2 — create the round and route into the game wizard.
-                  // Schema field names match the existing Quick Round insert
-                  // in this same file (GolfTrip.createdBy, GolfTripCourse
-                  // with sortOrder, GolfTripMember role lowercase "owner"/
-                  // "member" — see commit history if these drift).
-                  if (!playGameCourse || !userId || playGameCreating) return;
-                  setPlayGameCreating(true);
-                  try {
-                    const supabase = createClient();
-                    const tripId = crypto.randomUUID();
-                    const today = new Date().toISOString().slice(0, 10);
-                    const nowIso = new Date().toISOString();
-                    const niceDate = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                    const { error: tripErr } = await supabase.from("GolfTrip").insert({
-                      id: tripId,
-                      name: `${playGameCourse.name} — ${niceDate}`,
-                      createdBy: userId,
-                      startDate: today,
-                      endDate: today,
-                      createdAt: nowIso,
-                      updatedAt: nowIso,
-                    });
-                    if (tripErr) {
-                      console.error("Play a Game: failed to create trip", tripErr);
-                      alert(`Couldn't create the round: ${tripErr.message}`);
-                      setPlayGameCreating(false);
-                      return;
-                    }
-
-                    // Attach the course as the round's single course-stop.
-                    // GolfTripCourse has no updatedAt column — sending one
-                    // makes Postgres reject the insert.
-                    const { error: tcErr } = await supabase.from("GolfTripCourse").insert({
-                      id: crypto.randomUUID(),
-                      tripId,
-                      courseId: playGameCourse.id,
-                      playDate: today,
-                      sortOrder: 0,
-                      createdAt: nowIso,
-                    });
-                    if (tcErr) {
-                      console.error("Play a Game: failed to attach course", tcErr);
-                      alert(`Couldn't attach the course: ${tcErr.message}`);
-                      setPlayGameCreating(false);
-                      return;
-                    }
-
-                    // Host membership — role is lowercase "owner" per the
-                    // pattern used by Quick Round.
-                    const { error: hostErr } = await supabase.from("GolfTripMember").insert({
-                      id: crypto.randomUUID(),
-                      tripId,
-                      userId,
-                      role: "owner",
-                      createdAt: nowIso,
-                    });
-                    if (hostErr) {
-                      console.error("Play a Game: failed to add host", hostErr);
-                      // Trip + course already inserted — don't block the
-                      // route, the user can add themselves on the trip page.
-                    }
-
-                    // Invited friends — role "member"
-                    if (playGameFriends.length > 0) {
-                      const { error: memErr } = await supabase.from("GolfTripMember").insert(playGameFriends.map(f => ({
-                        id: crypto.randomUUID(),
-                        tripId,
-                        userId: f.id,
-                        role: "member",
-                        createdAt: nowIso,
-                      })));
-                      if (memErr) console.error("Play a Game: failed to invite friends", memErr);
-                    }
-
-                    setPlayGameOpen(false);
-                    setPlayGameCreating(false);
-                    // Drop the user on the trip page with a flag that
-                    // tells it to open the game-creation modal
-                    // immediately — that's where "normal steps
-                    // thereafter" (game type + rules) live.
-                    router.push(`/trips/${tripId}?startGame=1`);
-                  } catch (err) {
-                    console.error("Play a Game create failed:", err);
-                    alert(`Couldn't start the game: ${err instanceof Error ? err.message : "unknown error"}`);
-                    setPlayGameCreating(false);
-                  }
-                }}
-                disabled={playGameCreating || (playGameStep === 1 && !playGameCourse)}
-                style={{
-                  flex: 2,
-                  background: (playGameStep === 1 && !playGameCourse) || playGameCreating ? "rgba(77,168,98,0.3)" : "#2d7a42",
-                  border: "none",
-                  borderRadius: 12,
-                  padding: "13px",
-                  fontFamily: "'Outfit', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: "#fff",
-                  cursor: playGameCreating ? "default" : "pointer",
-                }}
-              >
-                {playGameCreating ? "Creating…" : playGameStep === 2 ? "Start Game →" : "Next"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Unified Create Game sheet (2026-05-24 refactor) — replaces
+          the old 2-step Play-a-Game wizard. Single sheet with course,
+          date, players + handicaps, format, and stakes all inline;
+          submit creates the round + game atomically and routes to
+          /games/[id]. Standalone mode (no presetTrip) — the sheet
+          creates the GolfTrip + GolfTripCourse + GolfTripMember
+          itself, then the game. */}
+      {userId && (
+        <CreateGameSheet
+          open={createGameOpen}
+          onClose={() => setCreateGameOpen(false)}
+          currentUserId={userId}
+          currentUserDisplayName={userDisplayName || "You"}
+          currentUserAvatarUrl={userAvatar}
+          currentUserHandicapIndex={userHandicap}
+          onCreated={(gameId) => router.push(`/games/${gameId}`)}
+        />
       )}
+
 
       <BottomNav />
     </main>
