@@ -9,6 +9,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 import { DirectionsButton } from "@/components/DirectionsButton";
+import CreateGameSheet from "@/components/CreateGameSheet";
 
 type Trip = {
   id: string;
@@ -43,7 +44,10 @@ type Member = {
   id: string;
   userId: string;
   role: string;
-  user: { username: string; displayName: string; avatarUrl: string | null };
+  // handicapIndex is hydrated into Member.user so the unified
+  // CreateGameSheet can pre-fill each player's HI without a second
+  // fetch when the sheet opens.
+  user: { username: string; displayName: string; avatarUrl: string | null; handicapIndex?: number | null };
 };
 
 type Clip = {
@@ -439,7 +443,7 @@ export default function TripPage() {
       const { data: memberData } = await supabase.from("GolfTripMember").select("id, userId, role").eq("tripId", id);
       if (memberData && memberData.length > 0) {
         const userIds = memberData.map((m: any) => m.userId);
-        const { data: usersData } = await supabase.from("User").select("id, username, displayName, avatarUrl").in("id", userIds);
+        const { data: usersData } = await supabase.from("User").select("id, username, displayName, avatarUrl, handicapIndex").in("id", userIds);
         setMembers(memberData.map((m: any) => ({
           ...m,
           user: usersData?.find((u: any) => u.id === m.userId) || { username: "golfer", displayName: "Golfer", avatarUrl: null },
@@ -903,57 +907,12 @@ export default function TripPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startGameRequested, loading, members.length, tripCourses.length]);
 
+  // Thin wrapper around setGameOpen — kept as a function so the two
+  // callers (?startGame=1 deep-link effect + Create Game button) can
+  // stay async-friendly. The unified <CreateGameSheet> handles all
+  // wizard state setup internally via the presetTrip prop, so no
+  // pre-populate work belongs here anymore (2026-05-24 refactor).
   const openGameCreator = async () => {
-    setGameStep(1);
-    setGameCourseId("");
-    setGameCourseName("");
-    setGameTeeBoxes([]);
-    setGameTeeId("");
-    setGameTeeSlope(113);
-    setGameTeeRating(72.0);
-    setGameCoursePar(72);
-    setGameFormat("");
-    setGameNassauFront("5"); setGameNassauBack("5"); setGameNassauTotal("5");
-    setGameSkinsAmt("5"); setGameSkinsCarryover(true);
-    setGameHoleHandicaps(Array(18).fill(0));
-    setGameHoleHandicapsKnown(false);
-    setGameSelectedHoles([]);
-    setGameHoleStake("5");
-    setGameTeamWager("20");
-    setGameError("");
-    // Pre-populate players from members with their handicap indexes
-    const supabase = createClient();
-    const memberUserIds = members.map(m => m.userId);
-    const { data: usersWithHI } = await supabase.from("User").select("id, displayName, avatarUrl, handicapIndex").in("id", memberUserIds);
-    // Two-player games are 1v1 by definition (Nassau, Match Play, Best
-    // Ball with one per side) — auto-split them onto separate teams so
-    // the user doesn't have to tap through Team A / Team B selectors.
-    // 3+ players keep the default "everyone on Team A" so the user can
-    // group them intentionally in Step 4.
-    const twoPlayerAutoSplit = (usersWithHI?.length ?? 0) === 2;
-    const initialPlayers: GamePlayer[] = (usersWithHI || []).map((u: any, idx: number) => ({
-      userId: u.id,
-      displayName: u.displayName,
-      avatarUrl: u.avatarUrl,
-      handicapIndex: u.handicapIndex ?? 0,
-      teamId: twoPlayerAutoSplit ? (idx === 0 ? "A" : "B") : "A",
-    }));
-    setGamePlayers(initialPlayers);
-
-    // Auto-skip step 1 (Select Course) when the trip has exactly one
-    // course — the round/trip already established the course, no reason
-    // to ask again. Pre-fills course state and jumps to Step 2 Players.
-    if (tripCourses.length === 1) {
-      const tc = tripCourses[0];
-      await handleSelectGameCourse(
-        tc.courseId,
-        tc.course.name,
-        tc.secondaryCourseId,
-        tc.secondaryCourse?.name
-      );
-      setGameStep(2);
-    }
-
     setGameOpen(true);
   };
 
@@ -3035,449 +2994,41 @@ export default function TripPage() {
         );
       })()}
 
-      {/* Game creator sheet — bottom-anchored bottom sheet. Top boundary
-          uses paddingTop on the outer flex container (safe-area-inset-top
-          + extra buffer) so the sheet's top edge can never grow into
-          the Dynamic Island / camera notch. Bottom margin clears the
-          fixed BottomNav so the tab bar stays visible and tappable. */}
-      {gameOpen && (
-        <div
-          id="trip-game-creator"
-          onClick={() => { if (!generatingGame) setGameOpen(false); }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 200,
-            // Deeper dim so the trip-page Games header / Create Game
-            // button can't show through behind the sheet — was 0.55
-            // and looked layered/sloppy.
-            background: "rgba(0,0,0,0.78)",
-            display: "flex",
-            alignItems: "stretch",
-            justifyContent: "center",
-            // Reserves the Dynamic Island / status-bar zone at the top.
-            paddingTop: "calc(env(safe-area-inset-top) + 24px)",
-          }}
-        >
-          <div onClick={e => e.stopPropagation()} style={{
-            width: "100%",
-            maxWidth: 520,
-            background: "#0d1f14",
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            border: "1px solid rgba(255,255,255,0.08)",
-            display: "flex",
-            flexDirection: "column",
-            // Stretch to fill the full vertical container so there's no
-            // gap between the sheet bottom and the screen edge — that
-            // gap was where the trip page bled through. The body inside
-            // is overflow-y: auto so long content still scrolls.
-            flex: 1,
-            minHeight: 0,
-          }}>
-            {/* Drag handle */}
-            <div aria-hidden style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "10px auto 6px", flexShrink: 0 }} />
-            {/* Header */}
-            <div style={{ padding: "14px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-              {gameStep > 1 && !generatingGame && (
-                <button onClick={() => setGameStep(s => s - 1)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                </button>
-              )}
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Create Game</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>
-                  {gameStep === 1 && "Step 1 of 5 — Select Course"}
-                  {gameStep === 2 && "Step 2 of 5 — Players & Handicaps"}
-                  {gameStep === 3 && "Step 3 of 5 — Game Format"}
-                  {gameStep === 4 && "Step 4 of 5 — Configure"}
-                  {gameStep === 5 && "Step 5 of 5 — Hole Handicap Rankings"}
-                </div>
-              </div>
-              {!generatingGame && (
-                <button onClick={() => setGameOpen(false)} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              )}
-            </div>
+      {/* Game creator — unified bottom sheet (2026-05-24 refactor).
+          Replaced the legacy 5-step wizard with the shared
+          <CreateGameSheet> component so Tee Up and trip-page entries
+          run the same flow. presetTrip skips the course/date sections
+          and seeds players from this trip's members + handicaps. */}
+      {gameOpen && trip && user?.id && (() => {
+        const host = members.find(m => m.userId === user.id);
+        return (
+          <CreateGameSheet
+            open={gameOpen}
+            onClose={() => setGameOpen(false)}
+            presetTrip={{
+              id: trip.id,
+              date: tripCourses[0]?.playDate ?? trip.startDate ?? null,
+              courses: tripCourses.map(tc => ({
+                courseId: tc.courseId,
+                courseName: tc.course.name,
+                courseLogoUrl: tc.course.logoUrl ?? null,
+              })),
+              members: members.map(m => ({
+                userId: m.userId,
+                displayName: m.user.displayName,
+                avatarUrl: m.user.avatarUrl,
+                handicapIndex: m.user.handicapIndex ?? null,
+              })),
+            }}
+            currentUserId={user.id}
+            currentUserDisplayName={host?.user.displayName || "You"}
+            currentUserAvatarUrl={host?.user.avatarUrl ?? null}
+            currentUserHandicapIndex={host?.user.handicapIndex ?? null}
+            onCreated={(gameId) => router.push(`/games/${gameId}`)}
+          />
+        );
+      })()}
 
-            <div style={{ overflowY: "auto", flex: 1, padding: "20px" }}>
-              {/* Step 1: Course & Tee */}
-              {!generatingGame && gameStep === 1 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>Select Course</div>
-                    {tripCourses.length === 0 ? (
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>Add a course to this trip first</div>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {tripCourses.map(tc => (
-                          <button key={tc.id} onClick={() => handleSelectGameCourse(tc.courseId, tc.course.name, tc.secondaryCourseId, tc.secondaryCourse?.name)}
-                            style={{ padding: "12px 14px", borderRadius: 12, border: `1.5px solid ${gameCourseId === tc.courseId ? "#4da862" : "rgba(255,255,255,0.08)"}`, background: gameCourseId === tc.courseId ? "rgba(77,168,98,0.1)" : "rgba(255,255,255,0.03)", cursor: "pointer", textAlign: "left" }}>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>
-                              {tc.course.name}
-                              {tc.secondaryCourse && <span style={{ color: "rgba(77,168,98,0.85)" }}> + {tc.secondaryCourse.name}</span>}
-                            </div>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>
-                              {tc.course.city}, {tc.course.state}
-                              {tc.secondaryCourse && <span style={{ color: "rgba(77,168,98,0.7)", marginLeft: 6 }}>· paired 9+9</span>}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Tee selection removed for now — handleSelectGameCourse
-                      auto-picks the highest-slope tee box behind the scenes
-                      so the slope/rating still feed the handicap math. */}
-                  {gameCourseId && (
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>
-                      Par {gameCoursePar}
-                      {gameTeeBoxes.length > 0 && ` · Slope ${gameTeeSlope} · Rating ${gameTeeRating}`}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Step 2: Players */}
-              {!generatingGame && gameStep === 2 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {(() => {
-                    const minHI = Math.min(...gamePlayers.map(p => p.handicapIndex));
-                    return gamePlayers.map((p, i) => {
-                      const diff = Math.round(p.handicapIndex * (gameTeeSlope / 113) + (gameTeeRating - gameCoursePar)) - Math.round(minHI * (gameTeeSlope / 113) + (gameTeeRating - gameCoursePar));
-                      return (
-                        <div key={p.userId} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "12px 12px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: diff > 0 ? 6 : 0 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0 }}>
-                              {p.avatarUrl ? <img src={p.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "9px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{p.displayName}</div>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                              <button
-                                onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.max(-10, Math.round((pl.handicapIndex - 0.1) * 10) / 10) } : pl))}
-                                style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 300, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>−</button>
-                              <input
-                                type="number" step="0.1" min="-10" max="54"
-                                value={p.handicapIndex === 0 ? "" : p.handicapIndex}
-                                placeholder="0"
-                                onChange={e => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: e.target.value === "" ? 0 : Math.max(-10, Math.min(54, parseFloat(e.target.value) || 0)) } : pl))}
-                                style={{ width: 54, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "5px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", textAlign: "center" }}
-                              />
-                              <button
-                                onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.min(54, Math.round((pl.handicapIndex + 0.1) * 10) / 10) } : pl))}
-                                style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#4da862", fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 300, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>+</button>
-                            </div>
-                          </div>
-                          {diff > 0 && (
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", paddingLeft: 42 }}>
-                              Gives <span style={{ color: "#4da862", fontWeight: 600 }}>+{diff} shot{diff !== 1 ? "s" : ""}</span> vs lowest handicap
-                            </div>
-                          )}
-                          {diff === 0 && gamePlayers.length > 1 && (
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", paddingLeft: 42 }}>Lowest handicap — receives no shots</div>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              )}
-
-              {/* Step 3: Format */}
-              {!generatingGame && gameStep === 3 && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {GAME_FORMATS.map(fmt => (
-                    <div key={fmt.id} className={`game-format-card${gameFormat === fmt.id ? " selected" : ""}`} onClick={() => setGameFormat(fmt.id)}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: gameFormat === fmt.id ? "#4da862" : "#fff", marginBottom: 4 }}>{fmt.name}</div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>{fmt.desc}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Step 4: Configure */}
-              {!generatingGame && gameStep === 4 && HOLE_PICKED_FORMATS.has(gameFormat) && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>Select holes</div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 12, lineHeight: 1.45 }}>
-                      {gameFormat === "closest_to_pin"
-                        ? "Tap the par-3s (or any holes) you're playing Closest to the Pin on. Anyone on the trip can declare a winner per hole after the round."
-                        : "Tap the holes you're playing Longest Drive on — typically par 4s and 5s. Anyone on the trip can declare a winner per hole after."}
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
-                      {Array.from({ length: 18 }, (_, i) => i + 1).map(h => {
-                        const selected = gameSelectedHoles.includes(h);
-                        return (
-                          <button
-                            key={h}
-                            onClick={() => setGameSelectedHoles(prev =>
-                              selected ? prev.filter(x => x !== h) : [...prev, h].sort((a, b) => a - b)
-                            )}
-                            style={{
-                              padding: "10px 0",
-                              borderRadius: 10,
-                              border: `1.5px solid ${selected ? "#4da862" : "rgba(255,255,255,0.1)"}`,
-                              background: selected ? "rgba(77,168,98,0.16)" : "rgba(255,255,255,0.03)",
-                              color: selected ? "#4da862" : "#fff",
-                              fontFamily: "'Outfit', sans-serif",
-                              fontSize: 14,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                          >
-                            {h}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {gameSelectedHoles.length > 0 && (
-                      <div style={{ marginTop: 12, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(77,168,98,0.85)" }}>
-                        {gameSelectedHoles.length} hole{gameSelectedHoles.length === 1 ? "" : "s"} selected · {gameSelectedHoles.join(" · ")}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Per-hole stake */}
-                  <div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>Stake per hole</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, paddingLeft: 12, maxWidth: 160 }}>
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.55)", marginRight: 2 }}>$</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        inputMode="decimal"
-                        value={gameHoleStake}
-                        onChange={(e) => setGameHoleStake(e.target.value)}
-                        placeholder="0"
-                        style={{ flex: 1, background: "transparent", border: "none", padding: "10px 12px 10px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", outline: "none", minWidth: 0 }}
-                      />
-                    </div>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 6, lineHeight: 1.45 }}>
-                      {Number(gameHoleStake) > 0
-                        ? `Winner of each hole takes $${gameHoleStake} from every other player. Set to $0 if you're playing for bragging rights.`
-                        : "Set a dollar amount above if you're playing for money. Otherwise leave at $0."}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 4: Configure — regular formats */}
-              {!generatingGame && gameStep === 4 && !HOLE_PICKED_FORMATS.has(gameFormat) && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  {gameFormat !== "skins" && (
-                    <div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>Team Assignment</div>
-                      {gamePlayers.map((p, i) => {
-                        const teamLetters = Array.from({ length: gamePlayers.length }, (_, k) => String.fromCharCode(65 + k));
-                        return (
-                          <div key={p.userId} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", flex: 1 }}>{p.displayName}</span>
-                            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                              {teamLetters.map(team => (
-                                <button key={team} onClick={() => setGamePlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, teamId: team } : pl))}
-                                  style={{ width: 34, height: 30, borderRadius: 8, border: `1.5px solid ${p.teamId === team ? "#4da862" : "rgba(255,255,255,0.12)"}`, background: p.teamId === team ? "rgba(77,168,98,0.15)" : "transparent", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: p.teamId === team ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer" }}>
-                                  {team}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {gameFormat === "nassau" && (
-                    <div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>Bet Amounts ($)</div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-                        {[["Front 9", gameNassauFront, setGameNassauFront], ["Back 9", gameNassauBack, setGameNassauBack], ["Full 18", gameNassauTotal, setGameNassauTotal]].map(([label, val, setter]) => (
-                          <div key={label as string}>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 4 }}>{label as string}</div>
-                            <input type="number" min="0" value={val as string} onChange={e => (setter as React.Dispatch<React.SetStateAction<string>>)(e.target.value)}
-                              style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {gameFormat === "skins" && (
-                    <div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>Skins Setup</div>
-                      <div style={{ marginBottom: 12 }}>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>$ per skin</div>
-                        <input type="number" min="0" value={gameSkinsAmt} onChange={e => setGameSkinsAmt(e.target.value)}
-                          style={{ width: 100, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }} />
-                      </div>
-                      <button onClick={() => setGameSkinsCarryover(v => !v)}
-                        style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                        <div style={{ width: 20, height: 20, borderRadius: 6, border: `2px solid ${gameSkinsCarryover ? "#4da862" : "rgba(255,255,255,0.2)"}`, background: gameSkinsCarryover ? "#4da862" : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {gameSkinsCarryover && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
-                        </div>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Carryover on ties</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {gameFormat === "best_ball" && (
-                    <div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", marginBottom: 6, letterSpacing: "0.08em", textTransform: "uppercase" }}>Team wager</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, paddingLeft: 12, maxWidth: 160 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, color: "rgba(255,255,255,0.55)", marginRight: 2 }}>$</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          inputMode="decimal"
-                          value={gameTeamWager}
-                          onChange={(e) => setGameTeamWager(e.target.value)}
-                          placeholder="0"
-                          style={{ flex: 1, background: "transparent", border: "none", padding: "10px 12px 10px 4px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", outline: "none", minWidth: 0 }}
-                        />
-                      </div>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 6, lineHeight: 1.45 }}>
-                        {Number(gameTeamWager) > 0
-                          ? `Each team puts up $${gameTeamWager}. Winning team takes the pot, split evenly among teammates. Set to $0 for bragging rights only.`
-                          : "Set a dollar amount above if you're playing for money. Otherwise leave at $0."}
-                      </div>
-                    </div>
-                  )}
-
-                  {(gameFormat === "stableford" || gameFormat === "scramble") && (
-                    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-                      {gameFormat === "stableford" && "Bogey=1pt, par=2pts, birdie=3pts, eagle=4pts. Teams combine points per hole if teammates are assigned above."}
-                      {gameFormat === "scramble" && "All players hit from the best shot each stroke. Assign teams above for team-vs-team play, or put everyone on separate teams for a group scramble."}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Step 5: Hole Handicap Rankings */}
-              {!generatingGame && gameStep === 5 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {gameHandicapWarning && (
-                    <div style={{ background: "rgba(255,170,0,0.08)", border: "1px solid rgba(255,170,0,0.25)", borderRadius: 10, padding: "10px 12px" }}>
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#ffaa00", lineHeight: 1.5 }}>
-                        These rankings don't look right — please update them from the actual scorecard. Each hole should have a unique difficulty rank where 1 = hardest, 18 = easiest (and they're rarely in 1, 2, 3… hole order).
-                      </div>
-                    </div>
-                  )}
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>
-                    Enter each hole's difficulty ranking (1 = hardest, 18 = easiest). Found on the scorecard. We'll save these for future games at this course.
-                  </div>
-                  {/* Quick path: open the course's scorecard editor in another tab.
-                      Earns +30 SCORECARD_COMPLETE points and propagates to every
-                      future game on this course. */}
-                  <a
-                    href={`/courses/${gameCourseId}?scorecard=edit`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 10,
-                      padding: "10px 14px",
-                      background: "rgba(77,168,98,0.1)",
-                      border: "1px solid rgba(77,168,98,0.3)",
-                      borderRadius: 10,
-                      fontFamily: "'Outfit', sans-serif",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: "#4da862",
-                      textDecoration: "none",
-                    }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                      <span>Open the full scorecard editor →</span>
-                      <span style={{ fontWeight: 400, fontSize: 10, color: "rgba(77,168,98,0.7)", letterSpacing: "0.04em" }}>Earn +30 pts when you complete it · saves for every future game here</span>
-                    </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <polyline points="15 3 21 3 21 9"/>
-                      <line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
-                  </a>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                    {gameHoleHandicaps.map((rank, i) => (
-                      <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "8px 10px" }}>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Hole {i + 1}</div>
-                        <input
-                          type="number" min="1" max="18"
-                          value={rank || ""}
-                          placeholder="—"
-                          onChange={e => {
-                            const val = Math.min(18, Math.max(1, Number(e.target.value)));
-                            setGameHoleHandicaps(prev => prev.map((r, idx) => idx === i ? val : r));
-                          }}
-                          style={{ width: "100%", background: "transparent", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: rank > 0 ? "#4da862" : "rgba(255,255,255,0.3)", outline: "none", textAlign: "center" }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Error — visible on any step */}
-              {!generatingGame && gameError && (
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#e05c5c", marginTop: 8 }}>{gameError}</div>
-              )}
-
-              {/* Generating spinner — replaces step content */}
-              {generatingGame && (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "60px 0" }}>
-                  <div style={{ width: 52, height: 52, borderRadius: "50%", border: "3px solid rgba(77,168,98,0.15)", borderTop: "3px solid #4da862", animation: "spin 1s linear infinite" }} />
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>Tour It is crunching the numbers...</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Calculating handicaps &amp; building your game sheet</div>
-                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                </div>
-              )}
-            </div>
-
-            {/* Footer CTA */}
-            {!generatingGame && (
-              <div style={{ padding: "12px 20px 28px", borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
-                {gameStep < 5 ? (
-                  <button
-                    onClick={() => {
-                      if (gameStep === 1 && !gameCourseId) return;
-                      if (gameStep === 3 && !gameFormat) return;
-                      if (gameStep === 4) {
-                        // CTP / Longest Drive skip step 5 (no hole-handicap rankings).
-                        if (HOLE_PICKED_FORMATS.has(gameFormat)) { generateGame(); return; }
-                        // Other formats: also skip if hole handicaps already known.
-                        if (gameHoleHandicapsKnown) { generateGame(); return; }
-                      }
-                      setGameStep(s => s + 1);
-                    }}
-                    disabled={
-                      (gameStep === 1 && !gameCourseId) ||
-                      (gameStep === 3 && !gameFormat) ||
-                      (gameStep === 4 && HOLE_PICKED_FORMATS.has(gameFormat) && gameSelectedHoles.length === 0)
-                    }
-                    style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: (gameStep === 1 && !gameCourseId) || (gameStep === 3 && !gameFormat) || (gameStep === 4 && HOLE_PICKED_FORMATS.has(gameFormat) && gameSelectedHoles.length === 0) ? "rgba(255,255,255,0.06)" : "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer" }}
-                  >
-                    {gameStep === 4 && (gameHoleHandicapsKnown || HOLE_PICKED_FORMATS.has(gameFormat)) ? "Create Game" : "Continue"}
-                  </button>
-                ) : (
-                  <button
-                    onClick={generateGame}
-                    style={{ width: "100%", padding: "14px", borderRadius: 12, border: "none", background: "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer" }}
-                  >
-                    Generate Game Sheet
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* View game sheet */}
       {viewGameOpen && viewGame && (
