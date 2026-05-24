@@ -147,8 +147,7 @@ input, textarea, select {
      just above the keyboard. The transition curve matches iOS's
      keyboard animation (Apple's "snappy" cubic-bezier(0.32, 0.72, 0, 1)
      at 250ms, same one SwiftUI uses) so the sheet and the keyboard
-     move in true lockstep. The duration matters more than the curve
-     for "Instagram-feel" smoothness. */
+     move in true lockstep. */
   bottom: var(--keyboard-height, 0px);
   left: 0;
   right: 0;
@@ -159,13 +158,22 @@ input, textarea, select {
   border-radius: 20px 20px 0 0;
   padding: 18px 20px calc(28px + env(safe-area-inset-bottom));
   overflow-y: auto;
-  min-height: 60vh;
+  /* IMPORTANT: min-height also shrinks when the keyboard is up,
+     capped at the available space above the keyboard. Without this,
+     a sheet with min-height: 60vh (or 80vh for --full) would refuse
+     to fit above a 290px iPhone keyboard, and the browser would push
+     the sheet's TOP off the screen. That was the "bouncy" feel —
+     the sheet kept fighting between min-height (wanted 60vh) and
+     max-height (wanted 90vh - 290px). Now both shrink together so
+     the sheet always fits and never bounces. */
+  min-height: min(60vh, calc(100vh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px));
   max-height: calc(90vh - var(--keyboard-height, 0px));
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   transition:
     bottom 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+    min-height 0.25s cubic-bezier(0.32, 0.72, 0, 1),
     max-height 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -178,7 +186,7 @@ input, textarea, select {
 /* Full variant — for sheets with lots of content that benefit from
    the extra vertical room (filter sheets with many fields). */
 .tourit-sheet--full {
-  min-height: 80vh;
+  min-height: min(80vh, calc(100vh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px));
 }
 
 /* Comments variant — half-sheet so the comment thread doesn't dominate

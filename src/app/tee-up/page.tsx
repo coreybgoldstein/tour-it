@@ -410,6 +410,34 @@ export default function TeeUpPage() {
   const [playGameCourse, setPlayGameCourse] = useState<CourseSearchRow | null>(null);
   const [playGameFriends, setPlayGameFriends] = useState<FriendRow[]>([]);
   const [playGameCreating, setPlayGameCreating] = useState(false);
+  // Per-course aggregates for Step 3's summary card. Fetched once after
+  // a course is picked so we don't block the user advancing through
+  // the wizard.
+  const [playGameCourseStats, setPlayGameCourseStats] = useState<{ par: number | null; yardage: number | null; holeCount: number | null }>({ par: null, yardage: null, holeCount: null });
+
+  // Fetch par/yardage/holeCount once a course is selected. Sum Hole.par
+  // and Hole.yardage across all holes for the course. If yardage is
+  // missing on some holes we still show what we have.
+  useEffect(() => {
+    if (!playGameCourse) { setPlayGameCourseStats({ par: null, yardage: null, holeCount: null }); return; }
+    let cancelled = false;
+    const supabase = createClient();
+    (async () => {
+      const { data } = await supabase.from("Hole").select("par, yardage").eq("courseId", playGameCourse.id);
+      if (cancelled) return;
+      if (!data || data.length === 0) {
+        setPlayGameCourseStats({ par: null, yardage: null, holeCount: null });
+        return;
+      }
+      const par = data.reduce((s: number, h: { par: number | null }) => s + (h.par ?? 0), 0);
+      const yardageVals = data.filter((h: { yardage: number | null }) => h.yardage != null);
+      const yardage = yardageVals.length > 0
+        ? yardageVals.reduce((s: number, h: { yardage: number | null }) => s + (h.yardage ?? 0), 0)
+        : null;
+      setPlayGameCourseStats({ par: par || null, yardage, holeCount: data.length });
+    })();
+    return () => { cancelled = true; };
+  }, [playGameCourse]);
 
   function openPlayAGame() {
     setPlayGameCourse(null);
@@ -1170,14 +1198,85 @@ export default function TeeUpPage() {
               </div>
             )}
 
-            {/* STEP 3 — confirm */}
+            {/* STEP 3 — confirm. Course card on top (logo + name + par
+                + yardage + hole count). Players below as a vertical
+                list with avatars so users can scan who's joining. */}
             {playGameStep === 3 && (
-              <div style={{ marginBottom: 18, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px" }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 4 }}>Course</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 12 }}>{playGameCourse?.name}</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 4 }}>Players</div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>
-                  You{playGameFriends.length > 0 && ` + ${playGameFriends.map(f => "@" + f.username).join(", ")}`}
+              <div style={{ marginBottom: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+                {/* Course card */}
+                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Course</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 12, background: playGameCourse?.logoUrl ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {playGameCourse?.logoUrl
+                        ? <img src={playGameCourse.logoUrl} alt={playGameCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{playGameCourse?.name}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{[playGameCourse?.city, playGameCourse?.state].filter(Boolean).join(", ")}</div>
+                    </div>
+                  </div>
+                  {/* Quick stats — par / yardage / hole count. Suppress
+                      individual cells when the data is missing. */}
+                  {(playGameCourseStats.par || playGameCourseStats.yardage || playGameCourseStats.holeCount) && (
+                    <div style={{ display: "flex", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                      {playGameCourseStats.par != null && (
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Par</div>
+                          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginTop: 2 }}>{playGameCourseStats.par}</div>
+                        </div>
+                      )}
+                      {playGameCourseStats.yardage != null && (
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Yards</div>
+                          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginTop: 2 }}>{playGameCourseStats.yardage.toLocaleString()}</div>
+                        </div>
+                      )}
+                      {playGameCourseStats.holeCount != null && (
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Holes</div>
+                          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", marginTop: 2 }}>{playGameCourseStats.holeCount}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Players list — vertical rows with avatar + username
+                    instead of a comma-separated string so each player
+                    reads as their own entity. Host (you) pinned at top. */}
+                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 10 }}>Playing</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {/* Host row */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>You</div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Host</div>
+                      </div>
+                    </div>
+                    {/* Invited friends */}
+                    {playGameFriends.map(f => (
+                      <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {f.avatarUrl
+                            ? <img src={f.avatarUrl} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.displayName || f.username}</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>@{f.username}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {playGameFriends.length === 0 && (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>Playing solo — invite friends from step 2 to join.</div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -1205,7 +1304,11 @@ export default function TeeUpPage() {
                     setPlayGameStep(3);
                     return;
                   }
-                  // Step 3 — create the round and route into the game wizard
+                  // Step 3 — create the round and route into the game wizard.
+                  // Schema field names match the existing Quick Round insert
+                  // in this same file (GolfTrip.createdBy, GolfTripCourse
+                  // with sortOrder, GolfTripMember role lowercase "owner"/
+                  // "member" — see commit history if these drift).
                   if (!playGameCourse || !userId || playGameCreating) return;
                   setPlayGameCreating(true);
                   try {
@@ -1213,51 +1316,66 @@ export default function TeeUpPage() {
                     const tripId = crypto.randomUUID();
                     const today = new Date().toISOString().slice(0, 10);
                     const nowIso = new Date().toISOString();
+                    const niceDate = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
                     const { error: tripErr } = await supabase.from("GolfTrip").insert({
                       id: tripId,
-                      hostUserId: userId,
-                      name: playGameCourse.name,
+                      name: `${playGameCourse.name} — ${niceDate}`,
+                      createdBy: userId,
                       startDate: today,
                       endDate: today,
-                      imageUrl: null,
                       createdAt: nowIso,
                       updatedAt: nowIso,
                     });
-                    if (tripErr) throw tripErr;
+                    if (tripErr) {
+                      console.error("Play a Game: failed to create trip", tripErr);
+                      alert(`Couldn't create the round: ${tripErr.message}`);
+                      setPlayGameCreating(false);
+                      return;
+                    }
 
-                    // Attach the course as the round's single course-stop
-                    await supabase.from("TripCourse").insert({
+                    // Attach the course as the round's single course-stop.
+                    // GolfTripCourse has no updatedAt column — sending one
+                    // makes Postgres reject the insert.
+                    const { error: tcErr } = await supabase.from("GolfTripCourse").insert({
                       id: crypto.randomUUID(),
                       tripId,
                       courseId: playGameCourse.id,
-                      orderIndex: 0,
-                      holeCount: 18,
+                      playDate: today,
+                      sortOrder: 0,
                       createdAt: nowIso,
-                      updatedAt: nowIso,
                     });
+                    if (tcErr) {
+                      console.error("Play a Game: failed to attach course", tcErr);
+                      alert(`Couldn't attach the course: ${tcErr.message}`);
+                      setPlayGameCreating(false);
+                      return;
+                    }
 
-                    // Host membership
-                    await supabase.from("TripMember").insert({
+                    // Host membership — role is lowercase "owner" per the
+                    // pattern used by Quick Round.
+                    const { error: hostErr } = await supabase.from("GolfTripMember").insert({
                       id: crypto.randomUUID(),
                       tripId,
                       userId,
-                      role: "HOST",
-                      status: "JOINED",
+                      role: "owner",
                       createdAt: nowIso,
-                      updatedAt: nowIso,
                     });
+                    if (hostErr) {
+                      console.error("Play a Game: failed to add host", hostErr);
+                      // Trip + course already inserted — don't block the
+                      // route, the user can add themselves on the trip page.
+                    }
 
-                    // Invited friends
+                    // Invited friends — role "member"
                     if (playGameFriends.length > 0) {
-                      await supabase.from("TripMember").insert(playGameFriends.map(f => ({
+                      const { error: memErr } = await supabase.from("GolfTripMember").insert(playGameFriends.map(f => ({
                         id: crypto.randomUUID(),
                         tripId,
                         userId: f.id,
-                        role: "MEMBER",
-                        status: "INVITED",
+                        role: "member",
                         createdAt: nowIso,
-                        updatedAt: nowIso,
                       })));
+                      if (memErr) console.error("Play a Game: failed to invite friends", memErr);
                     }
 
                     setPlayGameOpen(false);
@@ -1269,6 +1387,7 @@ export default function TeeUpPage() {
                     router.push(`/trips/${tripId}?startGame=1`);
                   } catch (err) {
                     console.error("Play a Game create failed:", err);
+                    alert(`Couldn't start the game: ${err instanceof Error ? err.message : "unknown error"}`);
                     setPlayGameCreating(false);
                   }
                 }}
