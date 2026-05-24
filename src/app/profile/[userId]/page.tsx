@@ -15,6 +15,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import ProgressionTracker from "@/components/ProgressionTracker";
+import { SheetPortal } from "@/components/SheetPortal";
 import { rateLimit } from "@/lib/rateLimit";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 
@@ -1794,9 +1795,12 @@ export default function ProfilePage() {
 
       {/* Comment sheet — comments variant (50vh) so the thread doesn't
           dominate the screen on tap. Keyboard appears only when the
-          user taps the input, not on sheet open. */}
+          user taps the input, not on sheet open. SheetPortal so it
+          renders at document.body and clears the feed-modal /
+          profile-feed stacking contexts that were trapping the sheet
+          behind the in-app feed viewer. */}
       {commentUploadId && (
-        <>
+        <SheetPortal>
           <div className="tourit-sheet-backdrop" onClick={() => { setCommentUploadId(null); setCommentText(""); }} />
           <div className="tourit-sheet tourit-sheet--comments" onClick={e => e.stopPropagation()}>
             <div className="tourit-sheet-grip" />
@@ -1845,7 +1849,7 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-        </>
+        </SheetPortal>
       )}
 
       {/* Followers / Following sheet */}
