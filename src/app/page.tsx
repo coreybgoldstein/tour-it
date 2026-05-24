@@ -846,15 +846,13 @@ export default function Home() {
     };
   }, [commentUploadId]);
 
-  // Auto-focus the comment input when the sheet opens — iOS requires
-  // the focus() call to happen close to the originating user gesture;
-  // we get it via the React commit that mounts the input.
+  // Comment input ref. We intentionally do NOT auto-focus on sheet
+  // open — the keyboard should only appear when the user explicitly
+  // taps "Add a comment...", matching the behaviour of the profile /
+  // course / hole comment sheets across the app. Previously this
+  // useEffect called .focus() 50ms after open, which sprang the
+  // keyboard up immediately and felt aggressive.
   const commentInputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (!commentUploadId) return;
-    const t = window.setTimeout(() => { commentInputRef.current?.focus(); }, 50);
-    return () => window.clearTimeout(t);
-  }, [commentUploadId]);
   // useKeyboardAwareSheet intentionally NOT used here — it constrained
   // the outer container which broke the bottom-anchored layout when the
   // keyboard opened. Replaced by the visualViewport tracker above
@@ -1967,17 +1965,24 @@ export default function Home() {
             borderTopRightRadius: 20,
             display: "flex",
             flexDirection: "column",
-            // Lift above the on-screen keyboard. When the keyboard is
-            // closed, marginBottom is 0 and the sheet sits at 50vh —
-            // ~half the screen — showing the latest comments with
-            // internal scroll. When the user taps the input, the
-            // keyboard rises and marginBottom pushes the sheet up by
-            // exactly the keyboard height so the input stays visible
-            // just above it.
+            // Lift above the on-screen keyboard. When closed, the
+            // sheet sits at 50vh — showing comments with internal
+            // scroll. When the user taps the input, the keyboard
+            // rises and marginBottom pushes the sheet up by exactly
+            // the keyboard height so the input stays visible.
+            //
+            // The transition is critical for the "smooth lift" feel:
+            // without it, every visualViewport.resize event (which
+            // fires continuously during iOS's ~280ms keyboard rise)
+            // would snap the sheet to a new position. With a 200ms
+            // ease-out transition that matches the keyboard's own
+            // animation curve, the sheet visibly tracks the keyboard
+            // top instead of strobing up in discrete jumps.
             marginBottom: commentKeyboardHeight,
             height: commentKeyboardHeight > 0 ? `calc(100% - ${commentKeyboardHeight}px)` : "50vh",
             minHeight: 0,
             maxHeight: `calc(100% - ${commentKeyboardHeight}px)`,
+            transition: "margin-bottom 0.2s ease-out, height 0.2s ease-out, max-height 0.2s ease-out",
           }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "12px auto 8px" }} />
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
