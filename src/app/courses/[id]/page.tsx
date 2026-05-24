@@ -677,7 +677,7 @@ const [editDescription, setEditDescription] = useState("");
       clips.sort((a, b) => (a.holeNumber ?? 999) - (b.holeNumber ?? 999));
       setCourseClips(clips);
 
-      // Group by hole for new grid/feed
+      // Group by hole for new grid/feed.
       const map: Record<number, Clip[]> = {};
       const extended: Clip[] = [];
       for (const clip of clips) {
@@ -688,6 +688,13 @@ const [editDescription, setEditDescription] = useState("");
           extended.push(clip);
         }
       }
+      // Newest-first within each hole bucket — the page-level fetch is
+      // sorted by rankScore for recall, but inside a hole users expect
+      // the most recent clip up front.
+      for (const holeNum of Object.keys(map)) {
+        map[Number(holeNum)].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+      }
+      extended.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
       setHoleClipsMap(map);
       setExtendedClips(extended);
       const hw = Object.keys(map).map(Number).sort((a, b) => a - b);
@@ -763,6 +770,13 @@ const [editDescription, setEditDescription] = useState("");
           map[clip.holeNumber].push(clip);
         } else { extended.push(clip); }
       }
+      // Newest-first within each hole bucket — the page-level fetch
+      // is sorted by rankScore for recall, but inside a hole users
+      // expect the most recent clip up front.
+      for (const holeNum of Object.keys(map)) {
+        map[Number(holeNum)].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+      }
+      extended.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
       setHoleClipsMap(map);
       setExtendedClips(extended);
       const hw = Object.keys(map).map(Number).sort((a, b) => a - b);

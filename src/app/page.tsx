@@ -266,9 +266,14 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, liked, onLike, likeCount, onComment, commentCount, commented, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow, hasAttribution }: {
+function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, clipId, holeNumber, liked, onLike, likeCount, onComment, commentCount, commented, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow, hasAttribution }: {
   userId: string; avatarUrl: string | null; username: string; rank?: string | null;
   courseId: string; courseName: string;
+  // clipId + holeNumber drive the deep-link share URL so "Send It"
+  // opens straight to this clip instead of dumping the user on the
+  // course profile and making them hunt for it.
+  clipId?: string;
+  holeNumber?: number | null;
   liked: boolean; onLike: () => void; likeCount: number;
   onComment: () => void; commentCount: number;
   // True when the current user has at least one comment on this clip —
@@ -288,8 +293,16 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, l
 }) {
   const [copied, setCopied] = useState(false);
   const handleShare = () => {
-    const url = `${window.location.origin}/courses/${courseId}`;
-    if (navigator.share) navigator.share({ title: courseName, text: `Check out ${courseName} on Tour It`, url }).catch(() => {});
+    // Prefer the hole-page deep link (?clip=X) so receivers open the
+    // clip viewer with the exact clip up first. Fall back to the
+    // course profile only when we don't have enough info — e.g.,
+    // foreign clips without a holeNumber on this surface.
+    const base = holeNumber
+      ? `${window.location.origin}/courses/${courseId}/holes/${holeNumber}`
+      : `${window.location.origin}/courses/${courseId}`;
+    const url = clipId ? `${base}?clip=${clipId}` : base;
+    const text = `Tour It — ${courseName}${holeNumber ? ` — Hole ${holeNumber}` : ""}`;
+    if (navigator.share) navigator.share({ title: text, text, url }).catch(() => {});
     else { navigator.clipboard.writeText(url).catch(() => {}); setCopied(true); setTimeout(() => setCopied(false), 2000); }
   };
   return (
@@ -536,7 +549,7 @@ const SeriesCard = memo(function SeriesCardImpl({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={item.shots[0]?.commentCount || 0} commented={!!(activeShot?.id && commentedIds?.has(activeShot.id))} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} clipId={activeShot?.id} holeNumber={item.holeNumber ?? null} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={item.shots[0]?.commentCount || 0} commented={!!(activeShot?.id && commentedIds?.has(activeShot.id))} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
 
       {/* Bottom overlay — series uploader avatar + name + active-shot date.
           Mirrors the single-clip overlay so the identity row is in the
@@ -720,7 +733,7 @@ const VideoCard = memo(function VideoCardImpl({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={clip.commentCount} commented={!!commentedIds?.has(clip.id)} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} clipId={clip.id} holeNumber={clip.holeNumber ?? null} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={clip.commentCount} commented={!!commentedIds?.has(clip.id)} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
 
       {(clip.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
         // Bottom overlay — avatar + username + date + (photo icon).

@@ -43,6 +43,14 @@ export default function KeyboardSync() {
   useEffect(() => {
     let detachCapacitor: (() => void) | null = null;
     let cleanedUp = false;
+    // True once Capacitor's keyboard plugin is wired up. When it is,
+    // we IGNORE focusin/visualViewport — those secondary signals were
+    // racing against Capacitor's authoritative keyboardHeight and
+    // causing the sheet to re-animate two or three times on every
+    // input focus (focusin fires 290 → cap fires 336 → vv fires 339
+    // → three transitions back-to-back). One source of truth on
+    // native eliminates the "two things competing" feel.
+    let capActive = false;
 
     const root = document.documentElement;
     const setHeight = (h: number) => {
@@ -51,13 +59,22 @@ export default function KeyboardSync() {
       // signals competing (Capacitor's exact value vs visualViewport's
       // settled value can differ by a fraction of a pixel).
       const px = Math.round(Math.max(0, h));
+      // No-op if unchanged — prevents re-triggering the CSS transition
+      // when two signals report the same height.
+      if (root.style.getPropertyValue("--keyboard-height") === `${px}px`) return;
       root.style.setProperty("--keyboard-height", `${px}px`);
     };
 
     // 1. Capacitor native — most precise. Fires BEFORE the iOS
     //    keyboard animation starts, with the exact final height.
+    //    Set capActive SYNCHRONOUSLY when we're on a native platform
+    //    so focusin/visualViewport bail out from the very first
+    //    focus — otherwise the dynamic import races against the
+    //    user's first tap and we end up double-animating before
+    //    the Capacitor listener attaches.
     const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
     if (cap?.isNativePlatform?.()) {
+      capActive = true;
       (async () => {
         try {
           const { Keyboard } = await import("@capacitor/keyboard");
@@ -72,37 +89,37 @@ export default function KeyboardSync() {
             hideHandle.remove();
           };
         } catch {
-          // Plugin not registered — fall through to web fallbacks below
+          // Plugin failed to load — re-enable web fallbacks so users
+          // aren't stuck without keyboard tracking. Rare edge case but
+          // worth handling so a missing-plugin install doesn't break
+          // every form on the app.
+          capActive = false;
         }
       })();
     }
 
-    // 2. focusin — instant anticipatory lift. Pre-warms the CSS var
-    //    to ~290px (typical iPhone keyboard) the moment an editable
-    //    element gains focus. Capacitor's keyboardWillShow refines
-    //    to the device-exact value once it fires; visualViewport
-    //    handles cases where Capacitor isn't available.
+    // 2. focusin — instant anticipatory lift. Only used on the WEB
+    //    where Capacitor isn't available. On native we skip this
+    //    entirely so we don't double-animate (see capActive above).
     const onFocusIn = (e: FocusEvent) => {
+      if (capActive) return;
       const t = e.target as HTMLElement | null;
       if (!t) return;
       const tag = t.tagName;
       if (tag !== "INPUT" && tag !== "TEXTAREA" && !t.isContentEditable) return;
-      // Only pre-warm if we don't already have a real value (which
-      // would be the case if Capacitor's listener fired faster than
-      // the focus event, which can happen on subsequent focuses).
       const current = root.style.getPropertyValue("--keyboard-height");
       if (!current || current === "0px") setHeight(290);
     };
     document.addEventListener("focusin", onFocusIn);
 
     // 3. visualViewport — settles the height to the device-exact
-    //    value once the keyboard is fully open. Required for web
-    //    where Capacitor isn't available, and a useful safety net
-    //    on native.
+    //    value. Web-only for the same reason as focusin: on native
+    //    Capacitor's value is already correct and vv would race.
     const vv = window.visualViewport;
     let vvHandler: (() => void) | null = null;
     if (vv) {
       vvHandler = () => {
+        if (capActive) return;
         const h = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
         // <50px likely means the keyboard isn't actually up — just
         // chrome resize from URL bar or accessory bar adjustments.

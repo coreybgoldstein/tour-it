@@ -849,6 +849,16 @@ export default function ProfilePage() {
     if (username.length < 3) { setUsernameError("Username must be at least 3 characters"); return; }
     if (/[@\s]/.test(username)) { setUsernameError("Username can't contain @ or spaces"); return; }
     setUsernameError(null);
+    // Guard against accidentally wiping an existing handicap. Investigated
+    // 2026-05-24 after a user reported their GHIN handicap disappeared
+    // without them clearing it. The form prepopulates from the saved
+    // value, so the only realistic path was saving the form with the
+    // handicap input emptied — confirm before nulling something the
+    // user had set.
+    if (profile.handicapIndex != null && editHandicap.trim() === "") {
+      const ok = window.confirm("Remove your GHIN handicap index? This will clear it from your profile.");
+      if (!ok) return;
+    }
     setSaving(true);
     const hcp = editHandicap ? parseFloat(editHandicap) : null;
     const first = editFirstName.trim();
