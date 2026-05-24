@@ -296,6 +296,14 @@ export async function awardPoints({
   // refreshes instantly — not just the /api/points/award path. All
   // direct-callers (referrals, contributions, streak cron, badges) now push
   // updates too. Fire-and-forget; failure must not block the points write.
+  //
+  // CRITICAL: the topic in Supabase's HTTP broadcast API is the literal
+  // channel name. Previously we sent "realtime:leaderboard-updates" which
+  // didn't match the client's .channel("leaderboard-updates") subscription
+  // — so the broadcast fired but nobody listened, and leaderboards relied
+  // entirely on the 10s polling fallback to catch up. The "realtime:"
+  // prefix is Supabase's INTERNAL WebSocket topic format, not something
+  // the broadcast API caller should produce.
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/realtime/v1/api/broadcast`, {
       method: "POST",
@@ -306,8 +314,8 @@ export async function awardPoints({
       },
       body: JSON.stringify({
         messages: [
-          { topic: "realtime:leaderboard-updates", event: "points-awarded", payload: { userId } },
-          { topic: `realtime:user-progression:${userId}`, event: "points-awarded", payload: { userId } },
+          { topic: "leaderboard-updates", event: "points-awarded", payload: { userId } },
+          { topic: `user-progression:${userId}`, event: "points-awarded", payload: { userId } },
         ],
       }),
     }).catch(() => {});
