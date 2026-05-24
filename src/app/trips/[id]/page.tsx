@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { sendPushToUser } from "@/lib/sendPush";
@@ -225,6 +225,11 @@ function DateRangePicker({ startDate, endDate, onChange }: {
 export default function TripPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // ?startGame=1 deep-link comes from /tee-up's "Play a Game" wizard
+  // after it creates the round. We watch for it and auto-open the
+  // game-creation modal once the trip data has loaded.
+  const startGameRequested = searchParams.get("startGame") === "1";
   const [trip, setTrip] = useState<Trip | null>(null);
   const [tripCourses, setTripCourses] = useState<TripCourse[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -871,6 +876,28 @@ export default function TripPage() {
     }
     setSendingMsg(false);
   };
+
+  // Auto-open the game wizard when arriving via the Play-a-Game
+  // deep-link from /tee-up. We wait until trip + members + courses
+  // have all loaded so openGameCreator() can pre-populate the player
+  // list from the trip's membership.
+  const startGameTriggered = useRef(false);
+  useEffect(() => {
+    if (!startGameRequested) return;
+    if (loading) return;
+    if (startGameTriggered.current) return;
+    if (!members.length || !tripCourses.length) return;
+    startGameTriggered.current = true;
+    openGameCreator();
+    // Clear the query param so a back/forward navigation doesn't
+    // re-trigger the wizard.
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("startGame");
+      window.history.replaceState({}, "", url.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startGameRequested, loading, members.length, tripCourses.length]);
 
   const openGameCreator = async () => {
     setGameStep(1);

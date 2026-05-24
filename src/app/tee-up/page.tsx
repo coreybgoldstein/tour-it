@@ -40,7 +40,11 @@ type RoundRow = {
   courseLogoUrl: string | null;
 };
 
-type Tab = "rounds" | "trips" | "archive";
+// Three top-level tabs. Each tab manages its own archive view via the
+// per-tab archiveView state (one boolean per tab). "Games" is new in
+// 2026-05-24 — surfaces active games + an empty-state Play-a-Game
+// wizard that creates a one-day round + game in a single flow.
+type Tab = "games" | "rounds" | "trips";
 
 function fmtDateRange(start: string | null, end: string | null): string | null {
   if (!start) return null;
@@ -109,7 +113,15 @@ export default function TeeUpPage() {
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [pastRounds, setPastRounds] = useState<RoundRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("rounds");
+  const [tab, setTab] = useState<Tab>("games");
+  // Per-tab "show archive" toggle. Lets users flip between active
+  // items and historical items WITHIN a tab instead of bouncing to a
+  // separate top-level Archive tab. Defaults closed.
+  const [archiveOpen, setArchiveOpen] = useState<Record<Tab, boolean>>({
+    games: false,
+    rounds: false,
+    trips: false,
+  });
   const [userId, setUserId] = useState<string | null>(null);
 
   // Quick Round sheet
@@ -138,7 +150,6 @@ export default function TeeUpPage() {
   const [newTripSaving, setNewTripSaving] = useState(false);
 
   // Archive sub-filter
-  const [archiveFilter, setArchiveFilter] = useState<"all" | "rounds" | "trips">("all");
 
   // Lock body scroll + size the Quick Round overlay to the visualViewport so
   // iOS Safari's keyboard doesn't push the top of the sheet off-screen when an
@@ -391,10 +402,30 @@ export default function TeeUpPage() {
     router.push(`/trips/${tripId}`);
   }
 
+  // Play a Game wizard state — separate from Quick Round because the
+  // user flow skips date/time (the game starts now) and ends on the
+  // trip page with the game-creation modal pre-opened.
+  const [playGameOpen, setPlayGameOpen] = useState(false);
+  const [playGameStep, setPlayGameStep] = useState<1 | 2 | 3>(1);
+  const [playGameCourse, setPlayGameCourse] = useState<CourseSearchRow | null>(null);
+  const [playGameFriends, setPlayGameFriends] = useState<FriendRow[]>([]);
+  const [playGameCreating, setPlayGameCreating] = useState(false);
+
+  function openPlayAGame() {
+    setPlayGameCourse(null);
+    setPlayGameFriends([]);
+    setPlayGameStep(1);
+    setPlayGameOpen(true);
+  }
+
   function handleNewClick() {
-    // Future Trips → New Trip sheet (multi-day, no course attached yet — user
-    // adds courses on the trip detail page). Rounds + archive → Quick Round.
-    if (tab === "trips") {
+    // Each tab's "+" button routes to that tab's creation flow.
+    // Games: a streamlined course→users→game-type wizard (no date,
+    // it's "play right now"). Trips: multi-day, courses get attached
+    // on the trip detail page. Rounds: classic Quick Round with date.
+    if (tab === "games") {
+      openPlayAGame();
+    } else if (tab === "trips") {
       setNewTripOpen(true);
     } else {
       setQuickOpen(true);
@@ -533,52 +564,96 @@ export default function TeeUpPage() {
   const pastTrips = trips.filter(t => t.isPast).sort((a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? ""));
 
   const counts: Record<Tab, number> = {
+    games: 0, // populated once we wire up TripGame query below
     rounds: futureRounds.length,
     trips: futureTrips.length,
-    archive: pastTrips.length + pastRounds.length,
   };
+
+  // Tab metadata — each entry pairs the visible label with a small
+  // inline SVG icon. Taller tabs (~56px) with icon-over-label so users
+  // get instant context for what each tab holds. Three discrete jobs:
+  // play, schedule rounds, plan trips.
+  const TAB_DEFS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    {
+      key: "games",
+      label: "Play a Game",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="5" />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        </svg>
+      ),
+    },
+    {
+      key: "rounds",
+      label: "Rounds",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="6" y1="21" x2="6" y2="3" />
+          <path d="M6 4h12l-3 4 3 4H6" />
+        </svg>
+      ),
+    },
+    {
+      key: "trips",
+      label: "Trips",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="7" width="18" height="14" rx="2" />
+          <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <line x1="3" y1="13" x2="21" y2="13" />
+        </svg>
+      ),
+    },
+  ];
 
   return (
     <main style={{ background: "#07100a", minHeight: "100dvh", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 100 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; }`}</style>
 
-      {/* Header */}
+      {/* Header — title + a context-aware "+ New" button that opens
+          the right sheet for whichever tab is active. */}
       <div style={{ padding: "12px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>Tee Up</div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: "0.04em", marginTop: 2 }}>What you're playing next</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: "0.04em", marginTop: 2 }}>
+            {tab === "games" ? "Start a game right now" : tab === "rounds" ? "Schedule a round" : "Plan a multi-day trip"}
+          </div>
         </div>
         <button
           onClick={handleNewClick}
           style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", borderRadius: 99, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862", cursor: "pointer" }}
         >
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          {tab === "trips" ? "New Trip" : "New Round"}
+          {tab === "games" ? "New Game" : tab === "trips" ? "New Trip" : "New Round"}
         </button>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — icon over label, 56px tall. Three primary jobs:
+          Play a Game / Rounds / Trips. Archive content for each tab
+          lives inside the body via an inline toggle, so users don't
+          lose their place navigating to a separate top-level tab. */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        {([
-          { key: "rounds" as const, label: "Upcoming Rounds" },
-          { key: "trips" as const, label: "Upcoming Trips" },
-          { key: "archive" as const, label: "Archive" },
-        ]).map(t => {
+        {TAB_DEFS.map(t => {
           const active = tab === t.key;
           return (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              style={{ flex: 1, padding: "12px 4px", background: "none", border: "none", borderBottom: `2px solid ${active ? "#4da862" : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+              style={{ flex: 1, padding: "10px 4px", background: "none", border: "none", borderBottom: `2px solid ${active ? "#4da862" : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, color: active ? "#fff" : "rgba(255,255,255,0.4)", minHeight: 56 }}
             >
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: active ? "#fff" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                {t.label}
-              </span>
-              {counts[t.key] > 0 && (
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.25)", background: active ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px" }}>
-                  {counts[t.key]}
+              {t.icon}
+              <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: active ? "#fff" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {t.label}
                 </span>
-              )}
+                {counts[t.key] > 0 && (
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.25)", background: active ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px" }}>
+                    {counts[t.key]}
+                  </span>
+                )}
+              </div>
             </button>
           );
         })}
@@ -592,61 +667,88 @@ export default function TeeUpPage() {
         </div>
       ) : (
         <div style={{ padding: "16px 20px" }}>
-          {tab === "rounds" && (
+          {/* Per-tab Active / Archive toggle. Pill pair sits at the top
+              of each tab's content area so users can flip between
+              upcoming items and historical ones without leaving the
+              tab. Counts hint at how much is in each bucket. */}
+          {(() => {
+            const archiveCounts: Record<Tab, number> = {
+              games: 0, // wired to TripGame archive query in a follow-up
+              rounds: pastRounds.length,
+              trips: pastTrips.length,
+            };
+            const isArchive = archiveOpen[tab];
+            const activeCount = counts[tab];
+            const archiveCount = archiveCounts[tab];
+            // Hide the toggle entirely when both buckets are empty —
+            // it's just noise when there's nothing to switch to.
+            if (activeCount === 0 && archiveCount === 0) return null;
+            return (
+              <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+                {([
+                  { archive: false, label: tab === "games" ? "Active" : "Upcoming", count: activeCount },
+                  { archive: true, label: "Archive", count: archiveCount },
+                ]).map(seg => {
+                  const active = seg.archive === isArchive;
+                  return (
+                    <button
+                      key={seg.label}
+                      onClick={() => setArchiveOpen(prev => ({ ...prev, [tab]: seg.archive }))}
+                      style={{
+                        flex: 1,
+                        background: active ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${active ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.08)"}`,
+                        borderRadius: 99,
+                        padding: "8px 10px",
+                        fontFamily: "'Outfit', sans-serif",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: active ? "#4da862" : "rgba(255,255,255,0.45)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <span>{seg.label}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.7 }}>{seg.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* GAMES TAB — new in 2026-05-24. Empty state pushes users
+              into the Play-a-Game wizard which creates a one-day
+              round + game in a single flow. Active games (in-progress
+              TripGame rows) will list here once the query is wired. */}
+          {tab === "games" && !archiveOpen.games && (
+            <EmptyState
+              title="No active games"
+              subtitle="Pick a course, invite friends, and start a game in seconds. We'll spin up a round automatically."
+              ctaLabel="Play a Game"
+              onCta={() => openPlayAGame()}
+            />
+          )}
+          {tab === "games" && archiveOpen.games && (
+            <EmptyState title="No archived games yet" subtitle="Finished games will land here." />
+          )}
+
+          {/* ROUNDS TAB */}
+          {tab === "rounds" && !archiveOpen.rounds && (
             futureRounds.length === 0
               ? <EmptyState title="No upcoming rounds" subtitle="Plan a single-day round, add friends, attach a game." ctaLabel="Schedule a round" onCta={() => setQuickOpen(true)} />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {futureRounds.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
                 </div>
           )}
-          {tab === "trips" && (
-            futureTrips.length === 0
-              ? <EmptyState title="No upcoming trips" subtitle="Plan a multi-day buddy trip with multiple courses." ctaLabel="Plan a trip" onCta={() => setNewTripOpen(true)} />
+          {tab === "rounds" && archiveOpen.rounds && (
+            pastRounds.length === 0
+              ? <EmptyState title="No archived rounds" subtitle="Past rounds you've logged will appear here." />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {futureTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
-                </div>
-          )}
-          {tab === "archive" && (
-            pastTrips.length === 0 && pastRounds.length === 0
-              ? <EmptyState title="Nothing in the archive yet" subtitle="Past trips and logged rounds will appear here." />
-              : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {/* Archive sub-filter */}
-                  <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
-                    {([
-                      { key: "all" as const, label: "All", count: pastTrips.length + pastRounds.length },
-                      { key: "rounds" as const, label: "Rounds", count: pastRounds.length },
-                      { key: "trips" as const, label: "Trips", count: pastTrips.length },
-                    ]).map(f => {
-                      const active = archiveFilter === f.key;
-                      return (
-                        <button
-                          key={f.key}
-                          onClick={() => setArchiveFilter(f.key)}
-                          style={{
-                            flex: 1,
-                            background: active ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
-                            border: `1px solid ${active ? "rgba(77,168,98,0.45)" : "rgba(255,255,255,0.08)"}`,
-                            borderRadius: 99,
-                            padding: "7px 10px",
-                            fontFamily: "'Outfit', sans-serif",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: active ? "#4da862" : "rgba(255,255,255,0.45)",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 5,
-                          }}
-                        >
-                          <span>{f.label}</span>
-                          <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.7 }}>{f.count}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {(archiveFilter === "all" || archiveFilter === "trips") && pastTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
-                  {(archiveFilter === "all" || archiveFilter === "rounds") && pastRounds.map(r => (
+                  {pastRounds.map(r => (
                     <button key={r.id} onClick={() => router.push(`/courses/${r.courseId}`)} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{ width: 44, height: 44, borderRadius: 10, background: r.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {r.courseLogoUrl ? <img src={r.courseLogoUrl} alt={r.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
@@ -660,6 +762,22 @@ export default function TeeUpPage() {
                       <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0 }}>Logged</span>
                     </button>
                   ))}
+                </div>
+          )}
+
+          {/* TRIPS TAB */}
+          {tab === "trips" && !archiveOpen.trips && (
+            futureTrips.length === 0
+              ? <EmptyState title="No upcoming trips" subtitle="Plan a multi-day buddy trip with multiple courses." ctaLabel="Plan a trip" onCta={() => setNewTripOpen(true)} />
+              : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {futureTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
+                </div>
+          )}
+          {tab === "trips" && archiveOpen.trips && (
+            pastTrips.length === 0
+              ? <EmptyState title="No archived trips" subtitle="Trips that have ended will appear here." />
+              : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {pastTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
                 </div>
           )}
         </div>
@@ -900,6 +1018,273 @@ export default function TeeUpPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Play a Game wizard — three-step flow that creates a one-day
+          round (GolfTrip with startDate = today, endDate = today) plus
+          drops the user on the trip page with the game-creation modal
+          pre-opened. Uses the shared .tourit-sheet pattern so the
+          global KeyboardSync handles the keyboard lift uniformly with
+          every other sheet in the app. */}
+      {playGameOpen && (
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => { if (!playGameCreating) setPlayGameOpen(false); }} />
+          <div className="tourit-sheet tourit-sheet--full" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
+
+            {/* Header — eyebrow + title + step indicator */}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 4 }}>Play a Game · Step {playGameStep} of 3</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
+                {playGameStep === 1 ? "Pick a course" : playGameStep === 2 ? "Who's playing?" : "Ready to tee it up?"}
+              </div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
+                {playGameStep === 1
+                  ? "Where are you playing? Search by name, city, or state."
+                  : playGameStep === 2
+                    ? "Add friends to the game. You can skip and play solo."
+                    : "We'll create the round and drop you into the game setup."}
+              </div>
+
+              {/* Step dots */}
+              <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
+                {[1, 2, 3].map(n => (
+                  <div
+                    key={n}
+                    style={{
+                      flex: 1,
+                      height: 3,
+                      borderRadius: 99,
+                      background: n <= playGameStep ? "#4da862" : "rgba(255,255,255,0.08)",
+                      transition: "background 0.2s",
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* STEP 1 — course */}
+            {playGameStep === 1 && (
+              <div style={{ marginBottom: 18 }}>
+                {playGameCourse ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", background: "rgba(77,168,98,0.10)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 12 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: playGameCourse.logoUrl ? "#fff" : "rgba(77,168,98,0.18)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {playGameCourse.logoUrl ? <img src={playGameCourse.logoUrl} alt={playGameCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{playGameCourse.name}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{[playGameCourse.city, playGameCourse.state].filter(Boolean).join(", ")}</div>
+                    </div>
+                    <button onClick={() => setPlayGameCourse(null)} aria-label="Clear course" style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      value={quickSearch}
+                      onChange={e => setQuickSearch(e.target.value)}
+                      placeholder="Search a course"
+                      style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
+                    />
+                    {quickResults.length > 0 && (
+                      <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4, maxHeight: 320, overflowY: "auto" }}>
+                        {quickResults.map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => { setPlayGameCourse(c); setQuickSearch(""); setQuickResults([]); }}
+                            style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, textAlign: "left" }}
+                          >
+                            <div style={{ width: 34, height: 34, borderRadius: 8, background: c.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              {c.logoUrl ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{[c.city, c.state].filter(Boolean).join(", ")}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* STEP 2 — friends */}
+            {playGameStep === 2 && (
+              <div style={{ marginBottom: 18 }}>
+                <input
+                  value={friendSearch}
+                  onChange={e => setFriendSearch(e.target.value)}
+                  placeholder="Add friends by username"
+                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none", marginBottom: 10 }}
+                />
+                {friendResults.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 200, overflowY: "auto", marginBottom: 10 }}>
+                    {friendResults.map(f => {
+                      const already = playGameFriends.some(x => x.id === f.id);
+                      return (
+                        <button
+                          key={f.id}
+                          onClick={() => { if (!already) setPlayGameFriends(prev => [...prev, f]); setFriendSearch(""); setFriendResults([]); }}
+                          disabled={already}
+                          style={{ width: "100%", background: already ? "rgba(77,168,98,0.10)" : "rgba(255,255,255,0.04)", border: `1px solid ${already ? "rgba(77,168,98,0.3)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, padding: "10px 12px", cursor: already ? "default" : "pointer", display: "flex", alignItems: "center", gap: 10, textAlign: "left", opacity: already ? 0.7 : 1 }}
+                        >
+                          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.18)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {f.avatarUrl ? <img src={f.avatarUrl} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{f.displayName || f.username}</div>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>@{f.username}</div>
+                          </div>
+                          {already && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Added</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {playGameFriends.length > 0 && (
+                  <>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Playing with</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {playGameFriends.map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => setPlayGameFriends(prev => prev.filter(x => x.id !== f.id))}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.14)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 10px", cursor: "pointer" }}
+                        >
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>@{f.username}</span>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* STEP 3 — confirm */}
+            {playGameStep === 3 && (
+              <div style={{ marginBottom: 18, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px 16px" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 4 }}>Course</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 12 }}>{playGameCourse?.name}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 4 }}>Players</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>
+                  You{playGameFriends.length > 0 && ` + ${playGameFriends.map(f => "@" + f.username).join(", ")}`}
+                </div>
+              </div>
+            )}
+
+            {/* Sticky footer — Back / Next pair */}
+            <div style={{ display: "flex", gap: 10, marginTop: "auto" }}>
+              <button
+                onClick={() => {
+                  if (playGameStep === 1) setPlayGameOpen(false);
+                  else setPlayGameStep(s => (s === 3 ? 2 : 1) as 1 | 2 | 3);
+                }}
+                disabled={playGameCreating}
+                style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}
+              >
+                {playGameStep === 1 ? "Cancel" : "Back"}
+              </button>
+              <button
+                onClick={async () => {
+                  if (playGameStep === 1) {
+                    if (!playGameCourse) return;
+                    setPlayGameStep(2);
+                    return;
+                  }
+                  if (playGameStep === 2) {
+                    setPlayGameStep(3);
+                    return;
+                  }
+                  // Step 3 — create the round and route into the game wizard
+                  if (!playGameCourse || !userId || playGameCreating) return;
+                  setPlayGameCreating(true);
+                  try {
+                    const supabase = createClient();
+                    const tripId = crypto.randomUUID();
+                    const today = new Date().toISOString().slice(0, 10);
+                    const nowIso = new Date().toISOString();
+                    const { error: tripErr } = await supabase.from("GolfTrip").insert({
+                      id: tripId,
+                      hostUserId: userId,
+                      name: playGameCourse.name,
+                      startDate: today,
+                      endDate: today,
+                      imageUrl: null,
+                      createdAt: nowIso,
+                      updatedAt: nowIso,
+                    });
+                    if (tripErr) throw tripErr;
+
+                    // Attach the course as the round's single course-stop
+                    await supabase.from("TripCourse").insert({
+                      id: crypto.randomUUID(),
+                      tripId,
+                      courseId: playGameCourse.id,
+                      orderIndex: 0,
+                      holeCount: 18,
+                      createdAt: nowIso,
+                      updatedAt: nowIso,
+                    });
+
+                    // Host membership
+                    await supabase.from("TripMember").insert({
+                      id: crypto.randomUUID(),
+                      tripId,
+                      userId,
+                      role: "HOST",
+                      status: "JOINED",
+                      createdAt: nowIso,
+                      updatedAt: nowIso,
+                    });
+
+                    // Invited friends
+                    if (playGameFriends.length > 0) {
+                      await supabase.from("TripMember").insert(playGameFriends.map(f => ({
+                        id: crypto.randomUUID(),
+                        tripId,
+                        userId: f.id,
+                        role: "MEMBER",
+                        status: "INVITED",
+                        createdAt: nowIso,
+                        updatedAt: nowIso,
+                      })));
+                    }
+
+                    setPlayGameOpen(false);
+                    setPlayGameCreating(false);
+                    // Drop the user on the trip page with a flag that
+                    // tells it to open the game-creation modal
+                    // immediately — that's where "normal steps
+                    // thereafter" (game type + rules) live.
+                    router.push(`/trips/${tripId}?startGame=1`);
+                  } catch (err) {
+                    console.error("Play a Game create failed:", err);
+                    setPlayGameCreating(false);
+                  }
+                }}
+                disabled={playGameCreating || (playGameStep === 1 && !playGameCourse)}
+                style={{
+                  flex: 2,
+                  background: (playGameStep === 1 && !playGameCourse) || playGameCreating ? "rgba(77,168,98,0.3)" : "#2d7a42",
+                  border: "none",
+                  borderRadius: 12,
+                  padding: "13px",
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#fff",
+                  cursor: playGameCreating ? "default" : "pointer",
+                }}
+              >
+                {playGameCreating ? "Creating…" : playGameStep === 3 ? "Start Game →" : "Next"}
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       <BottomNav />
