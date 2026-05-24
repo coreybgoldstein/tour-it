@@ -27,6 +27,9 @@ type TripRow = {
   firstCourseState: string | null;
   firstCourseLat: number | null;
   firstCourseLng: number | null;
+  // Members shown as stacked avatars on the card — same shape as TripGame
+  // `players` so the same row component renders both.
+  members: { userId: string; displayName: string; avatarUrl: string | null }[];
   isRound: boolean;       // 1 day, 1 course-stop
   isPast: boolean;
 };
@@ -510,14 +513,29 @@ export default function TeeUpPage() {
       // 2) Enrich each trip with course/member/game counts
       let built: TripRow[] = [];
       if (tripIds.length > 0) {
-        const [{ data: tripRows }, { data: tcRows }, { data: memberCounts }, { data: gameRows }] = await Promise.all([
+        const [{ data: tripRows }, { data: tcRows }, { data: memberRowsAll }, { data: gameRows }] = await Promise.all([
           supabase.from("GolfTrip").select("id, name, startDate, endDate, imageUrl").in("id", tripIds),
           supabase.from("GolfTripCourse").select("tripId, courseId, secondaryCourseId, sortOrder").in("tripId", tripIds),
-          supabase.from("GolfTripMember").select("tripId").in("tripId", tripIds),
+          supabase.from("GolfTripMember").select("tripId, userId").in("tripId", tripIds),
           supabase.from("TripGame").select("tripId").in("tripId", tripIds),
         ]);
         const memberByTrip = new Map<string, number>();
-        for (const r of (memberCounts ?? []) as any[]) memberByTrip.set(r.tripId, (memberByTrip.get(r.tripId) ?? 0) + 1);
+        for (const r of (memberRowsAll ?? []) as any[]) memberByTrip.set(r.tripId, (memberByTrip.get(r.tripId) ?? 0) + 1);
+        // Hydrate user profiles for the stacked-avatar row at the bottom
+        // of each card. One Supabase round-trip across all members in all
+        // trips, then grouped client-side.
+        const memberUserIds = Array.from(new Set(((memberRowsAll ?? []) as any[]).map(r => r.userId)));
+        const userById = new Map<string, { displayName: string; avatarUrl: string | null }>();
+        if (memberUserIds.length > 0) {
+          const { data: userRows } = await supabase.from("User").select("id, displayName, avatarUrl").in("id", memberUserIds);
+          for (const u of (userRows ?? []) as any[]) userById.set(u.id, { displayName: u.displayName ?? "", avatarUrl: u.avatarUrl ?? null });
+        }
+        const membersByTrip = new Map<string, { userId: string; displayName: string; avatarUrl: string | null }[]>();
+        for (const r of (memberRowsAll ?? []) as any[]) {
+          const u = userById.get(r.userId);
+          if (!membersByTrip.has(r.tripId)) membersByTrip.set(r.tripId, []);
+          membersByTrip.get(r.tripId)!.push({ userId: r.userId, displayName: u?.displayName ?? "@?", avatarUrl: u?.avatarUrl ?? null });
+        }
         const gameByTrip = new Map<string, number>();
         for (const r of (gameRows ?? []) as any[]) gameByTrip.set(r.tripId, (gameByTrip.get(r.tripId) ?? 0) + 1);
         const tcByTrip = new Map<string, any[]>();
@@ -566,6 +584,7 @@ export default function TeeUpPage() {
             firstCourseState: firstCourse?.state ?? null,
             firstCourseLat: firstCourse?.latitude ?? null,
             firstCourseLng: firstCourse?.longitude ?? null,
+            members: membersByTrip.get(t.id) ?? [],
             isRound, isPast,
           };
         });
@@ -850,20 +869,7 @@ export default function TeeUpPage() {
             pastRounds.length === 0
               ? <EmptyState title="No archived rounds" subtitle="Past rounds you've logged will appear here." />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {pastRounds.map(r => (
-                    <button key={r.id} onClick={() => router.push(`/courses/${r.courseId}`)} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 10, background: r.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {r.courseLogoUrl ? <img src={r.courseLogoUrl} alt={r.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.courseName}</div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
-                          {fmtSingleDate(r.date)} {r.totalScore != null && <>· <span style={{ color: "#4da862", fontWeight: 600 }}>{r.totalScore}</span></>}
-                        </div>
-                      </div>
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0 }}>Logged</span>
-                    </button>
-                  ))}
+                  {pastRounds.map(r => <LoggedRoundCard key={r.id} round={r} onClick={() => router.push(`/courses/${r.courseId}`)} />)}
                 </div>
           )}
 
@@ -1509,6 +1515,47 @@ function GameCard({
   );
 }
 
+function LoggedRoundCard({ round, onClick }: { round: RoundRow; onClick: () => void }) {
+  // Archived-round card. Matches the muted (archived) variant of TripCard
+  // exactly so the Rounds → Archive view is visually consistent with the
+  // rest of the Tee Up surface. No member row — RoundRow comes from the
+  // Round table (a logged scored round) and doesn't carry player data.
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        textAlign: "left",
+        cursor: "pointer",
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 16,
+        padding: "14px 16px",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+      }}
+    >
+      <div style={{ width: 44, height: 44, borderRadius: 11, background: round.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {round.courseLogoUrl
+          ? <img src={round.courseLogoUrl} alt={round.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 3 }}>
+          Logged{fmtSingleDate(round.date) ? ` · ${fmtSingleDate(round.date)}` : ""}
+        </div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{round.courseName}</div>
+        {round.totalScore != null && (
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
+            Score <span style={{ color: "#4da862", fontWeight: 600 }}>{round.totalScore}</span>
+          </div>
+        )}
+      </div>
+    </button>
+  );
+}
+
 function EmptyState({ title, subtitle, ctaLabel, onCta }: { title: string; subtitle: string; ctaLabel?: string; onCta?: () => void }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "48px 24px", textAlign: "center" }}>
@@ -1532,43 +1579,80 @@ function EmptyState({ title, subtitle, ctaLabel, onCta }: { title: string; subti
 }
 
 function TripCard({ trip, onClick }: { trip: TripRow; onClick: () => void }) {
+  // Mirror GameCard exactly so the three tabs feel like one design system:
+  // green gradient hero for upcoming, muted card for past, Playfair title,
+  // eyebrow caps with date, stacked-avatar member row, big green pill
+  // chevron. `isRound` only changes the eyebrow label (ROUND vs TRIP).
+  const archived = trip.isPast;
   const date = fmtDateRange(trip.startDate, trip.endDate);
-  const meta: string[] = [];
-  if (trip.courseCount > 0) meta.push(`${trip.courseCount} ${trip.courseCount === 1 ? "course" : "courses"}`);
-  if (trip.totalHoles > 0) meta.push(`${trip.totalHoles} holes`);
-  if (trip.memberCount > 0) meta.push(`${trip.memberCount} ${trip.memberCount === 1 ? "golfer" : "golfers"}`);
+  const eyebrowKind = archived ? "Played" : (trip.isRound ? "Round" : "Trip");
+  const subParts: string[] = [];
+  if (trip.courseCount > 0) subParts.push(`${trip.courseCount} ${trip.courseCount === 1 ? "course" : "courses"}`);
+  if (trip.totalHoles > 0) subParts.push(`${trip.totalHoles} holes`);
+  if (trip.memberCount > 0) subParts.push(`${trip.memberCount} ${trip.memberCount === 1 ? "golfer" : "golfers"}`);
+  const members = trip.members ?? [];
   return (
-    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, boxSizing: "border-box" }}>
-      <div style={{ width: 44, height: 44, borderRadius: 10, background: trip.imageUrl || trip.firstCourseLogo ? "transparent" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {trip.imageUrl
-          ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : trip.firstCourseLogo
-            ? <img src={trip.firstCourseLogo} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
-            : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>
-        }
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 2 }}>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{trip.name}</div>
-          {date && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: trip.isPast ? "rgba(255,255,255,0.4)" : "#4da862", flexShrink: 0 }}>{date}</div>}
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        textAlign: "left",
+        cursor: "pointer",
+        background: archived
+          ? "rgba(255,255,255,0.03)"
+          : "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)",
+        border: `1px solid ${archived ? "rgba(255,255,255,0.07)" : "rgba(77,168,98,0.35)"}`,
+        borderRadius: 16,
+        padding: "14px 16px",
+        boxShadow: archived ? "none" : "0 6px 20px rgba(0,0,0,0.22)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 0,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 11, background: trip.imageUrl || trip.firstCourseLogo ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {trip.imageUrl
+            ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : trip.firstCourseLogo
+              ? <img src={trip.firstCourseLogo} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-          <span>{meta.join(" · ")}</span>
-          {trip.gameCount > 0 && (
-            <>
-              <span style={{ color: "rgba(255,255,255,0.2)" }}>·</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#4da862", fontWeight: 600 }}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
-                {trip.gameCount} {trip.gameCount === 1 ? "game" : "games"}
-              </span>
-            </>
-          )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: archived ? "rgba(255,255,255,0.35)" : "rgba(77,168,98,0.85)", marginBottom: 3 }}>
+            {eyebrowKind}{date ? ` · ${date}` : ""}
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{trip.name}</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {subParts.join(" · ")}
+            {trip.gameCount > 0 && (
+              <> · <span style={{ color: archived ? "rgba(255,255,255,0.5)" : "#4da862", fontWeight: 600 }}>{trip.gameCount} {trip.gameCount === 1 ? "game" : "games"}</span></>
+            )}
+          </div>
         </div>
+        {!archived && (
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#2d7a42", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 4px 12px rgba(45,122,66,0.4)" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        )}
       </div>
-      {!trip.isPast && trip.firstCourseName && (
-        <DirectionsButton course={{ name: trip.firstCourseName, city: trip.firstCourseCity, state: trip.firstCourseState, latitude: trip.firstCourseLat, longitude: trip.firstCourseLng }} />
+      {members.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${archived ? "rgba(255,255,255,0.06)" : "rgba(77,168,98,0.18)"}` }}>
+          <div style={{ display: "flex" }}>
+            {members.slice(0, 5).map((m, i) => (
+              <div key={m.userId} style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "2px solid #0d2318", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -7 : 0, zIndex: members.length - i, flexShrink: 0 }}>
+                {m.avatarUrl
+                  ? <img src={m.avatarUrl} alt={m.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
+              </div>
+            ))}
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {members.slice(0, 2).map(m => m.displayName || "@?").join(" · ")}
+            {members.length > 2 && ` +${members.length - 2}`}
+          </div>
+        </div>
       )}
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
-    </div>
+    </button>
   );
 }
