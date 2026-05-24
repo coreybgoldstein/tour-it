@@ -419,7 +419,11 @@ export default function CourseProfilePage() {
   const [extractionMessage, setExtractionMessage] = useState<string | null>(null);
   const [extractionConfidence, setExtractionConfidence] = useState<Record<number, { par?: string; yardage?: string; handicapRank?: string }>>({});
   const [contributeOpen, setContributeOpen] = useState(false);
-  useKeyboardAwareSheet(contributeOpen, "course-contribute-sheet");
+  // NOTE: do NOT call useKeyboardAwareSheet here — the global
+  // <KeyboardSync> + `.tourit-sheet` CSS already drives the lift via
+  // --keyboard-height. The legacy hook sets inline `bottom` /
+  // `maxHeight` that race with the CSS and end up clamping the sheet
+  // to a tiny strip when the keyboard opens (see 2026-05-24 fix).
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -1203,7 +1207,9 @@ const [editDescription, setEditDescription] = useState("");
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 12, display: "flex", alignItems: "center", gap: 5 }}>
             {holes.length > 0 && holes.some(h => h.par) && <span>Par {holes.reduce((s, h) => s + (h.par || 0), 0)}</span>}
             {holes.length > 0 && holes.some(h => h.yardage) && <><span style={{ color: "rgba(255,255,255,0.35)" }}>·</span><span>{holes.reduce((s, h) => s + (h.yardage || 0), 0).toLocaleString()} yds</span></>}
-            {courseClips.length > 0 && <><span style={{ color: "rgba(255,255,255,0.35)" }}>·</span><span>{courseClips.length} clips</span></>}
+            {/* "X clips" removed 2026-05-24 — the hero meta line was
+                getting too busy alongside Par + yards + pills below.
+                Clip count is still surfaced inside each hole tile. */}
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", position: "relative" }}>
             {/* Est. {year} pill removed from the hero on 2026-05-23 —
@@ -1628,11 +1634,21 @@ const [editDescription, setEditDescription] = useState("");
           <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 24px 44px" }}>
             <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>{course.name}</div>
-            {(hero.designer || hero.year) && (
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 16 }}>
-                {hero.designer ? `Designed by ${hero.designer}` : ""}{hero.designer && hero.year ? " · " : ""}{hero.year ? `Est. ${hero.year}` : ""}
-              </div>
-            )}
+            {(() => {
+              // Prefer the curated `hero.year` (set in COURSE_HEROES for
+              // famous tracks) and fall back to the seeded
+              // course.yearEstablished from the DB so seeded courses still
+              // show "Est. YYYY" when no hero override exists. Year pill
+              // was removed from the hero on 2026-05-23 — this About
+              // sheet is the canonical place to surface it.
+              const yr = hero.year ?? course.yearEstablished ?? null;
+              if (!hero.designer && !yr) return null;
+              return (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 16 }}>
+                  {hero.designer ? `Designed by ${hero.designer}` : ""}{hero.designer && yr ? " · " : ""}{yr ? `Est. ${yr}` : ""}
+                </div>
+              );
+            })()}
             <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
               {course.description || hero.description}
             </p>
@@ -2033,8 +2049,8 @@ const [editDescription, setEditDescription] = useState("");
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Contribute</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 24 }}>Help keep {course.name} accurate and beautiful</div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", marginBottom: 4, flexShrink: 0 }}>Contribute</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginBottom: 16, flexShrink: 0 }}>Help keep {course.name} accurate and beautiful</div>
 
             {contributeSuccess ? (
               <div style={{ textAlign: "center", padding: "24px 0" }}>
@@ -2045,6 +2061,7 @@ const [editDescription, setEditDescription] = useState("");
               </div>
             ) : (
               <>
+                <div className="tourit-sheet-body">
                 {/* Course Info fields */}
                 <div style={{ marginBottom: 20, display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Info</div>
@@ -2185,9 +2202,16 @@ const [editDescription, setEditDescription] = useState("");
                     {contributeError}
                   </div>
                 )}
-                <button onClick={handleContributeSubmit} disabled={contributing} style={{ width: "100%", background: contributing ? "rgba(45,122,66,0.5)" : "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: contributing ? "default" : "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}>
-                  {contributing ? "Saving..." : "Submit Updates"}
-                </button>
+                </div>
+                {/* Sticky submit row — always reachable above the keyboard
+                    so users don't have to scroll the long form to find it.
+                    Lives outside .tourit-sheet-body so the body scrolls
+                    independently. */}
+                <div className="tourit-sheet-footer">
+                  <button onClick={handleContributeSubmit} disabled={contributing} style={{ width: "100%", background: contributing ? "rgba(45,122,66,0.5)" : "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: contributing ? "default" : "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.3)" }}>
+                    {contributing ? "Saving..." : "Submit Updates"}
+                  </button>
+                </div>
               </>
             )}
           </div>

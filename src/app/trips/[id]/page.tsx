@@ -921,12 +921,18 @@ export default function TripPage() {
     const supabase = createClient();
     const memberUserIds = members.map(m => m.userId);
     const { data: usersWithHI } = await supabase.from("User").select("id, displayName, avatarUrl, handicapIndex").in("id", memberUserIds);
-    const initialPlayers: GamePlayer[] = (usersWithHI || []).map((u: any) => ({
+    // Two-player games are 1v1 by definition (Nassau, Match Play, Best
+    // Ball with one per side) — auto-split them onto separate teams so
+    // the user doesn't have to tap through Team A / Team B selectors.
+    // 3+ players keep the default "everyone on Team A" so the user can
+    // group them intentionally in Step 4.
+    const twoPlayerAutoSplit = (usersWithHI?.length ?? 0) === 2;
+    const initialPlayers: GamePlayer[] = (usersWithHI || []).map((u: any, idx: number) => ({
       userId: u.id,
       displayName: u.displayName,
       avatarUrl: u.avatarUrl,
       handicapIndex: u.handicapIndex ?? 0,
-      teamId: "A",
+      teamId: twoPlayerAutoSplit ? (idx === 0 ? "A" : "B") : "A",
     }));
     setGamePlayers(initialPlayers);
 
@@ -2413,12 +2419,12 @@ export default function TripPage() {
                 style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(77,168,98,0.14)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862", cursor: "pointer", marginBottom: 16, letterSpacing: "0.02em" }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                Invite Golfers to This Trip
+                Invite Golfers to This {flavorUpper}
               </button>
             )}
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, gap: 12 }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Edit Trip</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff" }}>Edit {flavorUpper}</div>
               <button
                 onClick={saveEdit}
                 disabled={!editName.trim() || saving}
@@ -2442,9 +2448,9 @@ export default function TripPage() {
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {/* Trip photo */}
+              {/* Trip / Round / Game photo */}
               <div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Trip Photo <span style={{ fontWeight: 400 }}>(optional)</span></div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>{flavorUpper} Photo <span style={{ fontWeight: 400 }}>(optional)</span></div>
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ width: 64, height: 64, borderRadius: 16, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {trip.imageUrl
@@ -2461,16 +2467,35 @@ export default function TripPage() {
                 </div>
               </div>
               <div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Trip Name</div>
-                <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Trip name" style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>{flavorUpper} Name</div>
+                <input value={editName} onChange={e => setEditName(e.target.value)} placeholder={`${flavorUpper} name`} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
               </div>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Description <span style={{ fontWeight: 400 }}>(optional)</span></div>
-                <input value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder="What's this trip about?" style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                <input value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder={`What's this ${flavor} about?`} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
               </div>
               <div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 10 }}>Trip Dates</div>
-                <DateRangePicker startDate={editStart} endDate={editEnd} onChange={(s, e) => { setEditStart(s); setEditEnd(e); }} />
+                {/* Games and Rounds are single-day by definition (1 course-
+                    stop, 1 date). Only Trips need a real start/end range —
+                    everywhere else we collapse to a single DateField and
+                    auto-mirror the value into editEnd so the schema stays
+                    consistent without confusing users with two pickers. */}
+                {flavor === "trip" ? (
+                  <>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 10 }}>Trip Dates</div>
+                    <DateRangePicker startDate={editStart} endDate={editEnd} onChange={(s, e) => { setEditStart(s); setEditEnd(e); }} />
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 10 }}>{flavorUpper} Date</div>
+                    <input
+                      type="date"
+                      value={editStart}
+                      onChange={e => { setEditStart(e.target.value); setEditEnd(e.target.value); }}
+                      style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: editStart ? "#fff" : "rgba(255,255,255,0.42)", outline: "none", colorScheme: "dark" }}
+                    />
+                  </>
+                )}
               </div>
             </div>
             <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
@@ -2483,7 +2508,7 @@ export default function TripPage() {
                 </div>
               ) : (
                 <button onClick={() => setConfirmDelete(true)} style={{ width: "100%", background: "none", border: "1px solid rgba(200,60,60,0.2)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(200,80,80,0.6)", cursor: "pointer" }}>
-                  Delete Trip
+                  Delete {flavorUpper}
                 </button>
               )}
             </div>
@@ -3019,18 +3044,15 @@ export default function TripPage() {
             position: "fixed",
             inset: 0,
             zIndex: 200,
-            background: "rgba(0,0,0,0.55)",
+            // Deeper dim so the trip-page Games header / Create Game
+            // button can't show through behind the sheet — was 0.55
+            // and looked layered/sloppy.
+            background: "rgba(0,0,0,0.78)",
             display: "flex",
-            alignItems: "flex-end",
+            alignItems: "stretch",
             justifyContent: "center",
             // Reserves the Dynamic Island / status-bar zone at the top.
-            // The sheet anchored to flex-end cannot grow above this.
             paddingTop: "calc(env(safe-area-inset-top) + 24px)",
-            // Reserves the BottomNav zone at the bottom — covered by the
-            // backdrop dim, but the sheet sits above it (see marginBottom
-            // on the inner panel) so the nav stays untouched-looking
-            // through the dim.
-            paddingBottom: "calc(70px + env(safe-area-inset-bottom))",
           }}
         >
           <div onClick={e => e.stopPropagation()} style={{
@@ -3042,10 +3064,11 @@ export default function TripPage() {
             border: "1px solid rgba(255,255,255,0.08)",
             display: "flex",
             flexDirection: "column",
-            // Fills the flex container (capped by outer paddingTop and
-            // paddingBottom). The body inside is overflow-y: auto so
-            // content scrolls when it exceeds available height.
-            maxHeight: "100%",
+            // Stretch to fill the full vertical container so there's no
+            // gap between the sheet bottom and the screen edge — that
+            // gap was where the trip page bled through. The body inside
+            // is overflow-y: auto so long content still scrolls.
+            flex: 1,
             minHeight: 0,
           }}>
             {/* Drag handle */}

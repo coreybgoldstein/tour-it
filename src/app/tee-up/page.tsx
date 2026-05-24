@@ -684,11 +684,16 @@ export default function TeeUpPage() {
     {
       key: "games",
       label: "Play a Game",
+      // Scorecard + pencil — reads as "play a round and keep score"
+      // more directly than the bullseye target did. The pencil sits
+      // diagonal across the lower-right corner of the card.
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="9" />
-          <circle cx="12" cy="12" r="5" />
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="13" height="16" rx="2" />
+          <line x1="6.5" y1="8" x2="12.5" y2="8" />
+          <line x1="6.5" y1="11.5" x2="12.5" y2="11.5" />
+          <line x1="6.5" y1="15" x2="10" y2="15" />
+          <path d="M15.5 17.5 L19 14 L21 16 L17.5 19.5 L14.8 20.2 Z" />
         </svg>
       ),
     },
@@ -841,7 +846,7 @@ export default function TeeUpPage() {
             activeGames.length === 0
               ? <EmptyState
                   title="No active games"
-                  subtitle="Pick a course, invite friends, and start a game in seconds. We'll spin up a round automatically."
+                  subtitle="Pick a course, invite friends, and start a game in seconds — Nassau, Skins, Match Play, Best Ball, Closest to the Pin, Long Drive. We'll spin up the round automatically."
                   ctaLabel="Play a Game"
                   onCta={() => openPlayAGame()}
                 />
