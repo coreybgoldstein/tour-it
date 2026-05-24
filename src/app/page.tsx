@@ -2056,6 +2056,46 @@ export default function Home() {
         </div>
       )}
 
+      {/* Homepage policy footer — small, fixed strip of legal/info
+          links visible just above the BottomNav. Required by Google's
+          OAuth verification: their reviewer expects a clickable
+          "Privacy Policy" link on the URL configured as the OAuth
+          consent screen's Application Home Page. Without this, app
+          name + logo stay frozen as "Sign in to {project}.supabase.co"
+          on the Google consent screen.
+
+          Positioned at the bottom-center, well below the active clip
+          content, so it's findable for Google + visitors without
+          interfering with the feed. Low-opacity text over the video
+          gradient keeps it unobtrusive in normal use. */}
+      <div
+        style={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: "calc(74px + env(safe-area-inset-bottom))",
+          zIndex: 11,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 10,
+          pointerEvents: "auto",
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: 10,
+          color: "rgba(255,255,255,0.35)",
+          textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+        }}
+        aria-label="Tour It policy links"
+      >
+        <a href="/privacy" style={{ color: "inherit", textDecoration: "none" }}>Privacy Policy</a>
+        <span aria-hidden="true">·</span>
+        <a href="/terms" style={{ color: "inherit", textDecoration: "none" }}>Terms</a>
+        <span aria-hidden="true">·</span>
+        <a href="/about" style={{ color: "inherit", textDecoration: "none" }}>About</a>
+        <span aria-hidden="true">·</span>
+        <a href="mailto:corey@touritgolf.com" style={{ color: "inherit", textDecoration: "none" }}>Contact</a>
+      </div>
+
       <BottomNav />
 
       {/* Report clip sheet */}
