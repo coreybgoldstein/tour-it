@@ -26,7 +26,7 @@
  * regardless of how tall its content renders.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type CourseSearchRow = {
@@ -143,6 +143,37 @@ export default function CreateGameSheet({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Refs for keyboard-aware scrolling ────────────────────────────
+  // Friend search lives in the middle of the sheet — when the user
+  // taps the input on a tall sheet, the dropdown results render
+  // below it and end up behind the keyboard. Scrolling the results
+  // anchor into view after they render brings them up above the
+  // keyboard. Same trick for the course search at the top — the
+  // sheet auto-scrolls so the dropdown is always visible.
+  const friendResultsRef = useRef<HTMLDivElement>(null);
+  const courseResultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (friendResults.length > 0 && friendResultsRef.current) {
+      friendResultsRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [friendResults]);
+
+  useEffect(() => {
+    if (courseResults.length > 0 && courseResultsRef.current) {
+      courseResultsRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [courseResults]);
+
+  // ── Handicap input drafts ────────────────────────────────────────
+  // Backed by string per userId so the input can sit at "" while the
+  // user retypes. Without this the controlled input snaps back to "0"
+  // the moment the field is emptied, which makes it impossible to
+  // delete a leading zero. On blur / +/-, we parse the draft back into
+  // the player's numeric handicapIndex and clear the draft so the
+  // canonical number takes over again.
+  const [handicapDrafts, setHandicapDrafts] = useState<Record<string, string>>({});
+
   // Selected trip course (when presetTrip has multiple stops). Falls back
   // to the first course automatically.
   const [tripCourseIdx, setTripCourseIdx] = useState(0);
@@ -171,6 +202,7 @@ export default function CreateGameSheet({
     setHoleStake("5");
     setSelectedHoles([]);
     setTripCourseIdx(0);
+    setHandicapDrafts({});
 
     // Seed player list — host always first, then trip members (deduped),
     // each with their current handicap.
@@ -500,7 +532,7 @@ export default function CreateGameSheet({
                     onChange={setCourseSearch}
                   />
                   {courseResults.length > 0 && (
-                    <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div ref={courseResultsRef} style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
                       {courseResults.map(c => (
                         <button
                           key={c.id}
@@ -557,21 +589,17 @@ export default function CreateGameSheet({
           {/* ── DATE (standalone only) ───────────────────────────── */}
           {!presetTrip && (
             <Section label="Date">
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={e => setDate(e.target.value)}
-                  style={inputStyle}
-                />
-                <input
-                  type="time"
-                  value={teeTime}
-                  onChange={e => setTeeTime(e.target.value)}
-                  placeholder="Tee time (optional)"
-                  style={inputStyle}
-                />
-              </div>
+              {/* iOS WKWebView renders native date/time controls with
+                  an absolutely-positioned indicator capsule that
+                  overflows the input box. In a 2-col grid these
+                  capsules visibly bleed into the adjacent cell. Stack
+                  the inputs in a custom-styled overlay (invisible
+                  native input on top of a styled div) so we control
+                  every pixel of chrome — same trick the trip-page
+                  DateField uses. */}
+              <DateInput value={date} onChange={setDate} placeholder="Select date" />
+              <div style={{ height: 8 }} />
+              <TimeInput value={teeTime} onChange={setTeeTime} placeholder="Tee time (optional)" />
             </Section>
           )}
 
@@ -597,19 +625,40 @@ export default function CreateGameSheet({
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <button
                       type="button"
-                      onClick={() => setPlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.max(-10, Math.round((pl.handicapIndex - 0.1) * 10) / 10) } : pl))}
+                      onClick={() => {
+                        setPlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.max(-10, Math.round((pl.handicapIndex - 0.1) * 10) / 10) } : pl));
+                        setHandicapDrafts(d => { const n = { ...d }; delete n[p.userId]; return n; });
+                      }}
                       style={stepperBtnStyle}
                     >−</button>
                     <input
                       type="number"
                       step="0.1"
-                      value={p.handicapIndex}
-                      onChange={e => setPlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: e.target.value === "" ? 0 : Math.max(-10, Math.min(54, parseFloat(e.target.value) || 0)) } : pl))}
+                      // Show the draft when the user is mid-edit so the
+                      // field can sit at "" without snapping back to 0.
+                      // Otherwise show the committed number — but treat
+                      // a fresh 0 as empty so new players land with a
+                      // blank field instead of a stuck "0".
+                      value={handicapDrafts[p.userId] !== undefined
+                        ? handicapDrafts[p.userId]
+                        : (p.handicapIndex === 0 ? "" : String(p.handicapIndex))}
+                      onChange={e => setHandicapDrafts(d => ({ ...d, [p.userId]: e.target.value }))}
+                      onBlur={() => {
+                        const raw = handicapDrafts[p.userId];
+                        if (raw === undefined) return;
+                        const parsed = raw.trim() === "" ? 0 : Math.max(-10, Math.min(54, parseFloat(raw) || 0));
+                        setPlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: parsed } : pl));
+                        setHandicapDrafts(d => { const n = { ...d }; delete n[p.userId]; return n; });
+                      }}
+                      placeholder="—"
                       style={{ width: 52, textAlign: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", outline: "none" }}
                     />
                     <button
                       type="button"
-                      onClick={() => setPlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.min(54, Math.round((pl.handicapIndex + 0.1) * 10) / 10) } : pl))}
+                      onClick={() => {
+                        setPlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, handicapIndex: Math.min(54, Math.round((pl.handicapIndex + 0.1) * 10) / 10) } : pl));
+                        setHandicapDrafts(d => { const n = { ...d }; delete n[p.userId]; return n; });
+                      }}
                       style={stepperBtnStyle}
                     >+</button>
                     {p.userId !== currentUserId && (
@@ -631,7 +680,7 @@ export default function CreateGameSheet({
                 onChange={setFriendSearch}
               />
               {friendResults.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div ref={friendResultsRef} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {friendResults.map(f => (
                     <button
                       key={f.id}
@@ -804,6 +853,46 @@ function Section({ label, children }: { label: string; children: React.ReactNode
     <div style={{ marginTop: 14 }}>
       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>{label}</div>
       {children}
+    </div>
+  );
+}
+
+// Custom-styled date / time input. iOS native chrome (the floating
+// indicator pill) overflows the input bounds and bleeds into adjacent
+// cells in a grid. We stack a visually-styled div under an invisible
+// native input so taps still open the iOS picker but the rendering
+// is fully under our control. Same approach as the trip-page
+// DateField, adapted for in-component use.
+function DateInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const display = value
+    ? new Date(value + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : placeholder;
+  return (
+    <div style={{ position: "relative", width: "100%", height: 44 }}>
+      <div style={{ ...inputStyle, height: "100%", padding: "0 14px", display: "flex", alignItems: "center", color: value ? "#fff" : "rgba(255,255,255,0.42)" }}>
+        {display}
+      </div>
+      <input type="date" value={value} onChange={e => onChange(e.target.value)} style={{ position: "absolute", inset: 0, opacity: 0, border: 0, padding: 0, margin: 0, cursor: "pointer", background: "transparent", colorScheme: "dark", width: "100%", height: "100%" }} />
+    </div>
+  );
+}
+
+function TimeInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const display = value
+    ? (() => {
+        const [hh, mm] = value.split(":").map(Number);
+        if (Number.isNaN(hh)) return placeholder;
+        const period = hh >= 12 ? "PM" : "AM";
+        const h12 = hh % 12 || 12;
+        return `${h12}:${String(mm ?? 0).padStart(2, "0")} ${period}`;
+      })()
+    : placeholder;
+  return (
+    <div style={{ position: "relative", width: "100%", height: 44 }}>
+      <div style={{ ...inputStyle, height: "100%", padding: "0 14px", display: "flex", alignItems: "center", color: value ? "#fff" : "rgba(255,255,255,0.42)" }}>
+        {display}
+      </div>
+      <input type="time" value={value} onChange={e => onChange(e.target.value)} style={{ position: "absolute", inset: 0, opacity: 0, border: 0, padding: 0, margin: 0, cursor: "pointer", background: "transparent", colorScheme: "dark", width: "100%", height: "100%" }} />
     </div>
   );
 }
