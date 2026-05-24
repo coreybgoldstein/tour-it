@@ -34,7 +34,13 @@ export default function BottomNav() {
   const isTeeUp = pathname === "/tee-up" || pathname.startsWith("/tee-up/");
   const isProfile = pathname === "/profile" || pathname.startsWith("/profile/");
 
-  if (!isDesktop && keyboardOpen) return null;
+  // When the keyboard opens we hide the mobile nav. Previously we unmounted
+  // the whole component (return null), but on iOS the unmount + keyboard
+  // animation didn't sync — the user could briefly see the nav's blurred
+  // backdrop-filter through the rising keyboard. Now we keep the component
+  // mounted and animate it OUT via translateY + opacity so the exit is a
+  // deliberate slide-down rather than a 1-frame backdrop flash.
+  const hideMobileNav = !isDesktop && keyboardOpen;
 
   const navItems = [
     {
@@ -177,18 +183,27 @@ export default function BottomNav() {
 
   // ── Mobile bottom nav ─────────────────────────────────────────
   return (
-    <nav style={{
+    <nav aria-hidden={hideMobileNav} style={{
       position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
       display: "flex", alignItems: "center",
       // Bottom padding includes the iOS home-indicator safe area so the
       // tab bar doesn't sit on top of the swipe-up bar in Capacitor.
       padding: "10px 4px calc(18px + env(safe-area-inset-bottom))",
       background: "rgba(4,12,6,0.98)",
-      backdropFilter: "blur(16px)",
-      WebkitBackdropFilter: "blur(16px)",
+      // Backdrop blur is dropped while hiding so the brief residual frame
+      // during keyboard-open doesn't show a frosted gradient through the
+      // rising keyboard.
+      backdropFilter: hideMobileNav ? "none" : "blur(16px)",
+      WebkitBackdropFilter: hideMobileNav ? "none" : "blur(16px)",
       borderTop: "1px solid rgba(77,168,98,0.25)",
-      transform: "translateZ(0)",
-      WebkitTransform: "translateZ(0)",
+      // Slide down + fade when the keyboard is up. 180ms ease-out feels
+      // intentional next to iOS's own keyboard rise (~250ms cubic-bezier).
+      // pointer-events: none stops the hidden nav from intercepting taps.
+      transform: hideMobileNav ? "translate3d(0, 100%, 0)" : "translateZ(0)",
+      WebkitTransform: hideMobileNav ? "translate3d(0, 100%, 0)" : "translateZ(0)",
+      opacity: hideMobileNav ? 0 : 1,
+      transition: "transform 0.18s ease-out, opacity 0.14s ease-out, backdrop-filter 0.1s",
+      pointerEvents: hideMobileNav ? "none" : "auto",
       willChange: "transform",
     }}>
       {navItems.map(item => (
