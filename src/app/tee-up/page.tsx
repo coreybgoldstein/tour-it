@@ -598,11 +598,12 @@ export default function TeeUpPage() {
     {
       key: "trips",
       label: "Trips",
+      // Airplane outline — fits the "travel to play" vibe of multi-day
+      // golf trips better than a suitcase. Lucide-style stroke icon to
+      // match the other two tabs.
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="7" width="18" height="14" rx="2" />
-          <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-          <line x1="3" y1="13" x2="21" y2="13" />
+          <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
         </svg>
       ),
     },
@@ -637,19 +638,24 @@ export default function TeeUpPage() {
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         {TAB_DEFS.map(t => {
           const active = tab === t.key;
+          // Active tab matches the BottomNav active treatment —
+          // icon + label both flip to the Tour It green (#4da862) so
+          // the system reads consistently across the app's nav surfaces.
+          const activeColor = "#4da862";
+          const idleColor = "rgba(255,255,255,0.4)";
           return (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              style={{ flex: 1, padding: "10px 4px", background: "none", border: "none", borderBottom: `2px solid ${active ? "#4da862" : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, color: active ? "#fff" : "rgba(255,255,255,0.4)", minHeight: 56 }}
+              style={{ flex: 1, padding: "10px 4px", background: "none", border: "none", borderBottom: `2px solid ${active ? activeColor : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, color: active ? activeColor : idleColor, minHeight: 56 }}
             >
               {t.icon}
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: active ? "#fff" : "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: active ? activeColor : idleColor, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                   {t.label}
                 </span>
                 {counts[t.key] > 0 && (
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.25)", background: active ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px" }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(77,168,98,0.7)" : "rgba(255,255,255,0.25)", background: active ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px" }}>
                     {counts[t.key]}
                   </span>
                 )}
