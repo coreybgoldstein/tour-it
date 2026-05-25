@@ -1836,7 +1836,7 @@ export default function ProfilePage() {
           return (
             <button key={tab} onClick={() => setProfileTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: `2px solid ${active ? "#4da862" : "transparent"}`, cursor: "pointer", marginBottom: -1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: active ? "#fff" : "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                {tab === "clips" ? "Clips" : "Lists"}
+                {tab === "clips" ? "Gallery" : "Lists"}
               </span>
               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: active ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.2)", background: active ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: 10, padding: "1px 6px", letterSpacing: 0 }}>
                 {count}
@@ -1917,8 +1917,8 @@ export default function ProfilePage() {
               <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(26,158,66,0.07)", border: "1px solid rgba(26,158,66,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.35)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
               </div>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>{isOwner ? "You haven't uploaded any clips yet" : "No clips yet"}</div>
-              {isOwner && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", lineHeight: 1.5, maxWidth: 220 }}>Upload hole footage to start building your scouting profile.</div>}
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.45)" }}>{isOwner ? "Your gallery is empty" : "Nothing in their gallery yet"}</div>
+              {isOwner && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", lineHeight: 1.5, maxWidth: 220 }}>Upload clips and hole photos to start building your scouting profile.</div>}
               {isOwner && <button onClick={() => router.push("/upload")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "11px 28px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: "'Outfit', sans-serif" }}>Upload a clip</button>}
             </div>
           ) : (
