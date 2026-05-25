@@ -204,14 +204,18 @@ function LeaderboardsButtonInline() {
 
 
 function CourseCard({ course, onClick, compact, featured }: { course: TrendingCourse; onClick: () => void; compact?: boolean; featured?: FeaturedTournament | null }) {
-  const h = compact ? 174 : 188;
   const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
   const GOLD = "#d4a017";
   return (
     <div
       onClick={onClick}
+      // width / height live in the .course-card-* CSS classes so the
+      // height-based media queries in the home <style> block can scale
+      // them down on smaller iPhones (SE/12 mini → 17/17 Pro/17e) without
+      // touching the design on Plus / Pro Max.
+      className={compact ? "course-card course-card-compact" : "course-card course-card-default"}
       style={{
-        width: 148, height: h, borderRadius: 14, flexShrink: 0, overflow: "hidden",
+        borderRadius: 14, flexShrink: 0, overflow: "hidden",
         cursor: "pointer", position: "relative", background: "rgba(10,28,18,0.95)",
         border: featured ? `1.5px solid ${GOLD}` : "1px solid rgba(26,158,66,0.12)",
         boxShadow: featured ? "0 0 0 1px rgba(212,160,23,0.25), 0 0 14px rgba(212,160,23,0.22)" : undefined,
@@ -1696,27 +1700,58 @@ export default function Home() {
         .courses-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; }
         .courses-row::-webkit-scrollbar { display: none; }
 
-        /* Compact layout for shorter viewports (iPhone SE/12/13/14 Pro
-           are ~844px tall vs Pro Max at ~932px). Without this, the
-           discovery section's Hero + Search + Popular + Near Me + Tour
-           the Feed rail overflowed the viewport on smaller phones and
-           a chunk of the Tour the Feed rail got hidden behind the
-           BottomNav. Scales every piece proportionally instead of
-           letting fixed pixels dominate. */
+        /* Course-row card sizes live in CSS (not inline) so the
+           viewport-based media queries below can scale them down on
+           smaller iPhones. */
+        .course-card-compact { width: 148px; height: 174px; }
+        .course-card-default { width: 148px; height: 188px; }
+
+        /* ── Responsive discovery layout ──
+           Tier breakpoints align with the real iPhone lineup:
+
+             default (≥ 871pt tall) — iPhone 14 Plus, 15/16 Plus,
+               14/15/16 Pro Max, 17 Pro Max (rumored ~956pt).
+               Full design, full breathing room.
+
+             max-height: 870px — base iPhone 14/15/16 (844pt),
+               14/15/16/17 Pro (852pt), iPhone 16e (852pt),
+               iPhone 17e (852pt), iPhone 12/13 mini (812pt).
+               Hero + cards + paddings scaled down so the Tour
+               the Feed rail clears the BottomNav.
+
+             max-height: 760px — iPhone SE 2nd/3rd gen (667pt)
+               and any 4.7"-class device. Tightest layout.
+
+           Width-based tier handles ≤ 380pt (SE/mini narrow widths)
+           so even on portrait orientation the cards don't crowd. */
         @media (max-height: 870px) {
           .discovery-hero { font-size: 24px !important; }
           .discovery-search-btn { padding: 13px 16px !important; }
           .discovery-search-btn span { font-size: 14px !important; }
-          .discovery-section-label { font-size: 11px !important; }
+          .discovery-section-label { font-size: 11px !important; padding-bottom: 8px !important; }
           .discovery-section { margin-top: 6px !important; }
           .discovery-row-pad { padding-top: 14px !important; padding-bottom: 12px !important; }
+          .course-card-compact { width: 138px !important; height: 160px !important; }
+          .course-card-default { width: 138px !important; height: 174px !important; }
           .feed-peek-card { width: 84px !important; }
-          .feed-peek-section { padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important; }
+          .feed-peek-section { padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important; margin-top: 12px !important; }
         }
         @media (max-height: 760px) {
           .discovery-hero { font-size: 22px !important; }
           .discovery-row-pad { padding-top: 10px !important; padding-bottom: 10px !important; }
+          .discovery-search-btn { padding: 11px 14px !important; }
+          .course-card-compact { width: 130px !important; height: 150px !important; }
+          .course-card-default { width: 130px !important; height: 164px !important; }
           .feed-peek-card { width: 76px !important; }
+          .feed-peek-section { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
+        }
+        @media (max-width: 380px) {
+          /* Narrow widths (iPhone SE / 12 mini / 13 mini at 375pt).
+             Shrinks card widths so two-and-a-half fit on screen instead
+             of just two-with-cutoff, which feels intentional. */
+          .course-card-compact { width: 132px !important; }
+          .course-card-default { width: 132px !important; }
+          .courses-row { gap: 10px !important; padding: 0 16px 4px !important; }
         }
         @keyframes splash-logo-in { 0% { opacity: 0; transform: scale(0.82); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes splash-tagline-in { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -1945,7 +1980,7 @@ export default function Home() {
                       featured={featured && course.id === featured.courseId ? featured : null}
                     />
                   )) : [1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} className="course-card course-card-compact" style={{ borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               </div>
@@ -1986,7 +2021,7 @@ export default function Home() {
               {locationStatus === "loading" && (
                 <div className="courses-row">
                   {[1, 2, 3].map(i => (
-                    <div key={i} style={{ width: 148, height: 174, borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
+                    <div key={i} className="course-card course-card-compact" style={{ borderRadius: 14, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }} />
                   ))}
                 </div>
               )}
