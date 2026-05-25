@@ -472,29 +472,73 @@ export default function CreateGameSheet({
     }
   }
 
+  // Body-scroll lock + visualViewport sync — same battle-tested
+  // pattern the Quick Round / New Trip sheets use. We tried
+  // `bottom: var(--keyboard-height)` first but it double-accounted
+  // with Capacitor's native WebView resize and the sheet shrank to
+  // ~30% of the visible area on focus. Sizing the overlay directly
+  // to `visualViewport.height` works in every mode: web Safari,
+  // Capacitor `keyboardResize: "native"`, and `keyboardResize:
+  // "none"`.
+  useEffect(() => {
+    if (!open) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width, overflow: body.style.overflow };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    const vv = window.visualViewport;
+    const sync = () => {
+      const el = document.getElementById("create-game-overlay");
+      if (!el || !vv) return;
+      el.style.height = `${vv.height}px`;
+      el.style.transform = `translateY(${vv.offsetTop}px)`;
+    };
+    if (vv) {
+      sync();
+      vv.addEventListener("resize", sync);
+      vv.addEventListener("scroll", sync);
+    }
+
+    return () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+      if (vv) {
+        vv.removeEventListener("resize", sync);
+        vv.removeEventListener("scroll", sync);
+      }
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
     <div
+      id="create-game-overlay"
       onClick={() => { if (!submitting) onClose(); }}
       style={{
         position: "fixed",
         top: 0,
         left: 0,
         right: 0,
-        // Bottom follows --keyboard-height so the sheet flexes to
-        // exactly the visible area above the keyboard — without
-        // this, on Capacitor iOS with default keyboardResize "none"
-        // the sheet stretches behind the keyboard and leaves a
-        // visible gap (see EditClipSheet fix on 2026-05-25).
-        bottom: "var(--keyboard-height, 0px)",
+        height: "100dvh",
         zIndex: 200,
         background: "rgba(0,0,0,0.78)",
         display: "flex",
         alignItems: "stretch",
         justifyContent: "center",
         paddingTop: "calc(env(safe-area-inset-top) + 24px)",
-        transition: "bottom 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
+        willChange: "transform",
       }}
     >
       <div

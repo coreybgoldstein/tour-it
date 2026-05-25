@@ -136,43 +136,72 @@ export default function EditClipSheet({
     onSaved({ holeNumber: editData.holeNumber, holeId, shotType: editData.shotType, clubUsed: editData.clubUsed, windCondition: editData.windCondition, strategyNote: editData.strategyNote });
   }
 
+  // Same visualViewport sync the Quick Round sheet uses — works in
+  // every keyboard mode (Capacitor native resize, none, web Safari).
+  // The earlier `bottom: var(--keyboard-height)` approach double-
+  // accounted with Capacitor's native WebView resize and the sheet
+  // shrank to a strip.
+  useEffect(() => {
+    if (!uploadId) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width, overflow: body.style.overflow };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    const vv = window.visualViewport;
+    const sync = () => {
+      const el = document.getElementById("edit-clip-overlay");
+      if (!el || !vv) return;
+      el.style.height = `${vv.height}px`;
+      el.style.transform = `translateY(${vv.offsetTop}px)`;
+    };
+    if (vv) {
+      sync();
+      vv.addEventListener("resize", sync);
+      vv.addEventListener("scroll", sync);
+    }
+
+    return () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+      if (vv) {
+        vv.removeEventListener("resize", sync);
+        vv.removeEventListener("scroll", sync);
+      }
+    };
+  }, [uploadId]);
+
   if (!uploadId) return null;
 
   return (
     <>
       <style>{`@keyframes editSpinSheet { to { transform: rotate(360deg); } }`}</style>
-      {/* Custom-overlay bottom sheet — same pattern as CreateGameSheet
-          and the trip-page Create Game sheet. .tourit-sheet's
-          min-height calc collapses below the keyboard top on tall
-          forms, leaving the profile page visible beneath the sheet
-          when the keyboard opens for the tag search. position:fixed
-          + alignItems:stretch + flex:1 on the inner panel forces it
-          to fill the available height between the safe-area top
-          and the keyboard. */}
       <div
+        id="edit-clip-overlay"
         onClick={onClose}
         style={{
           position: "fixed",
           top: 0,
           left: 0,
           right: 0,
-          // Bottom tracks the on-screen keyboard via the global
-          // --keyboard-height CSS var maintained by <KeyboardSync>.
-          // Without this, on Capacitor iOS (default keyboardResize
-          // "none") 100vh stays full-screen when the keyboard opens
-          // and the sheet stretches BEHIND the keyboard, leaving a
-          // visible gap above the keyboard where the page shows
-          // through. Pulling the container's bottom up to the
-          // keyboard top fixes the gap and the sheet flexes to fill
-          // exactly the visible area.
-          bottom: "var(--keyboard-height, 0px)",
+          height: "100dvh",
           zIndex: 210,
           background: "rgba(0,0,0,0.78)",
           display: "flex",
           alignItems: "stretch",
           justifyContent: "center",
           paddingTop: "calc(env(safe-area-inset-top) + 24px)",
-          transition: "bottom 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
+          willChange: "transform",
         }}
       >
         <div
