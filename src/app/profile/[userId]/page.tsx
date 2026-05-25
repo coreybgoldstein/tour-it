@@ -487,6 +487,16 @@ export default function ProfilePage() {
   const [editUsername, setEditUsername] = useState("");
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [nameNudgeDismissed, setNameNudgeDismissed] = useState(false);
+  // Complete-profile nudge — fires when isOwner + any of avatar /
+  // handicap / homeCourse is missing. Per 2026-05-25 onboarding v3,
+  // those fields are NOT collected at signup anymore; first profile
+  // visit is where we prompt for them. Dismissal persisted in
+  // localStorage so it doesn't badger every visit.
+  const [completeProfileDismissed, setCompleteProfileDismissed] = useState(true);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setCompleteProfileDismissed(!!localStorage.getItem("tour-it-complete-profile-dismissed"));
+  }, []);
   const [editBio, setEditBio] = useState("");
   const [editHomeCourseSearch, setEditHomeCourseSearch] = useState("");
   const [editHomeCourseResults, setEditHomeCourseResults] = useState<HomeCourse[]>([]);
@@ -1650,6 +1660,47 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Complete-profile nudge — onboarding v3 defers avatar /
+          handicap / home course to the first profile visit. Show
+          this banner when any of those three are still missing and
+          the user hasn't dismissed it. Dismissal sticks in
+          localStorage so it doesn't badger every visit; they can
+          still hit the pencil icon in the identity band any time. */}
+      {isOwner && !completeProfileDismissed && (
+        profile.avatarUrl === null ||
+        profile.handicapIndex === null ||
+        profile.homeCourseId === null
+      ) && (
+        <div style={{ margin: "12px 16px 0", padding: "14px 16px", background: "linear-gradient(135deg, rgba(77,168,98,0.12) 0%, rgba(45,122,66,0.05) 100%)", border: "1px solid rgba(77,168,98,0.32)", borderRadius: 14, boxShadow: "0 4px 16px rgba(0,0,0,0.18)" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 4 }}>Finish your profile</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.55 }}>
+                Pick an avatar, drop your handicap, pin a home course. Two minutes — and your stats render right when you join games.
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+                {profile.avatarUrl === null && <span style={completeChipStyle}>Avatar</span>}
+                {profile.handicapIndex === null && <span style={completeChipStyle}>Handicap</span>}
+                {profile.homeCourseId === null && <span style={completeChipStyle}>Home course</span>}
+              </div>
+            </div>
+            <button
+              onClick={() => { try { localStorage.setItem("tour-it-complete-profile-dismissed", "1"); } catch {} setCompleteProfileDismissed(true); }}
+              aria-label="Dismiss"
+              style={{ flexShrink: 0, width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <button onClick={() => setShowEdit(true)} style={{ marginTop: 12, width: "100%", background: "#2d7a42", border: "none", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 2px 12px rgba(45,122,66,0.4)" }}>
+            Complete profile
+          </button>
+        </div>
+      )}
+
       {/* Identity band — matches the trip page pattern. Avatar is vertically
           centered in the band so it sits cleanly between the green top bar
           and the progression card below */}
@@ -2047,3 +2098,18 @@ export default function ProfilePage() {
     </main>
   );
 }
+
+// Small chip style for the "still missing" markers on the Finish
+// your profile banner.
+const completeChipStyle: React.CSSProperties = {
+  fontFamily: "'Outfit', sans-serif",
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "rgba(77,168,98,0.95)",
+  background: "rgba(77,168,98,0.15)",
+  border: "1px solid rgba(77,168,98,0.32)",
+  borderRadius: 99,
+  padding: "3px 8px",
+};
