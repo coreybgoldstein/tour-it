@@ -1295,7 +1295,7 @@ export default function Home() {
     const currentUid = session?.user?.id ?? null;
     const { data: rawUploads } = await supabase
       .from("Upload")
-      .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
+      .select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, strategyNote, clubUsed, windCondition, shotType, likeCount, commentCount, userId, uploadedByUserId, seriesId, seriesOrder, yardageOverlay, datePlayedAt, createdAt")
       .eq("moderationStatus", "APPROVED")
       .order("createdAt", { ascending: false })
       .lt("createdAt", feedCursorRef.current)
@@ -1311,11 +1311,18 @@ export default function Home() {
 
     const courseIds = [...new Set(uploads.map((u: any) => u.courseId))];
     const userIds = [...new Set(uploads.map((u: any) => u.userId))];
+    // Audit #28: load-more was forgetting to pull uploadedByUserId
+    // and resolve it to a username, so any hero-tagged clip past the
+    // initial 25 lost its "uploaded by @x" attribution chip. Mirror
+    // the initial loadFeed pattern (line ~1104) and resolve all
+    // original-uploader ids alongside the current-owner ids.
+    const uploaderIds = [...new Set(uploads.map((u: any) => u.uploadedByUserId).filter(Boolean) as string[])];
+    const allUserIds = [...new Set([...userIds, ...uploaderIds])];
     const holeIds = [...new Set(uploads.map((u: any) => u.holeId).filter(Boolean))];
 
     const [{ data: courses }, { data: users }, { data: holes }, { data: progressions }] = await Promise.all([
       supabase.from("Course").select("id, name, logoUrl, city, state").in("id", courseIds),
-      supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds),
+      supabase.from("User").select("id, username, avatarUrl, handicapIndex").in("id", allUserIds),
       supabase.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds),
       supabase.from("UserProgression").select("userId, rank").in("userId", userIds),
     ]);
@@ -1327,6 +1334,11 @@ export default function Home() {
       const hole = holes?.find((h: any) => h.id === u.holeId);
       const user = users?.find((usr: any) => usr.id === u.userId);
       const course = courses?.find((c: any) => c.id === u.courseId);
+      // Only render the attribution chip when ownership was actually
+      // transferred (uploadedByUserId differs from current owner).
+      const originalUploader = u.uploadedByUserId && u.uploadedByUserId !== u.userId
+        ? users?.find((usr: any) => usr.id === u.uploadedByUserId)
+        : null;
       return {
         ...u,
         commentCount: u.commentCount || 0,
@@ -1341,6 +1353,7 @@ export default function Home() {
         holeNumber: hole?.holeNumber || undefined,
         holePar: hole?.par ?? null,
         holeYardage: hole?.yardage ?? null,
+        uploadedByUsername: originalUploader?.username ?? null,
       };
     });
 
