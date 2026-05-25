@@ -4,6 +4,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import LikesSheet from "@/components/LikesSheet";
 import NotificationsPanel from "@/components/NotificationsPanel";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
@@ -25,7 +26,7 @@ const SHOT_LABEL: Record<string, string> = {
 };
 
 function ProfileFeedCard({
-  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, isOwner, currentUserId, likedIds, commentedIds, commentOpen,
+  clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, onShowLikes, isOwner, currentUserId, likedIds, commentedIds, commentOpen,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; cloudflareVideoId?: string | null; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null; uploadedByUserId?: string | null; uploadedByUsername?: string | null };
   isActive: boolean;
@@ -37,6 +38,8 @@ function ProfileFeedCard({
   onReport?: () => void;
   uploaderInfo: { id: string; username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null };
   onComment: () => void;
+  // Open the "Who liked this" sheet for this clip.
+  onShowLikes?: (uploadId: string) => void;
   isOwner: boolean;
   currentUserId?: string | null;
   likedIds?: Set<string>;
@@ -146,13 +149,23 @@ function ProfileFeedCard({
         {/* Uploader avatar removed from right rail — now lives inline next
             to the uploader's username in the bottom overlay (see below).
             isTagged badge moves with it. */}
-        {/* Like */}
-        <button onClick={toggleLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
-        </button>
+        {/* Heart toggles like; count below opens "Who liked this".
+            Same split pattern as the home feed RightPanel and the
+            course-profile FeedCard. */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+          <button onClick={toggleLike} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+          </button>
+          <button
+            onClick={onShowLikes && likeCount > 0 ? () => onShowLikes(clip.id) : undefined}
+            disabled={!onShowLikes || likeCount === 0}
+            style={{ background: "none", border: "none", padding: "0 4px", cursor: onShowLikes && likeCount > 0 ? "pointer" : "default" }}
+          >
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
+          </button>
+        </div>
         {/* Comment — same belt-and-suspenders against the iOS WKWebView
             phantom-tap bug as the home feed. Without stopPropagation +
             preventDefault, the touch that opens the comment sheet can
@@ -402,6 +415,8 @@ export default function ProfilePage() {
   // Mirrors likedIds for the comment button's "you commented" green
   // state. Loaded in the same batch query so we hit the DB once.
   const [commentedIds, setCommentedIds] = useState<Set<string> | undefined>(undefined);
+  // "Who liked this" sheet — opens from the like-count tap.
+  const [likesUploadId, setLikesUploadId] = useState<string | null>(null);
   const prefetchedProfileLikesRef = useRef<string>("");
 
   useEffect(() => {
@@ -1101,6 +1116,7 @@ export default function ProfilePage() {
                 currentUserId={currentUserId}
                 likedIds={likedIds}
                 commentedIds={commentedIds}
+                onShowLikes={(uploadId) => setLikesUploadId(uploadId)}
               />
             </div>
           ))}
@@ -1854,6 +1870,15 @@ export default function ProfilePage() {
       })()}
 
       <BottomNav />
+
+      {/* "Who liked this" sheet — opens from the like-count tap on any
+          ProfileFeedCard. Page-level mount so the feed modal it lives
+          above can still trigger it. */}
+      <LikesSheet
+        open={!!likesUploadId}
+        uploadId={likesUploadId}
+        onClose={() => setLikesUploadId(null)}
+      />
 
       <NotificationsPanel open={notificationsOpen} onClose={closeNotifications} />
 

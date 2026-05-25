@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import LikesSheet from "@/components/LikesSheet";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { useSave } from "@/hooks/useSave";
@@ -139,8 +140,10 @@ function FlagBadge({ label, large }: { label: string | number; large?: boolean }
   );
 }
 
-function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, holeDescription, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds, commentOpen }: {
+function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, uploaderMap, clipIndex, totalClips, holeNumber, holePar, holeYardage, holeDescription, scoutedHoles, holeIndex, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds, commentedIds, commentOpen }: {
   clip: Clip; isActive: boolean; onClose: () => void; onComment: () => void;
+  // Open the "Who liked this" sheet for this clip.
+  onShowLikes?: (uploadId: string) => void;
   course: Course | null; uploaderMap: Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }>;
   clipIndex: number; totalClips: number;
   holeNumber?: number | null;
@@ -154,10 +157,16 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
   // Pre-batched set of clip IDs the current user has liked (see useLike).
   // Eliminates per-clip Supabase round-trip → no heart flicker on mount.
   likedIds?: Set<string>;
+  // Mirror for comments — set of clip IDs the user has commented on.
+  // Drives the green filled-comment-button state so the same clip
+  // looks the same on the home feed, the course feed modal, and the
+  // user profile (clip uniformity rule, CLAUDE.md).
+  commentedIds?: Set<string>;
   // When true, the parent's comment sheet is open. Pauses the video so
   // onEnded can't fire and auto-advance to the next clip while the user types.
   commentOpen?: boolean;
 }) {
+  const commented = !!commentedIds?.has(clip.id);
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
   const isDesktop = useIsDesktop();
@@ -273,15 +282,25 @@ function FeedCard({ clip, isActive, onClose, onComment, course, uploaderMap, cli
         )}
         {/* Avatar removed from right rail — now lives inline next to the
             uploader's username in the bottom overlay (see below). */}
-        <button onClick={toggleLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
-        </button>
+        {/* Heart toggles like; count below opens the "Who liked this"
+            sheet. Same split as the home-feed RightPanel. */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+          <button onClick={toggleLike} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+          </button>
+          <button
+            onClick={onShowLikes && likeCount > 0 ? () => onShowLikes(clip.id) : undefined}
+            disabled={!onShowLikes || likeCount === 0}
+            style={{ background: "none", border: "none", padding: "0 4px", cursor: onShowLikes && likeCount > 0 ? "pointer" : "default" }}
+          >
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
+          </button>
+        </div>
         <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: commented ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${commented ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill={commented ? "#fff" : "none"} stroke={commented ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{clip.commentCount || 0}</span>
         </button>
@@ -386,6 +405,14 @@ export default function CourseProfilePage() {
   // clips + user are both ready — eliminates per-clip like-state fetches
   // and the heart-flicker that came with them.
   const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
+  // Mirrors home feed: set of upload IDs the current user has commented
+  // on. Drives the green "you commented" state on the FeedCard's
+  // comment button. Same pattern, same source — keeps the clip's
+  // comment state uniform whether you see it on the home feed, the
+  // course profile feed modal, or your own profile.
+  const [commentedIds, setCommentedIds] = useState<Set<string> | undefined>(undefined);
+  // "Who liked this" sheet — opens from the like-count tap on a clip.
+  const [likesUploadId, setLikesUploadId] = useState<string | null>(null);
   const prefetchedLikesRef = useRef<string>("");
   const [suggestedCourses, setSuggestedCourses] = useState<SuggestedCourse[]>([]);
   const [uploaders, setUploaders] = useState<Record<string, { username: string; avatarUrl: string | null; handicapIndex?: number | null; rank?: string | null }>>({});
@@ -474,15 +501,23 @@ const [editDescription, setEditDescription] = useState("");
     const supabase = createClient();
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("Like")
-        .select("uploadId")
-        .eq("userId", user.id)
-        .in("uploadId", uploadIds);
-      if (cancelled || !data) return;
-      const liked = data.map(r => r.uploadId);
-      seedLikedCache(user.id, liked, uploadIds);
-      setLikedIds(new Set(liked));
+      // Batch likes + comments in one round-trip so the FeedCard
+      // renders with both filled states correct on first paint.
+      const [{ data: likeData }, { data: commentData }] = await Promise.all([
+        supabase.from("Like").select("uploadId").eq("userId", user.id).in("uploadId", uploadIds),
+        supabase.from("Comment").select("uploadId").eq("userId", user.id).in("uploadId", uploadIds),
+      ]);
+      if (cancelled) return;
+      if (likeData) {
+        const liked = likeData.map(r => r.uploadId);
+        seedLikedCache(user.id, liked, uploadIds);
+        setLikedIds(new Set(liked));
+      }
+      if (commentData) {
+        // Dedupe — a user can leave multiple comments on the same
+        // clip, but we only care about "has commented at least once."
+        setCommentedIds(new Set(commentData.map(r => r.uploadId)));
+      }
     })();
     return () => { cancelled = true; };
   }, [user?.id, courseClips]);
@@ -581,6 +616,13 @@ const [editDescription, setEditDescription] = useState("");
       createdAt: now, updatedAt: now,
     });
     if (!error) {
+      // Flip the comment button to its "you commented" filled state
+      // immediately so the FeedCard mirrors the home-feed UX.
+      setCommentedIds(prev => {
+        const next = new Set(prev ?? []);
+        next.add(commentUploadId);
+        return next;
+      });
       const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId, holeNumber, courseId").eq("id", commentUploadId).single();
       await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
 
@@ -2305,6 +2347,8 @@ const [editDescription, setEditDescription] = useState("");
                       currentUserId={user?.id}
                       followingIds={followingIds}
                       likedIds={likedIds}
+                      commentedIds={commentedIds}
+                      onShowLikes={(uploadId) => setLikesUploadId(uploadId)}
                       onFollow={async (targetId: string) => {
                         if (!user?.id || followingInProgress.has(targetId)) return;
                         setFollowingInProgress(s => new Set(s).add(targetId));
@@ -2728,6 +2772,15 @@ const [editDescription, setEditDescription] = useState("");
       )}
 
       <BottomNav />
+
+      {/* "Who liked this" sheet — opens from the like-count tap on any
+          FeedCard. Page-level mount so it works from inside the feed
+          modal too. */}
+      <LikesSheet
+        open={!!likesUploadId}
+        uploadId={likesUploadId}
+        onClose={() => setLikesUploadId(null)}
+      />
 
     </main>
   );

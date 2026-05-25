@@ -7,6 +7,7 @@ import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 import BottomNav from "@/components/BottomNav";
+import LikesSheet from "@/components/LikesSheet";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
@@ -266,7 +267,7 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
   );
 }
 
-function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, clipId, holeNumber, liked, onLike, likeCount, onComment, commentCount, commented, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow, hasAttribution }: {
+function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, clipId, holeNumber, liked, onLike, likeCount, onLikeCountTap, onComment, commentCount, commented, onTapUser, onIntel, intelOpen, onReport, onEdit, isFollowing, onFollow, hasAttribution }: {
   userId: string; avatarUrl: string | null; username: string; rank?: string | null;
   courseId: string; courseName: string;
   // clipId + holeNumber drive the deep-link share URL so "Send It"
@@ -275,6 +276,10 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, c
   clipId?: string;
   holeNumber?: number | null;
   liked: boolean; onLike: () => void; likeCount: number;
+  // Tap the count under the heart to open the "Who liked this" sheet.
+  // Optional so callers without that wiring just don't get the
+  // affordance — the heart still toggles likes either way.
+  onLikeCountTap?: () => void;
   onComment: () => void; commentCount: number;
   // True when the current user has at least one comment on this clip —
   // drives the green "you commented" state on the comment button,
@@ -323,13 +328,23 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, c
           right column (Intel → Like → Comment → Send → Report only) and
           puts the identity badge where the name is, which is a stronger
           "this is who posted it" signal. */}
-      {/* Like */}
-      <button onClick={onLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </div>
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
-      </button>
+      {/* Like — heart toggles the user's like; the count below it is
+          its own tap target that opens the "Who liked this" sheet
+          (Instagram-style). Two affordances in one stacked column. */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <button onClick={onLike} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+        </button>
+        <button
+          onClick={onLikeCountTap}
+          disabled={!onLikeCountTap || likeCount === 0}
+          style={{ background: "none", border: "none", padding: "0 4px", cursor: onLikeCountTap && likeCount > 0 ? "pointer" : "default" }}
+        >
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
+        </button>
+      </div>
       {/* Comment */}
       <button
         onClick={(e) => {
@@ -397,11 +412,13 @@ function RightPanel({ userId, avatarUrl, username, rank, courseId, courseName, c
 // every render, but their closures only read stable refs (router, setters)
 // so a stale closure can't go wrong here.
 const SeriesCard = memo(function SeriesCardImpl({
-  item, isActive, onTapCourse, onTapUser, onComment, currentUserId, followingIds, onFollow, likedIds, commentedIds, commentOpen,
+  item, isActive, onTapCourse, onTapUser, onComment, onShowLikes, currentUserId, followingIds, onFollow, likedIds, commentedIds, commentOpen,
 }: {
   item: Extract<FeedItem, { type: "series" }>;
   isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
+  // Open the "Who liked this" sheet for the currently-active shot.
+  onShowLikes?: (uploadId: string) => void;
   currentUserId?: string | null;
   followingIds?: Set<string>; onFollow?: (userId: string) => void;
   // Pre-batched set of clip IDs the current user has liked — eliminates
@@ -549,7 +566,7 @@ const SeriesCard = memo(function SeriesCardImpl({
         </button>
       )}
 
-      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} clipId={activeShot?.id} holeNumber={item.holeNumber ?? null} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={item.shots[0]?.commentCount || 0} commented={!!(activeShot?.id && commentedIds?.has(activeShot.id))} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
+      <RightPanel userId={item.userId} avatarUrl={item.avatarUrl} username={item.username} rank={item.rank} courseId={item.courseId} courseName={item.courseName} clipId={activeShot?.id} holeNumber={item.holeNumber ?? null} liked={seriesLiked} onLike={handleSeriesLike} likeCount={seriesLikeCount} onLikeCountTap={onShowLikes && activeShot?.id ? () => onShowLikes(activeShot.id) : undefined} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={item.shots[0]?.commentCount || 0} commented={!!(activeShot?.id && commentedIds?.has(activeShot.id))} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} isFollowing={followingIds?.has(item.userId)} onFollow={currentUserId && currentUserId !== item.userId ? () => onFollow?.(item.userId) : undefined} hasAttribution={!!activeShot?.uploadedByUsername} />
 
       {/* Bottom overlay — series uploader avatar + name + active-shot date.
           Mirrors the single-clip overlay so the identity row is in the
@@ -620,10 +637,12 @@ const SeriesCard = memo(function SeriesCardImpl({
 // drives its own re-renders via useState/useEffect; this only cuts the
 // "parent re-rendered, so I re-render too" cascade.
 const VideoCard = memo(function VideoCardImpl({
-  clip, isActive, onTapCourse, onTapUser, onComment, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds, commentedIds, commentOpen,
+  clip, isActive, onTapCourse, onTapUser, onComment, onShowLikes, onEnded, onReport, onEdit, currentUserId, followingIds, onFollow, likedIds, commentedIds, commentOpen,
 }: {
   clip: FeedClip; isActive: boolean;
   onTapCourse: () => void; onTapUser: () => void; onComment: () => void;
+  // Open the "Who liked this" sheet for this clip.
+  onShowLikes?: (uploadId: string) => void;
   onEnded: () => void;
   followingIds?: Set<string>; onFollow?: (userId: string) => void;
   onReport?: () => void;
@@ -733,7 +752,7 @@ const VideoCard = memo(function VideoCardImpl({
         </div>
       )}
 
-      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} clipId={clip.id} holeNumber={clip.holeNumber ?? null} liked={liked} onLike={handleLike} likeCount={likeCount} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={clip.commentCount} commented={!!commentedIds?.has(clip.id)} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
+      <RightPanel userId={clip.userId} avatarUrl={clip.avatarUrl} username={clip.username} rank={clip.rank} courseId={clip.courseId} courseName={clip.courseName} clipId={clip.id} holeNumber={clip.holeNumber ?? null} liked={liked} onLike={handleLike} likeCount={likeCount} onLikeCountTap={onShowLikes ? () => onShowLikes(clip.id) : undefined} onComment={() => { if (intelOpen) setIntelOpen(false); onComment(); }} commentCount={clip.commentCount} commented={!!commentedIds?.has(clip.id)} onTapUser={onTapUser} onIntel={hasNotes ? () => setIntelOpen(o => !o) : null} intelOpen={intelOpen} onReport={onReport} onEdit={onEdit} isFollowing={followingIds?.has(clip.userId)} onFollow={currentUserId && currentUserId !== clip.userId ? () => onFollow?.(clip.userId) : undefined} hasAttribution={!!clip.uploadedByUsername} />
 
       {(clip.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
         // Bottom overlay — avatar + username + date + (photo icon).
@@ -819,6 +838,9 @@ export default function Home() {
   // user has commented on. Drives the green "you commented" state on
   // the comment button in the feed-clip right rail.
   const [commentedIds, setCommentedIds] = useState<Set<string> | undefined>(undefined);
+  // "Who liked this" sheet — tap the count under the heart to open.
+  // Holds the uploadId so the LikesSheet can fetch the right Like rows.
+  const [likesUploadId, setLikesUploadId] = useState<string | null>(null);
   // Track which course routes we've already prefetched so we don't re-fire
   // the request when the feed or near-me data refreshes.
   const prefetchedCoursesRef = useRef<Set<string>>(new Set());
@@ -1925,9 +1947,9 @@ export default function Home() {
         {!loading && feedItems.map((item, i) => (
           <div key={item.type === "clip" ? item.clip.id : item.seriesId} className="feed-item">
             {item.type === "series" ? (
-              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => { const id = item.shots[0]?.id; if (id) openCommentSheet(id); }} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentedIds={commentedIds} commentOpen={!!commentUploadId} />
+              <SeriesCard item={item} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.userId}`)} onTapCourse={() => router.push(`/courses/${item.courseId}`)} onComment={() => { const id = item.shots[0]?.id; if (id) openCommentSheet(id); }} onShowLikes={(uploadId) => setLikesUploadId(uploadId)} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentedIds={commentedIds} commentOpen={!!commentUploadId} />
             ) : (
-              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => openCommentSheet(item.clip.id)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentedIds={commentedIds} commentOpen={!!commentUploadId} />
+              <VideoCard clip={item.clip} isActive={i === activeIndex} onTapUser={() => router.push(`/profile/${item.clip.userId}`)} onTapCourse={() => router.push(`/courses/${item.clip.courseId}`)} onComment={() => openCommentSheet(item.clip.id)} onShowLikes={(uploadId) => setLikesUploadId(uploadId)} onEnded={() => feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" })} onReport={user && item.clip.userId !== user.id ? () => setReportClipId(item.clip.id) : undefined} onEdit={user && item.clip.userId === user.id ? () => setEditClipInfo({ id: item.clip.id, courseId: item.clip.courseId, holeId: item.clip.holeId ?? null, holeNumber: item.clip.holeNumber ?? null }) : undefined} currentUserId={user?.id} followingIds={followingIds} onFollow={handleFollow} likedIds={likedIds} commentedIds={commentedIds} commentOpen={!!commentUploadId} />
             )}
           </div>
         ))}
@@ -2132,6 +2154,15 @@ export default function Home() {
       </div>
 
       <BottomNav />
+
+      {/* "Who liked this" sheet — opens from the like-count tap on
+          any feed card. Page-level mount so it shares state cleanly
+          across SeriesCard + VideoCard. */}
+      <LikesSheet
+        open={!!likesUploadId}
+        uploadId={likesUploadId}
+        onClose={() => setLikesUploadId(null)}
+      />
 
       {/* Report clip sheet */}
       {reportClipId && (

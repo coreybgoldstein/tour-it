@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 import BottomNav from "@/components/BottomNav";
+import LikesSheet from "@/components/LikesSheet";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { HoleSideBar } from "@/components/clip/HoleSideBar";
@@ -265,7 +266,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
   );
 }
 
-function ClipActions({ upload, likedIds, currentUserId }: { upload: Upload; likedIds?: Set<string>; currentUserId?: string | null }) {
+function ClipActions({ upload, likedIds, currentUserId, onShowLikes }: { upload: Upload; likedIds?: Set<string>; currentUserId?: string | null; onShowLikes?: (uploadId: string) => void }) {
   const { liked, likeCount, toggleLike } = useLike({
     uploadId: upload.id,
     initialLikeCount: upload.likeCount || 0,
@@ -273,12 +274,23 @@ function ClipActions({ upload, likedIds, currentUserId }: { upload: Upload; like
     currentUserId: currentUserId ?? null,
   });
   return (
-    <button className="action-btn" onClick={toggleLike}>
-      <div className="action-icon" style={liked ? { borderColor: "#1a9e42", background: "#1a9e42" } : {}}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      </div>
-      <span className="action-label">{likeCount}</span>
-    </button>
+    // Heart toggles like; the count below is its own tap target that
+    // opens the "Who liked this" sheet (clip uniformity rule —
+    // matches home feed + course profile FeedCard).
+    <div className="action-btn" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <button onClick={toggleLike} style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+        <div className="action-icon" style={liked ? { borderColor: "#1a9e42", background: "#1a9e42" } : {}}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </div>
+      </button>
+      <button
+        onClick={onShowLikes && likeCount > 0 ? () => onShowLikes(upload.id) : undefined}
+        disabled={!onShowLikes || likeCount === 0}
+        style={{ background: "none", border: "none", padding: "0 4px", cursor: onShowLikes && likeCount > 0 ? "pointer" : "default" }}
+      >
+        <span className="action-label">{likeCount}</span>
+      </button>
+    </div>
   );
 }
 
@@ -293,6 +305,13 @@ export default function HolePage() {
   // Pre-batched set of upload IDs the current user has liked across this
   // hole's visible clips. Same pattern as home/course/profile pages.
   const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
+  // Mirror for comments — same uniformity rule as the home feed and
+  // course profile FeedCard. If the user has commented on a clip, the
+  // hole-page action bar should reflect that with a filled comment
+  // button, no matter which surface they arrived from.
+  const [commentedIds, setCommentedIds] = useState<Set<string> | undefined>(undefined);
+  // "Who liked this" sheet — opens from the like-count tap.
+  const [likesUploadId, setLikesUploadId] = useState<string | null>(null);
   const prefetchedHoleLikesRef = useRef<string>("");
   const [series, setSeries] = useState<Series[]>([]);
   const [activeSeries, setActiveSeries] = useState<Series | null>(null);
@@ -316,15 +335,21 @@ export default function HolePage() {
     const supabase = createClient();
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("Like")
-        .select("uploadId")
-        .eq("userId", user.id)
-        .in("uploadId", uploadIds);
-      if (cancelled || !data) return;
-      const liked = data.map(r => r.uploadId);
-      seedLikedCache(user.id, liked, uploadIds);
-      setLikedIds(new Set(liked));
+      // Batch likes + comments together so both filled states paint
+      // correctly on first frame.
+      const [{ data: likeData }, { data: commentData }] = await Promise.all([
+        supabase.from("Like").select("uploadId").eq("userId", user.id).in("uploadId", uploadIds),
+        supabase.from("Comment").select("uploadId").eq("userId", user.id).in("uploadId", uploadIds),
+      ]);
+      if (cancelled) return;
+      if (likeData) {
+        const liked = likeData.map(r => r.uploadId);
+        seedLikedCache(user.id, liked, uploadIds);
+        setLikedIds(new Set(liked));
+      }
+      if (commentData) {
+        setCommentedIds(new Set(commentData.map(r => r.uploadId)));
+      }
     })();
     return () => { cancelled = true; };
   }, [user?.id, uploads]);
@@ -410,6 +435,13 @@ export default function HolePage() {
       userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
     });
     if (!error) {
+      // Optimistic green-fill on the comment button — matches home
+      // feed + course profile pattern.
+      setCommentedIds(prev => {
+        const next = new Set(prev ?? []);
+        next.add(commentUploadId);
+        return next;
+      });
       const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId, holeNumber, courseId").eq("id", commentUploadId).single();
       await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
       if (uploadData?.userId && uploadData.userId !== user.id) {
@@ -853,15 +885,22 @@ export default function HolePage() {
                   follow action still lives on the uploader's profile page. */}
 
               {/* Like */}
-              <ClipActions key={activeUpload.id} upload={activeUpload} likedIds={likedIds} currentUserId={user?.id ?? null} />
+              <ClipActions key={activeUpload.id} upload={activeUpload} likedIds={likedIds} currentUserId={user?.id ?? null} onShowLikes={(uploadId) => setLikesUploadId(uploadId)} />
 
-              {/* Comment */}
-              <button className="action-btn" onClick={() => setCommentUploadId(activeUpload.id)}>
-                <div className="action-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                </div>
-                <span className="action-label">{activeUpload.commentCount || 0}</span>
-              </button>
+              {/* Comment — filled green when the current user has
+                  commented on this clip, matching home feed + course
+                  profile + user profile. */}
+              {(() => {
+                const commented = !!commentedIds?.has(activeUpload.id);
+                return (
+                  <button className="action-btn" onClick={() => setCommentUploadId(activeUpload.id)}>
+                    <div className="action-icon" style={commented ? { background: "#1a9e42", borderColor: "#1a9e42" } : undefined}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill={commented ? "#fff" : "none"} stroke={commented ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <span className="action-label">{activeUpload.commentCount || 0}</span>
+                  </button>
+                );
+              })()}
 
               {/* SEND IT */}
               <button className="action-btn" onClick={handleShare}>
@@ -1102,6 +1141,13 @@ export default function HolePage() {
       )}
 
       <BottomNav />
+
+      {/* "Who liked this" sheet — opens from the like-count tap. */}
+      <LikesSheet
+        open={!!likesUploadId}
+        uploadId={likesUploadId}
+        onClose={() => setLikesUploadId(null)}
+      />
     </>
   );
 }
