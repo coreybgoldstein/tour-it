@@ -900,6 +900,12 @@ export default function Home() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // Push-permission smart prompt (audit #23). iOS Capacitor requires
+  // requestPermission() to fire from a user tap, so the old
+  // useEffect-driven registerPush call was silently denied. Now we
+  // surface a small banner the user can tap to opt in.
+  const [showPushPrompt, setShowPushPrompt] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
   const [splashVisible, setSplashVisible] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
   const [showScrollHint] = useState(true);
@@ -983,7 +989,16 @@ export default function Home() {
         localStorage.setItem("tour-it-onboarded", "1");
         const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
         setUserProfile(profile);
-        import("@/lib/registerPush").then(({ registerPush }) => registerPush(data.user!.id));
+        // registerPush MOVED to a user-gesture prompt below. The
+        // useEffect-driven auto-call was silently denied on iOS
+        // Capacitor (requestPermission requires a tap) so users
+        // never actually got push permission. Audit #23.
+        // Show the prompt banner if push hasn't been registered
+        // yet and the user hasn't dismissed it.
+        if (typeof window !== "undefined" && !localStorage.getItem("tour-it-push-prompt-dismissed")) {
+          // Tiny delay so it doesn't fight with the welcome modal
+          setTimeout(() => setShowPushPrompt(true), 1200);
+        }
         const { data: follows } = await supabase.from("Follow").select("followingId").eq("followerId", data.user.id).eq("status", "ACTIVE");
         setFollowingIds(new Set((follows || []).map((f: any) => f.followingId)));
       }
@@ -2184,6 +2199,61 @@ export default function Home() {
       </div>
 
       <BottomNav />
+
+      {/* Push-permission smart prompt — fires from a user tap so iOS
+          Capacitor accepts requestPermission(). Dismissal is sticky
+          in localStorage so it doesn't re-nag. */}
+      {showPushPrompt && user && (
+        <div
+          onClick={(e) => { e.stopPropagation(); }}
+          style={{
+            position: "fixed",
+            left: 12,
+            right: 12,
+            bottom: `calc(78px + env(safe-area-inset-bottom))`,
+            zIndex: 105,
+            background: "rgba(13,35,24,0.96)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(77,168,98,0.35)",
+            borderRadius: 14,
+            padding: "12px 14px",
+            boxShadow: "0 8px 28px rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Stay in the loop</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", lineHeight: 1.35 }}>Get a tap when someone likes or comments on your clips.</div>
+          </div>
+          <button
+            onClick={async () => {
+              if (pushBusy || !user) return;
+              setPushBusy(true);
+              try {
+                const { registerPush } = await import("@/lib/registerPush");
+                await registerPush(user.id);
+              } catch {}
+              localStorage.setItem("tour-it-push-prompt-dismissed", "1");
+              setShowPushPrompt(false);
+              setPushBusy(false);
+            }}
+            disabled={pushBusy}
+            style={{ background: "#2d7a42", border: "none", borderRadius: 99, padding: "8px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", cursor: pushBusy ? "default" : "pointer", flexShrink: 0 }}
+          >
+            {pushBusy ? "…" : "Turn on"}
+          </button>
+          <button
+            onClick={() => { localStorage.setItem("tour-it-push-prompt-dismissed", "1"); setShowPushPrompt(false); }}
+            aria-label="Dismiss"
+            style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 18, cursor: "pointer", padding: 4, flexShrink: 0 }}
+          >×</button>
+        </div>
+      )}
 
       {/* "Who liked this" sheet — opens from the like-count tap on
           any feed card. Page-level mount so it shares state cleanly
