@@ -230,7 +230,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
   // we still render it even if the progression bar is hidden — the
   // sheet needs to surface BEFORE the UI lights up, not after.
   if (!prog || prog.totalPoints === 0) {
-    return showFirstEarn ? <FirstEarnSheet pts={prog?.totalPoints ?? 0} onClose={() => setShowFirstEarn(false)} onSeeLedger={() => { setShowFirstEarn(false); setShowLedger(true); if (ledger.length === 0) loadLedger(0); }} /> : null;
+    return showFirstEarn ? <FirstEarnSheet pts={prog?.totalPoints ?? 0} onClose={() => setShowFirstEarn(false)} onSeePoints={() => { setShowFirstEarn(false); router.push("/leaderboards?points=1"); }} /> : null;
   }
 
   const rankColor = getRankColor(prog.rank);
@@ -251,7 +251,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
         <FirstEarnSheet
           pts={prog.totalPoints}
           onClose={() => setShowFirstEarn(false)}
-          onSeeLedger={() => { setShowFirstEarn(false); setShowLedger(true); if (ledger.length === 0) loadLedger(0); }}
+          onSeePoints={() => { setShowFirstEarn(false); router.push("/leaderboards?points=1"); }}
         />
       )}
 
@@ -419,7 +419,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
 // points. Per the onboarding v3 plan, gamification is HIDDEN from
 // day-zero accounts; this is the one-time reveal that lights it
 // up. Dismissal is sticky in localStorage so it never re-fires.
-function FirstEarnSheet({ pts, onClose, onSeeLedger }: { pts: number; onClose: () => void; onSeeLedger: () => void }) {
+function FirstEarnSheet({ pts, onClose, onSeePoints }: { pts: number; onClose: () => void; onSeePoints: () => void }) {
   return (
     <>
       <div className="tourit-sheet-backdrop" onClick={onClose} />
@@ -441,7 +441,7 @@ function FirstEarnSheet({ pts, onClose, onSeeLedger }: { pts: number; onClose: (
             Every clip you upload, like you give, and round you log earns points. Build them up to level up from Caddie to Legend and climb the monthly leaderboard.
           </div>
           <button
-            onClick={onSeeLedger}
+            onClick={onSeePoints}
             style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "15px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 16px rgba(45,122,66,0.4)", marginBottom: 8 }}
           >
             See how points work

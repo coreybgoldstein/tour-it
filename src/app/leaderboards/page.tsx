@@ -9,6 +9,7 @@ import { RANK_COLORS } from "@/config/points-system";
 import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { isMayActive } from "@/lib/competitions";
 import MayCompetitionModal from "@/components/MayCompetitionModal";
+import PointsSystemSheet from "@/components/PointsSystemSheet";
 
 type Period = "all" | "monthly";
 
@@ -54,6 +55,20 @@ export default function LeaderboardsPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myRank, setMyRank] = useState<number | null>(null);
   const [showCompModal, setShowCompModal] = useState(false);
+  // Evergreen points-system sheet. Auto-opens via ?points=1 — that
+  // query param is the destination for the FirstEarnSheet's "See
+  // how points work" CTA on the profile page, and for any other
+  // surface that wants to send a user to the explainer.
+  const [showPointsSheet, setShowPointsSheet] = useState(
+    searchParams.get("points") === "1"
+  );
+  // Strip the param from the URL once we've consumed it so a back
+  // navigation doesn't re-open the sheet.
+  useEffect(() => {
+    if (searchParams.get("points") === "1" && typeof window !== "undefined") {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [searchParams]);
 
   const currentMonth = new Date().toLocaleString("default", { month: "long" });
 
@@ -140,7 +155,7 @@ export default function LeaderboardsPage() {
         <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
         </button>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff" }}>Leaderboard</div>
           {period === "monthly" && (
             <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
@@ -149,6 +164,17 @@ export default function LeaderboardsPage() {
             </div>
           )}
         </div>
+        {/* How points work — opens the evergreen explainer sheet.
+            Also the deep-link target for the FirstEarnSheet on
+            profile (/leaderboards?points=1 auto-opens). */}
+        <button
+          onClick={() => setShowPointsSheet(true)}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.32)", borderRadius: 99, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", cursor: "pointer", flexShrink: 0 }}
+          aria-label="How points work"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          How points work
+        </button>
       </div>
 
       {/* Period tabs */}
@@ -298,6 +324,7 @@ export default function LeaderboardsPage() {
       <BottomNav />
 
       {showCompModal && <MayCompetitionModal onClose={() => setShowCompModal(false)} />}
+      {showPointsSheet && <PointsSystemSheet onClose={() => setShowPointsSheet(false)} />}
     </main>
   );
 }
