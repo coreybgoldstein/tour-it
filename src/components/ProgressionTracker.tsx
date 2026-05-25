@@ -50,28 +50,34 @@ const USER_LINKED_ACTIONS = new Set([
   "referral_first_upload",
 ]);
 
+// Display labels for every PointAction value. Keep these professional —
+// title-cased, no underscores, present-tense for ongoing actions and
+// past-tense for one-shot events. The ledger renders the raw key as a
+// last resort, so every action emitted by awardPoints needs an entry
+// here or the user sees something like "clip_uploaded_for_other".
 const ACTION_LABELS: Record<string, string> = {
   signup:                      "Joined Tour It",
   complete_profile:            "Completed profile",
   enable_notifications:        "Enabled notifications",
   upload_clip:                 "Uploaded a clip",
-  upload_first_for_course:     "First scout for course",
-  upload_series:               "Series upload bonus",
+  upload_first_for_course:     "First clip at a course",
+  upload_series:               "Uploaded a full-hole series",
+  clip_uploaded_for_other:     "Filmed a clip for another golfer",
   intel_bonus:                 "Intel quality bonus",
-  add_hole_photo:              "Added hole photo",
+  add_hole_photo:              "Added a hole photo",
   add_cover_photo:             "Added course cover photo",
   add_course_logo:             "Added course logo",
   add_year_established:        "Added course year",
   add_course_type:             "Added course type",
-  add_zip_code:                "Added zip code",
-  add_website_url:             "Added website URL",
+  add_zip_code:                "Added course zip code",
+  add_website_url:             "Added course website",
   add_course_description:      "Added course description",
-  course_profile_complete:     "Completed course profile",
+  course_profile_complete:     "Completed a course profile",
   add_hole_par:                "Added hole par",
   add_hole_yardage:            "Added hole yardage",
-  scorecard_complete:          "Completed scorecard",
-  first_scorecard_for_course:  "First scorecard for course",
-  log_first_round:             "Logged first round",
+  scorecard_complete:          "Completed a scorecard",
+  first_scorecard_for_course:  "First scorecard at a course",
+  log_first_round:             "Logged your first round",
   log_complete_round:          "Logged a round",
   like_received:               "Like received",
   comment_received:            "Comment received",
@@ -86,11 +92,26 @@ const ACTION_LABELS: Record<string, string> = {
   streak_52_weeks:             "52-week streak bonus",
   referral_signup:             "Referral — friend joined",
   referral_first_upload:       "Referral — friend uploaded",
+  create_trip:                 "Created a trip",
+  create_game:                 "Created a game",
+  enable_ryder_cup:            "Enabled Ryder Cup mode",
   level_up:                    "Level up bonus",
   rank_up:                     "Rank up bonus",
   unlike_received:             "Like removed",
   upload_deleted:              "Clip deleted",
+  trip_deleted:                "Trip deleted",
+  game_deleted:                "Game deleted",
+  round_deleted:               "Round deleted",
 };
+
+// Fallback formatter for any action that slips through without an
+// explicit label — turns "snake_case_action" into "Snake case action".
+// Better than showing the raw key.
+function prettifyAction(raw: string): string {
+  if (!raw) return "Activity";
+  const spaced = raw.replace(/_/g, " ").trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
 
 const PAGE_SIZE = 50;
 
@@ -386,7 +407,7 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
                       >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {ACTION_LABELS[entry.action] ?? entry.action}
+                            {ACTION_LABELS[entry.action] ?? prettifyAction(entry.action)}
                           </div>
                           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
                             {formatTimeAgo(entry.createdAt)}

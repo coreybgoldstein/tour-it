@@ -82,6 +82,39 @@ type FeedItem =
   | { type: "clip"; clip: FeedClip }
   | { type: "series"; shots: FeedClip[]; seriesId: string; courseName: string; courseLogoUrl: string | null; courseCity?: string | null; courseState?: string | null; courseId: string; holeId: string; holeNumber?: number; username: string; avatarUrl: string | null; userId: string; rank?: string | null };
 
+function itemCourseId(item: FeedItem): string {
+  return item.type === "clip" ? item.clip.courseId : item.courseId;
+}
+
+/**
+ * Reorder a feed so no two items from the same course land within
+ * `minGap` slots of each other. Greedy: walks the source list and at
+ * each output slot picks the first source item whose courseId isn't
+ * present in the last `minGap` already-placed items. If no candidate
+ * qualifies (all remaining items are from a recently-seen course),
+ * we accept the best-effort head — never drop items, just bunch
+ * them at the end so the feed stays whole.
+ *
+ * `recent` lets the caller seed the "last seen" window — used when
+ * appending paginated chunks so the join point doesn't repeat a
+ * course that was at the tail of the existing feed.
+ */
+function spaceByCourse(items: FeedItem[], minGap = 5, recent: string[] = []): FeedItem[] {
+  if (items.length <= 1) return items;
+  const queue = items.slice();
+  const out: FeedItem[] = [];
+  const window: string[] = recent.slice(-minGap);
+  while (queue.length > 0) {
+    let pickIdx = queue.findIndex(it => !window.includes(itemCourseId(it)));
+    if (pickIdx === -1) pickIdx = 0; // no clean pick — accept the conflict
+    const [picked] = queue.splice(pickIdx, 1);
+    out.push(picked);
+    window.push(itemCourseId(picked));
+    if (window.length > minGap) window.shift();
+  }
+  return out;
+}
+
 type CommentItem = {
   id: string;
   body: string;
@@ -1187,7 +1220,10 @@ export default function Home() {
         interleaved.push(series);
       });
       while (si < singleItems.length) interleaved.push(singleItems[si++]);
-      setFeedItems(interleaved);
+      // Final pass: keep clips from the same course at least 5 slots
+      // apart so the feed doesn't show three Pebble Beach clips in
+      // a row. Greedy reorder; never drops items.
+      setFeedItems(spaceByCourse(interleaved, 5));
       feedCursorRef.current = allUploads![allUploads!.length - 1].createdAt;
       hasMoreRef.current = (allUploads?.length ?? 0) >= 200;
       setLoading(false);
@@ -1392,7 +1428,14 @@ export default function Home() {
       ...singleClips.map(clip => ({ type: "clip" as const, clip })),
     ];
 
-    setFeedItems(prev => [...prev, ...newItems]);
+    setFeedItems(prev => {
+      // Apply the same course-spacing pass to the new chunk, but seed
+      // the window with the trailing 5 courseIds from the existing
+      // feed so the join point doesn't repeat.
+      const recent = prev.slice(-5).map(itemCourseId);
+      const spaced = spaceByCourse(newItems, 5, recent);
+      return [...prev, ...spaced];
+    });
     feedCursorRef.current = rawUploads![rawUploads!.length - 1].createdAt;
     hasMoreRef.current = rawUploads!.length >= 25;
     loadingMoreRef.current = false;
