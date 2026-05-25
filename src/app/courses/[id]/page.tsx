@@ -1611,35 +1611,17 @@ const [editDescription, setEditDescription] = useState("");
                             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <span style={{ fontFamily: "'Playfair Display', serif", fontSize: holeNum <= 9 ? 44 : 40, fontWeight: 400, color: hasBg ? "#ffffff" : "rgba(255,255,255,0.3)", letterSpacing: "-1px", lineHeight: 1, textShadow: hasBg && !hasClips ? "0 2px 8px rgba(0,0,0,0.6)" : undefined }}>{holeNum}</span>
                             </div>
-                            {/* Bottom: clip indicator + at-a-glance
-                                engagement totals across this hole's
-                                clips (IG-style). Lets users see which
-                                holes have the most action before
-                                tapping in. Hidden on empty tiles. */}
-                            {hasClips && (() => {
-                              const totalLikes = clips?.reduce((s, c) => s + (c.likeCount || 0), 0) || 0;
-                              const totalComments = clips?.reduce((s, c) => s + (c.commentCount || 0), 0) || 0;
-                              return (
-                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                  <div style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
-                                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
-                                  </div>
-                                  {totalLikes > 0 && (
-                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>
-                                      <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                      {totalLikes}
-                                    </span>
-                                  )}
-                                  {totalComments > 0 && (
-                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>
-                                      <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                                      {totalComments}
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })()}
+                            {/* Bottom: clip indicator — only when there
+                                ARE clips. Aggregate likes/comments
+                                pills removed 2026-05-24 to keep the
+                                hole grid clean; per-clip engagement
+                                still lives on user profile thumbnails. */}
+                            {hasClips && (
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
