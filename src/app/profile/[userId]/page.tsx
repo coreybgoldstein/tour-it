@@ -820,7 +820,7 @@ export default function ProfilePage() {
       const clipLink = holeNumber
         ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
         : `/courses/${uploadData.courseId}`;
-      supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, read: false, createdAt: now, updatedAt: now }).then(() => {});
+      supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, referenceId: commentUploadId, read: false, createdAt: now, updatedAt: now }).then(() => {});
       fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
       fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
     }

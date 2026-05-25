@@ -1474,6 +1474,7 @@ export default function Home() {
           title: "New comment",
           body: `${commenterName} commented on your clip`,
           linkUrl: clipLink,
+          referenceId: commentUploadId,
           read: false,
           createdAt: notifNow,
           updatedAt: notifNow,

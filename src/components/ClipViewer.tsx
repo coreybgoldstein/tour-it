@@ -178,6 +178,7 @@ export default function ClipViewer({
           title: "New comment",
           body: `${commenterName} commented on your clip`,
           linkUrl: clipLink,
+          referenceId: clip.id,
           read: false,
           createdAt: notifNow,
           updatedAt: notifNow,

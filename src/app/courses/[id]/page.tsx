@@ -642,7 +642,7 @@ const [editDescription, setEditDescription] = useState("");
         const commenterName = commenterProfile?.displayName || commenterProfile?.username || "Someone";
         const notifNow = new Date().toISOString();
         const clipLink = holeNumber ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}` : `/courses/${uploadData.courseId}`;
-        await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, read: false, createdAt: notifNow, updatedAt: notifNow });
+        await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, referenceId: commentUploadId, read: false, createdAt: notifNow, updatedAt: notifNow });
         sendPushToUser("comment_received", uploadData.userId, commentUploadId);
         fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
       }
