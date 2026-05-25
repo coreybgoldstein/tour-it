@@ -906,6 +906,9 @@ export default function Home() {
   // surface a small banner the user can tap to opt in.
   const [showPushPrompt, setShowPushPrompt] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
+  // Post-onboarding home-course prompt — fires once for fresh
+  // graduates of /onboarding/intro who haven't pinned a home course.
+  const [showHomeCoursePrompt, setShowHomeCoursePrompt] = useState(false);
   const [splashVisible, setSplashVisible] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
   const [showScrollHint] = useState(true);
@@ -987,7 +990,7 @@ export default function Home() {
         // Logged-in users never see the onboarding modal, even if Safari cleared localStorage
         setShowOnboarding(false);
         localStorage.setItem("tour-it-onboarded", "1");
-        const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName").eq("id", data.user.id).single();
+        const { data: profile } = await supabase.from("User").select("username, avatarUrl, displayName, homeCourseId").eq("id", data.user.id).single();
         setUserProfile(profile);
         // registerPush MOVED to a user-gesture prompt below. The
         // useEffect-driven auto-call was silently denied on iOS
@@ -998,6 +1001,18 @@ export default function Home() {
         if (typeof window !== "undefined" && !localStorage.getItem("tour-it-push-prompt-dismissed")) {
           // Tiny delay so it doesn't fight with the welcome modal
           setTimeout(() => setShowPushPrompt(true), 1200);
+        }
+        // Post-onboarding home-course prompt (v3, 2026-05-25). Fires
+        // ONCE for users who just finished the intro slides and don't
+        // yet have a home course pinned. Funnels them toward search
+        // + contribute. Push prompt and this prompt are intentionally
+        // staggered (push fires first at 1.2s, this at 2.4s) so they
+        // never overlap.
+        if (typeof window !== "undefined"
+          && localStorage.getItem("tour-it-intro-seen")
+          && !localStorage.getItem("tour-it-explore-home-course-dismissed")
+          && !profile?.homeCourseId) {
+          setTimeout(() => setShowHomeCoursePrompt(true), 2400);
         }
         const { data: follows } = await supabase.from("Follow").select("followingId").eq("followerId", data.user.id).eq("status", "ACTIVE");
         setFollowingIds(new Set((follows || []).map((f: any) => f.followingId)));
@@ -2314,6 +2329,49 @@ export default function Home() {
             style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 18, cursor: "pointer", padding: 4, flexShrink: 0 }}
           >×</button>
         </div>
+      )}
+
+      {/* Post-onboarding home-course prompt — bottom sheet that
+          fires once for users who just finished /onboarding/intro
+          and don't have a home course pinned. Tap "Find my course"
+          funnels them to /search; "Maybe later" dismisses and the
+          sticky localStorage flag stops re-prompts. */}
+      {showHomeCoursePrompt && user && (
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => { try { localStorage.setItem("tour-it-explore-home-course-dismissed", "1"); } catch {} setShowHomeCoursePrompt(false); }} />
+          <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
+            <div style={{ padding: "0 4px 4px", textAlign: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.32)", margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+              </div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 10, lineHeight: 1.2 }}>
+                Pin your home course
+              </div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 22, lineHeight: 1.6, maxWidth: 300, marginLeft: "auto", marginRight: "auto" }}>
+                Find a course you&apos;ve played, pin it as home, and drop the intel you wish you&apos;d had before your first round there.
+              </div>
+              <button
+                onClick={() => {
+                  try { localStorage.setItem("tour-it-explore-home-course-dismissed", "1"); } catch {}
+                  setShowHomeCoursePrompt(false);
+                  router.push("/search");
+                }}
+                style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "15px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 16px rgba(45,122,66,0.4)", marginBottom: 8 }}
+              >
+                Find my course
+              </button>
+              <button
+                onClick={() => { try { localStorage.setItem("tour-it-explore-home-course-dismissed", "1"); } catch {} setShowHomeCoursePrompt(false); }}
+                style={{ width: "100%", background: "none", border: "none", padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)", cursor: "pointer" }}
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* "Who liked this" sheet — opens from the like-count tap on
