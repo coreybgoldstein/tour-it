@@ -628,13 +628,16 @@ const [editDescription, setEditDescription] = useState("");
       // number (matches the home-feed pattern fixed 2026-05-25).
       const { data: uploadData } = await supabase
         .from("Upload")
-        .select("commentCount, userId, courseId, hole:holeId(holeNumber)")
+        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
         .eq("id", commentUploadId)
         .single();
       const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
         ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
         : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
-      await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
+      const newCommentCount = (uploadData?.commentCount || 0) + 1;
+      const { computeRankScore } = await import("@/lib/rankScore");
+      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
+      await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
 
       // Notify clip owner (skip if commenting on own clip)
       if (uploadData?.userId && uploadData.userId !== user.id) {

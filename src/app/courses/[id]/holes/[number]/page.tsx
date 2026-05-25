@@ -455,13 +455,16 @@ export default function HolePage() {
       // Upload has no holeNumber column — join Hole to get the number.
       const { data: uploadData } = await supabase
         .from("Upload")
-        .select("commentCount, userId, courseId, hole:holeId(holeNumber)")
+        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
         .eq("id", commentUploadId)
         .single();
       const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
         ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
         : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
-      await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
+      const newCommentCount = (uploadData?.commentCount || 0) + 1;
+      const { computeRankScore } = await import("@/lib/rankScore");
+      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
+      await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
       if (uploadData?.userId && uploadData.userId !== user.id) {
         // Insert the in-app Notification row + push + points. The
         // hole-page comment handler used to only award points which
