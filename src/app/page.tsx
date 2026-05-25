@@ -2097,9 +2097,10 @@ export default function Home() {
 
       {/* Welcome moment — shown after signup/onboarding */}
       {showWelcome && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.82)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={() => setShowWelcome(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "24px 24px 0 0", padding: "28px 24px 52px" }}>
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.12)", borderRadius: 99, margin: "0 auto 24px" }} />
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => setShowWelcome(false)} />
+          <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", marginBottom: 10 }}>
               You&apos;re in. Welcome to Tour It.
             </div>
@@ -2123,13 +2124,15 @@ export default function Home() {
               Explore first
             </button>
           </div>
-        </div>
+        </>
       )}
 
       {/* Onboarding */}
       {showOnboarding && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-          <div style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "24px 24px 0 0", padding: "28px 24px", paddingBottom: "max(96px, calc(env(safe-area-inset-bottom) + 96px))" }}>
+        <>
+          <div className="tourit-sheet-backdrop" onClick={dismissOnboarding} />
+          <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: 40, width: "auto", maxWidth: "80%" }} />
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginTop: 14, marginBottom: 8 }}>Welcome to Tour It</div>
@@ -2197,7 +2200,7 @@ export default function Home() {
               </button>
             )}
           </div>
-        </div>
+        </>
       )}
 
       {/* Homepage policy footer — small, fixed strip of legal/info
