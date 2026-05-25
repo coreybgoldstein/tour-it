@@ -2135,14 +2135,43 @@ export default function Home() {
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginTop: 14, marginBottom: 8 }}>Welcome to Tour It</div>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>Scout any golf course before you play — real clips from golfers who&apos;ve already been there.</div>
             </div>
+            {/* Green-stroke SVG silhouettes — matches the BottomNav +
+                Intel/Like/Comment iconography across the app. No
+                emojis (per design direction 2026-05-25). */}
             {[
-              { icon: "🎥", title: "Watch hole-by-hole clips", desc: "See tee shots, approaches, and putts from real rounds" },
-              { icon: "📌", title: "Save courses to your list", desc: "Build your bucket list and track rounds you've played" },
-              { icon: "⛳", title: "Upload your own footage", desc: "Help other golfers by sharing your course knowledge" },
+              {
+                title: "Watch hole-by-hole clips",
+                desc: "See tee shots, approaches, and putts from real rounds",
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="6 4 20 12 6 20"/>
+                  </svg>
+                ),
+              },
+              {
+                title: "Save courses to your list",
+                desc: "Build your bucket list and track rounds you've played",
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                  </svg>
+                ),
+              },
+              {
+                title: "Upload your own footage",
+                desc: "Help other golfers by sharing your course knowledge",
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                ),
+              },
             ].map(f => (
               <div key={f.title} style={{ display: "flex", gap: 14, marginBottom: 18, alignItems: "flex-start" }}>
-                <span style={{ fontSize: 22, flexShrink: 0, lineHeight: 1.2 }}>{f.icon}</span>
-                <div>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.28)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {f.icon}
+                </div>
+                <div style={{ paddingTop: 4 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 2 }}>{f.title}</div>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{f.desc}</div>
                 </div>
