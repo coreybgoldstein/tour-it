@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { gameFormatLabel } from "@/lib/gameFormats";
 
 type GameRow = {
   id: string;
@@ -46,17 +47,6 @@ type TripRow = {
   id: string;
   name: string;
   startDate: string | null;
-};
-
-const FORMAT_LABELS: Record<string, string> = {
-  nassau: "Nassau",
-  skins: "Skins",
-  match_play: "Match Play",
-  best_ball: "Best Ball",
-  stableford: "Stableford",
-  scramble: "Scramble",
-  closest_to_pin: "Closest to the Pin",
-  longest_drive: "Longest Drive",
 };
 
 export default function GamePage() {
@@ -145,7 +135,7 @@ export default function GamePage() {
     );
   }
 
-  const formatLabel = FORMAT_LABELS[game.format] ?? game.format;
+  const formatLabel = gameFormatLabel(game.format);
   const cfg = game.formatConfig ?? {};
   const stakesLine = (() => {
     if (game.format === "nassau") return `$${cfg.frontAmount ?? "?"} / $${cfg.backAmount ?? "?"} / $${cfg.totalAmount ?? "?"}`;

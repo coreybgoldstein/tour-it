@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { GlobalFonts, createCanvas, loadImage, type SKRSContext2D } from "@napi-rs/canvas";
 import { join } from "path";
 import { createClient } from "@supabase/supabase-js";
+import { gameFormatLabel } from "@/lib/gameFormats";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,9 +110,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     .maybeSingle();
 
   const game = gameRes.data?.[0];
-  const formatLabel = game
-    ? (({ nassau: "Nassau", skins: "Skins", match: "Match Play", stroke: "Stroke Play" } as Record<string, string>)[game.format] ?? game.format)
-    : null;
+  const formatLabel = game ? gameFormatLabel(game.format) : null;
 
   type Player = { displayName: string; avatarUrl?: string | null; netStrokes?: number; courseHandicap?: number; strokeHoles?: number[] };
   const rawPlayers: Player[] = game && Array.isArray(game.players) ? (game.players as unknown as Player[]) : [];

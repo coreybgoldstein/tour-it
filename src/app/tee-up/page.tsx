@@ -8,6 +8,7 @@ import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
 import Toast, { type ToastState } from "@/components/Toast";
 import { sendPushToUser } from "@/lib/sendPush";
+import { gameFormatLabel } from "@/lib/gameFormats";
 
 type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
 type FriendRow = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
@@ -1192,19 +1193,7 @@ function GameCard({
   archived?: boolean;
 }) {
   // Format → friendly label. Keep in sync with the GAME_FORMATS array
-  // in /trips/[id]/page.tsx — if a new format is added there, drop it
-  // in here too.
-  const FORMAT_LABELS: Record<string, string> = {
-    nassau: "Nassau",
-    skins: "Skins",
-    best_ball: "Best Ball",
-    ctp: "Closest to Pin",
-    long_drive: "Long Drive",
-    match_play: "Match Play",
-    stroke_play: "Stroke Play",
-    scramble: "Scramble",
-  };
-  const formatLabel = FORMAT_LABELS[game.format] ?? game.format;
+  const formatLabel = gameFormatLabel(game.format);
   const cfg = game.formatConfig as { frontAmount?: number; backAmount?: number; totalAmount?: number; skinsAmount?: number; wager?: number; holes?: number[]; stake?: number } | null;
   const sub =
     game.format === "nassau" && cfg ? `$${cfg.frontAmount}/$${cfg.backAmount}/$${cfg.totalAmount}`

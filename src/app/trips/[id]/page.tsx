@@ -10,6 +10,7 @@ import { getVideoSrc } from "@/lib/getVideoSrc";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
 import Toast, { type ToastState } from "@/components/Toast";
+import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER } from "@/lib/gameFormats";
 
 type Trip = {
   id: string;
@@ -76,29 +77,19 @@ type TripGameRecord = {
   courseLogoUrl?: string | null;
 };
 
-const GAME_FORMATS = [
-  { id: "nassau", name: "Nassau", desc: "3 bets: front 9, back 9, full 18" },
-  { id: "skins", name: "Skins", desc: "Win each hole, ties carry over" },
-  { id: "match_play", name: "Match Play", desc: "Win holes, not total strokes" },
-  { id: "stableford", name: "Stableford", desc: "Points per hole: bogey=1, par=2, birdie=3+" },
-  { id: "best_ball", name: "Best Ball", desc: "Team: best net score per hole counts" },
-  { id: "scramble", name: "Scramble", desc: "All play from the best shot" },
-  { id: "closest_to_pin", name: "Closest to the Pin", desc: "Closest to the flag on chosen holes wins each" },
-  { id: "longest_drive", name: "Longest Drive", desc: "Longest tee shot in the fairway on chosen holes" },
-];
-
-// Formats where the user picks a SUBSET of holes that the game is played
-// on (vs. running the full 18). Skip the Step 5 hole-handicap rankings
-// entirely — no handicap math applies for closest-to-pin or longest
-// drive. formatConfig stores the chosen holes + winners declared per hole.
-const HOLE_PICKED_FORMATS = new Set(["closest_to_pin", "longest_drive"]);
+// Game format catalog now lives in @/lib/gameFormats — single source
+// of truth shared with CreateGameSheet, /tee-up, /games/[id], and
+// the round-recap beauty route. Aliased here so the legacy in-file
+// names keep working without a sweep through the rest of this file.
+const GAME_FORMATS = SHARED_GAME_FORMATS;
+const HOLE_PICKED_FORMATS = SHARED_HOLE_PICKED;
 
 // Formats where the winner is a TEAM (not an individual player) and the
 // stake is a per-team wager. formatConfig.wager stores the dollar amount
 // each team puts up; winners.team stores the winning teamId ("A", "B"…).
 // On settle, the winning team takes the pot from the losing team(s),
 // split per teammate.
-const TEAM_WAGER_FORMATS = new Set(["best_ball"]);
+const TEAM_WAGER_FORMATS = SHARED_TEAM_WAGER;
 
 // ── Inline date-range calendar ──────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
