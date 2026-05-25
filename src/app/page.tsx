@@ -511,15 +511,32 @@ const SeriesCard = memo(function SeriesCardImpl({
       onTouchEnd={handleTouchEnd}
     >
       <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", background: "#07100a", ...(isDesktop ? { maxWidth: 390 } : {}) }}>
-      {item.shots.map((shot, i) => (
-        <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.18s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
-          {shot.mediaType === "VIDEO" ? (
-            <HlsVideo ref={el => { videoRefs.current[shot.id] = el as HTMLVideoElement | null; }} src={getVideoSrc(shot.mediaUrl, shot.cloudflareVideoId)} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
-          ) : (
-            <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
-          )}
-        </div>
-      ))}
+      {item.shots.map((shot, i) => {
+        const isActiveShot = i === shotIndex;
+        // Only mount the actual <video> for the active shot — iOS WKWebView
+        // caps simultaneous video elements at ~16, and a feed with multiple
+        // visible series + peek-rail blew past that and rendered later
+        // clips black. Inactive shots render a thumbnail poster instead and
+        // swap in the real video when they become active. Photos always
+        // render as <img> regardless.
+        const isVideo = shot.mediaType === "VIDEO";
+        const posterSrc = shot.cloudflareVideoId
+          ? `https://videodelivery.net/${shot.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400`
+          : shot.mediaUrl;
+        return (
+          <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: isActiveShot ? 1 : 0, transition: "opacity 0.18s", pointerEvents: isActiveShot ? "auto" : "none" }}>
+            {isVideo ? (
+              isActiveShot ? (
+                <HlsVideo ref={el => { videoRefs.current[shot.id] = el as HTMLVideoElement | null; }} src={getVideoSrc(shot.mediaUrl, shot.cloudflareVideoId)} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
+              ) : (
+                <img src={posterSrc} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              )
+            ) : (
+              <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
+            )}
+          </div>
+        );
+      })}
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 35%)", pointerEvents: "none", zIndex: 5 }} />
 
