@@ -48,6 +48,9 @@ function SearchPageInner() {
   const [newCourseType, setNewCourseType] = useState<"PUBLIC" | "SEMI_PRIVATE" | "PRIVATE" | "">("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  // Success confirmation pill — replaces a native alert() per the
+  // design-system rule (no JS alerts on iOS WebView).
+  const [createSuccess, setCreateSuccess] = useState(false);
 
   const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
 
@@ -473,50 +476,32 @@ function SearchPageInner() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setCreateError("You must be logged in."); setCreating(false); return; }
 
-    // Geocode the actual course by name+city+state (OSM has most golf courses indexed)
-    // Falls back to city+state center if the named search misses
-    let latitude: number | null = null;
-    let longitude: number | null = null;
-    try {
-      const tryGeo = async (q: string) => {
-        const r = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`,
-          { headers: { "Accept-Language": "en" } }
-        );
-        const d = await r.json();
-        return d?.[0] ? { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) } : null;
-      };
-      // First try: exact course name in that city/state
-      const exact = await tryGeo(`${newName.trim()}, ${newCity.trim()}, ${newState.trim()}, US`);
-      // Fallback: city center if the course name isn't in OSM yet
-      const result = exact ?? await tryGeo(`${newCity.trim()}, ${newState.trim()}, US`);
-      if (result) { latitude = result.lat; longitude = result.lon; }
-    } catch {}
-
-    const slug = `${newName}-${newCity}-${newState}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
-    const now = new Date().toISOString();
-    const { data, error } = await supabase.from("Course").insert({
+    // Funnel through CourseRequest instead of inserting Course + 18
+    // Hole rows directly from the client. The previous code was an
+    // anti-spam vector (any signed-in user could create unlimited
+    // courses with default `par 4` holes that polluted the DB) and
+    // bypassed the ".claude/CLAUDE.md: never insert Courses, only
+    // update existing" seeding rule. The team reviews CourseRequest
+    // entries and creates real Course rows out-of-band (audit
+    // 2026-05-25 follow-up to #13).
+    const { error: reqErr } = await supabase.from("CourseRequest").insert({
       id: crypto.randomUUID(),
-      name: newName.trim(), city: newCity.trim(), state: newState.trim().toUpperCase(),
-      country: "US", holeCount: parseInt(newHoles) || 18, courseType: newCourseType || null,
-      slug, uploadCount: 0, saveCount: 0, viewCount: 0,
-      ...(latitude != null && longitude != null ? { latitude, longitude } : {}),
-      createdAt: now, updatedAt: now,
-    }).select("id").single();
+      userId: user.id,
+      name: newName.trim(),
+      city: newCity.trim(),
+      state: newState.trim().toUpperCase(),
+      courseType: newCourseType || null,
+      status: "PENDING",
+      createdAt: new Date().toISOString(),
+    });
     setCreating(false);
-    if (error) { setCreateError(error.message); return; }
-    const holeTotal = parseInt(newHoles) || 18;
-    const holes = Array.from({ length: holeTotal }, (_, i) => ({
-      id: crypto.randomUUID(),
-      courseId: data.id,
-      holeNumber: i + 1,
-      par: 4,
-      uploadCount: 0,
-      createdAt: now,
-      updatedAt: now,
-    }));
-    await supabase.from("Hole").insert(holes);
-    router.push(`/courses/${data.id}`);
+    if (reqErr) { setCreateError(reqErr.message); return; }
+    // We don't have a course id to route to — the request is queued
+    // for review. Surface a brief success confirmation inline; the
+    // sheet auto-closes after a beat so the user can continue.
+    setNewName(""); setNewCity(""); setNewState(""); setNewHoles("18"); setNewCourseType("");
+    setCreateSuccess(true);
+    setTimeout(() => { setCreateSuccess(false); setAddOpen(false); }, 2400);
   };
 
   // Tap anywhere outside the input / a button to dismiss the iOS keyboard.
@@ -1064,8 +1049,14 @@ function SearchPageInner() {
                 </div>
               </div>
               {createError && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#ef4444" }}>{createError}</div>}
-              <button onClick={handleCreate} disabled={creating} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: creating ? "default" : "pointer", opacity: creating ? 0.6 : 1, marginTop: 4 }}>
-                {creating ? "Creating…" : "Add Course"}
+              {createSuccess && (
+                <div style={{ background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 12, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862", display: "flex", alignItems: "center", gap: 10 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Thanks — we&apos;ll review and add it within 24h.
+                </div>
+              )}
+              <button onClick={handleCreate} disabled={creating || createSuccess} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "14px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: creating || createSuccess ? "default" : "pointer", opacity: creating || createSuccess ? 0.6 : 1, marginTop: 4 }}>
+                {creating ? "Submitting…" : createSuccess ? "Submitted" : "Submit for review"}
               </button>
             </div>
           </div>
