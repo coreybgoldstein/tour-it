@@ -58,6 +58,27 @@ export default function AppDownloadBanner() {
     setShow(true);
   }, []);
 
+  // Push page content down by the banner's height while it's visible so it
+  // doesn't overlay the TopBar (covering the hamburger button). We use a
+  // CSS custom property on <html> so any layout that wants to participate
+  // can read it; we also set body padding-top directly as a simple default
+  // that just works for the existing page layouts. Cleared on dismiss /
+  // unmount so the page snaps back to its normal offset.
+  useEffect(() => {
+    if (!show) return;
+    const BANNER_HEIGHT_PX = 68; // 44 icon + 10/12 vertical padding + 1 border + small safe-area buffer
+    const root = document.documentElement;
+    const prevBodyPadding = document.body.style.paddingTop;
+    const prevRootVar = root.style.getPropertyValue("--app-banner-offset");
+    document.body.style.paddingTop = `calc(${BANNER_HEIGHT_PX}px + env(safe-area-inset-top, 0px))`;
+    root.style.setProperty("--app-banner-offset", `calc(${BANNER_HEIGHT_PX}px + env(safe-area-inset-top, 0px))`);
+    return () => {
+      document.body.style.paddingTop = prevBodyPadding;
+      if (prevRootVar) root.style.setProperty("--app-banner-offset", prevRootVar);
+      else root.style.removeProperty("--app-banner-offset");
+    };
+  }, [show]);
+
   const dismiss = () => {
     try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch {}
     setShow(false);
