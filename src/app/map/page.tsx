@@ -375,7 +375,10 @@ export default function MapPage() {
     <>
       <style>{`
         .leaflet-container { background: #07100a !important; }
-        .leaflet-control-zoom { margin-bottom: 160px !important; margin-right: 12px !important; }
+        /* Push the +/- zoom controls above the bottom card carousel
+           (carousel sits at bottom: 80 + ~110px card height ≈ 190px
+           from the bottom). 220px clears the card strip cleanly. */
+        .leaflet-control-zoom { margin-bottom: 220px !important; margin-right: 12px !important; }
         .leaflet-control-zoom a { background: rgba(15,30,18,0.92) !important; border-color: rgba(255,255,255,0.12) !important; color: #fff !important; width: 32px !important; height: 32px !important; line-height: 32px !important; font-size: 16px !important; }
         .leaflet-control-zoom a:hover { background: rgba(45,122,66,0.4) !important; }
         .leaflet-control-attribution { background: rgba(7,16,10,0.7) !important; color: rgba(255,255,255,0.3) !important; font-size: 9px !important; margin-bottom: 80px !important; }
@@ -648,11 +651,14 @@ export default function MapPage() {
 
         {/* ── Phase 3B: Dart-throw UX ───────────────────────────────────── */}
 
-        {/* A. Dart button — hidden once dart mode opens */}
+        {/* A. Dart button — hidden once dart mode opens. Positioned
+            below the sticky search header using safe-area-inset-top
+            so it never overlaps the search bar on devices with a
+            notch / Dynamic Island. */}
         {!dartMode && (
           <div style={{
             position: "absolute",
-            top: 140,
+            top: "calc(env(safe-area-inset-top, 0px) + 130px)",
             right: 16,
             zIndex: 490,
             display: "flex",
@@ -709,6 +715,19 @@ export default function MapPage() {
                 <circle cx="12" cy="12" r="2.4" fill="#16a34a" />
                 {/* Red bullseye */}
                 <circle cx="12" cy="12" r="1.2" fill="#dc2626" />
+                {/* Dart stuck into the bullseye. Drawn coming in from
+                    the upper-right at ~30° so the tip touches center.
+                    Order: yellow shaft, dark steel tip overlay at the
+                    board side, white flights at the back. */}
+                <g transform="rotate(30 12 12)">
+                  {/* Shaft */}
+                  <line x1="12" y1="12" x2="12" y2="3.5" stroke="#facc15" strokeWidth="1.1" strokeLinecap="round" />
+                  {/* Steel tip — short overlap at the board so it reads as embedded */}
+                  <line x1="12" y1="12" x2="12" y2="10.5" stroke="#9ca3af" strokeWidth="1.4" strokeLinecap="round" />
+                  {/* Flights — two crossed triangles at the back */}
+                  <path d="M12 3.5 L9.6 1.6 L12 4.4 Z" fill="#fff" />
+                  <path d="M12 3.5 L14.4 1.6 L12 4.4 Z" fill="#e5e7eb" />
+                </g>
               </svg>
             </button>
             <span style={{
