@@ -1725,25 +1725,29 @@ export default function Home() {
            Width-based tier handles ≤ 380pt (SE/mini narrow widths)
            so even on portrait orientation the cards don't crowd. */
         @media (max-height: 870px) {
-          .discovery-hero { font-size: 24px !important; }
-          .discovery-search-btn { padding: 13px 16px !important; }
+          .discovery-logo { height: 48px !important; }
+          .may-banner { height: 38px !important; }
+          .discovery-hero { font-size: 22px !important; }
+          .discovery-search-btn { padding: 12px 16px !important; }
           .discovery-search-btn span { font-size: 14px !important; }
-          .discovery-section-label { font-size: 11px !important; padding-bottom: 8px !important; }
-          .discovery-section { margin-top: 6px !important; }
-          .discovery-row-pad { padding-top: 14px !important; padding-bottom: 12px !important; }
-          .course-card-compact { width: 138px !important; height: 160px !important; }
-          .course-card-default { width: 138px !important; height: 174px !important; }
-          .feed-peek-card { width: 84px !important; }
-          .feed-peek-section { padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important; margin-top: 12px !important; }
+          .discovery-section-label { font-size: 11px !important; padding-bottom: 6px !important; }
+          .discovery-section { margin-top: 4px !important; }
+          .discovery-row-pad { padding-top: 12px !important; padding-bottom: 10px !important; }
+          .course-card-compact { width: 132px !important; height: 144px !important; }
+          .course-card-default { width: 132px !important; height: 160px !important; }
+          .feed-peek-card { width: 78px !important; }
+          .feed-peek-section { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; margin-top: 8px !important; }
         }
         @media (max-height: 760px) {
-          .discovery-hero { font-size: 22px !important; }
-          .discovery-row-pad { padding-top: 10px !important; padding-bottom: 10px !important; }
-          .discovery-search-btn { padding: 11px 14px !important; }
-          .course-card-compact { width: 130px !important; height: 150px !important; }
-          .course-card-default { width: 130px !important; height: 164px !important; }
-          .feed-peek-card { width: 76px !important; }
-          .feed-peek-section { padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important; }
+          .discovery-logo { height: 42px !important; }
+          .may-banner { height: 34px !important; }
+          .discovery-hero { font-size: 20px !important; }
+          .discovery-row-pad { padding-top: 8px !important; padding-bottom: 8px !important; }
+          .discovery-search-btn { padding: 10px 14px !important; }
+          .course-card-compact { width: 124px !important; height: 134px !important; }
+          .course-card-default { width: 124px !important; height: 150px !important; }
+          .feed-peek-card { width: 70px !important; }
+          .feed-peek-section { padding-bottom: calc(78px + env(safe-area-inset-bottom)) !important; }
         }
         @media (max-width: 380px) {
           /* Narrow widths (iPhone SE / 12 mini / 13 mini at 375pt).
@@ -1908,7 +1912,7 @@ export default function Home() {
               </button>
               {/* Logo — centered on mobile, left-aligned on desktop */}
               <div style={{ display: "flex", justifyContent: isDesktop ? "flex-start" : "center" }}>
-                <img src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 68 : 56, width: "auto" }} />
+                <img className="discovery-logo" src="/tour-it-logo-full.png" alt="Tour It" style={{ height: isDesktop ? 68 : 56, width: "auto" }} />
               </div>
               {/* Bell — right-aligned in third column */}
               <div style={{ display: "flex", justifyContent: "flex-end" }}>

@@ -8,7 +8,7 @@ export default function MayCompetitionBanner() {
 
   return (
     <Link href="/leaderboards?period=monthly" style={{ display: "block", textDecoration: "none" }}>
-      <div style={{
+      <div className="may-banner" style={{
         position: "relative",
         background: "linear-gradient(90deg, #1e5c30 0%, #2d7a42 50%, #3a9954 100%)",
         display: "flex",
