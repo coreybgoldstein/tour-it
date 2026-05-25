@@ -305,7 +305,10 @@ export default function TeeUpPage() {
     const tripId = crypto.randomUUID();
     const now = new Date().toISOString();
     const courseLabel = quickCourse.name;
-    const niceDate = new Date(quickDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    // Parse as UTC (trailing 'Z') and format in UTC so picking May 25 in a
+    // negative offset timezone (e.g. PST) doesn't roll back to May 24. Mirrors
+    // the fmtSingleDate helper at the top of this file.
+    const niceDate = new Date(quickDate + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
     const tripName = `${courseLabel} — ${niceDate}`;
 
     await supabase.from("GolfTrip").insert({
@@ -1044,7 +1047,7 @@ export default function TeeUpPage() {
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Don't see your friend?</span>
                 <button
                   onClick={() => {
-                    const msg = `Join me on Tour It! Sign up at touritgolf.com — we're playing${quickCourse ? ` ${quickCourse.name}` : " a round"}${quickDate ? ` on ${new Date(quickDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}.`;
+                    const msg = `Join me on Tour It! Sign up at touritgolf.com — we're playing${quickCourse ? ` ${quickCourse.name}` : " a round"}${quickDate ? ` on ${new Date(quickDate + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}` : ""}.`;
                     if (typeof navigator !== "undefined" && navigator.share) {
                       navigator.share({ title: "Join me on Tour It", text: msg }).catch(() => {});
                     } else if (typeof navigator !== "undefined" && navigator.clipboard) {
