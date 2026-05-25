@@ -25,6 +25,17 @@ async function getSenderName(userId: string): Promise<string> {
   return data?.displayName || data?.username || "Someone";
 }
 
+// Upload has no holeNumber column — every push query joins
+// `hole:holeId(holeNumber)` to get it. PostgREST returns the join as
+// either an object or an array depending on the relation cardinality
+// it infers; normalize here.
+function normalizeHoleNumber(hole: unknown): number | null {
+  if (!hole) return null;
+  const obj = Array.isArray(hole) ? hole[0] : hole;
+  const n = (obj as { holeNumber?: number } | null)?.holeNumber;
+  return typeof n === "number" ? n : null;
+}
+
 async function deliverPush(recipientUserId: string, title: string, body: string, url: string) {
   const { data: target } = await sb.from("User").select("pushSubscription").eq("id", recipientUserId).single();
   if (!target?.pushSubscription) return { ok: false, reason: "no subscription" };
@@ -77,44 +88,47 @@ export async function POST(req: NextRequest) {
 
   } else if (type === "comment_received") {
     if (!referenceId) return NextResponse.json({ error: "Missing referenceId" }, { status: 400 });
-    const { data: upload } = await sb.from("Upload").select("userId, courseId, holeNumber").eq("id", referenceId).maybeSingle();
+    const { data: upload } = await sb.from("Upload").select("userId, courseId, hole:holeId(holeNumber)").eq("id", referenceId).maybeSingle();
     if (!upload || upload.userId !== recipientUserId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const { data: comment } = await sb.from("Comment").select("id").eq("uploadId", referenceId).eq("userId", user.id).maybeSingle();
     if (!comment) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const name = await getSenderName(user.id);
+    const holeNumber = normalizeHoleNumber(upload.hole);
     title = "New comment";
     body = `${name} commented on your clip`;
-    url = upload.holeNumber
-      ? `/courses/${upload.courseId}/holes/${upload.holeNumber}?clip=${referenceId}`
+    url = holeNumber
+      ? `/courses/${upload.courseId}/holes/${holeNumber}?clip=${referenceId}`
       : `/courses/${upload.courseId}`;
 
   } else if (type === "like_milestone") {
     if (!referenceId || !likeCount) return NextResponse.json({ error: "Missing referenceId or likeCount" }, { status: 400 });
-    const { data: upload } = await sb.from("Upload").select("userId, courseId, holeNumber").eq("id", referenceId).maybeSingle();
+    const { data: upload } = await sb.from("Upload").select("userId, courseId, hole:holeId(holeNumber)").eq("id", referenceId).maybeSingle();
     if (!upload || upload.userId !== recipientUserId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const { data: like } = await sb.from("Like").select("id").eq("uploadId", referenceId).eq("userId", user.id).maybeSingle();
     if (!like) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const count = Number(likeCount).toLocaleString();
+    const holeNumber = normalizeHoleNumber(upload.hole);
     title = `${count} likes!`;
     body = `Your clip hit ${count} likes 🎯`;
-    url = upload.holeNumber
-      ? `/courses/${upload.courseId}/holes/${upload.holeNumber}?clip=${referenceId}`
+    url = holeNumber
+      ? `/courses/${upload.courseId}/holes/${holeNumber}?clip=${referenceId}`
       : `/courses/${upload.courseId}`;
 
   } else if (type === "new_clip") {
     if (!referenceId) return NextResponse.json({ error: "Missing referenceId" }, { status: 400 });
-    const { data: upload } = await sb.from("Upload").select("userId, courseId, holeNumber").eq("id", referenceId).maybeSingle();
+    const { data: upload } = await sb.from("Upload").select("userId, courseId, hole:holeId(holeNumber)").eq("id", referenceId).maybeSingle();
     if (!upload || upload.userId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const [name, courseRow] = await Promise.all([
       getSenderName(user.id),
       sb.from("Course").select("name").eq("id", upload.courseId).single(),
     ]);
     const courseName = courseRow.data?.name || "a course";
-    const holeLabel = upload.holeNumber ? ` — Hole ${upload.holeNumber}` : "";
+    const holeNumber = normalizeHoleNumber(upload.hole);
+    const holeLabel = holeNumber ? ` — Hole ${holeNumber}` : "";
     title = "New clip";
     body = `${name} posted at ${courseName}${holeLabel}`;
-    url = upload.holeNumber
-      ? `/courses/${upload.courseId}/holes/${upload.holeNumber}?clip=${referenceId}`
+    url = holeNumber
+      ? `/courses/${upload.courseId}/holes/${holeNumber}?clip=${referenceId}`
       : `/courses/${upload.courseId}`;
 
   } else if (type === "new_clips") {
@@ -131,21 +145,24 @@ export async function POST(req: NextRequest) {
 
   } else if (type === "tag") {
     if (!referenceId) return NextResponse.json({ error: "Missing referenceId" }, { status: 400 });
-    const { data: upload } = await sb.from("Upload").select("userId, courseId, holeNumber").eq("id", referenceId).maybeSingle();
+    const { data: upload } = await sb.from("Upload").select("userId, courseId, hole:holeId(holeNumber)").eq("id", referenceId).maybeSingle();
     if (!upload || upload.userId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const [name, courseRow] = await Promise.all([
       getSenderName(user.id),
       sb.from("Course").select("name").eq("id", upload.courseId).single(),
     ]);
     const courseName = courseRow.data?.name || "a course";
-    const holeLabel = upload.holeNumber ? ` — Hole ${upload.holeNumber}` : "";
+    const holeNumber = normalizeHoleNumber(upload.hole);
+    const holeLabel = holeNumber ? ` — Hole ${holeNumber}` : "";
     title = "You were tagged in a clip";
     body = `${name} tagged you at ${courseName}${holeLabel}`;
     url = `/courses/${upload.courseId}`;
 
   } else if (type === "trip_invite") {
     if (!referenceId) return NextResponse.json({ error: "Missing referenceId" }, { status: 400 });
-    const { data: trip } = await sb.from("Trip").select("name").eq("id", referenceId).maybeSingle();
+    // Real table is GolfTrip — the original `Trip` lookup 404s every
+    // trip-invite push (caught in 2026-05-25 audit).
+    const { data: trip } = await sb.from("GolfTrip").select("name").eq("id", referenceId).maybeSingle();
     if (!trip) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const name = await getSenderName(user.id);
     title = "You've been invited!";

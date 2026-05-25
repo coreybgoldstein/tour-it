@@ -84,12 +84,17 @@ export async function POST(req: Request) {
   if (countErr) return NextResponse.json({ error: countErr.message }, { status: 500 });
   const trueCount = count ?? 0;
 
-  // 3) Get upload metadata for rankScore + owner-side awards
+  // 3) Get upload metadata for rankScore + owner-side awards.
+  // Upload has no holeNumber column — join Hole inline. Fixed
+  // 2026-05-25 (audit).
   const { data: upload } = await admin
     .from("Upload")
-    .select("userId, courseId, holeNumber, commentCount, createdAt")
+    .select("userId, courseId, commentCount, createdAt, hole:holeId(holeNumber)")
     .eq("id", body.uploadId)
     .maybeSingle();
+  const uploadHoleNumber = ((upload?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
+    ? (upload?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
+    : (upload?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
 
   // 4) Write the count + recomputed rankScore back
   const newRank = upload
@@ -116,8 +121,8 @@ export async function POST(req: Request) {
       const milestones: Record<number, string> = { 10: "milestone_10_likes", 100: "milestone_100_likes", 1000: "milestone_1000_likes" };
       if (milestones[trueCount]) {
         const now = new Date().toISOString();
-        const linkUrl = upload.holeNumber
-          ? `/courses/${upload.courseId}/holes/${upload.holeNumber}?clip=${body.uploadId}`
+        const linkUrl = uploadHoleNumber
+          ? `/courses/${upload.courseId}/holes/${uploadHoleNumber}?clip=${body.uploadId}`
           : `/courses/${upload.courseId}`;
         admin.from("Notification").insert({
           id: randomUUID(),

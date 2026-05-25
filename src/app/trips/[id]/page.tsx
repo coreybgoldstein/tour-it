@@ -7,7 +7,6 @@ import BottomNav from "@/components/BottomNav";
 import { sendPushToUser } from "@/lib/sendPush";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
-import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
 
@@ -377,8 +376,31 @@ export default function TripPage() {
 
       const { data: tripData } = await supabase.from("GolfTrip").select("*").eq("id", id).single();
       if (!tripData) { setLoading(false); return; }
+
+      // Membership gate — anyone with a trip link could previously
+      // read members + courses + games + clips even if they weren't
+      // invited (audit 2026-05-25). The owner always has access; all
+      // other viewers must be in GolfTripMember.
+      if (!authUser) {
+        router.replace(`/login?next=/trips/${id}`);
+        return;
+      }
+      const isCreator = authUser.id === tripData.createdBy;
+      if (!isCreator) {
+        const { data: membership } = await supabase
+          .from("GolfTripMember")
+          .select("id")
+          .eq("tripId", id)
+          .eq("userId", authUser.id)
+          .maybeSingle();
+        if (!membership) {
+          router.replace("/tee-up");
+          return;
+        }
+      }
+
       setTrip(tripData);
-      setIsOwner(authUser?.id === tripData.createdBy);
+      setIsOwner(isCreator);
 
       const { data: tcData } = await supabase.from("GolfTripCourse").select("id, courseId, secondaryCourseId, playDate, teeTime, accommodation, sortOrder").eq("tripId", id);
       if (tcData && tcData.length > 0) {

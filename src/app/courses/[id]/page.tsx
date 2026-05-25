@@ -15,7 +15,6 @@ import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
 import { SheetPortal } from "@/components/SheetPortal";
-import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
@@ -522,9 +521,11 @@ const [editDescription, setEditDescription] = useState("");
     return () => { cancelled = true; };
   }, [user?.id, courseClips]);
   const [tripPickerOpen, setTripPickerOpen] = useState(false);
-  useKeyboardAwareSheet(tripPickerOpen, "course-trip-picker");
   const [planOpen, setPlanOpen] = useState(false);
-  useKeyboardAwareSheet(planOpen, "course-plan-sheet");
+  // NOTE: useKeyboardAwareSheet removed 2026-05-25 — the hook's
+  // inline bottom/maxHeight raced with the .tourit-sheet CSS-driven
+  // --keyboard-height lift and collapsed the sheet to a strip when
+  // the keyboard opened. The global KeyboardSync now handles both.
   // Brief "Sent!" confirmation state for the Send pill in the hero.
   // navigator.share opens the iOS share sheet directly (no app feedback
   // needed since the OS provides it); the fallback path that copies the
@@ -623,7 +624,16 @@ const [editDescription, setEditDescription] = useState("");
         next.add(commentUploadId);
         return next;
       });
-      const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId, holeNumber, courseId").eq("id", commentUploadId).single();
+      // Upload has no holeNumber column — join Hole to get the
+      // number (matches the home-feed pattern fixed 2026-05-25).
+      const { data: uploadData } = await supabase
+        .from("Upload")
+        .select("commentCount, userId, courseId, hole:holeId(holeNumber)")
+        .eq("id", commentUploadId)
+        .single();
+      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
+        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
+        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
       await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
 
       // Notify clip owner (skip if commenting on own clip)
@@ -631,7 +641,7 @@ const [editDescription, setEditDescription] = useState("");
         const { data: commenterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
         const commenterName = commenterProfile?.displayName || commenterProfile?.username || "Someone";
         const notifNow = new Date().toISOString();
-        const clipLink = uploadData.holeNumber ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}` : `/courses/${uploadData.courseId}`;
+        const clipLink = holeNumber ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}` : `/courses/${uploadData.courseId}`;
         await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, read: false, createdAt: notifNow, updatedAt: notifNow });
         sendPushToUser("comment_received", uploadData.userId, commentUploadId);
         fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});

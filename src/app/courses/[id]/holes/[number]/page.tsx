@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
-import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 import BottomNav from "@/components/BottomNav";
 import LikesSheet from "@/components/LikesSheet";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
@@ -359,7 +358,9 @@ export default function HolePage() {
   const [submittingReport, setSubmittingReport] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
-  useKeyboardAwareSheet(!!commentUploadId, "hole-comment-sheet");
+  // useKeyboardAwareSheet removed 2026-05-25 — KeyboardSync + the
+  // .tourit-sheet --keyboard-height CSS handle the lift; the legacy
+  // hook fought with it and collapsed the comment sheet on focus.
   const [commentItems, setCommentItems] = useState<CommentItem[]>([]);
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
@@ -431,8 +432,17 @@ export default function HolePage() {
     if (!commentText.trim() || !user || !commentUploadId || submittingComment) return;
     setSubmittingComment(true);
     const supabase = createClient();
+    // Comment requires id + updatedAt — Prisma's @default(cuid) +
+    // @updatedAt are metadata only; the REST insert needs explicit
+    // values or Postgres rejects on NOT NULL. The hole-page used to
+    // ship the bare insert and the comment silently never landed
+    // (optimistic UI showed it). Fix: stamp both like the other
+    // comment handlers do.
+    const newId = crypto.randomUUID();
+    const now = new Date().toISOString();
     const { error } = await supabase.from("Comment").insert({
-      userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
+      id: newId, userId: user.id, uploadId: commentUploadId, body: commentText.trim(),
+      createdAt: now, updatedAt: now,
     });
     if (!error) {
       // Optimistic green-fill on the comment button — matches home
@@ -442,7 +452,15 @@ export default function HolePage() {
         next.add(commentUploadId);
         return next;
       });
-      const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId, holeNumber, courseId").eq("id", commentUploadId).single();
+      // Upload has no holeNumber column — join Hole to get the number.
+      const { data: uploadData } = await supabase
+        .from("Upload")
+        .select("commentCount, userId, courseId, hole:holeId(holeNumber)")
+        .eq("id", commentUploadId)
+        .single();
+      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
+        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
+        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
       await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
       if (uploadData?.userId && uploadData.userId !== user.id) {
         // Insert the in-app Notification row + push + points. The
@@ -452,8 +470,8 @@ export default function HolePage() {
         const { data: commenterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
         const commenterName = commenterProfile?.displayName || commenterProfile?.username || "Someone";
         const notifNow = new Date().toISOString();
-        const clipLink = uploadData.holeNumber
-          ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}`
+        const clipLink = holeNumber
+          ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
           : `/courses/${uploadData.courseId}`;
         supabase.from("Notification").insert({
           id: crypto.randomUUID(),

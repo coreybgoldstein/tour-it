@@ -86,6 +86,29 @@ export default function GamePage() {
         setLoading(false);
         return;
       }
+
+      // Membership gate — anyone with a game id could previously
+      // read stakes + players (audit 2026-05-25). A user must be a
+      // GolfTripMember on the underlying trip to see the page.
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (cancelled) return;
+      if (!authUser) {
+        router.replace(`/login?next=/games/${gameId}`);
+        return;
+      }
+      const { data: membership } = await supabase
+        .from("GolfTripMember")
+        .select("id")
+        .eq("tripId", (data as { tripId: string }).tripId)
+        .eq("userId", authUser.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!membership) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+
       setGame(data as GameRow);
 
       const [{ data: tripData }, { data: courseData }] = await Promise.all([
@@ -98,7 +121,7 @@ export default function GamePage() {
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [gameId]);
+  }, [gameId, router]);
 
   if (loading) {
     return (

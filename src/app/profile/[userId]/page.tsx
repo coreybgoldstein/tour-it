@@ -805,12 +805,20 @@ export default function ProfilePage() {
       body: commentText.trim(), createdAt: now, updatedAt: now,
     });
     if (error) { setSubmittingComment(false); return; }
-    const { data: uploadData } = await supabase.from("Upload").select("commentCount, userId, holeNumber, courseId").eq("id", commentUploadId).single();
+    // Upload has no holeNumber column — join Hole to get the number.
+    const { data: uploadData } = await supabase
+      .from("Upload")
+      .select("commentCount, userId, courseId, hole:holeId(holeNumber)")
+      .eq("id", commentUploadId)
+      .single();
+    const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
+      ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
+      : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
     await supabase.from("Upload").update({ commentCount: (uploadData?.commentCount || 0) + 1 }).eq("id", commentUploadId);
     if (uploadData?.userId && uploadData.userId !== currentUserId) {
       const commenterName = currentUserMeta?.username || "Someone";
-      const clipLink = uploadData.holeNumber
-        ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}`
+      const clipLink = holeNumber
+        ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
         : `/courses/${uploadData.courseId}`;
       supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, read: false, createdAt: now, updatedAt: now }).then(() => {});
       fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback, startTransition } from "react
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -52,7 +51,9 @@ function SearchPageInner() {
 
   const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
 
-  useKeyboardAwareSheet(addOpen, "search-create-course-sheet");
+  // useKeyboardAwareSheet calls removed 2026-05-25 — KeyboardSync
+  // + .tourit-sheet handle the lift; the legacy hook collapsed
+  // sheets when the keyboard opened.
 
   // Filters — initialized from URL params so they survive navigation
   const [filterOpen, setFilterOpen] = useState(false);
@@ -61,7 +62,6 @@ function SearchPageInner() {
   const [filterZip, setFilterZip] = useState(searchParams.get("zip") || "");
   const [filterHoles, setFilterHoles] = useState<"all" | "9" | "18">((searchParams.get("holes") as "9" | "18") || "all");
   const [filterCourseType, setFilterCourseType] = useState<"" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE">((searchParams.get("type") as "" | "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE") || "");
-  useKeyboardAwareSheet(filterOpen, "search-filter-sheet");
   const [filterRadius, setFilterRadius] = useState<"10" | "25" | "50">((searchParams.get("radius") as "10" | "25" | "50") || "25");
   const [zipCoords, setZipCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [zipLoading, setZipLoading] = useState(false);

@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
-import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 import BottomNav from "@/components/BottomNav";
 import LikesSheet from "@/components/LikesSheet";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
@@ -1427,7 +1426,20 @@ export default function Home() {
       // push but no in-app notification card. Course-page and profile-
       // page comment handlers already do this; the home-feed path was
       // the outlier (caught 2026-05-24 from user feedback).
-      const { data: uploadData } = await supabase.from("Upload").select("commentCount, likeCount, createdAt, userId, holeNumber, courseId").eq("id", commentUploadId).single();
+      // Upload has NO holeNumber column — holeNumber lives on Hole and
+      // joins via Upload.holeId. Earlier code selected a phantom
+      // `holeNumber` field which silently returned undefined, so every
+      // comment notification deep-link fell back to course root.
+      // Fix: join Hole inline so the comment notif points at the
+      // exact clip.
+      const { data: uploadData } = await supabase
+        .from("Upload")
+        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
+        .eq("id", commentUploadId)
+        .single();
+      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
+        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
+        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
       const newCommentCount = (uploadData?.commentCount || 0) + 1;
       const { computeRankScore } = await import("@/lib/rankScore");
       const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
@@ -1435,8 +1447,8 @@ export default function Home() {
       if (uploadData?.userId && uploadData.userId !== user.id) {
         const commenterName = userProfile?.displayName || userProfile?.username || "Someone";
         const notifNow = new Date().toISOString();
-        const clipLink = uploadData.holeNumber
-          ? `/courses/${uploadData.courseId}/holes/${uploadData.holeNumber}?clip=${commentUploadId}`
+        const clipLink = holeNumber
+          ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
           : `/courses/${uploadData.courseId}`;
         supabase.from("Notification").insert({
           id: crypto.randomUUID(),
