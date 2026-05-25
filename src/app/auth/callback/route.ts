@@ -35,7 +35,7 @@ export async function GET(request: Request) {
   // but our public.User row does not — we have to provision it here on
   // the very first callback. Email/password signups handle this in the
   // /signup page itself, so this block is a no-op for them. We also
-  // route brand-new users (no username) into /onboarding/profile so the
+  // route brand-new users (no username) into /onboarding/intro so the
   // OAuth-only path still collects a handle, display name, handicap,
   // and home course before they land in the feed.
   const { data: { user } } = await supabase.auth.getUser();
@@ -80,13 +80,13 @@ export async function GET(request: Request) {
       // No username yet — funnel them through onboarding regardless of
       // what next= says. After /onboarding completes the user lands on
       // home automatically.
-      return NextResponse.redirect(`${origin}/onboarding/profile`);
+      return NextResponse.redirect(`${origin}/onboarding/intro`);
     }
 
     if (!existing.username) {
       // Edge case: User row exists (created earlier) but username never
       // got set — same guardrail as above.
-      return NextResponse.redirect(`${origin}/onboarding/profile`);
+      return NextResponse.redirect(`${origin}/onboarding/intro`);
     }
   }
 

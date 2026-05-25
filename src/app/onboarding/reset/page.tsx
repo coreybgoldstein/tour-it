@@ -95,12 +95,16 @@ export default function OnboardingReset() {
       localStorage.removeItem("tour-it-may-modal-seen");
       localStorage.removeItem("tour-it-feed-hint");
       localStorage.removeItem("tour-it-app-download-banner-dismissed");
+      // New flags introduced 2026-05-25 in the v3 onboarding rewrite.
+      localStorage.removeItem("tour-it-intro-seen");
+      localStorage.removeItem("tour-it-explore-home-course-dismissed");
+      localStorage.removeItem("tour-it-complete-profile-dismissed");
     } catch {}
 
     setStep("done");
     // Tiny pause so the "done" state can render before the redirect
     // (otherwise the route flashes through invisibly).
-    setTimeout(() => router.replace("/onboarding/profile"), 700);
+    setTimeout(() => router.replace("/onboarding/intro"), 700);
   }
 
   return (
