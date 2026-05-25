@@ -25,7 +25,7 @@ export async function DELETE() {
   // 6. Saves
   await admin.from("Save").delete().eq("userId", uid);
   // 7. Moderation reports submitted by user
-  await admin.from("ModerationReport").delete().eq("reporterId", uid);
+  await admin.from("ModerationReport").delete().eq("reportedById", uid);
   // 8. Comments + likes + tags on user's own uploads
   const { data: uploads } = await admin.from("Upload").select("id").eq("userId", uid);
   if (uploads && uploads.length > 0) {
