@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -1073,10 +1073,30 @@ export default function ProfilePage() {
   );
 
   const initials = profile.displayName?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
-  const allClips = [
-    ...uploads,
-    ...(isOwner ? taggedUploads : []),
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Memoized so the feed modal doesn't rebuild + re-sort this on
+  // every parent render (scroll handler firing setFeedActiveIdx,
+  // setLikesUploadId, every onComment open, etc.). For owners the
+  // array is uploads + taggedUploads which can be 50+ items, so
+  // skipping the rebuild keeps the feed scroll smooth and avoids
+  // the "freeze" reports on own-profile interactions.
+  const allClips = useMemo(
+    () => [
+      ...uploads,
+      ...(isOwner ? taggedUploads : []),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [uploads, taggedUploads, isOwner]
+  );
+
+  // Memoized course lookup — without this the feed modal does 3
+  // linear scans of coursesPlayed for every clip every render
+  // (`.find()` called inline). On an owner profile with 50+ clips
+  // that's 150+ scans per render and any state change (scroll,
+  // open sheet, etc.) felt like a freeze.
+  const coursesById = useMemo(() => {
+    const m = new Map<string, typeof coursesPlayed[number]>();
+    for (const c of coursesPlayed) m.set(c.id, c);
+    return m;
+  }, [coursesPlayed]);
 
   const openFeed = (idx: number) => {
     setFeedActiveIdx(idx);
@@ -1103,9 +1123,9 @@ export default function ProfilePage() {
               <ProfileFeedCard
                 clip={clip}
                 isActive={idx === feedActiveIdx}
-                courseName={coursesPlayed.find(c => c.id === clip.courseId)?.name ?? null}
-                courseLogoUrl={coursesPlayed.find(c => c.id === clip.courseId)?.logoUrl ?? null}
-                courseLocation={(() => { const c = coursesPlayed.find(c => c.id === clip.courseId); return c ? [c.city, c.state].filter(Boolean).join(", ") || null : null; })()}
+                courseName={coursesById.get(clip.courseId)?.name ?? null}
+                courseLogoUrl={coursesById.get(clip.courseId)?.logoUrl ?? null}
+                courseLocation={(() => { const c = coursesById.get(clip.courseId); return c ? [c.city, c.state].filter(Boolean).join(", ") || null : null; })()}
                 onClose={() => setFeedOpen(false)}
                 onOptions={isOwner ? () => { setFeedOpen(false); setSelectedClip(clip); } : undefined}
                 onReport={!isOwner && currentUserId ? () => { setFeedOpen(false); setReportClipId(clip.id); } : undefined}
@@ -1794,8 +1814,9 @@ export default function ProfilePage() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
               {allClips.map((upload, i) => {
-                const courseLogoUrl = coursesPlayed.find(c => c.id === upload.courseId)?.logoUrl ?? null;
-                const courseName = coursesPlayed.find(c => c.id === upload.courseId)?.name || "";
+                const c = coursesById.get(upload.courseId);
+                const courseLogoUrl = c?.logoUrl ?? null;
+                const courseName = c?.name || "";
                 return (
                 <div key={upload.id + (upload.isTagged ? "-t" : "")} className="clip-thumb" onClick={() => openFeed(i)}
                   style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}>
