@@ -2622,8 +2622,8 @@ const [editDescription, setEditDescription] = useState("");
 
       {tripPickerOpen && (
         <SheetPortal>
-          <div id="course-trip-picker" className="tourit-sheet-backdrop" onClick={() => setTripPickerOpen(false)} />
-          <div className="tourit-sheet" onClick={e => e.stopPropagation()}>
+          <div className="tourit-sheet-backdrop" onClick={() => setTripPickerOpen(false)} />
+          <div id="course-trip-picker" className="tourit-sheet" onClick={e => e.stopPropagation()}>
             <div className="tourit-sheet-grip" />
 
             {tripStep === "select" && (
