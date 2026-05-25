@@ -141,9 +141,48 @@ export default function EditClipSheet({
   return (
     <>
       <style>{`@keyframes editSpinSheet { to { transform: rotate(360deg); } }`}</style>
-      <div className="tourit-sheet-backdrop" onClick={onClose} />
-      <div id="edit-clip-sheet" className="tourit-sheet" onClick={e => e.stopPropagation()}>
-        <div className="tourit-sheet-grip" />
+      {/* Custom-overlay bottom sheet — same pattern as CreateGameSheet
+          and the trip-page Create Game sheet. .tourit-sheet's
+          min-height calc collapses below the keyboard top on tall
+          forms, leaving the profile page visible beneath the sheet
+          when the keyboard opens for the tag search. position:fixed
+          + alignItems:stretch + flex:1 on the inner panel forces it
+          to fill the available height between the safe-area top
+          and the keyboard. */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 210,
+          background: "rgba(0,0,0,0.78)",
+          display: "flex",
+          alignItems: "stretch",
+          justifyContent: "center",
+          paddingTop: "calc(env(safe-area-inset-top) + 24px)",
+        }}
+      >
+        <div
+          id="edit-clip-sheet"
+          onClick={e => e.stopPropagation()}
+          style={{
+            width: "100%",
+            maxWidth: 520,
+            background: "#0d2318",
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderTop: "1px solid rgba(77,168,98,0.3)",
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minHeight: 0,
+            padding: "10px 20px calc(20px + env(safe-area-inset-bottom))",
+            overflowY: "auto",
+            boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+          }}
+        >
+          <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "0 auto 10px", flexShrink: 0 }} />
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 20 }}>Edit clip</div>
 
         {loading || !editData ? (
@@ -251,6 +290,7 @@ export default function EditClipSheet({
             </button>
           </>
         )}
+        </div>
       </div>
     </>
   );
