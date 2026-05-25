@@ -137,6 +137,21 @@ input, textarea, select {
   inset: 0;
   z-index: 200;
   background: rgba(0, 0, 0, 0.65);
+  animation: tourit-sheet-fade-in 0.22s ease both;
+}
+
+/* Slide-up entry animation — the bottom-sheet "feels right" cue. The
+   curve matches iOS's snappy keyboard curve so the open + the
+   keyboard rise stay in sync if focusing an input opens both at once.
+   Backdrop fades in alongside so it doesn't pop in over a still feed.
+*/
+@keyframes tourit-sheet-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes tourit-sheet-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .tourit-sheet {
@@ -175,6 +190,7 @@ input, textarea, select {
     bottom 0.25s cubic-bezier(0.32, 0.72, 0, 1),
     min-height 0.25s cubic-bezier(0.32, 0.72, 0, 1),
     max-height 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  animation: tourit-sheet-slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 /* Compact variant — content-sized, for short confirmation sheets that

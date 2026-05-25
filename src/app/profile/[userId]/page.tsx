@@ -1385,8 +1385,13 @@ export default function ProfilePage() {
       {isOwner && showEdit && (
         <>
           <div className="tourit-sheet-backdrop" onClick={() => setShowEdit(false)} />
-          <div className="tourit-sheet" onClick={e => e.stopPropagation()}>
+          <div className="tourit-sheet tourit-sheet--full" onClick={e => e.stopPropagation()}>
             <div className="tourit-sheet-grip" />
+            {/* Scrollable body — keeps "Save changes" pinned to the bottom
+                of the sheet via .tourit-sheet-footer so the submit button
+                is always visible above the keyboard, even when the form
+                grows past the keyboard's open height. */}
+            <div className="tourit-sheet-body">
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14 }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "#1a3320", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>
                 {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
@@ -1459,12 +1464,18 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <button onClick={handleSaveProfile} style={{ width: "100%", padding: "12px", background: "#1a9e42", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif" }}>
-              {saving ? "Saving…" : "Save changes"}
-            </button>
-            <div style={{ marginTop: 28, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
+            <div style={{ marginTop: 12, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
               <button onClick={() => { setShowEdit(false); setShowDeleteAccount(true); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,100,100,0.45)", padding: "4px 0" }}>
                 Delete account
+              </button>
+            </div>
+            </div>{/* /.tourit-sheet-body */}
+
+            {/* Sticky submit — always visible above the keyboard so a
+                new user filling out fields can always see how to save. */}
+            <div className="tourit-sheet-footer">
+              <button onClick={handleSaveProfile} style={{ width: "100%", padding: "13px", background: "#1a9e42", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit', sans-serif", boxShadow: "0 4px 16px rgba(26,158,66,0.35)" }}>
+                {saving ? "Saving…" : "Save changes"}
               </button>
             </div>
           </div>
