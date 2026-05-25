@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import { KeyboardResize } from "@capacitor/keyboard";
 
 const config: CapacitorConfig = {
   appId: "com.tourit.app",
@@ -40,6 +41,20 @@ const config: CapacitorConfig = {
   },
 
   plugins: {
+    // Disable Capacitor's native WebView resize when the keyboard opens.
+    // Default ("native") shrinks the WebView itself, which then pins our
+    // position:fixed sheets to the SHRUNKEN bottom — and the CSS
+    // `bottom: var(--keyboard-height)` from KeyboardSync lifts them a
+    // second time on top of that. The double-lift was sending sheets
+    // halfway up the screen (Contribute sheet, profile edit, etc.) when
+    // an input was focused. With "none" the WebView stays full height,
+    // the bottom edge stays put, and the CSS variable is the single
+    // source of truth for sheet lift.
+    Keyboard: {
+      resize: KeyboardResize.None,
+      resizeOnFullScreen: true,
+    },
+
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],
     },
