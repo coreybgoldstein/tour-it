@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
+import { sendPushToUser } from "@/lib/sendPush";
 
 type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
 type FriendRow = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
@@ -372,6 +373,11 @@ export default function TeeUpPage() {
           updatedAt: now,
         }))
       );
+      // Fire a push to each invitee so they get the notification on their phone,
+      // not just in the bell. Mirrors the long-form trip-invite path.
+      for (const f of invitedFriends) {
+        sendPushToUser("trip_invite", f.id, tripId);
+      }
     }
 
     // +50 pts award (same hook the long-form trip create uses)
