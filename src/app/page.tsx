@@ -1609,6 +1609,18 @@ export default function Home() {
         if (item.type === "clip" && item.clip.id === commentUploadId) {
           return { ...item, clip: { ...item.clip, commentCount: item.clip.commentCount + 1 } };
         }
+        if (item.type === "series") {
+          // Series items hold their per-shot data in item.shots, and the
+          // RightPanel reads commentCount from item.shots[0]. Bump the
+          // shot whose id matches the comment target so the badge under
+          // the comment button reflects the new total.
+          const idx = item.shots.findIndex(s => s.id === commentUploadId);
+          if (idx >= 0) {
+            const shots = item.shots.slice();
+            shots[idx] = { ...shots[idx], commentCount: (shots[idx].commentCount || 0) + 1 };
+            return { ...item, shots };
+          }
+        }
         return item;
       }));
       // Flip the right-rail comment button to green immediately on post.
