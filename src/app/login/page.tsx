@@ -247,36 +247,56 @@ function LoginPageInner() {
           </>
         )}
 
-        <div className="field">
-          <label className="field-label">Email</label>
-          <input
-            className="field-input"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-          />
-        </div>
+        {/* Real <form> so iOS Password AutoFill recognizes this as a
+            credential form and offers the "Use Saved Password" chip
+            above the keyboard. The username + current-password
+            autoComplete hints are what make iOS associate the saved
+            credential with this field pair — without them the
+            QuickType keyboard accessory never appears. */}
+        <form
+          onSubmit={(e) => { e.preventDefault(); handleLogin(); }}
+          autoComplete="on"
+        >
+          <div className="field">
+            <label className="field-label" htmlFor="login-email">Email</label>
+            <input
+              id="login-email"
+              className="field-input"
+              type="email"
+              name="email"
+              autoComplete="username"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="you@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+            />
+          </div>
 
-        <div className="field">
-          <label className="field-label">Password</label>
-          <input
-            className="field-input"
-            type="password"
-            placeholder="Your password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleLogin()}
-          />
-        </div>
+          <div className="field">
+            <label className="field-label" htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              className="field-input"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              placeholder="Your password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
+          </div>
 
-        <div className="forgot">
-          <a href="/forgot-password">Forgot password?</a>
-        </div>
+          <div className="forgot">
+            <a href="/forgot-password">Forgot password?</a>
+          </div>
 
-        <button className="btn-submit" onClick={handleLogin} disabled={loading}>
-          {loading ? "Logging in..." : "Log in"}
-        </button>
+          <button type="submit" className="btn-submit" disabled={loading}>
+            {loading ? "Logging in..." : "Log in"}
+          </button>
+        </form>
 
         <div className="divider" />
 

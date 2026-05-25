@@ -346,69 +346,102 @@ function SignUpPageInner() {
           </div>
         ) : (
           <>
-            <div className="field" style={{ display: "flex", gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <label className="field-label">First name</label>
+            {/* Real <form> so iOS Password AutoFill recognizes this as
+                a signup form and offers Strong Password suggestions
+                above the keyboard. The email field carries
+                autoComplete="username" (not the handle field) because
+                email is the actual login credential — iOS will save
+                email + password as the credential pair, then offer
+                that pair back on /login. The handle field uses
+                "nickname" so it doesn't compete for the username
+                association. */}
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSignUp(); }}
+              autoComplete="on"
+            >
+              <div className="field" style={{ display: "flex", gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label" htmlFor="signup-first">First name</label>
+                  <input
+                    id="signup-first"
+                    className="field-input"
+                    type="text"
+                    name="given-name"
+                    placeholder="Chris"
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="field-label" htmlFor="signup-last">Last name</label>
+                  <input
+                    id="signup-last"
+                    className="field-input"
+                    type="text"
+                    name="family-name"
+                    placeholder="Berman"
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    autoComplete="family-name"
+                  />
+                </div>
+              </div>
+
+              <div className="field">
+                <label className="field-label" htmlFor="signup-handle">Username</label>
                 <input
+                  id="signup-handle"
                   className="field-input"
                   type="text"
-                  placeholder="Chris"
-                  value={firstName}
-                  onChange={e => setFirstName(e.target.value)}
-                  autoComplete="given-name"
+                  name="nickname"
+                  autoComplete="nickname"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder="e.g. boomer — not your email"
+                  value={username}
+                  onChange={e => setUsername(e.target.value.toLowerCase().replace(/[\s@]/g, ""))}
                 />
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Lowercase, no spaces — not your email</p>
               </div>
-              <div style={{ flex: 1 }}>
-                <label className="field-label">Last name</label>
+
+              <div className="field">
+                <label className="field-label" htmlFor="signup-email">Email</label>
                 <input
+                  id="signup-email"
                   className="field-input"
-                  type="text"
-                  placeholder="Berman"
-                  value={lastName}
-                  onChange={e => setLastName(e.target.value)}
-                  autoComplete="family-name"
+                  type="email"
+                  name="email"
+                  autoComplete="username"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                 />
               </div>
-            </div>
 
-            <div className="field">
-              <label className="field-label">Username</label>
-              <input
-                className="field-input"
-                type="text"
-                placeholder="e.g. boomer — not your email"
-                value={username}
-                onChange={e => setUsername(e.target.value.toLowerCase().replace(/[\s@]/g, ""))}
-              />
-              <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Lowercase, no spaces — not your email</p>
-            </div>
+              <div className="field">
+                <label className="field-label" htmlFor="signup-password">Password</label>
+                <input
+                  id="signup-password"
+                  className="field-input"
+                  type="password"
+                  name="new-password"
+                  autoComplete="new-password"
+                  placeholder="Min. 8 characters"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                />
+              </div>
 
-            <div className="field">
-              <label className="field-label">Email</label>
-              <input
-                className="field-input"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="field">
-              <label className="field-label">Password</label>
-              <input
-                className="field-input"
-                type="password"
-                placeholder="Min. 8 characters"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && handleSignUp()}
-              />
-            </div>
-
-            <button className="btn-submit" onClick={handleSignUp} disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
-            </button>
+              <button type="submit" className="btn-submit" disabled={loading}>
+                {loading ? "Creating account..." : "Create account"}
+              </button>
+            </form>
 
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", textAlign: "center", lineHeight: 1.6, marginTop: 4 }}>
               By creating an account you agree to our{" "}
