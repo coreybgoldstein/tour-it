@@ -1689,6 +1689,14 @@ export default function Home() {
                   onClick: () => { setMenuOpen(false); router.push("/leaderboards"); },
                 },
                 {
+                  label: "Play Tour It",
+                  // Trophy silhouette — the gamification hub (points,
+                  // ranks, monthly comp). Sits with the engagement
+                  // surfaces, not the legal/admin block.
+                  icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+                  onClick: () => { setMenuOpen(false); router.push("/play"); },
+                },
+                {
                   label: "Tee Up",
                   icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="10" cy="7.2" r="0.6" fill="currentColor" stroke="none"/><circle cx="14" cy="8.4" r="0.6" fill="currentColor" stroke="none"/><circle cx="11" cy="10.8" r="0.6" fill="currentColor" stroke="none"/><circle cx="14.4" cy="11.2" r="0.6" fill="currentColor" stroke="none"/><line x1="9.5" y1="15.5" x2="14.5" y2="15.5"/><path d="M10.5 15.5 L12 21 L13.5 15.5"/></svg>,
                   onClick: () => { setMenuOpen(false); router.push("/tee-up"); },
@@ -2241,46 +2249,6 @@ export default function Home() {
           </div>
         </>
       )}
-
-      {/* Homepage policy footer — small, fixed strip of legal/info
-          links visible just above the BottomNav. Required by Google's
-          OAuth verification: their reviewer expects a clickable
-          "Privacy Policy" link on the URL configured as the OAuth
-          consent screen's Application Home Page. Without this, app
-          name + logo stay frozen as "Sign in to {project}.supabase.co"
-          on the Google consent screen.
-
-          Positioned at the bottom-center, well below the active clip
-          content, so it's findable for Google + visitors without
-          interfering with the feed. Low-opacity text over the video
-          gradient keeps it unobtrusive in normal use. */}
-      <div
-        style={{
-          position: "fixed",
-          left: 0,
-          right: 0,
-          bottom: "calc(74px + env(safe-area-inset-bottom))",
-          zIndex: 11,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: 10,
-          pointerEvents: "auto",
-          fontFamily: "'Outfit', sans-serif",
-          fontSize: 10,
-          color: "rgba(255,255,255,0.35)",
-          textShadow: "0 1px 4px rgba(0,0,0,0.6)",
-        }}
-        aria-label="Tour It policy links"
-      >
-        <a href="/privacy" style={{ color: "inherit", textDecoration: "none" }}>Privacy Policy</a>
-        <span aria-hidden="true">·</span>
-        <a href="/terms" style={{ color: "inherit", textDecoration: "none" }}>Terms</a>
-        <span aria-hidden="true">·</span>
-        <a href="/about" style={{ color: "inherit", textDecoration: "none" }}>About</a>
-        <span aria-hidden="true">·</span>
-        <a href="mailto:corey@touritgolf.com" style={{ color: "inherit", textDecoration: "none" }}>Contact</a>
-      </div>
 
       <BottomNav />
 

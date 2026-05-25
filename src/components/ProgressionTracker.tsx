@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { levelProgress } from "@/lib/progression";
-import { MAX_LEVEL } from "@/config/points-system";
+import { levelProgress, rankLabel } from "@/lib/progression";
+import { MAX_LEVEL, type RankTierKey } from "@/config/points-system";
 import { getRankColor } from "@/lib/rank-styles";
 import LevelTracker from "@/components/LevelTracker";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
@@ -260,12 +260,20 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
         onClick={() => router.push("/leaderboards")}
         style={{ margin: "0 16px 8px", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer", position: "relative" }}
       >
-        {/* Row 1: eyebrow LEVEL X + total pts */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: rankColor, flexShrink: 0 }}>
+        {/* Row 1: rank pill + LEVEL X eyebrow + total pts. Rank tier
+            label (Caddie / Local / Marshal / …) lives in the pill so
+            users see what they ARE, not just their level number. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 8px", borderRadius: 99, background: `${rankColor}15`, border: `1px solid ${rankColor}55`, flexShrink: 0 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: rankColor, boxShadow: `0 0 6px ${rankColor}90` }} />
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: rankColor, textTransform: "uppercase" }}>
+              {rankLabel(prog.rank as RankTierKey)}
+            </span>
+          </span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
             Level {prog.level}
           </span>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1 }}>
+          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1, marginLeft: "auto" }}>
             {prog.totalPoints.toLocaleString()}
           </span>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.4)", letterSpacing: "0.02em" }}>pts</span>

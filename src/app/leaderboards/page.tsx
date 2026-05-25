@@ -54,18 +54,23 @@ export default function LeaderboardsPage() {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myRank, setMyRank] = useState<number | null>(null);
-  const [showCompModal, setShowCompModal] = useState(false);
-  // Evergreen points-system sheet. Auto-opens via ?points=1 — that
-  // query param is the destination for the FirstEarnSheet's "See
-  // how points work" CTA on the profile page, and for any other
-  // surface that wants to send a user to the explainer.
+  // ?competition=1 auto-opens the monthly competition modal (used by
+  // the Play hub's "Monthly Comp" tile). ?points=1 opens the evergreen
+  // points-system sheet (used by FirstEarnSheet's "See how points
+  // work" CTA and any other surface that needs the explainer).
+  const [showCompModal, setShowCompModal] = useState(
+    searchParams.get("competition") === "1"
+  );
   const [showPointsSheet, setShowPointsSheet] = useState(
     searchParams.get("points") === "1"
   );
   // Strip the param from the URL once we've consumed it so a back
   // navigation doesn't re-open the sheet.
   useEffect(() => {
-    if (searchParams.get("points") === "1" && typeof window !== "undefined") {
+    if (typeof window === "undefined") return;
+    const p = searchParams.get("points");
+    const c = searchParams.get("competition");
+    if (p === "1" || c === "1") {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, [searchParams]);

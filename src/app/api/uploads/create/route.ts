@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
+import { awardPoints } from "@/lib/awardPoints";
+import { PointAction } from "@/config/points-system";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
@@ -162,6 +164,7 @@ export async function POST(req: Request) {
     .eq("date", roundDate)
     .maybeSingle();
   let roundId = existingRound?.id;
+  const isNewRound = !roundId;
   if (!roundId) {
     roundId = randomUUID();
     await admin.from("Round").insert({
@@ -174,6 +177,16 @@ export async function POST(req: Request) {
     });
   }
   await admin.from("Upload").update({ roundId }).eq("id", body.uploadId);
+
+  // Award round-creation points only when a NEW Round row was inserted —
+  // not on every subsequent clip uploaded to the same round/date. The
+  // ONE_TIME_ACTIONS / REFERENCE_DEDUPED_ACTIONS guards in awardPoints
+  // make these calls safe to repeat anyway, but skipping the call when
+  // we already had a roundId saves a DB round-trip per upload.
+  if (isNewRound) {
+    awardPoints({ userId: user.id, action: PointAction.LOG_FIRST_ROUND, referenceId: roundId }).catch(() => {});
+    awardPoints({ userId: user.id, action: PointAction.LOG_COMPLETE_ROUND, referenceId: roundId }).catch(() => {});
+  }
 
   // Counter bumps. Read-modify-write is acceptable here — bursty concurrent
   // uploads from one user are rare and a -1 drift in display count is

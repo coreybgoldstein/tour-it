@@ -280,7 +280,13 @@ export default function TripPage() {
     if (!trip || deletingTrip) return;
     setDeletingTrip(true);
     const supabase = createClient();
-    await supabase.from("GolfTrip").delete().eq("id", trip.id);
+    const tripId = trip.id;
+    await supabase.from("GolfTrip").delete().eq("id", tripId);
+    fetch("/api/points/award", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "trip_deleted", referenceId: tripId }),
+    }).catch(() => {});
     router.push("/lists");
   }
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -998,6 +1004,11 @@ export default function TripPage() {
     if (deletingGameId) return;
     setDeletingGameId(gameId);
     await createClient().from("TripGame").delete().eq("id", gameId);
+    fetch("/api/points/award", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "game_deleted", referenceId: gameId }),
+    }).catch(() => {});
     setGames(prev => prev.filter(g => g.id !== gameId));
     setViewGameOpen(false);
     setViewGame(null);

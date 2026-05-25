@@ -73,6 +73,9 @@ export const PointAction = {
   // Reversals
   UNLIKE_RECEIVED:             "unlike_received",
   UPLOAD_DELETED:              "upload_deleted",
+  TRIP_DELETED:                "trip_deleted",
+  GAME_DELETED:                "game_deleted",
+  ROUND_DELETED:               "round_deleted",
 } as const;
 
 export type PointActionKey = typeof PointAction[keyof typeof PointAction];
@@ -137,6 +140,11 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
 
   [PointAction.UNLIKE_RECEIVED]:           -2,
   [PointAction.UPLOAD_DELETED]:           -20,
+  // Mirror the CREATE_* awards so deleting a trip/game/round refunds
+  // the exact amount that was originally granted. Keep these in sync.
+  [PointAction.TRIP_DELETED]:             -50,
+  [PointAction.GAME_DELETED]:             -15,
+  [PointAction.ROUND_DELETED]:            -15,
 };
 
 // One-time actions — only ever award once per user (enforced in awardPoints)

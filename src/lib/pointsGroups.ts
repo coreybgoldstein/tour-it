@@ -117,6 +117,9 @@ export const POINTS_GROUPS: PointsGroup[] = [
     rows: [
       { label: "Like removed from your clip",  display: fmtNeg(POINT_VALUES[PointAction.UNLIKE_RECEIVED]),  negative: true },
       { label: "Clip deleted",                 display: fmtNeg(POINT_VALUES[PointAction.UPLOAD_DELETED]),   negative: true },
+      { label: "Trip deleted",                 display: fmtNeg(POINT_VALUES[PointAction.TRIP_DELETED]),     negative: true },
+      { label: "Game deleted",                 display: fmtNeg(POINT_VALUES[PointAction.GAME_DELETED]),     negative: true },
+      { label: "Round deleted",                display: fmtNeg(POINT_VALUES[PointAction.ROUND_DELETED]),    negative: true },
     ],
   },
 ];

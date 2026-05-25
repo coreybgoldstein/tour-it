@@ -4,17 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
-import { RANK_COLORS, RANK_TIERS } from "@/config/points-system";
 import BottomNav from "@/components/BottomNav";
-
-const RANK_META: Record<string, { label: string; desc: string }> = {
-  CADDIE:     { label: "Caddie",     desc: "Reading the book. Learning the course. Every great one started here." },
-  LOCAL:      { label: "Local",      desc: "You know your home track inside out. People are starting to notice." },
-  MARSHAL:    { label: "Marshal",    desc: "A fixture on the course. Your scouting covers real ground." },
-  COURSE_PRO: { label: "Course Pro", desc: "You've gone deep on multiple tracks. The community counts on your intel." },
-  TOUR_PRO:   { label: "Tour Pro",   desc: "Elite contributor. Your clips have reached players across the country." },
-  LEGEND:     { label: "Legend",     desc: "The rarest rank on Tour It. You didn't just build a profile — you helped build the platform." },
-};
 
 function SectionDivider() {
   return (
@@ -178,61 +168,7 @@ export default function AboutPage() {
             Every clip is a piece of intel. Every hole scouted is a favor to a golfer you&apos;ll never meet. When you post that approach into 14 with the pin tucked back-left and wind off the water, you&apos;re not just sharing a video — you&apos;re helping someone show up a little more prepared.
           </p>
           <p style={{ fontSize: isDesktop ? 17 : 16, lineHeight: 1.78, color: "rgba(255,255,255,0.82)", marginBottom: 0 }}>
-            The more you contribute, the better it gets for everyone. The more you contribute, the more the community recognizes it.
-          </p>
-        </div>
-
-        <SectionDivider />
-
-        {/* Earn your rank */}
-        <div>
-          <h2 style={{
-            fontFamily: "'Playfair Display', serif", fontSize: isDesktop ? 26 : 22,
-            fontWeight: 700, color: "#fff", margin: "0 0 8px",
-          }}>
-            Earn your rank
-          </h2>
-          <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)", marginBottom: 36, fontStyle: "italic" }}>
-            Six ranks. All of them worth chasing.
-          </p>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            {RANK_TIERS.map((tier, i) => {
-              const color = RANK_COLORS[tier.rank];
-              const meta = RANK_META[tier.rank];
-              const isLast = i === RANK_TIERS.length - 1;
-              return (
-                <div key={tier.rank} style={{
-                  display: "flex", alignItems: "flex-start", gap: 20,
-                  padding: "14px 0",
-                  borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.05)",
-                }}>
-                  {/* Color bar + connector line */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, paddingTop: 4 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: color, boxShadow: `0 0 8px ${color}60`, flexShrink: 0 }} />
-                    {!isLast && <div style={{ width: 1, flex: 1, minHeight: 24, background: `linear-gradient(180deg, ${color}40, transparent)`, marginTop: 6 }} />}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{
-                      fontFamily: "'Outfit', sans-serif", fontSize: isDesktop ? 17 : 16,
-                      fontWeight: 700, color, marginBottom: 6, letterSpacing: "0.01em",
-                    }}>
-                      {meta.label}
-                    </div>
-                    <div style={{ fontSize: isDesktop ? 15 : 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
-                      {meta.desc}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <p style={{ fontSize: isDesktop ? 16 : 15, lineHeight: 1.78, color: "rgba(255,255,255,0.65)", marginTop: 36, marginBottom: 0 }}>
-            Points come from doing things that make Tour It better: uploading clips, scouting a hole, being the first to map a course nobody&apos;s touched. There are bonuses for milestones, for showing up consistently, for going somewhere nobody else has been yet.
-          </p>
-          <p style={{ fontSize: isDesktop ? 16 : 15, lineHeight: 1.78, color: "rgba(255,255,255,0.65)", marginTop: 16, marginBottom: 0 }}>
-            Go explore. The system rewards the work.
+            The more you contribute, the better it gets for everyone.
           </p>
         </div>
 
