@@ -21,6 +21,8 @@ import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { RANK_TIERS, RANK_COLORS, type RankTierKey } from "@/config/points-system";
 import { rankLabel } from "@/lib/progression";
 import BottomNav from "@/components/BottomNav";
+import PointsSystemSheet from "@/components/PointsSystemSheet";
+import MayCompetitionModal from "@/components/MayCompetitionModal";
 
 const RANK_META: Record<RankTierKey, string> = {
   CADDIE:     "Reading the book. Every great one started here.",
@@ -35,6 +37,13 @@ export default function PlayHubPage() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const [me, setMe] = useState<{ rank: string; level: number; totalPoints: number } | null>(null);
+  // Inline sheets — keep the Play hub mounted as the back-stack anchor.
+  // Tiles that previously router.push'd to /leaderboards?points=1 now
+  // open the sheet right here, so a back gesture from any subsequent
+  // navigation (like the Leaderboard tile) returns to /play instead of
+  // a transient /leaderboards entry.
+  const [showPoints, setShowPoints] = useState(false);
+  const [showComp, setShowComp] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -66,12 +75,14 @@ export default function PlayHubPage() {
         @keyframes play-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
-      {/* Sticky back */}
+      {/* Sticky back. TourItTopBar is hidden on /play (see
+          HIDDEN_EXACT), so this header sits right under the iOS
+          status bar and owns the safe-area-inset-top padding. */}
       <div style={{
         position: "sticky", top: 0, zIndex: 10,
         background: "rgba(7,16,10,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
-        padding: "calc(12px + env(safe-area-inset-top)) 20px 12px",
+        padding: "calc(10px + env(safe-area-inset-top)) 20px 10px",
         display: "flex", alignItems: "center", gap: 12,
       }}>
         <button onClick={() => router.back()} style={{
@@ -151,7 +162,7 @@ export default function PlayHubPage() {
               sub: "How every action scores",
               color: "#4da862",
               icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7" x2="12" y2="13"/><line x1="9" y1="10" x2="15" y2="10"/><path d="M9 16h6"/></svg>,
-              onClick: () => router.push("/leaderboards?points=1"),
+              onClick: () => setShowPoints(true),
             },
             {
               label: "Leaderboard",
@@ -165,14 +176,14 @@ export default function PlayHubPage() {
               sub: "Prizes for the top scorers",
               color: "#f97316",
               icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
-              onClick: () => router.push("/leaderboards?competition=1"),
+              onClick: () => setShowComp(true),
             },
             {
               label: "Streaks",
               sub: "Show up week after week",
               color: "#f97316",
               icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c0 5-4 6-4 10a4 4 0 0 0 8 0c0-2-1-3-1-5 0 0 3 1 3 5a6 6 0 0 1-12 0c0-6 6-7 6-10z"/></svg>,
-              onClick: () => router.push("/leaderboards?points=1"),
+              onClick: () => setShowPoints(true),
             },
           ].map((tile) => (
             <button
@@ -300,7 +311,7 @@ export default function PlayHubPage() {
             Every month resets. The top scorers in the monthly leaderboard claim prizes — Tour It gear, course-credit gift cards, and a permanent spot in the Hall of the Month.
           </p>
           <button
-            onClick={() => router.push("/leaderboards?competition=1")}
+            onClick={() => setShowComp(true)}
             style={{
               display: "inline-flex", alignItems: "center", gap: 7,
               padding: "10px 16px", borderRadius: 99,
@@ -329,7 +340,7 @@ export default function PlayHubPage() {
             Upload a clip — start scoring
           </button>
           <button
-            onClick={() => router.push("/leaderboards?points=1")}
+            onClick={() => setShowPoints(true)}
             style={{
               padding: "13px 22px",
               background: "rgba(255,255,255,0.04)",
@@ -344,6 +355,9 @@ export default function PlayHubPage() {
       </div>
 
       <BottomNav />
+
+      {showPoints && <PointsSystemSheet onClose={() => setShowPoints(false)} />}
+      {showComp && <MayCompetitionModal onClose={() => setShowComp(false)} />}
     </main>
   );
 }

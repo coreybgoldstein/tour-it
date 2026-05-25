@@ -20,6 +20,7 @@ const HIDDEN_EXACT = new Set<string>([
   "/privacy",
   "/terms",
   "/feedback",
+  "/play",
 ]);
 const HIDDEN_PREFIXES = ["/courses/", "/onboarding", "/admin"];
 
