@@ -94,13 +94,18 @@ export async function POST(req: Request) {
     if (h1) {
       holeId = h1.id;
     } else {
+      // par: 4 is the safe default — par: 0 corrupts every downstream
+      // scorecard total + UserBadge "perfect round" check (audit #35).
+      // Most courses are par 4-heavy so this gets the scorecard math
+      // close enough until the team seeds the real par via the bulk
+      // seeder.
       const newHoleId = randomUUID();
       const nowIso = new Date().toISOString();
       const { error: hErr } = await admin.from("Hole").insert({
         id: newHoleId,
         courseId: body.courseId,
         holeNumber: 1,
-        par: 0,
+        par: 4,
         uploadCount: 0,
         createdAt: nowIso,
         updatedAt: nowIso,
