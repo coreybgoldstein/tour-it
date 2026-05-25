@@ -1028,6 +1028,30 @@ export default function ProfilePage() {
     setDeleting(false); setSelectedClip(null); setConfirmDelete(false);
   }
 
+  // ── Memoized derivations ─────────────────────────────────────────
+  // MUST live before the early returns below — React's hooks rules
+  // require the same number of hook calls every render. If useMemo
+  // sits after `if (loading) return …`, the first render (loading
+  // = true) skips them, and once data lands React sees more hooks
+  // than before → "Couldn't load this profile" white screen.
+  const allClips = useMemo(
+    () => [
+      ...uploads,
+      ...(isOwner ? taggedUploads : []),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [uploads, taggedUploads, isOwner]
+  );
+
+  // O(1) course lookup — without this the feed modal does 3 linear
+  // scans of coursesPlayed for every clip every render. On an owner
+  // profile with 50+ clips that's 150+ array scans per render and
+  // any state change felt like a freeze.
+  const coursesById = useMemo(() => {
+    const m = new Map<string, typeof coursesPlayed[number]>();
+    for (const c of coursesPlayed) m.set(c.id, c);
+    return m;
+  }, [coursesPlayed]);
+
   if (loading) return (
     <main style={{ background: "#07100a", minHeight: "100dvh", paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 760 : undefined }}>
       {/* Banner */}
@@ -1073,30 +1097,6 @@ export default function ProfilePage() {
   );
 
   const initials = profile.displayName?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
-  // Memoized so the feed modal doesn't rebuild + re-sort this on
-  // every parent render (scroll handler firing setFeedActiveIdx,
-  // setLikesUploadId, every onComment open, etc.). For owners the
-  // array is uploads + taggedUploads which can be 50+ items, so
-  // skipping the rebuild keeps the feed scroll smooth and avoids
-  // the "freeze" reports on own-profile interactions.
-  const allClips = useMemo(
-    () => [
-      ...uploads,
-      ...(isOwner ? taggedUploads : []),
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    [uploads, taggedUploads, isOwner]
-  );
-
-  // Memoized course lookup — without this the feed modal does 3
-  // linear scans of coursesPlayed for every clip every render
-  // (`.find()` called inline). On an owner profile with 50+ clips
-  // that's 150+ scans per render and any state change (scroll,
-  // open sheet, etc.) felt like a freeze.
-  const coursesById = useMemo(() => {
-    const m = new Map<string, typeof coursesPlayed[number]>();
-    for (const c of coursesPlayed) m.set(c.id, c);
-    return m;
-  }, [coursesPlayed]);
 
   const openFeed = (idx: number) => {
     setFeedActiveIdx(idx);
