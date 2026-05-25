@@ -28,7 +28,10 @@ type Course = {
   logoUrl?: string | null;
 };
 
-const TEE_COLORS = ["Black", "Blue", "White", "Red", "Gold", "Green"];
+// Tee-box picker temporarily hidden — selection was never wired through
+// to teeBoxId at upload time (always null on insert). Leave the schema
+// field `intel.tee` in place so we can re-enable the picker post-launch
+// without a state-shape change. See audit item #19.
 const WIND_OPTIONS = [
   { label: "Calm", value: "CALM" },
   { label: "Into", value: "INTO" },
@@ -59,12 +62,6 @@ const SHOT_TYPES = [
   { label: "Putt", value: "PUTT" },
   { label: "Bunker", value: "BUNKER" },
 ];
-const HANDICAP_RANGES = [
-  { label: "Scratch", value: "SCRATCH" },
-  { label: "Low (1-9)", value: "LOW" },
-  { label: "Mid (10-18)", value: "MID" },
-  { label: "High (19+)", value: "HIGH" },
-];
 const CLUBS = [
   { group: "Woods", options: ["Driver", "3-wood", "5-wood", "7-wood"] },
   { group: "Hybrids", options: ["2-hybrid", "3-hybrid", "4-hybrid", "5-hybrid"] },
@@ -73,7 +70,10 @@ const CLUBS = [
   { group: "Other", options: ["Putter", "Chipper"] },
 ];
 
-const INTEL_FIELDS = ["tee", "datePlayed", "club", "wind", "notes"];
+// "tee" intentionally omitted — the tee picker is hidden until teeBoxId
+// is wired through (audit #19). Including it would lock the discoverability
+// score at 80% max for every user.
+const INTEL_FIELDS = ["datePlayed", "club", "wind", "notes"];
 
 function UploadPageInner() {
   const router = useRouter();
@@ -1533,20 +1533,11 @@ function UploadPageInner() {
               <label className="field-label">Date Played <span className="optional-tag">OPTIONAL</span></label>
               <input className="field-input" type="date" value={intel.datePlayed} onChange={e => setIntel({ ...intel, datePlayed: e.target.value })} style={{ colorScheme: "dark" }} />
             </div>
-            <div className="field">
-              <label className="field-label">Tee <span className="optional-tag">OPTIONAL</span></label>
-              <div className="pill-row">
-                {TEE_COLORS.map(tee => {
-                  const teeColorMap: Record<string, string> = { Black: "#222", Blue: "#2a6db5", White: "#e8e8e8", Red: "#c0392b", Gold: "#c8a96e", Green: "#4da862" };
-                  return (
-                    <button key={tee} className={`pill-option ${intel.tee === tee ? "selected" : ""}`} onClick={() => setIntel({ ...intel, tee: intel.tee === tee ? "" : tee })}>
-                      <span className="tee-dot" style={{ background: teeColorMap[tee], border: tee === "White" ? "1px solid rgba(255,255,255,0.3)" : "none" }} />
-                      {tee}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Tee-box picker hidden until teeBoxId is wired through to the
+                /api/uploads/create insert (currently hard-coded to null).
+                Leave intel.tee state and the review-screen chip in place so
+                the picker can be re-enabled with one diff post-launch.
+                See audit #19. */}
             {contentFormat === "SHOT" && (
             <div className="field">
               <label className="field-label">Shot Type <span className="optional-tag">OPTIONAL</span></label>
