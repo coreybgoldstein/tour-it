@@ -366,6 +366,7 @@ export default function TeeUpPage() {
           title: "You've been invited!",
           body: `${inviterName} added you to "${tripName}"`,
           linkUrl: `/trips/${tripId}`,
+          referenceId: tripId,
           read: false,
           createdAt: now,
           updatedAt: now,

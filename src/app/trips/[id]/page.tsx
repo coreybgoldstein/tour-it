@@ -585,6 +585,7 @@ export default function TripPage() {
         title: "You've been invited!",
         body: `${inviterName} added you to "${tripName}"`,
         linkUrl: `/trips/${id}`,
+        referenceId: id as string,
         read: false,
         createdAt: now,
         updatedAt: now,
