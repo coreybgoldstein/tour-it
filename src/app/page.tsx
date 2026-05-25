@@ -679,6 +679,11 @@ const SeriesCard = memo(function SeriesCardImpl({
   && prev.currentUserId === next.currentUserId
   && prev.followingIds === next.followingIds
   && prev.likedIds === next.likedIds
+  && prev.commentedIds === next.commentedIds
+  // commentOpen MUST be in the comparator — without it, opening the
+  // comment sheet doesn't re-render the card and the pause useEffect
+  // never fires, so the video keeps playing under the open sheet.
+  && prev.commentOpen === next.commentOpen
 ));
 
 // memo'd for the same reason as SeriesCard above — avoid re-rendering 100+
@@ -868,6 +873,11 @@ const VideoCard = memo(function VideoCardImpl({
   && prev.currentUserId === next.currentUserId
   && prev.followingIds === next.followingIds
   && prev.likedIds === next.likedIds
+  && prev.commentedIds === next.commentedIds
+  // commentOpen MUST be in the comparator — without it, opening the
+  // comment sheet doesn't re-render the card and the pause useEffect
+  // never fires, so the video keeps playing under the open sheet.
+  && prev.commentOpen === next.commentOpen
 ));
 
 
