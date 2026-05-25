@@ -1696,6 +1696,7 @@ export default function Home() {
         .feed-peek-rail { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; scroll-snap-type: x proximity; touch-action: pan-x; }
         .feed-peek-rail::-webkit-scrollbar { display: none; }
         .feed-peek-card { width: 96px; aspect-ratio: 9 / 16; flex-shrink: 0; border-radius: 12px; overflow: hidden; position: relative; cursor: pointer; background: rgba(10,28,18,0.95); border: 1px solid rgba(26,158,66,0.12); scroll-snap-align: start; }
+        @keyframes scroll-hint-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
         .feed-item { scroll-snap-align: start; scroll-snap-stop: always; }
         .courses-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; }
         .courses-row::-webkit-scrollbar { display: none; }
@@ -2056,11 +2057,43 @@ export default function Home() {
             <div className="feed-peek-section" style={{ flexShrink: 0, marginTop: 16, paddingBottom: "calc(96px + env(safe-area-inset-bottom))", position: "relative" }}>
               {/* Section label — left-aligned to match the other rails
                   (Popular / Near Me) but kept in Playfair to read as a
-                  display-font moment, not a label. */}
-              <div style={{ padding: "0 20px 8px" }}>
+                  display-font moment, not a label. SCROLL hint to the
+                  right teaches first-time users that the discovery
+                  section is the top of a vertical feed. Gently bobs so
+                  the eye catches it without screaming. */}
+              <div style={{ padding: "0 20px 8px", display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.005em" }}>
                   Tour the Feed
                 </div>
+                <button
+                  onClick={() => {
+                    const target = feedRef.current?.children[1] as HTMLElement | undefined;
+                    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  aria-label="Scroll into the feed"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 5,
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    color: "#4da862",
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    opacity: 0.85,
+                    animation: "scroll-hint-bob 1.8s ease-in-out infinite",
+                  }}
+                >
+                  Scroll
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
               </div>
 
               {/* Rail of 9:16 vertical clip cards */}
