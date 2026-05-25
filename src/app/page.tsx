@@ -2055,13 +2055,12 @@ export default function Home() {
               feed to that clip. */}
           {showScrollHint && user !== null && feedItems.length > 0 && (
             <div className="feed-peek-section" style={{ flexShrink: 0, marginTop: 16, paddingBottom: "calc(96px + env(safe-area-inset-bottom))", position: "relative" }}>
-              {/* Section label — left-aligned to match the other rails
-                  (Popular / Near Me) but kept in Playfair to read as a
-                  display-font moment, not a label. SCROLL hint to the
-                  right teaches first-time users that the discovery
-                  section is the top of a vertical feed. Gently bobs so
-                  the eye catches it without screaming. */}
-              <div style={{ padding: "0 20px 8px", display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+              {/* Section label — Playfair headline with the "(SCROLL
+                  DOWN)" hint sitting tight next to it, vertically
+                  centered against the headline's mid-line. Gently bobs
+                  so a first-time user understands the discovery section
+                  is the top of a vertical feed. */}
+              <div style={{ padding: "0 20px 8px", display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.005em" }}>
                   Tour the Feed
                 </div>
@@ -2072,9 +2071,6 @@ export default function Home() {
                   }}
                   aria-label="Scroll into the feed"
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
                     background: "none",
                     border: "none",
                     padding: 0,
@@ -2082,17 +2078,15 @@ export default function Home() {
                     color: "#4da862",
                     fontFamily: "'Outfit', sans-serif",
                     fontSize: 10,
-                    fontWeight: 700,
-                    letterSpacing: "0.18em",
+                    fontWeight: 800,
+                    letterSpacing: "0.14em",
                     textTransform: "uppercase",
-                    opacity: 0.85,
+                    opacity: 0.9,
                     animation: "scroll-hint-bob 1.8s ease-in-out infinite",
+                    lineHeight: 1,
                   }}
                 >
-                  Scroll
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                  (SCROLL DOWN)
                 </button>
               </div>
 
