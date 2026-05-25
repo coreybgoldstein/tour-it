@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, memo } from "react";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -25,7 +25,7 @@ const SHOT_LABEL: Record<string, string> = {
   PUTT: "Putt", BUNKER: "Bunker", LAY_UP: "Layup", FULL_HOLE: "Full Hole",
 };
 
-function ProfileFeedCard({
+const ProfileFeedCard = memo(function ProfileFeedCardImpl({
   clip, isActive, courseName, courseLogoUrl, courseLocation, onClose, onOptions, onReport, uploaderInfo, onComment, onShowLikes, isOwner, currentUserId, likedIds, commentedIds, commentOpen,
 }: {
   clip: { id: string; mediaUrl: string; mediaType: string; cloudflareVideoId?: string | null; courseId: string; holeNumber?: number | null; holePar?: number | null; holeYardage?: number | null; shotType?: string | null; isTagged?: boolean; likeCount?: number; commentCount?: number; strategyNote?: string | null; clubUsed?: string | null; windCondition?: string | null; conditions?: string | null; landingZoneNote?: string | null; whatCameraDoesntShow?: string | null; datePlayedAt?: string | null; createdAt?: string | null; uploadedByUserId?: string | null; uploadedByUsername?: string | null };
@@ -266,7 +266,31 @@ function ProfileFeedCard({
       </div>{/* end inner wrapper */}
     </div>
   );
-}
+}, (prev, next) => {
+  // Custom equality so the feed modal doesn't re-render every card on
+  // every parent state change (scroll handler firing setFeedActiveIdx,
+  // opening LikesSheet, comment sheet, etc.). Only the truly
+  // render-affecting props are compared — inline callbacks
+  // (onClose, onOptions, onShowLikes, onComment) and uploaderInfo
+  // object literals get new refs every render but don't change what
+  // the card paints, so we ignore them here. Without this the owner
+  // profile (50+ clips) felt frozen during scroll.
+  return prev.clip.id === next.clip.id
+    && prev.clip.commentCount === next.clip.commentCount
+    && prev.clip.likeCount === next.clip.likeCount
+    && prev.isActive === next.isActive
+    && prev.commentOpen === next.commentOpen
+    && prev.isOwner === next.isOwner
+    && prev.currentUserId === next.currentUserId
+    && prev.courseName === next.courseName
+    && prev.courseLogoUrl === next.courseLogoUrl
+    && prev.courseLocation === next.courseLocation
+    && prev.likedIds === next.likedIds
+    && prev.commentedIds === next.commentedIds
+    && prev.uploaderInfo.id === next.uploaderInfo.id
+    && prev.uploaderInfo.handicapIndex === next.uploaderInfo.handicapIndex
+    && prev.uploaderInfo.rank === next.uploaderInfo.rank;
+});
 
 function FlagBadge({ label }: { label: string | number }) {
   return (
