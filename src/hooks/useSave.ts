@@ -44,7 +44,7 @@ export function useSave({ courseId }: UseSaveOptions): UseSaveReturn {
           .select("id, saveType")
           .eq("userId", user.id)
           .eq("courseId", courseId)
-          .single();
+          .maybeSingle();
 
         if (existingSave) {
           setSaved(true);
