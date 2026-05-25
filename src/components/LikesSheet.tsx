@@ -89,9 +89,11 @@ export default function LikesSheet({ open, uploadId, onClose }: LikesSheetProps)
         zIndex: 240,
         background: "rgba(0,0,0,0.78)",
         display: "flex",
-        alignItems: "stretch",
+        // Bottom-anchored half-sheet (~1/3 of screen). Doesn't stretch
+        // full-height like the wizards because the content is short
+        // and a tall sheet wasted screen real estate.
+        alignItems: "flex-end",
         justifyContent: "center",
-        paddingTop: "calc(env(safe-area-inset-top) + 24px)",
       }}
     >
       <div
@@ -106,8 +108,11 @@ export default function LikesSheet({ open, uploadId, onClose }: LikesSheetProps)
           borderTop: "1px solid rgba(77,168,98,0.3)",
           display: "flex",
           flexDirection: "column",
-          flex: 1,
-          minHeight: 0,
+          // Cap at ~half the viewport, min ~bottom third for breathing
+          // room. Content scrolls internally via the body's
+          // overflow-y when the like list overflows.
+          minHeight: "min(36vh, 320px)",
+          maxHeight: "60vh",
           boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
         }}
       >
