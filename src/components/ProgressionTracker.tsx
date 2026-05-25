@@ -164,15 +164,19 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
     if (missing.length === 0) return;
     let cancelled = false;
     (async () => {
+      // Upload has no holeNumber column — join Hole inline (audit
+      // #1 pattern, applied to the ledger deep-link resolver).
       const { data } = await createClient()
         .from("Upload")
-        .select("id, courseId, holeNumber")
+        .select("id, courseId, hole:holeId(holeNumber)")
         .in("id", missing);
       if (cancelled || !data) return;
       const map: Record<string, string> = {};
-      for (const row of data as { id: string; courseId: string; holeNumber: number | null }[]) {
-        map[row.id] = row.holeNumber
-          ? `/courses/${row.courseId}/holes/${row.holeNumber}?clip=${row.id}`
+      type JoinedRow = { id: string; courseId: string; hole: { holeNumber: number } | { holeNumber: number }[] | null };
+      for (const row of data as unknown as JoinedRow[]) {
+        const holeNumber = Array.isArray(row.hole) ? row.hole[0]?.holeNumber : row.hole?.holeNumber;
+        map[row.id] = holeNumber
+          ? `/courses/${row.courseId}/holes/${holeNumber}?clip=${row.id}`
           : `/courses/${row.courseId}`;
       }
       setClipLinks(prev => ({ ...prev, ...map }));
@@ -193,21 +197,13 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
     if (ledger.length === 0) loadLedger(0);
   }
 
-  if (!prog) {
-    if (!isOwner) return null;
-    return (
-      <div
-        onClick={() => router.push("/leaderboards")}
-        style={{ margin: "0 16px 8px", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer" }}
-      >
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>Level 1</span>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff" }}>0 pts</span>
-        </div>
-        <LevelTracker pct={0} rankColor="rgba(190,190,190,0.75)" />
-      </div>
-    );
-  }
+  // Gamification gate (2026-05-25 onboarding rewrite): hide the
+  // level/rank/ledger UI entirely for brand-new users (no UserProgression
+  // row OR totalPoints === 0). Avoids dropping a "Level 1 of 25" pill
+  // on day-zero accounts where it competes for attention with the
+  // home feed. The UI lights up the moment they earn their first
+  // points (real-time channel above refreshes prog).
+  if (!prog || prog.totalPoints === 0) return null;
 
   const rankColor = getRankColor(prog.rank);
   const { current, required, pct } = levelProgress(prog.totalPoints);
