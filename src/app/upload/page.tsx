@@ -12,6 +12,12 @@ import { calcIntelBonus } from "@/config/points-system";
 import { finalizeUpload } from "@/lib/uploadFinalize";
 import exifr from "exifr";
 
+// Dev-only logger — keeps useful tracing for local debugging but stays silent
+// in production so iOS Safari Web Inspector users don't see internal flow.
+const devLog = (...args: unknown[]) => {
+  if (process.env.NODE_ENV !== "production") console.log(...args);
+};
+
 type Course = {
   id: string;
   name: string;
@@ -297,8 +303,8 @@ function UploadPageInner() {
       // Shared: look up nearby courses for a lat/lng and auto-select the closest
       const resolveLocation = async (coords: { lat: number; lng: number }, source: "file" | "device") => {
         setGpsCoords(coords);
-        console.log("[GPS] coords:", coords.lat.toFixed(6), coords.lng.toFixed(6));
-        console.log("[GPS] bbox:", coords.lat - 0.1, "to", coords.lat + 0.1, " / ", coords.lng - 0.1, "to", coords.lng + 0.1);
+        devLog("[GPS] coords:", coords.lat.toFixed(6), coords.lng.toFixed(6));
+        devLog("[GPS] bbox:", coords.lat - 0.1, "to", coords.lat + 0.1, " / ", coords.lng - 0.1, "to", coords.lng + 0.1);
         const supabase = createClient();
         const { data, error } = await supabase
           .from("Course")
@@ -309,7 +315,7 @@ function UploadPageInner() {
           .lte("longitude", coords.lng + 0.1)
           .order("uploadCount", { ascending: false })
           .limit(5);
-        console.log("[GPS] query result:", data, "error:", error);
+        devLog("[GPS] query result:", data, "error:", error);
         const courses = (data || []) as (Course & { latitude: number | null; longitude: number | null })[];
         setGpsSuggestions(courses);
 
@@ -324,7 +330,7 @@ function UploadPageInner() {
           })
           .sort((a, b) => a.dist - b.dist);
 
-        console.log("[GPS] withDist:", withDist.map(d => `${d.course.name} ${Math.round(d.dist)}m`));
+        devLog("[GPS] withDist:", withDist.map(d => `${d.course.name} ${Math.round(d.dist)}m`));
         if (withDist.length > 0 && withDist[0].dist < 2000) {
           setSelectedCourse(withDist[0].course);
           setStep(prev => (prev <= 2 ? 3 : prev));
@@ -363,7 +369,7 @@ function UploadPageInner() {
             await resolveLocation(fileCoords, "file");
             return;
           }
-          console.log("[GPS] file coords found no course, trying device GPS");
+          devLog("[GPS] file coords found no course, trying device GPS");
         }
         // File GPS missing or pointed nowhere useful — fall back to device location
         const deviceCoords = await deviceCoordsPromise;
@@ -455,31 +461,31 @@ function UploadPageInner() {
       // End of file first (iPhone non-fast-start: moov at end)
       const endBuf = await file.slice(Math.max(0, file.size - CHUNK), file.size).arrayBuffer();
       const r1 = scanChunk(new Uint8Array(endBuf));
-      if (r1) { console.log(`[GPS] ${r1.method} hit:`, { lat: r1.lat, lng: r1.lng }); return { lat: r1.lat, lng: r1.lng }; }
+      if (r1) { devLog(`[GPS] ${r1.method} hit:`, { lat: r1.lat, lng: r1.lng }); return { lat: r1.lat, lng: r1.lng }; }
 
       // Start of file (fast-start / Android / web-optimized)
       if (file.size > CHUNK) {
         const startBuf = await file.slice(0, CHUNK).arrayBuffer();
         const r2 = scanChunk(new Uint8Array(startBuf));
-        if (r2) { console.log(`[GPS] ${r2.method} hit:`, { lat: r2.lat, lng: r2.lng }); return { lat: r2.lat, lng: r2.lng }; }
+        if (r2) { devLog(`[GPS] ${r2.method} hit:`, { lat: r2.lat, lng: r2.lng }); return { lat: r2.lat, lng: r2.lng }; }
       }
-      console.log("[GPS] mdta miss, ©xyz miss, trying exifr");
+      devLog("[GPS] mdta miss, ©xyz miss, trying exifr");
     } catch (e) {
-      console.log("[GPS] error:", e);
+      devLog("[GPS] error:", e);
     }
 
     // ── Strategy 3: exifr EXIF GPS ───────────────────────────────────────────
     try {
       const gps = await exifr.gps(file);
       if (gps?.latitude != null && gps?.longitude != null) {
-        console.log("[GPS] exifr hit:", { lat: gps.latitude, lng: gps.longitude });
+        devLog("[GPS] exifr hit:", { lat: gps.latitude, lng: gps.longitude });
         return { lat: gps.latitude, lng: gps.longitude };
       }
     } catch (e) {
-      console.log("[GPS] error:", e);
+      devLog("[GPS] error:", e);
     }
 
-    console.log("[GPS] all methods failed");
+    devLog("[GPS] all methods failed");
     return null;
   }
 
