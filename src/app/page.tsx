@@ -1695,6 +1695,29 @@ export default function Home() {
         .feed-item { scroll-snap-align: start; scroll-snap-stop: always; }
         .courses-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; }
         .courses-row::-webkit-scrollbar { display: none; }
+
+        /* Compact layout for shorter viewports (iPhone SE/12/13/14 Pro
+           are ~844px tall vs Pro Max at ~932px). Without this, the
+           discovery section's Hero + Search + Popular + Near Me + Tour
+           the Feed rail overflowed the viewport on smaller phones and
+           a chunk of the Tour the Feed rail got hidden behind the
+           BottomNav. Scales every piece proportionally instead of
+           letting fixed pixels dominate. */
+        @media (max-height: 870px) {
+          .discovery-hero { font-size: 24px !important; }
+          .discovery-search-btn { padding: 13px 16px !important; }
+          .discovery-search-btn span { font-size: 14px !important; }
+          .discovery-section-label { font-size: 11px !important; }
+          .discovery-section { margin-top: 6px !important; }
+          .discovery-row-pad { padding-top: 14px !important; padding-bottom: 12px !important; }
+          .feed-peek-card { width: 84px !important; }
+          .feed-peek-section { padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important; }
+        }
+        @media (max-height: 760px) {
+          .discovery-hero { font-size: 22px !important; }
+          .discovery-row-pad { padding-top: 10px !important; padding-bottom: 10px !important; }
+          .feed-peek-card { width: 76px !important; }
+        }
         @keyframes splash-logo-in { 0% { opacity: 0; transform: scale(0.82); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes splash-tagline-in { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes splash-fade-out { 0% { opacity: 1; } 100% { opacity: 0; } }
@@ -1863,8 +1886,8 @@ export default function Home() {
           <MayCompetitionBanner />
 
           {/* Hero text */}
-          <div style={{ padding: "20px 20px 14px", flexShrink: 0 }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#fff", lineHeight: 1.12 }}>
+          <div className="discovery-row-pad" style={{ padding: "20px 20px 14px", flexShrink: 0 }}>
+            <div className="discovery-hero" style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900, color: "#fff", lineHeight: 1.12 }}>
               Scout your next round
             </div>
           </div>
@@ -1872,6 +1895,7 @@ export default function Home() {
           {/* Search CTA */}
           <div style={{ padding: "0 20px 20px", flexShrink: 0 }}>
             <button
+              className="discovery-search-btn"
               onClick={() => router.push("/search")}
               style={{ width: "100%", display: "flex", alignItems: "center", gap: 11, background: "rgba(26,158,66,0.07)", border: "1.5px solid rgba(26,158,66,0.55)", borderRadius: 14, padding: "16px 18px", cursor: "pointer", boxShadow: "0 0 18px rgba(26,158,66,0.2), inset 0 0 10px rgba(26,158,66,0.04)" }}
             >
@@ -1908,7 +1932,7 @@ export default function Home() {
             const deduped = trendingCourses.filter(c => !nearMeIds.has(c.id) || c.id === featured?.courseId);
             return (
               <div style={{ flexShrink: 0 }}>
-                <div style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
+                <div className="discovery-section-label" style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
                   Popular on Tour It
                 </div>
                 <div className="courses-row">
@@ -1930,7 +1954,7 @@ export default function Home() {
 
           {/* Courses Near Me */}
           {locationStatus !== "denied" && (
-            <div style={{ flexShrink: 0, marginTop: 10 }}>
+            <div className="discovery-section" style={{ flexShrink: 0, marginTop: 10 }}>
               <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", flexShrink: 0 }}>
                   Courses Near Me
@@ -1990,7 +2014,7 @@ export default function Home() {
               arrows, no banners. Tapping any card scrolls the parent
               feed to that clip. */}
           {showScrollHint && user !== null && feedItems.length > 0 && (
-            <div style={{ flexShrink: 0, marginTop: 16, paddingBottom: "calc(96px + env(safe-area-inset-bottom))", position: "relative" }}>
+            <div className="feed-peek-section" style={{ flexShrink: 0, marginTop: 16, paddingBottom: "calc(96px + env(safe-area-inset-bottom))", position: "relative" }}>
               {/* Section label — left-aligned to match the other rails
                   (Popular / Near Me) but kept in Playfair to read as a
                   display-font moment, not a label. */}

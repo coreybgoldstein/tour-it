@@ -171,12 +171,14 @@ export default function OnboardingIntroPage() {
         <div className="intro-slide">
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(140deg, #0a2614 0%, #07100a 60%, #0d2318 100%)" }} />
 
-          {/* Decorative card stack — three faux cards (Round / Game / Trip) */}
-          <div style={{ position: "absolute", top: "8%", left: "50%", transform: "translateX(-50%)", width: "90%", maxWidth: 360, display: "flex", flexDirection: "column", gap: 12, opacity: 0.7 }}>
+          {/* Decorative card stack — sits behind the text, centered behind
+              the headline so the slide reads as one composed unit instead
+              of "stuff at the top, words at the bottom" with empty middle. */}
+          <div style={{ position: "absolute", top: "14%", left: "50%", transform: "translateX(-50%)", width: "92%", maxWidth: 360, display: "flex", flexDirection: "column", gap: 10, opacity: 0.55, pointerEvents: "none" }}>
             {/* Round */}
-            <div style={{ background: "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 16, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, transform: "rotate(-1.5deg)", boxShadow: "0 6px 24px rgba(0,0,0,0.28)" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21h16M12 15V2"/></svg>
+            <div style={{ background: "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 16, padding: "11px 14px", display: "flex", alignItems: "center", gap: 12, transform: "rotate(-1.5deg)", boxShadow: "0 6px 24px rgba(0,0,0,0.28)" }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21h16M12 15V2"/></svg>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>Round · Saturday</div>
@@ -184,33 +186,33 @@ export default function OnboardingIntroPage() {
               </div>
             </div>
             {/* Game */}
-            <div style={{ background: "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 16, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, transform: "rotate(1deg)", boxShadow: "0 6px 24px rgba(0,0,0,0.28)" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <div style={{ background: "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 16, padding: "11px 14px", display: "flex", alignItems: "center", gap: 12, transform: "rotate(1deg)", boxShadow: "0 6px 24px rgba(0,0,0,0.28)" }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="13" height="16" rx="2" /><line x1="6.5" y1="8" x2="12.5" y2="8" /><line x1="6.5" y1="11.5" x2="12.5" y2="11.5" /><line x1="6.5" y1="15" x2="10" y2="15" /><path d="M15.5 17.5 L19 14 L21 16 L17.5 19.5 L14.8 20.2 Z" />
                 </svg>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>Game · Nassau · $5/$5/$5</div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 900, color: "#fff" }}>Match the buddies</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 900, color: "#fff" }}>Saturday Match</div>
               </div>
             </div>
             {/* Trip */}
-            <div style={{ background: "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 16, padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, transform: "rotate(-0.5deg)", boxShadow: "0 6px 24px rgba(0,0,0,0.28)" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+            <div style={{ background: "linear-gradient(135deg, rgba(77,168,98,0.14) 0%, rgba(45,122,66,0.06) 100%)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 16, padding: "11px 14px", display: "flex", alignItems: "center", gap: 12, transform: "rotate(-0.5deg)", boxShadow: "0 6px 24px rgba(0,0,0,0.28)" }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>Trip · Aug 20–23</div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 900, color: "#fff" }}>Caddy Daddy Invitational</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 900, color: "#fff" }}>Pinehurst Invitational</div>
               </div>
             </div>
           </div>
 
-          {/* Vignette to keep the content readable over the cards */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.05) 35%, rgba(7,16,10,0.85) 60%)" }} />
+          {/* Vignette that fades the cards into the headline cleanly. */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.05) 30%, rgba(7,16,10,0.92) 55%)" }} />
 
-          <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", padding: "0 32px 200px", textAlign: "center" }}>
+          <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", paddingTop: "32%", textAlign: "center" }}>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 14 }}>
               Tee Up
             </div>
@@ -218,7 +220,7 @@ export default function OnboardingIntroPage() {
               Plan rounds,<br />start games,<br />book trips
             </div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, color: "rgba(255,255,255,0.7)", lineHeight: 1.7, maxWidth: 320 }}>
-              Tee it up with the boys. Schedule a round, run a Nassau or Skins, plan a multi-day trip — Tour It tracks the stakes, the strokes, and the stories.
+              Tee it up with your crew. Schedule a round, run a Nassau or Skins, plan a multi-day trip — Tour It tracks the stakes, the strokes, and the stories.
             </div>
           </div>
         </div>

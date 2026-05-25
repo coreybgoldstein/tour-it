@@ -753,6 +753,54 @@ export default function ProfilePage() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen, feedOpen, showEdit]);
 
+  // Body-scroll-lock + visualViewport sync — same battle-tested
+  // pattern CreateGameSheet uses. The earlier .tourit-sheet implementation
+  // relied on `bottom: var(--keyboard-height)` which left the form fields
+  // scrolling unpredictably when the iOS keyboard opened during a name
+  // edit (the "page gets screwed up" bug the user reported on 2026-05-26).
+  // Sizing the overlay directly to `visualViewport.height` and shifting
+  // it via `translateY(visualViewport.offsetTop)` works in every WebView
+  // resize mode without any math.
+  useEffect(() => {
+    if (!showEdit) return;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = { position: body.style.position, top: body.style.top, left: body.style.left, right: body.style.right, width: body.style.width, overflow: body.style.overflow };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
+    const vv = window.visualViewport;
+    const sync = () => {
+      const el = document.getElementById("profile-edit-overlay");
+      if (!el || !vv) return;
+      el.style.height = `${vv.height}px`;
+      el.style.transform = `translateY(${vv.offsetTop}px)`;
+    };
+    if (vv) {
+      sync();
+      vv.addEventListener("resize", sync);
+      vv.addEventListener("scroll", sync);
+    }
+
+    return () => {
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+      if (vv) {
+        vv.removeEventListener("resize", sync);
+        vv.removeEventListener("scroll", sync);
+      }
+    };
+  }, [showEdit]);
+
   // Reset scroll to top whenever we navigate to a (potentially new) profile.
   // Without this, navigating from a course clip → /profile/<userId> can leave
   // the window scrolled down from the previous page, hiding the identity
@@ -1383,15 +1431,44 @@ export default function ProfilePage() {
 
       {/* Owner: edit profile sheet */}
       {isOwner && showEdit && (
-        <>
-          <div className="tourit-sheet-backdrop" onClick={() => setShowEdit(false)} />
-          <div className="tourit-sheet tourit-sheet--full" onClick={e => e.stopPropagation()}>
-            <div className="tourit-sheet-grip" />
+        <div
+          id="profile-edit-overlay"
+          onClick={() => setShowEdit(false)}
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0,
+            height: "100dvh",
+            zIndex: 200,
+            background: "rgba(0,0,0,0.78)",
+            display: "flex",
+            alignItems: "stretch",
+            justifyContent: "center",
+            paddingTop: "calc(env(safe-area-inset-top) + 24px)",
+            willChange: "transform",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 520,
+              background: "#0d2318",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderTop: "1px solid rgba(77,168,98,0.3)",
+              display: "flex",
+              flexDirection: "column",
+              flex: 1,
+              minHeight: 0,
+              boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+            }}
+          >
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "10px auto 4px", flexShrink: 0 }} />
             {/* Scrollable body — keeps "Save changes" pinned to the bottom
-                of the sheet via .tourit-sheet-footer so the submit button
-                is always visible above the keyboard, even when the form
-                grows past the keyboard's open height. */}
-            <div className="tourit-sheet-body">
+                via the sticky footer below so the submit is always visible
+                above the keyboard. */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px 0", minHeight: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14 }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "#1a3320", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>
                 {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
@@ -1469,17 +1546,17 @@ export default function ProfilePage() {
                 Delete account
               </button>
             </div>
-            </div>{/* /.tourit-sheet-body */}
+            </div>{/* /body */}
 
             {/* Sticky submit — always visible above the keyboard so a
                 new user filling out fields can always see how to save. */}
-            <div className="tourit-sheet-footer">
+            <div style={{ flexShrink: 0, padding: "12px 20px calc(20px + env(safe-area-inset-bottom))", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0d2318" }}>
               <button onClick={handleSaveProfile} style={{ width: "100%", padding: "13px", background: "#1a9e42", border: "none", borderRadius: 12, color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Outfit', sans-serif", boxShadow: "0 4px 16px rgba(26,158,66,0.35)" }}>
                 {saving ? "Saving…" : "Save changes"}
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Delete account confirmation */}
