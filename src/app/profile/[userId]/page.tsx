@@ -1137,13 +1137,24 @@ export default function ProfilePage() {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* Full-screen scroll feed */}
+      {/* Full-screen scroll feed.
+          Virtualized: every clip gets a same-size slot div so the
+          scroll-snap layout stays correct, but only the active card
+          plus a small neighbor window actually mounts a ProfileFeedCard
+          (which spins up a <video> element on iOS WKWebView). Without
+          this the feed mounted 50+ videos at once on the owner profile
+          and the WebView locked up. */}
       {feedOpen && (
         <div ref={feedScrollRef}
           onScroll={e => setFeedActiveIdx(Math.round((e.target as HTMLElement).scrollTop / window.innerHeight))}
           style={{ position: "fixed", inset: 0, left: isDesktop ? 72 : 0, zIndex: 100, background: "#000", overflowY: "scroll", scrollSnapType: "y mandatory", scrollbarWidth: "none", touchAction: "pan-y", overscrollBehavior: "contain" }}>
-          {allClips.map((clip, idx) => (
+          {allClips.map((clip, idx) => {
+            // ±2 keeps the snap-next card warm so the swipe never
+            // lands on a blank slot. Tune up if needed.
+            const inWindow = Math.abs(idx - feedActiveIdx) <= 2;
+            return (
             <div key={clip.id + (clip.isTagged ? "-t" : "")} style={{ scrollSnapAlign: "start", scrollSnapStop: "always", height: "100svh", width: "100vw" }}>
+              {inWindow ? (
               <ProfileFeedCard
                 clip={clip}
                 isActive={idx === feedActiveIdx}
@@ -1162,8 +1173,10 @@ export default function ProfilePage() {
                 commentedIds={commentedIds}
                 onShowLikes={(uploadId) => setLikesUploadId(uploadId)}
               />
+              ) : null}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
