@@ -137,7 +137,7 @@ export async function POST(req: Request) {
         }).then(() => {});
         fetch(`${new URL(req.url).origin}/api/push/send`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", cookie: req.headers.get("cookie") ?? "" },
           body: JSON.stringify({ type: "like_milestone", recipientUserId: upload.userId, referenceId: body.uploadId, likeCount: trueCount }),
         }).catch(() => {});
         fetch(`${new URL(req.url).origin}/api/points/award`, {
