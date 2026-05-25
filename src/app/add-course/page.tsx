@@ -71,7 +71,11 @@ export default function AddCoursePage() {
   };
 
   return (
-    <main style={{ minHeight: "100svh", background: "#07100a", paddingBottom: 100, color: "#fff" }}>
+    // paddingBottom grows by --keyboard-height when the iOS keyboard
+    // opens so the Submit button + last form fields aren't trapped
+    // behind the keyboard. KeyboardSync publishes the var globally;
+    // the value self-corrects in both Capacitor resize modes.
+    <main style={{ minHeight: "100svh", background: "#07100a", paddingBottom: "calc(100px + var(--keyboard-height, 0px))", color: "#fff", transition: "padding-bottom 0.25s cubic-bezier(0.32, 0.72, 0, 1)" }}>
       {/* Header */}
       <div style={{ padding: "56px 20px 0", display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
         <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
@@ -93,20 +97,23 @@ export default function AddCoursePage() {
           </button>
         </div>
       ) : (
-        <div style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 18 }}>
+        <form
+          onSubmit={e => { e.preventDefault(); handleSubmit(); }}
+          style={{ padding: "0 20px", display: "flex", flexDirection: "column", gap: 18 }}
+        >
           <div>
-            <label style={labelStyle}>Course Name *</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Augusta National Golf Club" style={inputStyle} />
+            <label style={labelStyle} htmlFor="ac-name">Course Name *</label>
+            <input id="ac-name" name="course-name" value={name} onChange={e => setName(e.target.value)} placeholder="Augusta National Golf Club" autoComplete="off" autoCorrect="off" style={inputStyle} />
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <label style={labelStyle}>City *</label>
-              <input value={city} onChange={e => setCity(e.target.value)} placeholder="Augusta" style={inputStyle} />
+              <label style={labelStyle} htmlFor="ac-city">City *</label>
+              <input id="ac-city" name="address-level2" value={city} onChange={e => setCity(e.target.value)} placeholder="Augusta" autoComplete="address-level2" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>State *</label>
-              <select value={state} onChange={e => setState(e.target.value)} style={{ ...inputStyle, appearance: "none", WebkitAppearance: "none" }}>
+              <label style={labelStyle} htmlFor="ac-state">State *</label>
+              <select id="ac-state" name="address-level1" value={state} onChange={e => setState(e.target.value)} autoComplete="address-level1" style={{ ...inputStyle, appearance: "none", WebkitAppearance: "none" }}>
                 <option value="">State</option>
                 {US_STATES.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
@@ -119,6 +126,7 @@ export default function AddCoursePage() {
               {(["PUBLIC", "SEMI_PRIVATE", "PRIVATE"] as const).map(t => (
                 <button
                   key={t}
+                  type="button"
                   onClick={() => setCourseType(courseType === t ? "" : t)}
                   style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: `1px solid ${courseType === t ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`, background: courseType === t ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.03)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: courseType === t ? "#4da862" : "rgba(255,255,255,0.4)", cursor: "pointer" }}
                 >
@@ -129,13 +137,14 @@ export default function AddCoursePage() {
           </div>
 
           <div>
-            <label style={labelStyle}>Website (optional)</label>
-            <input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} placeholder="https://..." style={inputStyle} />
+            <label style={labelStyle} htmlFor="ac-website">Website (optional)</label>
+            <input id="ac-website" name="url" type="url" inputMode="url" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} placeholder="https://..." autoComplete="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} style={inputStyle} />
           </div>
 
           <div>
-            <label style={labelStyle}>Notes (optional)</label>
+            <label style={labelStyle} htmlFor="ac-notes">Notes (optional)</label>
             <textarea
+              id="ac-notes"
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Any details that might help us find the course..."
@@ -149,13 +158,13 @@ export default function AddCoursePage() {
           )}
 
           <button
-            onClick={handleSubmit}
+            type="submit"
             disabled={loading}
             style={{ padding: "14px", borderRadius: 12, background: loading ? "rgba(45,122,66,0.4)" : "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: loading ? "not-allowed" : "pointer" }}
           >
             {loading ? "Submitting..." : "Submit Request"}
           </button>
-        </div>
+        </form>
       )}
 
       <BottomNav />
