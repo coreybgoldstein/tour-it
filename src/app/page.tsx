@@ -2158,8 +2158,16 @@ export default function Home() {
         </>
       )}
 
-      {/* Onboarding */}
-      {showOnboarding && (
+      {/* Welcome to Tour It — ONLY for unauthenticated visitors.
+          The localStorage flag check fires before auth.getUser()
+          resolves, so without the !user guard logged-in users get
+          a "Create an account" flash on top of the home feed when
+          they bypass the normal onboarding write to localStorage
+          (e.g. via /onboarding/reset or after my v3 rewrite).
+          The auth-resolve effect (~line 988) also calls
+          setShowOnboarding(false), but render-time guard is the
+          belt + suspenders fix. */}
+      {showOnboarding && !user && (
         <>
           <div className="tourit-sheet-backdrop" onClick={dismissOnboarding} />
           <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
