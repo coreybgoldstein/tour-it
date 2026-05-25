@@ -9,6 +9,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
+import Toast, { type ToastState } from "@/components/Toast";
 
 type Trip = {
   id: string;
@@ -346,6 +347,8 @@ export default function TripPage() {
   // beauty PNG file or sending an iMessage-friendly link with og:image.
   const [sendRoundChooserOpen, setSendRoundChooserOpen] = useState(false);
   const [sendingMode, setSendingMode] = useState<"image" | "link" | null>(null);
+  // Inline toast for non-blocking errors/successes — replaces native alert().
+  const [toast, setToast] = useState<ToastState>(null);
   const [scorecardHoles, setScorecardHoles] = useState<Array<{ holeNumber: number; par: number | null; yardage: number | null; handicapRank: number | null }>>([]);
   const [scorecardLoading, setScorecardLoading] = useState(false);
   async function openScorecardSheet(courseId: string) {
@@ -1103,7 +1106,7 @@ export default function TripPage() {
     });
     if (tcErr) {
       console.error("Clone Round: failed to attach course", tcErr);
-      alert(`Couldn't clone the round: ${tcErr.message}`);
+      setToast({ msg: `Couldn't clone the round: ${tcErr.message}`, kind: "error" });
       return;
     }
     fetch("/api/points/award", {
@@ -1118,6 +1121,7 @@ export default function TripPage() {
 
   return (
     <>
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
       <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff", paddingBottom: 100 }}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
@@ -2319,7 +2323,7 @@ export default function TripPage() {
                   setSendRoundChooserOpen(false);
                 } catch (e) {
                   console.error("Beauty-shot share failed", e);
-                  alert("Couldn't generate the share image. Try again in a moment.");
+                  setToast({ msg: "Couldn't generate the share image. Try again in a moment.", kind: "error" });
                 } finally {
                   setSendingMode(null);
                 }
@@ -2358,7 +2362,7 @@ export default function TripPage() {
                     await navigator.share({ title: "Upcoming Round", text, url: linkUrl });
                   } else {
                     await navigator.clipboard.writeText(linkUrl);
-                    alert("Link copied to clipboard");
+                    setToast({ msg: "Link copied to clipboard", kind: "success" });
                   }
                   setSendRoundChooserOpen(false);
                 } catch (e) {

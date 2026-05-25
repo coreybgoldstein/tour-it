@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
+import Toast, { type ToastState } from "@/components/Toast";
 import { sendPushToUser } from "@/lib/sendPush";
 
 type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
@@ -159,6 +160,8 @@ export default function TeeUpPage() {
   const [quickSearch, setQuickSearch] = useState("");
   const [quickResults, setQuickResults] = useState<CourseSearchRow[]>([]);
   const [quickSaving, setQuickSaving] = useState(false);
+  // Inline toast for non-blocking errors/successes — replaces native alert().
+  const [toast, setToast] = useState<ToastState>(null);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Friend-invite state for the Quick Round sheet
@@ -344,7 +347,7 @@ export default function TeeUpPage() {
     if (tcErr) {
       // Surface the failure so we never silently strand the user on a course-less trip again.
       console.error("Quick Round: failed to attach course", tcErr);
-      alert(`Couldn't save the course on this round: ${tcErr.message}`);
+      setToast({ msg: `Couldn't save the course on this round: ${tcErr.message}`, kind: "error" });
       setQuickSaving(false);
       return;
     }
@@ -731,6 +734,7 @@ export default function TeeUpPage() {
   return (
     <main style={{ background: "#07100a", minHeight: "100dvh", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 100 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; }`}</style>
+      <Toast toast={toast} onDismiss={() => setToast(null)} />
 
       {/* Header — title + a context-aware "+ New" button that opens
           the right sheet for whichever tab is active. */}
