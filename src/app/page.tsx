@@ -1404,14 +1404,26 @@ export default function Home() {
   useEffect(() => {
     if (!localStorage.getItem("tour-it-onboarded")) setShowOnboarding(true);
 
-    // Check for ?welcome=1 from post-signup onboarding redirect
-    if (typeof window !== "undefined") {
+    // Check for ?welcome=1 from post-signup onboarding redirect.
+    // Wrapped in a callback so we can re-run when the tab becomes visible —
+    // covers the case where the user has Tour It open in tab A, signs up
+    // in tab B (which lands on /?welcome=1), and then returns to tab A:
+    // without the visibilitychange handler the welcome modal would only
+    // fire on mount and miss this scenario.
+    const checkWelcomeParam = () => {
+      if (typeof window === "undefined") return;
       const params = new URLSearchParams(window.location.search);
       if (params.get("welcome") === "1") {
         setShowWelcome(true);
         window.history.replaceState({}, "", "/");
       }
-    }
+    };
+    checkWelcomeParam();
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") checkWelcomeParam();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     // Auto-load near me if previously granted (fresh cache only)
     try {
@@ -1421,6 +1433,10 @@ export default function Home() {
         if (Date.now() - ts < 3600000) fetchNearMe(); // only auto-call with fresh cache
       }
     } catch {}
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   useEffect(() => {
