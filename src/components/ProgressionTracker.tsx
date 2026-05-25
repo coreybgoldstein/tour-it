@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { levelProgress } from "@/lib/progression";
@@ -103,6 +103,28 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
   const [ledgerPage, setLedgerPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
+  // First-earn celebratory moment — fires once per user the instant
+  // their totalPoints transitions from 0 → >0 (so brand-new accounts
+  // that earn their very first points see a one-time "here's how the
+  // points system works" reveal). Gated by localStorage so it never
+  // re-fires.
+  const [showFirstEarn, setShowFirstEarn] = useState(false);
+  const firstEarnFiredRef = useRef(false);
+  useEffect(() => {
+    if (!isOwner || !prog) return;
+    if (typeof window === "undefined") return;
+    if (firstEarnFiredRef.current) return;
+    if (localStorage.getItem("tour-it-first-earn-seen")) {
+      firstEarnFiredRef.current = true;
+      return;
+    }
+    if (prog.totalPoints > 0) {
+      firstEarnFiredRef.current = true;
+      localStorage.setItem("tour-it-first-earn-seen", "1");
+      setShowFirstEarn(true);
+    }
+  }, [prog, isOwner]);
+
   useEffect(() => {
     const supabase = createClient();
     let cancelled = false;
@@ -203,7 +225,13 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
   // on day-zero accounts where it competes for attention with the
   // home feed. The UI lights up the moment they earn their first
   // points (real-time channel above refreshes prog).
-  if (!prog || prog.totalPoints === 0) return null;
+  //
+  // EXCEPTION: when the first-earn celebratory sheet is mid-fire,
+  // we still render it even if the progression bar is hidden — the
+  // sheet needs to surface BEFORE the UI lights up, not after.
+  if (!prog || prog.totalPoints === 0) {
+    return showFirstEarn ? <FirstEarnSheet pts={prog?.totalPoints ?? 0} onClose={() => setShowFirstEarn(false)} onSeeLedger={() => { setShowFirstEarn(false); setShowLedger(true); if (ledger.length === 0) loadLedger(0); }} /> : null;
+  }
 
   const rankColor = getRankColor(prog.rank);
   const { current, required, pct } = levelProgress(prog.totalPoints);
@@ -215,6 +243,17 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
   return (
     <>
       <style>{`@keyframes pt-spin { to { transform: rotate(360deg); } }`}</style>
+
+      {/* First-earn celebratory sheet — only renders for the brief
+          moment the user crosses 0 → first points. Mounted alongside
+          the bar so they see both. */}
+      {showFirstEarn && (
+        <FirstEarnSheet
+          pts={prog.totalPoints}
+          onClose={() => setShowFirstEarn(false)}
+          onSeeLedger={() => { setShowFirstEarn(false); setShowLedger(true); if (ledger.length === 0) loadLedger(0); }}
+        />
+      )}
 
       {/* Progression card — slim layout */}
       <div
@@ -371,6 +410,50 @@ export default function ProgressionTracker({ userId, isOwner }: { userId: string
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+// First-earn celebratory sheet — bottom sheet that introduces the
+// points system the moment a brand-new user earns their first
+// points. Per the onboarding v3 plan, gamification is HIDDEN from
+// day-zero accounts; this is the one-time reveal that lights it
+// up. Dismissal is sticky in localStorage so it never re-fires.
+function FirstEarnSheet({ pts, onClose, onSeeLedger }: { pts: number; onClose: () => void; onSeeLedger: () => void }) {
+  return (
+    <>
+      <div className="tourit-sheet-backdrop" onClick={onClose} />
+      <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+        <div className="tourit-sheet-grip" />
+        <div style={{ padding: "0 4px 6px", textAlign: "center" }}>
+          <div style={{ width: 64, height: 64, borderRadius: 16, background: "linear-gradient(135deg, rgba(212,160,23,0.22) 0%, rgba(212,160,23,0.06) 100%)", border: "1px solid rgba(212,160,23,0.4)", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4a017" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#d4a017", marginBottom: 10 }}>
+            +{pts.toLocaleString()} pts
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 900, color: "#fff", marginBottom: 10, lineHeight: 1.2 }}>
+            You&apos;re on the board
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.62)", marginBottom: 22, lineHeight: 1.6, maxWidth: 320, marginLeft: "auto", marginRight: "auto" }}>
+            Every clip you upload, like you give, and round you log earns points. Build them up to level up from Caddie to Legend and climb the monthly leaderboard.
+          </div>
+          <button
+            onClick={onSeeLedger}
+            style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "15px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 16px rgba(45,122,66,0.4)", marginBottom: 8 }}
+          >
+            See how points work
+          </button>
+          <button
+            onClick={onClose}
+            style={{ width: "100%", background: "none", border: "none", padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", cursor: "pointer" }}
+          >
+            Got it
+          </button>
+        </div>
+      </div>
     </>
   );
 }

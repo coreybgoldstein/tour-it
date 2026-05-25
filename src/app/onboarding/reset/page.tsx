@@ -99,6 +99,7 @@ export default function OnboardingReset() {
       localStorage.removeItem("tour-it-intro-seen");
       localStorage.removeItem("tour-it-explore-home-course-dismissed");
       localStorage.removeItem("tour-it-complete-profile-dismissed");
+      localStorage.removeItem("tour-it-first-earn-seen");
     } catch {}
 
     setStep("done");
