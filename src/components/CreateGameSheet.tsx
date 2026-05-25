@@ -479,13 +479,22 @@ export default function CreateGameSheet({
       onClick={() => { if (!submitting) onClose(); }}
       style={{
         position: "fixed",
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        // Bottom follows --keyboard-height so the sheet flexes to
+        // exactly the visible area above the keyboard — without
+        // this, on Capacitor iOS with default keyboardResize "none"
+        // the sheet stretches behind the keyboard and leaves a
+        // visible gap (see EditClipSheet fix on 2026-05-25).
+        bottom: "var(--keyboard-height, 0px)",
         zIndex: 200,
         background: "rgba(0,0,0,0.78)",
         display: "flex",
         alignItems: "stretch",
         justifyContent: "center",
         paddingTop: "calc(env(safe-area-inset-top) + 24px)",
+        transition: "bottom 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
       }}
     >
       <div

@@ -153,13 +153,26 @@ export default function EditClipSheet({
         onClick={onClose}
         style={{
           position: "fixed",
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          // Bottom tracks the on-screen keyboard via the global
+          // --keyboard-height CSS var maintained by <KeyboardSync>.
+          // Without this, on Capacitor iOS (default keyboardResize
+          // "none") 100vh stays full-screen when the keyboard opens
+          // and the sheet stretches BEHIND the keyboard, leaving a
+          // visible gap above the keyboard where the page shows
+          // through. Pulling the container's bottom up to the
+          // keyboard top fixes the gap and the sheet flexes to fill
+          // exactly the visible area.
+          bottom: "var(--keyboard-height, 0px)",
           zIndex: 210,
           background: "rgba(0,0,0,0.78)",
           display: "flex",
           alignItems: "stretch",
           justifyContent: "center",
           paddingTop: "calc(env(safe-area-inset-top) + 24px)",
+          transition: "bottom 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
       >
         <div
