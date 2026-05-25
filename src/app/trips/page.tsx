@@ -23,7 +23,7 @@ export default function TripsPage() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) { router.replace("/login"); return; }
+      if (!data.user) { router.replace("/login?next=/trips"); return; }
       setUserId(data.user.id);
 
       // Trips where user is a member
