@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const SUPABASE_STORAGE = "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos";
@@ -13,8 +13,24 @@ const DEFAULT_AVATARS = [
 
 const randomAvatar = () => DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)];
 
-export default function SignUpPage() {
+// Only honor relative same-origin paths so a malicious referrer can't
+// turn /signup?next=https://evil.example into an open redirect after auth.
+function safeRedirect(raw: string | null | undefined): string {
+  if (!raw) return "/";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
+function SignUpPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Accept both ?next= (ActionZone) and ?redirect= (/upload) — prefer next,
+  // fall back to home. After successful signup we still detour through
+  // /onboarding (the brand-new account always needs it) but we keep the
+  // target around so the OAuth round-trip preserves intent.
+  const redirectTarget = safeRedirect(
+    searchParams.get("next") ?? searchParams.get("redirect")
+  );
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName]   = useState("");
   const [email, setEmail]       = useState("");
@@ -36,9 +52,12 @@ export default function SignUpPage() {
     setError("");
     setLoading(true);
     const supabase = createClient();
+    // Round-trip the desired post-auth path through Supabase OAuth so
+    // users land where they intended (e.g. /upload) after creating their
+    // account, not unconditionally on the home feed.
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTarget)}` },
     });
     if (oauthError) {
       setError("Couldn't start Google sign-up. Please try again.");
@@ -118,9 +137,15 @@ export default function SignUpPage() {
       fetch("/api/referral/signup", { method: "POST" }).catch(() => {});
     }
 
-    // With email confirmation disabled, session is returned immediately
+    // With email confirmation disabled, session is returned immediately.
+    // Thread the original redirect target through onboarding via ?next so
+    // the user lands on their intended destination (e.g. /upload) once
+    // they finish the profile setup steps.
     if (authData.session) {
-      router.push("/onboarding");
+      const onboardingUrl = redirectTarget && redirectTarget !== "/"
+        ? `/onboarding?next=${encodeURIComponent(redirectTarget)}`
+        : "/onboarding";
+      router.replace(onboardingUrl);
       return;
     }
 
@@ -373,5 +398,16 @@ export default function SignUpPage() {
         )}
       </div>
     </main>
+  );
+}
+
+// useSearchParams() needs to live under a Suspense boundary in App Router
+// so SSR/prerender doesn't bail. The dark fallback matches the page
+// background to prevent a white flash on first paint.
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<main style={{ minHeight: "100dvh", background: "#07100a" }} />}>
+      <SignUpPageInner />
+    </Suspense>
   );
 }

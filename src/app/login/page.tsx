@@ -1,11 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+// Only honor relative same-origin paths so a malicious referrer can't
+// turn /login?next=https://evil.example into an open redirect after auth.
+function safeRedirect(raw: string | null | undefined): string {
+  if (!raw) return "/";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
+function LoginPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // ActionZone uses ?next= while /upload uses ?redirect= — accept both,
+  // prefer next, and fall back to home so older entry points keep working.
+  const redirectTarget = safeRedirect(
+    searchParams.get("next") ?? searchParams.get("redirect")
+  );
+
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
@@ -32,9 +47,12 @@ export default function LoginPage() {
     // it forwards to ?next, which here points at the home feed for
     // returning users; brand-new Google users get redirected to
     // /onboarding/profile inside auth/callback when no username is set.
+    // Round-trip the redirect target through Supabase OAuth so the user
+    // lands on the page they were trying to reach (e.g. /upload) instead
+    // of always being dumped on the home feed.
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTarget)}` },
     });
     if (oauthError) {
       setError("Couldn't start Google sign-in. Please try again.");
@@ -58,7 +76,11 @@ export default function LoginPage() {
     const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (loginError) {
-      setError("Invalid email or password. Please try again.");
+      // Surface the real Supabase error message instead of a generic string
+      // so users (and us) can distinguish wrong-password from rate-limit /
+      // outage / unconfirmed-email cases. Falls back to the generic copy
+      // if Supabase returns no message.
+      setError(loginError.message || "Invalid email or password. Please try again.");
       setLoading(false);
       return;
     }
@@ -72,12 +94,12 @@ export default function LoginPage() {
         .eq("id", userId)
         .single();
       if (profile && profile.displayName === profile.username) {
-        router.push("/onboarding");
+        router.replace("/onboarding");
         return;
       }
     }
 
-    router.push("/");
+    router.replace(redirectTarget);
   };
 
   return (
@@ -263,5 +285,16 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+// useSearchParams() forces the page into the client-side suspense
+// boundary in App Router. Wrap the inner component so SSR doesn't bail
+// out, and so prerender works for the /login route.
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<main style={{ minHeight: "100dvh", background: "#07100a" }} />}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
