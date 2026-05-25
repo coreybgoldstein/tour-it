@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useKeyboardAwareSheet } from "@/hooks/useKeyboardAwareSheet";
 
 type TagUser = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
 
@@ -50,7 +49,20 @@ export default function EditClipSheet({
   const [tagInput, setTagInput] = useState("");
   const [tagResults, setTagResults] = useState<TagUser[]>([]);
   const tagDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useKeyboardAwareSheet(!!uploadId, "edit-clip-sheet");
+  // NOTE: do NOT call useKeyboardAwareSheet here — the global
+  // KeyboardSync + .tourit-sheet CSS already handles the keyboard
+  // lift. The legacy hook sets inline bottom/maxHeight that fight
+  // the CSS and clip the tag-search dropdown (see CLAUDE.md rule).
+  const tagResultsRef = useRef<HTMLDivElement>(null);
+  // When results render, scroll them into the visible area above
+  // the keyboard so the user can pick one without scrolling the
+  // sheet themselves. Same trick CreateGameSheet uses for its
+  // friend search.
+  useEffect(() => {
+    if (tagResults.length > 0 && tagResultsRef.current) {
+      tagResultsRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [tagResults]);
 
   useEffect(() => {
     if (!uploadId) { setEditData(null); return; }
@@ -211,7 +223,7 @@ export default function EditClipSheet({
               <input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="Search by username…"
                 style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }} />
               {tagResults.length > 0 && (
-                <div style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 10, overflow: "hidden" }}>
+                <div ref={tagResultsRef} style={{ marginTop: 6, background: "rgba(0,0,0,0.3)", borderRadius: 10, overflow: "hidden" }}>
                   {tagResults.map(u => (
                     <button key={u.id} onClick={() => { setEditData(d => d ? { ...d, taggedUsers: [...d.taggedUsers, u] } : d); setTagInput(""); setTagResults([]); }}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
