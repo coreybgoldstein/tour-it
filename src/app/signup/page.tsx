@@ -91,6 +91,31 @@ function SignUpPageInner() {
     }
 
     const supabase = createClient();
+    const trimmedUsername = username.trim();
+
+    // Step 0 — Check username availability before we create the auth user.
+    // Without this, a duplicate username surfaces as a raw Postgres unique-
+    // constraint error AFTER the auth account is already created, leaving
+    // an orphaned auth user and a confusing error for the signer-up.
+    // maybeSingle() returns null when there's no match; a non-null row
+    // means the handle is taken.
+    const { data: existingUser, error: usernameLookupError } = await supabase
+      .from("User")
+      .select("id")
+      .eq("username", trimmedUsername)
+      .maybeSingle();
+
+    if (usernameLookupError) {
+      setError(usernameLookupError.message || "Could not verify username. Please try again.");
+      setLoading(false);
+      return;
+    }
+    if (existingUser) {
+      setError("That username is already taken. Please pick another.");
+      setLoading(false);
+      return;
+    }
+
     // displayName is now derived from first + last so the rest of the app
     // doesn't need to know about the split — every existing surface that
     // reads displayName still works without changes.
@@ -101,11 +126,14 @@ function SignUpPageInner() {
       email,
       password,
       options: {
-        data: { username, display_name: computedDisplayName },
+        data: { username: trimmedUsername, display_name: computedDisplayName },
       },
     });
 
     if (signUpError) {
+      // Surface the real Supabase error message so rate-limits, outages,
+      // weak-password, and email-already-registered cases are debuggable
+      // rather than appearing as a single generic failure (audit #30).
       setError(signUpError.message);
       setLoading(false);
       return;
@@ -118,7 +146,7 @@ function SignUpPageInner() {
       const { error: dbError } = await supabase.from("User").insert({
         id: userId,
         email: email,
-        username: username,
+        username: trimmedUsername,
         firstName: trimmedFirst,
         lastName: trimmedLast,
         displayName: computedDisplayName,
