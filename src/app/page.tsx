@@ -1718,6 +1718,7 @@ export default function Home() {
         .feed-peek-rail::-webkit-scrollbar { display: none; }
         .feed-peek-card { width: 96px; aspect-ratio: 9 / 16; flex-shrink: 0; border-radius: 12px; overflow: hidden; position: relative; cursor: pointer; background: rgba(10,28,18,0.95); border: 1px solid rgba(26,158,66,0.12); scroll-snap-align: start; }
         @keyframes scroll-hint-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+        @keyframes feed-peek-chevron-bob { 0%, 100% { transform: translate(0, -50%); } 50% { transform: translate(3px, -50%); } }
         .feed-item { scroll-snap-align: start; scroll-snap-stop: always; }
         .courses-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 0 20px 4px; }
         .courses-row::-webkit-scrollbar { display: none; }
@@ -2090,7 +2091,7 @@ export default function Home() {
                     const target = feedRef.current?.children[1] as HTMLElement | undefined;
                     target?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
-                  aria-label="Scroll into the feed"
+                  aria-label="Swipe up into the feed"
                   style={{
                     background: "none",
                     border: "none",
@@ -2107,12 +2108,25 @@ export default function Home() {
                     lineHeight: 1,
                   }}
                 >
-                  (SCROLL DOWN)
+                  (SWIPE UP)
                 </button>
               </div>
 
               {/* Rail of 9:16 vertical clip cards */}
               <div style={{ position: "relative" }}>
+                {/* Right-edge fade — signals "this rail keeps going
+                    sideways" so users don't mistake the peek-card row
+                    for the only content. Beta tester (Leslie) wasn't
+                    sure if the rail scrolled horizontally; this fade
+                    plus the small chevron at the right edge make it
+                    obvious. Pointer-events none so it doesn't catch
+                    taps meant for the rail. */}
+                <div aria-hidden style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: 56, background: "linear-gradient(to left, #07100a 0%, rgba(7,16,10,0.85) 30%, transparent 100%)", pointerEvents: "none", zIndex: 2 }} />
+                <div aria-hidden style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", color: "rgba(77,168,98,0.85)", pointerEvents: "none", zIndex: 3, animation: "feed-peek-chevron-bob 1.6s ease-in-out infinite" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </div>
                 <div
                   ref={peekRailRef}
                   className="feed-peek-rail"
