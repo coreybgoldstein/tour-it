@@ -1474,7 +1474,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("tour-it-onboarded")) setShowOnboarding(true);
+    // Only show the welcome / "Create an account" modal once we've
+    // confirmed the visitor is logged OUT (user === null). When user
+    // is still undefined the auth check hasn't resolved yet — firing
+    // setShowOnboarding(true) preemptively caused the modal to flash
+    // for users returning from /onboarding/intro after signup, which
+    // is the bug Leslie reported on 2026-05-26.
+    if (user === null && !localStorage.getItem("tour-it-onboarded")) setShowOnboarding(true);
 
     // Check for ?welcome=1 from post-signup onboarding redirect.
     // Wrapped in a callback so we can re-run when the tab becomes visible —
@@ -1509,7 +1515,10 @@ export default function Home() {
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, []);
+    // `user` is in the deps so the onboarding check re-runs once auth
+    // resolves from undefined → null/object. Without this dep the
+    // modal flash for logged-in users wouldn't get re-evaluated.
+  }, [user]);
 
   useEffect(() => {
     if (!commentUploadId) { setCommentItems([]); return; }

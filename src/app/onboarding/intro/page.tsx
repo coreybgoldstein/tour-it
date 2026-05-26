@@ -60,7 +60,15 @@ export default function OnboardingIntroPage() {
   function handleDone() {
     // Mark intro as seen so the home page knows to fire the
     // "explore your home course" follow-up prompt on first paint.
-    try { localStorage.setItem("tour-it-intro-seen", "1"); } catch {}
+    try {
+      localStorage.setItem("tour-it-intro-seen", "1");
+      // Also mark the legacy "onboarded" flag so the home page's
+      // logged-out-only "Create an account" welcome modal doesn't
+      // flash for users who just finished signup + the intro. The
+      // beta tester (Leslie) saw the modal AFTER signing up because
+      // this flag was never set on the intro-done path.
+      localStorage.setItem("tour-it-onboarded", "1");
+    } catch {}
     router.replace(safeNext);
   }
 
