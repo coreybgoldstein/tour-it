@@ -121,9 +121,91 @@ export default function KeyboardSync() {
       window.scrollTo(0, savedScrollY);
     };
 
+    // ── 3. Global swipe-down-to-dismiss for every .tourit-sheet ───
+    // Auto-wire the gesture on every grip element we find in the
+    // DOM so individual sheet callsites don't each need to import
+    // the hook. On touchend past the close threshold we
+    // programmatically click the sheet's matching backdrop —
+    // every .tourit-sheet pattern in the app already wires the
+    // backdrop click to its onClose callback, so the backdrop
+    // click IS the close. Generic across BottomSheet (portaled)
+    // and inline .tourit-sheet uses alike.
+    const grips = new WeakSet<HTMLElement>();
+    const attachSwipe = (grip: HTMLElement) => {
+      if (grips.has(grip)) return;
+      grips.add(grip);
+      const sheet = grip.closest(".tourit-sheet") as HTMLElement | null;
+      if (!sheet) return;
+
+      let startY = 0;
+      let startT = 0;
+      let lastY = 0;
+      let dragging = false;
+
+      const onStart = (e: TouchEvent) => {
+        if (e.touches.length !== 1) return;
+        startY = e.touches[0].clientY;
+        lastY = startY;
+        startT = performance.now();
+        dragging = true;
+        sheet.style.transition = "none";
+      };
+      const onMove = (e: TouchEvent) => {
+        if (!dragging || e.touches.length !== 1) return;
+        const y = e.touches[0].clientY;
+        const delta = Math.max(0, y - startY);
+        sheet.style.transform = `translateY(${delta}px)`;
+        lastY = y;
+      };
+      const onEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        const delta = Math.max(0, lastY - startY);
+        const dt = performance.now() - startT;
+        const velocity = dt > 0 ? delta / dt : 0;
+        sheet.style.transition = "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)";
+        if (delta > 100 || velocity > 0.6) {
+          sheet.style.transform = "translateY(100%)";
+          window.setTimeout(() => {
+            // Find the matching backdrop. For inline sheet uses,
+            // it's the sheet's previousElementSibling. For portaled
+            // BottomSheet, both backdrop + sheet sit on document.body
+            // as siblings — same lookup works.
+            const backdrop = sheet.previousElementSibling as HTMLElement | null;
+            if (backdrop?.classList.contains("tourit-sheet-backdrop")) {
+              backdrop.click();
+            }
+            // Reset transform so the next open doesn't start
+            // off-screen. Defer one frame so React unmount can
+            // happen cleanly first.
+            requestAnimationFrame(() => {
+              sheet.style.transform = "";
+              sheet.style.transition = "";
+            });
+          }, 240);
+        } else {
+          sheet.style.transform = "translateY(0)";
+        }
+      };
+
+      grip.addEventListener("touchstart", onStart, { passive: true });
+      grip.addEventListener("touchmove", onMove, { passive: true });
+      grip.addEventListener("touchend", onEnd);
+      grip.addEventListener("touchcancel", onEnd);
+
+      // Make the grip behave as a real touch target — bigger hit
+      // area + no other gesture (so a vertical drag never bleeds
+      // into the page beneath, even on iOS scroll-snap surfaces
+      // like the home feed).
+      grip.style.touchAction = "none";
+      grip.style.cursor = "grab";
+    };
+
     const evaluate = () => {
       const anyOpen = document.querySelector(".tourit-sheet") !== null;
       if (anyOpen) lock(); else unlock();
+      // Wire swipe-down on every grip that hasn't been wired yet.
+      document.querySelectorAll<HTMLElement>(".tourit-sheet-grip").forEach(attachSwipe);
     };
 
     evaluate();

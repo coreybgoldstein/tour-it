@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useSwipeDownToDismiss } from "@/hooks/useSwipeDownToDismiss";
 
 /**
  * Single source of truth for every bottom sheet in the app. Pairs with
@@ -43,6 +44,12 @@ export type BottomSheetProps = {
 
 export function BottomSheet({ open, onClose, variant = "default", footer, id, children }: BottomSheetProps) {
   const [mounted, setMounted] = useState(false);
+  // Refs for swipe-down-to-dismiss. The hook attaches touch listeners
+  // to the grip; dragging it down past 100px (or with enough flick
+  // velocity) animates the sheet out and calls onClose.
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const gripRef = useRef<HTMLDivElement>(null);
+  useSwipeDownToDismiss(gripRef, sheetRef, onClose);
   // Lock body scroll while the sheet is open so background content
   // doesn't bleed through swipes that should target the sheet itself.
   useEffect(() => {
@@ -66,12 +73,15 @@ export function BottomSheet({ open, onClose, variant = "default", footer, id, ch
   // position: sticky, etc). Without this, the sheet's z-index 210 is
   // scoped to that local context — and the BottomNav at z-index 100,
   // which sits at the page root, ends up rendering ABOVE the sheet.
-  // That was the bug Corey hit on the course Save picker on 2026-05-23.
   return createPortal(
     <>
       <div className="tourit-sheet-backdrop" onClick={onClose} />
-      <div className={sheetClass} id={id} onClick={e => e.stopPropagation()}>
-        <div className="tourit-sheet-grip" />
+      <div ref={sheetRef} className={sheetClass} id={id} onClick={e => e.stopPropagation()} style={{ touchAction: "pan-y" }}>
+        {/* Grip with built-in swipe-down listener. Larger touch target
+            than the visible pill so the drag is easy to grab. */}
+        <div ref={gripRef} style={{ padding: "10px 0 16px", display: "flex", justifyContent: "center", cursor: "grab", flexShrink: 0, touchAction: "none" }}>
+          <div className="tourit-sheet-grip" style={{ margin: 0 }} />
+        </div>
         {footer ? (
           <>
             <div className="tourit-sheet-body">{children}</div>
