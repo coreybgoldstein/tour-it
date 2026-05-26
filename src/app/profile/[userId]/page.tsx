@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, memo } from "react";
+import { useSwipeDownToDismiss } from "@/hooks/useSwipeDownToDismiss";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -506,6 +507,12 @@ export default function ProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Refs for swipe-down-to-dismiss on the profile-edit sheet. The
+  // hook attaches touch listeners to the grip; dragging it down past
+  // 100px (or with enough flick velocity) closes the sheet.
+  const editSheetRef = useRef<HTMLDivElement>(null);
+  const editGripRef = useRef<HTMLDivElement>(null);
+  useSwipeDownToDismiss(editGripRef, editSheetRef, () => setShowEdit(false));
 
   // Owner: clip edit/delete
   const [selectedClip, setSelectedClip] = useState<Upload | null>(null);
@@ -1453,6 +1460,7 @@ export default function ProfilePage() {
           }}
         >
           <div
+            ref={editSheetRef}
             onClick={e => e.stopPropagation()}
             style={{
               width: "100%",
@@ -1467,9 +1475,15 @@ export default function ProfilePage() {
               flex: 1,
               minHeight: 0,
               boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+              touchAction: "pan-y",
             }}
           >
-            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "10px auto 4px", flexShrink: 0 }} />
+            {/* Grip-handle drag affordance — wider hit area than the
+                visible pill so the swipe-down gesture catches even
+                when the user grabs slightly off-center. */}
+            <div ref={editGripRef} style={{ padding: "8px 0 4px", display: "flex", justifyContent: "center", cursor: "grab", flexShrink: 0, touchAction: "none" }}>
+              <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99 }} />
+            </div>
             {/* Scrollable body — keeps "Save changes" pinned to the bottom
                 via the sticky footer below so the submit is always visible
                 above the keyboard. */}

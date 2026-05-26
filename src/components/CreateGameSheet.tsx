@@ -27,6 +27,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SwipeGrip } from "@/components/SwipeGrip";
 import { createClient } from "@/lib/supabase/client";
 
 type CourseSearchRow = {
@@ -141,6 +142,8 @@ export default function CreateGameSheet({
 
   // ── Submit state ─────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
+  // Ref for swipe-down-to-dismiss on the sheet panel.
+  const cgSheetRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   // ── Refs for keyboard-aware scrolling ────────────────────────────
@@ -542,6 +545,7 @@ export default function CreateGameSheet({
       }}
     >
       <div
+        ref={cgSheetRef}
         onClick={e => e.stopPropagation()}
         style={{
           width: "100%",
@@ -556,10 +560,11 @@ export default function CreateGameSheet({
           flex: 1,
           minHeight: 0,
           boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
+          touchAction: "pan-y",
         }}
       >
-        {/* Drag handle */}
-        <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.14)", borderRadius: 99, margin: "10px auto 4px", flexShrink: 0 }} />
+        {/* Grip — swipe down to close. */}
+        <SwipeGrip sheetRef={cgSheetRef} onClose={() => { if (!submitting) onClose(); }} />
 
         {/* Header */}
         <div style={{ padding: "10px 20px 14px", flexShrink: 0 }}>

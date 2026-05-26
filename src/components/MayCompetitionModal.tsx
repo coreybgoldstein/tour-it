@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { POINTS_GROUPS } from "@/lib/pointsGroups";
+import { SwipeGrip } from "@/components/SwipeGrip";
 
 type Props = { onClose: () => void };
 
 const COMPETITION_GROUPS = POINTS_GROUPS;
 
 export default function MayCompetitionModal({ onClose }: Props) {
+  const sheetRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
@@ -33,7 +35,7 @@ export default function MayCompetitionModal({ onClose }: Props) {
       />
 
       {/* Sheet */}
-      <div style={{
+      <div ref={sheetRef} style={{
         position: "fixed",
         bottom: 0, left: 0, right: 0,
         zIndex: 1001,
@@ -45,11 +47,10 @@ export default function MayCompetitionModal({ onClose }: Props) {
         animation: "may-slide-up 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
         paddingBottom: "max(36px, calc(env(safe-area-inset-bottom) + 24px))",
         WebkitOverflowScrolling: "touch" as any,
+        touchAction: "pan-y",
       }}>
-        {/* Drag handle */}
-        <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 4 }}>
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.12)" }} />
-        </div>
+        {/* Swipe-down grip */}
+        <SwipeGrip sheetRef={sheetRef} onClose={onClose} />
 
         {/* Close button */}
         <button
