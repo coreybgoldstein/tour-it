@@ -1927,8 +1927,17 @@ export default function ProfilePage() {
             {isOwner && (
               <>
                 <span style={{ margin: "0 5px", color: "rgba(255,255,255,0.25)" }}>·</span>
-                <button onClick={() => router.push("/search?tab=people")} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 10px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                <button onClick={() => router.push("/search?tab=people")} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 10px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>
+                  {/* Stick-figure golfer mid-swing — genderless silhouette,
+                      golf-themed instead of the generic user-with-plus. */}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="4" r="1.6"/>
+                    <path d="M11 6 L11 13"/>
+                    <path d="M11 13 L8 19"/>
+                    <path d="M11 13 L14 17"/>
+                    <path d="M11 8 L4 5"/>
+                    <path d="M14 17 L18 21"/>
+                  </svg>
                   Find friends
                 </button>
               </>
@@ -2201,17 +2210,58 @@ export default function ProfilePage() {
           <div className="tourit-sheet-backdrop" onClick={() => setFollowSheet(null)} />
           <div className="tourit-sheet" onClick={e => e.stopPropagation()} style={{ padding: 0 }}>
             <div className="tourit-sheet-grip" style={{ marginTop: 8 }} />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 12px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px 12px", gap: 8 }}>
               <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, color: "#fff", margin: 0 }}>{followSheet === "followers" ? "Followers" : "Following"}</h2>
-              <button onClick={() => setFollowSheet(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {/* Golfer + plus — persistent "Add friends" affordance
+                    inside the follower/following sheet. Routes to the
+                    People search tab. Visible regardless of whether
+                    the list has entries. */}
+                {isOwner && (
+                  <button
+                    onClick={() => { setFollowSheet(null); router.push("/search?tab=people"); }}
+                    aria-label="Find friends"
+                    style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                  >
+                    {/* Stick-figure golfer mid-swing — genderless silhouette */}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="4" r="1.6"/>
+                      <path d="M11 6 L11 13"/>
+                      <path d="M11 13 L8 19"/>
+                      <path d="M11 13 L14 17"/>
+                      <path d="M11 8 L4 5"/>
+                      <path d="M14 17 L18 21"/>
+                    </svg>
+                    <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#4da862", border: "2px solid #0d2318", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, lineHeight: 1 }}>+</span>
+                  </button>
+                )}
+                <button onClick={() => setFollowSheet(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
             </div>
             <div style={{ overflowY: "auto", paddingBottom: 40 }}>
               {followListLoading ? (
                 <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}><div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.8s linear infinite" }} /></div>
               ) : followList.length === 0 ? (
-                <div style={{ padding: "40px 20px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)" }}>{followSheet === "followers" ? "No followers yet" : "Not following anyone yet"}</div>
+                <div style={{ padding: "40px 20px", textAlign: "center" }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>{followSheet === "followers" ? "No followers yet" : "Not following anyone yet"}</div>
+                  {isOwner && (
+                    <button onClick={() => { setFollowSheet(null); router.push("/search?tab=people"); }}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#2d7a42", border: "none", borderRadius: 99, padding: "9px 18px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="4" r="1.6"/>
+                        <path d="M11 6 L11 13"/>
+                        <path d="M11 13 L8 19"/>
+                        <path d="M11 13 L14 17"/>
+                        <path d="M11 8 L4 5"/>
+                        <path d="M14 17 L18 21"/>
+                      </svg>
+                      Find friends
+                    </button>
+                  )}
+                </div>
               ) : followList.map(u => (
                 <button key={u.id} onClick={() => { setFollowSheet(null); router.push(`/profile/${u.id}`); }}
                   style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}>

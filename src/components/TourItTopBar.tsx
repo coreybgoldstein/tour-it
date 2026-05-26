@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 
 // Routes where the bar is hidden — clip-heavy / feed pages, auth, and pages
 // that already render their own header (map, notifications, course detail).
@@ -28,6 +29,7 @@ export default function TourItTopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const unreadNotifications = useUnreadNotifications();
   const [signedIn, setSignedIn] = useState(false);
 
   const hidden =
@@ -85,6 +87,7 @@ export default function TourItTopBar() {
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
             style={{
+              position: "relative",
               width: 36,
               height: 36,
               borderRadius: "50%",
@@ -101,6 +104,9 @@ export default function TourItTopBar() {
             <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
             <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
             <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
+            {unreadNotifications > 0 && (
+              <span style={{ position: "absolute", top: 1, right: 1, width: 9, height: 9, borderRadius: "50%", background: "#e8353a", border: "1.5px solid #1c4425", boxShadow: "0 0 6px rgba(232,53,58,0.6)" }} />
+            )}
           </button>
 
           <div style={{ display: "flex", justifyContent: "center" }}>

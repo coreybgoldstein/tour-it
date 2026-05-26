@@ -86,10 +86,14 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
   [PointAction.COMPLETE_PROFILE]:          25,
   [PointAction.ENABLE_NOTIFICATIONS]:      10,
 
-  [PointAction.UPLOAD_CLIP]:               20,
+  // 2026-05-26 rebalance: uploading is the highest-value action
+  // on the platform — every clip is the content that makes the
+  // app useful. Bumped from 20 → 35 so it always outweighs the
+  // 25-pt referral signup (passive action).
+  [PointAction.UPLOAD_CLIP]:               35,
   [PointAction.UPLOAD_FIRST_FOR_COURSE]:  100,
-  [PointAction.UPLOAD_SERIES]:             30,
-  [PointAction.CLIP_UPLOADED_FOR_OTHER]:   10,
+  [PointAction.UPLOAD_SERIES]:             40,
+  [PointAction.CLIP_UPLOADED_FOR_OTHER]:   15,
 
   // Variable — actual amount comes from calcIntelBonus and is passed
   // through awardPoints' customAmount override.
@@ -127,7 +131,12 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
   [PointAction.STREAK_26_WEEKS]:         1500,
   [PointAction.STREAK_52_WEEKS]:         4000,
 
-  [PointAction.REFERRAL_SIGNUP]:           50,
+  // 2026-05-26 rebalance: bringing a friend in is good but it's
+  // passive next to actually uploading content. Trimmed so the
+  // active "upload a clip" (35) always beats the passive "your
+  // friend signed up" (25). The bonus when that friend posts
+  // their first clip stays — that's still active engagement.
+  [PointAction.REFERRAL_SIGNUP]:           25,
   [PointAction.REFERRAL_FIRST_UPLOAD]:    25,
 
   [PointAction.CREATE_TRIP]:               50,
@@ -139,7 +148,9 @@ export const POINT_VALUES: Record<PointActionKey, number> = {
   [PointAction.RANK_UP]:                    0,
 
   [PointAction.UNLIKE_RECEIVED]:           -2,
-  [PointAction.UPLOAD_DELETED]:           -20,
+  // Mirror of UPLOAD_CLIP — keep in sync if that value changes
+  // so the deduction reverses exactly what the upload granted.
+  [PointAction.UPLOAD_DELETED]:           -35,
   // Mirror the CREATE_* awards so deleting a trip/game/round refunds
   // the exact amount that was originally granted. Keep these in sync.
   [PointAction.TRIP_DELETED]:             -50,

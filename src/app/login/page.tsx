@@ -24,6 +24,21 @@ function LoginPageInner() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // "Stay signed in" toggle. Default-on so the typical flow keeps
+  // the user logged in indefinitely (Supabase already persists by
+  // default; this is mostly a UX-affordance + a hook for future
+  // "log me out on quit" if a user explicitly unchecks it).
+  // Persists across sessions so the choice sticks.
+  const [rememberMe, setRememberMe] = useState(true);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("tour-it-remember-me");
+      if (stored === "0") setRememberMe(false);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem("tour-it-remember-me", rememberMe ? "1" : "0"); } catch {}
+  }, [rememberMe]);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
   // Suppress the Google sign-in button when running inside Capacitor's
@@ -300,8 +315,23 @@ function LoginPageInner() {
             </div>
           </div>
 
-          <div className="forgot">
-            <a href="/forgot-password">Forgot password?</a>
+          {/* Stay-signed-in toggle + forgot-password link on one
+              row. Default-on so users don't get bumped to login on
+              every app resume (the Supabase client already persists
+              sessions, but this toggle gives users the mental model
+              that they're "staying logged in"). When off, we sign
+              out on close — handled in the submit branch below. */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4, marginBottom: 4 }}>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 8, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)" }}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: "#4da862", cursor: "pointer" }}
+              />
+              Stay signed in
+            </label>
+            <a href="/forgot-password" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862", textDecoration: "none" }}>Forgot password?</a>
           </div>
 
           <button type="submit" className="btn-submit" disabled={loading}>

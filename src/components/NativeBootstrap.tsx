@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 // One-time native shell setup for Capacitor iOS:
 //
@@ -70,6 +71,28 @@ export default function NativeBootstrap() {
     return () => {
       clearInterval(heartbeat);
     };
+  }, []);
+
+  // Proactive Supabase session refresh on every visibilitychange-
+  // visible event. Fixes the "switched apps, came back, was bumped
+  // to login" bug that Leslie reported during beta — Supabase's
+  // auto-refresh runs on a timer that pauses while the WebView is
+  // backgrounded, so when iOS resumed the page the access token
+  // could already be expired and the next auth call would fail.
+  // refreshSession() uses the persisted refresh token to mint a
+  // new access token; if the refresh token is also dead, the user
+  // gets logged out anyway, but that's the rare case.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const supabase = createClient();
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      // Fire-and-forget — failure here just means "no session to
+      // refresh," which is correct behavior for logged-out users.
+      supabase.auth.refreshSession().catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
   return null;

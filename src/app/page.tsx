@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
+import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 import BottomNav from "@/components/BottomNav";
 import LikesSheet from "@/components/LikesSheet";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
@@ -888,6 +889,10 @@ const VideoCard = memo(function VideoCardImpl({
 export default function Home() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
+  // Unread notification count drives the red pip on the hamburger
+  // button — so users see "open me, there's something new" without
+  // having to manually navigate to /notifications.
+  const unreadNotifications = useUnreadNotifications();
   const [user, setUser] = useState<any>(undefined); // undefined = auth not yet checked, null = confirmed logged out
   const [userProfile, setUserProfile] = useState<any>(null);
   const [trendingCourses, setTrendingCourses] = useState<TrendingCourse[]>([]);
@@ -1942,11 +1947,16 @@ export default function Home() {
             <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(77,168,98,0.07) 1px, transparent 1px)", backgroundSize: "16px 16px", pointerEvents: "none" }} />
             {/* 3-col row: hamburger | logo | bell */}
             <div style={{ display: "grid", gridTemplateColumns: "44px 1fr 44px", alignItems: "center", paddingTop: "calc(env(safe-area-inset-top) + 12px)", paddingBottom: 14, paddingLeft: 16, paddingRight: 16, position: "relative", zIndex: 1 }}>
-              {/* Hamburger */}
-              <button onClick={() => setMenuOpen(true)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: isDesktop ? "none" : "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
+              {/* Hamburger — red dot when there are unread
+                  notifications so users know to open the menu
+                  (Notifications lives inside). */}
+              <button onClick={() => setMenuOpen(true)} style={{ position: "relative", width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: isDesktop ? "none" : "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, cursor: "pointer" }}>
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
                 <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
+                {unreadNotifications > 0 && (
+                  <span style={{ position: "absolute", top: 1, right: 1, width: 9, height: 9, borderRadius: "50%", background: "#e8353a", border: "1.5px solid #1c4425", boxShadow: "0 0 6px rgba(232,53,58,0.6)" }} />
+                )}
               </button>
               {/* Logo — centered on mobile, left-aligned on desktop */}
               <div style={{ display: "flex", justifyContent: isDesktop ? "flex-start" : "center" }}>
