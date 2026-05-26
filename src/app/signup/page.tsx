@@ -35,6 +35,9 @@ function SignUpPageInner() {
   const [lastName, setLastName]   = useState("");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState("");
@@ -80,6 +83,12 @@ function SignUpPageInner() {
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.");
       setLoading(false);
       return;
     }
@@ -396,14 +405,16 @@ function SignUpPageInner() {
                   type="text"
                   name="nickname"
                   autoComplete="nickname"
-                  autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  placeholder="e.g. boomer — not your email"
+                  placeholder="e.g. Boomer — not your email"
                   value={username}
-                  onChange={e => setUsername(e.target.value.toLowerCase().replace(/[\s@]/g, ""))}
+                  // Only strip spaces and @ — uppercase + lowercase both
+                  // allowed. Beta feedback: forced-lowercase + over-strict
+                  // sanitization felt arbitrary.
+                  onChange={e => setUsername(e.target.value.replace(/[\s@]/g, ""))}
                 />
-                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>Lowercase, no spaces — not your email</p>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", marginTop: 5 }}>No spaces — not your email</p>
               </div>
 
               <div className="field">
@@ -426,16 +437,53 @@ function SignUpPageInner() {
 
               <div className="field">
                 <label className="field-label" htmlFor="signup-password">Password</label>
-                <input
-                  id="signup-password"
-                  className="field-input"
-                  type="password"
-                  name="new-password"
-                  autoComplete="new-password"
-                  placeholder="Min. 8 characters"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="signup-password"
+                    className="field-input"
+                    type={showPassword ? "text" : "password"}
+                    name="new-password"
+                    autoComplete="new-password"
+                    placeholder="Min. 8 characters"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    style={{ paddingRight: 44, width: "100%", boxSizing: "border-box" }}
+                  />
+                  <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(p => !p)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", padding: 6, cursor: "pointer", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {showPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="field">
+                <label className="field-label" htmlFor="signup-confirm">Confirm password</label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="signup-confirm"
+                    className="field-input"
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirm-password"
+                    autoComplete="new-password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    style={{ paddingRight: 44, width: "100%", boxSizing: "border-box" }}
+                  />
+                  <button type="button" aria-label={showConfirmPassword ? "Hide password" : "Show password"} onClick={() => setShowConfirmPassword(p => !p)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", padding: 6, cursor: "pointer", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {showConfirmPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
+                  </button>
+                </div>
+                {confirmPassword.length > 0 && password !== confirmPassword && (
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(240,120,90,0.85)", marginTop: 5 }}>Passwords don&apos;t match.</p>
+                )}
               </div>
 
               <button type="submit" className="btn-submit" disabled={loading}>
