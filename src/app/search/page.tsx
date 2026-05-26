@@ -52,7 +52,9 @@ function SearchPageInner() {
   // design-system rule (no JS alerts on iOS WebView).
   const [createSuccess, setCreateSuccess] = useState(false);
 
-  const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
+  const [searchTab, setSearchTab] = useState<"courses" | "people">(
+    searchParams.get("tab") === "people" ? "people" : "courses"
+  );
 
   // Near-Me state for the empty search state. Beta feedback: Leslie
   // didn't know any local courses, didn't know her ZIP when traveling,

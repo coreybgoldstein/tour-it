@@ -1407,9 +1407,14 @@ export default function ProfilePage() {
         <div onClick={() => setShowAvatarModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 300, gap: 20 }}>
           <img src={profile.avatarUrl} alt="avatar" style={{ width: 240, height: 240, borderRadius: "50%", objectFit: "cover", outline: `3px solid ${getRankColor(profileRank)}` }} onClick={e => e.stopPropagation()} />
           {isOwner && (
-            <button onClick={e => { e.stopPropagation(); setShowAvatarModal(false); fileInputRef.current?.click(); }} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "9px 22px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>
-              Change photo
-            </button>
+            <>
+              {/* Same label/input pattern as the edit sheet — native
+                  iOS-WebView-safe photo picker without JS click(). */}
+              <label htmlFor="profile-avatar-modal-file" onClick={e => e.stopPropagation()} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "9px 22px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
+                Change photo
+              </label>
+              <input id="profile-avatar-modal-file" type="file" accept="image/*" style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }} onChange={(e) => { setShowAvatarModal(false); handleAvatarUpload(e); }} />
+            </>
           )}
         </div>
       )}
@@ -1476,11 +1481,19 @@ export default function ProfilePage() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#1a9e42" }}>@{profile.username}</div>
               </div>
-              <button onClick={() => fileInputRef.current?.click()} style={{ padding: "7px 14px", background: "rgba(26,158,66,0.15)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42", cursor: "pointer", whiteSpace: "nowrap" }}>
+              {/* Native <label> pairs with the hidden file input below
+                  so iOS WebView opens the photo picker reliably. The
+                  earlier programmatic fileInputRef.current?.click()
+                  didn't fire when body has position:fixed (the scroll-
+                  lock state) — beta tester Leslie reported "When I
+                  click change photo, it doesn't let me change my
+                  photo." This label/htmlFor approach is the native
+                  HTML primitive; no JS click() needed. */}
+              <label htmlFor="profile-avatar-file" style={{ padding: "7px 14px", background: "rgba(26,158,66,0.15)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42", cursor: "pointer", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center" }}>
                 {uploadingAvatar ? "Uploading…" : "Change photo"}
-              </button>
+              </label>
             </div>
-            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
+            <input id="profile-avatar-file" ref={fileInputRef} type="file" accept="image/*" style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }} onChange={handleAvatarUpload} />
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Username</label>
               <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.06)", border: `1px solid ${usernameError ? "rgba(240,120,90,0.6)" : "rgba(255,255,255,0.1)"}`, borderRadius: 10, paddingLeft: 12 }}>
@@ -1541,8 +1554,16 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <div style={{ marginTop: 12, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
-              <button onClick={() => { setShowEdit(false); setShowDeleteAccount(true); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,100,100,0.45)", padding: "4px 0" }}>
+            {/* Danger Zone — pushed far below the form fields with a
+                wide gap + section header so Delete can't be tapped by
+                accident while reaching for Save Changes. Beta feedback:
+                "delete account button should not be so close to the
+                save changes button" — confirmed dangerous. */}
+            <div style={{ marginTop: 56, paddingTop: 20, borderTop: "1px dashed rgba(240,90,90,0.25)" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(240,90,90,0.55)", marginBottom: 10, textAlign: "center" }}>
+                Danger Zone
+              </div>
+              <button onClick={() => { setShowEdit(false); setShowDeleteAccount(true); }} style={{ width: "100%", background: "rgba(240,90,90,0.06)", border: "1px solid rgba(240,90,90,0.22)", borderRadius: 12, padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(240,120,90,0.85)", cursor: "pointer" }}>
                 Delete account
               </button>
             </div>
@@ -1882,11 +1903,24 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Followers · following */}
-          <div style={{ display: "flex", alignItems: "center", fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>
-            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.55)" }}><span style={{ fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{followerCount}</span> followers</button>
+          {/* Followers · following · find friends.
+              Underlined to signal tap-ability — beta tester didn't
+              realize they were buttons. "Find friends" sits inline
+              for owners only and routes into the People search tab
+              so it's discoverable without burying it in the menu. */}
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: 4, fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>
+            <button onClick={() => openFollowSheet("followers")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.55)", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.25)", textUnderlineOffset: 3 }}><span style={{ fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{followerCount}</span> followers</button>
             <span style={{ margin: "0 5px", color: "rgba(255,255,255,0.25)" }}>·</span>
-            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.55)" }}><span style={{ fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{followingCount}</span> following</button>
+            <button onClick={() => openFollowSheet("following")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.55)", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.25)", textUnderlineOffset: 3 }}><span style={{ fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{followingCount}</span> following</button>
+            {isOwner && (
+              <>
+                <span style={{ margin: "0 5px", color: "rgba(255,255,255,0.25)" }}>·</span>
+                <button onClick={() => router.push("/search?tab=people")} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 10px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                  Find friends
+                </button>
+              </>
+            )}
           </div>
         </div>
 
