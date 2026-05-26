@@ -54,6 +54,13 @@ function SearchPageInner() {
 
   const [searchTab, setSearchTab] = useState<"courses" | "people">("courses");
 
+  // Near-Me state for the empty search state. Beta feedback: Leslie
+  // didn't know any local courses, didn't know her ZIP when traveling,
+  // and wanted "use my location" right on the search page. Mirrors the
+  // home page's nearMe pattern.
+  const [nearMeCourses, setNearMeCourses] = useState<Course[]>([]);
+  const [nearMeStatus, setNearMeStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
+
   // useKeyboardAwareSheet calls removed 2026-05-25 — KeyboardSync
   // + .tourit-sheet handle the lift; the legacy hook collapsed
   // sheets when the keyboard opened.
@@ -140,6 +147,59 @@ function SearchPageInner() {
     setRecentSearches(updated);
     try { localStorage.setItem("tour-it-recent-searches", JSON.stringify(updated)); } catch {}
   }
+
+  // Find courses near the user's current location. Same pattern as
+  // the home page's fetchNearMe — cache reads are instant, fresh
+  // geolocation is requested in the background.
+  function fetchNearMeSearch(radius = 50) {
+    if (!navigator.geolocation) return;
+    setNearMeStatus("loading");
+    const MILES_PER_DEGREE = 69;
+    const RANGE = radius / MILES_PER_DEGREE;
+
+    async function doFetch(lat: number, lng: number) {
+      const { data } = await createClient()
+        .from("Course")
+        .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
+        .gte("latitude", lat - RANGE).lte("latitude", lat + RANGE)
+        .gte("longitude", lng - RANGE).lte("longitude", lng + RANGE)
+        .order("uploadCount", { ascending: false })
+        .limit(8);
+      setNearMeCourses(((data ?? []) as unknown) as Course[]);
+      setNearMeStatus("granted");
+    }
+
+    let usedCache = false;
+    try {
+      const raw = localStorage.getItem("tour-it-location");
+      if (raw) {
+        const { lat, lng, ts } = JSON.parse(raw);
+        if (Date.now() - ts < 3600000) { doFetch(lat, lng); usedCache = true; }
+      }
+    } catch {}
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        localStorage.setItem("tour-it-location", JSON.stringify({ lat, lng, ts: Date.now() }));
+        if (!usedCache) doFetch(lat, lng);
+      },
+      () => { if (!usedCache) setNearMeStatus("denied"); }
+    );
+  }
+
+  // Auto-fire on mount if location was previously granted (cached
+  // coords within the hour). User never has to tap "Enable" twice.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tour-it-location");
+      if (raw) {
+        const { ts } = JSON.parse(raw);
+        if (Date.now() - ts < 3600000) fetchNearMeSearch();
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Geocode zip from URL on mount
   useEffect(() => {
@@ -558,7 +618,18 @@ function SearchPageInner() {
         {/* Header — tight against the green TopBar above so there isn't a
             wide black gap between the bar and "Search". */}
         <div style={{ padding: "4px 0 12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            {/* Back button — beta tester (Leslie) tapped into search
+                from the home discovery and had no way back. iOS swipe-
+                back also doesn't fire reliably in the Capacitor
+                WebView, so this explicit affordance is the safety net. */}
+            <button
+              onClick={() => { if (typeof window !== "undefined" && window.history.length > 1) router.back(); else router.push("/"); }}
+              aria-label="Back"
+              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, padding: 0 }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff" }}>
               Search
             </div>
@@ -807,6 +878,58 @@ function SearchPageInner() {
                 );
               })()}
               {displayList.map(course => {
+                const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
+                return (
+                  <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
+                    <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
+                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="course-name">{course.name}</div>
+                      <div className="course-meta">
+                        {[course.city, course.state].filter(s => s?.trim()).join(", ")}
+                        {course.uploadCount > 0 && <span className="clip-count">{course.uploadCount} clips</span>}
+                      </div>
+                    </div>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                      <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Near Me — prioritized for users who don't know local
+              course names or ZIPs. Empty by default; tapping "Use my
+              location" requests permission then populates. If location
+              was previously granted (cached coords), populates on mount. */}
+          {!showResults && searchTab === "courses" && (
+            <>
+              <p className="section-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span>Near Me</span>
+                {nearMeStatus === "loading" && <span style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.3)" }}>Locating…</span>}
+              </p>
+              {nearMeStatus === "idle" && (
+                <button
+                  onClick={() => fetchNearMeSearch()}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(26,158,66,0.1)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 12, padding: "12px 16px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", marginBottom: 18 }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                  Use my location to find courses
+                </button>
+              )}
+              {nearMeStatus === "denied" && (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", padding: "8px 0 16px" }}>
+                  Location blocked. Enable Tour It location access in iOS Settings to find courses near you.
+                </div>
+              )}
+              {nearMeStatus === "granted" && nearMeCourses.length === 0 && (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", padding: "8px 0 16px" }}>
+                  No courses found within 50 miles.
+                </div>
+              )}
+              {nearMeStatus === "granted" && nearMeCourses.length > 0 && nearMeCourses.slice(0, 5).map(course => {
                 const abbr = course.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase();
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
