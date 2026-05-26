@@ -198,48 +198,6 @@ export default function TourItTopBar() {
             <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 4 }}>
               {[
                 {
-                  label: "About Tour It",
-                  icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                    </svg>
-                  ),
-                  onClick: () => { setMenuOpen(false); router.push("/about"); },
-                },
-                {
-                  label: "Leaderboard",
-                  icon: (
-                    // Masters-style leaderboard — matches the top-right Leaderboards button
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="4" cy="3" r="1"/>
-                      <circle cx="20" cy="3" r="1"/>
-                      <path d="M4 4 Q12 8 20 4"/>
-                      <path d="M4 4 L4 17 L20 17 L20 4"/>
-                      <line x1="6" y1="10" x2="18" y2="10"/>
-                      <line x1="6" y1="13.5" x2="18" y2="13.5"/>
-                      <line x1="12" y1="17" x2="12" y2="20"/>
-                      <line x1="10" y1="20" x2="14" y2="20"/>
-                    </svg>
-                  ),
-                  onClick: () => { setMenuOpen(false); router.push("/leaderboards"); },
-                },
-                {
-                  label: "Play Tour It",
-                  icon: (
-                    // Trophy — the gamification hub destination
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
-                      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
-                      <path d="M4 22h16"/>
-                      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-                      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-                      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-                    </svg>
-                  ),
-                  onClick: () => { setMenuOpen(false); router.push("/play"); },
-                },
-                {
                   label: "Tee Up",
                   icon: (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -253,6 +211,36 @@ export default function TourItTopBar() {
                     </svg>
                   ),
                   onClick: () => { setMenuOpen(false); router.push("/tee-up"); },
+                },
+                {
+                  label: "Play Tour It",
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                      <path d="M4 22h16"/>
+                      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                    </svg>
+                  ),
+                  onClick: () => { setMenuOpen(false); router.push("/play"); },
+                },
+                {
+                  label: "Leaderboard",
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="4" cy="3" r="1"/>
+                      <circle cx="20" cy="3" r="1"/>
+                      <path d="M4 4 Q12 8 20 4"/>
+                      <path d="M4 4 L4 17 L20 17 L20 4"/>
+                      <line x1="6" y1="10" x2="18" y2="10"/>
+                      <line x1="6" y1="13.5" x2="18" y2="13.5"/>
+                      <line x1="12" y1="17" x2="12" y2="20"/>
+                      <line x1="10" y1="20" x2="14" y2="20"/>
+                    </svg>
+                  ),
+                  onClick: () => { setMenuOpen(false); router.push("/leaderboards"); },
                 },
                 {
                   label: "Notifications",
@@ -272,6 +260,16 @@ export default function TourItTopBar() {
                     </svg>
                   ),
                   onClick: () => { setMenuOpen(false); router.push("/feedback"); },
+                },
+                {
+                  label: "About Tour It",
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                    </svg>
+                  ),
+                  onClick: () => { setMenuOpen(false); router.push("/about"); },
                 },
                 {
                   label: "Privacy Policy",
@@ -329,6 +327,30 @@ export default function TourItTopBar() {
                 </button>
               ))}
             </div>
+
+            {signedIn && (
+              <button
+                onClick={() => { setMenuOpen(false); router.push("/invite"); }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  padding: "14px 24px",
+                  background: "rgba(77,168,98,0.08)",
+                  border: "none",
+                  borderTop: "1px solid rgba(77,168,98,0.2)",
+                  cursor: "pointer",
+                  color: "#4da862",
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  textAlign: "left",
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Invite Friends
+              </button>
+            )}
 
             {signedIn && (
               <button
