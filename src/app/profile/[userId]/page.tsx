@@ -1500,14 +1500,14 @@ export default function ProfilePage() {
                 <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginRight: 2 }}>@</span>
                 <input
                   value={editUsername}
-                  onChange={e => { setEditUsername(e.target.value.toLowerCase().replace(/[@\s]/g, "")); if (usernameError) setUsernameError(null); }}
+                  onChange={e => { setEditUsername(e.target.value.replace(/[@\s]/g, "")); if (usernameError) setUsernameError(null); }}
                   placeholder="e.g. boomer"
                   autoComplete="username"
                   style={{ flex: 1, background: "transparent", border: "none", padding: "10px 12px 10px 0", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'Outfit', sans-serif" }}
                 />
               </div>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: usernameError ? "rgba(240,120,90,0.85)" : "rgba(255,255,255,0.35)", marginTop: 5 }}>
-                {usernameError ?? "Lowercase, no spaces — not your email"}
+                {usernameError ?? "No spaces — not your email"}
               </div>
             </div>
             <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
@@ -1554,16 +1554,14 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            {/* Danger Zone — pushed far below the form fields with a
-                wide gap + section header so Delete can't be tapped by
-                accident while reaching for Save Changes. Beta feedback:
-                "delete account button should not be so close to the
-                save changes button" — confirmed dangerous. */}
-            <div style={{ marginTop: 56, paddingTop: 20, borderTop: "1px dashed rgba(240,90,90,0.25)" }}>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(240,90,90,0.55)", marginBottom: 10, textAlign: "center" }}>
-                Danger Zone
-              </div>
-              <button onClick={() => { setShowEdit(false); setShowDeleteAccount(true); }} style={{ width: "100%", background: "rgba(240,90,90,0.06)", border: "1px solid rgba(240,90,90,0.22)", borderRadius: 12, padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(240,120,90,0.85)", cursor: "pointer" }}>
+            {/* Delete account — small unobtrusive text link with
+                enough top margin to keep it well away from any
+                primary action. No big red button, no scary label.
+                Beta feedback: the styled button drew too much
+                attention; the spacing alone is enough to prevent
+                accidental taps. */}
+            <div style={{ marginTop: 64, marginBottom: 4, textAlign: "center" }}>
+              <button onClick={() => { setShowEdit(false); setShowDeleteAccount(true); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(240,120,90,0.35)", padding: "4px 8px" }}>
                 Delete account
               </button>
             </div>
