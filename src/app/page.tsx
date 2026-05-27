@@ -1291,9 +1291,18 @@ export default function Home() {
     const supabase = createClient();
     let cancelled = false;
     (async () => {
-      const [{ data: likeData }, { data: commentData }] = await Promise.all([
+      const [{ data: likeData }, { data: commentData }, { data: countData }] = await Promise.all([
         supabase.from("Like").select("uploadId").eq("userId", user.id).in("uploadId", allUploadIds),
         supabase.from("Comment").select("uploadId").eq("userId", user.id).in("uploadId", allUploadIds),
+        // Also refetch the current authoritative comment counts on
+        // visible clips. Home caches commentCount at initial fetch
+        // time, so when a user comments via a DIFFERENT surface
+        // (ClipViewer, course/hole/profile page) and returns to home,
+        // the badge stays at the cached value — usually 0 — even
+        // though the button correctly flips green (commentedIds is
+        // re-batched here). Pulling fresh counts in the same batch
+        // keeps the badge in sync with the DB.
+        supabase.from("Upload").select("id, commentCount").in("id", allUploadIds),
       ]);
       if (cancelled) return;
       if (likeData) {
@@ -1309,6 +1318,36 @@ export default function Home() {
         // Dedupe — a user can have multiple comments on the same clip.
         // We only care about "has commented at least once."
         setCommentedIds(new Set(commentData.map(r => r.uploadId)));
+      }
+      if (countData) {
+        // Merge the refreshed counts into the existing feedItems
+        // shape — handles both single clips and series entries.
+        const countMap = new Map<string, number>();
+        for (const row of countData as { id: string; commentCount: number | null }[]) {
+          countMap.set(row.id, row.commentCount ?? 0);
+        }
+        setFeedItems(prev => prev.map(it => {
+          if (it.type === "clip") {
+            const fresh = countMap.get(it.clip.id);
+            if (fresh != null && fresh !== it.clip.commentCount) {
+              return { ...it, clip: { ...it.clip, commentCount: fresh } };
+            }
+            return it;
+          }
+          // Series — refresh per-shot counts. RightPanel reads
+          // shots[0].commentCount so that one matters most, but
+          // refresh all of them for consistency.
+          let changed = false;
+          const shots = it.shots.map(s => {
+            const fresh = countMap.get(s.id);
+            if (fresh != null && fresh !== s.commentCount) {
+              changed = true;
+              return { ...s, commentCount: fresh };
+            }
+            return s;
+          });
+          return changed ? { ...it, shots } : it;
+        }));
       }
     })();
     return () => { cancelled = true; };
