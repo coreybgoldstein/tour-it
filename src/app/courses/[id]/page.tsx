@@ -1187,10 +1187,10 @@ const [editDescription, setEditDescription] = useState("");
                 router.back();
               }
             }}
-            style={{ position: "absolute", top: 8, left: 16, zIndex: 11, display: "flex", alignItems: "center", gap: 6, background: "rgba(7,16,10,0.75)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "6px 12px 6px 8px", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
+            style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 8px)", left: 16, zIndex: 11, display: "flex", alignItems: "center", gap: 6, background: "rgba(7,16,10,0.85)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "8px 14px 8px 10px", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>{fromTripIdea ? "Trip" : "Map"}</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{fromTripIdea ? "Trip" : "Map"}</span>
           </button>
         )}
 
