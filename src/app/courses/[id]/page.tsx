@@ -1148,7 +1148,7 @@ const [editDescription, setEditDescription] = useState("");
         {!course.coverImageUrl && (
           <button
             onClick={openContribute}
-            style={{ position: "absolute", top: 52, right: 16, zIndex: 10, display: "flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "7px 12px", cursor: "pointer" }}
+            style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 8px)", right: 16, zIndex: 10, display: "flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "7px 12px", cursor: "pointer" }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Add cover photo</span>
@@ -1159,7 +1159,7 @@ const [editDescription, setEditDescription] = useState("");
             Mirrors the home-card treatment so the major announcement is
             recognizable across surfaces. */}
         {isHostingMajor && tournament && (
-          <div style={{ position: "absolute", top: 52, right: 16, zIndex: 10, width: 58, height: 58, borderRadius: 12, background: "#fff", border: `1.5px solid ${PGA_GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,0.45), 0 0 16px rgba(212,160,23,0.25)" }}>
+          <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 8px)", right: 16, zIndex: 10, width: 58, height: 58, borderRadius: 12, background: "#fff", border: `1.5px solid ${PGA_GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 4px 14px rgba(0,0,0,0.45), 0 0 16px rgba(212,160,23,0.25)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={tournament.logoSrc}
@@ -1196,13 +1196,14 @@ const [editDescription, setEditDescription] = useState("");
 
         {/* Top left: course logo badge — tap to expand if logo exists, else go back.
             Matches the crest treatment on home + profile thumbnails: white bg,
-            subtle white-18% border, classy drop shadow. The previous green-tinted
-            backplate looked muddy against the cover photo — clean white gives the
-            crest itself room to read and the shadow makes it feel lifted off the
-            cover. */}
+            subtle white-18% border, classy drop shadow.
+            Position adjusts based on whether the back-to-Map pill is also
+            showing: when it is, the logo slots in BELOW the pill instead
+            of overlapping it. Beta tester reported this top-left stack
+            felt cluttered on the Stonebridge / Noonan courses. */}
         <button
           onClick={() => course.logoUrl ? setLogoLightboxOpen(true) : router.back()}
-          style={{ position: "absolute", top: 52, left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 3px 10px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
+          style={{ position: "absolute", top: (fromMap || fromTripIdea) ? "calc(env(safe-area-inset-top, 0px) + 58px)" : "calc(env(safe-area-inset-top, 0px) + 8px)", left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 3px 10px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
         >
           {course.logoUrl ? (
             <img
