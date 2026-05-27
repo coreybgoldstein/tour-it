@@ -1322,6 +1322,17 @@ export default function Home() {
       if (countData) {
         // Merge the refreshed counts into the existing feedItems
         // shape — handles both single clips and series entries.
+        //
+        // CRITICAL: only update when the DB count is GREATER than
+        // what we have locally. Supabase reads can lag UPDATEs by
+        // a tick (connection pool, replica reads), and this effect
+        // re-runs on every feedItems mutation. Without this guard,
+        // the user's own optimistic increment (commentCount: 0 → 1
+        // after they post) could get clobbered back to 0 on the
+        // immediate refire while the UPDATE is still propagating.
+        // Bumping only upward means we still catch new comments
+        // from other users (which only go up) but never roll back
+        // our own optimistic state.
         const countMap = new Map<string, number>();
         for (const row of countData as { id: string; commentCount: number | null }[]) {
           countMap.set(row.id, row.commentCount ?? 0);
@@ -1329,18 +1340,15 @@ export default function Home() {
         setFeedItems(prev => prev.map(it => {
           if (it.type === "clip") {
             const fresh = countMap.get(it.clip.id);
-            if (fresh != null && fresh !== it.clip.commentCount) {
+            if (fresh != null && fresh > (it.clip.commentCount ?? 0)) {
               return { ...it, clip: { ...it.clip, commentCount: fresh } };
             }
             return it;
           }
-          // Series — refresh per-shot counts. RightPanel reads
-          // shots[0].commentCount so that one matters most, but
-          // refresh all of them for consistency.
           let changed = false;
           const shots = it.shots.map(s => {
             const fresh = countMap.get(s.id);
-            if (fresh != null && fresh !== s.commentCount) {
+            if (fresh != null && fresh > (s.commentCount ?? 0)) {
               changed = true;
               return { ...s, commentCount: fresh };
             }
@@ -1351,7 +1359,16 @@ export default function Home() {
       }
     })();
     return () => { cancelled = true; };
-  }, [user?.id, feedItems]);
+    // Deps: refire when the visible-clip ID set changes (new clips
+    // loaded via pagination or feed re-fetch), not on every minor
+    // mutation like a local commentCount bump. Without this, the
+    // effect was running on every render that touched feedItems —
+    // including the optimistic increment after the user's own
+    // comment — and the in-flight DB read could clobber the local
+    // bump with stale data. eslint-disable on the deps because
+    // we intentionally exclude feedItems' object reference.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, feedItems.length, feedItems.map(it => it.type === "clip" ? it.clip.id : it.seriesId).join(",")]);
 
   // Prefetch the routes for the trending + near-me course tiles on the
   // discovery screen so that tapping one feels instant — Next.js fetches
