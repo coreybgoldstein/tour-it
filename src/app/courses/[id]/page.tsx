@@ -1238,7 +1238,7 @@ const [editDescription, setEditDescription] = useState("");
         )}
 
 
-        <div style={{ position: "relative", padding: "0 20px 14px", zIndex: 10, marginTop: 110 }}>
+        <div style={{ position: "relative", padding: "0 20px 14px", zIndex: 10, marginTop: "calc(env(safe-area-inset-top, 0px) + 68px)" }}>
           {(() => {
             // Universal Google Maps URL — WKWebView on iOS intercepts and
             // offers "Open in Maps" / "Open in Google Maps." Constructed
