@@ -9,6 +9,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
+import TripNotes from "@/components/TripNotes";
 import Toast, { type ToastState } from "@/components/Toast";
 import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER } from "@/lib/gameFormats";
 
@@ -1981,6 +1982,19 @@ export default function TripPage() {
             </div>
           )}
         </div>
+
+        {/* Trip Notes — collaborative knowledge layer. Renders only
+            on real Trips, not single-day Rounds (notes don't add
+            value for a one-day session). The component handles its
+            own fetch + add UI; canEdit is true if the viewer is a
+            trip member (creator counts as a member). */}
+        {!isRound && trip && (
+          <TripNotes
+            tripId={trip.id}
+            currentUserId={user?.id ?? null}
+            canEdit={!!user && (isOwner || members.some((m) => m.userId === user.id))}
+          />
+        )}
       </main>
 
       {/* Post-creation welcome sheet — fires when ?welcome=1 was on
