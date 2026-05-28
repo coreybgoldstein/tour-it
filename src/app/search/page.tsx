@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, startTransition } from "react
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { BEST_FOR_TAGS, getEnrichment } from "@/lib/tripEnrichment";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -52,8 +53,10 @@ function SearchPageInner() {
   // design-system rule (no JS alerts on iOS WebView).
   const [createSuccess, setCreateSuccess] = useState(false);
 
-  const [searchTab, setSearchTab] = useState<"courses" | "people">(
-    searchParams.get("tab") === "people" ? "people" : "courses"
+  const [searchTab, setSearchTab] = useState<"courses" | "people" | "trips">(
+    searchParams.get("tab") === "people" ? "people"
+      : searchParams.get("tab") === "trips" ? "trips"
+      : "courses"
   );
 
   // Near-Me state for the empty search state. Beta feedback: Leslie
@@ -95,6 +98,23 @@ function SearchPageInner() {
   const [followingInProgress, setFollowingInProgress] = useState<Set<string>>(new Set());
   const [newGolfers, setNewGolfers] = useState<Person[]>([]);
   const peopleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Trips tab state. Loaded once on first tab visit, filtered client-
+  // side because the catalog is small (14 destinations and counting).
+  type TripCardData = {
+    id: string;
+    slug: string;
+    name: string;
+    tagline: string;
+    heroImageUrl: string | null;
+    region: string;
+    vibeTag: string;
+    costBand: string;
+    durationDays: number;
+  };
+  const [tripResults, setTripResults] = useState<TripCardData[]>([]);
+  const [tripsLoaded, setTripsLoaded] = useState(false);
+  const [activeBestFor, setActiveBestFor] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const lastQueryRef = useRef<{ q: string; coords: { lat: number; lng: number } | null; state: string; city: string; holes: string; courseType: string; radius: string } | null>(null);
@@ -229,6 +249,23 @@ function SearchPageInner() {
         setNewGolfers(users as Person[]);
       });
   }, []);
+
+  // Trip catalog load — fetched lazily on first Trips tab visit.
+  // Small catalog (14 destinations at beta launch); we filter client-
+  // side and rerender as user types or taps best-for chips. When the
+  // catalog crosses ~50 we'll move to server-side LLM ranking.
+  useEffect(() => {
+    if (searchTab !== "trips" || tripsLoaded) return;
+    const supabase = createClient();
+    (async () => {
+      const { data } = await supabase
+        .from("TripItinerary")
+        .select("id, slug, name, tagline, heroImageUrl, region, vibeTag, costBand, durationDays")
+        .order("dartThrowCount", { ascending: false });
+      if (data) setTripResults(data as TripCardData[]);
+      setTripsLoaded(true);
+    })();
+  }, [searchTab, tripsLoaded]);
 
   // People search
   useEffect(() => {
@@ -658,7 +695,7 @@ function SearchPageInner() {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onKeyDown={e => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
-              placeholder={searchTab === "courses" ? "Course, city, state or zip…" : "Name or @username"}
+              placeholder={searchTab === "courses" ? "Course, city, state or zip…" : searchTab === "trips" ? "Search trips by destination, vibe, region…" : "Name or @username"}
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -676,13 +713,13 @@ function SearchPageInner() {
 
           {/* Tabs + Filter button */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
-            {(["courses", "people"] as const).map(tab => (
+            {(["courses", "trips", "people"] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => { setSearchTab(tab); setQuery(""); setTimeout(() => inputRef.current?.focus(), 50); }}
                 style={{ padding: "7px 18px", borderRadius: 99, border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", background: searchTab === tab ? "#2d7a42" : "rgba(255,255,255,0.07)", color: searchTab === tab ? "#fff" : "rgba(255,255,255,0.45)", transition: "all 0.15s" }}
               >
-                {tab === "courses" ? "Courses" : "People"}
+                {tab === "courses" ? "Courses" : tab === "trips" ? "Trips" : "People"}
               </button>
             ))}
 
@@ -723,6 +760,120 @@ function SearchPageInner() {
             </div>
           )}
         </div>
+
+        {/* ── Trips tab ── */}
+        {searchTab === "trips" && (
+          <>
+            {/* Best-for filter chips. Single-select. Tap an active chip
+                to clear. Filters the catalog client-side by intersecting
+                the trip's enrichment bestFor[] tags. */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6, marginBottom: 14 }}>
+              {BEST_FOR_TAGS.map(tag => {
+                const active = activeBestFor === tag.id;
+                return (
+                  <button
+                    key={tag.id}
+                    onClick={() => setActiveBestFor(active ? null : tag.id)}
+                    style={{
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: "5px 11px",
+                      borderRadius: 99,
+                      cursor: "pointer",
+                      border: `1px solid ${active ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`,
+                      background: active ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
+                      color: active ? "#4da862" : "rgba(255,255,255,0.55)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {tag.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Trip cards — filtered by query + active best-for chip. */}
+            {(() => {
+              const q = query.trim().toLowerCase();
+              const filtered = tripResults.filter(t => {
+                if (q) {
+                  const haystack = `${t.name} ${t.region} ${t.tagline}`.toLowerCase();
+                  if (!haystack.includes(q)) return false;
+                }
+                if (activeBestFor) {
+                  const enr = getEnrichment(t.slug);
+                  if (!enr || !enr.bestFor.includes(activeBestFor)) return false;
+                }
+                return true;
+              });
+              if (filtered.length === 0) {
+                return <div className="empty-hint">No trips match. Try clearing the filter or {q ? "search" : "tag"}.</div>;
+              }
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {filtered.map(trip => {
+                    const enr = getEnrichment(trip.slug);
+                    return (
+                      <button
+                        key={trip.id}
+                        onClick={() => router.push(`/trip-ideas/${trip.slug}`)}
+                        style={{
+                          position: "relative",
+                          width: "100%",
+                          background: "rgba(10,28,18,0.6)",
+                          border: "1px solid rgba(77,168,98,0.15)",
+                          borderRadius: 16,
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          padding: 0,
+                          textAlign: "left",
+                          display: "flex",
+                          flexDirection: "column",
+                        }}
+                      >
+                        {/* Hero image — 16:9 banner */}
+                        {trip.heroImageUrl && (
+                          <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden" }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={trip.heroImageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0) 50%, rgba(7,16,10,0.7) 100%)" }} />
+                            <div style={{ position: "absolute", left: 12, top: 12, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff", padding: "3px 8px", borderRadius: 99, background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.18)" }}>
+                                {trip.region}
+                              </span>
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "#4da862", padding: "3px 8px", borderRadius: 99, background: "rgba(7,16,10,0.7)", border: "1px solid rgba(77,168,98,0.4)" }}>
+                                {trip.durationDays} DAYS · {trip.costBand}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ padding: "14px 14px 16px" }}>
+                          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 800, color: "#fff", lineHeight: 1.15, marginBottom: 4 }}>{trip.name}</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.55, marginBottom: enr ? 10 : 0 }}>
+                            {enr?.oneLiner ?? trip.tagline}
+                          </div>
+                          {enr && (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                              {enr.bestFor.slice(0, 3).map(tag => {
+                                const label = BEST_FOR_TAGS.find(t => t.id === tag)?.label ?? tag;
+                                return (
+                                  <span key={tag} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(77,168,98,0.85)", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.2)", padding: "2px 7px", borderRadius: 99 }}>
+                                    {label}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </>
+        )}
 
         {/* ── People tab ── */}
         {searchTab === "people" && (

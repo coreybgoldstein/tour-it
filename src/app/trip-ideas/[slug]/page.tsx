@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { createClient as createServerSb } from "@/lib/supabase/server";
 import { createClient as createAdminSb } from "@supabase/supabase-js";
 import ActionZone from "./ActionZone";
+import { getEnrichment, BEST_FOR_TAGS } from "@/lib/tripEnrichment";
 
 type Course = {
   id: string;
@@ -172,6 +173,12 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
 
   const seasonLabel = formatSeason(it.bestSeasonStart, it.bestSeasonEnd);
   const budget = budgetSplit(it.costBand);
+  // Look up rich enrichment (airport/lodging tiers/what-to-remember/
+  // fun fact/who-should-skip/best months) for this destination. The
+  // catalog of authored entries lives in @/lib/tripEnrichment.ts —
+  // null means we haven't written rich copy for this slug yet, in
+  // which case the page falls back to its original structural fields.
+  const enr = getEnrichment(it.slug);
 
   const sectionLabel: React.CSSProperties = {
     fontFamily: "'Outfit', sans-serif",
@@ -297,6 +304,11 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
         {/* Why This Trip */}
         <section style={card}>
           <div style={{ ...sectionLabel, marginBottom: 12 }}>Why this trip</div>
+          {enr?.oneLiner && (
+            <p style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 18, fontWeight: 700, color: "#4da862", lineHeight: 1.35, margin: "0 0 16px" }}>
+              {enr.oneLiner}
+            </p>
+          )}
           <p style={{
             fontFamily: "'Outfit', sans-serif",
             fontSize: 15.5,
@@ -305,20 +317,108 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
             margin: 0,
             whiteSpace: "pre-line",
           }}>{it.whyThisTrip}</p>
+          {enr?.bestFor && enr.bestFor.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 14 }}>
+              {enr.bestFor.map(tag => {
+                const label = BEST_FOR_TAGS.find(t => t.id === tag)?.label ?? tag;
+                return (
+                  <span key={tag} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.3)", padding: "3px 9px", borderRadius: 99 }}>
+                    {label}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </section>
+
+        {/* Airport strategy — only when enrichment exists */}
+        {enr && (
+          <section style={card}>
+            <div style={{ ...sectionLabel, marginBottom: 14 }}>Airport strategy</div>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: enr.alternateAirport ? 14 : 0 }}>
+              <div style={{ minWidth: 60, padding: "8px 0", textAlign: "center", background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 14, color: "#4da862", letterSpacing: "0.05em" }}>{enr.primaryAirport.code}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{enr.primaryAirport.name}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)" }}>~{enr.primaryAirport.driveMinutes} min drive{enr.primaryAirport.note ? ` · ${enr.primaryAirport.note}` : ""}</div>
+              </div>
+            </div>
+            {enr.alternateAirport && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ minWidth: 60, padding: "8px 0", textAlign: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 14, color: "rgba(255,255,255,0.6)", letterSpacing: "0.05em" }}>{enr.alternateAirport.code}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.8)", marginBottom: 2 }}>{enr.alternateAirport.name} <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.35)", letterSpacing: "0.08em", marginLeft: 4 }}>BACKUP</span></div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>~{enr.alternateAirport.driveMinutes} min drive{enr.alternateAirport.note ? ` · ${enr.alternateAirport.note}` : ""}</div>
+                </div>
+              </div>
+            )}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16, fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.55)" }}>
+              <span>{enr.rentalCarNeeded ? "🚗 Rental car needed" : "🚐 Resort shuttle ok"}</span>
+              <span style={{ color: "rgba(255,255,255,0.2)" }}>·</span>
+              <span>{enr.walkingFriendly ? "🚶 Walking-friendly" : "⛳ Cart most rounds"}</span>
+            </div>
+          </section>
+        )}
 
         {/* Where to Stay */}
         <section style={card}>
-          <div style={{ ...sectionLabel, marginBottom: 10 }}>Where to stay</div>
-          <p style={{
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: 15,
-            color: "#fff",
-            lineHeight: 1.5,
-            margin: 0,
-          }}>{it.stayRec}</p>
+          <div style={{ ...sectionLabel, marginBottom: 14 }}>Where to stay</div>
+          {enr?.lodging ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {enr.lodging.luxury && (
+                <div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#d4a017", marginBottom: 4 }}>Luxury play</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.5 }}>{enr.lodging.luxury}</div>
+                </div>
+              )}
+              {enr.lodging.value && (
+                <div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#4da862", marginBottom: 4 }}>Best value</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.5 }}>{enr.lodging.value}</div>
+                </div>
+              )}
+              {enr.lodging.group && (
+                <div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 4 }}>For groups</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.85)", lineHeight: 1.5 }}>{enr.lodging.group}</div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 15,
+              color: "#fff",
+              lineHeight: 1.5,
+              margin: 0,
+            }}>{it.stayRec}</p>
+          )}
           {/* BOOKING_COM_AFFILIATE_LINK — Phase 6 */}
         </section>
+
+        {/* Human details — what to remember, food/drink, fun fact,
+            and the honest "skip if." Only renders when enrichment is
+            authored so older itineraries don't show empty cards. */}
+        {enr && (
+          <section style={card}>
+            <div style={{ ...sectionLabel, marginBottom: 14 }}>The good stuff</div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 5 }}>What the group chat will remember</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14.5, color: "rgba(255,255,255,0.85)", lineHeight: 1.6, fontStyle: "italic" }}>{enr.whatToRemember}</div>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 5 }}>Local food + drink</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.78)", lineHeight: 1.55 }}>{enr.foodDrink}</div>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(212,160,23,0.85)", marginBottom: 5 }}>Fun fact</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.78)", lineHeight: 1.55 }}>{enr.funFact}</div>
+            </div>
+            <div style={{ paddingTop: 14, borderTop: "1px solid rgba(240,90,90,0.18)" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(240,120,90,0.7)", marginBottom: 5 }}>Skip this trip if…</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.55 }}>{enr.skipIf}</div>
+            </div>
+          </section>
+        )}
 
         {/* Day by Day */}
         <section>

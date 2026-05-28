@@ -223,6 +223,20 @@ export default function TripPage() {
   // after it creates the round. We watch for it and auto-open the
   // game-creation modal once the trip data has loaded.
   const startGameRequested = searchParams.get("startGame") === "1";
+  // ?welcome=1 fires when the user just created this trip from a
+  // trip-idea blueprint via Start Planning. Opens a quick onboarding
+  // sheet that asks the rest (dates + invite). Stripped from the
+  // URL after consumed so a back-navigation doesn't replay it.
+  const [showWelcome, setShowWelcome] = useState(searchParams.get("welcome") === "1");
+  const [welcomeStart, setWelcomeStart] = useState("");
+  const [welcomeEnd, setWelcomeEnd] = useState("");
+  const [welcomeSaving, setWelcomeSaving] = useState(false);
+  useEffect(() => {
+    if (searchParams.get("welcome") === "1" && typeof window !== "undefined") {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [trip, setTrip] = useState<Trip | null>(null);
   const [tripCourses, setTripCourses] = useState<TripCourse[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
@@ -1952,6 +1966,78 @@ export default function TripPage() {
           )}
         </div>
       </main>
+
+      {/* Post-creation welcome sheet — fires when ?welcome=1 was on
+          the URL (set by ActionZone's Start Planning flow on a trip
+          idea). Quick "tell us about your trip" prompt: dates +
+          invites. Skipping is fine — they can edit later. */}
+      {showWelcome && trip && (
+        <>
+          <div onClick={() => setShowWelcome(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", zIndex: 300 }} />
+          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 301, background: "#0d2318", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: "20px 22px calc(28px + env(safe-area-inset-bottom))", borderTop: "1px solid rgba(77,168,98,0.3)", boxShadow: "0 -8px 32px rgba(0,0,0,0.4)", maxHeight: "85svh", overflowY: "auto" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 18px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 6, lineHeight: 1.15 }}>
+              Your trip is live
+            </div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13.5, color: "rgba(255,255,255,0.65)", lineHeight: 1.6, marginBottom: 20 }}>
+              Recommended courses are already attached. A couple quick things to finish setting it up — you can skip and edit later.
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 8 }}>
+                When are you going?
+              </label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input type="date" value={welcomeStart} onChange={e => setWelcomeStart(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 12px", color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Outfit', sans-serif", colorScheme: "dark" as never }} />
+                <input type="date" value={welcomeEnd} onChange={e => setWelcomeEnd(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 12px", color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Outfit', sans-serif", colorScheme: "dark" as never }} />
+              </div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>Start and end dates. Approximate is fine.</div>
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 8 }}>
+                Who&apos;s coming?
+              </label>
+              <button
+                onClick={() => { setShowWelcome(false); setInviteOpen(true); }}
+                style={{ width: "100%", padding: "12px", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="4" r="1.6"/><path d="M11 6 L11 13"/><path d="M11 13 L8 19"/><path d="M11 13 L14 17"/><path d="M11 8 L4 5"/><path d="M14 17 L18 21"/></svg>
+                Invite your crew
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button
+                onClick={async () => {
+                  if (!trip) return;
+                  setWelcomeSaving(true);
+                  const supabase = createClient();
+                  const updates: { startDate?: string; endDate?: string } = {};
+                  if (welcomeStart) updates.startDate = welcomeStart;
+                  if (welcomeEnd) updates.endDate = welcomeEnd;
+                  if (Object.keys(updates).length > 0) {
+                    await supabase.from("GolfTrip").update(updates).eq("id", trip.id);
+                    setTrip(t => t ? { ...t, ...updates } : t);
+                  }
+                  setWelcomeSaving(false);
+                  setShowWelcome(false);
+                }}
+                disabled={welcomeSaving}
+                style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)", color: "#fff", border: "none", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, cursor: welcomeSaving ? "wait" : "pointer", boxShadow: "0 4px 16px rgba(45,122,66,0.35)" }}
+              >
+                {welcomeSaving ? "Saving…" : "Save & continue"}
+              </button>
+              <button
+                onClick={() => setShowWelcome(false)}
+                style={{ width: "100%", padding: "11px", background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
+              >
+                Skip for now
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Clip feed modal */}
       {feedOpen && (
