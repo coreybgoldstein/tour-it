@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
 
     // Ask Claude to extract structured search parameters
     const msg = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      // Haiku: structured-JSON extraction from short search queries — a
+      // task Haiku handles fine. Saves ~5x per call vs Sonnet.
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 512,
       system: `You are a golf course search assistant for Tour It, a US golf scouting app with 11,000+ courses.
 Extract structured search parameters from natural language golf course queries.

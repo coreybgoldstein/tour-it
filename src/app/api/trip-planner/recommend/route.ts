@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "node:crypto";
 import { rateLimit } from "@/lib/rateLimit";
 import { TRIP_ENRICHMENT, BEST_FOR_TAGS } from "@/lib/tripEnrichment";
+
+// Cache TTL — long enough that 7-day repeat queries are free, short
+// enough that newly-added itineraries surface within a week.
+const CACHE_TTL_DAYS = 7;
 
 // POST /api/trip-planner/recommend
 //
@@ -54,6 +59,39 @@ export async function POST(req: NextRequest) {
   const input = (await req.json()) as PlannerInput;
   if (!Array.isArray(input.months) || input.months.length === 0) {
     return NextResponse.json({ error: "months[] is required" }, { status: 400 });
+  }
+
+  // Canonicalize the brief inputs into a deterministic JSON string and
+  // hash it — two users with the same group/budget/months/vibes/notes/
+  // origin share the LLM call.
+  const briefKey = JSON.stringify({
+    groupSize: input.groupSize ?? null,
+    budgetPerPerson: input.budgetPerPerson ?? null,
+    originCity: (input.originCity ?? "").trim().toLowerCase() || null,
+    originState: (input.originState ?? "").trim().toUpperCase() || null,
+    rounds: input.rounds ?? null,
+    days: input.days ?? null,
+    months: [...input.months].sort((a, b) => a - b),
+    vibes: [...(input.vibes ?? [])].sort(),
+    notes: (input.notes ?? "").trim().toLowerCase() || null,
+  });
+  const briefHash = createHash("sha256").update(briefKey).digest("hex");
+
+  // ─── Cache lookup ───────────────────────────────────────────────────────
+  // Cache the full hydrated response keyed by brief hash. Skip the
+  // catalog fetch and LLM call entirely on a hit. Increments hits for
+  // visibility (admin can see which briefs are popular).
+  {
+    const { data: cached } = await sb
+      .from("TripPlannerCache")
+      .select("response, expiresAt")
+      .eq("briefHash", briefHash)
+      .gt("expiresAt", new Date().toISOString())
+      .maybeSingle();
+    if (cached) {
+      sb.from("TripPlannerCache").update({ hits: (cached as any).hits != null ? (cached as any).hits + 1 : 1 }).eq("briefHash", briefHash).then(() => {}, () => {});
+      return NextResponse.json(cached.response);
+    }
   }
 
   // ─── Pull catalog ────────────────────────────────────────────────────────
@@ -237,10 +275,22 @@ Valid bestFor tag ids: ${validTagIds.join(", ")}.`;
       };
     });
 
-  return NextResponse.json({
+  const responseBody = {
     explanation: parsed.explanation ?? "Here are your best matches.",
     recommendations,
-  });
+  };
+
+  // Cache the full response for CACHE_TTL_DAYS. Fire-and-forget so we
+  // don't block the user on a write.
+  const expiresAt = new Date(Date.now() + CACHE_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  sb.from("TripPlannerCache").upsert({
+    briefHash,
+    response: responseBody,
+    hits: 0,
+    expiresAt,
+  }, { onConflict: "briefHash" }).then(() => {}, () => {});
+
+  return NextResponse.json(responseBody);
 }
 
 function getOptionalEnrichment(slug: string) {

@@ -729,6 +729,20 @@ model Notification {
 // SEARCH LOG
 // ============================================================
 
+// Idempotent cache for the AI trip planner. Keyed on a SHA-256 of the
+// canonical brief inputs (group, budget, months, vibes, notes, origin)
+// so two users with identical briefs share the Claude call. 7-day TTL
+// so newly-added itineraries propagate within a week.
+model TripPlannerCache {
+  briefHash String   @id
+  response  Json
+  hits      Int      @default(0)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
 model SearchLog {
   id          String   @id @default(cuid())
   query       String

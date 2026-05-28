@@ -66,7 +66,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      // Haiku 4.5 handles scorecard-image OCR + structured extraction
+      // well at ~5x lower cost than Sonnet. If accuracy slips on edge
+      // cases (faded scorecards, unusual layouts), revert this line.
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 2000,
       messages: [{
         role: "user",

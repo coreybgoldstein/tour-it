@@ -188,7 +188,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   let shareText = "";
   try {
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      // Haiku 4.5 is great for short structured-JSON game-sheet
+      // generation (rules + tip + share text) at ~5x lower cost than
+      // Sonnet. Sonnet stays only for the trip planner's multi-factor
+      // ranking, which actually needs the reasoning headroom.
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
       messages: [{ role: "user", content: prompt }],
     });
