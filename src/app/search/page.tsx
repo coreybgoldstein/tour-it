@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { BEST_FOR_TAGS, getEnrichment } from "@/lib/tripEnrichment";
 import TripPlannerSheet from "@/components/TripPlannerSheet";
+import { cdnImage } from "@/lib/cdnImage";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -875,7 +876,7 @@ function SearchPageInner() {
                         {trip.heroImageUrl && (
                           <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden" }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={trip.heroImageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <img src={cdnImage(trip.heroImageUrl)} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0) 50%, rgba(7,16,10,0.7) 100%)" }} />
                             <div style={{ position: "absolute", left: 12, top: 12, display: "flex", gap: 6, flexWrap: "wrap" }}>
                               <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#fff", padding: "3px 8px", borderRadius: 99, background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.18)" }}>
@@ -931,7 +932,7 @@ function SearchPageInner() {
                 {newGolfers.map(person => (
                   <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                     <div onClick={() => router.push(`/profile/${person.id}`)} style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                      {person.avatarUrl ? <img src={person.avatarUrl} alt={person.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>{(person.displayName || person.username)[0].toUpperCase()}</span>}
+                      {person.avatarUrl ? <img src={cdnImage(person.avatarUrl)} alt={person.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>{(person.displayName || person.username)[0].toUpperCase()}</span>}
                     </div>
                     <div onClick={() => router.push(`/profile/${person.id}`)} style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{person.displayName || person.username}</div>
@@ -965,7 +966,7 @@ function SearchPageInner() {
             {!peopleLoading && peopleResults.map(person => (
               <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <div onClick={() => router.push(`/profile/${person.id}`)} style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                  {person.avatarUrl ? <img src={person.avatarUrl} alt={person.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>{(person.displayName || person.username)[0].toUpperCase()}</span>}
+                  {person.avatarUrl ? <img src={cdnImage(person.avatarUrl)} alt={person.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 700, color: "#4da862" }}>{(person.displayName || person.username)[0].toUpperCase()}</span>}
                 </div>
                 <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => router.push(`/profile/${person.id}`)}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{person.displayName}</div>
@@ -1037,7 +1038,7 @@ function SearchPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -1074,7 +1075,7 @@ function SearchPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -1126,7 +1127,7 @@ function SearchPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -1153,7 +1154,7 @@ function SearchPageInner() {
                 return (
                   <div key={course.id} className="course-row" style={{ position: "relative" }} onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -1180,7 +1181,7 @@ function SearchPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className="course-badge has-clips" style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>

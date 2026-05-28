@@ -12,6 +12,7 @@ import CreateGameSheet from "@/components/CreateGameSheet";
 import TripNotes from "@/components/TripNotes";
 import Toast, { type ToastState } from "@/components/Toast";
 import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER } from "@/lib/gameFormats";
+import { cdnImage } from "@/lib/cdnImage";
 
 type Trip = {
   id: string;
@@ -1235,7 +1236,7 @@ export default function TripPage() {
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
                   {(roundCourse?.logoUrl) && (
                     <div style={{ width: 52, height: 52, borderRadius: 12, background: "#fff", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
-                      <img src={roundCourse.logoUrl} alt={roundCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={cdnImage(roundCourse.logoUrl)} alt={roundCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -1279,9 +1280,9 @@ export default function TripPage() {
                 {uploadingImage ? (
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>...</div>
                 ) : trip.imageUrl ? (
-                  <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={cdnImage(trip.imageUrl)} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : isRound && roundCourse?.logoUrl ? (
-                  <img src={roundCourse.logoUrl} alt={roundCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={cdnImage(roundCourse.logoUrl)} alt={roundCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 20, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
                 )}
@@ -1358,7 +1359,7 @@ export default function TripPage() {
                     return (
                       <div key={m.id} style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: `2px solid ${ringColor}`, background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -6 : 0, flexShrink: 0, zIndex: members.length - i }}>
                         {m.user.avatarUrl
-                          ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         }
                       </div>
@@ -1615,14 +1616,14 @@ export default function TripPage() {
                               <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ position: "relative", width: 44, height: 44, flexShrink: 0, cursor: "pointer", alignSelf: "center" }}>
                                 <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                                   {tc.course.logoUrl
-                                    ? <img src={tc.course.logoUrl} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                                    ? <img src={cdnImage(tc.course.logoUrl)} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                                     : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{abbr(tc.course.name)}</span>
                                   }
                                 </div>
                                 {tc.secondaryCourse && (
                                   <div style={{ position: "absolute", bottom: -4, right: -4, width: 22, height: 22, borderRadius: 6, background: "rgba(7,16,10,0.95)", border: "1.5px solid #4da862", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                     {tc.secondaryCourse.logoUrl
-                                      ? <img src={tc.secondaryCourse.logoUrl} alt={tc.secondaryCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                                      ? <img src={cdnImage(tc.secondaryCourse.logoUrl)} alt={tc.secondaryCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                                       : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#4da862" }}>{abbr(tc.secondaryCourse.name)}</span>
                                     }
                                   </div>
@@ -1794,7 +1795,7 @@ export default function TripPage() {
                           {g.players.slice(0, 5).map((p: any, i: number) => (
                             <div key={p.userId} style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "2px solid #0d2318", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -8 : 0, zIndex: (g.players?.length || 0) - i, flexShrink: 0 }}>
                               {p.avatarUrl
-                                ? <img src={p.avatarUrl} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ? <img src={cdnImage(p.avatarUrl)} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
                             </div>
                           ))}
@@ -1928,7 +1929,7 @@ export default function TripPage() {
                       >
                         <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: isPositive ? "rgba(77,168,98,0.18)" : "rgba(220,80,80,0.15)", flexShrink: 0 }}>
                           {row.avatarUrl
-                            ? <img src={row.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img src={cdnImage(row.avatarUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: 8 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                           }
                         </div>
@@ -2257,7 +2258,7 @@ export default function TripPage() {
                       <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", flexDirection: align === "right" ? "row-reverse" : "row" }}>
                         <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: `2px solid ${ringColor}`, background: "rgba(0,0,0,0.3)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 0 1px rgba(0,0,0,0.4)` }}>
                           {m.user.avatarUrl
-                            ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                           }
                         </div>
@@ -2284,7 +2285,7 @@ export default function TripPage() {
                           <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
                             <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.15)", background: "rgba(77,168,98,0.12)", flexShrink: 0 }}>
                               {m.user.avatarUrl
-                                ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "10px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                               }
                             </div>
@@ -2306,7 +2307,7 @@ export default function TripPage() {
                   <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                     <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(77,168,98,0.3)", background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {m.user.avatarUrl
-                        ? <img src={m.user.avatarUrl} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                       }
                     </div>
@@ -2331,7 +2332,7 @@ export default function TripPage() {
           <button onClick={() => setTripImageExpanded(false)} style={{ position: "absolute", top: 20, right: 20, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
-          <img src={trip.imageUrl} alt={trip.name} style={{ maxWidth: "92vw", maxHeight: "80vh", borderRadius: 16, objectFit: "contain" }} onClick={e => e.stopPropagation()} />
+          <img src={cdnImage(trip.imageUrl)} alt={trip.name} style={{ maxWidth: "92vw", maxHeight: "80vh", borderRadius: 16, objectFit: "contain" }} onClick={e => e.stopPropagation()} />
         </div>
       )}
 
@@ -2352,7 +2353,7 @@ export default function TripPage() {
               {inviteResults.map(u => (
                 <div key={u.id} className="invite-result">
                   <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(77,168,98,0.3)", background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                    {u.avatarUrl ? <img src={cdnImage(u.avatarUrl)} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{u.displayName}</div>
@@ -2434,7 +2435,7 @@ export default function TripPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ width: 64, height: 64, borderRadius: 16, overflow: "hidden", background: "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {trip.imageUrl
-                      ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ? <img src={cdnImage(trip.imageUrl)} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, fontWeight: 700, color: "#4da862" }}>{tripAbbr}</span>
                     }
                   </div>
@@ -2672,7 +2673,7 @@ export default function TripPage() {
                     <div key={c.id} className="course-result-row" onClick={() => { setSelectedAddCourse(c); setAddCourseStep("details"); if (!addPlayDate && trip?.startDate) setAddPlayDate(trip.startDate); }}>
                       <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
                         {c.logoUrl
-                          ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                          ? <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                           : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>{abbr(c.name)}</span>
                         }
                       </div>
@@ -2712,7 +2713,7 @@ export default function TripPage() {
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
                           {pairCourse.logoUrl
-                            ? <img src={pairCourse.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img src={cdnImage(pairCourse.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862" }}>{abbr(pairCourse.name)}</span>
                           }
                         </div>
@@ -2810,7 +2811,7 @@ export default function TripPage() {
                     <div key={c.id} className="course-result-row" onClick={() => { setPairCourse(c); setAddCourseStep("details"); }}>
                       <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
                         {c.logoUrl
-                          ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                          ? <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                           : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>{abbr(c.name)}</span>
                         }
                       </div>
@@ -2998,7 +2999,7 @@ export default function TripPage() {
                     >
                       <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", flexShrink: 0 }}>
                         {p.avatarUrl
-                          ? <img src={p.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ? <img src={cdnImage(p.avatarUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: 8 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         }
                       </div>
@@ -3355,7 +3356,7 @@ export default function TripPage() {
                   <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", background: "rgba(255,255,255,0.025)", borderRadius: 10, border: `1px solid ${t === "RED" ? "rgba(200,16,46,0.4)" : t === "BLUE" ? "rgba(59,130,246,0.4)" : "rgba(255,255,255,0.06)"}` }}>
                     <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0 }}>
                       {m.user.avatarUrl
-                        ? <img src={m.user.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                        ? <img src={cdnImage(m.user.avatarUrl)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
                         : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" style={{ margin: "8px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                       }
                     </div>
@@ -3508,7 +3509,7 @@ function RyderCupHero({
           ) : teamMembers.slice(0, 5).map(m => (
             <div key={m.id} style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", border: "1.5px solid #fff", background: "rgba(0,0,0,0.3)" }}>
               {m.user.avatarUrl
-                ? <img src={m.user.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                ? <img src={cdnImage(m.user.avatarUrl)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
                 : <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" style={{ margin: "5px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               }
             </div>

@@ -1,0 +1,15 @@
+name = "tourit-img-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-05-28"
+account_id = "54fdaebae8ba74b71bbcc7fd4fab5221"
+
+# Route binding: every request to img.touritgolf.com hits this Worker.
+# Requires that touritgolf.com is on Cloudflare DNS and that the
+# img subdomain has a (proxied / orange-cloud) CNAME or A record so
+# Cloudflare actually receives the traffic.
+[[routes]]
+pattern = "img.touritgolf.com/*"
+zone_name = "touritgolf.com"
+
+# No env vars needed — the Supabase storage URL is hard-coded so the
+# Worker can boot without any secret-binding ceremony.

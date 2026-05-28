@@ -7,6 +7,7 @@ import { compressVideo } from "@/lib/compressVideo";
 import { sendPushToUser } from "@/lib/sendPush";
 import { calcIntelBonus } from "@/config/points-system";
 import { finalizeUpload } from "@/lib/uploadFinalize";
+import { cdnImage } from "@/lib/cdnImage";
 
 type Course = { id: string; name: string; city: string; state: string; holeCount: number };
 type TagUser = { id: string; username: string; displayName: string; avatarUrl: string | null };
@@ -691,7 +692,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(212,160,23,0.12)", border: "1px solid rgba(212,160,23,0.4)", borderRadius: 99, padding: "3px 8px 3px 5px" }}>
                       <div style={{ width: 18, height: 18, borderRadius: "50%", overflow: "hidden", background: "rgba(212,160,23,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {clip.heroUser.avatarUrl
-                          ? <img src={clip.heroUser.avatarUrl} alt={clip.heroUser.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ? <img src={cdnImage(clip.heroUser.avatarUrl)} alt={clip.heroUser.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : <span style={{ fontSize: 9, color: "#d4a017", fontWeight: 700 }}>{clip.heroUser.username[0]?.toUpperCase()}</span>}
                       </div>
                       <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#d4a017" }}>@{clip.heroUser.username}</span>
@@ -732,7 +733,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
                         style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "9px 10px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
                         <div style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", background: "rgba(212,160,23,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {u.avatarUrl
-                            ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            ? <img src={cdnImage(u.avatarUrl)} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <span style={{ fontSize: 10, color: "#d4a017", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
                         </div>
                         <div>

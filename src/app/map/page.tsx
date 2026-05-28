@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { findClosestItinerary, type ItineraryCentroid } from "@/lib/geo";
+import { cdnImage } from "@/lib/cdnImage";
 
 type MapCourse = {
   id: string;
@@ -532,7 +533,7 @@ export default function MapPage() {
                       >
                         <div style={{ width: 32, height: 32, borderRadius: 7, flexShrink: 0, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {s.logoUrl ? (
-                            <img src={s.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <img src={cdnImage(s.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           ) : (
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.5)" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                           )}
@@ -623,9 +624,9 @@ export default function MapPage() {
                 >
                   <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {course.logoUrl ? (
-                      <img src={course.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={cdnImage(course.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : course.coverImageUrl ? (
-                      <img src={course.coverImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img src={cdnImage(course.coverImageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.45)" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                     )}

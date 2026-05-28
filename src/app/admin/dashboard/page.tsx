@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { cdnImage } from "@/lib/cdnImage";
 
 type TopCourse = { id: string; name: string; city: string; state: string; uploadCount: number; viewCount: number; saveCount: number };
 type TopUploader = { id: string; username: string; displayName: string; uploadCount: number; avatarUrl: string | null };
@@ -504,7 +505,7 @@ export default function DashboardPage() {
             <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderBottom: i < data.topUploaders.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.2)", width: 20, flexShrink: 0 }}>{i + 1}</div>
               {u.avatarUrl
-                ? <img src={u.avatarUrl} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                ? <img src={cdnImage(u.avatarUrl)} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
                 : <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
               }
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -522,7 +523,7 @@ export default function DashboardPage() {
           {data.recentUsers.map((u, i) => (
             <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderBottom: i < data.recentUsers.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
               {u.avatarUrl
-                ? <img src={u.avatarUrl} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                ? <img src={cdnImage(u.avatarUrl)} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
                 : <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
               }
               <div style={{ flex: 1, minWidth: 0 }}>

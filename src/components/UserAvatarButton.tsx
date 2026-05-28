@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
+import { cdnImage } from "@/lib/cdnImage";
 
 export default function UserAvatarButton({ style }: { style?: React.CSSProperties }) {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function UserAvatarButton({ style }: { style?: React.CSSPropertie
       }}
     >
       {avatarUrl
-        ? <img src={avatarUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ? <img src={cdnImage(avatarUrl)} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       }
     </button>

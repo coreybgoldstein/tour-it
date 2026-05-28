@@ -17,6 +17,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
+import { cdnImage } from "@/lib/cdnImage";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 6px rgba(0,0,0,0.4)" }}>
@@ -223,7 +224,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
           <button onClick={() => router.push(`/profile/${series.userId}`)} style={{ display: "flex", alignItems: "center", gap: 7, background: "none", border: "none", padding: 0, cursor: "pointer" }}>
             <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.3)", background: "rgba(26,158,66,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               {series.avatarUrl
-                ? <img src={series.avatarUrl} alt={series.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ? <img src={cdnImage(series.avatarUrl)} alt={series.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               }
             </div>
@@ -979,7 +980,7 @@ export default function HolePage() {
                   <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
                     <div className={isLegend(uploaders[activeUpload.userId]?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaders[activeUpload.userId]?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {uploaders[activeUpload.userId]?.avatarUrl
-                        ? <img src={uploaders[activeUpload.userId].avatarUrl!} alt={uploaders[activeUpload.userId].username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ? <img src={cdnImage(uploaders[activeUpload.userId].avatarUrl!)} alt={uploaders[activeUpload.userId].username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                     </div>
                   </button>
@@ -1108,7 +1109,7 @@ export default function HolePage() {
                 <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
                   <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: getRankRingBorder(c.rank), overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {c.avatarUrl
-                      ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                      ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
                       : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     }
                   </div>

@@ -10,6 +10,7 @@ import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { isMayActive } from "@/lib/competitions";
 import MayCompetitionModal from "@/components/MayCompetitionModal";
 import PointsSystemSheet from "@/components/PointsSystemSheet";
+import { cdnImage } from "@/lib/cdnImage";
 
 type Period = "all" | "monthly";
 
@@ -291,7 +292,7 @@ export default function LeaderboardsPage() {
                   style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", border: getRankRingBorder(entry.rank), flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
                   {entry.user?.avatarUrl
-                    ? <img src={entry.user.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ? <img src={cdnImage(entry.user.avatarUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   }
                 </div>

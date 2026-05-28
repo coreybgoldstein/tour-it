@@ -11,6 +11,7 @@ import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 import { calcIntelBonus } from "@/config/points-system";
 import { finalizeUpload } from "@/lib/uploadFinalize";
 import exifr from "exifr";
+import { cdnImage } from "@/lib/cdnImage";
 
 // Dev-only logger — keeps useful tracing for local debugging but stays silent
 // in production so iOS Safari Web Inspector users don't see internal flow.
@@ -822,7 +823,7 @@ function UploadPageInner() {
             onClick={() => router.push(`/courses/${selectedCourse?.id}`)}
             style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 20px", marginBottom: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
             {selectedCourse?.logoUrl ? (
-              <img src={selectedCourse.logoUrl} alt="" style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover", backgroundColor: "#fff" }} />
+              <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover", backgroundColor: "#fff" }} />
             ) : (
               <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
                 {selectedCourse?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}
@@ -1116,7 +1117,7 @@ function UploadPageInner() {
                   return (
                     <button key={course.id} className="course-item" onClick={() => { setSelectedCourse(course); setStep(3); }}>
                       {course.logoUrl
-                        ? <img src={course.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                        ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
                         : <div className="course-abbr">{abbr}</div>}
                       <div>
                         <div className="course-name-text">{course.name}</div>
@@ -1149,7 +1150,7 @@ function UploadPageInner() {
                       return (
                         <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
                           {course.logoUrl
-                            ? <img src={course.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                            ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
                             : <div className="course-abbr">{abbr}</div>}
                           <div>
                             <div className="course-name-text">{course.name}</div>
@@ -1174,7 +1175,7 @@ function UploadPageInner() {
                   return (
                     <button className="course-item selected" onClick={() => setStep(3)}>
                       {selectedCourse.logoUrl
-                        ? <img src={selectedCourse.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                        ? <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
                         : <div className="course-abbr">{abbr}</div>}
                       <div>
                         <div className="course-name-text">{selectedCourse.name}</div>
@@ -1208,7 +1209,7 @@ function UploadPageInner() {
                 return (
                   <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
                     {course.logoUrl
-                      ? <img src={course.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                      ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
                       : <div className="course-abbr">{abbr}</div>}
                     <div>
                       <div className="course-name-text">{course.name}</div>
@@ -1225,11 +1226,11 @@ function UploadPageInner() {
         {step >= 3 && selectedCourse && (
           <div style={{ marginBottom: 20, borderRadius: 16, overflow: "hidden", position: "relative", minHeight: 72, background: selectedCourse.coverImageUrl ? "transparent" : "rgba(77,168,98,0.08)", border: "1px solid rgba(255,255,255,0.07)" }}>
             {selectedCourse.coverImageUrl && (
-              <img src={selectedCourse.coverImageUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35 }} />
+              <img src={cdnImage(selectedCourse.coverImageUrl)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35 }} />
             )}
             <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px" }}>
               {selectedCourse.logoUrl ? (
-                <img src={selectedCourse.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)", backgroundColor: "#fff" }} />
+                <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)", backgroundColor: "#fff" }} />
               ) : (
                 <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>
                   {selectedCourse.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}
@@ -1476,7 +1477,7 @@ function UploadPageInner() {
                 heroUser ? (
                   <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, padding: "8px 12px" }}>
                     <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {heroUser.avatarUrl ? <img src={heroUser.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{heroUser.username[0].toUpperCase()}</span>}
+                      {heroUser.avatarUrl ? <img src={cdnImage(heroUser.avatarUrl)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{heroUser.username[0].toUpperCase()}</span>}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{heroUser.displayName}</div>
@@ -1504,7 +1505,7 @@ function UploadPageInner() {
                           <button key={u.id} onClick={() => { setHeroUser(u); setHeroInput(""); setHeroResults([]); }}
                             style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textAlign: "left" }}>
                             <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                              {u.avatarUrl ? <img src={cdnImage(u.avatarUrl)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
                             </div>
                             <div>
                               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff" }}>{u.displayName}</div>

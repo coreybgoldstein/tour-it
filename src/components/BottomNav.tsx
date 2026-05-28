@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
+import { cdnImage } from "@/lib/cdnImage";
 
 export default function BottomNav() {
   const router = useRouter();
@@ -129,7 +130,7 @@ export default function BottomNav() {
         <div style={{ position: "relative", width: isDesktop ? 28 : 24, height: isDesktop ? 28 : 24 }}>
           <div style={{ width: "100%", height: "100%", borderRadius: "50%", overflow: "hidden", border: `1.8px solid ${active ? "#4da862" : "rgba(255,255,255,0.85)"}`, background: "rgba(77,168,98,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             {avatarUrl
-              ? <img src={avatarUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ? <img src={cdnImage(avatarUrl)} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             }
           </div>

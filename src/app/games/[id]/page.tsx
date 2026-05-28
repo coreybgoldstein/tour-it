@@ -20,6 +20,7 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { gameFormatLabel } from "@/lib/gameFormats";
+import { cdnImage } from "@/lib/cdnImage";
 
 type GameRow = {
   id: string;
@@ -199,7 +200,7 @@ export default function GamePage() {
                 <div key={p.userId} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {p.avatarUrl
-                      ? <img src={p.avatarUrl} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ? <img src={cdnImage(p.avatarUrl)} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
                   </div>
                   <div style={{ flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff" }}>{p.displayName}</div>

@@ -22,6 +22,7 @@ import { sendPushToUser } from "@/lib/sendPush";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { activeFeaturedTournament } from "@/lib/pgaChampionship";
+import { cdnImage } from "@/lib/cdnImage";
 type Course = {
   id: string;
   name: string;
@@ -359,7 +360,7 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
             <button onClick={() => router.push(`/profile/${clip.userId}`)} aria-label={`Open ${uploader?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
               <div className={isLegend(uploader?.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploader?.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {uploader?.avatarUrl
-                  ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={cdnImage(uploader.avatarUrl)} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
               </div>
             </button>
@@ -1135,7 +1136,7 @@ const [editDescription, setEditDescription] = useState("");
           tight to the bottom so it sits closer to the hole-grid below. */}
       <div style={{ position: "relative", width: "100%", minHeight: 200, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
         {course.coverImageUrl ? (
-          <img src={course.coverImageUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={cdnImage(course.coverImageUrl)} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : courseClips.find(c => c.mediaType === "PHOTO") ? (
           <img src={courseClips.find(c => c.mediaType === "PHOTO")!.mediaUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
@@ -1207,7 +1208,7 @@ const [editDescription, setEditDescription] = useState("");
         >
           {course.logoUrl ? (
             <img
-              src={course.logoUrl}
+              src={cdnImage(course.logoUrl)}
               alt={course.name}
               style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }}
               onError={e => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }}
@@ -1223,7 +1224,7 @@ const [editDescription, setEditDescription] = useState("");
             style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <img
-              src={course.logoUrl}
+              src={cdnImage(course.logoUrl)}
               alt={course.name}
               onClick={e => e.stopPropagation()}
               style={{ maxWidth: "80vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 16, backgroundColor: "#fff", padding: 16, boxShadow: "0 8px 48px rgba(0,0,0,0.6)" }}
@@ -1606,7 +1607,7 @@ const [editDescription, setEditDescription] = useState("");
                             </>
                           ) : holeData?.imageUrl ? (
                             <>
-                              <img src={holeData.imageUrl} alt={`Hole ${holeNum}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                              <img src={cdnImage(holeData.imageUrl)} alt={`Hole ${holeNum}`} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.55) 0%, rgba(7,16,10,0.35) 40%, rgba(7,16,10,0.7) 100%)" }} />
                             </>
                           ) : null}
@@ -2263,7 +2264,7 @@ const [editDescription, setEditDescription] = useState("");
                       {coverPreview ? (
                         <img src={coverPreview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : course.coverImageUrl ? (
-                        <img src={course.coverImageUrl} alt="current" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5 }} />
+                        <img src={cdnImage(course.coverImageUrl)} alt="current" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5 }} />
                       ) : (
                         <div style={{ textAlign: "center" }}>
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 6 }}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -2296,7 +2297,7 @@ const [editDescription, setEditDescription] = useState("");
                       {logoPreview ? (
                         <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} />
                       ) : course.logoUrl ? (
-                        <img src={course.logoUrl} alt="current logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, opacity: 0.5 }} />
+                        <img src={cdnImage(course.logoUrl)} alt="current logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, opacity: 0.5 }} />
                       ) : (
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                       )}
@@ -2448,13 +2449,13 @@ const [editDescription, setEditDescription] = useState("");
                     <button key={c.id} onClick={() => { setFeedOpen(false); router.push(`/courses/${c.id}`); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, overflow: "hidden", cursor: "pointer", textAlign: "left", padding: 0 }}>
                       <div style={{ width: "100%", height: 90, background: "#0d2318", position: "relative", overflow: "hidden" }}>
                         {c.coverImageUrl
-                          ? <img src={c.coverImageUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ? <img src={cdnImage(c.coverImageUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : <div style={{ width: "100%", height: "100%", background: "linear-gradient(160deg, #1a4d22 0%, #0d2e14 100%)" }} />
                         }
                         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)" }} />
                         {c.logoUrl && (
                           <div style={{ position: "absolute", top: 7, right: 7, width: 28, height: 18, borderRadius: 5, overflow: "hidden" }}>
-                            <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
+                            <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                           </div>
                         )}
                       </div>
@@ -2581,7 +2582,7 @@ const [editDescription, setEditDescription] = useState("");
                 <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
                   <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: getRankRingBorder(c.rank), overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {c.avatarUrl
-                      ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                      ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
                       : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     }
                   </div>
@@ -2600,7 +2601,7 @@ const [editDescription, setEditDescription] = useState("");
                     <button key={u.id} onMouseDown={e => { e.preventDefault(); selectMention(u.username); }}
                       style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "9px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                       <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.15)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
+                        {u.avatarUrl ? <img src={cdnImage(u.avatarUrl)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0].toUpperCase()}</span>}
                       </div>
                       <div style={{ textAlign: "left" }}>
                         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>{u.displayName}</div>

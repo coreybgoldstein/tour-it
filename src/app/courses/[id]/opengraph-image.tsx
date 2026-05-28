@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { createClient } from "@supabase/supabase-js";
 import { CANONICAL_HOST } from "@/lib/seo";
+import { cdnImage } from "@/lib/cdnImage";
 
 /**
  * Dynamic Open Graph image for course pages.
@@ -314,7 +315,7 @@ export default async function OG({ params }: { params: Promise<{ id: string }> }
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={logoUrl}
+              src={cdnImage(logoUrl)}
               alt=""
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />

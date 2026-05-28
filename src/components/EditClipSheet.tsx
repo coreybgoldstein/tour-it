@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { cdnImage } from "@/lib/cdnImage";
 
 type TagUser = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
 
@@ -309,7 +310,7 @@ export default function EditClipSheet({
                     <button key={u.id} onClick={() => { setEditData(d => d ? { ...d, taggedUsers: [...d.taggedUsers, u] } : d); setTagInput(""); setTagResults([]); }}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
                       <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(26,158,66,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
+                        {u.avatarUrl ? <img src={cdnImage(u.avatarUrl)} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
                       </div>
                       <div>
                         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>@{u.username}</div>

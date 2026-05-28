@@ -20,6 +20,7 @@ import ProgressionTracker from "@/components/ProgressionTracker";
 import { SheetPortal } from "@/components/SheetPortal";
 import { rateLimit } from "@/lib/rateLimit";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
+import { cdnImage } from "@/lib/cdnImage";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -236,7 +237,7 @@ const ProfileFeedCard = memo(function ProfileFeedCardImpl({
               <div style={{ position: "relative", width: 28, height: 28, flexShrink: 0 }}>
                 <div className={isLegend(uploaderInfo.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(uploaderInfo.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {uploaderInfo.avatarUrl
-                    ? <img src={uploaderInfo.avatarUrl} alt={uploaderInfo.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ? <img src={cdnImage(uploaderInfo.avatarUrl)} alt={uploaderInfo.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                 </div>
                 {clip.isTagged && (
@@ -367,7 +368,7 @@ function UpcomingTripCard({ trip, onClick }: { trip: ProfileTrip; onClick: () =>
     >
       <div style={{ width: 44, height: 44, borderRadius: 10, background: trip.imageUrl || trip.firstCourseLogo ? "transparent" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {trip.imageUrl
-          ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ? <img src={cdnImage(trip.imageUrl)} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : trip.firstCourseLogo
             ? <img src={trip.firstCourseLogo} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
             : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
@@ -1317,7 +1318,7 @@ export default function ProfilePage() {
                     editData.heroUser ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 10, padding: "8px 12px" }}>
                         <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          {editData.heroUser.avatarUrl ? <img src={editData.heroUser.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={editData.heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{editData.heroUser.username[0].toUpperCase()}</span>}
+                          {editData.heroUser.avatarUrl ? <img src={cdnImage(editData.heroUser.avatarUrl)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={editData.heroUser.username} /> : <span style={{ fontSize: 11, color: "#4da862", fontWeight: 700 }}>{editData.heroUser.username[0].toUpperCase()}</span>}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{editData.heroUser.username}</div>
@@ -1342,7 +1343,7 @@ export default function ProfilePage() {
                               <button key={u.id} onClick={() => { setEditData(d => d ? { ...d, heroUser: u } : d); setEditHeroInput(""); setEditHeroResults([]); }}
                                 style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
                                 <div style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.15)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 10, color: "#4da862", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
+                                  {u.avatarUrl ? <img src={cdnImage(u.avatarUrl)} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 10, color: "#4da862", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
                                 </div>
                                 <div>
                                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>@{u.username}</div>
@@ -1412,7 +1413,7 @@ export default function ProfilePage() {
       {/* Avatar lightbox */}
       {showAvatarModal && profile.avatarUrl && (
         <div onClick={() => setShowAvatarModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 300, gap: 20 }}>
-          <img src={profile.avatarUrl} alt="avatar" style={{ width: 240, height: 240, borderRadius: "50%", objectFit: "cover", outline: `3px solid ${getRankColor(profileRank)}` }} onClick={e => e.stopPropagation()} />
+          <img src={cdnImage(profile.avatarUrl)} alt="avatar" style={{ width: 240, height: 240, borderRadius: "50%", objectFit: "cover", outline: `3px solid ${getRankColor(profileRank)}` }} onClick={e => e.stopPropagation()} />
           {isOwner && (
             <>
               {/* Same label/input pattern as the edit sheet — native
@@ -1490,7 +1491,7 @@ export default function ProfilePage() {
             <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px 0", minHeight: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14 }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "#1a3320", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>
-                {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+                {profile.avatarUrl ? <img src={cdnImage(profile.avatarUrl)} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#1a9e42" }}>@{profile.username}</div>
@@ -1835,7 +1836,7 @@ export default function ProfilePage() {
             onClick={() => setShowAvatarModal(true)}
             style={{ width: 72, height: 72, borderRadius: "50%", background: profile.avatarUrl ? "transparent" : "#1a3320", border: "3px solid #07100a", outline: `2.5px solid ${getRankColor(profileRank)}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", fontWeight: 600, color: "rgba(255,255,255,0.6)", overflow: "hidden", cursor: "pointer" }}
           >
-            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 11 }}>…</span> : initials)}
+            {profile.avatarUrl ? <img src={cdnImage(profile.avatarUrl)} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (uploadingAvatar ? <span style={{ fontSize: 11 }}>…</span> : initials)}
           </div>
           {/* @username nameplate — rank-colored pill that doubles as the
               level indicator. Dark text reads cleanly on every rank color
@@ -2019,7 +2020,7 @@ export default function ProfilePage() {
                   <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, cursor: "pointer", textAlign: "left" }}>
                     <div style={{ width: 40, height: 40, borderRadius: 10, background: s.course.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                       {s.course.logoUrl ? (
-                        <img src={s.course.logoUrl} alt={s.course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img src={cdnImage(s.course.logoUrl)} alt={s.course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>
                           {s.course.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}
@@ -2163,7 +2164,7 @@ export default function ProfilePage() {
                 : commentItems.map(c => (
                   <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
                     <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: getRankRingBorder(c.rank), overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {c.avatarUrl ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                      {c.avatarUrl ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                     </div>
                     <div>
                       <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
@@ -2179,7 +2180,7 @@ export default function ProfilePage() {
                     <button key={u.id} onMouseDown={e => { e.preventDefault(); selectMention(u.username); }}
                       style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "9px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                       <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.15)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        {u.avatarUrl ? <img src={u.avatarUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
+                        {u.avatarUrl ? <img src={cdnImage(u.avatarUrl)} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={u.username} /> : <span style={{ fontSize: 10, color: "#1a9e42", fontWeight: 700 }}>{u.username[0]?.toUpperCase()}</span>}
                       </div>
                       <div style={{ textAlign: "left" }}>
                         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>{u.displayName}</div>
@@ -2266,7 +2267,7 @@ export default function ProfilePage() {
                 <button key={u.id} onClick={() => { setFollowSheet(null); router.push(`/profile/${u.id}`); }}
                   style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}>
                   <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(26,158,66,0.15)", border: "1px solid rgba(26,158,66,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {u.avatarUrl ? <img src={u.avatarUrl} alt={u.username || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /> : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#1a9e42" }}>{(u.displayName || u.username || "?")[0].toUpperCase()}</span>}
+                    {u.avatarUrl ? <img src={cdnImage(u.avatarUrl)} alt={u.username || ""} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} /> : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#1a9e42" }}>{(u.displayName || u.username || "?")[0].toUpperCase()}</span>}
                   </div>
                   <div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>{u.displayName}</div>

@@ -21,6 +21,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
 import { activeFeaturedTournament, type FeaturedTournament } from "@/lib/pgaChampionship";
+import { cdnImage } from "@/lib/cdnImage";
 
 type TrendingCourse = {
   id: string;
@@ -223,14 +224,14 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
       }}
     >
       {course.coverImageUrl && (
-        <img src={course.coverImageUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={cdnImage(course.coverImageUrl)} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
       <div style={{ position: "absolute", inset: 0, background: course.coverImageUrl ? "linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.12) 35%, rgba(0,0,0,0.82) 65%, rgba(0,0,0,0.96) 100%)" : "linear-gradient(145deg, rgba(13,35,22,1) 0%, rgba(7,16,10,1) 100%)" }} />
 
       {!course.coverImageUrl && (
         <div style={{ position: "absolute", top: "32%", left: "50%", transform: "translate(-50%, -50%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {course.logoUrl ? (
-            <img src={course.logoUrl} alt={course.name} style={{ width: 68, height: 42, objectFit: "cover", objectPosition: "center", borderRadius: 8, backgroundColor: "#fff" }} />
+            <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: 68, height: 42, objectFit: "cover", objectPosition: "center", borderRadius: 8, backgroundColor: "#fff" }} />
           ) : (
             <div style={{ width: 46, height: 46, borderRadius: 10, background: "rgba(26,158,66,0.12)", border: "1px solid rgba(26,158,66,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(26,158,66,0.6)" }}>{abbr}</div>
           )}
@@ -248,7 +249,7 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
           badge so they coexist. */}
       {course.coverImageUrl && course.logoUrl && (
         <div style={{ position: "absolute", top: 6, left: 6, width: 28, height: 28, borderRadius: 7, background: "#fff", border: "1.5px solid rgba(255,255,255,0.18)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
-          <img src={course.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={cdnImage(course.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
       )}
 
@@ -636,7 +637,7 @@ const SeriesCard = memo(function SeriesCardImpl({
             <button onClick={onTapUser} aria-label={`Open ${item.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
               <div className={isLegend(item.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(item.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {item.avatarUrl
-                  ? <img src={item.avatarUrl} alt={item.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={cdnImage(item.avatarUrl)} alt={item.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
               </div>
             </button>
@@ -829,7 +830,7 @@ const VideoCard = memo(function VideoCardImpl({
             <button onClick={onTapUser} aria-label={`Open ${clip.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
               <div className={isLegend(clip.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", overflow: "hidden", border: getRankRingBorder(clip.rank), background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {clip.avatarUrl
-                  ? <img src={clip.avatarUrl} alt={clip.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={cdnImage(clip.avatarUrl)} alt={clip.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
               </div>
             </button>
@@ -2360,7 +2361,7 @@ export default function Home() {
               ) : commentItems.map(c => (
                 <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
                   <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: getRankRingBorder(c.rank), overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {c.avatarUrl ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                    {c.avatarUrl ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
                   </div>
                   <div style={{ flex: 1 }}>
                     <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>

@@ -12,6 +12,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BEST_FOR_TAGS } from "@/lib/tripEnrichment";
+import { cdnImage } from "@/lib/cdnImage";
 
 type Recommendation = {
   slug: string;
@@ -371,7 +372,7 @@ export default function TripPlannerSheet({ open, onClose }: { open: boolean; onC
                     {r.heroImageUrl && (
                       <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", overflow: "hidden" }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={r.heroImageUrl} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img src={cdnImage(r.heroImageUrl)} alt={r.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0) 50%, rgba(7,16,10,0.7) 100%)" }} />
                         <div style={{ position: "absolute", left: 12, top: 12, display: "flex", gap: 6 }}>
                           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", color: "#fff", padding: "3px 9px", borderRadius: 99, background: "rgba(45,122,66,0.95)", border: "1px solid rgba(77,168,98,0.7)" }}>

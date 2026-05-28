@@ -21,6 +21,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { cdnImage } from "@/lib/cdnImage";
 
 type Liker = {
   userId: string;
@@ -152,7 +153,7 @@ export default function LikesSheet({ open, uploadId, onClose }: LikesSheetProps)
                 >
                   <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {liker.avatarUrl
-                      ? <img src={liker.avatarUrl} alt={liker.displayName ?? liker.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ? <img src={cdnImage(liker.avatarUrl)} alt={liker.displayName ?? liker.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>

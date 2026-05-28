@@ -29,6 +29,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SwipeGrip } from "@/components/SwipeGrip";
 import { createClient } from "@/lib/supabase/client";
+import { cdnImage } from "@/lib/cdnImage";
 
 type CourseSearchRow = {
   id: string;
@@ -599,7 +600,7 @@ export default function CreateGameSheet({
                         >
                           <div style={resultIconStyle(c.logoUrl)}>
                             {c.logoUrl
-                              ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ? <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
                           </div>
                           <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
@@ -668,7 +669,7 @@ export default function CreateGameSheet({
                 <div key={p.userId} style={playerRowStyle}>
                   <div style={avatarStyle(p.avatarUrl)}>
                     {p.avatarUrl
-                      ? <img src={p.avatarUrl} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ? <img src={cdnImage(p.avatarUrl)} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -765,7 +766,7 @@ export default function CreateGameSheet({
                     >
                       <div style={avatarStyle(f.avatarUrl)}>
                         {f.avatarUrl
-                          ? <img src={f.avatarUrl} alt={f.displayName ?? f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ? <img src={cdnImage(f.avatarUrl)} alt={f.displayName ?? f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
                       </div>
                       <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
@@ -976,7 +977,7 @@ function SelectedCoursePill({ course, onClear }: { course: CourseSearchRow; onCl
     <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 12, padding: "10px 12px" }}>
       <div style={resultIconStyle(course.logoUrl)}>
         {course.logoUrl
-          ? <img src={course.logoUrl} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>

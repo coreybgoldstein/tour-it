@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { CropModal } from "@/components/CropModal";
+import { cdnImage } from "@/lib/cdnImage";
 
 const TEE_COLORS = ["BLACK", "BLUE", "WHITE", "GOLD", "RED", "GREEN"] as const;
 type TeeColor = typeof TEE_COLORS[number];
@@ -413,7 +414,7 @@ export default function AdminCourseEditPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <div style={{ width: 90, height: 90, borderRadius: 14, overflow: "hidden", background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {logoUrl
-                  ? <img src={logoUrl} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={cdnImage(logoUrl)} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>No logo</span>
                 }
               </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { cdnImage } from "@/lib/cdnImage";
 
 type Trip = {
   id: string;
@@ -86,7 +87,7 @@ export default function TripsPage() {
             >
               <div style={{ width: 52, height: 52, borderRadius: 12, background: trip.imageUrl ? "transparent" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {trip.imageUrl
-                  ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={cdnImage(trip.imageUrl)} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 }
               </div>

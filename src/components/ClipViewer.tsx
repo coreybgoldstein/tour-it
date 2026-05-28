@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLike } from "@/hooks/useLike";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
+import { cdnImage } from "@/lib/cdnImage";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -302,7 +303,7 @@ export default function ClipViewer({
           <button className="cv-action-btn" onClick={() => uploader && router.push(`/profile/${uploader.id}`)}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(255,255,255,0.55)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {uploader?.avatarUrl
-                ? <img src={uploader.avatarUrl} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ? <img src={cdnImage(uploader.avatarUrl)} alt={uploader.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               }
             </div>
@@ -441,7 +442,7 @@ export default function ClipViewer({
                   <div key={c.id} style={{ display: "flex", gap: 10 }}>
                     <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {c.avatarUrl
-                        ? <img src={c.avatarUrl} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(77,168,98,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                       }
                     </div>

@@ -9,6 +9,7 @@ import CreateGameSheet from "@/components/CreateGameSheet";
 import Toast, { type ToastState } from "@/components/Toast";
 import { sendPushToUser } from "@/lib/sendPush";
 import { gameFormatLabel } from "@/lib/gameFormats";
+import { cdnImage } from "@/lib/cdnImage";
 
 type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
 type FriendRow = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
@@ -938,7 +939,7 @@ export default function TeeUpPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(77,168,98,0.10)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 12 }}>
                   <div style={{ width: 36, height: 36, borderRadius: 8, background: quickCourse.logoUrl ? "#fff" : "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {quickCourse.logoUrl
-                      ? <img src={quickCourse.logoUrl} alt={quickCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ? <img src={cdnImage(quickCourse.logoUrl)} alt={quickCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862" }}>{quickCourse.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}</span>
                     }
                   </div>
@@ -969,7 +970,7 @@ export default function TeeUpPage() {
                         <button key={c.id} onClick={() => { setQuickCourse(c); setQuickSearch(""); setQuickResults([]); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", textAlign: "left" }}>
                           <div style={{ width: 30, height: 30, borderRadius: 7, background: c.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.18)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             {c.logoUrl
-                              ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ? <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#4da862" }}>{c.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}</span>
                             }
                           </div>
@@ -1010,7 +1011,7 @@ export default function TeeUpPage() {
                     <button key={f.id} onClick={() => setInvitedFriends(prev => prev.filter(x => x.id !== f.id))} style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 99, padding: "4px 9px 4px 4px", cursor: "pointer" }}>
                       <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.3)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         {f.avatarUrl
-                          ? <img src={f.avatarUrl} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ? <img src={cdnImage(f.avatarUrl)} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         }
                       </div>
@@ -1040,7 +1041,7 @@ export default function TeeUpPage() {
                     <button key={f.id} onClick={() => { setInvitedFriends(prev => [...prev, f]); setFriendSearch(""); setFriendResults([]); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", textAlign: "left" }}>
                       <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.3)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {f.avatarUrl
-                          ? <img src={f.avatarUrl} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ? <img src={cdnImage(f.avatarUrl)} alt={f.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         }
                       </div>
@@ -1289,7 +1290,7 @@ function GameCard({
             {players.slice(0, 5).map((p, i) => (
               <div key={p.userId} style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "2px solid #0d2318", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -7 : 0, zIndex: players.length - i, flexShrink: 0 }}>
                 {p.avatarUrl
-                  ? <img src={p.avatarUrl} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={cdnImage(p.avatarUrl)} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
               </div>
             ))}
@@ -1402,7 +1403,7 @@ function TripCard({ trip, onClick }: { trip: TripRow; onClick: () => void }) {
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ width: 44, height: 44, borderRadius: 11, background: trip.imageUrl || trip.firstCourseLogo ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {trip.imageUrl
-            ? <img src={trip.imageUrl} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ? <img src={cdnImage(trip.imageUrl)} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : trip.firstCourseLogo
               ? <img src={trip.firstCourseLogo} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
@@ -1431,7 +1432,7 @@ function TripCard({ trip, onClick }: { trip: TripRow; onClick: () => void }) {
             {members.slice(0, 5).map((m, i) => (
               <div key={m.userId} style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: "2px solid #0d2318", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -7 : 0, zIndex: members.length - i, flexShrink: 0 }}>
                 {m.avatarUrl
-                  ? <img src={m.avatarUrl} alt={m.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ? <img src={cdnImage(m.avatarUrl)} alt={m.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
               </div>
             ))}

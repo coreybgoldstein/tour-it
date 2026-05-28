@@ -5,6 +5,7 @@ import { createClient as createServerSb } from "@/lib/supabase/server";
 import { createClient as createAdminSb } from "@supabase/supabase-js";
 import ActionZone from "./ActionZone";
 import { getEnrichment, BEST_FOR_TAGS } from "@/lib/tripEnrichment";
+import { cdnImage } from "@/lib/cdnImage";
 
 type Course = {
   id: string;
@@ -322,7 +323,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
             <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               {it.submittedBy.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={it.submittedBy.avatarUrl} alt={it.submittedBy.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <img src={cdnImage(it.submittedBy.avatarUrl)} alt={it.submittedBy.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               )}
@@ -477,7 +478,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
                     }}>
                       {s.course?.logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={s.course.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img src={cdnImage(s.course.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2">
                           <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
