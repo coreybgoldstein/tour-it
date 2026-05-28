@@ -42,6 +42,8 @@ type Itinerary = {
   latitude: number;
   longitude: number;
   region: string;
+  sourceGolfTripId: string | null;
+  submittedBy: { username: string; displayName: string; avatarUrl: string | null } | null;
   stops: Stop[];
 };
 
@@ -70,10 +72,22 @@ async function fetchItinerary(slug: string): Promise<Itinerary | null> {
 
   const { data: it, error: itErr } = await sb
     .from("TripItinerary")
-    .select("id, slug, name, tagline, whyThisTrip, heroImageUrl, vibeTag, costBand, bestSeasonStart, bestSeasonEnd, durationDays, stayRec, latitude, longitude, region")
+    .select("id, slug, name, tagline, whyThisTrip, heroImageUrl, vibeTag, costBand, bestSeasonStart, bestSeasonEnd, durationDays, stayRec, latitude, longitude, region, sourceGolfTripId, submittedByUserId")
     .eq("slug", slug)
     .single();
   if (itErr || !it) return null;
+
+  // Hydrate the submitting user when this itinerary was user-converted
+  // from a private GolfTrip (the "Submitted by @x" credit chip).
+  let submittedBy: Itinerary["submittedBy"] = null;
+  if ((it as any).submittedByUserId) {
+    const { data: u } = await sb
+      .from("User")
+      .select("username, displayName, avatarUrl")
+      .eq("id", (it as any).submittedByUserId)
+      .maybeSingle();
+    if (u) submittedBy = u as Itinerary["submittedBy"];
+  }
 
   const { data: stops, error: stopsErr } = await sb
     .from("TripItineraryStop")
@@ -93,7 +107,8 @@ async function fetchItinerary(slug: string): Promise<Itinerary | null> {
   (courses ?? []).forEach((c) => (courseById[c.id] = c as Course));
 
   return {
-    ...(it as Omit<Itinerary, "stops">),
+    ...(it as Omit<Itinerary, "stops" | "submittedBy">),
+    submittedBy,
     stops: (stops ?? []).map((s: any) => ({
       id: s.id,
       day: s.day,
@@ -300,6 +315,26 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
 
       {/* ── BODY ──────────────────────────────────────────────────────────── */}
       <div style={{ padding: it.heroImageUrl ? "28px 16px 16px" : "10px 16px 16px", display: "flex", flexDirection: "column", gap: 22 }}>
+
+        {/* Submitted-by credit — only on user-converted itineraries. */}
+        {it.submittedBy && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.28)", borderRadius: 14 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              {it.submittedBy.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={it.submittedBy.avatarUrl} alt={it.submittedBy.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              )}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>Submitted by a Tour It member</div>
+              <Link href={`/profile/${it.submittedBy.username}`} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", textDecoration: "none" }}>
+                @{it.submittedBy.username}
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Why This Trip */}
         <section style={card}>

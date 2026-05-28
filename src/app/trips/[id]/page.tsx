@@ -238,8 +238,16 @@ export default function TripPage() {
   const [welcomeStart, setWelcomeStart] = useState("");
   const [welcomeEnd, setWelcomeEnd] = useState("");
   const [welcomeSaving, setWelcomeSaving] = useState(false);
+  // Publicize-confirmation sheet — opens when ?publicize=1 (from the
+  // day-after notification deep-link) OR when the user taps the
+  // publicize CTA in the trip header (set elsewhere).
+  const [publicizeOpen, setPublicizeOpen] = useState(searchParams.get("publicize") === "1");
+  const [publicizeTagline, setPublicizeTagline] = useState("");
+  const [publicizing, setPublicizing] = useState(false);
+  const [publicizeError, setPublicizeError] = useState<string | null>(null);
   useEffect(() => {
-    if (searchParams.get("welcome") === "1" && typeof window !== "undefined") {
+    const params = new URLSearchParams(searchParams.toString());
+    if ((params.get("welcome") === "1" || params.get("publicize") === "1") && typeof window !== "undefined") {
       window.history.replaceState({}, "", window.location.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1995,6 +2003,36 @@ export default function TripPage() {
             canEdit={!!user && (isOwner || members.some((m) => m.userId === user.id))}
           />
         )}
+
+        {/* Make-public CTA — visible only to creators of trips that
+            have actually ended and aren't yet public. Mirrors the
+            day-after notification's deep-link so creators can also
+            initiate publication from inside the trip. */}
+        {!isRound && trip && isOwner && !trip.isPublic && trip.endDate && trip.endDate < new Date().toISOString().slice(0, 10) && (
+          <div style={{ marginTop: 22, padding: 16, background: "linear-gradient(135deg, rgba(45,122,66,0.18) 0%, rgba(77,168,98,0.08) 100%)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 14 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(77,168,98,0.8)", marginBottom: 4 }}>Now that the trip's done</div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 800, color: "#fff", lineHeight: 1.2, marginBottom: 4 }}>Want other golfers to find this?</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1.5, marginBottom: 12 }}>
+              We&apos;ll create a public itinerary from the broad shape of this trip — courses, airport, lodging — so future golfers can plan around it. Dates, members, and chat stay private.
+            </div>
+            <button
+              onClick={() => setPublicizeOpen(true)}
+              style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)", color: "#fff", border: "1px solid rgba(77,168,98,0.6)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(45,122,66,0.3)" }}
+            >
+              Publish this trip
+            </button>
+          </div>
+        )}
+
+        {/* "Now public" indicator if it's already been published. */}
+        {!isRound && trip?.isPublic && (
+          <div style={{ marginTop: 22, padding: 14, background: "rgba(77,168,98,0.06)", border: "1px dashed rgba(77,168,98,0.3)", borderRadius: 12, display: "flex", alignItems: "center", gap: 10 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.7)" }}>
+              This trip is public — other golfers can find it in /search.
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Post-creation welcome sheet — fires when ?welcome=1 was on
@@ -2080,6 +2118,80 @@ export default function TripPage() {
                 Skip for now
               </button>
             </div>
+          </div>
+        </>
+      )}
+
+      {/* Publicize confirmation sheet — opens when the user taps the
+          "Publish this trip" CTA OR lands from ?publicize=1 (the
+          day-after notification deep-link). Lets them tweak the
+          tagline before we mint the TripItinerary. */}
+      {publicizeOpen && trip && isOwner && !trip.isPublic && (
+        <>
+          <div onClick={() => !publicizing && setPublicizeOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", zIndex: 200 }} />
+          <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 201, background: "#0d2318", borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: "16px 22px calc(28px + env(safe-area-inset-bottom))", borderTop: "1px solid rgba(77,168,98,0.3)" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 16px" }} />
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", marginBottom: 3 }}>Publish trip</div>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.1 }}>Share {trip.name}?</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginTop: 6 }}>
+                Other golfers will find this in the Trips search with you credited as the author. Specific dates, members, and chat stay private.
+              </div>
+            </div>
+
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>
+              Tagline <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional — describe the trip in one line)</span>
+            </div>
+            <input
+              value={publicizeTagline}
+              onChange={(e) => setPublicizeTagline(e.target.value)}
+              placeholder={trip.description || "e.g. Four buddies, four rounds, lobster rolls between"}
+              style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
+            />
+
+            {publicizeError && (
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "#ff7575", marginTop: 12, padding: "8px 12px", background: "rgba(255,90,90,0.06)", border: "1px solid rgba(255,90,90,0.22)", borderRadius: 8 }}>{publicizeError}</div>
+            )}
+
+            <button
+              onClick={async () => {
+                setPublicizing(true);
+                setPublicizeError(null);
+                try {
+                  const supabase = createClient();
+                  const { data: { session } } = await supabase.auth.getSession();
+                  if (!session) throw new Error("Sign in to publish.");
+                  const res = await fetch(`/api/trips/${trip.id}/publicize`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+                    body: JSON.stringify({ tagline: publicizeTagline.trim() || undefined }),
+                  });
+                  if (!res.ok) {
+                    const j = await res.json().catch(() => ({}));
+                    throw new Error(j?.error ?? `Publish failed (${res.status})`);
+                  }
+                  const { slug } = await res.json();
+                  setTrip((t) => (t ? { ...t, isPublic: true } : t));
+                  setPublicizeOpen(false);
+                  router.push(`/trip-ideas/${slug}`);
+                } catch (e: any) {
+                  setPublicizeError(e?.message ?? "Couldn't publish the trip.");
+                } finally {
+                  setPublicizing(false);
+                }
+              }}
+              disabled={publicizing}
+              style={{ width: "100%", padding: "13px", marginTop: 16, background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)", color: "#fff", border: "none", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, cursor: publicizing ? "wait" : "pointer", boxShadow: "0 4px 16px rgba(45,122,66,0.35)", opacity: publicizing ? 0.7 : 1 }}
+            >
+              {publicizing ? "Publishing…" : "Publish trip"}
+            </button>
+            <button
+              onClick={() => setPublicizeOpen(false)}
+              disabled={publicizing}
+              style={{ width: "100%", padding: "11px", marginTop: 8, background: "transparent", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
+            >
+              Not yet
+            </button>
           </div>
         </>
       )}
