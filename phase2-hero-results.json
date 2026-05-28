@@ -1,8 +1,74 @@
 [
   {
-    "slug": "texas-stretch",
-    "page": "(--url override)",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-texas-stretch.jpg",
+    "slug": "vegas-strip-stretch",
+    "page": "Las Vegas Strip",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-vegas-strip-stretch.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "palm-springs-warmup",
+    "page": "La Quinta, California",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-palm-springs-warmup.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "park-city-altitude",
+    "page": "Park City, Utah",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-park-city-altitude.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "big-cedar-ozarks",
+    "page": "Branson, Missouri",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-big-cedar-ozarks.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "hilton-head-lowcountry",
+    "page": "Harbour Town Golf Links",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-hilton-head-lowcountry.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "big-island-golf",
+    "page": "Hawaii (island)",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-big-island-golf.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "maui-trade-winds",
+    "page": "Kapalua, Hawaii",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-maui-trade-winds.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "central-oregon-bend",
+    "page": "Bend, Oregon",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-central-oregon-bend.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "cape-cod-loop",
+    "page": "Cape Cod",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-cape-cod-loop.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "rtj-alabama-trail",
+    "page": "Robert Trent Jones Golf Trail",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-rtj-alabama-trail.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "greenbrier-stretch",
+    "page": "The Greenbrier",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-greenbrier-stretch.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "san-diego-coastal",
+    "page": "Torrey Pines Golf Course",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-san-diego-coastal.jpg",
     "status": "ok"
   }
 ]

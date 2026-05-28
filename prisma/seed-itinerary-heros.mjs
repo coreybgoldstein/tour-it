@@ -46,6 +46,20 @@ const HERO_PAGES = {
   "chicago-publics":              ["Cog Hill Golf & Country Club"],
   "coastal-carolina-public":      ["Kiawah Island Golf Resort"],
   "texas-stretch":                ["PGA Frisco", "Fields Ranch", "2027 PGA Championship", "2024 KitchenAid Senior PGA Championship", "Frisco, Texas"],
+
+  // Catalog expansion (2026-05)
+  "big-cedar-ozarks":             ["Big Cedar Lodge", "Payne's Valley Golf Course", "Branson, Missouri", "Ozarks"],
+  "hilton-head-lowcountry":       ["Harbour Town Golf Links", "Hilton Head Island, South Carolina", "Sea Pines Resort"],
+  "vegas-strip-stretch":          ["Las Vegas Strip", "Wynn Las Vegas", "Las Vegas"],
+  "palm-springs-warmup":          ["PGA West", "La Quinta, California", "Palm Springs, California", "Coachella Valley"],
+  "park-city-altitude":           ["Park City, Utah", "Soldier Hollow", "Wasatch Mountains"],
+  "big-island-golf":              ["Mauna Kea Golf Course", "Kohala Coast", "Hawaii (island)"],
+  "maui-trade-winds":             ["Kapalua, Hawaii", "The Plantation Course at Kapalua", "Maui"],
+  "central-oregon-bend":          ["Bend, Oregon", "Mount Bachelor", "Deschutes River"],
+  "cape-cod-loop":                ["Cape Cod", "Chatham, Massachusetts", "Brewster, Massachusetts"],
+  "rtj-alabama-trail":            ["Robert Trent Jones Golf Trail", "Ross Bridge Golf Resort", "Auburn, Alabama"],
+  "greenbrier-stretch":           ["The Greenbrier", "Old White TPC", "White Sulphur Springs, West Virginia"],
+  "san-diego-coastal":            ["Torrey Pines Golf Course", "La Jolla, San Diego", "San Diego"],
 };
 
 const UA = "TourItGolf/1.0 (https://touritgolf.com; coreybgoldstein@gmail.com)";
