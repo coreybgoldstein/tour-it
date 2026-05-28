@@ -20,6 +20,12 @@ type Trip = {
   endDate: string | null;
   createdBy: string;
   imageUrl: string | null;
+  // Logistics — surfaced on the trip header; collected at creation
+  // and editable later. Used for public-conversion content.
+  arrivalAirport?: string | null;
+  lodging?: string | null;
+  isPublic?: boolean;
+  publicizedAt?: string | null;
   ryderCupEnabled?: boolean;
   redTeamName?: string | null;
   blueTeamName?: string | null;
@@ -275,6 +281,8 @@ export default function TripPage() {
   const [editDesc, setEditDesc] = useState("");
   const [editStart, setEditStart] = useState("");
   const [editEnd, setEditEnd] = useState("");
+  const [editAirport, setEditAirport] = useState("");
+  const [editLodging, setEditLodging] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Delete trip
@@ -705,8 +713,16 @@ export default function TripPage() {
   const saveEdit = async () => {
     if (!editName.trim() || saving) return;
     setSaving(true);
-    await createClient().from("GolfTrip").update({ name: editName.trim(), description: editDesc.trim() || null, startDate: editStart || null, endDate: editEnd || null }).eq("id", id as string);
-    setTrip(prev => prev ? { ...prev, name: editName.trim(), description: editDesc.trim() || null, startDate: editStart || null, endDate: editEnd || null } : prev);
+    const updates = {
+      name: editName.trim(),
+      description: editDesc.trim() || null,
+      startDate: editStart || null,
+      endDate: editEnd || null,
+      arrivalAirport: editAirport.trim() || null,
+      lodging: editLodging.trim() || null,
+    };
+    await createClient().from("GolfTrip").update(updates).eq("id", id as string);
+    setTrip(prev => prev ? { ...prev, ...updates } : prev);
     setSaving(false);
     setEditOpen(false);
   };
@@ -1195,7 +1211,7 @@ export default function TripPage() {
               {/* Edit pill — top-right */}
               {isOwner && (
                 <button
-                  onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
+                  onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditOpen(true); }}
                   aria-label="Edit round"
                   style={{ position: "absolute", top: 14, right: 14, display: "flex", alignItems: "center", gap: 4, background: "rgba(7,16,10,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "6px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.95)", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
                 >
@@ -1282,7 +1298,7 @@ export default function TripPage() {
                         </button>
                       )}
                       <button
-                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditOpen(true); }}
+                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditOpen(true); }}
                         aria-label="Edit trip"
                         style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
                       >
@@ -1988,8 +2004,23 @@ export default function TripPage() {
                 When are you going?
               </label>
               <div style={{ display: "flex", gap: 8 }}>
-                <input type="date" value={welcomeStart} onChange={e => setWelcomeStart(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 12px", color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Outfit', sans-serif", colorScheme: "dark" as never }} />
-                <input type="date" value={welcomeEnd} onChange={e => setWelcomeEnd(e.target.value)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 12px", color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Outfit', sans-serif", colorScheme: "dark" as never }} />
+                <input
+                  type="date"
+                  value={welcomeStart}
+                  onChange={e => {
+                    const v = e.target.value;
+                    setWelcomeStart(v);
+                    if (v && welcomeEnd && welcomeEnd < v) setWelcomeEnd("");
+                  }}
+                  style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 12px", color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Outfit', sans-serif", colorScheme: "dark" as never }}
+                />
+                <input
+                  type="date"
+                  value={welcomeEnd}
+                  min={welcomeStart || undefined}
+                  onChange={e => setWelcomeEnd(e.target.value)}
+                  style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 12px", color: "#fff", fontSize: 14, outline: "none", fontFamily: "'Outfit', sans-serif", colorScheme: "dark" as never }}
+                />
               </div>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 6 }}>Start and end dates. Approximate is fine.</div>
             </div>
@@ -2297,6 +2328,18 @@ export default function TripPage() {
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Description <span style={{ fontWeight: 400 }}>(optional)</span></div>
                 <input value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder={`What's this ${flavor} about?`} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
               </div>
+              {flavor === "trip" && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Flying into</div>
+                    <input value={editAirport} onChange={e => setEditAirport(e.target.value)} placeholder="e.g. RDU" style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Lodging</div>
+                    <input value={editLodging} onChange={e => setEditLodging(e.target.value)} placeholder="Hotel or rental" style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                  </div>
+                </div>
+              )}
               <div>
                 {/* Games and Rounds are single-day by definition (1 course-
                     stop, 1 date). Only Trips need a real start/end range —

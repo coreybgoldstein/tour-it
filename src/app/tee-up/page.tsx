@@ -81,7 +81,7 @@ function fmtSingleDate(iso: string | null): string | null {
 // that we control completely. Tapping the area still opens the iOS picker
 // (the input is hit-target-sized), but the visual is consistent across
 // platforms regardless of empty/filled state.
-function DateField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function DateField({ value, onChange, min, max }: { value: string; onChange: (v: string) => void; min?: string; max?: string }) {
   const display = value
     ? new Date(value + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : "Select date";
@@ -90,7 +90,7 @@ function DateField({ value, onChange }: { value: string; onChange: (v: string) =
       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "0 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: value ? "#fff" : "rgba(255,255,255,0.42)" }}>
         {display}
       </div>
-      <input type="date" value={value} onChange={e => onChange(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, border: 0, padding: 0, margin: 0, cursor: "pointer", background: "transparent", colorScheme: "dark" }} />
+      <input type="date" value={value} min={min} max={max} onChange={e => onChange(e.target.value)} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, border: 0, padding: 0, margin: 0, cursor: "pointer", background: "transparent", colorScheme: "dark" }} />
     </div>
   );
 }
@@ -178,6 +178,11 @@ export default function TeeUpPage() {
   const [newTripName, setNewTripName] = useState("");
   const [newTripStart, setNewTripStart] = useState("");
   const [newTripEnd, setNewTripEnd] = useState("");
+  // Logistics — captured up-front so the trip page renders something
+  // useful before stops are added, and so public conversion has real
+  // detail to broadcast.
+  const [newTripAirport, setNewTripAirport] = useState("");
+  const [newTripLodging, setNewTripLodging] = useState("");
   const [newTripSaving, setNewTripSaving] = useState(false);
 
   // Archive sub-filter
@@ -419,6 +424,8 @@ export default function TeeUpPage() {
       createdBy: userId,
       startDate: newTripStart || null,
       endDate: newTripEnd || null,
+      arrivalAirport: newTripAirport.trim() || null,
+      lodging: newTripLodging.trim() || null,
       createdAt: now,
       updatedAt: now,
     });
@@ -1108,15 +1115,47 @@ export default function TeeUpPage() {
               />
             </div>
 
-            {/* Start + End dates */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
+            {/* Start + End dates — end is constrained to >= start so the
+                picker UI prevents impossible ranges (Nov 1 → Oct 30). If
+                start changes to a date after the current end, we clear
+                end so the user isn't stuck with an invalid value. */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Start Date</div>
-                <DateField value={newTripStart} onChange={setNewTripStart} />
+                <DateField
+                  value={newTripStart}
+                  onChange={(v) => {
+                    setNewTripStart(v);
+                    if (v && newTripEnd && newTripEnd < v) setNewTripEnd("");
+                  }}
+                />
               </div>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>End Date</div>
-                <DateField value={newTripEnd} onChange={setNewTripEnd} />
+                <DateField value={newTripEnd} onChange={setNewTripEnd} min={newTripStart || undefined} />
+              </div>
+            </div>
+
+            {/* Flying-into + lodging — optional but lets the trip detail
+                page show real logistics from minute one. */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
+              <div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Flying into</div>
+                <input
+                  value={newTripAirport}
+                  onChange={e => setNewTripAirport(e.target.value)}
+                  placeholder="e.g. RDU"
+                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
+                />
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Lodging</div>
+                <input
+                  value={newTripLodging}
+                  onChange={e => setNewTripLodging(e.target.value)}
+                  placeholder="Hotel or rental"
+                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
+                />
               </div>
             </div>
 

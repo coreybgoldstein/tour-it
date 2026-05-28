@@ -183,6 +183,7 @@ model User {
   tripMemberships  GolfTripMember[]   @relation("TripMemberships")
   ryderAssignments GolfTripRyderTeam[]
   tripMessages     TripMessage[]
+  tripNotes        GolfTripNote[]
   createdTripGames TripGame[]
   notifications    Notification[]
   uploadTags       UploadTag[]
@@ -567,6 +568,20 @@ model GolfTrip {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
+  // Logistics — captured at trip creation so the trip is useful from
+  // day 1 (and so public conversion has real airport + lodging detail).
+  arrivalAirport  String?
+  lodging         String?
+
+  // Public conversion. When the user opts to publish, isPublic flips
+  // true and publicizedAt is set; we also create a TripItinerary row
+  // referencing this trip via sourceGolfTripId.
+  // publicizeNotifiedAt is set by the day-after cron so we don't
+  // re-prompt the user on every cron run.
+  isPublic              Boolean   @default(false)
+  publicizedAt          DateTime?
+  publicizeNotifiedAt   DateTime?
+
   // Ryder Cup mode
   ryderCupEnabled Boolean @default(false)
   redTeamName     String?
@@ -580,8 +595,31 @@ model GolfTrip {
   messages    TripMessage[]
   games       TripGame[]
   ryderTeams  GolfTripRyderTeam[]
+  notes       GolfTripNote[]
 
   @@index([createdBy])
+  @@index([endDate, isPublic, publicizeNotifiedAt])
+}
+
+// User-authored notes attached to a trip — surfaced as a knowledge
+// layer ("best clubhouses", "weather notes", "best food") that
+// every trip member contributes to. Visible to all members; visible
+// to everyone if the trip gets publicized.
+model GolfTripNote {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  category  String   // "clubhouse" | "food" | "weather" | "tip" | "logistics" | "course" | "other"
+  subject   String?  // optional title — e.g. restaurant name, course nickname
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trip      GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, category, createdAt(sort: Desc)])
+  @@index([userId])
 }
 
 model GolfTripRyderTeam {
@@ -931,6 +969,14 @@ model TripItinerary {
   longitude       Float
   region          String
   dartThrowCount  Int      @default(0)
+
+  // User-submitted itineraries. When a GolfTrip is publicized, we
+  // create a TripItinerary referencing it via sourceGolfTripId; the
+  // UI shows a "Submitted by @username" credit chip at the top.
+  // sourceGolfTripId is nullable so curated trips stay clean.
+  sourceGolfTripId  String?
+  submittedByUserId String?
+
   stops           TripItineraryStop[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
