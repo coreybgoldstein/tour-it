@@ -60,6 +60,23 @@ const HERO_PAGES = {
   "rtj-alabama-trail":            ["Robert Trent Jones Golf Trail", "Ross Bridge Golf Resort", "Auburn, Alabama"],
   "greenbrier-stretch":           ["The Greenbrier", "Old White TPC", "White Sulphur Springs, West Virginia"],
   "san-diego-coastal":            ["Torrey Pines Golf Course", "La Jolla, San Diego", "San Diego"],
+
+  // Catalog expansion round 2 (2026-05)
+  "nc-sandhills-architecture":    ["Tobacco Road Golf Club", "Pinehurst, North Carolina", "Southern Pines, North Carolina"],
+  "vermont-fall-foliage":         ["Stowe, Vermont", "Manchester, Vermont", "Green Mountains"],
+  "tahoe-summer":                 ["Edgewood Tahoe Golf Course", "Lake Tahoe", "Truckee, California"],
+  "coeur-dalene-lakes":           ["Coeur d'Alene Resort", "Coeur d'Alene, Idaho", "Lake Coeur d'Alene"],
+  "sun-valley-mountain":          ["Sun Valley, Idaho", "Sun Valley Resort", "Ketchum, Idaho"],
+  "colorado-rockies-loop":        ["Vail, Colorado", "Beaver Creek Resort", "Breckenridge, Colorado"],
+  "napa-sonoma-wine":             ["Napa Valley", "Silverado Resort", "Sonoma County, California"],
+  "orlando-family-sampler":       ["Walt Disney World Resort", "Bay Hill Club and Lodge", "Orlando, Florida"],
+  "tampa-bay-sampler":            ["Innisbrook Resort and Golf Club", "Tampa, Florida", "Clearwater, Florida"],
+  "williamsburg-historic":        ["Colonial Williamsburg", "Williamsburg, Virginia", "Kingsmill Resort"],
+  "kentucky-bourbon-trail":       ["Kentucky Bourbon Trail", "Bardstown, Kentucky", "Louisville, Kentucky"],
+  "biloxi-gulf-coast-casino":     ["Biloxi, Mississippi", "Beau Rivage Resort & Casino", "Mississippi Gulf Coast"],
+  "mesquite-wolf-creek":          ["Mesquite, Nevada", "Virgin River Gorge"],
+  "tucson-desert":                ["Tucson, Arizona", "Saguaro National Park", "Santa Catalina Mountains"],
+  "lake-of-the-ozarks":           ["Lake of the Ozarks", "Osage Beach, Missouri", "Bagnell Dam"],
 };
 
 const UA = "TourItGolf/1.0 (https://touritgolf.com; coreybgoldstein@gmail.com)";

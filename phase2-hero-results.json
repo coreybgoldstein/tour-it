@@ -1,74 +1,92 @@
 [
   {
-    "slug": "vegas-strip-stretch",
-    "page": "Las Vegas Strip",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-vegas-strip-stretch.jpg",
+    "slug": "nc-sandhills-architecture",
+    "page": "Pinehurst, North Carolina",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-nc-sandhills-architecture.jpg",
     "status": "ok"
   },
   {
-    "slug": "palm-springs-warmup",
-    "page": "La Quinta, California",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-palm-springs-warmup.jpg",
+    "slug": "vermont-fall-foliage",
+    "page": "Stowe, Vermont",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-vermont-fall-foliage.jpg",
     "status": "ok"
   },
   {
-    "slug": "park-city-altitude",
-    "page": "Park City, Utah",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-park-city-altitude.jpg",
+    "slug": "tahoe-summer",
+    "page": "Edgewood Tahoe Golf Course",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-tahoe-summer.jpg",
     "status": "ok"
   },
   {
-    "slug": "big-cedar-ozarks",
-    "page": "Branson, Missouri",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-big-cedar-ozarks.jpg",
+    "slug": "coeur-dalene-lakes",
+    "page": "Coeur d'Alene Resort",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-coeur-dalene-lakes.jpg",
     "status": "ok"
   },
   {
-    "slug": "hilton-head-lowcountry",
-    "page": "Harbour Town Golf Links",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-hilton-head-lowcountry.jpg",
+    "slug": "sun-valley-mountain",
+    "page": "Ketchum, Idaho",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-sun-valley-mountain.jpg",
     "status": "ok"
   },
   {
-    "slug": "big-island-golf",
-    "page": "Hawaii (island)",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-big-island-golf.jpg",
+    "slug": "colorado-rockies-loop",
+    "page": "Vail, Colorado",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-colorado-rockies-loop.jpg",
     "status": "ok"
   },
   {
-    "slug": "maui-trade-winds",
-    "page": "Kapalua, Hawaii",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-maui-trade-winds.jpg",
+    "slug": "napa-sonoma-wine",
+    "page": "Silverado Resort",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-napa-sonoma-wine.jpg",
     "status": "ok"
   },
   {
-    "slug": "central-oregon-bend",
-    "page": "Bend, Oregon",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-central-oregon-bend.jpg",
+    "slug": "orlando-family-sampler",
+    "page": "Walt Disney World Resort",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-orlando-family-sampler.jpg",
     "status": "ok"
   },
   {
-    "slug": "cape-cod-loop",
-    "page": "Cape Cod",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-cape-cod-loop.jpg",
+    "slug": "tampa-bay-sampler",
+    "page": "Tampa, Florida",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-tampa-bay-sampler.jpg",
     "status": "ok"
   },
   {
-    "slug": "rtj-alabama-trail",
-    "page": "Robert Trent Jones Golf Trail",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-rtj-alabama-trail.jpg",
+    "slug": "williamsburg-historic",
+    "page": "Colonial Williamsburg",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-williamsburg-historic.jpg",
     "status": "ok"
   },
   {
-    "slug": "greenbrier-stretch",
-    "page": "The Greenbrier",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-greenbrier-stretch.jpg",
+    "slug": "kentucky-bourbon-trail",
+    "page": "Kentucky Bourbon Trail",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-kentucky-bourbon-trail.jpg",
     "status": "ok"
   },
   {
-    "slug": "san-diego-coastal",
-    "page": "Torrey Pines Golf Course",
-    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-san-diego-coastal.jpg",
+    "slug": "biloxi-gulf-coast-casino",
+    "page": "Biloxi, Mississippi",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-biloxi-gulf-coast-casino.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "mesquite-wolf-creek",
+    "page": "Mesquite, Nevada",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-mesquite-wolf-creek.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "tucson-desert",
+    "page": "Tucson, Arizona",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-tucson-desert.jpg",
+    "status": "ok"
+  },
+  {
+    "slug": "lake-of-the-ozarks",
+    "page": "Lake of the Ozarks",
+    "url": "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/course-images/itinerary-lake-of-the-ozarks.jpg",
     "status": "ok"
   }
 ]
