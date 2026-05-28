@@ -1612,18 +1612,62 @@ const [editDescription, setEditDescription] = useState("");
                           ) : null}
                           {/* Content */}
                           <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
-                            {/* Top row: Par + Yardage */}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasBg ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.35)", textShadow: hasBg && !hasClips ? "0 1px 3px rgba(0,0,0,0.65)" : undefined }}>
-                                {holeData?.par ? `Par ${holeData.par}` : ""}
-                              </span>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: hasBg ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.22)", textShadow: hasBg && !hasClips ? "0 1px 3px rgba(0,0,0,0.65)" : undefined }}>
-                                {holeData?.yardage ? holeData.yardage : ""}
-                              </span>
+                            {/* Top row — Par pill (color-coded by par)
+                                + Yardage with "YDS" suffix. Brand-green
+                                bias on empty tiles so the page reads as
+                                Tour It even before any clips land. */}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 4 }}>
+                              {holeData?.par ? (
+                                <span style={{
+                                  fontFamily: "'Outfit', sans-serif",
+                                  fontSize: 9,
+                                  fontWeight: 800,
+                                  letterSpacing: "0.1em",
+                                  textTransform: "uppercase",
+                                  padding: "2px 7px",
+                                  borderRadius: 99,
+                                  color: holeData.par === 3 ? "#d4a017" : holeData.par === 5 ? "#fbbf24" : "#4da862",
+                                  background: holeData.par === 3 ? "rgba(212,160,23,0.12)" : holeData.par === 5 ? "rgba(251,191,36,0.12)" : "rgba(77,168,98,0.14)",
+                                  border: `1px solid ${holeData.par === 3 ? "rgba(212,160,23,0.35)" : holeData.par === 5 ? "rgba(251,191,36,0.35)" : "rgba(77,168,98,0.38)"}`,
+                                  textShadow: hasBg && !hasClips ? "0 1px 3px rgba(0,0,0,0.5)" : undefined,
+                                }}>
+                                  PAR {holeData.par}
+                                </span>
+                              ) : <span />}
+                              {holeData?.yardage ? (
+                                <span style={{
+                                  fontFamily: "'Outfit', sans-serif",
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  letterSpacing: "0.04em",
+                                  color: hasBg ? "rgba(255,255,255,0.78)" : "rgba(255,255,255,0.55)",
+                                  textShadow: hasBg && !hasClips ? "0 1px 3px rgba(0,0,0,0.65)" : undefined,
+                                  display: "inline-flex",
+                                  alignItems: "baseline",
+                                  gap: 2,
+                                }}>
+                                  {holeData.yardage}
+                                  <span style={{ fontSize: 8, fontWeight: 600, color: hasBg ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.3)" }}>YDS</span>
+                                </span>
+                              ) : null}
                             </div>
-                            {/* Center: hole number */}
+                            {/* Center: hole number — brand green with
+                                soft glow so even an empty hole tile feels
+                                alive. Stays white when a clip thumbnail
+                                is the background (the glow would clash
+                                with the live video). */}
                             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: holeNum <= 9 ? 44 : 40, fontWeight: 400, color: hasBg ? "#ffffff" : "rgba(255,255,255,0.3)", letterSpacing: "-1px", lineHeight: 1, textShadow: hasBg && !hasClips ? "0 2px 8px rgba(0,0,0,0.6)" : undefined }}>{holeNum}</span>
+                              <span style={{
+                                fontFamily: "'Playfair Display', serif",
+                                fontSize: holeNum <= 9 ? 52 : 46,
+                                fontWeight: 700,
+                                color: hasClips ? "#ffffff" : "#4da862",
+                                letterSpacing: "-1px",
+                                lineHeight: 1,
+                                textShadow: hasClips
+                                  ? "0 2px 8px rgba(0,0,0,0.6)"
+                                  : "0 0 14px rgba(77,168,98,0.55), 0 0 28px rgba(77,168,98,0.28), 0 1px 4px rgba(0,0,0,0.5)",
+                              }}>{holeNum}</span>
                             </div>
                             {/* Bottom: clip indicator — only when there
                                 ARE clips. Aggregate likes/comments
