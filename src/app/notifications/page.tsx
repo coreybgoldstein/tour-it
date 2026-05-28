@@ -183,7 +183,14 @@ export default function NotificationsPage() {
     <div style={{ minHeight: "100dvh", background: "#07100a", paddingBottom: 100, paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 680 : undefined }}>
       {/* Header — top padding includes the iOS safe-area-inset so the title
           never sits under the notch / Dynamic Island in the Capacitor WebView. */}
-      <div style={{ padding: "calc(20px + env(safe-area-inset-top)) 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)" }}>
+      <div style={{ padding: "calc(20px + env(safe-area-inset-top)) 20px 16px", borderBottom: "1px solid rgba(77,168,98,0.15)", display: "flex", alignItems: "center", gap: 10 }}>
+        <button
+          onClick={() => router.back()}
+          aria-label="Back"
+          style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
         <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff", margin: 0 }}>
           Notifications
         </h1>

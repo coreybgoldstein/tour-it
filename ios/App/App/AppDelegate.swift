@@ -158,6 +158,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 web.scrollView.bounces = false
                 web.scrollView.alwaysBounceVertical = false
                 web.scrollView.alwaysBounceHorizontal = false
+                // Enable iOS's native left-edge-swipe-back gesture inside
+                // the WebView. WKWebView keeps its own URL history; this
+                // makes the swipe move back through that history exactly
+                // the way Safari does. No-op until next TestFlight build
+                // since the JS bundle can't toggle this.
+                web.allowsBackForwardNavigationGestures = true
             }
             v.subviews.forEach(walk)
         }
