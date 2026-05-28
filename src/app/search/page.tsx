@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { BEST_FOR_TAGS, getEnrichment } from "@/lib/tripEnrichment";
+import TripPlannerSheet from "@/components/TripPlannerSheet";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -115,6 +116,7 @@ function SearchPageInner() {
   const [tripResults, setTripResults] = useState<TripCardData[]>([]);
   const [tripsLoaded, setTripsLoaded] = useState(false);
   const [activeBestFor, setActiveBestFor] = useState<string | null>(null);
+  const [plannerOpen, setPlannerOpen] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const lastQueryRef = useRef<{ q: string; coords: { lat: number; lng: number } | null; state: string; city: string; holes: string; courseType: string; radius: string } | null>(null);
@@ -764,6 +766,43 @@ function SearchPageInner() {
         {/* ── Trips tab ── */}
         {searchTab === "trips" && (
           <>
+            {/* Plan-My-Trip hero CTA — opens an AI-powered planner sheet
+                that asks group/budget/origin/dates/vibes and returns the
+                top 3-5 matches from the catalog with reasoning. */}
+            <button
+              onClick={() => setPlannerOpen(true)}
+              style={{
+                position: "relative",
+                width: "100%",
+                marginTop: 8,
+                marginBottom: 14,
+                padding: "16px 16px",
+                background: "linear-gradient(135deg, rgba(45,122,66,0.95) 0%, rgba(77,168,98,0.85) 100%)",
+                color: "#fff",
+                border: "1px solid rgba(77,168,98,0.55)",
+                borderRadius: 14,
+                fontFamily: "'Outfit', sans-serif",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                textAlign: "left",
+                boxShadow: "0 4px 18px rgba(45,122,66,0.3)",
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(7,16,10,0.45)", border: "1px solid rgba(255,255,255,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: "0.01em", marginBottom: 3 }}>Plan my trip</div>
+                <div style={{ fontSize: 12, opacity: 0.85, lineHeight: 1.35 }}>
+                  Tell us your group + dates. We'll match the catalog.
+                </div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.85 }}><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
             {/* Best-for filter chips. Single-select. Tap an active chip
                 to clear. Filters the catalog client-side by intersecting
                 the trip's enrichment bestFor[] tags. */}
@@ -1340,6 +1379,7 @@ function SearchPageInner() {
       )}
 
       <BottomNav />
+      <TripPlannerSheet open={plannerOpen} onClose={() => setPlannerOpen(false)} />
     </main>
   );
 }
