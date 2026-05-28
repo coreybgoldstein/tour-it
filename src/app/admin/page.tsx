@@ -5,7 +5,28 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SeoTab from "./SeoTab";
 
-type Tab = "overview" | "clips" | "reports" | "requests" | "seo";
+type Tab = "overview" | "clips" | "reports" | "requests" | "trips" | "seo";
+
+type CachedBrief = {
+  briefHash: string;
+  brief: {
+    groupSize: number | null;
+    budgetPerPerson: number | null;
+    originCity: string | null;
+    rounds: number | null;
+    days: number | null;
+    months: number[];
+    vibes: string[];
+    notes: string | null;
+  } | null;
+  response: {
+    explanation: string;
+    recommendations: Array<{ slug: string; name: string; matchScore: number }>;
+  };
+  hits: number;
+  createdAt: string;
+  expiresAt: string;
+};
 
 type ClipRow = {
   id: string;
@@ -86,6 +107,8 @@ export default function AdminPage() {
   const [reportsHasMore, setReportsHasMore] = useState(false);
   const [clipsLoadingMore, setClipsLoadingMore] = useState(false);
   const [reportsLoadingMore, setReportsLoadingMore] = useState(false);
+  const [cachedBriefs, setCachedBriefs] = useState<CachedBrief[]>([]);
+  const [tripsLoaded, setTripsLoaded] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -236,6 +259,27 @@ export default function AdminPage() {
     setActioning(null);
   }
 
+  // Trip-planner cache — admin-only insight into which AI briefs are
+  // popular. Lazy-loaded on first Trips tab activation so the home
+  // admin load stays fast. Sorted by hits desc so the top of the list
+  // is "what people keep asking for."
+  async function loadCachedBriefs(supabase: any) {
+    const { data } = await supabase
+      .from("TripPlannerCache")
+      .select("briefHash, brief, response, hits, createdAt, expiresAt")
+      .order("hits", { ascending: false })
+      .order("createdAt", { ascending: false })
+      .limit(100);
+    setCachedBriefs((data ?? []) as CachedBrief[]);
+    setTripsLoaded(true);
+  }
+
+  useEffect(() => {
+    if (tab === "trips" && !tripsLoaded) {
+      loadCachedBriefs(createClient());
+    }
+  }, [tab, tripsLoaded]);
+
   async function loadRequests(supabase: any) {
     const { data } = await supabase
       .from("CourseRequest")
@@ -320,7 +364,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 8, padding: "16px 16px 0", overflowX: "auto" }}>
-        {(["overview", "clips", "reports", "requests", "seo"] as Tab[]).map(t => (
+        {(["overview", "clips", "reports", "requests", "trips", "seo"] as Tab[]).map(t => (
           <button key={t} className={`admin-tab ${tab === t ? "admin-tab-active" : "admin-tab-inactive"}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
             {t === "reports" && (stats?.pendingReports ?? 0) > 0 && (
@@ -501,6 +545,115 @@ export default function AdminPage() {
               </div>
             ))}
             {requests.length === 0 && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", paddingTop: 40 }}>No course requests</div>}
+          </div>
+        )}
+
+        {/* ── Trips: planner cache ── */}
+        {tab === "trips" && (
+          <div>
+            {(() => {
+              if (!tripsLoaded) {
+                return <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", paddingTop: 40 }}>Loading…</div>;
+              }
+              const totalEntries = cachedBriefs.length;
+              const totalHits = cachedBriefs.reduce((s, b) => s + b.hits, 0);
+              const callsSaved = totalHits; // each hit is a Claude call we didn't pay for
+              const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+              return (
+                <>
+                  {/* Summary stat cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                    <div className="admin-stat">
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Cached briefs</div>
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 700, color: "#fff" }}>{totalEntries}</div>
+                    </div>
+                    <div className="admin-stat">
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Claude calls saved</div>
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 700, color: callsSaved > 0 ? "#4da862" : "#fff" }}>{callsSaved}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 12, lineHeight: 1.5 }}>
+                    Trip planner cache — keyed on the canonicalized brief. Sorted by hits (most-asked first). 7-day TTL. Use this to see what people want and what to seed next.
+                  </div>
+
+                  {cachedBriefs.length === 0 ? (
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.3)", textAlign: "center", paddingTop: 40 }}>
+                      No cached briefs yet. Once people use the planner, briefs land here.
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {cachedBriefs.map(b => {
+                        const monthLabel = b.brief?.months?.map(m => MONTH_LABELS[m - 1]).join(", ") ?? "—";
+                        const ageHours = Math.floor((Date.now() - new Date(b.createdAt).getTime()) / 3600000);
+                        const ageLabel = ageHours < 24 ? `${ageHours}h ago` : `${Math.floor(ageHours / 24)}d ago`;
+                        return (
+                          <div key={b.briefHash} style={{ padding: 14, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: "0.08em", color: b.hits > 0 ? "#4da862" : "rgba(255,255,255,0.35)", padding: "2px 8px", borderRadius: 99, background: b.hits > 0 ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${b.hits > 0 ? "rgba(77,168,98,0.3)" : "rgba(255,255,255,0.08)"}` }}>
+                                  {b.hits} HIT{b.hits === 1 ? "" : "S"}
+                                </span>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{ageLabel}</span>
+                              </div>
+                              <code style={{ fontFamily: "monospace", fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{b.briefHash.slice(0, 8)}</code>
+                            </div>
+
+                            {/* Brief inputs */}
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                              {b.brief?.groupSize != null && (
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, padding: "3px 9px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.75)" }}>👥 {b.brief.groupSize}</span>
+                              )}
+                              {b.brief?.budgetPerPerson != null && (
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, padding: "3px 9px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.75)" }}>💵 ${b.brief.budgetPerPerson}/pp</span>
+                              )}
+                              {b.brief?.days != null && (
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, padding: "3px 9px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.75)" }}>📅 {b.brief.days}d</span>
+                              )}
+                              {b.brief?.rounds != null && (
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, padding: "3px 9px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.75)" }}>⛳ {b.brief.rounds}r</span>
+                              )}
+                              {b.brief?.originCity && (
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, padding: "3px 9px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.75)" }}>✈️ {b.brief.originCity}</span>
+                              )}
+                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, padding: "3px 9px", borderRadius: 99, background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)" }}>🗓 {monthLabel}</span>
+                            </div>
+
+                            {b.brief?.vibes && b.brief.vibes.length > 0 && (
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+                                {b.brief.vibes.map(v => (
+                                  <span key={v} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, padding: "2px 7px", borderRadius: 99, background: "rgba(77,168,98,0.08)", color: "rgba(77,168,98,0.85)", border: "1px solid rgba(77,168,98,0.2)" }}>{v}</span>
+                                ))}
+                              </div>
+                            )}
+
+                            {b.brief?.notes && (
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.55)", fontStyle: "italic", marginBottom: 10, padding: "6px 10px", background: "rgba(255,255,255,0.02)", borderRadius: 8, borderLeft: "2px solid rgba(77,168,98,0.4)" }}>
+                                "{b.brief.notes}"
+                              </div>
+                            )}
+
+                            {/* Top recommendations */}
+                            <div style={{ paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 5 }}>Top matches</div>
+                              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                {(b.response.recommendations ?? []).slice(0, 3).map((r, i) => (
+                                  <div key={r.slug} style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>
+                                    <span style={{ color: "rgba(255,255,255,0.3)", width: 14 }}>{i + 1}.</span>
+                                    <a href={`/trip-ideas/${r.slug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#fff", textDecoration: "none", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</a>
+                                    <span style={{ color: "#4da862", fontSize: 10, fontWeight: 600 }}>{r.matchScore}%</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 

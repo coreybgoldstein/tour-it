@@ -735,12 +735,14 @@ model Notification {
 // so newly-added itineraries propagate within a week.
 model TripPlannerCache {
   briefHash String   @id
+  brief     Json?
   response  Json
   hits      Int      @default(0)
   createdAt DateTime @default(now())
   expiresAt DateTime
 
   @@index([expiresAt])
+  @@index([hits(sort: Desc)])
 }
 
 model SearchLog {

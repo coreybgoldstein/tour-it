@@ -285,6 +285,17 @@ Valid bestFor tag ids: ${validTagIds.join(", ")}.`;
   const expiresAt = new Date(Date.now() + CACHE_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
   sb.from("TripPlannerCache").upsert({
     briefHash,
+    brief: {
+      groupSize: input.groupSize ?? null,
+      budgetPerPerson: input.budgetPerPerson ?? null,
+      originCity: input.originCity ?? null,
+      originState: input.originState ?? null,
+      rounds: input.rounds ?? null,
+      days: input.days ?? null,
+      months: input.months,
+      vibes: input.vibes ?? [],
+      notes: input.notes ?? null,
+    },
     response: responseBody,
     hits: 0,
     expiresAt,
