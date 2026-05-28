@@ -1627,9 +1627,16 @@ const [editDescription, setEditDescription] = useState("");
                                   padding: "2px 7px",
                                   borderRadius: 99,
                                   color: holeData.par === 3 ? "#d4a017" : holeData.par === 5 ? "#fbbf24" : "#4da862",
-                                  background: holeData.par === 3 ? "rgba(212,160,23,0.12)" : holeData.par === 5 ? "rgba(251,191,36,0.12)" : "rgba(77,168,98,0.14)",
-                                  border: `1px solid ${holeData.par === 3 ? "rgba(212,160,23,0.35)" : holeData.par === 5 ? "rgba(251,191,36,0.35)" : "rgba(77,168,98,0.38)"}`,
-                                  textShadow: hasBg && !hasClips ? "0 1px 3px rgba(0,0,0,0.5)" : undefined,
+                                  // Solid dark base so the par text + colored
+                                  // border read clearly against any tile bg
+                                  // (clip thumbnail, course-hole photo, or the
+                                  // empty dark fill). Previous tinted-only
+                                  // background was too faint to register at
+                                  // 9px — user reported "make the pill
+                                  // background darker so you can see it."
+                                  background: "rgba(7,16,10,0.78)",
+                                  border: `1px solid ${holeData.par === 3 ? "rgba(212,160,23,0.55)" : holeData.par === 5 ? "rgba(251,191,36,0.55)" : "rgba(77,168,98,0.55)"}`,
+                                  boxShadow: hasBg && !hasClips ? "0 1px 3px rgba(0,0,0,0.45)" : undefined,
                                 }}>
                                   PAR {holeData.par}
                                 </span>
