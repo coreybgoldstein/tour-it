@@ -1686,12 +1686,12 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
   }
 
   return (
-    <div style={{ padding: "12px 16px 0" }}>
+    <div style={{ padding: "8px 16px 0" }}>
       {recent.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Recent</div>
-            <button onClick={onClearRecents} style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.35)", cursor: "pointer" }}>Clear</button>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>Recent</div>
+            <button onClick={onClearRecents} style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer" }}>Clear</button>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {recent.map((q) => (
@@ -1708,17 +1708,8 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
         </div>
       )}
 
-      {/* Where to next? — trip inspiration rail. Pulled UP from the
-          page-bottom slot per user request so it lands above the
-          fold on first paint. Sits right after Recent (or at the
-          very top when the user has no recent searches) so it's the
-          first thing they see beneath the search bar's PlannerCTA. */}
-      <div style={{ marginBottom: 16, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
-        <TourWhereToNext />
-      </div>
-
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Near you</div>
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 5 }}>Near you</div>
         {locStatus !== "granted" && (
           <button
             onClick={enableLocation}
@@ -1735,18 +1726,35 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
           </div>
         )}
         {locStatus === "granted" && nearMe.length === 0 && (
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", padding: "6px 4px" }}>No courses within 50 miles.</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", padding: "6px 4px" }}>No courses within 50 miles.</div>
         )}
       </div>
 
       {popular.length > 0 && (
-        <div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Popular</div>
+        <div style={{ marginBottom: 6 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 5 }}>Popular</div>
           <div>
-            {popular.map((c) => <TourCourseRow key={c.id} course={c} onClick={() => router.push(`/courses/${c.id}`)} />)}
+            {/* Cap Popular at 4 rows so the Where-to-next rail below
+                sits within the visible viewport on first open (per
+                user: "popular course list should only populate
+                enough to allow for the grail to be seen in full on
+                the screen when you open the page"). The full list
+                stays one tap away via the Browse-all link the
+                WhereToNext header carries; courses-only browsing
+                comes back via search. */}
+            {popular.slice(0, 4).map((c) => <TourCourseRow key={c.id} course={c} onClick={() => router.push(`/courses/${c.id}`)} />)}
           </div>
         </div>
       )}
+
+      {/* Where to next? — the differentiator rail. Lives at the
+          bottom of the discovery stack so the user's eye lands on
+          it as the natural next move after Near You + Popular.
+          Popular is capped above so this fits on-screen on first
+          paint instead of being pushed under the fold. */}
+      <div style={{ marginTop: 4, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
+        <TourWhereToNext />
+      </div>
     </div>
   );
 }
@@ -1766,7 +1774,7 @@ function TourCourseRow({ course, onClick }: { course: TourCourseLite; onClick: (
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course.name}</div>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{[course.city, course.state].filter(Boolean).join(", ")}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.7)", marginTop: 1 }}>{[course.city, course.state].filter(Boolean).join(", ")}</div>
       </div>
       {!!course.uploadCount && course.uploadCount > 0 && (
         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 700, color: "#4da862", flexShrink: 0 }}>

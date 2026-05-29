@@ -36,6 +36,7 @@ import BottomNav from "@/components/BottomNav";
 // NOT render it here or the page ends up with a doubled bar.
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
 import PlannerCTA from "@/components/PlannerCTA";
+import { gameFormatLabel } from "@/lib/gameFormats";
 import { airportByCode } from "@/data/airports";
 import { readPermission, readCoords, requestLocation } from "@/lib/locationPermission";
 
@@ -75,6 +76,14 @@ type ActiveTour = {
   members: MemberLite[];
   /** First stop with a future or null playDate — the "next up" course. */
   nextStop: Stop | null;
+  /** Most-recent game attached to this trip (null = no game yet).
+   *  When set the YourTour card surfaces a game-tease chip the user
+   *  can tap to land directly on the game sheet, and the create-
+   *  another-game CTA shrinks to a small "+ game" pill. */
+  game: { id: string; format: string; courseId: string; courseName: string } | null;
+  /** Total game count for the trip — used to badge the "+ N games"
+   *  variant of the add-another CTA. */
+  gameCount: number;
 };
 
 type TripIdea = {
@@ -122,7 +131,14 @@ export default function HomeTour() {
   // the courses arriving from Supabase.
   const [nearMeQueried, setNearMeQueried] = useState(false);
 
-  const [tour, setTour] = useState<ActiveTour | null>(null);
+  // tours = ALL upcoming trips (each rendered as a card in the
+  // horizontal YourTour rail). The earlier single-tour shape was kept
+  // for the v1 home which only surfaced the soonest trip; user
+  // feedback: "it should be a scrolling [rail] so you can see
+  // everything you have lined up". `tour` retained as a convenience
+  // alias for the first entry — many call sites still read it.
+  const [tours, setTours] = useState<ActiveTour[]>([]);
+  const tour = tours[0] ?? null;
   const [tourLoaded, setTourLoaded] = useState(false);
 
   const [tripIdeas, setTripIdeas] = useState<TripIdea[]>([]);
@@ -171,28 +187,22 @@ export default function HomeTour() {
         .eq("userId", userId);
       const tripIds = (memberships ?? []).map((m: any) => m.tripId);
       if (tripIds.length === 0) {
-        if (!cancelled) { setTour(null); setTourLoaded(true); }
+        if (!cancelled) { setTours([]); setTourLoaded(true); }
         return;
       }
 
-      // 2) Trip + stops + members fanned out in parallel for ALL
-      //    candidate tripIds. This was previously 4 sequential RTTs
-      //    (trip → then stops+members → then courses+users) which
-      //    pushed cold-start tour load to ~2s on cell. Now: 1 RTT
-      //    for trip+stops+members (3 in parallel), then 1 RTT for
-      //    courses+users (2 in parallel). Cold path is ~halved.
-      const [{ data: trips }, { data: allStopRows }, { data: allMemberRows }] = await Promise.all([
+      // 2) Trip + stops + members + games fanned out in parallel for
+      //    ALL candidate tripIds. The trip query now fetches ALL
+      //    upcoming trips (no .limit(1)) because YourTour is a
+      //    scrolling carousel showing every upcoming trip the user
+      //    is part of, not just the soonest.
+      const [{ data: trips }, { data: allStopRows }, { data: allMemberRows }, { data: allGameRows }] = await Promise.all([
         sb.from("GolfTrip")
           .select("id, name, startDate, endDate, arrivalAirport, lodging, lodgingCity, lodgingState, imageUrl")
           .in("id", tripIds)
           .or(`endDate.gte.${todayIso},endDate.is.null`)
           .order("startDate", { ascending: true, nullsFirst: false })
-          .order("createdAt", { ascending: false })
-          .limit(1),
-        // Fetch stops + members for ALL candidate trips up front —
-        // wasteful when the user is in many trips, but the typical
-        // user is in 1-3 trips so the extra rows are negligible vs.
-        // the round-trip latency saved.
+          .order("createdAt", { ascending: false }),
         sb.from("GolfTripCourse")
           .select("tripId, courseId, playDate, teeTime, sortOrder")
           .in("tripId", tripIds)
@@ -200,19 +210,21 @@ export default function HomeTour() {
         sb.from("GolfTripMember")
           .select("tripId, userId")
           .in("tripId", tripIds),
+        // Games: pull most-recent-first so [0] for a tripId is the
+        // newest game (the one we surface in the trip-card tease).
+        sb.from("TripGame")
+          .select("id, tripId, format, courseId, courseName, createdAt")
+          .in("tripId", tripIds)
+          .order("createdAt", { ascending: false }),
       ]);
-      const t = (trips ?? [])[0];
-      if (!t) {
-        if (!cancelled) { setTour(null); setTourLoaded(true); }
+      const tripsArr = (trips ?? []) as any[];
+      if (tripsArr.length === 0) {
+        if (!cancelled) { setTours([]); setTourLoaded(true); }
         return;
       }
 
-      // Filter to just the rows belonging to the chosen trip.
-      const stopRows = (allStopRows ?? []).filter((s: any) => s.tripId === t.id);
-      const memberRows = (allMemberRows ?? []).filter((m: any) => m.tripId === t.id);
-
-      const courseIds = Array.from(new Set(stopRows.map((s: any) => s.courseId).filter(Boolean)));
-      const memberUserIds = Array.from(new Set(memberRows.map((m: any) => m.userId).filter(Boolean)));
+      const courseIds = Array.from(new Set((allStopRows ?? []).map((s: any) => s.courseId).filter(Boolean)));
+      const memberUserIds = Array.from(new Set((allMemberRows ?? []).map((m: any) => m.userId).filter(Boolean)));
 
       const [{ data: coursesRaw }, { data: usersRaw }] = await Promise.all([
         courseIds.length ? sb.from("Course").select("id, name, city, state, coverImageUrl, logoUrl, uploadCount").in("id", courseIds) : Promise.resolve({ data: [] as any[] }),
@@ -222,31 +234,33 @@ export default function HomeTour() {
       const courseById = new Map((coursesRaw ?? []).map((c: any) => [c.id, c]));
       const userById = new Map((usersRaw ?? []).map((u: any) => [u.id, u]));
 
-      const stops: Stop[] = (stopRows as any[])
-        .map((s) => ({
-          courseId: s.courseId,
-          playDate: s.playDate,
-          teeTime: s.teeTime,
-          sortOrder: s.sortOrder,
-          course: courseById.get(s.courseId),
-        }))
-        .filter((s) => s.course) as Stop[];
+      const builtTours: ActiveTour[] = tripsArr.map((t: any) => {
+        const stopRows = (allStopRows ?? []).filter((s: any) => s.tripId === t.id);
+        const memberRows = (allMemberRows ?? []).filter((m: any) => m.tripId === t.id);
+        const gameRows = (allGameRows ?? []).filter((g: any) => g.tripId === t.id);
 
-      const members: MemberLite[] = (memberRows as any[])
-        .map((m) => {
-          const u = userById.get(m.userId);
-          if (!u) return null;
-          return { userId: m.userId, displayName: u.displayName, username: u.username, avatarUrl: u.avatarUrl };
-        })
-        .filter(Boolean) as MemberLite[];
+        const stops: Stop[] = stopRows
+          .map((s: any) => ({
+            courseId: s.courseId,
+            playDate: s.playDate,
+            teeTime: s.teeTime,
+            sortOrder: s.sortOrder,
+            course: courseById.get(s.courseId),
+          }))
+          .filter((s: any) => s.course) as Stop[];
 
-      // Choose the "next up" course — first stop whose playDate is
-      // in the future (or has no playDate set). Falls back to first
-      // stop overall.
-      const next = stops.find((s: any) => !s.playDate || s.playDate >= todayIso) ?? stops[0] ?? null;
+        const members: MemberLite[] = memberRows
+          .map((m: any) => {
+            const u = userById.get(m.userId);
+            if (!u) return null;
+            return { userId: m.userId, displayName: u.displayName, username: u.username, avatarUrl: u.avatarUrl };
+          })
+          .filter(Boolean) as MemberLite[];
 
-      if (!cancelled) {
-        setTour({
+        const next = stops.find((s: any) => !s.playDate || s.playDate >= todayIso) ?? stops[0] ?? null;
+        const newestGame = gameRows[0];
+
+        return {
           id: t.id,
           name: t.name,
           startDate: t.startDate,
@@ -254,13 +268,19 @@ export default function HomeTour() {
           region: null,
           arrivalAirport: t.arrivalAirport,
           lodging: t.lodging,
-          lodgingCity: (t as any).lodgingCity ?? null,
-          lodgingState: (t as any).lodgingState ?? null,
+          lodgingCity: t.lodgingCity ?? null,
+          lodgingState: t.lodgingState ?? null,
           imageUrl: t.imageUrl,
           stops,
           members,
           nextStop: next,
-        });
+          game: newestGame ? { id: newestGame.id, format: newestGame.format, courseId: newestGame.courseId, courseName: newestGame.courseName } : null,
+          gameCount: gameRows.length,
+        };
+      });
+
+      if (!cancelled) {
+        setTours(builtTours);
         setTourLoaded(true);
       }
     })();
@@ -470,32 +490,39 @@ export default function HomeTour() {
           queried={nearMeQueried}
         />
 
-        {/* Your Tour — section is suppressed entirely until the tour
-            query has settled. User feedback: the shimmer skeleton
-            flashed for 1-2s on cold cell connections and read as a
-            "loading" state that shouldn't be there at all. Holding
-            the section back means there's a brief moment with no
-            YourTour content (label included), then the card or CTA
-            snaps in — preferable to the shimmer. */}
+        {/* Your Tour — horizontal scrolling rail of upcoming trips +
+            a final Plan-Another card. The previous 2-col grid only
+            ever showed the soonest trip; user feedback: "it should
+            be a scrolling [rail] so you can see everything you have
+            lined up with the last being plan another title".
+            Section is suppressed entirely until tour query has
+            settled to avoid skeleton flash. */}
         <section style={{ marginTop: 14, minHeight: tourLoaded ? undefined : 0 }}>
           {tourLoaded && <SectionLabel>Your Tour</SectionLabel>}
 
-          {showTour && tour && (
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.85fr) minmax(0, 1fr)", gap: 8 }}>
-              <YourTourCard
-                tour={tour}
-                // ?createGame=1 → the trip page auto-opens the
-                // CreateGameSheet on mount so users land directly in
-                // the game-setup flow.
-                onGame={() => router.push(`/trips/${tour.id}?createGame=1`)}
-                onTrip={() => router.push(`/trips/${tour.id}`)}
-                onStopTap={(id) => router.push(`/courses/${id}`)}
-              />
-              <PlanAnotherTile onClick={() => router.push("/tour?tab=trips")} />
+          {tourLoaded && tours.length > 0 && (
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch", marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, scrollSnapType: "x proximity" }}>
+              {tours.map((t) => (
+                <div key={t.id} style={{ flexShrink: 0, scrollSnapAlign: "start", width: t.stops.length <= 1 ? 232 : 286 }}>
+                  <YourTourCard
+                    tour={t}
+                    // ?createGame=1 → the trip page auto-opens the
+                    // CreateGameSheet on mount so users land directly
+                    // in the game-setup flow.
+                    onGame={() => router.push(`/trips/${t.id}?createGame=1`)}
+                    onOpenGame={(gameId) => router.push(`/trips/${t.id}?game=${gameId}`)}
+                    onTrip={() => router.push(`/trips/${t.id}`)}
+                    onStopTap={(id) => router.push(`/courses/${id}`)}
+                  />
+                </div>
+              ))}
+              <div style={{ flexShrink: 0, scrollSnapAlign: "start", width: 178 }}>
+                <PlanAnotherTile onClick={() => router.push("/tour?tab=trips")} />
+              </div>
             </div>
           )}
 
-          {showCTA && (
+          {tourLoaded && tours.length === 0 && (
             <PlannerCTA onClick={() => router.push("/tour?tab=trips")} />
           )}
         </section>
@@ -523,11 +550,13 @@ export default function HomeTour() {
 // PlanAnotherTile, not full-width.
 // ─────────────────────────────────────────────────────────────────────
 function YourTourCard({
-  tour, onGame, onTrip, onStopTap,
+  tour, onGame, onOpenGame, onTrip, onStopTap,
 }: {
   tour: ActiveTour;
   /** Opens the trip page with the game-creation sheet pre-opened. */
   onGame: () => void;
+  /** Opens the trip page deep-linked to the named game's sheet. */
+  onOpenGame: (gameId: string) => void;
   onTrip: () => void;
   /** Show a hover/tap popup for the stop's course details, instead of
    *  routing immediately. The actual route-to-course-profile happens
@@ -651,15 +680,77 @@ function YourTourCard({
         </div>
       )}
 
-      {/* Action row — single primary CTA, one line. Compact icon +
-          single line of copy ("Create a Game") so the cell fits in
-          the constrained 2-col grid without wrapping. */}
+      {/* Action row — two branches:
+            - Game already exists: surface a tease chip with the
+              game's format + course; tap = land on that game's
+              sheet. Right-side "+ game" pill adds another (no
+              full-width Create-a-Game button so the existing
+              game stays the visual lead).
+            - No game yet: full-width Create-a-Game CTA. */}
       <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2 }}>
-        <ActionCellSingle
-          title="Create a Game"
-          icon={<GameScorecardIcon color="#0c2218" />}
-          onClick={onGame}
-        />
+        {tour.game ? (
+          <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onOpenGame(tour.game!.id); }}
+              style={{
+                flex: 1, minWidth: 0,
+                padding: "8px 10px",
+                background: "rgba(77,168,98,0.14)",
+                border: "1px solid rgba(77,168,98,0.5)",
+                borderRadius: 10,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                textAlign: "left",
+              }}
+            >
+              <GameScorecardIcon color="#7ed28b" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
+                  {tour.gameCount > 1 ? `Latest of ${tour.gameCount} games` : "Game ready"}
+                </div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {gameFormatLabel(tour.game.format)} · {tour.game.courseName}
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onGame(); }}
+              aria-label="Add another game"
+              title="Add another game"
+              style={{
+                flexShrink: 0,
+                width: 38,
+                padding: 0,
+                background: "rgba(7,16,10,0.5)",
+                border: "1px solid rgba(77,168,98,0.4)",
+                borderRadius: 10,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+              }}
+            >
+              <GameScorecardIcon color="#7ed28b" />
+              {/* Plus glyph in the top-right corner so the icon reads
+                  as "add another game" rather than "open game". */}
+              <div style={{ position: "absolute", top: 2, right: 2, width: 12, height: 12, borderRadius: "50%", background: "#7ed28b", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0c1c13" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </div>
+            </button>
+          </div>
+        ) : (
+          <ActionCellSingle
+            title="Create a Game"
+            icon={<GameScorecardIcon color="#0c2218" />}
+            onClick={onGame}
+          />
+        )}
       </div>
 
       {/* Course popup — floating card anchored above the flag strip.
@@ -1269,28 +1360,57 @@ function ActionCellSingle({ title, icon, onClick }: {
       style={{
         width: "100%",
         padding: "10px 12px",
-        background: "#4da862",
-        border: "1px solid rgba(126,200,140,0.7)",
-        borderRadius: 3,
+        // Gradient + subtle inset highlight reads as a "premium pill"
+        // rather than a flat fill, so the Create-a-Game step on
+        // YourTour gets the inviting moment it deserves.
+        background: "linear-gradient(180deg, #5cbd75 0%, #3f9554 100%)",
+        border: "1px solid rgba(126,200,140,0.85)",
+        borderRadius: 10,
         cursor: "pointer",
         display: "flex",
         alignItems: "center",
-        gap: 8,
-        minHeight: 40,
+        gap: 10,
+        minHeight: 44,
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 0 rgba(0,0,0,0.18)",
       }}
     >
-      <div style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div style={{
+        width: 28, height: 28, borderRadius: 7,
+        background: "rgba(7,16,10,0.16)",
+        border: "1px solid rgba(7,16,10,0.22)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0,
+      }}>
         {icon}
       </div>
-      <div style={{
-        flex: 1, textAlign: "left",
-        fontFamily: "'Outfit', sans-serif",
-        fontSize: 13.5, fontWeight: 800,
-        color: "#0a1a10",
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-        letterSpacing: "0.01em",
-      }}>{title}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: 13.5, fontWeight: 800,
+          color: "#0a1a10",
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          letterSpacing: "0.01em",
+          lineHeight: 1.1,
+        }}>{title}</div>
+        <div style={{
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: 9.5, fontWeight: 600,
+          color: "rgba(10,26,16,0.62)",
+          marginTop: 1,
+          letterSpacing: "0.05em",
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        }}>Pick a format · auto strokes</div>
+      </div>
+      <ChevronRightDark />
     </button>
+  );
+}
+
+function ChevronRightDark() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0a1a10" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.55 }}>
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
   );
 }
 
