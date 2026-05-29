@@ -52,6 +52,68 @@ const FORMAT_NAMES: Record<string, string> = {
   scramble: "Scramble",
 };
 
+// Tolerant JSON extractor — strips ```json fences, drops any
+// preamble/postamble, and returns the largest valid {...} block.
+// Throws when nothing parseable is in the response.
+function parseLooseJson(raw: string): { rules?: string; tip?: string; shareText?: string } {
+  // Fence strip first (common Haiku output shape).
+  let s = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+  try { return JSON.parse(s); } catch { /* fall through */ }
+  // Find the largest top-level {...} substring.
+  const first = s.indexOf("{");
+  const last = s.lastIndexOf("}");
+  if (first >= 0 && last > first) {
+    const slice = s.slice(first, last + 1);
+    return JSON.parse(slice);
+  }
+  throw new Error("No JSON object found in LLM response");
+}
+
+// Deterministic minimal game sheet — used when the LLM call fails for
+// any reason. Keeps the round flow alive; the user can edit later.
+function buildFallbackSheet(args: {
+  courseName: string;
+  format: string;
+  formatConfig: Record<string, unknown>;
+  players: Array<{ displayName: string; courseHandicap: number; netStrokes: number; teamId: string }>;
+  teams: Array<{ name: string; playerIds: string[] }>;
+}): { rules: string; tip: string; shareText: string } {
+  const { courseName, format, formatConfig, players, teams } = args;
+  const formatName = FORMAT_NAMES[format] || format;
+
+  let stakesLine = "";
+  if (format === "nassau") {
+    stakesLine = `$${formatConfig.frontAmount} front 9 / $${formatConfig.backAmount} back 9 / $${formatConfig.totalAmount} overall.`;
+  } else if (format === "skins") {
+    stakesLine = `$${formatConfig.skinsAmount} per skin${formatConfig.carryover ? "; ties carry over" : ""}.`;
+  } else if (format === "stableford") {
+    stakesLine = `Scoring: bogey 1, par 2, birdie 3, eagle 4, albatross 5.`;
+  } else if (format === "best_ball") {
+    stakesLine = `Team best ball — lowest net score per hole counts.`;
+  } else if (format === "match_play") {
+    stakesLine = `Match play — win holes, halve ties.`;
+  } else if (format === "scramble") {
+    stakesLine = `Scramble — everyone hits, group plays the best ball.`;
+  }
+
+  const rules = `${formatName} at ${courseName}. ${stakesLine} Net strokes apply per each player's course handicap and stroke holes.`;
+  const tip = "Play your own ball straight and play it fast — pace matters more than perfection.";
+
+  const teamLines = teams.length > 0
+    ? teams.map(t => `${t.name}: ${t.playerIds.map(pid => players.find(p => (p as any).userId === pid)?.displayName || pid).join(" & ")}`).join("\n")
+    : "";
+  const playerLines = players.map(p => `${p.displayName} — net ${p.netStrokes}`).join("\n");
+  const shareText = [
+    `${courseName} — ${formatName}`,
+    stakesLine,
+    teamLines,
+    playerLines,
+    "Good luck out there.",
+  ].filter(Boolean).join("\n");
+
+  return { rules, tip, shareText };
+}
+
 function buildPrompt(data: {
   courseName: string;
   coursePar: number;
@@ -188,20 +250,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   let shareText = "";
   try {
     const response = await anthropic.messages.create({
-      // Haiku 4.5 is great for short structured-JSON game-sheet
-      // generation (rules + tip + share text) at ~5x lower cost than
-      // Sonnet. Sonnet stays only for the trip planner's multi-factor
-      // ranking, which actually needs the reasoning headroom.
+      // Haiku 4.5 handles short structured-JSON game-sheet generation
+      // (rules + tip + share text) at ~5x lower cost than Sonnet.
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
       messages: [{ role: "user", content: prompt }],
     });
     const rawText = response.content[0].type === "text" ? response.content[0].text : "{}";
-    const parsed = JSON.parse(rawText);
+    // Tolerant parse: Haiku occasionally wraps output in ```json fences
+    // OR adds a preamble despite the prompt asking for raw JSON. Strip
+    // common fence shapes first, then fall back to extracting the
+    // largest {...} block in the response.
+    const parsed = parseLooseJson(rawText);
     gameSheet = JSON.stringify({ rules: parsed.rules || "", tip: parsed.tip || "" });
     shareText = parsed.shareText || rawText;
   } catch (e) {
-    return NextResponse.json({ error: "Failed to generate game sheet" }, { status: 500 });
+    // Don't fail the request just because the LLM hiccuped. Fall back
+    // to a deterministic minimal game sheet so the round still
+    // creates and the user can play. The fallback is built from the
+    // same structured data we already have — accurate, just lacking
+    // Claude's flourish.
+    console.error("game-sheet LLM failed, using fallback:", e);
+    const fallback = buildFallbackSheet({ courseName, format, formatConfig, players: enrichedPlayers, teams });
+    gameSheet = JSON.stringify({ rules: fallback.rules, tip: fallback.tip });
+    shareText = fallback.shareText;
   }
 
   // Save hole handicaps to Hole table
