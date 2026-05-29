@@ -69,24 +69,38 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: `Lodging search failed: ${(e as Error).message}` }, { status: 502 });
   }
 
-  // Filter to lodging-only results. Earlier this also let
-  // `class === "amenity"` through, which surfaced churches /
-  // restaurants / community centers whenever a query loosely
-  // matched their name ("Alpine Village" → "Alpine Village
-  // Baptist Church"). Tightened to `class === "tourism"` plus
-  // an explicit lodging-type whitelist.
+  // Filter: keep the broad set of lodging-shaped results — Nominatim
+  // tags real condos / lodges inconsistently across class buckets
+  // (tourism, leisure, building, even amenity). Instead of a class
+  // whitelist (which lost real Alpine-Village-style condos to the
+  // void), exclude the type-buckets we KNOW are wrong: places of
+  // worship, schools, restaurants, retail, etc.
   const LODGING_TYPES = new Set([
     "hotel", "motel", "resort", "guest_house", "guesthouse", "hostel",
-    "chalet", "apartment", "bed_and_breakfast", "lodging", "alpine_hut",
-    "camp_site", "caravan_site", "wilderness_hut",
+    "chalet", "apartment", "apartments", "bed_and_breakfast", "lodging",
+    "alpine_hut", "camp_site", "caravan_site", "wilderness_hut",
+    "condominium", "condominiums",
+  ]);
+  const EXCLUDED_TYPES = new Set([
+    "church", "place_of_worship", "chapel", "cathedral", "mosque", "synagogue", "temple",
+    "school", "kindergarten", "university", "college",
+    "restaurant", "fast_food", "cafe", "bar", "pub", "biergarten",
+    "bank", "atm", "fuel", "pharmacy", "hospital", "clinic", "doctors", "dentist",
+    "library", "museum", "theatre", "cinema",
+    "post_office", "police", "fire_station", "townhall",
+    "supermarket", "marketplace", "convenience",
   ]);
 
   const results: LodgingHit[] = hits
     .filter((h) => {
       const t = (h.type || "").toLowerCase();
       const c = (h.class || "").toLowerCase();
-      // Lodging-only — never let amenity-class results through.
-      return LODGING_TYPES.has(t) || c === "tourism";
+      if (EXCLUDED_TYPES.has(t)) return false;
+      // Explicit lodging types always pass.
+      if (LODGING_TYPES.has(t)) return true;
+      // Broad classes that legitimately contain condos / lodges /
+      // rentals across Nominatim's data.
+      return c === "tourism" || c === "leisure" || c === "building" || c === "amenity";
     })
     .slice(0, 8)
     .map((h) => {

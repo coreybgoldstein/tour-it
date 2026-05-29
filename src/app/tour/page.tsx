@@ -75,6 +75,25 @@ function TourPageInner() {
   const [smartExplanation, setSmartExplanation] = useState<string>("");
   const smartDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Recent NL queries (top 3) persisted to localStorage. Distinct
+  // from the legacy `recentSearches` state above (which stored
+  // recent Course objects for the old per-tab UI — now unused but
+  // kept around because some legacy render branches still reference
+  // it). This array holds raw query strings for the new unified
+  // Smart search empty state.
+  const [recentQueries, setRecentQueries] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tourit-recent-searches");
+      if (raw) setRecentQueries(JSON.parse(raw).slice(0, 3));
+    } catch {}
+  }, []);
+
+  // (Popular + Near Me fetches live inside TourEmptyState — they
+  // only matter on the empty-query state, so colocating them avoids
+  // running them when the user lands on /tour?tab=people from a
+  // legacy deep-link and just bypasses the empty state.)
+
   // Near-Me state for the empty search state. Beta feedback: Leslie
   // didn't know any local courses, didn't know her ZIP when traveling,
   // and wanted "use my location" right on the search page. Mirrors the
@@ -442,6 +461,16 @@ function TourPageInner() {
         if (!res.ok) throw new Error(data?.error ?? `Search failed (${res.status})`);
         setSmartResults(data.results ?? []);
         setSmartExplanation(data.explanation ?? "");
+        // Persist the query as a recent search — only when results
+        // came back so we don't pollute the rail with typos. Dedupe +
+        // cap to 3, most-recent-first.
+        if ((data.results ?? []).length > 0) {
+          setRecentQueries((prev) => {
+            const next = [q, ...prev.filter((r) => r.toLowerCase() !== q.toLowerCase())].slice(0, 3);
+            try { localStorage.setItem("tourit-recent-searches", JSON.stringify(next)); } catch {}
+            return next;
+          });
+        }
       } catch (e: any) {
         setSmartExplanation(e?.message ?? "Smart search is offline.");
         setSmartResults([]);
@@ -680,10 +709,15 @@ function TourPageInner() {
         /* Bottom-sheet styles (.tourit-sheet, .tourit-sheet-backdrop,
            .tourit-sheet-grip, .tourit-sheet-footer) live in globals.css
            so every sheet across the app stays uniform. */
-        .search-box { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 15px 18px; transition: border-color 0.2s, box-shadow 0.2s; }
-        .search-box.focused { border-color: rgba(77,168,98,0.5); box-shadow: 0 0 0 4px rgba(77,168,98,0.07); }
-        .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Outfit', sans-serif; font-size: 16px; color: #fff; }
-        .search-input::placeholder { color: rgba(255,255,255,0.22); }
+        /* Search box mirrors the home "Tour It All" hero: green-rim
+           glow, italic Playfair serif input, the small Outfit subtitle
+           below it. Tighter padding so it sits compactly against the
+           recent / near / popular sections below. */
+        .search-box { display: flex; align-items: center; gap: 10px; background: rgba(7,30,15,0.85); border: 1px solid rgba(77,168,98,0.55); border-radius: 12px; padding: 11px 16px; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 0 0 1px rgba(77,168,98,0.2), 0 0 18px rgba(77,168,98,0.18); }
+        .search-box.focused { border-color: rgba(77,168,98,0.85); box-shadow: 0 0 0 1px rgba(77,168,98,0.4), 0 0 22px rgba(77,168,98,0.25); }
+        .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; font-weight: 800; color: #4da862; letter-spacing: 0.01em; }
+        .search-input::placeholder { color: rgba(77,168,98,0.55); font-style: italic; }
+        .search-subtitle { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 500; color: rgba(126,200,140,0.7); letter-spacing: 0.04em; margin-top: 6px; padding-left: 4px; }
         .clear-btn { background: rgba(255,255,255,0.08); border: none; cursor: pointer; color: rgba(255,255,255,0.5); border-radius: 99px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .section-label { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 10px; margin-top: 24px; }
         .course-row { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: opacity 0.15s; }
@@ -735,7 +769,7 @@ function TourPageInner() {
             </button>
           </div>
           <div className={`search-box ${focused ? "focused" : ""}`}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <input
@@ -749,7 +783,7 @@ function TourPageInner() {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onKeyDown={e => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
-              placeholder="Search courses, trips, golfers — try 'links near LAX' or '4-day buddy trip'"
+              placeholder="Tour It All"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -764,6 +798,12 @@ function TourPageInner() {
               </button>
             )}
           </div>
+          {/* Search subtitle — same Outfit caption as the home Tour
+              It All button, so the visual scope is consistent across
+              both entry points. */}
+          {!query && (
+            <div className="search-subtitle">courses · holes · trips · golfers</div>
+          )}
 
           {/* Tab row hidden 2026-05-29 — user feedback: "no need for
               toggling, all function of searching under one house."
@@ -794,16 +834,19 @@ function TourPageInner() {
                 Thinking…
               </div>
             )}
+            {/* Empty-query state (no examples / instructional copy —
+                user feedback: "let user be intuitive"). Three tight
+                discovery blocks: recent searches, courses near me,
+                popular courses. Each pulls from its own state /
+                effect; sections that have no data hide themselves so
+                a brand-new user never sees empty rails. */}
             {!smartLoading && !query.trim() && (
-              <div style={{ padding: "12px 16px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.55 }}>
-                Type what you want. The AI figures out whether you mean a course, a trip, or both. Examples:
-                <ul style={{ paddingLeft: 18, marginTop: 8, color: "rgba(255,255,255,0.5)" }}>
-                  <li><em>links courses near LAX</em></li>
-                  <li><em>4-day buddy trip in March with good bars</em></li>
-                  <li><em>Donald Ross courses in NC</em></li>
-                  <li><em>cheap public golf in Vegas</em></li>
-                </ul>
-              </div>
+              <TourEmptyState
+                recent={recentQueries}
+                onPickRecent={(q) => setQuery(q)}
+                onClearRecents={() => { setRecentQueries([]); try { localStorage.removeItem("tourit-recent-searches"); } catch {} }}
+                router={router}
+              />
             )}
             {!smartLoading && smartExplanation && (
               <div style={{ padding: "6px 16px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(244,236,214,0.55)", fontStyle: "italic" }}>
@@ -1550,6 +1593,165 @@ type TourIdea = {
   bestSeasonStart: number;
   bestSeasonEnd: number;
 };
+
+// ────────────────────────────────────────────────────────────────────
+// TourEmptyState — shown on /tour when the smart query is empty.
+// Three tight blocks (Recent / Near Me / Popular). Each hides when
+// it has no data so a brand-new user never sees skeleton rails.
+// ────────────────────────────────────────────────────────────────────
+
+type TourEmptyStateProps = {
+  recent: string[];
+  onPickRecent: (q: string) => void;
+  onClearRecents: () => void;
+  router: ReturnType<typeof useRouter>;
+};
+
+type TourCourseLite = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null; coverImageUrl: string | null; uploadCount: number };
+
+function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEmptyStateProps) {
+  const [nearMe, setNearMe] = useState<TourCourseLite[]>([]);
+  const [popular, setPopular] = useState<TourCourseLite[]>([]);
+  const [locStatus, setLocStatus] = useState<"unknown" | "loading" | "granted" | "denied">("unknown");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const sb = createClient();
+      const { data } = await sb
+        .from("Course")
+        .select("id, name, city, state, logoUrl, coverImageUrl, uploadCount")
+        .order("uploadCount", { ascending: false, nullsFirst: false })
+        .limit(20);
+      if (!cancelled) setPopular((data ?? []) as TourCourseLite[]);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem("tourit-loc-coords");
+      if (!cached) return;
+      const { lat, lng, ts } = JSON.parse(cached);
+      if (Date.now() - ts < 3_600_000) {
+        setLocStatus("granted");
+        fetchNearMe(lat, lng);
+      }
+    } catch {}
+  }, []);
+
+  async function fetchNearMe(lat: number, lng: number) {
+    const sb = createClient();
+    const radiusMiles = 50;
+    const deg = radiusMiles / 69;
+    const lngDeg = deg / Math.cos((lat * Math.PI) / 180);
+    const { data } = await sb
+      .from("Course")
+      .select("id, name, city, state, logoUrl, coverImageUrl, uploadCount, latitude, longitude")
+      .gte("latitude", lat - deg).lte("latitude", lat + deg)
+      .gte("longitude", lng - lngDeg).lte("longitude", lng + lngDeg)
+      .order("uploadCount", { ascending: false, nullsFirst: false })
+      .limit(3);
+    setNearMe((data ?? []) as TourCourseLite[]);
+  }
+
+  function enableLocation() {
+    if (!("geolocation" in navigator)) { setLocStatus("denied"); return; }
+    setLocStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        try { sessionStorage.setItem("tourit-loc-coords", JSON.stringify({ lat, lng, ts: Date.now() })); } catch {}
+        setLocStatus("granted");
+        fetchNearMe(lat, lng);
+      },
+      () => setLocStatus("denied"),
+      { timeout: 8000 }
+    );
+  }
+
+  return (
+    <div style={{ padding: "12px 16px 0" }}>
+      {recent.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Recent</div>
+            <button onClick={onClearRecents} style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.35)", cursor: "pointer" }}>Clear</button>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {recent.map((q) => (
+              <button
+                key={q}
+                onClick={() => onPickRecent(q)}
+                style={{ background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 99, padding: "5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(126,200,140,0.95)", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Near you</div>
+        {locStatus !== "granted" && (
+          <button
+            onClick={enableLocation}
+            disabled={locStatus === "loading"}
+            style={{ width: "100%", padding: "9px 12px", borderRadius: 10, background: "rgba(244,236,214,0.02)", border: "1px solid rgba(255,255,255,0.08)", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 7 }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+            {locStatus === "loading" ? "Finding you…" : locStatus === "denied" ? "Location blocked — tap to retry" : "Enable location to see nearby courses"}
+          </button>
+        )}
+        {locStatus === "granted" && nearMe.length > 0 && (
+          <div>
+            {nearMe.map((c) => <TourCourseRow key={c.id} course={c} onClick={() => router.push(`/courses/${c.id}`)} />)}
+          </div>
+        )}
+        {locStatus === "granted" && nearMe.length === 0 && (
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", padding: "6px 4px" }}>No courses within 50 miles.</div>
+        )}
+      </div>
+
+      {popular.length > 0 && (
+        <div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Popular</div>
+          <div>
+            {popular.map((c) => <TourCourseRow key={c.id} course={c} onClick={() => router.push(`/courses/${c.id}`)} />)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TourCourseRow({ course, onClick }: { course: TourCourseLite; onClick: () => void }) {
+  const logo = course.logoUrl ? cdnImage(course.logoUrl) : null;
+  return (
+    <button
+      onClick={onClick}
+      style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "transparent", border: "none", borderTop: 0, borderLeft: 0, borderRight: 0, cursor: "pointer", textAlign: "left", width: "100%" }}
+    >
+      <div style={{ width: 38, height: 38, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.45)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 3, flexShrink: 0 }}>
+        {logo
+          ? <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{course.name.slice(0, 2).toUpperCase()}</span>
+        }
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{course.name}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{[course.city, course.state].filter(Boolean).join(", ")}</div>
+      </div>
+      {!!course.uploadCount && course.uploadCount > 0 && (
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 700, color: "#4da862", flexShrink: 0 }}>
+          {course.uploadCount} {course.uploadCount === 1 ? "clip" : "clips"}
+        </span>
+      )}
+    </button>
+  );
+}
 
 function TourWhereToNext() {
   const router = useRouter();
