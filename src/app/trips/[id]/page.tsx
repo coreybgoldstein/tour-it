@@ -10,6 +10,8 @@ import { getVideoSrc } from "@/lib/getVideoSrc";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
 import TripNotes from "@/components/TripNotes";
+import AirportField from "@/components/AirportField";
+import LodgingField from "@/components/LodgingField";
 import Toast, { type ToastState } from "@/components/Toast";
 import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER } from "@/lib/gameFormats";
 import { cdnImage } from "@/lib/cdnImage";
@@ -2456,14 +2458,18 @@ export default function TripPage() {
                 <input value={editDesc} onChange={e => setEditDesc(e.target.value)} placeholder={`What's this ${flavor} about?`} style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
               </div>
               {flavor === "trip" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   <div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Flying into</div>
-                    <input value={editAirport} onChange={e => setEditAirport(e.target.value)} placeholder="e.g. RDU" style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                    <AirportField value={editAirport} onChange={setEditAirport} />
                   </div>
                   <div>
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Lodging</div>
-                    <input value={editLodging} onChange={e => setEditLodging(e.target.value)} placeholder="Hotel or rental" style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }} />
+                    <LodgingField
+                      value={editLodging}
+                      onChange={setEditLodging}
+                      stateHint={tripCourses[0]?.course?.state ?? undefined}
+                    />
                   </div>
                 </div>
               )}

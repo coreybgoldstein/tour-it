@@ -10,6 +10,8 @@ import Toast, { type ToastState } from "@/components/Toast";
 import { sendPushToUser } from "@/lib/sendPush";
 import { gameFormatLabel } from "@/lib/gameFormats";
 import { cdnImage } from "@/lib/cdnImage";
+import AirportField from "@/components/AirportField";
+import LodgingField from "@/components/LodgingField";
 
 type CourseSearchRow = { id: string; name: string; city: string | null; state: string | null; logoUrl: string | null };
 type FriendRow = { id: string; username: string; displayName: string | null; avatarUrl: string | null };
@@ -1137,26 +1139,18 @@ export default function TeeUpPage() {
               </div>
             </div>
 
-            {/* Flying-into + lodging — optional but lets the trip detail
-                page show real logistics from minute one. */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
+            {/* Flying-into + lodging — search-as-you-type pickers so we
+                land canonical airport codes + real hotel names instead
+                of free-text inconsistencies. Stack vertically so each
+                dropdown has room to render. */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 22 }}>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Flying into</div>
-                <input
-                  value={newTripAirport}
-                  onChange={e => setNewTripAirport(e.target.value)}
-                  placeholder="e.g. RDU"
-                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
-                />
+                <AirportField value={newTripAirport} onChange={setNewTripAirport} />
               </div>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Lodging</div>
-                <input
-                  value={newTripLodging}
-                  onChange={e => setNewTripLodging(e.target.value)}
-                  placeholder="Hotel or rental"
-                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "11px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
-                />
+                <LodgingField value={newTripLodging} onChange={setNewTripLodging} />
               </div>
             </div>
 
