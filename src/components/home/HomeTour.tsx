@@ -131,11 +131,11 @@ export default function HomeTour() {
   // because a buddy who got invited to Bethpage Saturday should also
   // see "Your Tour" at the top.
   //
-  // Round-trip reduction: memberships query is fired in parallel with
-  // the trip query — we don't actually need the full membership list
-  // before we can ask the DB for matching trips. The inner-join filter
-  // on the GolfTrip query does the same exclusion the in() did, in one
-  // hop instead of two.
+  // 3-step query (memberships → trip → stops+members). A single
+  // inner-join query LOOKED like a win for round-trip count but the
+  // !inner filter on the embedded GolfTripMember table behaved
+  // inconsistently and returned no trips at all on real prod data —
+  // reverted to this conservative sequential pattern that ships.
   useEffect(() => {
     if (!authResolved || !userId) { setTourLoaded(true); return; }
     let cancelled = false;
@@ -143,36 +143,44 @@ export default function HomeTour() {
       const sb = createClient();
       const todayIso = new Date().toISOString().slice(0, 10);
 
-      // Single combined query: pull the soonest active trip the user
-      // is a member of, joining stops + members in the same round-
-      // trip. The !inner join on GolfTripMember filters to trips the
-      // user belongs to without a separate membership fetch.
+      // 1) Trips the user belongs to (creator OR member). The creator
+      //    also has a membership row, so this catches both.
+      const { data: memberships } = await sb
+        .from("GolfTripMember")
+        .select("tripId")
+        .eq("userId", userId);
+      const tripIds = (memberships ?? []).map((m: any) => m.tripId);
+      if (tripIds.length === 0) {
+        if (!cancelled) { setTour(null); setTourLoaded(true); }
+        return;
+      }
+
+      // 2) Soonest one whose endDate is in the future (or null — i.e.
+      //    a brand-new trip without the welcome flow completed yet).
       const { data: trips } = await sb
         .from("GolfTrip")
-        .select(`
-          id, name, startDate, endDate, arrivalAirport, lodging, imageUrl,
-          members:GolfTripMember!inner(userId, user:User!GolfTripMember_userId_fkey(displayName, username, avatarUrl)),
-          stops:GolfTripCourse(courseId, playDate, sortOrder, course:Course!GolfTripCourse_courseId_fkey(id, name, city, state, coverImageUrl, logoUrl, uploadCount))
-        `)
-        .eq("members.userId", userId)
+        .select("id, name, startDate, endDate, arrivalAirport, lodging, imageUrl")
+        .in("id", tripIds)
         .or(`endDate.gte.${todayIso},endDate.is.null`)
         .order("startDate", { ascending: true, nullsFirst: false })
         .order("createdAt", { ascending: false })
         .limit(1);
-      const t: any = (trips ?? [])[0];
+      const t = (trips ?? [])[0];
       if (!t) {
         if (!cancelled) { setTour(null); setTourLoaded(true); }
         return;
       }
 
-      // The !inner join only returned the requesting user's membership
-      // row — re-fetch the full member list for display. Fire after
-      // we know we have a trip; cheaper than fetching for a no-op.
-      const { data: membersRaw } = await sb
-        .from("GolfTripMember")
-        .select("userId, user:User!GolfTripMember_userId_fkey(displayName, username, avatarUrl)")
-        .eq("tripId", t.id);
-      const stopsRaw = t.stops;
+      // 3) Stops + full member list in parallel.
+      const [{ data: stopsRaw }, { data: membersRaw }] = await Promise.all([
+        sb.from("GolfTripCourse")
+          .select("courseId, playDate, sortOrder, course:Course!GolfTripCourse_courseId_fkey(id, name, city, state, coverImageUrl, logoUrl, uploadCount)")
+          .eq("tripId", t.id)
+          .order("sortOrder", { ascending: true }),
+        sb.from("GolfTripMember")
+          .select("userId, user:User!GolfTripMember_userId_fkey(displayName, username, avatarUrl)")
+          .eq("tripId", t.id),
+      ]);
 
       // Supabase types the FK join as an array even when 1:1, so
       // normalize both shapes before consuming.
@@ -633,43 +641,43 @@ function TourSkeleton() {
 
 // ─────────────────────────────────────────────────────────────────────
 // PlannerCTA — empty state. Bundles "and line up the game" into the
-// subtext so users discover Tee Up from the first touch.
+// subtext so users discover Tee Up from the first touch. NOTE: the
+// caller (HomeTour) already wraps this in its own <section> with a
+// "Your Tour" SectionLabel — we render JUST the button here so the
+// label doesn't double up.
 // ─────────────────────────────────────────────────────────────────────
 function PlannerCTA({ onClick }: { onClick: () => void }) {
   return (
-    <section style={{ marginTop: 24 }}>
-      <SectionLabel>Your Tour</SectionLabel>
-      <button
-        onClick={onClick}
-        style={{
-          width: "100%",
-          padding: "18px 16px",
-          background: "linear-gradient(135deg, rgba(45,122,66,0.95) 0%, rgba(77,168,98,0.82) 100%)",
-          border: "1px solid rgba(77,168,98,0.55)",
-          borderRadius: 16,
-          cursor: "pointer",
-          textAlign: "left",
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          color: "#fff",
-          fontFamily: "'Outfit', sans-serif",
-        }}
-      >
-        <div style={{ width: 46, height: 46, borderRadius: 12, background: "rgba(7,16,10,0.45)", border: "1px solid rgba(244,236,214,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <SparkleIcon />
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        padding: "18px 16px",
+        background: "linear-gradient(135deg, rgba(45,122,66,0.95) 0%, rgba(77,168,98,0.82) 100%)",
+        border: "1px solid rgba(77,168,98,0.55)",
+        borderRadius: 16,
+        cursor: "pointer",
+        textAlign: "left",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        color: "#fff",
+        fontFamily: "'Outfit', sans-serif",
+      }}
+    >
+      <div style={{ width: 46, height: 46, borderRadius: 12, background: "rgba(7,16,10,0.45)", border: "1px solid rgba(244,236,214,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <SparkleIcon />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 19, lineHeight: 1.15, marginBottom: 3 }}>
+          Plan your next round or trip
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 19, lineHeight: 1.15, marginBottom: 3 }}>
-            Plan your next round or trip
-          </div>
-          <div style={{ fontSize: 12, opacity: 0.88, lineHeight: 1.4 }}>
-            Tell us your crew and dates. We'll build the tour and line up the game.
-          </div>
+        <div style={{ fontSize: 12, opacity: 0.88, lineHeight: 1.4 }}>
+          Tell us your crew and dates. We&apos;ll build the tour and line up the game.
         </div>
-        <ChevronRight />
-      </button>
-    </section>
+      </div>
+      <ChevronRight />
+    </button>
   );
 }
 
