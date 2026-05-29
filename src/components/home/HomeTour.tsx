@@ -55,7 +55,7 @@ type MemberLite = {
   avatarUrl: string | null;
 };
 
-type Stop = { courseId: string; sortOrder: number; course: CourseLite };
+type Stop = { courseId: string; sortOrder: number; course: CourseLite; playDate?: string | null; teeTime?: string | null };
 
 type ActiveTour = {
   id: string;
@@ -183,7 +183,7 @@ export default function HomeTour() {
       //    "Round" even on Caddy Daddy-style multi-stop trips.
       const [{ data: stopRows }, { data: memberRows }] = await Promise.all([
         sb.from("GolfTripCourse")
-          .select("courseId, playDate, sortOrder")
+          .select("courseId, playDate, teeTime, sortOrder")
           .eq("tripId", t.id)
           .order("sortOrder", { ascending: true }),
         sb.from("GolfTripMember")
@@ -206,6 +206,7 @@ export default function HomeTour() {
         .map((s) => ({
           courseId: s.courseId,
           playDate: s.playDate,
+          teeTime: s.teeTime,
           sortOrder: s.sortOrder,
           course: courseById.get(s.courseId),
         }))
@@ -727,15 +728,12 @@ function PlanAnotherTile({ onClick }: { onClick: () => void }) {
 
       {/* Foreground content sits above the route illustration */}
       <div style={{ position: "relative", display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between", gap: 8 }}>
-        {/* Tee-with-flag glyph — replaces the sparkle/AI star. Uses
-            the same green-stroke aesthetic as the rest of the home
-            icons so it doesn't read as a generic AI feature. */}
-        <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 22h14" />
-            <path d="M12 22 Q 8 16 12 8" />
-            <path d="M12 8 L19 5 L12 2 Z" fill="#d4a017" stroke="#d4a017" />
-          </svg>
+        {/* Tour It pin — the brand mark used in the top bar. Replaces
+            the cartoon flag glyph. No tinted background container; the
+            pin sits cleanly on the gradient like a watermark/medallion. */}
+        <div style={{ width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/tour-it-pin.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} />
         </div>
         <div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>
@@ -1088,7 +1086,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                 <div style={{
                   width: 34, height: 34, borderRadius: 8,
                   background: t.courseLogo ? "rgba(255,255,255,0.96)" : "rgba(10,28,18,0.96)",
-                  border: "1px solid rgba(255,255,255,0.85)",
+                  border: "0.5px solid rgba(255,255,255,0.55)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden",
                   boxShadow: "0 2px 6px rgba(0,0,0,0.45)",
@@ -1448,7 +1446,25 @@ function formatNextUpDate(tour: ActiveTour, next: Stop | null): string {
   const iso = tour.startDate || (next as any)?.playDate || null;
   if (!iso) return "Soon";
   const d = new Date(iso + "T00:00:00Z");
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  const dateStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+
+  // Append tee time when the "next up" stop has one set. Format
+  // "HH:MM" → "h:mm AM/PM" so 07:30 → "7:30 AM". The teeTime column
+  // is a free-form string, so we only format when it matches HH:MM.
+  const tee = (next as any)?.teeTime as string | null | undefined;
+  if (tee) {
+    const m = tee.match(/^(\d{1,2}):(\d{2})/);
+    if (m) {
+      let hh = parseInt(m[1], 10);
+      const mm = m[2];
+      const ampm = hh >= 12 ? "PM" : "AM";
+      hh = hh % 12 || 12;
+      return `${dateStr} · ${hh}:${mm} ${ampm}`;
+    }
+    // Non-HH:MM strings — show as-is.
+    return `${dateStr} · ${tee}`;
+  }
+  return dateStr;
 }
 
 function tripContextLabel(tour: ActiveTour): string {
