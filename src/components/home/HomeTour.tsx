@@ -370,29 +370,34 @@ export default function HomeTour() {
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 96, paddingLeft: isDesktop ? 72 : 0 }}>
       <MayCompetitionBanner />
 
-      <div style={{ padding: "8px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
+      <div style={{ padding: "10px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
 
-        {/* Search — entry to Scout. Green glow matches the previous
-            HomeClassic search bar so the visual continuity holds. */}
+        {/* Unified entry — routes to /tour with the Smart (LLM)
+            tab pre-selected. "Tour It All" plays on the brand and
+            signals the unified scope (courses + trips). Bolder
+            italic-serif copy reads as a hero CTA, not a form input. */}
         <button
-          onClick={() => router.push("/tour")}
-          aria-label="Find a course"
+          onClick={() => router.push("/tour?tab=smart")}
+          aria-label="Tour It All"
           style={{
             width: "100%",
             display: "flex", alignItems: "center", gap: 10,
             background: "rgba(7,30,15,0.85)",
             border: "1px solid rgba(77,168,98,0.55)",
             borderRadius: 12,
-            padding: "13px 16px",
+            padding: "12px 16px",
             cursor: "pointer",
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Playfair Display', serif",
+            fontStyle: "italic",
             color: "#4da862",
-            fontSize: 14,
+            fontSize: 17,
+            fontWeight: 800,
+            letterSpacing: "0.01em",
             boxShadow: "0 0 0 1px rgba(77,168,98,0.2), 0 0 18px rgba(77,168,98,0.18)",
           }}
         >
           <SearchIcon />
-          Find a course — name, city, or state
+          Tour It All
         </button>
 
         {/* Courses Near Me */}
@@ -918,6 +923,10 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
       <div style={{ marginBottom: 10 }}>
         <SectionLabel>Tour the Feed</SectionLabel>
       </div>
+      {/* Card sizing + border match HomeClassic.feed-peek-card
+          exactly — the user wanted "the same style with overlay as
+          before we made all these renovations". 96px wide, 9:16
+          aspect, hairline green border, no drop shadow. */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, WebkitOverflowScrolling: "touch", marginRight: -16, paddingRight: 16 }}>
         {teasers.map((t) => (
           <button
@@ -925,16 +934,15 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
             onClick={() => onTap(t.id)}
             style={{
               flexShrink: 0,
-              width: 150,
+              width: 96,
               aspectRatio: "9 / 16",
               borderRadius: 12,
               overflow: "hidden",
-              border: "1px solid rgba(77,168,98,0.18)",
+              border: "1px solid rgba(26,158,66,0.12)",
               padding: 0,
-              background: "#0c1c13",
+              background: "rgba(10,28,18,0.95)",
               position: "relative",
               cursor: "pointer",
-              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
             }}
           >
             {t.thumbnail && (
@@ -942,16 +950,16 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
               <img src={t.thumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             )}
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(7,16,10,0.92))" }} />
-            <div style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%,-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(77,168,98,0.92)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
+            <div style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%,-50%)", width: 26, height: 26, borderRadius: "50%", background: "rgba(77,168,98,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <PlayIcon />
             </div>
-            <div style={{ position: "absolute", left: 9, right: 9, bottom: 9, textAlign: "left" }}>
+            <div style={{ position: "absolute", left: 7, right: 7, bottom: 7, textAlign: "left" }}>
               {t.holeNumber && (
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: "#4da862", marginBottom: 2 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#4da862", marginBottom: 1 }}>
                   HOLE {t.holeNumber}{t.shotType ? ` · ${t.shotType.toUpperCase()}` : ""}
                 </div>
               )}
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                 {t.courseName}
               </div>
             </div>
@@ -1015,7 +1023,7 @@ function ActionCell({ label, title, icon, variant, onClick }: {
     <button
       onClick={onClick}
       style={{
-        padding: "11px 12px 12px",
+        padding: "9px 10px 10px",
         background: isPrimary ? "#4da862" : "rgba(244,236,214,0.025)",
         border: isPrimary ? "1px solid rgba(126,200,140,0.7)" : "1px solid rgba(255,255,255,0.1)",
         borderRadius: 3,
@@ -1023,18 +1031,19 @@ function ActionCell({ label, title, icon, variant, onClick }: {
         textAlign: "left",
         display: "flex",
         alignItems: "center",
-        gap: 10,
-        minHeight: 56,
+        gap: 8,
+        minHeight: 52,
+        minWidth: 0,
       }}
     >
-      <div style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         {icon}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontFamily: "'Playfair Display', serif",
           fontStyle: "italic",
-          fontSize: 10,
+          fontSize: 9.5,
           fontWeight: 700,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
@@ -1043,13 +1052,14 @@ function ActionCell({ label, title, icon, variant, onClick }: {
         }}>{label}</div>
         <div style={{
           fontFamily: "'Outfit', sans-serif",
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: 700,
           color: isPrimary ? "#0a1a10" : "#fff",
           lineHeight: 1.15,
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
+          // Wrap is allowed — short copy ("Create a game", "The holes")
+          // looked great on iPhone Pro Max but clipped on smaller
+          // screens once the YourTour card sat in a 2-col grid with
+          // PlanAnother. wrap > ellipsis here.
         }}>{title}</div>
       </div>
     </button>
@@ -1198,7 +1208,7 @@ function ChevronRight() {
 }
 function PlayIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 2 }}>
+    <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 1 }}>
       <polygon points="6 4 20 12 6 20 6 4" />
     </svg>
   );
