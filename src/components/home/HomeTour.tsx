@@ -1245,7 +1245,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                 position: "absolute", left: 0, right: 0, top: 6, display: "flex", justifyContent: "center",
               }}>
                 <div style={{
-                  width: 34, height: 34, borderRadius: 14,
+                  width: 34, height: 34, borderRadius: 8,
                   background: t.courseLogo ? "rgba(255,255,255,0.96)" : "rgba(10,28,18,0.96)",
                   border: "0.5px solid rgba(255,255,255,0.55)",
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -1254,7 +1254,11 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                 }}>
                   {t.courseLogo ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={t.courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 3 }} />
+                    // Inner img gets its own borderRadius so logos with
+                    // dark backgrounds (e.g. Coyote Moon's black bg)
+                    // don't reveal hard square corners against the
+                    // white badge frame.
+                    <img src={t.courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 3, borderRadius: 5 }} />
                   ) : (
                     <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 13, fontWeight: 800, color: "#4da862", letterSpacing: "0.04em" }}>
                       {initials || "TI"}
