@@ -13,7 +13,7 @@ import TripNotes from "@/components/TripNotes";
 import AirportField from "@/components/AirportField";
 import LodgingField from "@/components/LodgingField";
 import Toast, { type ToastState } from "@/components/Toast";
-import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER } from "@/lib/gameFormats";
+import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER, MULTI_SEGMENT_FORMATS as SHARED_MULTI_SEGMENT } from "@/lib/gameFormats";
 import { cdnImage } from "@/lib/cdnImage";
 
 type Trip = {
@@ -100,6 +100,7 @@ const HOLE_PICKED_FORMATS = SHARED_HOLE_PICKED;
 // On settle, the winning team takes the pot from the losing team(s),
 // split per teammate.
 const TEAM_WAGER_FORMATS = SHARED_TEAM_WAGER;
+const MULTI_SEGMENT_FORMATS = SHARED_MULTI_SEGMENT;
 
 // ── Inline date-range calendar ──────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -1005,6 +1006,28 @@ export default function TripPage() {
         continue;
       }
 
+      // Multi-segment formats (Nassau today, anything we add later
+      // that bundles independent bets). Each segment with a declared
+      // winner settles like a single-stake winner-takes-from-losers:
+      //   winner receives stake × (numPlayers - 1)
+      //   each loser pays stake
+      if (MULTI_SEGMENT_FORMATS[g.format]) {
+        const segments = MULTI_SEGMENT_FORMATS[g.format];
+        for (const seg of segments) {
+          const winnerId = winners[seg.key];
+          if (!winnerId) continue;
+          const stake = Number((cfg as any)[seg.stakeKey]) || 0;
+          if (!stake) continue;
+          const winner = players.find(p => p.userId === winnerId);
+          if (!winner) continue;
+          const losers = players.filter(p => p.userId !== winnerId);
+          if (losers.length === 0) continue;
+          bump(winner, stake * losers.length);
+          for (const p of losers) bump(p, -stake);
+        }
+        continue;
+      }
+
       // Best Ball — team wager
       if (TEAM_WAGER_FORMATS.has(g.format)) {
         const wager = Number(cfg.wager) || 0;
@@ -1844,6 +1867,47 @@ export default function TripPage() {
                         by teamId; the pill shows "Team A" + member names. */}
                     {!isHolePicked && (() => {
                       const isTeamWager = TEAM_WAGER_FORMATS.has(g.format);
+                      const segments = MULTI_SEGMENT_FORMATS[g.format];
+
+                      // Multi-segment (Nassau): render one declare button
+                      // per segment so the front, back, and overall bets
+                      // each get their own winner. Stake label included
+                      // when known so it's clear what's being settled.
+                      if (segments && segments.length > 0) {
+                        return (
+                          <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {segments.map((seg) => {
+                              const winnerId = winners[seg.key];
+                              const label = winnerId ? (playerName(winnerId) || "") : "";
+                              const stake = Number((cfg as any)?.[seg.stakeKey]) || 0;
+                              const pillLabel = stake ? `${seg.label} · $${stake}` : seg.label;
+                              return (
+                                <button
+                                  key={seg.key}
+                                  onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: seg.key, label: pillLabel }); }}
+                                  style={{
+                                    padding: "6px 12px",
+                                    borderRadius: 99,
+                                    border: label ? "1px solid rgba(212,160,23,0.45)" : "1px solid rgba(77,168,98,0.35)",
+                                    background: label ? "rgba(212,160,23,0.10)" : "rgba(77,168,98,0.08)",
+                                    color: label ? "#d4a017" : "#4da862",
+                                    fontFamily: "'Outfit', sans-serif",
+                                    fontSize: 11.5,
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {label ? `🏆 ${seg.label}: ${label}` : pillLabel}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      }
+
+                      // Single-winner formats (stableford, match play,
+                      // stroke play, scramble) or team wager (best ball).
                       const winnerKey = isTeamWager ? "team" : "overall";
                       const winnerId = winners[winnerKey];
                       let label = "";

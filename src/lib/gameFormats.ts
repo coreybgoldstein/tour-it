@@ -55,3 +55,19 @@ export const HOLE_PICKED_FORMATS = new Set<string>(["closest_to_pin", "longest_d
 
 // Formats where the wager is per-team rather than per-player.
 export const TEAM_WAGER_FORMATS = new Set<string>(["best_ball"]);
+
+// Formats that bundle multiple independent bets into a single "game".
+// Each segment is declared + settled separately. Nassau is the canonical
+// case (front 9 / back 9 / overall 18) — three bets, one round, three
+// potentially different winners.
+//
+// `stakeKey` points at the formatConfig field that holds that segment's
+// dollar value, so settle-up math can roll the segment in automatically.
+export type GameSegment = { key: string; label: string; stakeKey: string };
+export const MULTI_SEGMENT_FORMATS: Record<string, GameSegment[]> = {
+  nassau: [
+    { key: "front",   label: "Front 9",    stakeKey: "frontAmount" },
+    { key: "back",    label: "Back 9",     stakeKey: "backAmount" },
+    { key: "overall", label: "Overall 18", stakeKey: "totalAmount" },
+  ],
+};
