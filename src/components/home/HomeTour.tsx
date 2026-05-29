@@ -444,20 +444,19 @@ export default function HomeTour() {
 
   return (
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 140, paddingLeft: isDesktop ? 72 : 0 }}>
-      {/* Tour It typography system v1. Three families, distinct
-          roles, chosen to land the "Most Modern" pairing from the
-          brand direction (scouting app + creator-led + destination).
-            - Source Serif 4 (editorial): trip names, course names,
-              section labels, hero copy. Carries the heritage /
-              craftsmanship signal.
-            - Inter (UI): buttons, meta lines, captions, navigation,
-              body text. Reads as a modern product.
-            - Barlow Condensed (scorecard): HOLE / SHOT / par /
-              yardages / leaderboard cells. The athletic data layer.
-          Loaded weights cover the range each family actually uses
-          in this file; unused weights are excluded to keep the
-          CSS import small. */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;0,8..60,800;1,8..60,600;1,8..60,700&display=swap');`}</style>
+      {/* Tour It typography system v2 — pared to TWO families per
+          user feedback ("still struggling to see uniformity"). The
+          third family (Barlow Condensed) was too distinctive
+          against Inter/Source Serif 4 in the scorecard moments
+          and read as a separate system rather than a layer of
+          the same system.
+            - Source Serif 4 (editorial): trip / round names,
+              section labels, hero copy. Heritage + craft signal.
+            - Inter (everything else): UI, eyebrows, scorecard
+              data (HOLE 7 · TEE SHOT), radius pills, captions.
+              One family carrying every functional role keeps
+              the page reading as one system. */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;0,8..60,800;1,8..60,600;1,8..60,700&display=swap');`}</style>
 
       <MayCompetitionBanner />
 
@@ -758,7 +757,7 @@ function YourTourCard({
             >
               <GameScorecardIcon color="#7ed28b" />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
                   {tour.gameCount > 1 ? `Latest of ${tour.gameCount} games` : "Game ready"}
                 </div>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
@@ -1008,14 +1007,14 @@ function NearMeRail({
               key={r}
               onClick={() => onChangeRadius(r)}
               style={{
-                fontFamily: "'Barlow Condensed', sans-serif", fontSize: 12, fontWeight: 600,
-                padding: "3px 10px",
+                fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 600,
+                padding: "4px 9px",
                 borderRadius: 99,
                 border: `1px solid ${radius === r ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`,
                 background: radius === r ? "rgba(77,168,98,0.15)" : "transparent",
                 color: radius === r ? "#4da862" : "rgba(255,255,255,0.4)",
                 cursor: "pointer",
-                letterSpacing: "0.08em",
+                letterSpacing: "0.04em",
               }}
             >{r}MI</button>
           ))}
@@ -1290,15 +1289,11 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                   {t.courseName}
                 </div>
                 {(t.holeNumber || shotLabel) && (
-                  // Scorecard typography — Barlow Condensed is the
-                  // athletic data layer. Holes / shot type / yardages
-                  // / par all live in this family. Reads like a real
-                  // scorecard label rather than a generic caption.
                   <div style={{
                     marginTop: 3,
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontSize: 10, fontWeight: 600, color: "#7ee098",
-                    letterSpacing: "0.1em",
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 8.5, fontWeight: 700, color: "#7ee098",
+                    letterSpacing: "0.08em",
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                   }}>
                     {t.holeNumber ? `HOLE ${t.holeNumber}` : ""}
