@@ -12,6 +12,7 @@ import CreateGameSheet from "@/components/CreateGameSheet";
 import TripNotes from "@/components/TripNotes";
 import AirportField from "@/components/AirportField";
 import LodgingField from "@/components/LodgingField";
+import ScorecardCell from "@/components/ScorecardCell";
 import Toast, { type ToastState } from "@/components/Toast";
 import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER, MULTI_SEGMENT_FORMATS as SHARED_MULTI_SEGMENT } from "@/lib/gameFormats";
 import { cdnImage } from "@/lib/cdnImage";
@@ -1832,31 +1833,25 @@ export default function TripPage() {
                       </div>
                     )}
 
-                    {/* CTP / Longest Drive — per-hole declare-winner pills */}
+                    {/* CTP / Longest Drive — per-hole scorecard cells.
+                        Sharp 3px corners + Playfair italic label give
+                        the row a printed-card feel instead of the
+                        generic gold-pill aesthetic everywhere else. */}
                     {isHolePicked && Array.isArray(cfg?.holes) && cfg.holes.length > 0 && (
-                      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 6 }}>
                         {cfg.holes.map((h: number) => {
                           const winnerId = winners[`hole-${h}`];
                           const name = playerName(winnerId);
+                          const stake = Number(cfg.stake) || 0;
                           return (
-                            <button
+                            <ScorecardCell
                               key={h}
+                              label={`Hole ${h}`}
+                              meta={stake ? `$${stake}` : undefined}
+                              value={name}
+                              placeholder="— declare"
                               onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: `hole-${h}`, label: `Hole ${h}` }); }}
-                              style={{
-                                padding: "6px 10px",
-                                borderRadius: 99,
-                                border: name ? "1px solid rgba(212,160,23,0.45)" : "1px solid rgba(77,168,98,0.35)",
-                                background: name ? "rgba(212,160,23,0.10)" : "rgba(77,168,98,0.08)",
-                                color: name ? "#d4a017" : "#4da862",
-                                fontFamily: "'Outfit', sans-serif",
-                                fontSize: 11,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {name ? `🏆 H${h}: ${name}` : `H${h} · Declare`}
-                            </button>
+                            />
                           );
                         })}
                       </div>
@@ -1869,37 +1864,25 @@ export default function TripPage() {
                       const isTeamWager = TEAM_WAGER_FORMATS.has(g.format);
                       const segments = MULTI_SEGMENT_FORMATS[g.format];
 
-                      // Multi-segment (Nassau): render one declare button
-                      // per segment so the front, back, and overall bets
-                      // each get their own winner. Stake label included
-                      // when known so it's clear what's being settled.
+                      // Multi-segment (Nassau): one scorecard cell per
+                      // segment. Equal-width grid so the three bets
+                      // line up like rows on a printed scorecard.
                       if (segments && segments.length > 0) {
                         return (
-                          <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", display: "grid", gridTemplateColumns: `repeat(${segments.length}, 1fr)`, gap: 6 }}>
                             {segments.map((seg) => {
                               const winnerId = winners[seg.key];
-                              const label = winnerId ? (playerName(winnerId) || "") : "";
+                              const name = winnerId ? (playerName(winnerId) || "") : "";
                               const stake = Number((cfg as any)?.[seg.stakeKey]) || 0;
-                              const pillLabel = stake ? `${seg.label} · $${stake}` : seg.label;
                               return (
-                                <button
+                                <ScorecardCell
                                   key={seg.key}
-                                  onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: seg.key, label: pillLabel }); }}
-                                  style={{
-                                    padding: "6px 12px",
-                                    borderRadius: 99,
-                                    border: label ? "1px solid rgba(212,160,23,0.45)" : "1px solid rgba(77,168,98,0.35)",
-                                    background: label ? "rgba(212,160,23,0.10)" : "rgba(77,168,98,0.08)",
-                                    color: label ? "#d4a017" : "#4da862",
-                                    fontFamily: "'Outfit', sans-serif",
-                                    fontSize: 11.5,
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                >
-                                  {label ? `🏆 ${seg.label}: ${label}` : pillLabel}
-                                </button>
+                                  label={seg.label}
+                                  meta={stake ? `$${stake}` : undefined}
+                                  value={name}
+                                  placeholder="— declare"
+                                  onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: seg.key, label: `${seg.label}${stake ? ` · $${stake}` : ""}` }); }}
+                                />
                               );
                             })}
                           </div>
@@ -1910,38 +1893,24 @@ export default function TripPage() {
                       // stroke play, scramble) or team wager (best ball).
                       const winnerKey = isTeamWager ? "team" : "overall";
                       const winnerId = winners[winnerKey];
-                      let label = "";
+                      let value = "";
                       if (winnerId) {
                         if (isTeamWager) {
                           const members = (g.players ?? []).filter((p: any) => (p.teamId || "A") === winnerId);
-                          label = `Team ${winnerId}${members.length > 0 ? ` (${members.map((m: any) => m.displayName).join(" + ")})` : ""}`;
+                          value = `Team ${winnerId}${members.length > 0 ? ` (${members.map((m: any) => m.displayName).join(" + ")})` : ""}`;
                         } else {
-                          label = playerName(winnerId) || "";
+                          value = playerName(winnerId) || "";
                         }
                       }
-                      const pillLabel = isTeamWager ? "Winning Team" : "Winner";
+                      const cellLabel = isTeamWager ? "Winning Team" : "Winner";
                       return (
                         <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: winnerKey, label: pillLabel }); }}
-                            style={{
-                              padding: "7px 14px",
-                              borderRadius: 99,
-                              border: label ? "1px solid rgba(212,160,23,0.45)" : "1px solid rgba(77,168,98,0.35)",
-                              background: label ? "rgba(212,160,23,0.10)" : "rgba(77,168,98,0.08)",
-                              color: label ? "#d4a017" : "#4da862",
-                              fontFamily: "'Outfit', sans-serif",
-                              fontSize: 12,
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              maxWidth: "100%",
-                            }}
-                          >
-                            {label ? `🏆 ${label}` : isTeamWager ? "🏆 Declare winning team" : "🏆 Declare winner"}
-                          </button>
+                          <ScorecardCell
+                            label={cellLabel}
+                            value={value}
+                            placeholder={isTeamWager ? "— declare team" : "— declare"}
+                            onClick={(e) => { e.stopPropagation(); setWinnerPicker({ gameId: g.id, key: winnerKey, label: cellLabel }); }}
+                          />
                         </div>
                       );
                     })()}
