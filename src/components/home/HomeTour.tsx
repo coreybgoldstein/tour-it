@@ -746,7 +746,11 @@ function YourTourCard({
                   {tour.gameCount > 1 ? `Latest of ${tour.gameCount} games` : "Game ready"}
                 </div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {gameStakesLabel(tour.game.format, tour.game.formatConfig) ?? gameFormatLabel(tour.game.format)}
+                  {(() => {
+                    const name = gameFormatLabel(tour.game.format);
+                    const stakes = gameStakesLabel(tour.game.format, tour.game.formatConfig);
+                    return stakes ? `${name} · ${stakes}` : name;
+                  })()}
                 </div>
               </div>
             </button>
