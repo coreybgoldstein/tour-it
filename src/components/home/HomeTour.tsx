@@ -446,7 +446,7 @@ export default function HomeTour() {
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 140, paddingLeft: isDesktop ? 72 : 0 }}>
       <MayCompetitionBanner />
 
-      <div style={{ padding: "6px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
+      <div style={{ padding: "12px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
 
         {/* Unified entry — routes to /tour with the Smart (LLM)
             tab pre-selected. "Tour It All" plays on the brand and
@@ -497,7 +497,7 @@ export default function HomeTour() {
             lined up with the last being plan another title".
             Section is suppressed entirely until tour query has
             settled to avoid skeleton flash. */}
-        <section style={{ marginTop: 14, minHeight: tourLoaded ? undefined : 0 }}>
+        <section style={{ marginTop: 10, minHeight: tourLoaded ? undefined : 0 }}>
           {tourLoaded && <SectionLabel>Your Tour</SectionLabel>}
 
           {tourLoaded && tours.length > 0 && (
@@ -798,13 +798,20 @@ function YourTourCard({
 }
 
 // Tap-popup playLabel — if the stop has its own playDate use that,
-// else fall back to the trip's startDate / "TBD". Adds a tee-time
-// suffix when available.
+// else fall back to the trip's startDate / "TBD". Suffixed with the
+// stop's tee time when set (per-stop times are what the popup is
+// for — the multi-stop trip header itself shows only the date
+// window with no time).
 function formatStopPlayLabel(stop: Stop, tour: ActiveTour): string {
   const iso = (stop as any).playDate || tour.startDate;
   if (!iso) return "Date TBD";
   const d = new Date(iso + "T00:00:00Z");
   const datePart = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  const tee = (stop as any).teeTime as string | null | undefined;
+  if (tee) {
+    const formatted = formatTeeTime(tee);
+    return formatted ? `${datePart} · ${formatted}` : `${datePart} · ${tee}`;
+  }
   return datePart;
 }
 
@@ -936,7 +943,7 @@ function NearMeRail({
   queried: boolean;
 }) {
   return (
-    <section style={{ marginTop: 14 }}>
+    <section style={{ marginTop: 10 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
         <SectionLabel inline>Courses Near Me</SectionLabel>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
@@ -1068,7 +1075,7 @@ function NearCourseCard({ course, onClick }: { course: CourseLite; onClick: () =
 function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea: (slug: string) => void; onBrowseAll: () => void }) {
   if (ideas.length === 0) return null;
   return (
-    <section style={{ marginTop: 14 }}>
+    <section style={{ marginTop: 10 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
         <SectionLabel inline>Where to next?</SectionLabel>
         <button
@@ -1133,7 +1140,7 @@ function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea
 function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId: string) => void }) {
   if (teasers.length === 0) return null;
   return (
-    <section style={{ marginTop: 14, marginBottom: 8 }}>
+    <section style={{ marginTop: 10, marginBottom: 8 }}>
       <div style={{ marginBottom: 8 }}>
         <SectionLabel>Tour the Feed</SectionLabel>
       </div>
@@ -1257,9 +1264,9 @@ function SectionLabel({ children, inline }: { children: React.ReactNode; inline?
     <div style={{
       fontFamily: "'Playfair Display', serif",
       fontStyle: "italic",
-      fontSize: 12,
-      fontWeight: 700,
-      letterSpacing: "0.14em",
+      fontSize: 14,
+      fontWeight: 900,
+      letterSpacing: "0.13em",
       textTransform: "uppercase",
       color: SAGE_BRIGHT,
       marginBottom: inline ? 0 : 10,
@@ -1651,30 +1658,55 @@ function Dot() {
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function formatNextUpDate(tour: ActiveTour, next: Stop | null): string {
-  // Prefer the trip's startDate, fall back to "soon" for trips with
-  // no dates yet (welcome flow never completed).
+  // Multi-stop trips: show the trip's window (start — end date), NO
+  // time. The single tee-time of a specific stop isn't meaningful on
+  // a multi-day trip where every stop has its own time.
+  // Single rounds: show date + tee time. The course-flag popup
+  // surfaces date+time per stop on multi-stop trips.
+  const isMultiStop = tour.stops.length > 1;
+
+  if (isMultiStop && tour.startDate) {
+    const start = new Date(tour.startDate + "T00:00:00Z");
+    const end = tour.endDate ? new Date(tour.endDate + "T00:00:00Z") : null;
+    const startStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+    if (end && tour.endDate !== tour.startDate) {
+      // Same-month range collapses to "Aug 20 — 23"; cross-month
+      // keeps both labels for clarity ("Aug 30 — Sep 2").
+      const sameMonth = start.getUTCMonth() === end.getUTCMonth() && start.getUTCFullYear() === end.getUTCFullYear();
+      const endStr = sameMonth
+        ? String(end.getUTCDate())
+        : end.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+      return `${startStr} — ${endStr}`;
+    }
+    return startStr;
+  }
+
+  // Single round (≤1 stop) — date + tee time when set.
   const iso = tour.startDate || (next as any)?.playDate || null;
   if (!iso) return "Soon";
   const d = new Date(iso + "T00:00:00Z");
   const dateStr = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 
-  // Append tee time when the "next up" stop has one set. Format
-  // "HH:MM" → "h:mm AM/PM" so 07:30 → "7:30 AM". The teeTime column
-  // is a free-form string, so we only format when it matches HH:MM.
   const tee = (next as any)?.teeTime as string | null | undefined;
   if (tee) {
-    const m = tee.match(/^(\d{1,2}):(\d{2})/);
-    if (m) {
-      let hh = parseInt(m[1], 10);
-      const mm = m[2];
-      const ampm = hh >= 12 ? "PM" : "AM";
-      hh = hh % 12 || 12;
-      return `${dateStr} · ${hh}:${mm} ${ampm}`;
-    }
-    // Non-HH:MM strings — show as-is.
-    return `${dateStr} · ${tee}`;
+    const formatted = formatTeeTime(tee);
+    return formatted ? `${dateStr} · ${formatted}` : `${dateStr} · ${tee}`;
   }
   return dateStr;
+}
+
+/** "07:30" → "7:30 AM", "13:00" → "1:00 PM". Returns null when the
+ *  input isn't in HH:MM form so callers can fall back to the raw
+ *  string. Shared between YourTourCard's meta line and the
+ *  course-flag popup. */
+function formatTeeTime(tee: string): string | null {
+  const m = tee.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  let hh = parseInt(m[1], 10);
+  const mm = m[2];
+  const ampm = hh >= 12 ? "PM" : "AM";
+  hh = hh % 12 || 12;
+  return `${hh}:${mm} ${ampm}`;
 }
 
 function tripContextLabel(tour: ActiveTour): string {
