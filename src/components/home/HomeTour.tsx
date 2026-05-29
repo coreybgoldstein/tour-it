@@ -435,10 +435,10 @@ export default function HomeTour() {
         <WhereToNext ideas={tripIdeas} onIdea={(slug) => router.push(`/trip-ideas/${slug}`)} onBrowseAll={() => router.push("/search?tab=trips")} />
 
         {/* Tour the Feed — feed-style rail at the bottom of the home.
-            Tap a thumbnail → opens the clip's course page (proper
-            vertical-feed integration with swipe-through clip-to-clip
-            navigation is the follow-up). */}
-        <FeedTease teasers={feedTeasers} onTap={(courseId) => router.push(`/courses/${courseId}`)} />
+            Tap a thumbnail → opens the dedicated /feed/[uploadId]
+            page (full-screen vertical clip feed, scroll-snap to the
+            tapped clip, swipe up/down to navigate through). */}
+        <FeedTease teasers={feedTeasers} onTap={(uploadId) => router.push(`/feed/${uploadId}`)} />
       </div>
 
       <BottomNav />
@@ -910,7 +910,7 @@ function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea
 // ─────────────────────────────────────────────────────────────────────
 // FeedTease — bottom rail of recent clip thumbnails.
 // ─────────────────────────────────────────────────────────────────────
-function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (courseId: string) => void }) {
+function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId: string) => void }) {
   if (teasers.length === 0) return null;
   return (
     <section style={{ marginTop: 24, marginBottom: 8 }}>
@@ -921,7 +921,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (courseId
         {teasers.map((t) => (
           <button
             key={t.id}
-            onClick={() => onTap(t.courseId)}
+            onClick={() => onTap(t.id)}
             style={{
               flexShrink: 0,
               width: 150,
