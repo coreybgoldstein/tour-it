@@ -713,16 +713,26 @@ export default function TeeUpPage() {
     {
       key: "games",
       label: "Play a Game",
-      // Scorecard + pencil — reads as "play a round and keep score"
-      // more directly than the bullseye target did. The pencil sits
-      // diagonal across the lower-right corner of the card.
+      // Scorecard with handicap-stroke dots + pencil. The dot pattern
+      // reads as "strokes received per player" — a handicap-game
+      // signal you only see on real scorecards, distinguishing the
+      // Play-a-Game intent from a generic notebook icon. Synced 1:1
+      // with HomeTour's Create-a-Game CTA per the "icons should
+      // match across surfaces" rule.
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="13" height="16" rx="2" />
-          <line x1="6.5" y1="8" x2="12.5" y2="8" />
-          <line x1="6.5" y1="11.5" x2="12.5" y2="11.5" />
-          <line x1="6.5" y1="15" x2="10" y2="15" />
-          <path d="M15.5 17.5 L19 14 L21 16 L17.5 19.5 L14.8 20.2 Z" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2.5" y="4" width="14" height="16" rx="1.8" />
+          <line x1="2.5" y1="9.3" x2="16.5" y2="9.3" />
+          <line x1="2.5" y1="14.6" x2="16.5" y2="14.6" />
+          <line x1="6" y1="4" x2="6" y2="20" />
+          <circle cx="9" cy="6.6" r="0.9" fill="currentColor" stroke="none" />
+          <circle cx="13" cy="6.6" r="0.9" fill="currentColor" stroke="none" />
+          <circle cx="11" cy="11.95" r="0.9" fill="currentColor" stroke="none" />
+          <circle cx="9" cy="17.3" r="0.9" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="17.3" r="0.9" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="17.3" r="0.9" fill="currentColor" stroke="none" />
+          <path d="M16 17 L19.5 13.5 L21.5 15.5 L18 19 L15.4 19.6 Z" />
+          <line x1="19.5" y1="13.5" x2="21.5" y2="15.5" />
         </svg>
       ),
     },

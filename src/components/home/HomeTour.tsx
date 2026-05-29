@@ -147,7 +147,16 @@ export default function HomeTour() {
   // inconsistently and returned no trips at all on real prod data —
   // reverted to this conservative sequential pattern that ships.
   useEffect(() => {
-    if (!authResolved || !userId) { setTourLoaded(true); return; }
+    // CRITICAL: do NOT setTourLoaded(true) while auth is still
+    // resolving. Earlier this branch did `if (!authResolved || !userId)
+    // { setTourLoaded(true); return; }` which flipped tourLoaded=true
+    // on the very first render — before auth even completed — and
+    // the page briefly rendered the "Plan your next round" CTA before
+    // the real tour data arrived. Now we only mark tourLoaded after
+    // auth resolves AND we know the user is logged out. Logged-in
+    // users keep tourLoaded=false until the query returns.
+    if (!authResolved) return;
+    if (!userId) { setTourLoaded(true); return; }
     let cancelled = false;
     (async () => {
       const sb = createClient();
@@ -596,12 +605,14 @@ function YourTourCard({
         </>)}
       </div>
 
-      {/* Course-flag strip — small course-logo badges, one per stop.
-          Tap a flag → shows an in-card popup with the course name +
-          date; the popup tap routes to that course profile. Stay on
-          the home screen per user request. */}
+      {/* Course-flag strip — course-logo badges, one per stop. Bigger
+          now (44px from 32px) so each badge reads as a course-hero,
+          not a tiny chip. Horizontal scroll handles 5+ stops; on a
+          typical 375px iPhone ~4 fit in view with the scroll hint
+          visible at the right edge. Tap → in-card popup with name +
+          date; tap popup → routes to course profile. */}
       {tour.stops.length > 0 && (
-        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 1, WebkitOverflowScrolling: "touch" }}>
+        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch", marginLeft: -2, marginRight: -2, paddingLeft: 2, paddingRight: 2 }}>
           {tour.stops.map((s, i) => {
             const isNext = next && s.courseId === next.courseId;
             const logo = s.course.logoUrl ? cdnImage(s.course.logoUrl) : null;
@@ -611,15 +622,16 @@ function YourTourCard({
                 onClick={() => setPopupIdx(popupIdx === i ? null : i)}
                 style={{
                   flexShrink: 0,
-                  width: 32, height: 32,
-                  borderRadius: 7,
+                  width: 44, height: 44,
+                  borderRadius: 9,
                   background: "#fff",
-                  border: isNext ? `2px solid ${GOLD}` : "1px solid rgba(255,255,255,0.5)",
-                  padding: 2,
+                  border: isNext ? `2px solid ${GOLD}` : "1px solid rgba(255,255,255,0.55)",
+                  padding: 3,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden",
                   cursor: "pointer",
                   position: "relative",
+                  boxShadow: isNext ? "0 0 8px rgba(212,160,23,0.35)" : "0 1px 2px rgba(0,0,0,0.25)",
                 }}
                 aria-label={s.course.name}
                 title={s.course.name}
@@ -628,7 +640,7 @@ function YourTourCard({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 ) : (
-                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 800, color: "#0c1c13" }}>
+                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#0c1c13" }}>
                     {initialsOf(s.course.name)}
                   </span>
                 )}
@@ -638,16 +650,13 @@ function YourTourCard({
         </div>
       )}
 
-      {/* Action row — single primary CTA. Icon is the scorecard +
-          pencil glyph from the /tee-up "Play a Game" tab so visual
-          identity stays consistent across the surfaces that create
-          games. */}
+      {/* Action row — single primary CTA, one line. Compact icon +
+          single line of copy ("Create a Game") so the cell fits in
+          the constrained 2-col grid without wrapping. */}
       <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2 }}>
-        <ActionCell
-          label="Tee Up"
-          title="Create a game"
-          icon={<ScorecardPencilIcon color="#0c2218" />}
-          variant="primary"
+        <ActionCellSingle
+          title="Create a Game"
+          icon={<GameScorecardIcon color="#0c2218" />}
           onClick={onGame}
         />
       </div>
@@ -1281,6 +1290,47 @@ function ActionCell({ label, title, icon, variant, onClick }: {
   );
 }
 
+// ActionCellSingle — single-line variant of ActionCell. Used for the
+// Tee Up "Create a Game" CTA on YourTourCard. No stacked "TEE UP"
+// label above the title; just icon + one line of copy, centered on
+// the cross axis so the row stays short. Keeps the same primary
+// pill aesthetic.
+function ActionCellSingle({ title, icon, onClick }: {
+  title: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        padding: "10px 12px",
+        background: "#4da862",
+        border: "1px solid rgba(126,200,140,0.7)",
+        borderRadius: 3,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        minHeight: 40,
+      }}
+    >
+      <div style={{ width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {icon}
+      </div>
+      <div style={{
+        flex: 1, textAlign: "left",
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: 13.5, fontWeight: 800,
+        color: "#0a1a10",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        letterSpacing: "0.01em",
+      }}>{title}</div>
+    </button>
+  );
+}
+
 // Visual fallback when the next course has no coverImageUrl. Uses a
 // topographic-line SVG pattern + a centered logo (or course initials)
 // so the hero never reads as an empty placeholder.
@@ -1409,6 +1459,47 @@ function ScorecardPencilIcon({ color = "#4da862" }: { color?: string }) {
       <line x1="6.5" y1="11.5" x2="12.5" y2="11.5" />
       <line x1="6.5" y1="15" x2="10" y2="15" />
       <path d="M15.5 17.5 L19 14 L21 16 L17.5 19.5 L14.8 20.2 Z" />
+    </svg>
+  );
+}
+
+// GameScorecardIcon — scorecard for the Create-a-Game CTA.
+// Inspired by a real handicap scorecard (rows = players, cols =
+// holes, dots = strokes received). At 24px we can't fit a real
+// 18-hole grid, so we abstract:
+//   - Rounded card outline
+//   - Horizontal divider lines splitting it into 3 player rows
+//   - Filled dots in cells indicating "strokes received" — the
+//     visual hook that says "this is the game side, not just a
+//     blank scorecard"
+//   - A small pencil tucked into the corner so it still reads as
+//     "fill me in / start a round"
+// Stroke pattern: row1 gets 2 dots, row2 gets 1 dot, row3 gets 3
+// dots — a deliberately uneven distribution that reads as
+// "competitive handicapping" rather than a tidy template.
+function GameScorecardIcon({ color = "#4da862" }: { color?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      {/* Card body */}
+      <rect x="2.5" y="4" width="14" height="16" rx="1.8" />
+      {/* Player-row dividers */}
+      <line x1="2.5" y1="9.3" x2="16.5" y2="9.3" />
+      <line x1="2.5" y1="14.6" x2="16.5" y2="14.6" />
+      {/* Left column gutter (the "Player" label column on a real
+          card) — a single vertical line distinguishes the name
+          column from the hole columns. */}
+      <line x1="6" y1="4" x2="6" y2="20" />
+      {/* Handicap stroke dots — filled, no stroke, so they pop. */}
+      <circle cx="9" cy="6.6" r="0.9" fill={color} stroke="none" />
+      <circle cx="13" cy="6.6" r="0.9" fill={color} stroke="none" />
+      <circle cx="11" cy="11.95" r="0.9" fill={color} stroke="none" />
+      <circle cx="9" cy="17.3" r="0.9" fill={color} stroke="none" />
+      <circle cx="12" cy="17.3" r="0.9" fill={color} stroke="none" />
+      <circle cx="15" cy="17.3" r="0.9" fill={color} stroke="none" />
+      {/* Pencil — diagonal across the lower-right corner, leaning
+          into the card so it reads as "fill me in". */}
+      <path d="M16 17 L19.5 13.5 L21.5 15.5 L18 19 L15.4 19.6 Z" />
+      <line x1="19.5" y1="13.5" x2="21.5" y2="15.5" />
     </svg>
   );
 }
