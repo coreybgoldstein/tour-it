@@ -790,7 +790,10 @@ function TourPageInner() {
               autoCorrect="off"
               autoCapitalize="off"
               spellCheck={false}
-              autoFocus
+              // NOTE: no autoFocus. User feedback — they don't want
+              // the keyboard to pop up the moment they land on the
+              // search page. It now appears only when they tap the
+              // input themselves.
             />
             {query && (
               <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
@@ -800,12 +803,9 @@ function TourPageInner() {
               </button>
             )}
           </div>
-          {/* Search subtitle — same Outfit caption as the home Tour
-              It All button, so the visual scope is consistent across
-              both entry points. */}
-          {!query && (
-            <div className="search-subtitle">courses · holes · trips · golfers</div>
-          )}
+          {/* (Subtitle below the search box removed — the placeholder
+              already says "Tour It All" so the "courses · holes ·
+              trips · golfers" caption read as duplicative.) */}
 
           {/* PlannerCTA under the search bar. Per user direction this
               is Tour It's headline differentiator and should be
@@ -815,7 +815,7 @@ function TourPageInner() {
               subtitle. Hidden while the user is actively searching
               (query has text) to keep the results focused. */}
           {!query && (
-            <div style={{ marginTop: 10 }}>
+            <div style={{ marginTop: 8 }}>
               <PlannerCTA variant="compact" />
             </div>
           )}
@@ -843,7 +843,7 @@ function TourPageInner() {
 
         {/* ── Smart tab — LLM-unified Courses + Trips ── */}
         {searchTab === "smart" && (
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 4 }}>
             {smartLoading && (
               <div style={{ padding: "14px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
                 Thinking…
@@ -1686,10 +1686,10 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
   }
 
   return (
-    <div style={{ padding: "8px 16px 0" }}>
+    <div style={{ padding: "4px 16px 0" }}>
       {recent.length > 0 && (
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+        <div style={{ marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)" }}>Recent</div>
             <button onClick={onClearRecents} style={{ background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer" }}>Clear</button>
           </div>
@@ -1708,8 +1708,8 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
         </div>
       )}
 
-      <div style={{ marginBottom: 8 }}>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 5 }}>Near you</div>
+      <div style={{ marginBottom: 4 }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 4 }}>Near you</div>
         {locStatus !== "granted" && (
           <button
             onClick={enableLocation}
@@ -1731,18 +1731,16 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
       </div>
 
       {popular.length > 0 && (
-        <div style={{ marginBottom: 6 }}>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 5 }}>Popular</div>
+        <div style={{ marginBottom: 2 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: 4 }}>Popular</div>
           <div>
-            {/* Cap Popular at 4 rows so the Where-to-next rail below
-                sits within the visible viewport on first open (per
-                user: "popular course list should only populate
-                enough to allow for the grail to be seen in full on
-                the screen when you open the page"). The full list
-                stays one tap away via the Browse-all link the
-                WhereToNext header carries; courses-only browsing
-                comes back via search. */}
-            {popular.slice(0, 4).map((c) => <TourCourseRow key={c.id} course={c} onClick={() => router.push(`/courses/${c.id}`)} />)}
+            {/* Cap Popular at 3 rows so the Where-to-next rail
+                lands within the visible viewport on first open
+                (user: "keep popular course to 3 total, and then
+                you will need to remove cushion across to help
+                with fitting"). The fuller catalog is still one
+                tap away via Browse-all in the WhereToNext header. */}
+            {popular.slice(0, 3).map((c) => <TourCourseRow key={c.id} course={c} onClick={() => router.push(`/courses/${c.id}`)} />)}
           </div>
         </div>
       )}
@@ -1750,9 +1748,9 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
       {/* Where to next? — the differentiator rail. Lives at the
           bottom of the discovery stack so the user's eye lands on
           it as the natural next move after Near You + Popular.
-          Popular is capped above so this fits on-screen on first
-          paint instead of being pushed under the fold. */}
-      <div style={{ marginTop: 4, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
+          Popular capped + spacing tightened above so this fits
+          on-screen on first paint. */}
+      <div style={{ marginTop: 0, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
         <TourWhereToNext />
       </div>
     </div>
@@ -1764,9 +1762,9 @@ function TourCourseRow({ course, onClick }: { course: TourCourseLite; onClick: (
   return (
     <button
       onClick={onClick}
-      style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "transparent", border: "none", borderTop: 0, borderLeft: 0, borderRight: 0, cursor: "pointer", textAlign: "left", width: "100%" }}
+      style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "transparent", border: "none", borderTop: 0, borderLeft: 0, borderRight: 0, cursor: "pointer", textAlign: "left", width: "100%" }}
     >
-      <div style={{ width: 38, height: 38, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.45)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 3, flexShrink: 0 }}>
+      <div style={{ width: 34, height: 34, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.45)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 3, flexShrink: 0 }}>
         {logo
           ? <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{course.name.slice(0, 2).toUpperCase()}</span>
