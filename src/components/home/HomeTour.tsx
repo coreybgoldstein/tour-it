@@ -501,9 +501,15 @@ export default function HomeTour() {
           {tourLoaded && <SectionLabel>Your Tour</SectionLabel>}
 
           {tourLoaded && tours.length > 0 && (
-            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch", marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, scrollSnapType: "x proximity" }}>
+            // alignItems: stretch (the flex-row default) lets each
+            // card wrapper take the height of the tallest sibling;
+            // setting height:100% on every wrapper + every inner
+            // card guarantees the visual heights are identical even
+            // when content differs (multi-stop trip vs single round
+            // vs plan-another).
+            <div style={{ display: "flex", alignItems: "stretch", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch", marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, scrollSnapType: "x proximity" }}>
               {tours.map((t) => (
-                <div key={t.id} style={{ flexShrink: 0, scrollSnapAlign: "start", width: t.stops.length <= 1 ? 232 : 286 }}>
+                <div key={t.id} style={{ flexShrink: 0, scrollSnapAlign: "start", width: t.stops.length <= 1 ? 232 : 286, display: "flex" }}>
                   <YourTourCard
                     tour={t}
                     // ?createGame=1 → the trip page auto-opens the
@@ -516,7 +522,7 @@ export default function HomeTour() {
                   />
                 </div>
               ))}
-              <div style={{ flexShrink: 0, scrollSnapAlign: "start", width: 178 }}>
+              <div style={{ flexShrink: 0, scrollSnapAlign: "start", width: 178, display: "flex" }}>
                 <PlanAnotherTile onClick={() => router.push("/tour?tab=trips")} />
               </div>
             </div>
@@ -578,6 +584,7 @@ function YourTourCard({
       onClick={onTrip}
       style={{
         width: "100%",
+        height: "100%",
         background: "linear-gradient(160deg, #0e2418 0%, #0a1a11 100%)",
         border: "1px solid rgba(77,168,98,0.32)",
         borderRadius: 14,
@@ -586,11 +593,19 @@ function YourTourCard({
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
+        // space-between pushes the Create-a-Game / game-tease row to
+        // the bottom so the action CTA aligns horizontally with the
+        // PlanAnother card's footer no matter how much intermediate
+        // content the trip card carries.
+        justifyContent: "space-between",
         gap: 7,
         minWidth: 0,
         position: "relative",
       }}
     >
+      {/* Top stack — everything above the action row is grouped so
+          space-between cleanly pushes the action row to the bottom. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 7, minWidth: 0 }}>
       {/* Top row: trip badge + UPCOMING TRIP / ROUND chip */}
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         {tripBadge && (
@@ -621,17 +636,27 @@ function YourTourCard({
         {tour.name}
       </div>
 
-      {/* Meta line: date · location · golfers. Tiny icon prefixes
-          keep this dense without an emoji vibe. */}
+      {/* Meta line: date · location · golfers. Each icon + label
+          pair is grouped in its own inline-flex span so the pin
+          stays glued to "Town of Mamaroneck, NY" even when the row
+          wraps to a second line (previously the icon could end up
+          alone at the end of line 1 with its label kicked to line
+          2). */}
       <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.78)" }}>
-        <CalendarMini /> <span>{dateLabel}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+          <CalendarMini /> {dateLabel}
+        </span>
         {locationLabel && (<>
           <Dot />
-          <PinMini /> <span style={{ whiteSpace: "nowrap" }}>{locationLabel}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+            <PinMini /> {locationLabel}
+          </span>
         </>)}
         {tour.members.length > 0 && (<>
           <Dot />
-          <UsersMini /> <span>{tour.members.length} {tour.members.length === 1 ? "golfer" : "golfers"}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+            <UsersMini /> {tour.members.length} {tour.members.length === 1 ? "golfer" : "golfers"}
+          </span>
         </>)}
       </div>
 
@@ -679,6 +704,9 @@ function YourTourCard({
           })}
         </div>
       )}
+      </div>
+      {/* ↑ end of "top stack" — everything below this is the action
+          row, pinned to the card's bottom by space-between. */}
 
       {/* Action row — two branches:
             - Game already exists: surface a tease chip with the
@@ -827,6 +855,7 @@ function PlanAnotherTile({ onClick }: { onClick: () => void }) {
       style={{
         position: "relative",
         width: "100%",
+        height: "100%",
         background: "linear-gradient(165deg, #1c4425 0%, #0c2117 55%, #05140a 100%)",
         border: "1px solid rgba(77,168,98,0.4)",
         borderRadius: 14,
