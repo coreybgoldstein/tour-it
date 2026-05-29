@@ -80,7 +80,7 @@ type ActiveTour = {
    *  When set the YourTour card surfaces a game-tease chip the user
    *  can tap to land directly on the game sheet, and the create-
    *  another-game CTA shrinks to a small "+ game" pill. */
-  game: { id: string; format: string; courseId: string; courseName: string } | null;
+  game: { id: string; format: string; courseId: string; courseName: string; formatConfig: Record<string, unknown> | null } | null;
   /** Total game count for the trip — used to badge the "+ N games"
    *  variant of the add-another CTA. */
   gameCount: number;
@@ -213,7 +213,7 @@ export default function HomeTour() {
         // Games: pull most-recent-first so [0] for a tripId is the
         // newest game (the one we surface in the trip-card tease).
         sb.from("TripGame")
-          .select("id, tripId, format, courseId, courseName, createdAt")
+          .select("id, tripId, format, formatConfig, courseId, courseName, createdAt")
           .in("tripId", tripIds)
           .order("createdAt", { ascending: false }),
       ]);
@@ -274,7 +274,7 @@ export default function HomeTour() {
           stops,
           members,
           nextStop: next,
-          game: newestGame ? { id: newestGame.id, format: newestGame.format, courseId: newestGame.courseId, courseName: newestGame.courseName } : null,
+          game: newestGame ? { id: newestGame.id, format: newestGame.format, courseId: newestGame.courseId, courseName: newestGame.courseName, formatConfig: newestGame.formatConfig ?? null } : null,
           gameCount: gameRows.length,
         };
       });
@@ -507,7 +507,7 @@ export default function HomeTour() {
             // card guarantees the visual heights are identical even
             // when content differs (multi-stop trip vs single round
             // vs plan-another).
-            <div style={{ display: "flex", alignItems: "stretch", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch", marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, scrollSnapType: "x proximity" }}>
+            <div style={{ display: "flex", alignItems: "stretch", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch", marginRight: -16, paddingRight: 16, scrollSnapType: "x proximity" }}>
               {tours.map((t) => (
                 <div key={t.id} style={{ flexShrink: 0, scrollSnapAlign: "start", width: t.stops.length <= 1 ? 232 : 286, display: "flex" }}>
                   <YourTourCard
@@ -636,28 +636,35 @@ function YourTourCard({
         {tour.name}
       </div>
 
-      {/* Meta line: date · location · golfers. Each icon + label
-          pair is grouped in its own inline-flex span so the pin
-          stays glued to "Town of Mamaroneck, NY" even when the row
-          wraps to a second line (previously the icon could end up
-          alone at the end of line 1 with its label kicked to line
-          2). */}
-      <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.78)" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
-          <CalendarMini /> {dateLabel}
-        </span>
-        {locationLabel && (<>
-          <Dot />
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
-            <PinMini /> {locationLabel}
+      {/* Meta block — TWO lines max (project rule per user). Row 1
+          is always date (+ tee time for single rounds, or date
+          window for trips). Row 2 carries location + golfer count
+          separated by a dot. When the card is too narrow for both
+          to fit on row 2, the golfer count wraps to a third line —
+          we trim the location instead via whiteSpace + ellipsis
+          to keep the 2-line ceiling. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.78)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", minWidth: 0 }}>
+            <CalendarMini /> {dateLabel}
           </span>
-        </>)}
-        {tour.members.length > 0 && (<>
-          <Dot />
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
-            <UsersMini /> {tour.members.length} {tour.members.length === 1 ? "golfer" : "golfers"}
-          </span>
-        </>)}
+        </div>
+        {(locationLabel || tour.members.length > 0) && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+            {locationLabel && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, overflow: "hidden", flex: "0 1 auto" }}>
+                <PinMini />
+                <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locationLabel}</span>
+              </span>
+            )}
+            {locationLabel && tour.members.length > 0 && <Dot />}
+            {tour.members.length > 0 && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", flexShrink: 0 }}>
+                <UsersMini /> {tour.members.length} {tour.members.length === 1 ? "golfer" : "golfers"}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Course-flag strip — course-logo badges, one per stop. Bigger
@@ -738,8 +745,8 @@ function YourTourCard({
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
                   {tour.gameCount > 1 ? `Latest of ${tour.gameCount} games` : "Game ready"}
                 </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {gameFormatLabel(tour.game.format)} · {tour.game.courseName}
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {gameStakesLabel(tour.game.format, tour.game.formatConfig) ?? gameFormatLabel(tour.game.format)}
                 </div>
               </div>
             </button>
@@ -1685,6 +1692,44 @@ function Dot() {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────
+
+// Build the "money at stake" label shown inside the game-tease chip.
+// User feedback: instead of "Nassau · Hampshire" the chip should
+// surface the wager amounts because that's the meaningful preview of
+// what the game is actually for. Returns null when the format has no
+// monetary preview (e.g. closest-to-pin); caller falls back to the
+// format name in that case.
+//
+// Examples:
+//   nassau   { frontAmount: 25, backAmount: 25, totalAmount: 50 }   → "$25/$25/$50"
+//   skins    { skinsAmount: 5 }                                     → "$5/skin"
+//   best_ball{ wager: 50 }                                          → "$50/team"
+function gameStakesLabel(format: string, cfg: Record<string, unknown> | null): string | null {
+  if (!cfg) return null;
+  const num = (k: string): number | null => {
+    const v = cfg[k];
+    if (v == null) return null;
+    const n = typeof v === "number" ? v : parseFloat(String(v));
+    return Number.isFinite(n) ? n : null;
+  };
+  const dollars = (n: number) => `$${Number.isInteger(n) ? n : n.toFixed(0)}`;
+  if (format === "nassau") {
+    const front = num("frontAmount");
+    const back = num("backAmount");
+    const total = num("totalAmount");
+    if (front == null && back == null && total == null) return null;
+    return [front, back, total].map((v) => v == null ? "—" : dollars(v)).join("/");
+  }
+  if (format === "skins") {
+    const amt = num("skinsAmount");
+    return amt != null ? `${dollars(amt)}/skin` : null;
+  }
+  if (format === "best_ball") {
+    const amt = num("wager");
+    return amt != null ? `${dollars(amt)}/team` : null;
+  }
+  return null;
+}
 
 function formatNextUpDate(tour: ActiveTour, next: Stop | null): string {
   // Multi-stop trips: show the trip's window (start — end date), NO
