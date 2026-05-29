@@ -1792,7 +1792,7 @@ function tripContextLabel(tour: ActiveTour): string {
   // #stops, that area should say upcoming trip". Round is still
   // labeled separately because the UX is different (1 course, 1
   // round, single day).
-  return tour.stops.length <= 1 ? "Round" : "Upcoming Trip";
+  return tour.stops.length <= 1 ? "Round" : "Trip";
 }
 
 // Derive a single human-readable location for the tour. Priority:
