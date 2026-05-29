@@ -430,7 +430,10 @@ export default function HomeTour() {
         {/* Where to next? — trip-idea inspiration */}
         <WhereToNext ideas={tripIdeas} onIdea={(slug) => router.push(`/trip-ideas/${slug}`)} onBrowseAll={() => router.push("/search?tab=trips")} />
 
-        {/* Tour the Feed — tease at the bottom */}
+        {/* Tour the Feed — feed-style rail at the bottom of the home.
+            Tap a thumbnail → opens the clip's course page (proper
+            vertical-feed integration with swipe-through clip-to-clip
+            navigation is the follow-up). */}
         <FeedTease teasers={feedTeasers} onTap={(courseId) => router.push(`/courses/${courseId}`)} />
       </div>
 
@@ -467,12 +470,12 @@ function YourTourCard({
         background: "linear-gradient(160deg, #0e2418 0%, #0a1a11 100%)",
         border: "1px solid rgba(77,168,98,0.32)",
         borderRadius: 14,
-        padding: "12px 12px 12px",
+        padding: "10px 12px 11px",
         cursor: "pointer",
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
-        gap: 10,
+        gap: 7,
         minWidth: 0,
       }}
     >
@@ -571,7 +574,7 @@ function YourTourCard({
         />
         <ActionCell
           label="Tee Up"
-          title="The game"
+          title="Create a game"
           icon={<PinFlagIcon color="#0c2218" />}
           variant="primary"
           onClick={onGame}
@@ -613,7 +616,7 @@ function PlanAnotherTile({ onClick }: { onClick: () => void }) {
           Plan another
         </div>
         <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
-          Round or trip
+          Round or Trip
         </div>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(244,236,214,0.6)", marginTop: 4, lineHeight: 1.3 }}>
           Tell us your crew and we&apos;ll build it.
@@ -906,10 +909,9 @@ function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea
 function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (courseId: string) => void }) {
   if (teasers.length === 0) return null;
   return (
-    <section style={{ marginTop: 28, marginBottom: 12 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 10 }}>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 22, color: "#fff" }}>Tour the Feed</span>
-        <PulsingHint />
+    <section style={{ marginTop: 24, marginBottom: 8 }}>
+      <div style={{ marginBottom: 10 }}>
+        <SectionLabel>Tour the Feed</SectionLabel>
       </div>
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, WebkitOverflowScrolling: "touch", marginRight: -16, paddingRight: 16 }}>
         {teasers.map((t) => (
@@ -918,15 +920,16 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (courseId
             onClick={() => onTap(t.courseId)}
             style={{
               flexShrink: 0,
-              width: 110,
+              width: 150,
               aspectRatio: "9 / 16",
-              borderRadius: 10,
+              borderRadius: 12,
               overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.07)",
+              border: "1px solid rgba(77,168,98,0.18)",
               padding: 0,
               background: "#0c1c13",
               position: "relative",
               cursor: "pointer",
+              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
             }}
           >
             {t.thumbnail && (
@@ -934,16 +937,16 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (courseId
               <img src={t.thumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             )}
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(7,16,10,0.92))" }} />
-            <div style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%,-50%)", width: 26, height: 26, borderRadius: "50%", background: "rgba(77,168,98,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%,-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(77,168,98,0.92)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
               <PlayIcon />
             </div>
-            <div style={{ position: "absolute", left: 7, right: 7, bottom: 7, textAlign: "left" }}>
+            <div style={{ position: "absolute", left: 9, right: 9, bottom: 9, textAlign: "left" }}>
               {t.holeNumber && (
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#4da862", marginBottom: 1 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", color: "#4da862", marginBottom: 2 }}>
                   HOLE {t.holeNumber}{t.shotType ? ` · ${t.shotType.toUpperCase()}` : ""}
                 </div>
               )}
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                 {t.courseName}
               </div>
             </div>
@@ -1190,7 +1193,7 @@ function ChevronRight() {
 }
 function PlayIcon() {
   return (
-    <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff" style={{ marginLeft: 2 }}>
       <polygon points="6 4 20 12 6 20 6 4" />
     </svg>
   );
@@ -1244,12 +1247,23 @@ function tripContextLabel(tour: ActiveTour): string {
   return `${stops} stops`;
 }
 
-// Derive a single human-readable location for the tour. Stops are
-// the primary source; when stops aren't attached yet (a brand-new
-// trip created from the planner but courses still to be picked), we
-// fall back to the airport code (looked up against the bundled US
-// airport list — "TVC" → "Traverse City, MI") and then the lodging.
+// Derive a single human-readable location for the tour. Priority:
+//   1. Lodging text — user explicitly typed WHERE they're staying.
+//      If the dropdown picker auto-formatted the value as
+//      "Property Name — City, ST", we strip back to just "City, ST"
+//      so the chip stays compact. Otherwise we show the raw text.
+//   2. Stops — city/state of attached courses (real trips with
+//      courses picked).
+//   3. Airport state — final fallback. Only the state code (e.g. "MI"),
+//      not the city, since the airport's city ("Traverse City") often
+//      misleads when the user is actually staying somewhere else
+//      (Boyne, Harbor Springs, etc.).
 function locationForTour(tour: ActiveTour): string {
+  if (tour.lodging && tour.lodging.trim()) {
+    const cityState = parseCityStateFromLodging(tour.lodging);
+    if (cityState) return cityState;
+    return tour.lodging.trim();
+  }
   const stops = tour.stops;
   if (stops.length > 0) {
     const cities = new Set(stops.map((s) => s.course.city).filter(Boolean) as string[]);
@@ -1261,12 +1275,17 @@ function locationForTour(tour: ActiveTour): string {
     if (states.size === 1) return stops[0].course.state ?? "";
     return stops[0].course.state ?? "";
   }
-  // Fallback chain — Caddy Daddy-style trip created with airport +
-  // lodging but no courses attached yet.
   if (tour.arrivalAirport) {
     const a = airportByCode(tour.arrivalAirport);
-    if (a) return `${a.city}, ${a.state}`;
+    if (a) return a.state;
   }
-  if (tour.lodging) return tour.lodging;
   return "";
+}
+
+// LodgingField formats picks as "Property — City, ST". Strip back
+// to the trailing "City, ST" when present so the tour chip shows
+// the location, not the property name.
+function parseCityStateFromLodging(raw: string): string | null {
+  const m = raw.match(/—\s*([^—]+?,\s*[A-Z]{2})\s*$/);
+  return m ? m[1].trim() : null;
 }
