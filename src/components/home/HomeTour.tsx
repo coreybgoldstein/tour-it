@@ -444,19 +444,20 @@ export default function HomeTour() {
 
   return (
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 140, paddingLeft: isDesktop ? 72 : 0 }}>
-      {/* Font-test for the section-label typography — round 2, all
-          inside the Playfair family so the section labels stay in
-          the same typographic system as the trip/course name
-          (Playfair 900). Three variants:
-            A) Playfair Display italic 900 (the prior default —
-               italic version of the title)
-            B) Playfair Display upright 900 (no italic — exactly
-               matches the trip-name weight + style)
-            C) Playfair Display SC (small-caps variant, purpose-
-               built for section headers)
-          Tell me A/B/C and I'll unify all three labels on the
-          winner + remove this loader. */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@700;900&display=swap');`}</style>
+      {/* Font-test for the section-label typography — round 3.
+          Fresh picks that complement Tour It's premium-but-modern
+          golf vibe. Three distinct families:
+            A) Fraunces — modern variable serif with character.
+               Used by a lot of contemporary premium brands;
+               great optical-size behavior at small sizes.
+            B) Cormorant Garamond italic — refined editorial
+               serif, evokes a fine club's printed menu /
+               scorecard. Higher contrast than Playfair.
+            C) Manrope — modern geometric sans for clean
+               contrast against the Playfair trip names. Reads
+               sporty + modern, the way the bottom-nav labels do.
+          Tell me A/B/C and I'll unify on the winner. */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600;1,700&family=Fraunces:wght@700;900&family=Manrope:wght@700;800&display=swap');`}</style>
 
       <MayCompetitionBanner />
 
@@ -512,7 +513,7 @@ export default function HomeTour() {
             Section is suppressed entirely until tour query has
             settled to avoid skeleton flash. */}
         <section style={{ marginTop: 10, minHeight: tourLoaded ? undefined : 0 }}>
-          {tourLoaded && <SectionLabel variant="playfairUpright">Your Tour (B · Playfair Upright)</SectionLabel>}
+          {tourLoaded && <SectionLabel variant="cormorantItalic">Your Tour (B · Cormorant Italic)</SectionLabel>}
 
           {tourLoaded && tours.length > 0 && (
             // alignItems: stretch (the flex-row default) lets each
@@ -999,7 +1000,7 @@ function NearMeRail({
   return (
     <section style={{ marginTop: 10 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <SectionLabel inline variant="playfairItalic">Courses Near Me (A · Playfair Italic)</SectionLabel>
+        <SectionLabel inline variant="fraunces">Courses Near Me (A · Fraunces)</SectionLabel>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
           {RADII.map((r) => (
             <button
@@ -1196,7 +1197,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
   return (
     <section style={{ marginTop: 10, marginBottom: 8 }}>
       <div style={{ marginBottom: 8 }}>
-        <SectionLabel variant="playfairSC">Tour the Feed (C · Playfair SC)</SectionLabel>
+        <SectionLabel variant="manrope">Tour the Feed (C · Manrope)</SectionLabel>
       </div>
       {/* Card sizing + border match HomeClassic.feed-peek-card
           exactly — the user wanted "the same style with overlay as
@@ -1313,37 +1314,36 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
 // Small primitives — labels, badges, action cells, avatars, icons.
 // ─────────────────────────────────────────────────────────────────────
 
-type SectionLabelVariant = "default" | "playfairItalic" | "playfairUpright" | "playfairSC";
+type SectionLabelVariant = "default" | "fraunces" | "cormorantItalic" | "manrope";
 
 function SectionLabel({ children, inline, variant = "default" }: { children: React.ReactNode; inline?: boolean; variant?: SectionLabelVariant }) {
-  // Three Playfair-family variants for the section-label test.
+  // Round-3 section-label test — three families that complement
+  // the Playfair trip names without being more Playfair.
   const v: React.CSSProperties = (() => {
     switch (variant) {
-      case "playfairItalic":
+      case "fraunces":
         return {
-          fontFamily: "'Playfair Display', serif",
+          fontFamily: "'Fraunces', serif",
+          fontStyle: "normal",
+          fontSize: 14,
+          fontWeight: 900,
+          letterSpacing: "0.1em",
+        };
+      case "cormorantItalic":
+        return {
+          fontFamily: "'Cormorant Garamond', serif",
           fontStyle: "italic",
-          fontSize: 14,
-          fontWeight: 900,
-          letterSpacing: "0.13em",
-        };
-      case "playfairUpright":
-        return {
-          fontFamily: "'Playfair Display', serif",
-          fontStyle: "normal",
-          fontSize: 14,
-          fontWeight: 900,
-          letterSpacing: "0.13em",
-        };
-      case "playfairSC":
-        return {
-          // Playfair Display SC is the small-caps family member —
-          // already shaped for headers so we don't need text-transform.
-          fontFamily: "'Playfair Display SC', 'Playfair Display', serif",
-          fontStyle: "normal",
-          fontSize: 14,
-          fontWeight: 900,
+          fontSize: 16,
+          fontWeight: 700,
           letterSpacing: "0.08em",
+        };
+      case "manrope":
+        return {
+          fontFamily: "'Manrope', sans-serif",
+          fontStyle: "normal",
+          fontSize: 12,
+          fontWeight: 800,
+          letterSpacing: "0.18em",
         };
       default:
         return {
