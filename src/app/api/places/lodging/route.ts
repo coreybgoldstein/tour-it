@@ -43,44 +43,46 @@ export async function GET(req: NextRequest) {
   // courses are located, so passing state in narrows results).
   const state = (url.searchParams.get("state") || "").trim();
 
-  // featuretype=hotel is too narrow; use `class=tourism` + free-form
-  // q so resorts/lodges/B&Bs all show up. Nominatim accepts up to ~50
-  // results — we limit to a small set for the dropdown.
-  const params = new URLSearchParams({
-    q: state ? `${q}, ${state}` : q,
-    format: "json",
-    limit: "8",
-    addressdetails: "1",
-    countrycodes: "us",
-  });
-
-  const nominatimUrl = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
-  let hits: any[] = [];
-  try {
-    const res = await fetch(nominatimUrl, {
+  // Two-stage Nominatim search. First try with the state hint
+  // suffixed; if that returns nothing, retry the bare query. This
+  // covers cases like "Alpine Village, MI" where the property is
+  // actually tagged in OSM as just "Alpine Village" (no state in
+  // its name) and the suffixed query confuses the geocoder.
+  async function nominatim(searchQ: string): Promise<any[]> {
+    const params = new URLSearchParams({
+      q: searchQ,
+      format: "json",
+      limit: "12",
+      addressdetails: "1",
+      countrycodes: "us",
+    });
+    const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+    const res = await fetch(url, {
       headers: { "User-Agent": UA, "Accept-Language": "en" },
-      // Nominatim asks for caching to be respected — let CF do it.
       cache: "force-cache",
       next: { revalidate: 60 * 60 * 24 },
     });
     if (!res.ok) throw new Error(`Nominatim ${res.status}`);
-    hits = await res.json();
+    return res.json();
+  }
+
+  let hits: any[] = [];
+  try {
+    hits = await nominatim(state ? `${q}, ${state}` : q);
+    if (hits.length === 0 && state) {
+      // Bare-query fallback — Nominatim sometimes doesn't recognize
+      // the "Name, ST" form for properties tagged without state.
+      hits = await nominatim(q);
+    }
   } catch (e) {
     return NextResponse.json({ error: `Lodging search failed: ${(e as Error).message}` }, { status: 502 });
   }
 
-  // Filter: keep the broad set of lodging-shaped results — Nominatim
-  // tags real condos / lodges inconsistently across class buckets
-  // (tourism, leisure, building, even amenity). Instead of a class
-  // whitelist (which lost real Alpine-Village-style condos to the
-  // void), exclude the type-buckets we KNOW are wrong: places of
-  // worship, schools, restaurants, retail, etc.
-  const LODGING_TYPES = new Set([
-    "hotel", "motel", "resort", "guest_house", "guesthouse", "hostel",
-    "chalet", "apartment", "apartments", "bed_and_breakfast", "lodging",
-    "alpine_hut", "camp_site", "caravan_site", "wilderness_hut",
-    "condominium", "condominiums",
-  ]);
+  // Stop-list. Nominatim tags real condos / lodges across many
+  // class buckets (tourism / leisure / building / amenity), and an
+  // allow-list approach kept losing legitimate properties. Pivoted
+  // to: let everything through EXCEPT obvious non-lodging buckets
+  // (churches, schools, restaurants, banks, libraries, etc.).
   const EXCLUDED_TYPES = new Set([
     "church", "place_of_worship", "chapel", "cathedral", "mosque", "synagogue", "temple",
     "school", "kindergarten", "university", "college",
@@ -94,13 +96,11 @@ export async function GET(req: NextRequest) {
   const results: LodgingHit[] = hits
     .filter((h) => {
       const t = (h.type || "").toLowerCase();
-      const c = (h.class || "").toLowerCase();
-      if (EXCLUDED_TYPES.has(t)) return false;
-      // Explicit lodging types always pass.
-      if (LODGING_TYPES.has(t)) return true;
-      // Broad classes that legitimately contain condos / lodges /
-      // rentals across Nominatim's data.
-      return c === "tourism" || c === "leisure" || c === "building" || c === "amenity";
+      // Just exclude the obvious bad types — churches, schools,
+      // restaurants, banks, etc. Everything else passes through.
+      // The previous class-allowlist was still too strict (real
+      // condos under unusual classes were dropped).
+      return !EXCLUDED_TYPES.has(t);
     })
     .slice(0, 8)
     .map((h) => {

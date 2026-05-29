@@ -49,7 +49,11 @@ export default function FeedPage() {
 
   const [clips, setClips] = useState<Clip[]>([]);
   const [loading, setLoading] = useState(true);
-  const [muted, setMuted] = useState(true);
+  // Sound on by default per user request. iOS blocks audio
+  // autoplay so the active video may still play silently until
+  // the user taps once — at first interaction we flip muted off
+  // so subsequent clips audibly autoplay.
+  const [muted, setMuted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -315,64 +319,71 @@ function FeedClip({
         <img src={cdnImage(clip.mediaUrl)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
-      {/* Top-left BACK button — sits ABOVE the course pill per user
-          request. Course pill slides down to the second row. */}
+      {/* Single top row — back · course pill · mute. Keeps everything
+          on one horizontal band right below the iOS safe area so the
+          top of the clip frame isn't visually crowded by a stacked
+          stack of controls. */}
       <button
         data-overlay-control
         onClick={(e) => { e.stopPropagation(); onBack(); }}
         aria-label="Back"
-        style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 10px)", left: 12, width: 36, height: 36, borderRadius: "50%", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 6 }}
+        style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 12px)", left: 12, width: 36, height: 36, borderRadius: "50%", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 6 }}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
       </button>
 
-      {/* Course pill — course logo + name/city, then hole/par/yds.
-          Tap routes to the course page. Sits below the back button. */}
+      {/* Course pill — sits to the right of the back button on the
+          same row, height-matched, with the mute toggle on the far
+          right. Tight gap to back, generous to mute. */}
       <button
         data-overlay-control
         onClick={(e) => { e.stopPropagation(); onCourse(); }}
         style={{
-          position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 56px)", left: 12, right: 60,
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "6px 12px 6px 6px",
+          position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 12px)", left: 56, right: 56,
+          height: 36,
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "0 12px 0 4px",
           background: "rgba(7,16,10,0.72)",
           border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: 99,
           cursor: "pointer",
           zIndex: 5,
-          maxWidth: "calc(100% - 72px)",
+          minWidth: 0,
         }}
         aria-label={`${clip.courseName ?? "Course"} — open course page`}
       >
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, padding: 3, border: "1px solid rgba(255,255,255,0.5)" }}>
+        <div style={{ width: 30, height: 30, borderRadius: 7, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, padding: 2, border: "1px solid rgba(255,255,255,0.5)" }}>
           {courseLogo
             ? <img src={courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{(clip.courseName ?? "TI").slice(0, 2).toUpperCase()}</span>
+            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, color: "#0c1c13" }}>{(clip.courseName ?? "TI").slice(0, 2).toUpperCase()}</span>
           }
         </div>
-        <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 7, minWidth: 0 }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ flex: 1, minWidth: 0, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 1, minWidth: 0 }}>
               {clip.courseName ?? "Unknown course"}
             </span>
             {holeMeta.length > 0 && (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11.5, fontWeight: 600, color: "#4da862", whiteSpace: "nowrap" }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 600, color: "#4da862", whiteSpace: "nowrap", flexShrink: 0 }}>
                 · {holeMeta.join(" · ")}
               </span>
             )}
           </div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {[clip.courseCity, clip.courseState].filter(Boolean).join(", ")}
-          </div>
+          {(clip.courseCity || clip.courseState) && (
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1 }}>
+              {[clip.courseCity, clip.courseState].filter(Boolean).join(", ")}
+            </div>
+          )}
         </div>
       </button>
 
-      {/* Mute toggle — top-right */}
+      {/* Mute toggle — top-right, height-matched to back + pill so
+          all three line up on the same row. */}
       <button
         data-overlay-control
         onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
         aria-label={muted ? "Unmute" : "Mute"}
-        style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 14px)", right: 12, width: 38, height: 38, borderRadius: "50%", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 6 }}
+        style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 12px)", right: 12, width: 36, height: 36, borderRadius: "50%", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 6 }}
       >
         {muted
           ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></svg>
@@ -399,10 +410,11 @@ function FeedClip({
         <RailButton label={String(clip.commentCount)} onClick={(e) => { e.stopPropagation(); onCourse(); }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
         </RailButton>
-        {/* SEND IT — matches the stacked "SEND / IT" treatment used
-            on profile/[userId] and courses/[id] clip rails. URL
-            points at the clip's course page so the recipient lands
-            on the canonical scouting surface. */}
+        {/* SEND IT — visual copied 1:1 from profile/[userId] line ~185.
+            Dark circle with backdrop-blur, white SEND / bright-green IT
+            stacked text, divider line between, SENT ✓ flash on share.
+            Behaves identically: Web Share → clipboard fallback → flash
+            "SENT" for 2s. */}
         <button
           onClick={async (e) => {
             e.stopPropagation();
@@ -419,19 +431,27 @@ function FeedClip({
           }}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", padding: 0 }}
         >
-          <div style={{ width: 42, height: 42, borderRadius: "50%", background: shareSent ? "rgba(77,168,98,0.92)" : "rgba(77,168,98,0.85)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: "50%",
+            background: shareSent ? "rgba(26,158,66,0.2)" : "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            border: `1px solid ${shareSent ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
             {shareSent
-              ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.05 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.06em" }}>SENT</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.05em" }}>SENT</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                 </div>
-              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 1 }}>
+              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 3 }}>
                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em", marginRight: "-0.12em" }}>SEND</span>
-                  <div style={{ width: 18, height: 1, background: "rgba(255,255,255,0.35)", margin: "1px 0" }} />
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#0e2418", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span>
+                  <div style={{ width: 20, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} />
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span>
                 </div>
             }
           </div>
+          <span style={{ height: 13, display: "block" }} />
         </button>
       </div>
 

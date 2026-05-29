@@ -234,9 +234,12 @@ export default function TripPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // ?startGame=1 deep-link comes from /tee-up's "Play a Game" wizard
-  // after it creates the round. We watch for it and auto-open the
-  // game-creation modal once the trip data has loaded.
-  const startGameRequested = searchParams.get("startGame") === "1";
+  // after it creates the round.
+  // ?createGame=1 is the same intent from the home's "Create a game"
+  // CTA on the YourTour card. Either flag auto-opens the game
+  // creation modal once the trip data has loaded.
+  const startGameRequested =
+    searchParams.get("startGame") === "1" || searchParams.get("createGame") === "1";
   // ?welcome=1 fires when the user just created this trip from a
   // trip-idea blueprint via Start Planning. Opens a quick onboarding
   // sheet that asks the rest (dates + invite). Stripped from the

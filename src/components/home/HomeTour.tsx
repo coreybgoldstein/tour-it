@@ -437,8 +437,10 @@ export default function HomeTour() {
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.85fr) minmax(0, 1fr)", gap: 8 }}>
               <YourTourCard
                 tour={tour}
-                onScout={() => tour.nextStop && router.push(`/courses/${tour.nextStop.courseId}`)}
-                onGame={() => router.push(`/trips/${tour.id}#games`)}
+                // ?createGame=1 → the trip page auto-opens the
+                // CreateGameSheet on mount so users land directly in
+                // the game-setup flow.
+                onGame={() => router.push(`/trips/${tour.id}?createGame=1`)}
                 onTrip={() => router.push(`/trips/${tour.id}`)}
                 onStopTap={(id) => router.push(`/courses/${id}`)}
               />
@@ -474,18 +476,26 @@ export default function HomeTour() {
 // PlanAnotherTile, not full-width.
 // ─────────────────────────────────────────────────────────────────────
 function YourTourCard({
-  tour, onScout, onGame, onTrip, onStopTap,
+  tour, onGame, onTrip, onStopTap,
 }: {
   tour: ActiveTour;
-  onScout: () => void;
+  /** Opens the trip page with the game-creation sheet pre-opened. */
   onGame: () => void;
   onTrip: () => void;
+  /** Show a hover/tap popup for the stop's course details, instead of
+   *  routing immediately. The actual route-to-course-profile happens
+   *  inside the popup when the user taps it. */
   onStopTap: (courseId: string) => void;
 }) {
   const next = tour.nextStop;
   const tripBadge = tour.imageUrl ? cdnImage(tour.imageUrl) : null;
   const dateLabel = useMemo(() => formatNextUpDate(tour, next), [tour, next]);
   const locationLabel = useMemo(() => locationForTour(tour), [tour]);
+  // Open course-popup state — null when no flag is selected, else the
+  // index in tour.stops. Stays on the home (per user request: "still
+  // remain on Homescreen") — popup floats inside this card.
+  const [popupIdx, setPopupIdx] = useState<number | null>(null);
+  const popupStop = popupIdx != null ? tour.stops[popupIdx] : null;
 
   return (
     <button
@@ -502,9 +512,10 @@ function YourTourCard({
         flexDirection: "column",
         gap: 7,
         minWidth: 0,
+        position: "relative",
       }}
     >
-      {/* Top row: trip badge + ROUND/N STOPS chip */}
+      {/* Top row: trip badge + UPCOMING TRIP / ROUND chip */}
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         {tripBadge && (
           <div style={{ width: 26, height: 26, borderRadius: 6, background: "#fff", padding: 2, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
@@ -528,8 +539,9 @@ function YourTourCard({
         }}>{tripContextLabel(tour)}</span>
       </div>
 
-      {/* Title */}
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.1, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+      {/* Title — forced single line (truncate with ellipsis) so the
+          trip name never wraps and pushes the card height. */}
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 900, color: "#fff", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
         {tour.name}
       </div>
 
@@ -548,8 +560,9 @@ function YourTourCard({
       </div>
 
       {/* Course-flag strip — small course-logo badges, one per stop.
-          Real course branding, not the trip's overall logo. Tap a flag
-          → scout that course. Hidden if 0 stops (incomplete trip). */}
+          Tap a flag → shows an in-card popup with the course name +
+          date; the popup tap routes to that course profile. Stay on
+          the home screen per user request. */}
       {tour.stops.length > 0 && (
         <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 1, WebkitOverflowScrolling: "touch" }}>
           {tour.stops.map((s, i) => {
@@ -558,7 +571,7 @@ function YourTourCard({
             return (
               <button
                 key={s.courseId + "-" + i}
-                onClick={() => onStopTap(s.courseId)}
+                onClick={() => setPopupIdx(popupIdx === i ? null : i)}
                 style={{
                   flexShrink: 0,
                   width: 32, height: 32,
@@ -588,15 +601,11 @@ function YourTourCard({
         </div>
       )}
 
-      {/* Action row */}
-      <div onClick={(e) => e.stopPropagation()} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 2 }}>
-        <ActionCell
-          label="Scout"
-          title="The holes"
-          icon={<BinocularsIcon />}
-          variant="ghost"
-          onClick={onScout}
-        />
+      {/* Action row — single primary CTA now. Scout button was
+          removed per user request (the course-flag strip carries the
+          per-course access). "Create a game" deep-links to the trip
+          page with the game sheet auto-opening. */}
+      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2 }}>
         <ActionCell
           label="Tee Up"
           title="Create a game"
@@ -605,8 +614,60 @@ function YourTourCard({
           onClick={onGame}
         />
       </div>
+
+      {/* Course popup — floating card anchored above the flag strip.
+          Closes when tapped outside (the card's own onClick will
+          re-trigger onTrip, so we stop-propagation on the inner). */}
+      {popupStop && (
+        <div
+          onClick={(e) => { e.stopPropagation(); setPopupIdx(null); }}
+          style={{ position: "absolute", inset: 0, zIndex: 6, background: "transparent" }}
+        >
+          <div
+            onClick={(e) => { e.stopPropagation(); onStopTap(popupStop.courseId); setPopupIdx(null); }}
+            style={{
+              position: "absolute",
+              left: 12, right: 12,
+              top: "50%", transform: "translateY(-50%)",
+              padding: "10px 12px",
+              background: "rgba(7,16,10,0.96)",
+              border: "1px solid rgba(77,168,98,0.45)",
+              borderRadius: 12,
+              boxShadow: "0 6px 20px rgba(0,0,0,0.5)",
+              display: "flex", alignItems: "center", gap: 10,
+              cursor: "pointer",
+            }}
+          >
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.5)", padding: 3, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+              {popupStop.course.logoUrl
+                ? <img src={cdnImage(popupStop.course.logoUrl)!} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                : <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{initialsOf(popupStop.course.name)}</span>}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {popupStop.course.name}
+              </div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(126,200,140,0.85)" }}>
+                {formatStopPlayLabel(popupStop, tour)}
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          </div>
+        </div>
+      )}
     </button>
   );
+}
+
+// Tap-popup playLabel — if the stop has its own playDate use that,
+// else fall back to the trip's startDate / "TBD". Adds a tee-time
+// suffix when available.
+function formatStopPlayLabel(stop: Stop, tour: ActiveTour): string {
+  const iso = (stop as any).playDate || tour.startDate;
+  if (!iso) return "Date TBD";
+  const d = new Date(iso + "T00:00:00Z");
+  const datePart = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  return datePart;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -1272,9 +1333,11 @@ function formatNextUpDate(tour: ActiveTour, next: Stop | null): string {
 }
 
 function tripContextLabel(tour: ActiveTour): string {
-  const stops = tour.stops.length;
-  if (stops <= 1) return "Round";
-  return `${stops} stops`;
+  // Single label both states share — user feedback: "get ride of
+  // #stops, that area should say upcoming trip". Round is still
+  // labeled separately because the UX is different (1 course, 1
+  // round, single day).
+  return tour.stops.length <= 1 ? "Round" : "Upcoming Trip";
 }
 
 // Derive a single human-readable location for the tour. Priority:
