@@ -130,6 +130,12 @@ export default function HomeTour() {
   // endDate hasn't passed yet. Members count too (not just creators)
   // because a buddy who got invited to Bethpage Saturday should also
   // see "Your Tour" at the top.
+  //
+  // Round-trip reduction: memberships query is fired in parallel with
+  // the trip query — we don't actually need the full membership list
+  // before we can ask the DB for matching trips. The inner-join filter
+  // on the GolfTrip query does the same exclusion the in() did, in one
+  // hop instead of two.
   useEffect(() => {
     if (!authResolved || !userId) { setTourLoaded(true); return; }
     let cancelled = false;
@@ -137,46 +143,36 @@ export default function HomeTour() {
       const sb = createClient();
       const todayIso = new Date().toISOString().slice(0, 10);
 
-      // 1) Trips the user belongs to (creator OR member). We use the
-      //    membership table as the source — the creator also has a
-      //    membership row inserted at create-time.
-      const { data: memberships } = await sb
-        .from("GolfTripMember")
-        .select("tripId")
-        .eq("userId", userId);
-      const tripIds = (memberships ?? []).map((m: any) => m.tripId);
-      if (tripIds.length === 0) {
-        if (!cancelled) { setTour(null); setTourLoaded(true); }
-        return;
-      }
-
-      // 2) Among those, find the soonest active one — endDate >= today
-      //    OR endDate is null (no dates set yet) so brand-new trips
-      //    without a welcome-flow-completed range still surface.
+      // Single combined query: pull the soonest active trip the user
+      // is a member of, joining stops + members in the same round-
+      // trip. The !inner join on GolfTripMember filters to trips the
+      // user belongs to without a separate membership fetch.
       const { data: trips } = await sb
         .from("GolfTrip")
-        .select("id, name, startDate, endDate, arrivalAirport, lodging, imageUrl")
-        .in("id", tripIds)
+        .select(`
+          id, name, startDate, endDate, arrivalAirport, lodging, imageUrl,
+          members:GolfTripMember!inner(userId, user:User!GolfTripMember_userId_fkey(displayName, username, avatarUrl)),
+          stops:GolfTripCourse(courseId, playDate, sortOrder, course:Course!GolfTripCourse_courseId_fkey(id, name, city, state, coverImageUrl, logoUrl, uploadCount))
+        `)
+        .eq("members.userId", userId)
         .or(`endDate.gte.${todayIso},endDate.is.null`)
         .order("startDate", { ascending: true, nullsFirst: false })
         .order("createdAt", { ascending: false })
         .limit(1);
-      const t = (trips ?? [])[0];
+      const t: any = (trips ?? [])[0];
       if (!t) {
         if (!cancelled) { setTour(null); setTourLoaded(true); }
         return;
       }
 
-      // 3) Hydrate stops + members for the chosen trip.
-      const [{ data: stopsRaw }, { data: membersRaw }] = await Promise.all([
-        sb.from("GolfTripCourse")
-          .select("courseId, playDate, sortOrder, course:Course!GolfTripCourse_courseId_fkey(id, name, city, state, coverImageUrl, logoUrl, uploadCount)")
-          .eq("tripId", t.id)
-          .order("sortOrder", { ascending: true }),
-        sb.from("GolfTripMember")
-          .select("userId, user:User!GolfTripMember_userId_fkey(displayName, username, avatarUrl)")
-          .eq("tripId", t.id),
-      ]);
+      // The !inner join only returned the requesting user's membership
+      // row — re-fetch the full member list for display. Fire after
+      // we know we have a trip; cheaper than fetching for a no-op.
+      const { data: membersRaw } = await sb
+        .from("GolfTripMember")
+        .select("userId, user:User!GolfTripMember_userId_fkey(displayName, username, avatarUrl)")
+        .eq("tripId", t.id);
+      const stopsRaw = t.stops;
 
       // Supabase types the FK join as an array even when 1:1, so
       // normalize both shapes before consuming.
@@ -386,24 +382,30 @@ export default function HomeTour() {
           onCourse={(id) => router.push(`/courses/${id}`)}
         />
 
-        {/* Your Tour */}
-        {!tourLoaded && (
-          <div style={{ marginTop: 22, padding: 24, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>
-            Loading…
-          </div>
-        )}
-        {showTour && tour && (
-          <YourTour
-            tour={tour}
-            onScout={() => tour.nextStop && router.push(`/courses/${tour.nextStop.courseId}`)}
-            onGame={() => router.push(`/trips/${tour.id}#games`)}
-            onTrip={() => router.push(`/trips/${tour.id}`)}
-            onStopTap={(id) => router.push(`/courses/${id}`)}
-          />
-        )}
-        {showCTA && (
-          <PlannerCTA onClick={() => router.push("/search?tab=trips")} />
-        )}
+        {/* Your Tour — section label always visible so the page rhythm
+            stays consistent across loading / loaded / empty states. */}
+        <section style={{ marginTop: 20 }}>
+          <SectionLabel>Your Tour</SectionLabel>
+
+          {!tourLoaded && <TourSkeleton />}
+
+          {showTour && tour && (
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.85fr) minmax(0, 1fr)", gap: 8 }}>
+              <YourTourCard
+                tour={tour}
+                onScout={() => tour.nextStop && router.push(`/courses/${tour.nextStop.courseId}`)}
+                onGame={() => router.push(`/trips/${tour.id}#games`)}
+                onTrip={() => router.push(`/trips/${tour.id}`)}
+                onStopTap={(id) => router.push(`/courses/${id}`)}
+              />
+              <PlanAnotherTile onClick={() => router.push("/search?tab=trips")} />
+            </div>
+          )}
+
+          {showCTA && (
+            <PlannerCTA onClick={() => router.push("/search?tab=trips")} />
+          )}
+        </section>
 
         {/* Where to next? — trip-idea inspiration */}
         <WhereToNext ideas={tripIdeas} onIdea={(slug) => router.push(`/trip-ideas/${slug}`)} onBrowseAll={() => router.push("/search?tab=trips")} />
@@ -418,9 +420,12 @@ export default function HomeTour() {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// YourTour — the centerpiece module when an active trip exists.
+// YourTourCard — compact (no giant hero). Title, meta line with date +
+// location + golfer count, a row of course-flag badges, and the
+// Scout/Tee-Up action pair. Designed to sit in a 2-col grid alongside
+// PlanAnotherTile, not full-width.
 // ─────────────────────────────────────────────────────────────────────
-function YourTour({
+function YourTourCard({
   tour, onScout, onGame, onTrip, onStopTap,
 }: {
   tour: ActiveTour;
@@ -430,168 +435,199 @@ function YourTour({
   onStopTap: (courseId: string) => void;
 }) {
   const next = tour.nextStop;
-  // Hero priority: ONLY the course's actual cover photo. Trip
-  // imageUrl is NOT used as the hero (it's typically a logo / crest
-  // graphic, not a landscape photo — using it full-bleed always
-  // looked wrong). When no course cover exists, fall through to
-  // FairwayPlaceholder which centers the course LOGO over the
-  // topographic pattern. The trip's uploaded image instead shows as
-  // a small badge top-left so users still see their custom artwork.
-  const heroSrc = next?.course.coverImageUrl ? cdnImage(next.course.coverImageUrl) : null;
-  const nextLogo = next?.course.logoUrl ? cdnImage(next.course.logoUrl) : null;
   const tripBadge = tour.imageUrl ? cdnImage(tour.imageUrl) : null;
   const dateLabel = useMemo(() => formatNextUpDate(tour, next), [tour, next]);
+  const locationLabel = useMemo(() => locationForTour(tour), [tour]);
 
   return (
-    <section style={{ marginTop: 24 }}>
-      <SectionLabel>Your Tour</SectionLabel>
-      <button
-        onClick={onTrip}
-        style={{
-          display: "block",
-          width: "100%",
-          padding: 0,
-          background: "#0c1c13",
-          border: "1px solid rgba(77,168,98,0.28)",
-          borderRadius: 16,
-          overflow: "hidden",
-          cursor: "pointer",
-          textAlign: "left",
-        }}
-      >
-        {/* Hero — shorter than before (21:9 instead of 16:9) so the
-            module doesn't dominate the screen. The Tour-the-Feed rail
-            below was getting pushed below the fold on smaller phones. */}
-        <div style={{ position: "relative", width: "100%", aspectRatio: "21 / 9", background: "#07100a" }}>
-          {heroSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={heroSrc} alt={next?.course.name ?? "Next course"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <FairwayPlaceholder logo={nextLogo} courseName={next?.course.name ?? tour.name} />
-          )}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0) 40%, rgba(7,16,10,0.92) 100%)" }} />
-
-          {/* Top-left badges — tiny YOUR TOUR + trip context, with
-              the trip's uploaded image (if any) as a small 28px
-              circular badge to its left. */}
-          <div style={{ position: "absolute", top: 10, left: 10, display: "flex", alignItems: "center", gap: 6 }}>
-            {tripBadge && (
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: "#fff", padding: 2, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={tripBadge} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-              </div>
-            )}
-            <Badge variant="solid">Your Tour</Badge>
-            <Badge variant="ghost">{tripContextLabel(tour)}</Badge>
+    <button
+      onClick={onTrip}
+      style={{
+        width: "100%",
+        background: "linear-gradient(160deg, #0e2418 0%, #0a1a11 100%)",
+        border: "1px solid rgba(77,168,98,0.32)",
+        borderRadius: 14,
+        padding: "12px 12px 12px",
+        cursor: "pointer",
+        textAlign: "left",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        minWidth: 0,
+      }}
+    >
+      {/* Top row: trip badge + ROUND/N STOPS chip */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        {tripBadge && (
+          <div style={{ width: 26, height: 26, borderRadius: 6, background: "#fff", padding: 2, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={tripBadge} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
+        )}
+        <span style={{
+          fontFamily: "'Playfair Display', serif",
+          fontStyle: "italic",
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: "rgba(126,200,140,0.95)",
+          padding: "3px 8px",
+          borderRadius: 99,
+          background: "rgba(77,168,98,0.12)",
+          border: "1px solid rgba(77,168,98,0.3)",
+          whiteSpace: "nowrap",
+        }}>{tripContextLabel(tour)}</span>
+      </div>
 
-          {/* Course logo top-right — only when we actually have a
-              hero photo (otherwise the logo already lives centered
-              in FairwayPlaceholder). */}
-          {heroSrc && nextLogo && (
-            <div style={{ position: "absolute", top: 10, right: 10, width: 38, height: 38, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 4 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={nextLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            </div>
-          )}
+      {/* Title */}
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 900, color: "#fff", lineHeight: 1.1, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+        {tour.name}
+      </div>
 
-          {/* Bottom-left caption */}
-          <div style={{ position: "absolute", left: 14, bottom: 10, right: 14 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(244,236,214,0.75)", marginBottom: 2 }}>
-              Next up · {dateLabel}
-            </div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.05 }}>
-              {next?.course.name ?? tour.name}
-            </div>
-          </div>
+      {/* Meta line: date · location · golfers. Tiny icon prefixes
+          keep this dense without an emoji vibe. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.78)" }}>
+        <CalendarMini /> <span>{dateLabel}</span>
+        {locationLabel && (<>
+          <Dot />
+          <PinMini /> <span style={{ whiteSpace: "nowrap" }}>{locationLabel}</span>
+        </>)}
+        {tour.members.length > 0 && (<>
+          <Dot />
+          <UsersMini /> <span>{tour.members.length} {tour.members.length === 1 ? "golfer" : "golfers"}</span>
+        </>)}
+      </div>
+
+      {/* Course-flag strip — small course-logo badges, one per stop.
+          Real course branding, not the trip's overall logo. Tap a flag
+          → scout that course. Hidden if 0 stops (incomplete trip). */}
+      {tour.stops.length > 0 && (
+        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 1, WebkitOverflowScrolling: "touch" }}>
+          {tour.stops.map((s, i) => {
+            const isNext = next && s.courseId === next.courseId;
+            const logo = s.course.logoUrl ? cdnImage(s.course.logoUrl) : null;
+            return (
+              <button
+                key={s.courseId + "-" + i}
+                onClick={() => onStopTap(s.courseId)}
+                style={{
+                  flexShrink: 0,
+                  width: 32, height: 32,
+                  borderRadius: 7,
+                  background: "#fff",
+                  border: isNext ? `2px solid ${GOLD}` : "1px solid rgba(255,255,255,0.5)",
+                  padding: 2,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  position: "relative",
+                }}
+                aria-label={s.course.name}
+                title={s.course.name}
+              >
+                {logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                ) : (
+                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 800, color: "#0c1c13" }}>
+                    {initialsOf(s.course.name)}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
+      )}
 
-        {/* Below-hero pad */}
-        <div style={{ padding: "14px 14px 14px" }}>
+      {/* Action row */}
+      <div onClick={(e) => e.stopPropagation()} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 2 }}>
+        <ActionCell
+          label="Scout"
+          title="The holes"
+          icon={<BinocularsIcon />}
+          variant="ghost"
+          onClick={onScout}
+        />
+        <ActionCell
+          label="Tee Up"
+          title="The game"
+          icon={<PinFlagIcon color="#0c2218" />}
+          variant="primary"
+          onClick={onGame}
+        />
+      </div>
+    </button>
+  );
+}
 
-          {/* Group avatars + tee-time line */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <AvatarStack members={tour.members} />
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {tour.members.length > 0 ? `${tour.members.length} ${tour.members.length === 1 ? "golfer" : "golfers"}` : "Just you so far"}
-              {next?.course.city && ` · ${next.course.city}${next.course.state ? ", " + next.course.state : ""}`}
-            </div>
-          </div>
-
-          {/* Stop chips — the trip's other courses (and the next one).
-              Hidden for solo rounds (1 stop = no journey to show). */}
-          {tour.stops.length > 1 && (
-            <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 6, overflowX: "auto", marginBottom: 14, paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
-              {tour.stops.map((s, i) => {
-                const isNext = next && s.courseId === next.courseId;
-                return (
-                  <button
-                    key={s.courseId + "-" + i}
-                    onClick={() => onStopTap(s.courseId)}
-                    style={{
-                      flexShrink: 0,
-                      padding: "5px 9px 6px 9px",
-                      borderRadius: 3,
-                      border: isNext ? `1px solid ${GOLD}66` : "1px solid rgba(255,255,255,0.08)",
-                      background: isNext ? "rgba(212,160,23,0.07)" : "rgba(255,255,255,0.02)",
-                      display: "flex", flexDirection: "column", gap: 1,
-                      cursor: "pointer",
-                      minWidth: 0,
-                      maxWidth: 200,
-                    }}
-                  >
-                    <span style={{
-                      fontFamily: "'Playfair Display', serif",
-                      fontStyle: "italic",
-                      fontSize: 9,
-                      fontWeight: 600,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: isNext ? GOLD : SAGE,
-                      whiteSpace: "nowrap",
-                    }}>
-                      {isNext ? "Next" : `Day ${i + 1}`}
-                    </span>
-                    <span style={{
-                      fontFamily: "'Outfit', sans-serif",
-                      fontSize: 12,
-                      fontWeight: isNext ? 700 : 500,
-                      color: isNext ? "#fff" : "rgba(255,255,255,0.7)",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      maxWidth: 180,
-                    }}>
-                      {s.course.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Action row — Scout the holes + Set up the game.
-              These are scorecard-style cells with a tiny label, custom
-              SVG icon (no emoji), and Outfit semibold action title. */}
-          <div onClick={(e) => e.stopPropagation()} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <ActionCell
-              label="Scout"
-              title="Scout the holes"
-              icon={<BinocularsIcon />}
-              variant="ghost"
-              onClick={onScout}
-            />
-            <ActionCell
-              label="Tee Up"
-              title="Set up the game"
-              icon={<PinFlagIcon color="#0c2218" />}
-              variant="primary"
-              onClick={onGame}
-            />
-          </div>
+// ─────────────────────────────────────────────────────────────────────
+// PlanAnotherTile — vertical companion card to the right of YourTour.
+// Always present alongside an active trip so the next-trip prompt
+// stays visible. Skinny but tall to match the YourTour card height.
+// ─────────────────────────────────────────────────────────────────────
+function PlanAnotherTile({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: "100%",
+        background: "linear-gradient(170deg, rgba(45,122,66,0.4) 0%, rgba(7,30,15,0.85) 100%)",
+        border: "1px dashed rgba(77,168,98,0.45)",
+        borderRadius: 14,
+        padding: "12px 10px",
+        cursor: "pointer",
+        textAlign: "left",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        gap: 8,
+        minWidth: 0,
+      }}
+    >
+      <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <SparkleIcon />
+      </div>
+      <div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>
+          Plan another
         </div>
-      </button>
-    </section>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+          Round or trip
+        </div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(244,236,214,0.6)", marginTop: 4, lineHeight: 1.3 }}>
+          Tell us your crew and we&apos;ll build it.
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// TourSkeleton — matches the shape of YourTourCard + PlanAnotherTile
+// so the page rhythm stays stable while the trip query resolves.
+// ─────────────────────────────────────────────────────────────────────
+function TourSkeleton() {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.85fr) minmax(0, 1fr)", gap: 8 }}>
+      <div style={{
+        height: 168,
+        borderRadius: 14,
+        background: "linear-gradient(110deg, rgba(255,255,255,0.04) 35%, rgba(77,168,98,0.08) 50%, rgba(255,255,255,0.04) 65%)",
+        backgroundSize: "200% 100%",
+        animation: "tourit-shimmer 1.4s linear infinite",
+        border: "1px solid rgba(255,255,255,0.05)",
+      }} />
+      <div style={{
+        height: 168,
+        borderRadius: 14,
+        background: "linear-gradient(110deg, rgba(255,255,255,0.03) 35%, rgba(77,168,98,0.06) 50%, rgba(255,255,255,0.03) 65%)",
+        backgroundSize: "200% 100%",
+        animation: "tourit-shimmer 1.4s linear infinite",
+        border: "1px dashed rgba(255,255,255,0.06)",
+      }} />
+      <style>{`@keyframes tourit-shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }`}</style>
+    </div>
   );
 }
 
@@ -1139,6 +1175,37 @@ function PlayIcon() {
     </svg>
   );
 }
+function CalendarMini() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(126,200,140,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+function PinMini() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(126,200,140,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+function UsersMini() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(126,200,140,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+function Dot() {
+  return <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(244,236,214,0.35)", display: "inline-block", margin: "0 1px" }} />;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -1152,8 +1219,23 @@ function formatNextUpDate(tour: ActiveTour, next: Stop | null): string {
 }
 
 function tripContextLabel(tour: ActiveTour): string {
-  const days = tour.stops.length;
-  if (days <= 1) return "Round";
-  const where = tour.stops[0]?.course.state || tour.stops[0]?.course.city || "";
-  return where ? `${days} stops · ${where}` : `${days} stops`;
+  const stops = tour.stops.length;
+  if (stops <= 1) return "Round";
+  return `${stops} stops`;
+}
+
+// Derive a single human-readable location for the tour from its stops.
+// Priority: same city → "City, ST"; same state → "ST"; mixed → first
+// stop's state. Empty when stops have no city/state at all.
+function locationForTour(tour: ActiveTour): string {
+  const stops = tour.stops;
+  if (stops.length === 0) return "";
+  const cities = new Set(stops.map((s) => s.course.city).filter(Boolean) as string[]);
+  const states = new Set(stops.map((s) => s.course.state).filter(Boolean) as string[]);
+  if (cities.size === 1) {
+    const c = stops[0].course;
+    return c.city ? `${c.city}${c.state ? ", " + c.state : ""}` : (c.state ?? "");
+  }
+  if (states.size === 1) return stops[0].course.state ?? "";
+  return stops[0].course.state ?? "";
 }
