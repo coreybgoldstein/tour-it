@@ -29,6 +29,8 @@ type Trip = {
   // and editable later. Used for public-conversion content.
   arrivalAirport?: string | null;
   lodging?: string | null;
+  lodgingCity?: string | null;
+  lodgingState?: string | null;
   isPublic?: boolean;
   publicizedAt?: string | null;
   ryderCupEnabled?: boolean;
@@ -297,6 +299,8 @@ export default function TripPage() {
   const [editEnd, setEditEnd] = useState("");
   const [editAirport, setEditAirport] = useState("");
   const [editLodging, setEditLodging] = useState("");
+  const [editLodgingCity, setEditLodgingCity] = useState<string | null>(null);
+  const [editLodgingState, setEditLodgingState] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Delete trip
@@ -734,6 +738,8 @@ export default function TripPage() {
       endDate: editEnd || null,
       arrivalAirport: editAirport.trim() || null,
       lodging: editLodging.trim() || null,
+      lodgingCity: editLodgingCity,
+      lodgingState: editLodgingState,
     };
     await createClient().from("GolfTrip").update(updates).eq("id", id as string);
     setTrip(prev => prev ? { ...prev, ...updates } : prev);
@@ -1247,7 +1253,7 @@ export default function TripPage() {
               {/* Edit pill — top-right */}
               {isOwner && (
                 <button
-                  onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditOpen(true); }}
+                  onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
                   aria-label="Edit round"
                   style={{ position: "absolute", top: 14, right: 14, display: "flex", alignItems: "center", gap: 4, background: "rgba(7,16,10,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "6px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.95)", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
                 >
@@ -1334,7 +1340,7 @@ export default function TripPage() {
                         </button>
                       )}
                       <button
-                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditOpen(true); }}
+                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
                         aria-label="Edit trip"
                         style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
                       >
@@ -2500,7 +2506,11 @@ export default function TripPage() {
                     <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Lodging</div>
                     <LodgingField
                       value={editLodging}
-                      onChange={setEditLodging}
+                      onChange={(choice) => {
+                        setEditLodging(choice.display);
+                        setEditLodgingCity(choice.city);
+                        setEditLodgingState(choice.state);
+                      }}
                       stateHint={tripCourses[0]?.course?.state ?? undefined}
                     />
                   </div>

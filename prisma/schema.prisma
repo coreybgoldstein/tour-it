@@ -572,6 +572,16 @@ model GolfTrip {
   // day 1 (and so public conversion has real airport + lodging detail).
   arrivalAirport  String?
   lodging         String?
+  // Structured lodging location — captured when the user picks a
+  // result from the LodgingField dropdown (Nominatim returns city +
+  // state alongside the display name). Used as the top-priority
+  // source for the home-screen "Your Tour" location chip — beats the
+  // airport's city, which often misleads (TVC = Traverse City but
+  // the user is actually in Boyne / Harbor Springs).
+  // Null when the lodging was typed freehand; we fall back to the
+  // raw lodging string in that case.
+  lodgingCity     String?
+  lodgingState    String?
 
   // Public conversion. When the user opts to publish, isPublic flips
   // true and publicizedAt is set; we also create a TripItinerary row

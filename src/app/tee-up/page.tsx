@@ -186,6 +186,12 @@ export default function TeeUpPage() {
   // detail to broadcast.
   const [newTripAirport, setNewTripAirport] = useState("");
   const [newTripLodging, setNewTripLodging] = useState("");
+  // Structured city/state captured when the user picks lodging from
+  // the dropdown — null when they typed freehand. Persisted on
+  // GolfTrip so the home Your Tour chip can show the real city
+  // ("Boyne, MI") instead of the airport's misleading one.
+  const [newTripLodgingCity, setNewTripLodgingCity] = useState<string | null>(null);
+  const [newTripLodgingState, setNewTripLodgingState] = useState<string | null>(null);
   const [newTripSaving, setNewTripSaving] = useState(false);
 
   // Archive sub-filter
@@ -429,6 +435,8 @@ export default function TeeUpPage() {
       endDate: newTripEnd || null,
       arrivalAirport: newTripAirport.trim() || null,
       lodging: newTripLodging.trim() || null,
+      lodgingCity: newTripLodgingCity,
+      lodgingState: newTripLodgingState,
       createdAt: now,
       updatedAt: now,
     });
@@ -1150,7 +1158,14 @@ export default function TeeUpPage() {
               </div>
               <div>
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Lodging</div>
-                <LodgingField value={newTripLodging} onChange={setNewTripLodging} />
+                <LodgingField
+                  value={newTripLodging}
+                  onChange={(choice) => {
+                    setNewTripLodging(choice.display);
+                    setNewTripLodgingCity(choice.city);
+                    setNewTripLodgingState(choice.state);
+                  }}
+                />
               </div>
             </div>
 

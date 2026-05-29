@@ -64,6 +64,8 @@ type ActiveTour = {
   region: string | null;
   arrivalAirport: string | null;
   lodging: string | null;
+  lodgingCity: string | null;
+  lodgingState: string | null;
   /** User-uploaded trip cover photo (fallback when the course
    *  doesn't have its own coverImageUrl). */
   imageUrl: string | null;
@@ -160,7 +162,7 @@ export default function HomeTour() {
       //    a brand-new trip without the welcome flow completed yet).
       const { data: trips } = await sb
         .from("GolfTrip")
-        .select("id, name, startDate, endDate, arrivalAirport, lodging, imageUrl")
+        .select("id, name, startDate, endDate, arrivalAirport, lodging, lodgingCity, lodgingState, imageUrl")
         .in("id", tripIds)
         .or(`endDate.gte.${todayIso},endDate.is.null`)
         .order("startDate", { ascending: true, nullsFirst: false })
@@ -216,6 +218,8 @@ export default function HomeTour() {
           region: null,
           arrivalAirport: t.arrivalAirport,
           lodging: t.lodging,
+          lodgingCity: (t as any).lodgingCity ?? null,
+          lodgingState: (t as any).lodgingState ?? null,
           imageUrl: t.imageUrl,
           stops,
           members,
@@ -1259,6 +1263,12 @@ function tripContextLabel(tour: ActiveTour): string {
 //      misleads when the user is actually staying somewhere else
 //      (Boyne, Harbor Springs, etc.).
 function locationForTour(tour: ActiveTour): string {
+  // Top priority — structured lodging city/state captured when the
+  // user picked from the LodgingField dropdown. Saturates the chip
+  // with a clean "Boyne, MI" without parsing display strings.
+  if (tour.lodgingCity || tour.lodgingState) {
+    return [tour.lodgingCity, tour.lodgingState].filter(Boolean).join(", ");
+  }
   if (tour.lodging && tour.lodging.trim()) {
     const cityState = parseCityStateFromLodging(tour.lodging);
     if (cityState) return cityState;

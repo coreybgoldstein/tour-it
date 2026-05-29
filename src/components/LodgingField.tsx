@@ -4,21 +4,23 @@
 // /api/places/lodging (Nominatim under the hood) returns up to 8
 // matching hotels / resorts / lodges. Tap to confirm.
 //
-// We store the human-readable display string (e.g. "Carolina Hotel
-// — Pinehurst, NC") in the parent's state. The route also returns
-// lat/lng for each result; we discard it for now since the schema
-// just has a single `lodging: String?` column. If we later want
-// map links or distance signals, we can extend the parent to also
-// take a structured object.
+// onChange now passes a structured payload — `{ display, city,
+// state }` — so the parent can also persist lodgingCity +
+// lodgingState columns on GolfTrip. city/state are populated when
+// the user picked from the dropdown; null when the user typed
+// freehand and saved as-is. The home-screen Your Tour location
+// chip prefers structured city/state over the airport's city.
 //
 // State bias: parent can pass a `stateHint` (e.g. derived from the
 // trip's first-course state) to focus results within that state.
 
 import { useEffect, useRef, useState } from "react";
 
+export type LodgingChoice = { display: string; city: string | null; state: string | null };
+
 type Props = {
   value: string;
-  onChange: (label: string) => void;
+  onChange: (choice: LodgingChoice) => void;
   placeholder?: string;
   /** ISO-2 state code, e.g. "NC". Biases server-side search. */
   stateHint?: string;
@@ -84,7 +86,7 @@ export default function LodgingField({ value, onChange, placeholder = "Hotel, re
   }
 
   function pick(h: Hit) {
-    onChange(h.display);
+    onChange({ display: h.display, city: h.city, state: h.state });
     setText(h.display);
     setOpen(false);
   }
@@ -92,7 +94,8 @@ export default function LodgingField({ value, onChange, placeholder = "Hotel, re
   function useTyped() {
     // Save whatever the user typed verbatim — escape hatch when the
     // service returns no hits but the user knows what they want.
-    onChange(text.trim());
+    // Freehand save — no structured city/state available.
+    onChange({ display: text.trim(), city: null, state: null });
     setOpen(false);
   }
 
