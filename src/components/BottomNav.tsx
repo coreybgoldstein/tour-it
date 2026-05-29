@@ -31,7 +31,7 @@ export default function BottomNav() {
   }, [pathname]);
 
   const isHome = pathname === "/";
-  const isSearch = pathname === "/search";
+  const isSearch = pathname === "/tour" || pathname === "/search";
   const isTeeUp = pathname === "/tee-up" || pathname.startsWith("/tee-up/");
   const isProfile = pathname === "/profile" || pathname.startsWith("/profile/");
 
@@ -61,7 +61,7 @@ export default function BottomNav() {
       ),
     },
     {
-      label: "Search",
+      label: "Tour",
       active: isSearch,
       onClick: () => {
         if (isSearch) {
@@ -75,7 +75,7 @@ export default function BottomNav() {
           Object.assign(ghost.style, { position: "fixed", top: "0", left: "0", width: "1px", height: "1px", opacity: "0", fontSize: "16px" });
           document.body.appendChild(ghost);
           ghost.focus();
-          router.push("/search");
+          router.push("/tour");
           setTimeout(() => ghost.remove(), 1000);
         }
       },

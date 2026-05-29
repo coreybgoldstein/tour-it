@@ -1928,7 +1928,7 @@ export default function ProfilePage() {
             {isOwner && (
               <>
                 <span style={{ margin: "0 5px", color: "rgba(255,255,255,0.25)" }}>·</span>
-                <button onClick={() => router.push("/search?tab=people")} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 10px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>
+                <button onClick={() => router.push("/tour?tab=people")} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "3px 10px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>
                   {/* Stick-figure golfer mid-swing — genderless silhouette,
                       golf-themed instead of the generic user-with-plus. */}
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2220,7 +2220,7 @@ export default function ProfilePage() {
                     the list has entries. */}
                 {isOwner && (
                   <button
-                    onClick={() => { setFollowSheet(null); router.push("/search?tab=people"); }}
+                    onClick={() => { setFollowSheet(null); router.push("/tour?tab=people"); }}
                     aria-label="Find friends"
                     style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
                   >
@@ -2248,7 +2248,7 @@ export default function ProfilePage() {
                 <div style={{ padding: "40px 20px", textAlign: "center" }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 14 }}>{followSheet === "followers" ? "No followers yet" : "Not following anyone yet"}</div>
                   {isOwner && (
-                    <button onClick={() => { setFollowSheet(null); router.push("/search?tab=people"); }}
+                    <button onClick={() => { setFollowSheet(null); router.push("/tour?tab=people"); }}
                       style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#2d7a42", border: "none", borderRadius: 99, padding: "9px 18px", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

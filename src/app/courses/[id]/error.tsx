@@ -17,7 +17,7 @@ export default function CourseError({ error, reset }: { error: Error & { digest?
       <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginBottom: 24, textAlign: "center", maxWidth: 260, lineHeight: 1.5 }}>Something went wrong loading this page.</p>
       <div style={{ display: "flex", gap: 10 }}>
         <button onClick={reset} style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Try again</button>
-        <button onClick={() => router.push("/search")} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}>Search courses</button>
+        <button onClick={() => router.push("/tour")} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 20px", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}>Search courses</button>
       </div>
     </div>
   );

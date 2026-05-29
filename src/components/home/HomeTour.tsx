@@ -375,7 +375,7 @@ export default function HomeTour() {
         {/* Search — entry to Scout. Green glow matches the previous
             HomeClassic search bar so the visual continuity holds. */}
         <button
-          onClick={() => router.push("/search")}
+          onClick={() => router.push("/tour")}
           aria-label="Find a course"
           style={{
             width: "100%",
@@ -422,17 +422,18 @@ export default function HomeTour() {
                 onTrip={() => router.push(`/trips/${tour.id}`)}
                 onStopTap={(id) => router.push(`/courses/${id}`)}
               />
-              <PlanAnotherTile onClick={() => router.push("/search?tab=trips")} />
+              <PlanAnotherTile onClick={() => router.push("/tour?tab=trips")} />
             </div>
           )}
 
           {showCTA && (
-            <PlannerCTA onClick={() => router.push("/search?tab=trips")} />
+            <PlannerCTA onClick={() => router.push("/tour?tab=trips")} />
           )}
         </section>
 
-        {/* Where to next? — trip-idea inspiration */}
-        <WhereToNext ideas={tripIdeas} onIdea={(slug) => router.push(`/trip-ideas/${slug}`)} onBrowseAll={() => router.push("/search?tab=trips")} />
+        {/* (Where-to-next moved to /tour bottom 2026-05-29 so the home
+            stays focused on the active loop. Trip inspiration now lives
+            on the dedicated tour page.) */}
 
         {/* Tour the Feed — feed-style rail at the bottom of the home.
             Tap a thumbnail → opens the dedicated /feed/[uploadId]

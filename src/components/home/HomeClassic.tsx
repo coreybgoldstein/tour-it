@@ -2040,7 +2040,7 @@ export default function HomeClassic() {
           <div style={{ padding: "0 20px 20px", flexShrink: 0 }}>
             <button
               className="discovery-search-btn"
-              onClick={() => router.push("/search")}
+              onClick={() => router.push("/tour")}
               style={{ width: "100%", display: "flex", alignItems: "center", gap: 11, background: "rgba(26,158,66,0.07)", border: "1.5px solid rgba(26,158,66,0.55)", borderRadius: 14, padding: "16px 18px", cursor: "pointer", boxShadow: "0 0 18px rgba(26,158,66,0.2), inset 0 0 10px rgba(26,158,66,0.04)" }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -2411,7 +2411,7 @@ export default function HomeClassic() {
               Every course on here gets better when golfers who&apos;ve played it contribute. Start by uploading a clip from a course you know.
             </div>
             <button
-              onClick={() => { setShowWelcome(false); router.push("/search"); }}
+              onClick={() => { setShowWelcome(false); router.push("/tour"); }}
               style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "16px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff", cursor: "pointer", boxShadow: "0 2px 16px rgba(45,122,66,0.4)", marginBottom: 12 }}
             >
               Find my home course
@@ -2593,7 +2593,7 @@ export default function HomeClassic() {
                 onClick={() => {
                   try { localStorage.setItem("tour-it-explore-home-course-dismissed", "1"); } catch {}
                   setShowHomeCoursePrompt(false);
-                  router.push("/search");
+                  router.push("/tour");
                 }}
                 style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "15px", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: "pointer", boxShadow: "0 4px 16px rgba(45,122,66,0.4)", marginBottom: 8 }}
               >
