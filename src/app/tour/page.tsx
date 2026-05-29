@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { BEST_FOR_TAGS, getEnrichment } from "@/lib/tripEnrichment";
 import TripPlannerSheet from "@/components/TripPlannerSheet";
+import PlannerCTA from "@/components/PlannerCTA";
 import { cdnImage } from "@/lib/cdnImage";
 import { readPermission, readCoords, requestLocation } from "@/lib/locationPermission";
 
@@ -806,6 +807,19 @@ function TourPageInner() {
             <div className="search-subtitle">courses · holes · trips · golfers</div>
           )}
 
+          {/* PlannerCTA under the search bar. Per user direction this
+              is Tour It's headline differentiator and should be
+              visible everywhere a user might be in a "what's next?"
+              mindset. Compact variant so it doesn't dominate the
+              search surface — sits as a quiet pill below the search
+              subtitle. Hidden while the user is actively searching
+              (query has text) to keep the results focused. */}
+          {!query && (
+            <div style={{ marginTop: 10 }}>
+              <PlannerCTA variant="compact" />
+            </div>
+          )}
+
           {/* Tab row hidden 2026-05-29 — user feedback: "no need for
               toggling, all function of searching under one house."
               Search is unified through the smart endpoint; the tab
@@ -1550,11 +1564,11 @@ function TourPageInner() {
         </>
       )}
 
-      {/* Where to next? — moved here from HomeTour 2026-05-29 so the
-          home stays focused on the active loop. Always present at the
-          bottom of /tour as a discovery surface; only renders if the
-          catalog has rows. */}
-      <TourWhereToNext />
+      {/* TourWhereToNext was previously rendered here at the page
+          bottom — moved INTO TourEmptyState 2026-05-29 so it sits
+          above the fold per user request ("we want that full bottom
+          rail with potential trips in view"). The bottom-of-page
+          slot was burying it under the Popular list. */}
 
       <BottomNav />
       <TripPlannerSheet open={plannerOpen} onClose={() => setPlannerOpen(false)} />
@@ -1693,6 +1707,15 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
           </div>
         </div>
       )}
+
+      {/* Where to next? — trip inspiration rail. Pulled UP from the
+          page-bottom slot per user request so it lands above the
+          fold on first paint. Sits right after Recent (or at the
+          very top when the user has no recent searches) so it's the
+          first thing they see beneath the search bar's PlannerCTA. */}
+      <div style={{ marginBottom: 16, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
+        <TourWhereToNext />
+      </div>
 
       <div style={{ marginBottom: 12 }}>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>Near you</div>

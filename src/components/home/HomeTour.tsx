@@ -35,6 +35,7 @@ import BottomNav from "@/components/BottomNav";
 // NOTE: TourItTopBar is rendered globally by src/app/layout.tsx — do
 // NOT render it here or the page ends up with a doubled bar.
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
+import PlannerCTA from "@/components/PlannerCTA";
 import { airportByCode } from "@/data/airports";
 import { readPermission, readCoords, requestLocation } from "@/lib/locationPermission";
 
@@ -821,47 +822,9 @@ function TourSkeleton() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// PlannerCTA — empty state. Bundles "and line up the game" into the
-// subtext so users discover Tee Up from the first touch. NOTE: the
-// caller (HomeTour) already wraps this in its own <section> with a
-// "Your Tour" SectionLabel — we render JUST the button here so the
-// label doesn't double up.
-// ─────────────────────────────────────────────────────────────────────
-function PlannerCTA({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: "100%",
-        padding: "18px 16px",
-        background: "linear-gradient(135deg, rgba(45,122,66,0.95) 0%, rgba(77,168,98,0.82) 100%)",
-        border: "1px solid rgba(77,168,98,0.55)",
-        borderRadius: 16,
-        cursor: "pointer",
-        textAlign: "left",
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        color: "#fff",
-        fontFamily: "'Outfit', sans-serif",
-      }}
-    >
-      <div style={{ width: 46, height: 46, borderRadius: 12, background: "rgba(7,16,10,0.45)", border: "1px solid rgba(244,236,214,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <SparkleIcon />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 19, lineHeight: 1.15, marginBottom: 3 }}>
-          Plan your next round or trip
-        </div>
-        <div style={{ fontSize: 12, opacity: 0.88, lineHeight: 1.4 }}>
-          Tell us your crew and dates. We&apos;ll build the tour and line up the game.
-        </div>
-      </div>
-      <ChevronRight />
-    </button>
-  );
-}
+// PlannerCTA moved to @/components/PlannerCTA so it can be shared
+// across HomeTour, /tour (under the search bar), and /tee-up footers.
+// Imported via the top-of-file import.
 
 // ─────────────────────────────────────────────────────────────────────
 // NearMeRail — horizontal scrolling row of nearby courses + radius

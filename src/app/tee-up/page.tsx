@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
+import PlannerCTA from "@/components/PlannerCTA";
 import Toast, { type ToastState } from "@/components/Toast";
 import { sendPushToUser } from "@/lib/sendPush";
 import { gameFormatLabel } from "@/lib/gameFormats";
@@ -932,6 +933,20 @@ export default function TeeUpPage() {
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {pastTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
                 </div>
+          )}
+
+          {/* PlannerCTA footer — sits at the bottom of both the
+              Rounds and Trips tabs. Per user direction this is Tour
+              It's headline differentiator and should be discoverable
+              from anywhere a user is in a "what next?" mindset. The
+              compact pill variant matches the one on /tour so users
+              recognize it instantly. Hidden on the Games tab — that
+              surface already shows New Game / Quick Round CTAs of
+              its own. */}
+          {(tab === "rounds" || tab === "trips") && (
+            <div style={{ marginTop: 24 }}>
+              <PlannerCTA variant="compact" />
+            </div>
           )}
         </div>
       )}
