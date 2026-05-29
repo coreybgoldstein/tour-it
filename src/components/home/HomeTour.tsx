@@ -32,7 +32,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { cdnImage } from "@/lib/cdnImage";
 import BottomNav from "@/components/BottomNav";
-import TourItTopBar from "@/components/TourItTopBar";
+// NOTE: TourItTopBar is rendered globally by src/app/layout.tsx — do
+// NOT render it here or the page ends up with a doubled bar.
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
 
 type CourseLite = {
@@ -93,7 +94,11 @@ type FeedTeaser = {
 
 const RADII = [10, 25, 50] as const;
 const SITE_BG = "#07100a";
-const SAGE = "rgba(244,236,214,0.55)";
+// Two sage tints — the bright one for section labels (was too dim
+// before; user said "can't see the gray"), the muted one for tertiary
+// metadata.
+const SAGE_BRIGHT = "rgba(244,236,214,0.92)";
+const SAGE = "rgba(244,236,214,0.6)";
 const GOLD = "#d4a017";
 
 export default function HomeTour() {
@@ -343,26 +348,27 @@ export default function HomeTour() {
 
   return (
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 96, paddingLeft: isDesktop ? 72 : 0 }}>
-      <TourItTopBar />
       <MayCompetitionBanner />
 
       <div style={{ padding: "8px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
 
-        {/* Search — entry to Scout. Tap routes to /search. */}
+        {/* Search — entry to Scout. Green glow matches the previous
+            HomeClassic search bar so the visual continuity holds. */}
         <button
           onClick={() => router.push("/search")}
           aria-label="Find a course"
           style={{
             width: "100%",
             display: "flex", alignItems: "center", gap: 10,
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(77,168,98,0.25)",
+            background: "rgba(7,30,15,0.85)",
+            border: "1px solid rgba(77,168,98,0.55)",
             borderRadius: 12,
             padding: "13px 16px",
             cursor: "pointer",
             fontFamily: "'Outfit', sans-serif",
-            color: "rgba(255,255,255,0.5)",
+            color: "#4da862",
             fontSize: 14,
+            boxShadow: "0 0 0 1px rgba(77,168,98,0.2), 0 0 18px rgba(77,168,98,0.18)",
           }}
         >
           <SearchIcon />
@@ -424,12 +430,16 @@ function YourTour({
   onStopTap: (courseId: string) => void;
 }) {
   const next = tour.nextStop;
-  // Hero source priority: course cover → user-uploaded trip photo →
-  // null (fall through to FairwayPlaceholder).
-  const heroSrc =
-    (next?.course.coverImageUrl ? cdnImage(next.course.coverImageUrl) : null) ||
-    (tour.imageUrl ? cdnImage(tour.imageUrl) : null);
+  // Hero priority: ONLY the course's actual cover photo. Trip
+  // imageUrl is NOT used as the hero (it's typically a logo / crest
+  // graphic, not a landscape photo — using it full-bleed always
+  // looked wrong). When no course cover exists, fall through to
+  // FairwayPlaceholder which centers the course LOGO over the
+  // topographic pattern. The trip's uploaded image instead shows as
+  // a small badge top-left so users still see their custom artwork.
+  const heroSrc = next?.course.coverImageUrl ? cdnImage(next.course.coverImageUrl) : null;
   const nextLogo = next?.course.logoUrl ? cdnImage(next.course.logoUrl) : null;
+  const tripBadge = tour.imageUrl ? cdnImage(tour.imageUrl) : null;
   const dateLabel = useMemo(() => formatNextUpDate(tour, next), [tour, next]);
 
   return (
@@ -449,8 +459,10 @@ function YourTour({
           textAlign: "left",
         }}
       >
-        {/* Hero — next course cover. Tap goes into the trip detail. */}
-        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#07100a" }}>
+        {/* Hero — shorter than before (21:9 instead of 16:9) so the
+            module doesn't dominate the screen. The Tour-the-Feed rail
+            below was getting pushed below the fold on smaller phones. */}
+        <div style={{ position: "relative", width: "100%", aspectRatio: "21 / 9", background: "#07100a" }}>
           {heroSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={heroSrc} alt={next?.course.name ?? "Next course"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -459,26 +471,36 @@ function YourTour({
           )}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0) 40%, rgba(7,16,10,0.92) 100%)" }} />
 
-          {/* Top-left badge: tiny YOUR TOUR + trip context */}
-          <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6 }}>
+          {/* Top-left badges — tiny YOUR TOUR + trip context, with
+              the trip's uploaded image (if any) as a small 28px
+              circular badge to its left. */}
+          <div style={{ position: "absolute", top: 10, left: 10, display: "flex", alignItems: "center", gap: 6 }}>
+            {tripBadge && (
+              <div style={{ width: 28, height: 28, borderRadius: 7, background: "#fff", padding: 2, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={tripBadge} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              </div>
+            )}
             <Badge variant="solid">Your Tour</Badge>
             <Badge variant="ghost">{tripContextLabel(tour)}</Badge>
           </div>
 
-          {/* Course logo top-right */}
-          {nextLogo && (
-            <div style={{ position: "absolute", top: 12, right: 12, width: 42, height: 42, borderRadius: 9, background: "#fff", border: "1px solid rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 4 }}>
+          {/* Course logo top-right — only when we actually have a
+              hero photo (otherwise the logo already lives centered
+              in FairwayPlaceholder). */}
+          {heroSrc && nextLogo && (
+            <div style={{ position: "absolute", top: 10, right: 10, width: 38, height: 38, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 4 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={nextLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             </div>
           )}
 
           {/* Bottom-left caption */}
-          <div style={{ position: "absolute", left: 14, bottom: 12, right: 14 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(244,236,214,0.65)", marginBottom: 2 }}>
+          <div style={{ position: "absolute", left: 14, bottom: 10, right: 14 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(244,236,214,0.75)", marginBottom: 2 }}>
               Next up · {dateLabel}
             </div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", lineHeight: 1.05 }}>
               {next?.course.name ?? tour.name}
             </div>
           </div>
@@ -885,11 +907,11 @@ function SectionLabel({ children, inline }: { children: React.ReactNode; inline?
     <div style={{
       fontFamily: "'Playfair Display', serif",
       fontStyle: "italic",
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: 700,
       letterSpacing: "0.14em",
       textTransform: "uppercase",
-      color: SAGE,
+      color: SAGE_BRIGHT,
       marginBottom: inline ? 0 : 10,
     }}>
       {children}
