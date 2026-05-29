@@ -956,7 +956,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
             <div style={{ position: "absolute", left: 7, right: 7, bottom: 7, textAlign: "left" }}>
               {t.holeNumber && (
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#4da862", marginBottom: 1 }}>
-                  HOLE {t.holeNumber}{t.shotType ? ` · ${t.shotType.toUpperCase()}` : ""}
+                  HOLE {t.holeNumber}{t.shotType ? ` · ${t.shotType.replace(/_/g, " ").toUpperCase()}` : ""}
                 </div>
               )}
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>

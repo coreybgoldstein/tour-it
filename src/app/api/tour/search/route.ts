@@ -6,10 +6,10 @@ import { rateLimit } from "@/lib/rateLimit";
 
 // POST /api/tour/search
 //
-// Unified LLM-powered search across Courses + TripItineraries. Takes
-// a free-text query, asks Claude Haiku to extract structured filters
-// and decide whether to search courses, trips, or both, then runs
-// the actual DB queries in parallel and returns a mixed result list.
+// Unified LLM-powered search across Courses + TripItineraries + Users.
+// Takes a free-text query, asks Claude Haiku to extract structured
+// filters and decide which sources to hit, then runs the actual DB
+// queries in parallel and returns a mixed result list.
 //
 // Cached by SHA-256 hash of the lowercased query — repeat searches
 // are free.
@@ -17,10 +17,11 @@ import { rateLimit } from "@/lib/rateLimit";
 // Body: { query: string }
 // Returns: {
 //   explanation: string,
-//   intent: "courses" | "trips" | "both",
+//   intent: "courses" | "trips" | "people" | "all",
 //   results: Array<
 //     | { type: "course", id, name, city, state, logoUrl, coverImageUrl, uploadCount }
 //     | { type: "trip", id, slug, name, tagline, heroImageUrl, region, durationDays, costBand }
+//     | { type: "person", id, username, displayName, avatarUrl, rank }
 //   >
 // }
 
@@ -72,13 +73,14 @@ export async function POST(req: NextRequest) {
 
   // ─── LLM intent extraction ──────────────────────────────────────
   let parsed: {
-    intent: "courses" | "trips" | "both";
+    intent: "courses" | "trips" | "people" | "all";
     states: string[];
     region: string | null;
     nameKeywords: string[];
     cityKeywords: string[];
     isPublic: boolean | null;
     vibeKeywords: string[];
+    personKeywords: string[];
     explanation: string;
   };
   try {
@@ -87,31 +89,35 @@ export async function POST(req: NextRequest) {
       max_tokens: 512,
       system: `You are the unified search-intent classifier for Tour It, a US golf scouting + trip-planning app.
 
-You receive a single free-text query and decide whether the user wants:
+You receive a single free-text query and decide which sources to search:
   - "courses": specific golf courses to scout/play
   - "trips":   curated multi-stop golf-trip itineraries from a 41-row catalog
-  - "both":    both types should be surfaced
+  - "people":  other golfers (search by displayName / @username)
+  - "all":     mixed — search all three sources and let the UI surface them together
 
 Return STRICT JSON only — no markdown fences, no preamble.
 
 JSON schema:
 {
-  "intent":        "courses" | "trips" | "both",
-  "states":        string[],       // US state codes the query mentions/implies
-  "region":        string | null,  // midwest / southeast / northeast / southwest / west / new england / mid-atlantic
-  "nameKeywords":  string[],       // lowercase tokens for course/trip name fuzzy match
-  "cityKeywords":  string[],       // lowercase city tokens
-  "isPublic":      boolean | null, // true if user explicitly wants public courses, null otherwise
-  "vibeKeywords":  string[],       // tokens to match trip vibe/region (e.g. "buddies", "links", "bucket-list", "couples", "casino")
-  "explanation":   string          // one short user-facing sentence describing what you're searching for
+  "intent":         "courses" | "trips" | "people" | "all",
+  "states":         string[],       // US state codes the query mentions/implies
+  "region":         string | null,  // midwest / southeast / northeast / southwest / west / new england / mid-atlantic
+  "nameKeywords":   string[],       // lowercase tokens for course/trip name fuzzy match
+  "cityKeywords":   string[],       // lowercase city tokens
+  "isPublic":       boolean | null, // true if user explicitly wants public courses, null otherwise
+  "vibeKeywords":   string[],       // tokens for trip vibe match ("buddies","links","bucket-list","couples","casino"...)
+  "personKeywords": string[],       // lowercase tokens for username/displayName fuzzy match
+  "explanation":    string          // one short user-facing sentence describing what you're searching for
 }
 
 Guidelines:
-- If the query mentions "trip", "buddy trip", "bachelor", "buddies", "weekend", "honeymoon", "itinerary" → intent likely "trips" or "both".
+- If the query starts with @ or matches a short username pattern → intent "people".
+- If the query mentions "trip", "buddy trip", "bachelor", "weekend", "honeymoon", "itinerary" → intent likely "trips" or "all".
 - If the query mentions a specific course name → intent likely "courses".
-- "links courses near LAX" → intent "courses", nameKeywords ["links"], cityKeywords [], states [] (LAX → ~Los Angeles area but no clean state filter).
-- "buddy trip in April with good bars" → intent "trips", vibeKeywords ["buddies","bachelor","nightlife"].
-- "Pinehurst" → intent "both" (could mean the resort/course or the trip).
+- "links courses near LAX" → intent "courses".
+- "buddy trip in April with good bars" → intent "trips".
+- "Pinehurst" → intent "all" (could mean the resort/course or the trip).
+- A short bare-word like "corey" or "@jack" → intent "people".
 - Empty arrays beat guesses. Never invent a state that isn't implied.`,
       messages: [{ role: "user", content: q }],
     });
@@ -123,13 +129,14 @@ Guidelines:
     // Fall back to a literal-only search across both tables when the
     // LLM can't parse the query. Better than returning an error.
     parsed = {
-      intent: "both",
+      intent: "all",
       states: [],
       region: null,
       nameKeywords: [q.toLowerCase()],
       cityKeywords: [q.toLowerCase()],
       isPublic: null,
       vibeKeywords: [],
+      personKeywords: [q.toLowerCase().replace(/^@/, "")],
       explanation: `Showing matches for "${q}"`,
     };
   }
@@ -142,8 +149,9 @@ Guidelines:
   }
 
   // ─── DB queries in parallel ─────────────────────────────────────
-  const wantsCourses = parsed.intent === "courses" || parsed.intent === "both";
-  const wantsTrips = parsed.intent === "trips" || parsed.intent === "both";
+  const wantsCourses = parsed.intent === "courses" || parsed.intent === "all";
+  const wantsTrips = parsed.intent === "trips" || parsed.intent === "all";
+  const wantsPeople = parsed.intent === "people" || parsed.intent === "all";
 
   const coursePromise = wantsCourses ? (async () => {
     let cq = sb
@@ -180,7 +188,27 @@ Guidelines:
     return scored.slice(0, 8).map((x) => x.t);
   })() : Promise.resolve([]);
 
-  const [courseRows, tripRows] = await Promise.all([coursePromise, tripPromise]);
+  const peoplePromise = wantsPeople ? (async () => {
+    // Cheap username + displayName fuzzy match against User. Limited
+    // because the People list can be long and we only need a few hits.
+    const tokens = (parsed.personKeywords ?? []).map((t) => t.replace(/^@/, "").toLowerCase()).filter(Boolean);
+    const fallback = q.toLowerCase().replace(/^@/, "");
+    const search = tokens.length > 0 ? tokens : [fallback];
+    const orParts: string[] = [];
+    for (const t of search) {
+      orParts.push(`username.ilike.%${t}%`);
+      orParts.push(`displayName.ilike.%${t}%`);
+    }
+    const { data } = await sb
+      .from("User")
+      .select("id, username, displayName, avatarUrl, reputationScore")
+      .or(orParts.join(","))
+      .order("reputationScore", { ascending: false, nullsFirst: false })
+      .limit(8);
+    return data ?? [];
+  })() : Promise.resolve([]);
+
+  const [courseRows, tripRows, peopleRows] = await Promise.all([coursePromise, tripPromise, peoplePromise]);
 
   // ─── Shape response ────────────────────────────────────────────
   const results = [
@@ -205,6 +233,14 @@ Guidelines:
       region: t.region,
       durationDays: t.durationDays,
       costBand: t.costBand,
+    })),
+    ...peopleRows.map((p: any) => ({
+      type: "person" as const,
+      id: p.id,
+      username: p.username,
+      displayName: p.displayName,
+      avatarUrl: p.avatarUrl,
+      rank: p.reputationScore ?? null,
     })),
   ];
 

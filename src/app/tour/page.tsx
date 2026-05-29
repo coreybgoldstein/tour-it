@@ -55,20 +55,22 @@ function TourPageInner() {
   // design-system rule (no JS alerts on iOS WebView).
   const [createSuccess, setCreateSuccess] = useState(false);
 
-  const [searchTab, setSearchTab] = useState<"smart" | "courses" | "people" | "trips">(
-    searchParams.get("tab") === "people" ? "people"
-      : searchParams.get("tab") === "trips" ? "trips"
-      : searchParams.get("tab") === "smart" ? "smart"
-      : "courses"
-  );
+  // Tab state hard-locked to "smart" — unified LLM search owns the
+  // page. Legacy per-type tab UI is no longer reachable; the value
+  // is cast through `as` so the wider tab-conditional render blocks
+  // (Courses / Trips / People) still typecheck against the union.
+  // They never render because searchTab is always "smart" at runtime.
+  const searchTab = "smart" as "smart" | "courses" | "people" | "trips";
 
-  // Unified Smart search — LLM-classifies intent + ranks across
-  // Courses + TripItineraries. Replaces the "pick a tab first" mental
-  // model when the user just types what they want.
+  // Unified search — single LLM-classified entry point. Replaces the
+  // "pick a tab first" mental model. Type what you want; the AI
+  // figures out whether you mean a course, a trip, or a person and
+  // returns mixed results.
   const [smartLoading, setSmartLoading] = useState(false);
   const [smartResults, setSmartResults] = useState<Array<
     | { type: "course"; id: string; name: string; city: string | null; state: string | null; logoUrl: string | null; coverImageUrl: string | null; uploadCount: number }
     | { type: "trip"; id: string; slug: string; name: string; tagline: string; heroImageUrl: string | null; region: string; durationDays: number; costBand: string }
+    | { type: "person"; id: string; username: string; displayName: string | null; avatarUrl: string | null; rank: number | null }
   >>([]);
   const [smartExplanation, setSmartExplanation] = useState<string>("");
   const smartDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -747,12 +749,7 @@ function TourPageInner() {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onKeyDown={e => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
-              placeholder={
-                searchTab === "smart" ? "Try: 'links courses near LAX' or '4-day buddy trip with bars'"
-                  : searchTab === "courses" ? "Course, city, state or zip…"
-                  : searchTab === "trips" ? "Search trips by destination, vibe, region…"
-                  : "Name or @username"
-              }
+              placeholder="Search courses, trips, golfers — try 'links near LAX' or '4-day buddy trip'"
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -768,67 +765,13 @@ function TourPageInner() {
             )}
           </div>
 
-          {/* Tabs + Filter button. "Smart" leads now — LLM-powered
-              unified search that returns mixed Courses + Trips
-              results. The legacy per-type tabs remain for power
-              users who want to filter explicitly. */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, overflowX: "auto", paddingBottom: 2 }}>
-            {(["smart", "courses", "trips", "people"] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => { setSearchTab(tab); setQuery(""); setSmartResults([]); setSmartExplanation(""); setTimeout(() => inputRef.current?.focus(), 50); }}
-                style={{
-                  flexShrink: 0,
-                  padding: "7px 16px",
-                  borderRadius: 99,
-                  border: tab === "smart" && searchTab !== tab ? "1px solid rgba(212,160,23,0.45)" : "none",
-                  fontFamily: "'Outfit', sans-serif",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  background:
-                    searchTab === tab
-                      ? (tab === "smart" ? "linear-gradient(135deg,#d4a017 0%,#a8801a 100%)" : "#2d7a42")
-                      : (tab === "smart" ? "rgba(212,160,23,0.08)" : "rgba(255,255,255,0.07)"),
-                  color: searchTab === tab ? "#fff" : (tab === "smart" ? "#d4a017" : "rgba(255,255,255,0.45)"),
-                  transition: "all 0.15s",
-                  display: "flex", alignItems: "center", gap: 5,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {tab === "smart" && (
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 3 L13.5 10.5 L21 12 L13.5 13.5 L12 21 L10.5 13.5 L3 12 L10.5 10.5 Z" />
-                  </svg>
-                )}
-                {tab === "smart" ? "Smart" : tab === "courses" ? "Courses" : tab === "trips" ? "Trips" : "People"}
-              </button>
-            ))}
-
-            {/* Invite pill — shown inline when People tab is active */}
-            {searchTab === "people" && (
-              <a
-                href="/invite"
-                style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", borderRadius: 99, border: "1px solid rgba(77,168,98,0.35)", background: "rgba(77,168,98,0.1)", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", textDecoration: "none", whiteSpace: "nowrap" }}
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Invite Friends
-              </a>
-            )}
-
-            {/* Filter button — only on courses tab */}
-            {searchTab === "courses" && (
-              <button
-                onClick={openFilterSheet}
-                style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 99, border: `1px solid ${hasFilters ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.12)"}`, background: hasFilters ? "rgba(77,168,98,0.12)" : "rgba(255,255,255,0.05)", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: hasFilters ? "#4da862" : "rgba(255,255,255,0.45)", cursor: "pointer", transition: "all 0.15s" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
-                </svg>
-                Filter{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}
-              </button>
-            )}
-          </div>
+          {/* Tab row hidden 2026-05-29 — user feedback: "no need for
+              toggling, all function of searching under one house."
+              Search is unified through the smart endpoint; the tab
+              state stays for back-compat with legacy ?tab= deep links
+              but doesn't surface visually. Per-type filter sheets
+              (Courses filter, People invite) move into the results
+              area where they're contextually relevant. */}
 
           {/* Active filter chips */}
           {hasFilters && searchTab === "courses" && (
@@ -897,7 +840,7 @@ function TourPageInner() {
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.5)" }}>{[r.city, r.state].filter(Boolean).join(", ")}</div>
                     </div>
                   </button>
-                ) : (
+                ) : r.type === "trip" ? (
                   <button
                     key={`t-${r.id}`}
                     onClick={() => router.push(`/trip-ideas/${r.slug}`)}
@@ -916,6 +859,30 @@ function TourPageInner() {
                       </div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</div>
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.tagline}</div>
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    key={`p-${r.id}`}
+                    onClick={() => router.push(`/profile/${r.username}`)}
+                    style={{ background: "#0c1c13", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, padding: 10, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
+                  >
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {r.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={cdnImage(r.avatarUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        </svg>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "1px 7px" }}>Golfer</span>
+                      </div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.displayName || `@${r.username}`}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>@{r.username}</div>
                     </div>
                   </button>
                 )

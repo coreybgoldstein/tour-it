@@ -34,6 +34,10 @@ export default function BottomNav() {
   const isSearch = pathname === "/tour" || pathname === "/search";
   const isTeeUp = pathname === "/tee-up" || pathname.startsWith("/tee-up/");
   const isProfile = pathname === "/profile" || pathname.startsWith("/profile/");
+  // Feed page is a full-screen experience — hide the nav so the
+  // right-rail buttons and the bottom uploader chip aren't occluded.
+  const isFeed = pathname.startsWith("/feed/");
+  if (isFeed) return null;
 
   // When the keyboard opens we hide the mobile nav. Previously we unmounted
   // the whole component (return null), but on iOS the unmount + keyboard
