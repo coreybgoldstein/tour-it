@@ -115,6 +115,11 @@ export default function HomeTour() {
   const [nearMe, setNearMe] = useState<CourseLite[]>([]);
   const [nearMeRadius, setNearMeRadius] = useState<10 | 25 | 50>(50);
   const [locStatus, setLocStatus] = useState<"unknown" | "denied" | "granted" | "loading">("unknown");
+  // True once a Near-Me query has actually completed at the current
+  // (lat, lng, radius). Gates the "No courses found" empty-state so
+  // it doesn't flash during the window between locStatus=granted and
+  // the courses arriving from Supabase.
+  const [nearMeQueried, setNearMeQueried] = useState(false);
 
   const [tour, setTour] = useState<ActiveTour | null>(null);
   const [tourLoaded, setTourLoaded] = useState(false);
@@ -160,39 +165,44 @@ export default function HomeTour() {
         return;
       }
 
-      // 2) Soonest one whose endDate is in the future (or null — i.e.
-      //    a brand-new trip without the welcome flow completed yet).
-      const { data: trips } = await sb
-        .from("GolfTrip")
-        .select("id, name, startDate, endDate, arrivalAirport, lodging, lodgingCity, lodgingState, imageUrl")
-        .in("id", tripIds)
-        .or(`endDate.gte.${todayIso},endDate.is.null`)
-        .order("startDate", { ascending: true, nullsFirst: false })
-        .order("createdAt", { ascending: false })
-        .limit(1);
+      // 2) Trip + stops + members fanned out in parallel for ALL
+      //    candidate tripIds. This was previously 4 sequential RTTs
+      //    (trip → then stops+members → then courses+users) which
+      //    pushed cold-start tour load to ~2s on cell. Now: 1 RTT
+      //    for trip+stops+members (3 in parallel), then 1 RTT for
+      //    courses+users (2 in parallel). Cold path is ~halved.
+      const [{ data: trips }, { data: allStopRows }, { data: allMemberRows }] = await Promise.all([
+        sb.from("GolfTrip")
+          .select("id, name, startDate, endDate, arrivalAirport, lodging, lodgingCity, lodgingState, imageUrl")
+          .in("id", tripIds)
+          .or(`endDate.gte.${todayIso},endDate.is.null`)
+          .order("startDate", { ascending: true, nullsFirst: false })
+          .order("createdAt", { ascending: false })
+          .limit(1),
+        // Fetch stops + members for ALL candidate trips up front —
+        // wasteful when the user is in many trips, but the typical
+        // user is in 1-3 trips so the extra rows are negligible vs.
+        // the round-trip latency saved.
+        sb.from("GolfTripCourse")
+          .select("tripId, courseId, playDate, teeTime, sortOrder")
+          .in("tripId", tripIds)
+          .order("sortOrder", { ascending: true }),
+        sb.from("GolfTripMember")
+          .select("tripId, userId")
+          .in("tripId", tripIds),
+      ]);
       const t = (trips ?? [])[0];
       if (!t) {
         if (!cancelled) { setTour(null); setTourLoaded(true); }
         return;
       }
 
-      // 3) Stops + member rows in parallel — bare queries (no FK
-      //    joins). The earlier `course:Course!fkey(...)` shorthand
-      //    silently returned null on prod, so stops fell through the
-      //    "no course attached" filter and the YourTour card showed
-      //    "Round" even on Caddy Daddy-style multi-stop trips.
-      const [{ data: stopRows }, { data: memberRows }] = await Promise.all([
-        sb.from("GolfTripCourse")
-          .select("courseId, playDate, teeTime, sortOrder")
-          .eq("tripId", t.id)
-          .order("sortOrder", { ascending: true }),
-        sb.from("GolfTripMember")
-          .select("userId")
-          .eq("tripId", t.id),
-      ]);
+      // Filter to just the rows belonging to the chosen trip.
+      const stopRows = (allStopRows ?? []).filter((s: any) => s.tripId === t.id);
+      const memberRows = (allMemberRows ?? []).filter((m: any) => m.tripId === t.id);
 
-      const courseIds = Array.from(new Set((stopRows ?? []).map((s: any) => s.courseId).filter(Boolean)));
-      const memberUserIds = Array.from(new Set((memberRows ?? []).map((m: any) => m.userId).filter(Boolean)));
+      const courseIds = Array.from(new Set(stopRows.map((s: any) => s.courseId).filter(Boolean)));
+      const memberUserIds = Array.from(new Set(memberRows.map((m: any) => m.userId).filter(Boolean)));
 
       const [{ data: coursesRaw }, { data: usersRaw }] = await Promise.all([
         courseIds.length ? sb.from("Course").select("id, name, city, state, coverImageUrl, logoUrl, uploadCount").in("id", courseIds) : Promise.resolve({ data: [] as any[] }),
@@ -202,7 +212,7 @@ export default function HomeTour() {
       const courseById = new Map((coursesRaw ?? []).map((c: any) => [c.id, c]));
       const userById = new Map((usersRaw ?? []).map((u: any) => [u.id, u]));
 
-      const stops: Stop[] = ((stopRows ?? []) as any[])
+      const stops: Stop[] = (stopRows as any[])
         .map((s) => ({
           courseId: s.courseId,
           playDate: s.playDate,
@@ -212,7 +222,7 @@ export default function HomeTour() {
         }))
         .filter((s) => s.course) as Stop[];
 
-      const members: MemberLite[] = ((memberRows ?? []) as any[])
+      const members: MemberLite[] = (memberRows as any[])
         .map((m) => {
           const u = userById.get(m.userId);
           if (!u) return null;
@@ -372,30 +382,35 @@ export default function HomeTour() {
       .order("name", { ascending: true })
       .limit(20);
     setNearMe((data ?? []) as CourseLite[]);
+    setNearMeQueried(true);
   }
 
   function changeRadius(r: 10 | 25 | 50) {
     setNearMeRadius(r);
     if (locStatus !== "granted") return;
     const cached = readCoords();
-    if (cached) fetchNearByCoords(cached.lat, cached.lng, r);
+    if (cached) {
+      // Reset queried so the empty-state copy is suppressed while
+      // the new-radius query is in flight.
+      setNearMeQueried(false);
+      fetchNearByCoords(cached.lat, cached.lng, r);
+    }
   }
 
   // ── Render ─────────────────────────────────────────────────────────
   const showCTA = tourLoaded && !tour;
   const showTour = tourLoaded && !!tour;
 
-  // Page-ready gate. User feedback: the home was flashing a
-  // half-loaded skeleton + "Plan your next round" CTA + "No courses
-  // found" for several seconds before the real content swapped in,
-  // and it read as broken. Now we hold a solid dark screen (the same
-  // one /loading.tsx renders) until auth has resolved AND the tour
-  // query has settled. Tour is the slowest-blocking call; once it's
-  // back, every other section either has data or is hidden.
-  const pageReady = authResolved && tourLoaded;
-  if (!pageReady) {
-    return <main style={{ minHeight: "100dvh", background: SITE_BG }} />;
-  }
+  // No full-page block here — the home shell (banner + search + Near
+  // Me + section labels + FeedTease) renders immediately so the user
+  // gets visual content within one paint. Each section handles its
+  // own loading state inline:
+  //   - Your Tour: TourSkeleton while !tourLoaded
+  //   - Near Me: empty rail + "Enable location" prompt
+  //   - Tour the Feed: section hidden when teasers empty
+  // The earlier "wait for tourLoaded before painting anything"
+  // gate showed the user a dark screen for ~2s on real cell
+  // connections — worse than the brief skeleton it was suppressing.
 
   return (
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 140, paddingLeft: isDesktop ? 72 : 0 }}>
@@ -442,14 +457,18 @@ export default function HomeTour() {
           onEnable={enableLocation}
           onMap={() => router.push("/map")}
           onCourse={(id) => router.push(`/courses/${id}`)}
+          queried={nearMeQueried}
         />
 
-        {/* Your Tour — section label always visible so the page rhythm
-            stays consistent across loading / loaded / empty states. */}
-        <section style={{ marginTop: 14 }}>
-          <SectionLabel>Your Tour</SectionLabel>
-
-          {!tourLoaded && <TourSkeleton />}
+        {/* Your Tour — section is suppressed entirely until the tour
+            query has settled. User feedback: the shimmer skeleton
+            flashed for 1-2s on cold cell connections and read as a
+            "loading" state that shouldn't be there at all. Holding
+            the section back means there's a brief moment with no
+            YourTour content (label included), then the card or CTA
+            snaps in — preferable to the shimmer. */}
+        <section style={{ marginTop: 14, minHeight: tourLoaded ? undefined : 0 }}>
+          {tourLoaded && <SectionLabel>Your Tour</SectionLabel>}
 
           {showTour && tour && (
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.85fr) minmax(0, 1fr)", gap: 8 }}>
@@ -840,7 +859,7 @@ function PlannerCTA({ onClick }: { onClick: () => void }) {
 // segmented control + Map shortcut.
 // ─────────────────────────────────────────────────────────────────────
 function NearMeRail({
-  courses, radius, onChangeRadius, locStatus, onEnable, onMap, onCourse,
+  courses, radius, onChangeRadius, locStatus, onEnable, onMap, onCourse, queried,
 }: {
   courses: CourseLite[];
   radius: 10 | 25 | 50;
@@ -849,6 +868,9 @@ function NearMeRail({
   onEnable: () => void;
   onMap: () => void;
   onCourse: (id: string) => void;
+  /** True after a Near-Me fetch has actually completed. Gates the
+   *  empty-state copy so it doesn't flash before the response. */
+  queried: boolean;
 }) {
   return (
     <section style={{ marginTop: 14 }}>
@@ -907,7 +929,7 @@ function NearMeRail({
         </div>
       )}
 
-      {locStatus === "granted" && courses.length === 0 && (
+      {locStatus === "granted" && queried && courses.length === 0 && (
         <div style={{ padding: "16px", background: "rgba(244,236,214,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
           No courses found within {radius} miles. Try a wider radius.
         </div>
