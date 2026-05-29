@@ -91,6 +91,7 @@ type FeedTeaser = {
   id: string;
   courseId: string;
   courseName: string;
+  courseLogo: string | null;
   thumbnail: string | null;
   shotType: string | null;
   holeNumber: number | null;
@@ -292,24 +293,28 @@ export default function HomeTour() {
       const courseIds = Array.from(new Set(uploads.map((u: any) => u.courseId).filter(Boolean)));
       const holeIds = Array.from(new Set(uploads.map((u: any) => u.holeId).filter(Boolean)));
       const [{ data: courses }, { data: holes }] = await Promise.all([
-        courseIds.length ? sb.from("Course").select("id, name").in("id", courseIds) : Promise.resolve({ data: [] }),
+        courseIds.length ? sb.from("Course").select("id, name, logoUrl").in("id", courseIds) : Promise.resolve({ data: [] }),
         holeIds.length ? sb.from("Hole").select("id, holeNumber").in("id", holeIds) : Promise.resolve({ data: [] }),
       ]);
       if (cancelled) return;
 
-      const courseById = new Map((courses ?? []).map((c: any) => [c.id, c.name as string]));
+      const courseById = new Map((courses ?? []).map((c: any) => [c.id, { name: c.name as string, logoUrl: c.logoUrl as string | null }]));
       const holeById = new Map((holes ?? []).map((h: any) => [h.id, h.holeNumber as number]));
 
-      const teasers: FeedTeaser[] = (uploads as any[]).map((u) => ({
-        id: u.id,
-        courseId: u.courseId,
-        courseName: (u.courseId && courseById.get(u.courseId)) || "Unknown",
-        thumbnail: u.cloudflareVideoId
-          ? `https://videodelivery.net/${u.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=1s&width=240`
-          : cdnImage(u.mediaUrl),
-        shotType: u.shotType,
-        holeNumber: (u.holeId && holeById.get(u.holeId)) ?? null,
-      }));
+      const teasers: FeedTeaser[] = (uploads as any[]).map((u) => {
+        const c = u.courseId ? courseById.get(u.courseId) : null;
+        return {
+          id: u.id,
+          courseId: u.courseId,
+          courseName: c?.name || "Unknown",
+          courseLogo: c?.logoUrl ? cdnImage(c.logoUrl) : null,
+          thumbnail: u.cloudflareVideoId
+            ? `https://videodelivery.net/${u.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=1s&width=240`
+            : cdnImage(u.mediaUrl),
+          shotType: u.shotType,
+          holeNumber: (u.holeId && holeById.get(u.holeId)) ?? null,
+        };
+      });
       setFeedTeasers(teasers);
     })();
     return () => { cancelled = true; };
@@ -383,7 +388,7 @@ export default function HomeTour() {
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 96, paddingLeft: isDesktop ? 72 : 0 }}>
       <MayCompetitionBanner />
 
-      <div style={{ padding: "10px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
+      <div style={{ padding: "6px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
 
         {/* Unified entry — routes to /tour with the Smart (LLM)
             tab pre-selected. "Tour It All" plays on the brand and
@@ -428,7 +433,7 @@ export default function HomeTour() {
 
         {/* Your Tour — section label always visible so the page rhythm
             stays consistent across loading / loaded / empty states. */}
-        <section style={{ marginTop: 20 }}>
+        <section style={{ marginTop: 14 }}>
           <SectionLabel>Your Tour</SectionLabel>
 
           {!tourLoaded && <TourSkeleton />}
@@ -834,8 +839,8 @@ function NearMeRail({
   onCourse: (id: string) => void;
 }) {
   return (
-    <section style={{ marginTop: 22 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+    <section style={{ marginTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
         <SectionLabel inline>Courses Near Me</SectionLabel>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
           {RADII.map((r) => (
@@ -966,8 +971,8 @@ function NearCourseCard({ course, onClick }: { course: CourseLite; onClick: () =
 function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea: (slug: string) => void; onBrowseAll: () => void }) {
   if (ideas.length === 0) return null;
   return (
-    <section style={{ marginTop: 26 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+    <section style={{ marginTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
         <SectionLabel inline>Where to next?</SectionLabel>
         <button
           onClick={onBrowseAll}
@@ -1031,8 +1036,8 @@ function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea
 function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId: string) => void }) {
   if (teasers.length === 0) return null;
   return (
-    <section style={{ marginTop: 24, marginBottom: 8 }}>
-      <div style={{ marginBottom: 10 }}>
+    <section style={{ marginTop: 14, marginBottom: 8 }}>
+      <div style={{ marginBottom: 8 }}>
         <SectionLabel>Tour the Feed</SectionLabel>
       </div>
       {/* Card sizing + border match HomeClassic.feed-peek-card
@@ -1040,43 +1045,107 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
           before we made all these renovations". 96px wide, 9:16
           aspect, hairline green border, no drop shadow. */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, WebkitOverflowScrolling: "touch", marginRight: -16, paddingRight: 16 }}>
-        {teasers.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => onTap(t.id)}
-            style={{
-              flexShrink: 0,
-              width: 96,
-              aspectRatio: "9 / 16",
-              borderRadius: 12,
-              overflow: "hidden",
-              border: "1px solid rgba(26,158,66,0.12)",
-              padding: 0,
-              background: "rgba(10,28,18,0.95)",
-              position: "relative",
-              cursor: "pointer",
-            }}
-          >
-            {t.thumbnail && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={t.thumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            )}
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(7,16,10,0.92))" }} />
-            <div style={{ position: "absolute", left: "50%", top: "42%", transform: "translate(-50%,-50%)", width: 26, height: 26, borderRadius: "50%", background: "rgba(77,168,98,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <PlayIcon />
-            </div>
-            <div style={{ position: "absolute", left: 7, right: 7, bottom: 7, textAlign: "left" }}>
-              {t.holeNumber && (
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", color: "#4da862", marginBottom: 1 }}>
-                  HOLE {t.holeNumber}{t.shotType ? ` · ${t.shotType.replace(/_/g, " ").toUpperCase()}` : ""}
-                </div>
+        {teasers.map((t) => {
+          const initials = t.courseName
+            .split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() || "").join("");
+          const shotLabel = t.shotType ? t.shotType.replace(/_/g, " ").toUpperCase() : null;
+          return (
+            <button
+              key={t.id}
+              onClick={() => onTap(t.id)}
+              style={{
+                flexShrink: 0,
+                width: 96,
+                aspectRatio: "9 / 16",
+                borderRadius: 12,
+                overflow: "hidden",
+                border: "1px solid rgba(26,158,66,0.18)",
+                padding: 0,
+                background: "rgba(10,28,18,0.95)",
+                position: "relative",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              {t.thumbnail && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={t.thumbnail} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               )}
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#fff", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                {t.courseName}
+              {/* Triple-stop gradient: dark top so the badge floats; mid
+                  clear so the thumbnail breathes; dark bottom so the
+                  course name + shot-type read on any image. */}
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(to bottom, rgba(7,16,10,0.78) 0%, rgba(7,16,10,0.0) 32%, rgba(7,16,10,0.0) 52%, rgba(7,16,10,0.96) 100%)",
+              }} />
+
+              {/* Upper third — course badge. Big square that reads as
+                  "this is THE course" the way a baseball-card badge
+                  reads as the team. Centered horizontally. */}
+              <div style={{
+                position: "absolute", left: 0, right: 0, top: 6, display: "flex", justifyContent: "center",
+              }}>
+                <div style={{
+                  width: 34, height: 34, borderRadius: 8,
+                  background: t.courseLogo ? "rgba(255,255,255,0.96)" : "rgba(10,28,18,0.96)",
+                  border: "1px solid rgba(255,255,255,0.85)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  overflow: "hidden",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.45)",
+                }}>
+                  {t.courseLogo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={t.courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 3 }} />
+                  ) : (
+                    <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 13, fontWeight: 700, color: "#4da862", letterSpacing: "0.04em" }}>
+                      {initials || "TI"}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </button>
-        ))}
+
+              {/* Centered play disc */}
+              <div style={{
+                position: "absolute", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
+                width: 28, height: 28, borderRadius: "50%",
+                background: "rgba(77,168,98,0.92)",
+                border: "1px solid rgba(255,255,255,0.85)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+              }}>
+                <PlayIcon />
+              </div>
+
+              {/* Bottom block — course name under the play button, shot
+                  type below. */}
+              <div style={{ position: "absolute", left: 6, right: 6, bottom: 6, textAlign: "center" }}>
+                <div style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 10.5, fontWeight: 800, color: "#fff",
+                  lineHeight: 1.1,
+                  overflow: "hidden", textOverflow: "ellipsis",
+                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+                }}>
+                  {t.courseName}
+                </div>
+                {(t.holeNumber || shotLabel) && (
+                  <div style={{
+                    marginTop: 3,
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: 8.5, fontWeight: 700, color: "#7ee098",
+                    letterSpacing: "0.08em",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>
+                    {t.holeNumber ? `HOLE ${t.holeNumber}` : ""}
+                    {t.holeNumber && shotLabel ? " · " : ""}
+                    {shotLabel || ""}
+                  </div>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
