@@ -444,20 +444,13 @@ export default function HomeTour() {
 
   return (
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 140, paddingLeft: isDesktop ? 72 : 0 }}>
-      {/* Font-test for the section-label typography — round 3.
-          Fresh picks that complement Tour It's premium-but-modern
-          golf vibe. Three distinct families:
-            A) Fraunces — modern variable serif with character.
-               Used by a lot of contemporary premium brands;
-               great optical-size behavior at small sizes.
-            B) Cormorant Garamond italic — refined editorial
-               serif, evokes a fine club's printed menu /
-               scorecard. Higher contrast than Playfair.
-            C) Manrope — modern geometric sans for clean
-               contrast against the Playfair trip names. Reads
-               sporty + modern, the way the bottom-nav labels do.
-          Tell me A/B/C and I'll unify on the winner. */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,600;1,700&family=Fraunces:wght@700;900&family=Manrope:wght@700;800&display=swap');`}</style>
+      {/* Manrope loaded for the whole home — user picked it as the
+          family for section labels + trip names + every other
+          headline on this surface. Weights 400-800 give enough
+          range: 800 for titles + section labels, 700 for sub-labels,
+          500-600 for meta lines. No italic (Manrope has none —
+          contrast is carried by weight + tracking instead). */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');`}</style>
 
       <MayCompetitionBanner />
 
@@ -484,7 +477,7 @@ export default function HomeTour() {
         >
           <SearchIcon />
           <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.1 }}>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 17, fontWeight: 800, letterSpacing: "0.01em" }}>
+            <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 800, letterSpacing: "0.01em" }}>
               Tour It All
             </span>
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 500, color: "rgba(126,200,140,0.7)", marginTop: 2, letterSpacing: "0.04em" }}>
@@ -513,7 +506,7 @@ export default function HomeTour() {
             Section is suppressed entirely until tour query has
             settled to avoid skeleton flash. */}
         <section style={{ marginTop: 10, minHeight: tourLoaded ? undefined : 0 }}>
-          {tourLoaded && <SectionLabel variant="cormorantItalic">Your Tour (B · Cormorant Italic)</SectionLabel>}
+          {tourLoaded && <SectionLabel>Your Tour</SectionLabel>}
 
           {tourLoaded && tours.length > 0 && (
             // alignItems: stretch (the flex-row default) lets each
@@ -630,11 +623,10 @@ function YourTourCard({
           </div>
         )}
         <span style={{
-          fontFamily: "'Playfair Display', serif",
-          fontStyle: "italic",
+          fontFamily: "'Manrope', sans-serif",
           fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.1em",
+          fontWeight: 800,
+          letterSpacing: "0.14em",
           textTransform: "uppercase",
           color: "rgba(126,200,140,0.95)",
           padding: "3px 8px",
@@ -647,7 +639,7 @@ function YourTourCard({
 
       {/* Title — forced single line (truncate with ellipsis) so the
           trip name never wraps and pushes the card height. */}
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 900, color: "#fff", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
+      <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
         {tour.name}
       </div>
 
@@ -717,7 +709,7 @@ function YourTourCard({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 ) : (
-                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#0c1c13" }}>
+                  <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 800, color: "#0c1c13" }}>
                     {initialsOf(s.course.name)}
                   </span>
                 )}
@@ -833,7 +825,7 @@ function YourTourCard({
             <div style={{ width: 36, height: 36, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.5)", padding: 3, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
               {popupStop.course.logoUrl
                 ? <img src={cdnImage(popupStop.course.logoUrl)!} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                : <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{initialsOf(popupStop.course.name)}</span>}
+                : <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{initialsOf(popupStop.course.name)}</span>}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -932,10 +924,10 @@ function PlanAnotherTile({ onClick }: { onClick: () => void }) {
           <img src="/tour-it-pin.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.55))" }} />
         </div>
         <div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>
             Plan Another
           </div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+          <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
             Round or Trip
           </div>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(244,236,214,0.65)", marginTop: 4, lineHeight: 1.3 }}>
@@ -1000,7 +992,7 @@ function NearMeRail({
   return (
     <section style={{ marginTop: 10 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <SectionLabel inline variant="fraunces">Courses Near Me (A · Fraunces)</SectionLabel>
+        <SectionLabel inline>Courses Near Me</SectionLabel>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
           {RADII.map((r) => (
             <button
@@ -1174,7 +1166,7 @@ function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea
                 <Badge variant="ghost">{i.durationDays}D · {i.costBand}</Badge>
               </div>
               <div style={{ position: "absolute", left: 10, bottom: 8, right: 10 }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+                <div style={{ fontFamily: "'Manrope', sans-serif", fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
                   {i.name}
                 </div>
               </div>
@@ -1197,7 +1189,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
   return (
     <section style={{ marginTop: 10, marginBottom: 8 }}>
       <div style={{ marginBottom: 8 }}>
-        <SectionLabel variant="manrope">Tour the Feed (C · Manrope)</SectionLabel>
+        <SectionLabel>Tour the Feed</SectionLabel>
       </div>
       {/* Card sizing + border match HomeClassic.feed-peek-card
           exactly — the user wanted "the same style with overlay as
@@ -1256,7 +1248,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={t.courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 3 }} />
                   ) : (
-                    <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 13, fontWeight: 700, color: "#4da862", letterSpacing: "0.04em" }}>
+                    <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 13, fontWeight: 800, color: "#4da862", letterSpacing: "0.04em" }}>
                       {initials || "TI"}
                     </span>
                   )}
@@ -1314,51 +1306,13 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
 // Small primitives — labels, badges, action cells, avatars, icons.
 // ─────────────────────────────────────────────────────────────────────
 
-type SectionLabelVariant = "default" | "fraunces" | "cormorantItalic" | "manrope";
-
-function SectionLabel({ children, inline, variant = "default" }: { children: React.ReactNode; inline?: boolean; variant?: SectionLabelVariant }) {
-  // Round-3 section-label test — three families that complement
-  // the Playfair trip names without being more Playfair.
-  const v: React.CSSProperties = (() => {
-    switch (variant) {
-      case "fraunces":
-        return {
-          fontFamily: "'Fraunces', serif",
-          fontStyle: "normal",
-          fontSize: 14,
-          fontWeight: 900,
-          letterSpacing: "0.1em",
-        };
-      case "cormorantItalic":
-        return {
-          fontFamily: "'Cormorant Garamond', serif",
-          fontStyle: "italic",
-          fontSize: 16,
-          fontWeight: 700,
-          letterSpacing: "0.08em",
-        };
-      case "manrope":
-        return {
-          fontFamily: "'Manrope', sans-serif",
-          fontStyle: "normal",
-          fontSize: 12,
-          fontWeight: 800,
-          letterSpacing: "0.18em",
-        };
-      default:
-        return {
-          fontFamily: "'Playfair Display', serif",
-          fontStyle: "italic",
-          fontSize: 14,
-          fontWeight: 900,
-          letterSpacing: "0.13em",
-        };
-    }
-  })();
-
+function SectionLabel({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
   return (
     <div style={{
-      ...v,
+      fontFamily: "'Manrope', sans-serif",
+      fontSize: 12,
+      fontWeight: 800,
+      letterSpacing: "0.18em",
       textTransform: "uppercase",
       color: SAGE_BRIGHT,
       marginBottom: inline ? 0 : 10,
@@ -1418,11 +1372,10 @@ function ActionCell({ label, title, icon, variant, onClick }: {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontFamily: "'Playfair Display', serif",
-          fontStyle: "italic",
+          fontFamily: "'Manrope', sans-serif",
           fontSize: 9.5,
-          fontWeight: 700,
-          letterSpacing: "0.1em",
+          fontWeight: 800,
+          letterSpacing: "0.14em",
           textTransform: "uppercase",
           color: isPrimary ? "rgba(7,16,10,0.7)" : SAGE,
           marginBottom: 1,
@@ -1546,7 +1499,7 @@ function FairwayPlaceholder({ logo, courseName }: { logo: string | null; courseN
             <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
         ) : (
-          <div style={{ width: 86, height: 86, borderRadius: 16, background: "rgba(244,236,214,0.06)", border: "1px solid rgba(244,236,214,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 900, color: "rgba(244,236,214,0.7)", letterSpacing: "0.05em" }}>
+          <div style={{ width: 86, height: 86, borderRadius: 16, background: "rgba(244,236,214,0.06)", border: "1px solid rgba(244,236,214,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Manrope', sans-serif", fontSize: 32, fontWeight: 800, color: "rgba(244,236,214,0.7)", letterSpacing: "0.05em" }}>
             {initialsOf(courseName)}
           </div>
         )}
