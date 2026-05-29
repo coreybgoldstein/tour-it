@@ -385,8 +385,20 @@ export default function HomeTour() {
   const showCTA = tourLoaded && !tour;
   const showTour = tourLoaded && !!tour;
 
+  // Page-ready gate. User feedback: the home was flashing a
+  // half-loaded skeleton + "Plan your next round" CTA + "No courses
+  // found" for several seconds before the real content swapped in,
+  // and it read as broken. Now we hold a solid dark screen (the same
+  // one /loading.tsx renders) until auth has resolved AND the tour
+  // query has settled. Tour is the slowest-blocking call; once it's
+  // back, every other section either has data or is hidden.
+  const pageReady = authResolved && tourLoaded;
+  if (!pageReady) {
+    return <main style={{ minHeight: "100dvh", background: SITE_BG }} />;
+  }
+
   return (
-    <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 96, paddingLeft: isDesktop ? 72 : 0 }}>
+    <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 140, paddingLeft: isDesktop ? 72 : 0 }}>
       <MayCompetitionBanner />
 
       <div style={{ padding: "6px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
@@ -728,12 +740,14 @@ function PlanAnotherTile({ onClick }: { onClick: () => void }) {
 
       {/* Foreground content sits above the route illustration */}
       <div style={{ position: "relative", display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between", gap: 8 }}>
-        {/* Tour It pin — the brand mark used in the top bar. Replaces
-            the cartoon flag glyph. No tinted background container; the
-            pin sits cleanly on the gradient like a watermark/medallion. */}
-        <div style={{ width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Tour It pin — the brand mark. Bigger now (52px from 38px)
+            and anchored hard against the top-left of the tile so it
+            reads as a corner medallion, not a centered glyph. The
+            negative margins pull it slightly outside the tile's
+            padding bounds, snug into the corner like a sticker. */}
+        <div style={{ width: 52, height: 52, marginTop: -2, marginLeft: -2, display: "flex", alignItems: "flex-start", justifyContent: "flex-start" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/tour-it-pin.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} />
+          <img src="/tour-it-pin.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.55))" }} />
         </div>
         <div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>

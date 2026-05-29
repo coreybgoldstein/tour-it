@@ -11,12 +11,20 @@
 // is the "got tapped from the feed-tease rail and wants to see clips"
 // shortcut.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { cdnImage } from "@/lib/cdnImage";
+
+type CommentItem = {
+  id: string;
+  body: string;
+  createdAt: string;
+  username: string;
+  avatarUrl: string | null;
+};
 
 type Clip = {
   id: string;
@@ -58,6 +66,128 @@ export default function FeedPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+
+  // Comment sheet — matches the bottom-sheet pattern used on
+  // HomeClassic / courses / hole / profile. Lifted to FeedPage so
+  // the sheet renders above the scroll-snap container regardless of
+  // which clip is active, and tapping the comment button in any
+  // ClipCard opens against the same DOM node.
+  const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
+  const [commentItems, setCommentItems] = useState<CommentItem[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [submittingComment, setSubmittingComment] = useState(false);
+  // 500ms grace flag set synchronously when the comment button is
+  // tapped, so iOS WKWebView's re-fired touch doesn't immediately
+  // dismiss the sheet via the backdrop tap handler. Mirrors the
+  // HomeClassic pattern.
+  const commentJustOpenedRef = useRef(false);
+  const openCommentSheet = useCallback((uploadId: string) => {
+    commentJustOpenedRef.current = true;
+    window.setTimeout(() => { commentJustOpenedRef.current = false; }, 500);
+    setCommentUploadId(uploadId);
+  }, []);
+  // Current user — fetched once, used for posting + the sign-in CTA.
+  const [me, setMe] = useState<{ id: string; username: string | null; displayName: string | null; avatarUrl: string | null } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const sb = createClient();
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user || cancelled) return;
+      const { data: prof } = await sb.from("User").select("id, username, displayName, avatarUrl").eq("id", user.id).maybeSingle();
+      if (!cancelled && prof) setMe(prof as any);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Load comments when the sheet opens.
+  useEffect(() => {
+    if (!commentUploadId) { setCommentItems([]); return; }
+    setLoadingComments(true);
+    const sb = createClient();
+    sb.from("Comment")
+      .select("id, body, createdAt, userId, user:User(username, avatarUrl)")
+      .eq("uploadId", commentUploadId)
+      .order("createdAt", { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          setCommentItems(data.map((c: any) => ({
+            id: c.id,
+            body: c.body,
+            createdAt: c.createdAt,
+            username: c.user?.username || "golfer",
+            avatarUrl: c.user?.avatarUrl || null,
+          })));
+        }
+        setLoadingComments(false);
+      });
+  }, [commentUploadId]);
+
+  // Submit. Pattern lifted from HomeClassic.submitComment: insert
+  // Comment → bump Upload.commentCount + rankScore → Notification +
+  // push + points → optimistic local list update.
+  async function submitComment() {
+    if (!commentText.trim() || !me || !commentUploadId || submittingComment) return;
+    setSubmittingComment(true);
+    const sb = createClient();
+    const id = crypto.randomUUID();
+    const { error } = await sb.from("Comment").insert({
+      id,
+      uploadId: commentUploadId,
+      userId: me.id,
+      body: commentText.trim(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    if (!error) {
+      const { data: uploadData } = await sb
+        .from("Upload")
+        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
+        .eq("id", commentUploadId)
+        .single();
+      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
+        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
+        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
+      const newCommentCount = (uploadData?.commentCount || 0) + 1;
+      const { computeRankScore } = await import("@/lib/rankScore");
+      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
+      await sb.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+      if (uploadData?.userId && uploadData.userId !== me.id) {
+        const commenterName = me.displayName || me.username || "Someone";
+        const notifNow = new Date().toISOString();
+        const clipLink = holeNumber
+          ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
+          : `/courses/${uploadData.courseId}`;
+        sb.from("Notification").insert({
+          id: crypto.randomUUID(),
+          userId: uploadData.userId,
+          type: "comment",
+          title: "New comment",
+          body: `${commenterName} commented on your clip`,
+          linkUrl: clipLink,
+          referenceId: commentUploadId,
+          read: false,
+          createdAt: notifNow,
+          updatedAt: notifNow,
+        }).then(() => {});
+        fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
+        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
+      }
+      setCommentItems(prev => [...prev, {
+        id,
+        body: commentText.trim(),
+        createdAt: new Date().toISOString(),
+        username: me.username || "golfer",
+        avatarUrl: me.avatarUrl || null,
+      }]);
+      // Bump local clip's commentCount so the right-rail count
+      // reflects the new total without a re-fetch.
+      setClips(prev => prev.map(c => c.id === commentUploadId ? { ...c, commentCount: c.commentCount + 1 } : c));
+      setCommentText("");
+    }
+    setSubmittingComment(false);
+  }
 
   // Fetch the requested clip + a window of recent approved clips so
   // the user has something to swipe through. The requested clip is
@@ -208,17 +338,82 @@ export default function FeedPage() {
             onBack={close}
             onCourse={() => router.push(`/courses/${c.courseId}`)}
             onUser={() => c.uploaderUsername && router.push(`/profile/${c.uploaderUsername}`)}
+            onComment={() => openCommentSheet(c.id)}
             registerVideo={(el) => (videoRefs.current[c.id] = el)}
             isActive={i === activeIndex}
           />
         ))}
       </div>
+
+      {/* Comment sheet — slides up from the bottom. Closes on backdrop
+          tap (after the 500ms grace). Layout copied from
+          HomeClassic.tsx (line ~2342) so the visual is identical
+          across surfaces. */}
+      {commentUploadId && (
+        <>
+          <div
+            className="tourit-sheet-backdrop"
+            onClick={() => {
+              if (commentJustOpenedRef.current) return;
+              setCommentUploadId(null);
+              setCommentText("");
+            }}
+          />
+          <div onClick={(e) => e.stopPropagation()} className="tourit-sheet tourit-sheet--comments">
+            <div className="tourit-sheet-grip" />
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", textAlign: "center", paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>Comments</div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
+              {loadingComments ? (
+                <div style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12, padding: "24px 0" }}>Loading...</div>
+              ) : commentItems.length === 0 ? (
+                <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
+              ) : commentItems.map(c => (
+                <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {c.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>@{c.username} </span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)" }}>{c.body}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: "10px 16px 36px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              {!me && (
+                <div style={{ textAlign: "center", padding: "8px 0 10px" }}>
+                  <a href="/login" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#4da862", fontWeight: 500 }}>Sign in to leave a comment</a>
+                </div>
+              )}
+              {me && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Add a comment..."
+                    style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                    onKeyDown={(e) => { if (e.key === "Enter" && commentText.trim()) submitComment(); }}
+                  />
+                  <button onClick={submitComment} disabled={!commentText.trim() || submittingComment} style={{ background: "#2d7a42", border: "none", borderRadius: 10, padding: "10px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: !commentText.trim() ? 0.4 : 1 }}>
+                    {submittingComment ? "..." : "Post"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }
 
 function FeedClip({
-  clip, muted, onToggleMute, onBack, onCourse, onUser, registerVideo, isActive,
+  clip, muted, onToggleMute, onBack, onCourse, onUser, onComment, registerVideo, isActive,
 }: {
   clip: Clip;
   muted: boolean;
@@ -226,6 +421,7 @@ function FeedClip({
   onBack: () => void;
   onCourse: () => void;
   onUser: () => void;
+  onComment: () => void;
   registerVideo: (el: HTMLVideoElement | null) => void;
   isActive: boolean;
 }) {
@@ -406,8 +602,8 @@ function FeedClip({
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
         </RailButton>
-        {/* Comment */}
-        <RailButton label={String(clip.commentCount)} onClick={(e) => { e.stopPropagation(); onCourse(); }}>
+        {/* Comment — opens the bottom-sheet (lifted state on FeedPage). */}
+        <RailButton label={String(clip.commentCount)} onClick={(e) => { e.stopPropagation(); onComment(); }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
         </RailButton>
         {/* SEND IT — visual copied 1:1 from profile/[userId] line ~185.
