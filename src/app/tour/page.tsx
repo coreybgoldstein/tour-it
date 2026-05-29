@@ -717,8 +717,13 @@ function TourPageInner() {
            recent / near / popular sections below. */
         .search-box { display: flex; align-items: center; gap: 10px; background: rgba(7,30,15,0.85); border: 1px solid rgba(77,168,98,0.55); border-radius: 12px; padding: 11px 16px; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 0 0 1px rgba(77,168,98,0.2), 0 0 18px rgba(77,168,98,0.18); }
         .search-box.focused { border-color: rgba(77,168,98,0.85); box-shadow: 0 0 0 1px rgba(77,168,98,0.4), 0 0 22px rgba(77,168,98,0.25); }
-        .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Playfair Display', serif; font-style: italic; font-size: 17px; font-weight: 800; color: #4da862; letter-spacing: 0.01em; }
-        .search-input::placeholder { color: rgba(77,168,98,0.55); font-style: italic; }
+        /* Input itself: white sans-serif at a comfortable reading
+           size. User feedback — they like the italic green Playfair
+           look when the placeholder is showing, but typed text in
+           that same style was hard to scan. Placeholder overrides
+           below restore the Playfair italic for the empty state. */
+        .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Outfit', sans-serif; font-style: normal; font-size: 15px; font-weight: 500; color: #fff; letter-spacing: 0.005em; }
+        .search-input::placeholder { font-family: 'Playfair Display', serif; color: rgba(77,168,98,0.55); font-style: italic; font-size: 17px; font-weight: 800; letter-spacing: 0.01em; }
         .search-subtitle { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 500; color: rgba(126,200,140,0.7); letter-spacing: 0.04em; margin-top: 6px; padding-left: 4px; }
         .clear-btn { background: rgba(255,255,255,0.08); border: none; cursor: pointer; color: rgba(255,255,255,0.5); border-radius: 99px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .section-label { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 10px; margin-top: 24px; }

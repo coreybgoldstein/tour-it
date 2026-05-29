@@ -444,6 +444,17 @@ export default function HomeTour() {
 
   return (
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 140, paddingLeft: isDesktop ? 72 : 0 }}>
+      {/* Font-test for the section-label typography. The user asked to
+          compare three options side-by-side and pick. Each section
+          label below renders in a distinct family so you can see all
+          three on one screen:
+            A) Cinzel — Roman-caps display serif (formal, elegant)
+            B) Bebas Neue — tall condensed sans-caps (sporty, modern)
+            C) Outfit 900 italic — clean geometric sans (friendly)
+          Tell me which feels right and I'll unify all three labels
+          on that family + remove this temporary loader. */}
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@700;900&display=swap');`}</style>
+
       <MayCompetitionBanner />
 
       <div style={{ padding: "12px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
@@ -498,7 +509,7 @@ export default function HomeTour() {
             Section is suppressed entirely until tour query has
             settled to avoid skeleton flash. */}
         <section style={{ marginTop: 10, minHeight: tourLoaded ? undefined : 0 }}>
-          {tourLoaded && <SectionLabel>Your Tour</SectionLabel>}
+          {tourLoaded && <SectionLabel variant="bebas">Your Tour (B · Bebas Neue)</SectionLabel>}
 
           {tourLoaded && tours.length > 0 && (
             // alignItems: stretch (the flex-row default) lets each
@@ -742,10 +753,10 @@ function YourTourCard({
             >
               <GameScorecardIcon color="#7ed28b" />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
                   {tour.gameCount > 1 ? `Latest of ${tour.gameCount} games` : "Game ready"}
                 </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
                   {(() => {
                     const name = gameFormatLabel(tour.game.format);
                     const stakes = gameStakesLabel(tour.game.format, tour.game.formatConfig);
@@ -985,7 +996,7 @@ function NearMeRail({
   return (
     <section style={{ marginTop: 10 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <SectionLabel inline>Courses Near Me</SectionLabel>
+        <SectionLabel inline variant="cinzel">Courses Near Me (A · Cinzel)</SectionLabel>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
           {RADII.map((r) => (
             <button
@@ -1182,7 +1193,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
   return (
     <section style={{ marginTop: 10, marginBottom: 8 }}>
       <div style={{ marginBottom: 8 }}>
-        <SectionLabel>Tour the Feed</SectionLabel>
+        <SectionLabel variant="outfitItalic">Tour the Feed (C · Outfit Italic)</SectionLabel>
       </div>
       {/* Card sizing + border match HomeClassic.feed-peek-card
           exactly — the user wanted "the same style with overlay as
@@ -1230,7 +1241,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                 position: "absolute", left: 0, right: 0, top: 6, display: "flex", justifyContent: "center",
               }}>
                 <div style={{
-                  width: 34, height: 34, borderRadius: 8,
+                  width: 34, height: 34, borderRadius: 14,
                   background: t.courseLogo ? "rgba(255,255,255,0.96)" : "rgba(10,28,18,0.96)",
                   border: "0.5px solid rgba(255,255,255,0.55)",
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -1299,14 +1310,52 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
 // Small primitives — labels, badges, action cells, avatars, icons.
 // ─────────────────────────────────────────────────────────────────────
 
-function SectionLabel({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
+type SectionLabelVariant = "default" | "cinzel" | "bebas" | "outfitItalic";
+
+function SectionLabel({ children, inline, variant = "default" }: { children: React.ReactNode; inline?: boolean; variant?: SectionLabelVariant }) {
+  // Variant-specific style overrides. Each variant tunes weight and
+  // letter-spacing to the family's natural rhythm — Bebas Neue wants
+  // less tracking and a larger size; Cinzel wants generous tracking.
+  const v: React.CSSProperties = (() => {
+    switch (variant) {
+      case "cinzel":
+        return {
+          fontFamily: "'Cinzel', serif",
+          fontStyle: "normal",
+          fontSize: 14,
+          fontWeight: 900,
+          letterSpacing: "0.14em",
+        };
+      case "bebas":
+        return {
+          fontFamily: "'Bebas Neue', sans-serif",
+          fontStyle: "normal",
+          fontSize: 18,
+          fontWeight: 400,
+          letterSpacing: "0.12em",
+        };
+      case "outfitItalic":
+        return {
+          fontFamily: "'Outfit', sans-serif",
+          fontStyle: "italic",
+          fontSize: 14,
+          fontWeight: 900,
+          letterSpacing: "0.1em",
+        };
+      default:
+        return {
+          fontFamily: "'Playfair Display', serif",
+          fontStyle: "italic",
+          fontSize: 14,
+          fontWeight: 900,
+          letterSpacing: "0.13em",
+        };
+    }
+  })();
+
   return (
     <div style={{
-      fontFamily: "'Playfair Display', serif",
-      fontStyle: "italic",
-      fontSize: 14,
-      fontWeight: 900,
-      letterSpacing: "0.13em",
+      ...v,
       textTransform: "uppercase",
       color: SAGE_BRIGHT,
       marginBottom: inline ? 0 : 10,
