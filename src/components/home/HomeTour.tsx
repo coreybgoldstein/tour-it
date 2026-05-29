@@ -35,6 +35,7 @@ import BottomNav from "@/components/BottomNav";
 // NOTE: TourItTopBar is rendered globally by src/app/layout.tsx — do
 // NOT render it here or the page ends up with a doubled bar.
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
+import { airportByCode } from "@/data/airports";
 
 type CourseLite = {
   id: string;
@@ -227,23 +228,26 @@ export default function HomeTour() {
   }, [authResolved, userId]);
 
   // ── Trip ideas (Where to next?) ────────────────────────────────────
-  // Pulls 6 itineraries, preferring ones in-season for the current
-  // month. Cheap query — TripItinerary is small + public-readable.
+  // Cheap query — the curated catalog is ~41 itineraries total, so we
+  // fetch the whole list and JS-filter for in-season + sample 6. The
+  // previous PostgREST .or(...) with a column-to-column comparison
+  // (bestSeasonStart.gt.bestSeasonEnd) silently returned no rows.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const sb = createClient();
-      const m = new Date().getMonth() + 1;
-      // Bias toward in-season: bestSeasonStart <= m <= bestSeasonEnd
-      // (handles year-wraparound via the OR clause).
       const { data } = await sb
         .from("TripItinerary")
         .select("id, slug, name, tagline, heroImageUrl, region, durationDays, costBand, bestSeasonStart, bestSeasonEnd")
-        .or(`and(bestSeasonStart.lte.${m},bestSeasonEnd.gte.${m}),and(bestSeasonStart.gt.bestSeasonEnd,or(bestSeasonStart.lte.${m},bestSeasonEnd.gte.${m}))`)
-        .limit(8);
-      if (cancelled) return;
-      // Shuffle so the same 6 don't show every load.
-      const shuffled = [...(data ?? [])].sort(() => Math.random() - 0.5).slice(0, 6);
+        .limit(60);
+      if (cancelled || !data) return;
+      const m = new Date().getMonth() + 1;
+      // In-season check that handles year-wraparound (e.g. Nov-Apr).
+      const inSeason = (start: number, end: number) =>
+        start <= end ? (m >= start && m <= end) : (m >= start || m <= end);
+      const seasonal = (data as any[]).filter((it) => inSeason(it.bestSeasonStart, it.bestSeasonEnd));
+      const pool = seasonal.length >= 6 ? seasonal : (data as any[]);
+      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 6);
       setTripIdeas(shuffled as TripIdea[]);
     })();
     return () => { cancelled = true; };
@@ -251,35 +255,43 @@ export default function HomeTour() {
 
   // ── Feed tease ─────────────────────────────────────────────────────
   // Recent approved clips — 5 thumbnails at the bottom of the home.
+  // Fetches the uploads first, then batches course + hole lookups so
+  // we don't depend on a FK-join name that may not exist. The prior
+  // version's `course:Course!Upload_courseId_fkey(name)` silently
+  // returned null on prod which made the whole rail render-skip.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const sb = createClient();
-      const { data } = await sb
+      const { data: uploads } = await sb
         .from("Upload")
-        .select("id, courseId, cloudflareVideoId, mediaUrl, mediaType, shotType, holeId, course:Course!Upload_courseId_fkey(name), hole:Hole!Upload_holeId_fkey(holeNumber)")
+        .select("id, courseId, cloudflareVideoId, mediaUrl, mediaType, shotType, holeId")
         .eq("moderationStatus", "APPROVED")
         .order("createdAt", { ascending: false })
         .limit(8);
+      if (cancelled || !uploads) return;
+
+      const courseIds = Array.from(new Set(uploads.map((u: any) => u.courseId).filter(Boolean)));
+      const holeIds = Array.from(new Set(uploads.map((u: any) => u.holeId).filter(Boolean)));
+      const [{ data: courses }, { data: holes }] = await Promise.all([
+        courseIds.length ? sb.from("Course").select("id, name").in("id", courseIds) : Promise.resolve({ data: [] }),
+        holeIds.length ? sb.from("Hole").select("id, holeNumber").in("id", holeIds) : Promise.resolve({ data: [] }),
+      ]);
       if (cancelled) return;
-      const teasers: FeedTeaser[] = ((data ?? []) as any[]).map((u) => {
-        const course = Array.isArray(u.course) ? u.course[0] : u.course;
-        const hole = Array.isArray(u.hole) ? u.hole[0] : u.hole;
-        // Cloudflare Stream thumbnail when available; else fall back
-        // to the mediaUrl (already CDN-fronted by cdnImage if it's a
-        // Supabase Storage image).
-        const thumb = u.cloudflareVideoId
+
+      const courseById = new Map((courses ?? []).map((c: any) => [c.id, c.name as string]));
+      const holeById = new Map((holes ?? []).map((h: any) => [h.id, h.holeNumber as number]));
+
+      const teasers: FeedTeaser[] = (uploads as any[]).map((u) => ({
+        id: u.id,
+        courseId: u.courseId,
+        courseName: (u.courseId && courseById.get(u.courseId)) || "Unknown",
+        thumbnail: u.cloudflareVideoId
           ? `https://videodelivery.net/${u.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=1s&width=240`
-          : cdnImage(u.mediaUrl);
-        return {
-          id: u.id,
-          courseId: u.courseId,
-          courseName: course?.name ?? "Unknown",
-          thumbnail: thumb,
-          shotType: u.shotType,
-          holeNumber: hole?.holeNumber ?? null,
-        };
-      });
+          : cdnImage(u.mediaUrl),
+        shotType: u.shotType,
+        holeNumber: (u.holeId && holeById.get(u.holeId)) ?? null,
+      }));
       setFeedTeasers(teasers);
     })();
     return () => { cancelled = true; };
@@ -1232,18 +1244,29 @@ function tripContextLabel(tour: ActiveTour): string {
   return `${stops} stops`;
 }
 
-// Derive a single human-readable location for the tour from its stops.
-// Priority: same city → "City, ST"; same state → "ST"; mixed → first
-// stop's state. Empty when stops have no city/state at all.
+// Derive a single human-readable location for the tour. Stops are
+// the primary source; when stops aren't attached yet (a brand-new
+// trip created from the planner but courses still to be picked), we
+// fall back to the airport code (looked up against the bundled US
+// airport list — "TVC" → "Traverse City, MI") and then the lodging.
 function locationForTour(tour: ActiveTour): string {
   const stops = tour.stops;
-  if (stops.length === 0) return "";
-  const cities = new Set(stops.map((s) => s.course.city).filter(Boolean) as string[]);
-  const states = new Set(stops.map((s) => s.course.state).filter(Boolean) as string[]);
-  if (cities.size === 1) {
-    const c = stops[0].course;
-    return c.city ? `${c.city}${c.state ? ", " + c.state : ""}` : (c.state ?? "");
+  if (stops.length > 0) {
+    const cities = new Set(stops.map((s) => s.course.city).filter(Boolean) as string[]);
+    const states = new Set(stops.map((s) => s.course.state).filter(Boolean) as string[]);
+    if (cities.size === 1) {
+      const c = stops[0].course;
+      return c.city ? `${c.city}${c.state ? ", " + c.state : ""}` : (c.state ?? "");
+    }
+    if (states.size === 1) return stops[0].course.state ?? "";
+    return stops[0].course.state ?? "";
   }
-  if (states.size === 1) return stops[0].course.state ?? "";
-  return stops[0].course.state ?? "";
+  // Fallback chain — Caddy Daddy-style trip created with airport +
+  // lodging but no courses attached yet.
+  if (tour.arrivalAirport) {
+    const a = airportByCode(tour.arrivalAirport);
+    if (a) return `${a.city}, ${a.state}`;
+  }
+  if (tour.lodging) return tour.lodging;
+  return "";
 }
