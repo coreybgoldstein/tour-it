@@ -8,7 +8,6 @@ import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
 // Routes where the bar is hidden — clip-heavy / feed pages, auth, and pages
 // that already render their own header (map, notifications, course detail).
 const HIDDEN_EXACT = new Set<string>([
-  "/",
   "/upload",
   "/map",
   "/notifications",
@@ -25,6 +24,11 @@ const HIDDEN_EXACT = new Set<string>([
 ]);
 const HIDDEN_PREFIXES = ["/courses/", "/onboarding", "/admin"];
 
+// Home route ("/") is conditional. HomeClassic renders its own inline
+// TopBar (legacy feed home), so we MUST hide this one there to avoid
+// a doubled stack. HomeTour expects the global TopBar so we render.
+const HIDE_ON_HOME = process.env.NEXT_PUBLIC_HOME_MODE === "classic";
+
 export default function TourItTopBar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -34,6 +38,7 @@ export default function TourItTopBar() {
 
   const hidden =
     !pathname ||
+    (pathname === "/" ? HIDE_ON_HOME : false) ||
     HIDDEN_EXACT.has(pathname) ||
     HIDDEN_PREFIXES.some((p) => pathname.startsWith(p));
 

@@ -62,6 +62,9 @@ type ActiveTour = {
   region: string | null;
   arrivalAirport: string | null;
   lodging: string | null;
+  /** User-uploaded trip cover photo (fallback when the course
+   *  doesn't have its own coverImageUrl). */
+  imageUrl: string | null;
   stops: Stop[];
   members: MemberLite[];
   /** First stop with a future or null playDate — the "next up" course. */
@@ -147,7 +150,7 @@ export default function HomeTour() {
       //    without a welcome-flow-completed range still surface.
       const { data: trips } = await sb
         .from("GolfTrip")
-        .select("id, name, startDate, endDate, arrivalAirport, lodging")
+        .select("id, name, startDate, endDate, arrivalAirport, lodging, imageUrl")
         .in("id", tripIds)
         .or(`endDate.gte.${todayIso},endDate.is.null`)
         .order("startDate", { ascending: true, nullsFirst: false })
@@ -203,6 +206,7 @@ export default function HomeTour() {
           region: null,
           arrivalAirport: t.arrivalAirport,
           lodging: t.lodging,
+          imageUrl: t.imageUrl,
           stops,
           members,
           nextStop: next,
@@ -420,7 +424,11 @@ function YourTour({
   onStopTap: (courseId: string) => void;
 }) {
   const next = tour.nextStop;
-  const nextCover = next?.course.coverImageUrl ? cdnImage(next.course.coverImageUrl) : null;
+  // Hero source priority: course cover → user-uploaded trip photo →
+  // null (fall through to FairwayPlaceholder).
+  const heroSrc =
+    (next?.course.coverImageUrl ? cdnImage(next.course.coverImageUrl) : null) ||
+    (tour.imageUrl ? cdnImage(tour.imageUrl) : null);
   const nextLogo = next?.course.logoUrl ? cdnImage(next.course.logoUrl) : null;
   const dateLabel = useMemo(() => formatNextUpDate(tour, next), [tour, next]);
 
@@ -443,11 +451,11 @@ function YourTour({
       >
         {/* Hero — next course cover. Tap goes into the trip detail. */}
         <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", background: "#07100a" }}>
-          {nextCover ? (
+          {heroSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={nextCover} alt={next?.course.name ?? "Next course"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={heroSrc} alt={next?.course.name ?? "Next course"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
-            <div style={{ width: "100%", height: "100%", background: "linear-gradient(160deg, rgba(45,122,66,0.4), rgba(7,16,10,0.9))" }} />
+            <FairwayPlaceholder logo={nextLogo} courseName={next?.course.name ?? tour.name} />
           )}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0) 40%, rgba(7,16,10,0.92) 100%)" }} />
 
@@ -960,6 +968,55 @@ function ActionCell({ label, title, icon, variant, onClick }: {
       </div>
     </button>
   );
+}
+
+// Visual fallback when the next course has no coverImageUrl. Uses a
+// topographic-line SVG pattern + a centered logo (or course initials)
+// so the hero never reads as an empty placeholder.
+function FairwayPlaceholder({ logo, courseName }: { logo: string | null; courseName: string }) {
+  return (
+    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(145deg, #1c4425 0%, #0c2117 60%, #050d08 100%)", overflow: "hidden" }}>
+      {/* Topographic fairway lines — abstract, golf-coded */}
+      <svg width="100%" height="100%" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" style={{ position: "absolute", inset: 0, opacity: 0.22 }}>
+        <defs>
+          <linearGradient id="fairway-line" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#4da862" stopOpacity="0" />
+            <stop offset="50%" stopColor="#7ed28b" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#4da862" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0,1,2,3,4,5,6,7,8].map((i) => (
+          <path
+            key={i}
+            d={`M -20 ${30 + i * 24} C 80 ${20 + i * 24}, 220 ${50 + i * 24}, 420 ${30 + i * 24}`}
+            stroke="url(#fairway-line)"
+            strokeWidth={i === 4 ? 1.8 : 1}
+            fill="none"
+          />
+        ))}
+      </svg>
+      {/* Centered logo OR initials medallion */}
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {logo ? (
+          <div style={{ width: 88, height: 88, borderRadius: 16, background: "#fff", padding: 10, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.6)", boxShadow: "0 6px 24px rgba(0,0,0,0.45)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
+        ) : (
+          <div style={{ width: 86, height: 86, borderRadius: 16, background: "rgba(244,236,214,0.06)", border: "1px solid rgba(244,236,214,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 900, color: "rgba(244,236,214,0.7)", letterSpacing: "0.05em" }}>
+            {initialsOf(courseName)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function initialsOf(name: string): string {
+  const words = name.replace(/[^a-zA-Z\s]/g, "").split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "TI";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }
 
 function AvatarStack({ members }: { members: MemberLite[] }) {
