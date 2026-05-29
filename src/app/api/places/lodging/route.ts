@@ -69,20 +69,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: `Lodging search failed: ${(e as Error).message}` }, { status: 502 });
   }
 
-  // Filter to lodging-ish results and reshape. Nominatim tags vary
-  // (hotel, resort, hostel, motel, lodging, guest_house, ...) — keep
-  // the broad set since some Tour It trips stay at golf-resort
-  // properties that may be tagged as "resort" or "hostel" instead.
+  // Filter to lodging-only results. Earlier this also let
+  // `class === "amenity"` through, which surfaced churches /
+  // restaurants / community centers whenever a query loosely
+  // matched their name ("Alpine Village" → "Alpine Village
+  // Baptist Church"). Tightened to `class === "tourism"` plus
+  // an explicit lodging-type whitelist.
   const LODGING_TYPES = new Set([
     "hotel", "motel", "resort", "guest_house", "guesthouse", "hostel",
     "chalet", "apartment", "bed_and_breakfast", "lodging", "alpine_hut",
+    "camp_site", "caravan_site", "wilderness_hut",
   ]);
 
   const results: LodgingHit[] = hits
     .filter((h) => {
       const t = (h.type || "").toLowerCase();
       const c = (h.class || "").toLowerCase();
-      return LODGING_TYPES.has(t) || c === "tourism" || c === "amenity";
+      // Lodging-only — never let amenity-class results through.
+      return LODGING_TYPES.has(t) || c === "tourism";
     })
     .slice(0, 8)
     .map((h) => {

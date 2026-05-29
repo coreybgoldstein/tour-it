@@ -1377,6 +1377,26 @@ export default function TripPage() {
                     </span>
                   </div>
                 )}
+                {/* Airport + lodging row — surfaces the logistics
+                    captured at trip creation so the header isn't
+                    just a name + date. Each chip uses a custom
+                    green-stroke icon. */}
+                {!isRound && (trip.arrivalAirport || trip.lodging) && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                    {trip.arrivalAirport && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 99, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(126,200,140,0.95)" }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
+                        {trip.arrivalAirport}
+                      </span>
+                    )}
+                    {trip.lodging && (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 99, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(126,200,140,0.95)", maxWidth: 220, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14" /><path d="M7 10h10M7 14h10M7 18h10" /><path d="M3 22h18" /></svg>
+                        {trip.lodging}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             )}

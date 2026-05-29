@@ -1,51 +1,64 @@
-// Home feed skeleton — shown while page.tsx loads
+// Home loading skeleton. Renders the *shape* of HomeTour (the new
+// loop home) — search bar, Near Me rail, Your Tour card, Feed rail —
+// so the transition from skeleton → real content is a swap, not a
+// flash of an entirely different feed-shaped layout. Previously this
+// painted a TikTok-style full-screen feed skeleton (matching the old
+// HomeClassic home) and showed for ~2 seconds before HomeTour took
+// over, which read as a broken first-paint.
+
 export default function HomeLoading() {
   return (
-    <div style={{ background: "#07100a", minHeight: "100dvh", overflow: "hidden" }}>
-      {/* Fake feed card — full viewport */}
-      <div style={{ height: "100svh", position: "relative", background: "rgba(255,255,255,0.03)" }}>
-        {/* Top bar skeleton */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "16px 16px 0", zIndex: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={pulse({ width: 40, height: 40, borderRadius: 10 })} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={pulse({ width: 140, height: 13, borderRadius: 6 })} />
-              <div style={pulse({ width: 100, height: 10, borderRadius: 5 })} />
-            </div>
-          </div>
-        </div>
+    <div style={{ background: "#07100a", minHeight: "100dvh", color: "#fff", paddingBottom: 96 }}>
+      <style>{`
+        @keyframes tourit-load-pulse {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
+        }
+      `}</style>
 
-        {/* Right sidebar skeleton */}
-        <div style={{ position: "absolute", right: 16, bottom: 120, display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
-          <div style={pulse({ width: 36, height: 36, borderRadius: "50%" })} />
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-              <div style={pulse({ width: 32, height: 32, borderRadius: "50%" })} />
-              <div style={pulse({ width: 20, height: 8, borderRadius: 4 })} />
-            </div>
+      {/* Empty space where TourItTopBar will mount (rendered globally
+          by layout.tsx; we don't try to mimic it here to avoid a
+          double-render seam when it appears). */}
+
+      {/* MayCompetitionBanner placeholder strip */}
+      <div style={pulse({ height: 38, marginTop: 70, marginLeft: 0, marginRight: 0 })} />
+
+      <div style={{ padding: "10px 16px 0" }}>
+        {/* Search bar */}
+        <div style={pulse({ width: "100%", height: 46, borderRadius: 12, marginTop: 0 })} />
+
+        {/* Courses Near Me section label + rail */}
+        <div style={pulse({ width: 200, height: 14, marginTop: 22, borderRadius: 6 })} />
+        <div style={{ display: "flex", gap: 10, marginTop: 12, overflow: "hidden" }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} style={pulse({ width: 160, height: 210, borderRadius: 12, flexShrink: 0 })} />
           ))}
         </div>
 
-        {/* Bottom gradient overlay */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 160, background: "linear-gradient(to top, rgba(7,16,10,0.8), transparent)" }} />
-      </div>
+        {/* Your Tour module */}
+        <div style={pulse({ width: 120, height: 14, marginTop: 22, borderRadius: 6 })} />
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.85fr) minmax(0, 1fr)", gap: 8, marginTop: 10 }}>
+          <div style={pulse({ height: 168, borderRadius: 14 })} />
+          <div style={pulse({ height: 168, borderRadius: 14 })} />
+        </div>
 
-      <style>{`
-        @keyframes shimmer {
-          0% { opacity: 0.4; }
-          50% { opacity: 0.7; }
-          100% { opacity: 0.4; }
-        }
-      `}</style>
+        {/* Tour the Feed */}
+        <div style={pulse({ width: 160, height: 14, marginTop: 24, borderRadius: 6 })} />
+        <div style={{ display: "flex", gap: 8, marginTop: 10, overflow: "hidden" }}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} style={pulse({ width: 96, height: 170, borderRadius: 12, flexShrink: 0 })} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 function pulse(extra: React.CSSProperties): React.CSSProperties {
   return {
-    background: "rgba(255,255,255,0.08)",
-    animation: "shimmer 1.4s ease-in-out infinite",
-    flexShrink: 0,
+    background: "rgba(77,168,98,0.06)",
+    border: "1px solid rgba(77,168,98,0.08)",
+    animation: "tourit-load-pulse 1.4s ease-in-out infinite",
     ...extra,
   };
 }

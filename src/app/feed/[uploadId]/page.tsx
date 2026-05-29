@@ -230,6 +230,9 @@ function FeedClip({
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(clip.likeCount);
   const [progress, setProgress] = useState(0); // 0..1
+  // "Sent" flash state — mirrors the pattern in profile/[userId]
+  // and courses/[id] clip cards (SEND → SENT ✓ for 2 seconds).
+  const [shareSent, setShareSent] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Track current user's like state on this clip — single Like row
@@ -312,14 +315,24 @@ function FeedClip({
         <img src={cdnImage(clip.mediaUrl)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
-      {/* Top course pill — course logo + name/city, then hole/par/yds.
-          Tap routes to the course page. Matches the classic feed
-          card's top pill exactly. */}
+      {/* Top-left BACK button — sits ABOVE the course pill per user
+          request. Course pill slides down to the second row. */}
+      <button
+        data-overlay-control
+        onClick={(e) => { e.stopPropagation(); onBack(); }}
+        aria-label="Back"
+        style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 10px)", left: 12, width: 36, height: 36, borderRadius: "50%", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 6 }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+      </button>
+
+      {/* Course pill — course logo + name/city, then hole/par/yds.
+          Tap routes to the course page. Sits below the back button. */}
       <button
         data-overlay-control
         onClick={(e) => { e.stopPropagation(); onCourse(); }}
         style={{
-          position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 12px)", left: 12, right: 60,
+          position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 56px)", left: 12, right: 60,
           display: "flex", alignItems: "center", gap: 10,
           padding: "6px 12px 6px 6px",
           background: "rgba(7,16,10,0.72)",
@@ -367,16 +380,6 @@ function FeedClip({
         }
       </button>
 
-      {/* Back button — bottom-left of the top zone, smaller */}
-      <button
-        data-overlay-control
-        onClick={(e) => { e.stopPropagation(); onBack(); }}
-        aria-label="Back"
-        style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 60px)", left: 12, width: 34, height: 34, borderRadius: "50%", background: "rgba(7,16,10,0.65)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 5 }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-      </button>
-
       {/* Right rail — INTEL · LIKE · COMMENT · SEND IT · MORE.
           Visually matches the classic feed's vertical stack. Intel /
           Comment / Send / More are placeholder-routes for now (open the
@@ -396,19 +399,40 @@ function FeedClip({
         <RailButton label={String(clip.commentCount)} onClick={(e) => { e.stopPropagation(); onCourse(); }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
         </RailButton>
-        {/* Send It */}
-        <RailButton label="SEND IT" onClick={(e) => {
-          e.stopPropagation();
-          if (typeof navigator !== "undefined" && (navigator as any).share) {
-            (navigator as any).share({ title: clip.courseName ?? "Tour It clip", url: `${window.location.origin}/feed/${clip.id}` }).catch(() => {});
-          }
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
-        </RailButton>
-        {/* More */}
-        <RailButton onClick={(e) => { e.stopPropagation(); }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="6" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="18" r="1" /></svg>
-        </RailButton>
+        {/* SEND IT — matches the stacked "SEND / IT" treatment used
+            on profile/[userId] and courses/[id] clip rails. URL
+            points at the clip's course page so the recipient lands
+            on the canonical scouting surface. */}
+        <button
+          onClick={async (e) => {
+            e.stopPropagation();
+            const url = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
+            try {
+              if (typeof navigator !== "undefined" && (navigator as any).share) {
+                await (navigator as any).share({ title: clip.courseName ?? "Tour It clip", url });
+              } else {
+                await navigator.clipboard.writeText(url);
+              }
+              setShareSent(true);
+              setTimeout(() => setShareSent(false), 2000);
+            } catch {}
+          }}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+        >
+          <div style={{ width: 42, height: 42, borderRadius: "50%", background: shareSent ? "rgba(77,168,98,0.92)" : "rgba(77,168,98,0.85)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+            {shareSent
+              ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.05 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.06em" }}>SENT</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 1 }}>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em", marginRight: "-0.12em" }}>SEND</span>
+                  <div style={{ width: 18, height: 1, background: "rgba(255,255,255,0.35)", margin: "1px 0" }} />
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#0e2418", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span>
+                </div>
+            }
+          </div>
+        </button>
       </div>
 
       {/* Bottom-left: uploader avatar + username + date */}

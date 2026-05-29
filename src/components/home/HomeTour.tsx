@@ -174,31 +174,44 @@ export default function HomeTour() {
         return;
       }
 
-      // 3) Stops + full member list in parallel.
-      const [{ data: stopsRaw }, { data: membersRaw }] = await Promise.all([
+      // 3) Stops + member rows in parallel — bare queries (no FK
+      //    joins). The earlier `course:Course!fkey(...)` shorthand
+      //    silently returned null on prod, so stops fell through the
+      //    "no course attached" filter and the YourTour card showed
+      //    "Round" even on Caddy Daddy-style multi-stop trips.
+      const [{ data: stopRows }, { data: memberRows }] = await Promise.all([
         sb.from("GolfTripCourse")
-          .select("courseId, playDate, sortOrder, course:Course!GolfTripCourse_courseId_fkey(id, name, city, state, coverImageUrl, logoUrl, uploadCount)")
+          .select("courseId, playDate, sortOrder")
           .eq("tripId", t.id)
           .order("sortOrder", { ascending: true }),
         sb.from("GolfTripMember")
-          .select("userId, user:User!GolfTripMember_userId_fkey(displayName, username, avatarUrl)")
+          .select("userId")
           .eq("tripId", t.id),
       ]);
 
-      // Supabase types the FK join as an array even when 1:1, so
-      // normalize both shapes before consuming.
-      const stops: Stop[] = ((stopsRaw ?? []) as any[])
+      const courseIds = Array.from(new Set((stopRows ?? []).map((s: any) => s.courseId).filter(Boolean)));
+      const memberUserIds = Array.from(new Set((memberRows ?? []).map((m: any) => m.userId).filter(Boolean)));
+
+      const [{ data: coursesRaw }, { data: usersRaw }] = await Promise.all([
+        courseIds.length ? sb.from("Course").select("id, name, city, state, coverImageUrl, logoUrl, uploadCount").in("id", courseIds) : Promise.resolve({ data: [] as any[] }),
+        memberUserIds.length ? sb.from("User").select("id, displayName, username, avatarUrl").in("id", memberUserIds) : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const courseById = new Map((coursesRaw ?? []).map((c: any) => [c.id, c]));
+      const userById = new Map((usersRaw ?? []).map((u: any) => [u.id, u]));
+
+      const stops: Stop[] = ((stopRows ?? []) as any[])
         .map((s) => ({
           courseId: s.courseId,
           playDate: s.playDate,
           sortOrder: s.sortOrder,
-          course: Array.isArray(s.course) ? s.course[0] : s.course,
+          course: courseById.get(s.courseId),
         }))
-        .filter((s) => s.course);
+        .filter((s) => s.course) as Stop[];
 
-      const members: MemberLite[] = ((membersRaw ?? []) as any[])
+      const members: MemberLite[] = ((memberRows ?? []) as any[])
         .map((m) => {
-          const u = Array.isArray(m.user) ? m.user[0] : m.user;
+          const u = userById.get(m.userId);
           if (!u) return null;
           return { userId: m.userId, displayName: u.displayName, username: u.username, avatarUrl: u.avatarUrl };
         })
@@ -377,7 +390,7 @@ export default function HomeTour() {
             signals the unified scope (courses + trips). Bolder
             italic-serif copy reads as a hero CTA, not a form input. */}
         <button
-          onClick={() => router.push("/tour?tab=smart")}
+          onClick={() => router.push("/tour")}
           aria-label="Tour It All"
           style={{
             width: "100%",
@@ -385,19 +398,21 @@ export default function HomeTour() {
             background: "rgba(7,30,15,0.85)",
             border: "1px solid rgba(77,168,98,0.55)",
             borderRadius: 12,
-            padding: "12px 16px",
+            padding: "11px 16px",
             cursor: "pointer",
-            fontFamily: "'Playfair Display', serif",
-            fontStyle: "italic",
             color: "#4da862",
-            fontSize: 17,
-            fontWeight: 800,
-            letterSpacing: "0.01em",
             boxShadow: "0 0 0 1px rgba(77,168,98,0.2), 0 0 18px rgba(77,168,98,0.18)",
           }}
         >
           <SearchIcon />
-          Tour It All
+          <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.1 }}>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 17, fontWeight: 800, letterSpacing: "0.01em" }}>
+              Tour It All
+            </span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 500, color: "rgba(126,200,140,0.7)", marginTop: 2, letterSpacing: "0.04em" }}>
+              courses · holes · trips · golfers
+            </span>
+          </span>
         </button>
 
         {/* Courses Near Me */}
