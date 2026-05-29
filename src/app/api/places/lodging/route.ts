@@ -3,15 +3,16 @@ import { rateLimit } from "@/lib/rateLimit";
 
 // Lodging search proxy.
 //
-// Currently fronts OpenStreetMap's Nominatim service (free, no key,
-// 1 req/sec global rate limit). Returns up to 8 hotel / resort / B&B
-// hits matching the query string, biased to the US.
+// Two backends, picked by env var at request time:
+//   - GOOGLE_PLACES_API_KEY set → Google Places Text Search (best
+//     coverage; finds real condos like "Alpine Village Condominium
+//     at The Highlands at Harbor Springs" that OSM doesn't index).
+//   - No key → OpenStreetMap Nominatim (free, no key, polite rate
+//     limit). Coverage gap on US condos / vacation rentals.
 //
-// Upgrade path (when traffic > Nominatim's polite limit or quality
-// slips): swap the fetch URL to Google Places Autocomplete with
-// types=lodging. The response shape we return is intentionally
-// minimal — name + city/state/country — so the client code doesn't
-// need to change.
+// Response shape is identical either way so client code (LodgingField)
+// doesn't change. Add GOOGLE_PLACES_API_KEY to Vercel to flip the
+// backend; no code changes needed.
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,11 +44,66 @@ export async function GET(req: NextRequest) {
   // courses are located, so passing state in narrows results).
   const state = (url.searchParams.get("state") || "").trim();
 
-  // Two-stage Nominatim search. First try with the state hint
-  // suffixed; if that returns nothing, retry the bare query. This
-  // covers cases like "Alpine Village, MI" where the property is
-  // actually tagged in OSM as just "Alpine Village" (no state in
-  // its name) and the suffixed query confuses the geocoder.
+  // ─── Google Places (preferred) — fires only when key is set ────
+  const googleKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (googleKey) {
+    try {
+      const queryStr = state ? `${q} ${state}` : q;
+      // Text Search returns full place objects with structured
+      // address components in one call — no second Details round-
+      // trip needed. types=lodging restricts to actual hotels /
+      // resorts / condos / B&Bs.
+      const params = new URLSearchParams({
+        query: queryStr,
+        type: "lodging",
+        region: "us",
+        key: googleKey,
+      });
+      const gUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?${params.toString()}`;
+      const gRes = await fetch(gUrl, { cache: "force-cache", next: { revalidate: 60 * 60 * 24 } });
+      if (gRes.ok) {
+        const gData = await gRes.json();
+        const gResults: LodgingHit[] = ((gData.results ?? []) as any[]).slice(0, 8).map((r) => {
+          // Google's `formatted_address` is "1278 Andover Club Dr,
+          // Harbor Springs, MI 49740, USA". Pull the city + state out
+          // of the last segments before "USA".
+          const parts = (r.formatted_address || "").split(",").map((s: string) => s.trim()).filter(Boolean);
+          let city: string | null = null;
+          let stateCode: string | null = null;
+          for (let i = parts.length - 1; i >= 0; i--) {
+            const seg = parts[i];
+            if (/^[A-Z]{2}\s+\d{5}/.test(seg)) {
+              stateCode = seg.split(/\s+/)[0];
+              city = parts[i - 1] ?? null;
+              break;
+            }
+          }
+          const name = (r.name as string) || (parts[0] ?? queryStr);
+          const display = city && stateCode ? `${name} — ${city}, ${stateCode}` : name;
+          return {
+            name,
+            display,
+            city,
+            state: stateCode,
+            lat: r.geometry?.location?.lat ?? null,
+            lng: r.geometry?.location?.lng ?? null,
+          };
+        });
+        if (gResults.length > 0) {
+          return NextResponse.json({ results: gResults });
+        }
+        // If Google returned zero hits we still fall through to
+        // Nominatim — sometimes a typo gets one match the other can't.
+      }
+    } catch (e) {
+      // Google failed — fall through to Nominatim silently.
+      console.warn("Google Places lookup failed, falling back to Nominatim", e);
+    }
+  }
+
+  // ─── Nominatim fallback (always present) ───────────────────────
+  // Two-stage search: first try with the state hint suffixed; if
+  // that returns nothing, retry the bare query.
   async function nominatim(searchQ: string): Promise<any[]> {
     const params = new URLSearchParams({
       q: searchQ,

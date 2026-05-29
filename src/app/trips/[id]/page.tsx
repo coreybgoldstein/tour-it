@@ -1394,7 +1394,16 @@ export default function TripPage() {
                     )}
                     {trip.lodging && (
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 99, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(126,200,140,0.95)", maxWidth: 220, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14" /><path d="M7 10h10M7 14h10M7 18h10" /><path d="M3 22h18" /></svg>
+                        {/* Hotel glyph — bed + arched headboard + lamp,
+                            replaces the generic building-with-lines icon
+                            that didn't read as "hotel". */}
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 18v-6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v6" />
+                          <path d="M3 18h18" />
+                          <path d="M3 21h18" />
+                          <path d="M8 12h5a2 2 0 0 1 2 2v1" />
+                          <circle cx="9" cy="11" r="1.2" />
+                        </svg>
                         {trip.lodging}
                       </span>
                     )}

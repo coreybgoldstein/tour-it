@@ -36,6 +36,7 @@ import BottomNav from "@/components/BottomNav";
 // NOT render it here or the page ends up with a doubled bar.
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
 import { airportByCode } from "@/data/airports";
+import { readPermission, readCoords, requestLocation } from "@/lib/locationPermission";
 
 type CourseLite = {
   id: string;
@@ -316,37 +317,40 @@ export default function HomeTour() {
 
   // ── Near Me ────────────────────────────────────────────────────────
   // We use the same proven pattern as the legacy home: navigator
-  // geolocation, fetch a bounding box of Courses, sort by upload
-  // count desc + clip ties by name. Auto-runs only if location was
-  // previously granted (sessionStorage cache) — first-time visitors
-  // see a one-tap "Enable location" CTA so we don't spam permission
-  // dialogs.
+  // Geolocation flow uses the shared lib/locationPermission helpers
+  // so the rule "once granted, always granted" holds across the home,
+  // /tour, and the map. localStorage-backed; coords are silently
+  // refreshed on mount when permission was previously granted, so
+  // first-time-per-session users don't see an enable prompt twice.
   useEffect(() => {
-    const cached = typeof window !== "undefined" ? sessionStorage.getItem("tourit-loc-coords") : null;
-    if (!cached) return;
-    try {
-      const { lat, lng, ts } = JSON.parse(cached);
-      if (Date.now() - ts < 3_600_000) {
+    const perm = readPermission();
+    if (perm === "granted") {
+      // Use cached coords immediately for an instant render…
+      const cached = readCoords();
+      if (cached) {
         setLocStatus("granted");
-        fetchNearByCoords(lat, lng, nearMeRadius);
+        fetchNearByCoords(cached.lat, cached.lng, nearMeRadius);
       }
-    } catch {}
+      // …then quietly refresh from the browser in the background so
+      // moving / changing location keeps results fresh.
+      requestLocation().then((coords) => {
+        if (coords) { setLocStatus("granted"); fetchNearByCoords(coords.lat, coords.lng, nearMeRadius); }
+      });
+    } else if (perm === "denied") {
+      setLocStatus("denied");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function enableLocation() {
     setLocStatus("loading");
-    if (!("geolocation" in navigator)) { setLocStatus("denied"); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        try { sessionStorage.setItem("tourit-loc-coords", JSON.stringify({ lat, lng, ts: Date.now() })); } catch {}
-        setLocStatus("granted");
-        fetchNearByCoords(lat, lng, nearMeRadius);
-      },
-      () => setLocStatus("denied"),
-      { timeout: 8000 }
-    );
+    const coords = await requestLocation();
+    if (coords) {
+      setLocStatus("granted");
+      fetchNearByCoords(coords.lat, coords.lng, nearMeRadius);
+    } else {
+      setLocStatus("denied");
+    }
   }
 
   async function fetchNearByCoords(lat: number, lng: number, miles: number) {
@@ -367,12 +371,8 @@ export default function HomeTour() {
   function changeRadius(r: 10 | 25 | 50) {
     setNearMeRadius(r);
     if (locStatus !== "granted") return;
-    const cached = sessionStorage.getItem("tourit-loc-coords");
-    if (!cached) return;
-    try {
-      const { lat, lng } = JSON.parse(cached);
-      fetchNearByCoords(lat, lng, r);
-    } catch {}
+    const cached = readCoords();
+    if (cached) fetchNearByCoords(cached.lat, cached.lng, r);
   }
 
   // ── Render ─────────────────────────────────────────────────────────
@@ -601,15 +601,15 @@ function YourTourCard({
         </div>
       )}
 
-      {/* Action row — single primary CTA now. Scout button was
-          removed per user request (the course-flag strip carries the
-          per-course access). "Create a game" deep-links to the trip
-          page with the game sheet auto-opening. */}
+      {/* Action row — single primary CTA. Icon is the scorecard +
+          pencil glyph from the /tee-up "Play a Game" tab so visual
+          identity stays consistent across the surfaces that create
+          games. */}
       <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2 }}>
         <ActionCell
           label="Tee Up"
           title="Create a game"
-          icon={<PinFlagIcon color="#0c2218" />}
+          icon={<ScorecardPencilIcon color="#0c2218" />}
           variant="primary"
           onClick={onGame}
         />
@@ -680,9 +680,10 @@ function PlanAnotherTile({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       style={{
+        position: "relative",
         width: "100%",
-        background: "linear-gradient(170deg, rgba(45,122,66,0.4) 0%, rgba(7,30,15,0.85) 100%)",
-        border: "1px dashed rgba(77,168,98,0.45)",
+        background: "linear-gradient(165deg, #1c4425 0%, #0c2117 55%, #05140a 100%)",
+        border: "1px solid rgba(77,168,98,0.4)",
         borderRadius: 14,
         padding: "12px 10px",
         cursor: "pointer",
@@ -692,20 +693,55 @@ function PlanAnotherTile({ onClick }: { onClick: () => void }) {
         justifyContent: "space-between",
         gap: 8,
         minWidth: 0,
+        overflow: "hidden",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
       }}
     >
-      <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <SparkleIcon />
-      </div>
-      <div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>
-          Plan another
+      {/* Decorative travel-route illustration in the background —
+          three dots connected by a curving path, suggesting a
+          multi-stop journey. Replaces the "AI star" glyph the user
+          didn't love. */}
+      <svg
+        aria-hidden
+        viewBox="0 0 120 168"
+        preserveAspectRatio="xMidYMid slice"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.18, pointerEvents: "none" }}
+      >
+        <defs>
+          <linearGradient id="plan-route" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#7ed28b" stopOpacity="0" />
+            <stop offset="40%" stopColor="#7ed28b" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#d4a017" stopOpacity="0.6" />
+          </linearGradient>
+        </defs>
+        <path d="M 12 150 C 30 130, 25 90, 55 80 C 85 70, 95 40, 110 18" stroke="url(#plan-route)" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeDasharray="2 5" />
+        <circle cx="12" cy="150" r="3.5" fill="#7ed28b" />
+        <circle cx="55" cy="80" r="3.5" fill="#7ed28b" />
+        <circle cx="110" cy="18" r="4.5" fill="#d4a017" stroke="#fff" strokeWidth="1" />
+      </svg>
+
+      {/* Foreground content sits above the route illustration */}
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between", gap: 8 }}>
+        {/* Tee-with-flag glyph — replaces the sparkle/AI star. Uses
+            the same green-stroke aesthetic as the rest of the home
+            icons so it doesn't read as a generic AI feature. */}
+        <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 22h14" />
+            <path d="M12 22 Q 8 16 12 8" />
+            <path d="M12 8 L19 5 L12 2 Z" fill="#d4a017" stroke="#d4a017" />
+          </svg>
         </div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
-          Round or Trip
-        </div>
-        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(244,236,214,0.6)", marginTop: 4, lineHeight: 1.3 }}>
-          Tell us your crew and we&apos;ll build it.
+        <div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>
+            Plan Another
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+            Round or Trip
+          </div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(244,236,214,0.65)", marginTop: 4, lineHeight: 1.3 }}>
+            Where to next?
+          </div>
         </div>
       </div>
     </button>
@@ -1256,6 +1292,20 @@ function PinFlagIcon({ color = "#4da862" }: { color?: string }) {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="6" y1="3" x2="6" y2="21" />
       <path d="M6 4 L18 7 L6 10 Z" fill={color} stroke="none" />
+    </svg>
+  );
+}
+// Scorecard + pencil — lifted from /tee-up so the Play-a-Game intent
+// reads identically across surfaces (user feedback: the icons should
+// match). Pencil sits diagonal across the lower-right corner.
+function ScorecardPencilIcon({ color = "#4da862" }: { color?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="13" height="16" rx="2" />
+      <line x1="6.5" y1="8" x2="12.5" y2="8" />
+      <line x1="6.5" y1="11.5" x2="12.5" y2="11.5" />
+      <line x1="6.5" y1="15" x2="10" y2="15" />
+      <path d="M15.5 17.5 L19 14 L21 16 L17.5 19.5 L14.8 20.2 Z" />
     </svg>
   );
 }

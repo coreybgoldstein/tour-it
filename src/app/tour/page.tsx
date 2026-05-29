@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { BEST_FOR_TAGS, getEnrichment } from "@/lib/tripEnrichment";
 import TripPlannerSheet from "@/components/TripPlannerSheet";
 import { cdnImage } from "@/lib/cdnImage";
+import { readPermission, readCoords, requestLocation } from "@/lib/locationPermission";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -1629,15 +1630,19 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
   }, []);
 
   useEffect(() => {
-    try {
-      const cached = sessionStorage.getItem("tourit-loc-coords");
-      if (!cached) return;
-      const { lat, lng, ts } = JSON.parse(cached);
-      if (Date.now() - ts < 3_600_000) {
+    const perm = readPermission();
+    if (perm === "granted") {
+      const cached = readCoords();
+      if (cached) {
         setLocStatus("granted");
-        fetchNearMe(lat, lng);
+        fetchNearMe(cached.lat, cached.lng);
       }
-    } catch {}
+      requestLocation().then((coords) => {
+        if (coords) { setLocStatus("granted"); fetchNearMe(coords.lat, coords.lng); }
+      });
+    } else if (perm === "denied") {
+      setLocStatus("denied");
+    }
   }, []);
 
   async function fetchNearMe(lat: number, lng: number) {
@@ -1655,19 +1660,15 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
     setNearMe((data ?? []) as TourCourseLite[]);
   }
 
-  function enableLocation() {
-    if (!("geolocation" in navigator)) { setLocStatus("denied"); return; }
+  async function enableLocation() {
     setLocStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        try { sessionStorage.setItem("tourit-loc-coords", JSON.stringify({ lat, lng, ts: Date.now() })); } catch {}
-        setLocStatus("granted");
-        fetchNearMe(lat, lng);
-      },
-      () => setLocStatus("denied"),
-      { timeout: 8000 }
-    );
+    const coords = await requestLocation();
+    if (coords) {
+      setLocStatus("granted");
+      fetchNearMe(coords.lat, coords.lng);
+    } else {
+      setLocStatus("denied");
+    }
   }
 
   return (
