@@ -55,11 +55,23 @@ function TourPageInner() {
   // design-system rule (no JS alerts on iOS WebView).
   const [createSuccess, setCreateSuccess] = useState(false);
 
-  const [searchTab, setSearchTab] = useState<"courses" | "people" | "trips">(
+  const [searchTab, setSearchTab] = useState<"smart" | "courses" | "people" | "trips">(
     searchParams.get("tab") === "people" ? "people"
       : searchParams.get("tab") === "trips" ? "trips"
+      : searchParams.get("tab") === "smart" ? "smart"
       : "courses"
   );
+
+  // Unified Smart search — LLM-classifies intent + ranks across
+  // Courses + TripItineraries. Replaces the "pick a tab first" mental
+  // model when the user just types what they want.
+  const [smartLoading, setSmartLoading] = useState(false);
+  const [smartResults, setSmartResults] = useState<Array<
+    | { type: "course"; id: string; name: string; city: string | null; state: string | null; logoUrl: string | null; coverImageUrl: string | null; uploadCount: number }
+    | { type: "trip"; id: string; slug: string; name: string; tagline: string; heroImageUrl: string | null; region: string; durationDays: number; costBand: string }
+  >>([]);
+  const [smartExplanation, setSmartExplanation] = useState<string>("");
+  const smartDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Near-Me state for the empty search state. Beta feedback: Leslie
   // didn't know any local courses, didn't know her ZIP when traveling,
@@ -403,6 +415,43 @@ function TourPageInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, results.length, query]);
 
+  // Smart-search effect — debounced LLM call to /api/tour/search
+  // when the Smart tab is active. Clears results between tab swaps so
+  // they don't bleed across.
+  useEffect(() => {
+    if (searchTab !== "smart") return;
+    if (smartDebounceRef.current) clearTimeout(smartDebounceRef.current);
+    const q = query.trim();
+    if (q.length < 2) {
+      setSmartResults([]);
+      setSmartExplanation("");
+      setSmartLoading(false);
+      return;
+    }
+    setSmartLoading(true);
+    smartDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/tour/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error ?? `Search failed (${res.status})`);
+        setSmartResults(data.results ?? []);
+        setSmartExplanation(data.explanation ?? "");
+      } catch (e: any) {
+        setSmartExplanation(e?.message ?? "Smart search is offline.");
+        setSmartResults([]);
+      } finally {
+        setSmartLoading(false);
+      }
+    }, 400);
+    return () => {
+      if (smartDebounceRef.current) clearTimeout(smartDebounceRef.current);
+    };
+  }, [query, searchTab]);
+
   // Course search — runs on query or filter change
   const search = useCallback((q: string, coords: { lat: number; lng: number } | null, state: string, city: string, holes: string, courseType: string, radius: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -698,7 +747,12 @@ function TourPageInner() {
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
               onKeyDown={e => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
-              placeholder={searchTab === "courses" ? "Course, city, state or zip…" : searchTab === "trips" ? "Search trips by destination, vibe, region…" : "Name or @username"}
+              placeholder={
+                searchTab === "smart" ? "Try: 'links courses near LAX' or '4-day buddy trip with bars'"
+                  : searchTab === "courses" ? "Course, city, state or zip…"
+                  : searchTab === "trips" ? "Search trips by destination, vibe, region…"
+                  : "Name or @username"
+              }
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="off"
@@ -714,15 +768,40 @@ function TourPageInner() {
             )}
           </div>
 
-          {/* Tabs + Filter button */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
-            {(["courses", "trips", "people"] as const).map(tab => (
+          {/* Tabs + Filter button. "Smart" leads now — LLM-powered
+              unified search that returns mixed Courses + Trips
+              results. The legacy per-type tabs remain for power
+              users who want to filter explicitly. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, overflowX: "auto", paddingBottom: 2 }}>
+            {(["smart", "courses", "trips", "people"] as const).map(tab => (
               <button
                 key={tab}
-                onClick={() => { setSearchTab(tab); setQuery(""); setTimeout(() => inputRef.current?.focus(), 50); }}
-                style={{ padding: "7px 18px", borderRadius: 99, border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, cursor: "pointer", background: searchTab === tab ? "#2d7a42" : "rgba(255,255,255,0.07)", color: searchTab === tab ? "#fff" : "rgba(255,255,255,0.45)", transition: "all 0.15s" }}
+                onClick={() => { setSearchTab(tab); setQuery(""); setSmartResults([]); setSmartExplanation(""); setTimeout(() => inputRef.current?.focus(), 50); }}
+                style={{
+                  flexShrink: 0,
+                  padding: "7px 16px",
+                  borderRadius: 99,
+                  border: tab === "smart" && searchTab !== tab ? "1px solid rgba(212,160,23,0.45)" : "none",
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  background:
+                    searchTab === tab
+                      ? (tab === "smart" ? "linear-gradient(135deg,#d4a017 0%,#a8801a 100%)" : "#2d7a42")
+                      : (tab === "smart" ? "rgba(212,160,23,0.08)" : "rgba(255,255,255,0.07)"),
+                  color: searchTab === tab ? "#fff" : (tab === "smart" ? "#d4a017" : "rgba(255,255,255,0.45)"),
+                  transition: "all 0.15s",
+                  display: "flex", alignItems: "center", gap: 5,
+                  whiteSpace: "nowrap",
+                }}
               >
-                {tab === "courses" ? "Courses" : tab === "trips" ? "Trips" : "People"}
+                {tab === "smart" && (
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3 L13.5 10.5 L21 12 L13.5 13.5 L12 21 L10.5 13.5 L3 12 L10.5 10.5 Z" />
+                  </svg>
+                )}
+                {tab === "smart" ? "Smart" : tab === "courses" ? "Courses" : tab === "trips" ? "Trips" : "People"}
               </button>
             ))}
 
@@ -763,6 +842,87 @@ function TourPageInner() {
             </div>
           )}
         </div>
+
+        {/* ── Smart tab — LLM-unified Courses + Trips ── */}
+        {searchTab === "smart" && (
+          <div style={{ marginTop: 8 }}>
+            {smartLoading && (
+              <div style={{ padding: "14px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
+                Thinking…
+              </div>
+            )}
+            {!smartLoading && !query.trim() && (
+              <div style={{ padding: "12px 16px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.55 }}>
+                Type what you want. The AI figures out whether you mean a course, a trip, or both. Examples:
+                <ul style={{ paddingLeft: 18, marginTop: 8, color: "rgba(255,255,255,0.5)" }}>
+                  <li><em>links courses near LAX</em></li>
+                  <li><em>4-day buddy trip in March with good bars</em></li>
+                  <li><em>Donald Ross courses in NC</em></li>
+                  <li><em>cheap public golf in Vegas</em></li>
+                </ul>
+              </div>
+            )}
+            {!smartLoading && smartExplanation && (
+              <div style={{ padding: "6px 16px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(244,236,214,0.55)", fontStyle: "italic" }}>
+                {smartExplanation}
+              </div>
+            )}
+            {!smartLoading && smartResults.length === 0 && query.trim() && smartExplanation && (
+              <div style={{ padding: "0 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
+                No matches yet. Try widening the query.
+              </div>
+            )}
+            <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+              {smartResults.map((r) =>
+                r.type === "course" ? (
+                  <button
+                    key={`c-${r.id}`}
+                    onClick={() => router.push(`/courses/${r.id}`)}
+                    style={{ background: "#0c1c13", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, padding: 10, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
+                  >
+                    <div style={{ width: 56, height: 56, borderRadius: 9, overflow: "hidden", flexShrink: 0, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      {r.logoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={cdnImage(r.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 6, background: "#fff" }} />
+                      ) : r.coverImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={cdnImage(r.coverImageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : null}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#4da862", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 99, padding: "1px 7px" }}>Course</span>
+                      </div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.5)" }}>{[r.city, r.state].filter(Boolean).join(", ")}</div>
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    key={`t-${r.id}`}
+                    onClick={() => router.push(`/trip-ideas/${r.slug}`)}
+                    style={{ background: "#0c1c13", border: "1px solid rgba(212,160,23,0.22)", borderRadius: 12, padding: 10, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
+                  >
+                    <div style={{ width: 88, height: 56, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "rgba(212,160,23,0.08)" }}>
+                      {r.heroImageUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={cdnImage(r.heroImageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "#d4a017", background: "rgba(212,160,23,0.1)", border: "1px solid rgba(212,160,23,0.3)", borderRadius: 99, padding: "1px 7px" }}>Trip</span>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(244,236,214,0.5)" }}>{r.durationDays}D · {r.costBand}</span>
+                      </div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.name}</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.tagline}</div>
+                    </div>
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ── Trips tab ── */}
         {searchTab === "trips" && (
