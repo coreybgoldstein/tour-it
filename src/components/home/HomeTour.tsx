@@ -599,27 +599,25 @@ function YourTourCard({
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
-        // space-between pushes the Create-a-Game / game-tease row to
-        // the bottom so the action CTA aligns horizontally with the
-        // PlanAnother card's footer no matter how much intermediate
-        // content the trip card carries.
-        justifyContent: "space-between",
+        // Natural top-down flow (no space-between). Round + Trip cards
+        // share the same vertical rhythm so the action row lands at
+        // the same y-position across the entire rail.
         gap: 7,
         minWidth: 0,
         position: "relative",
       }}
     >
-      {/* "+ game" icon — top-right corner of every card. Always
-          present (per user direction) so adding another game is a
-          single tap whether there's already a game on the trip or
-          not. Absolutely positioned so it doesn't shift content. */}
+      {/* "+ game" — top-right of every card. Uses the same scorecard
+          icon as the action row + a tiny green "+" dot in the corner,
+          so the affordance reads as "add a game" specifically, not a
+          generic plus. Always present whether or not a game exists. */}
       <button
         onClick={(e) => { e.stopPropagation(); onGame(); }}
         aria-label="Add a game"
         title="Add a game"
         style={{
           position: "absolute", top: 8, right: 8, zIndex: 2,
-          width: 28, height: 28, padding: 0,
+          width: 34, height: 30, padding: 0,
           background: "rgba(7,16,10,0.55)",
           border: "1px solid rgba(77,168,98,0.45)",
           borderRadius: 8,
@@ -627,10 +625,15 @@ function YourTourCard({
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        <GameScorecardIcon color="#7ed28b" />
+        {/* Small plus dot in the corner — same affordance pattern
+            as the old inline add-another button. */}
+        <div style={{ position: "absolute", top: -4, right: -4, width: 14, height: 14, borderRadius: "50%", background: "#7ed28b", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #0a1a10" }}>
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0c1c13" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </div>
       </button>
 
       {/* Top stack — everything above the action row is grouped so
@@ -699,59 +702,63 @@ function YourTourCard({
         )}
       </div>
 
-      {/* Course-flag strip — only rendered standalone for MULTI-stop
-          trips. Single-round cards inline the one flag with the
-          action row below to keep the round module visually tighter
-          (per user direction: "move the game when created on same
-          line as flag badge and then shorten the modules"). */}
-      {tour.stops.length > 1 && (
-        <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch", marginLeft: -2, marginRight: -2, paddingLeft: 2, paddingRight: 2 }}>
-          {tour.stops.map((s, i) => (
-            <FlagBadge key={s.courseId + "-" + i} stop={s} isNext={!!(next && s.courseId === next.courseId)} onTap={() => setPopupIdx(popupIdx === i ? null : i)} />
-          ))}
-        </div>
-      )}
       </div>
-      {/* ↑ end of "top stack" — everything below this is the action
-          row, pinned to the card's bottom by space-between. */}
+      {/* ↑ end of the "top stack" of static content (chip, title,
+          meta). Below this row is the unified flag+game row that
+          both round and trip cards render identically. */}
 
-      {/* Action row — three layouts:
-            - Single-round w/ game:   flag + game-tease in one row
-            - Single-round w/o game:  flag + Create-a-Game CTA
-            - Multi-stop trip:        full-width game-tease OR CTA
-          The "+ game" add-another button lives in the top-right
-          corner of the whole card now, so the action row no longer
-          carries a secondary pill. */}
-      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2, display: "flex", gap: 7, alignItems: "stretch" }}>
-        {tour.stops.length === 1 && (
-          <div style={{ flexShrink: 0, alignSelf: "stretch", display: "flex", alignItems: "stretch" }}>
-            <FlagBadge stop={tour.stops[0]} isNext={true} onTap={() => setPopupIdx(0)} />
+      {/* Unified action row — flags + game button in a single row,
+          for BOTH single-round and multi-stop trip cards. The flags
+          scroll horizontally inside their container; the game button
+          is anchored on the right and never scrolls away. So
+          regardless of whether the trip has 1 stop or 8, the user
+          always sees the game CTA at the same screen position, with
+          extra flags hidden behind a scroll edge. Per user:
+          "Bring the create a game/created game button to the same
+          lines as the course badges, fit it in there and hide some
+          of the course badges if necessary for the trip modules,
+          remember the course badges is still on a rail that you can
+          scroll." */}
+      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2, display: "flex", gap: 7, alignItems: "stretch", minWidth: 0 }}>
+        {/* Flag rail — horizontal scroll. flex:1 with minWidth:0 +
+            overflow-x:auto means it shrinks first so the game
+            button on the right always keeps its width. */}
+        {tour.stops.length > 0 && (
+          <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 7, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 2, alignItems: "stretch" }}>
+            {tour.stops.map((s, i) => (
+              <FlagBadge key={s.courseId + "-" + i} stop={s} isNext={!!(next && s.courseId === next.courseId)} onTap={() => setPopupIdx(popupIdx === i ? null : i)} />
+            ))}
           </div>
         )}
-        <div style={{ flex: 1, minWidth: 0 }}>
+
+        {/* Game CTA — fixed width on the right. Same minHeight as
+            the flag badge (44px) so the row is visually balanced.
+            The game tease and Create-a-Game both render at the same
+            size; only the content swaps. */}
+        <div style={{ flexShrink: 0, width: tour.game ? 138 : 132, display: "flex", alignItems: "stretch" }}>
           {tour.game ? (
             <button
               onClick={(e) => { e.stopPropagation(); onOpenGame(tour.game!.id); }}
               style={{
-                width: "100%", height: "100%",
-                padding: "8px 12px",
+                width: "100%",
+                padding: "6px 8px",
                 background: "rgba(77,168,98,0.14)",
                 border: "1px solid rgba(77,168,98,0.5)",
-                borderRadius: 10,
+                borderRadius: 9,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                gap: 6,
                 minHeight: 44,
                 textAlign: "left",
               }}
             >
               <GameScorecardIcon color="#7ed28b" />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
-                  {tour.gameCount > 1 ? `Latest of ${tour.gameCount} games` : "Game ready"}
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 7.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
+                  {tour.gameCount > 1 ? `${tour.gameCount} games` : "Game ready"}
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 10.5, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
                   {(() => {
                     const name = gameFormatLabel(tour.game.format);
                     const stakes = gameStakesLabel(tour.game.format, tour.game.formatConfig);
@@ -761,11 +768,27 @@ function YourTourCard({
               </div>
             </button>
           ) : (
-            <ActionCellSingle
-              title="CREATE A GAME"
-              icon={<GameScorecardIcon color="#0c2218" />}
-              onClick={onGame}
-            />
+            <button
+              onClick={(e) => { e.stopPropagation(); onGame(); }}
+              style={{
+                width: "100%",
+                padding: "6px 10px",
+                background: "linear-gradient(180deg, #5cbd75 0%, #3f9554 100%)",
+                border: "1px solid rgba(126,200,140,0.85)",
+                borderRadius: 9,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                minHeight: 44,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)",
+              }}
+            >
+              <GameScorecardIcon color="#0c2218" />
+              <div style={{ flex: 1, minWidth: 0, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: "#0a1a10", letterSpacing: "0.04em", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                CREATE A GAME
+              </div>
+            </button>
           )}
         </div>
       </div>
