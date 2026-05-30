@@ -737,26 +737,30 @@ function YourTourCard({
       </div>
 
       {/* ── Meta block ───────────────────────────────────────────────
-          Two clean lines. Row 1 = date (+ tee time for rounds).
-          Row 2 = location + golfer count. Both Inter, light sage. */}
+          Three lines max. Row 1 = date (+ tee time for rounds).
+          Row 2 = location (the golfer count moved out — now we
+          show actual NAMES below instead of a "+N" pill).
+          Row 3 = comma-separated first names of the players (when
+          members exist) so the user can see who's in the round/trip
+          at a glance, not just how many. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 3, fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.82)" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}>
           <CalendarMini /> {dateLabel}
         </span>
-        {(locationLabel || tour.members.length > 0) && (
+        {locationLabel && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-            {locationLabel && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, minWidth: 0, overflow: "hidden", flex: "0 1 auto" }}>
-                <PinMini />
-                <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locationLabel}</span>
-              </span>
-            )}
-            {locationLabel && tour.members.length > 0 && <Dot />}
-            {tour.members.length > 0 && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", flexShrink: 0 }}>
-                <UsersMini /> {tour.members.length}
-              </span>
-            )}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, minWidth: 0, overflow: "hidden", flex: "0 1 auto" }}>
+              <PinMini />
+              <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locationLabel}</span>
+            </span>
+          </div>
+        )}
+        {tour.members.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, minWidth: 0, overflow: "hidden", flex: "1 1 auto" }}>
+              <UsersMini />
+              <PlayerNamesLine members={tour.members} />
+            </span>
           </div>
         )}
       </div>
@@ -1485,20 +1489,20 @@ function RoundPlayerStack({ members }: { members: MemberLite[] }) {
   const visible = members.slice(0, 4);
   const extra = members.length - visible.length;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
       {visible.map((m) => {
         const avatar = m.avatarUrl ? cdnImage(m.avatarUrl) : null;
         return (
           <div
             key={m.userId}
             style={{
-              width: 28, height: 28,
-              borderRadius: 7,
+              width: 36, height: 36,
+              borderRadius: 9,
               background: avatar ? "#0c1c13" : "rgba(77,168,98,0.18)",
-              border: "1px solid rgba(255,255,255,0.55)",
+              border: "1px solid rgba(255,255,255,0.6)",
               display: "flex", alignItems: "center", justifyContent: "center",
               overflow: "hidden",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.35)",
               flexShrink: 0,
             }}
             title={m.displayName || m.username || "Golfer"}
@@ -1507,7 +1511,7 @@ function RoundPlayerStack({ members }: { members: MemberLite[] }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: "rgba(126,200,140,0.95)", letterSpacing: "0.02em" }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: "rgba(126,200,140,0.95)", letterSpacing: "0.02em" }}>
                 {playerInitials(m)}
               </span>
             )}
@@ -1516,17 +1520,45 @@ function RoundPlayerStack({ members }: { members: MemberLite[] }) {
       })}
       {extra > 0 && (
         <div style={{
-          width: 28, height: 28, borderRadius: 7,
-          background: "rgba(7,16,10,0.6)",
+          width: 36, height: 36, borderRadius: 9,
+          background: "rgba(7,16,10,0.65)",
           border: "1px solid rgba(255,255,255,0.4)",
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.85)" }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 800, color: "rgba(255,255,255,0.88)" }}>
             +{extra}
           </span>
         </div>
       )}
+    </div>
+  );
+}
+
+// PlayerNamesLine — comma-separated first names of the trip members,
+// shown under the meta block on both round and trip cards. Single
+// line + ellipsis; the existing "+N golfers" treatment lived in the
+// meta line as a count, this surfaces actual names so the user can
+// see *who's* playing at a glance.
+function PlayerNamesLine({ members }: { members: MemberLite[] }) {
+  if (members.length === 0) return null;
+  const names = members.map((m) => {
+    const src = m.displayName || m.username || "";
+    return src.split(/\s+/)[0] || "?";
+  });
+  return (
+    <div style={{
+      fontFamily: "'Inter', sans-serif",
+      fontSize: 11,
+      fontWeight: 500,
+      color: "rgba(126,200,140,0.78)",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      minWidth: 0,
+      letterSpacing: "0.01em",
+    }}>
+      {names.join(" · ")}
     </div>
   );
 }
