@@ -35,6 +35,7 @@ export default function TourItTopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const unreadNotifications = useUnreadNotifications();
   const [signedIn, setSignedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const hidden =
     !pathname ||
@@ -45,7 +46,19 @@ export default function TourItTopBar() {
   // Used to show/hide the Log Out button in the drawer
   useEffect(() => {
     if (hidden) return;
-    createClient().auth.getUser().then(({ data: { user } }) => setSignedIn(!!user));
+    createClient().auth.getUser().then(async ({ data: { user } }) => {
+      setSignedIn(!!user);
+      // Admin drawer entry is gated on the User.isAdmin flag. We
+      // re-check on each menu mount (the hook above re-fires when
+      // hidden flips, so promotion takes effect without a hard
+      // refresh).
+      if (user) {
+        const { data: profile } = await createClient().from("User").select("isAdmin").eq("id", user.id).maybeSingle();
+        setIsAdmin(!!profile?.isAdmin);
+      } else {
+        setIsAdmin(false);
+      }
+    });
   }, [hidden]);
 
   if (hidden) return null;
@@ -314,7 +327,20 @@ export default function TourItTopBar() {
                   ),
                   onClick: () => { setMenuOpen(false); window.location.href = "mailto:corey@touritgolf.com"; },
                 },
-              ].map((item) => (
+                // Admin-only entry — only rendered into the array
+                // when the logged-in user has User.isAdmin=true. The
+                // .filter(Boolean) below removes the null otherwise.
+                isAdmin ? {
+                  label: "Admin",
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      <path d="M9 12l2 2 4-4" />
+                    </svg>
+                  ),
+                  onClick: () => { setMenuOpen(false); router.push("/admin"); },
+                } : null,
+              ].filter((it): it is { label: string; icon: React.ReactElement; onClick: () => void } => it !== null).map((item) => (
                 <button
                   key={item.label}
                   onClick={item.onClick}
