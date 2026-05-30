@@ -515,7 +515,7 @@ export default function HomeTour() {
             // vs plan-another).
             <div style={{ display: "flex", alignItems: "stretch", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch", marginRight: -16, paddingRight: 16, scrollSnapType: "x proximity" }}>
               {tours.map((t) => (
-                <div key={t.id} style={{ flexShrink: 0, scrollSnapAlign: "start", width: t.stops.length <= 1 ? 232 : 286, display: "flex" }}>
+                <div key={t.id} style={{ flexShrink: 0, scrollSnapAlign: "start", width: 268, display: "flex" }}>
                   <YourTourCard
                     tour={t}
                     // ?createGame=1 → the trip page auto-opens the
@@ -609,11 +609,36 @@ function YourTourCard({
         position: "relative",
       }}
     >
+      {/* "+ game" icon — top-right corner of every card. Always
+          present (per user direction) so adding another game is a
+          single tap whether there's already a game on the trip or
+          not. Absolutely positioned so it doesn't shift content. */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onGame(); }}
+        aria-label="Add a game"
+        title="Add a game"
+        style={{
+          position: "absolute", top: 8, right: 8, zIndex: 2,
+          width: 28, height: 28, padding: 0,
+          background: "rgba(7,16,10,0.55)",
+          border: "1px solid rgba(77,168,98,0.45)",
+          borderRadius: 8,
+          cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+
       {/* Top stack — everything above the action row is grouped so
           space-between cleanly pushes the action row to the bottom. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 7, minWidth: 0 }}>
-      {/* Top row: trip badge + UPCOMING TRIP / ROUND chip */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      {/* Top row: trip badge + UPCOMING TRIP / ROUND chip. Right
+          padding accommodates the absolute "+ game" button. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, paddingRight: 36 }}>
         {tripBadge && (
           <div style={{ width: 26, height: 26, borderRadius: 6, background: "#fff", padding: 2, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -674,69 +699,42 @@ function YourTourCard({
         )}
       </div>
 
-      {/* Course-flag strip — course-logo badges, one per stop. Bigger
-          now (44px from 32px) so each badge reads as a course-hero,
-          not a tiny chip. Horizontal scroll handles 5+ stops; on a
-          typical 375px iPhone ~4 fit in view with the scroll hint
-          visible at the right edge. Tap → in-card popup with name +
-          date; tap popup → routes to course profile. */}
-      {tour.stops.length > 0 && (
+      {/* Course-flag strip — only rendered standalone for MULTI-stop
+          trips. Single-round cards inline the one flag with the
+          action row below to keep the round module visually tighter
+          (per user direction: "move the game when created on same
+          line as flag badge and then shorten the modules"). */}
+      {tour.stops.length > 1 && (
         <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch", marginLeft: -2, marginRight: -2, paddingLeft: 2, paddingRight: 2 }}>
-          {tour.stops.map((s, i) => {
-            const isNext = next && s.courseId === next.courseId;
-            const logo = s.course.logoUrl ? cdnImage(s.course.logoUrl) : null;
-            return (
-              <button
-                key={s.courseId + "-" + i}
-                onClick={() => setPopupIdx(popupIdx === i ? null : i)}
-                style={{
-                  flexShrink: 0,
-                  width: 44, height: 44,
-                  borderRadius: 9,
-                  background: "#fff",
-                  border: isNext ? `2px solid ${GOLD}` : "1px solid rgba(255,255,255,0.55)",
-                  padding: 3,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  overflow: "hidden",
-                  cursor: "pointer",
-                  position: "relative",
-                  boxShadow: isNext ? "0 0 8px rgba(212,160,23,0.35)" : "0 1px 2px rgba(0,0,0,0.25)",
-                }}
-                aria-label={s.course.name}
-                title={s.course.name}
-              >
-                {logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                ) : (
-                  <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 13, fontWeight: 800, color: "#0c1c13" }}>
-                    {initialsOf(s.course.name)}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+          {tour.stops.map((s, i) => (
+            <FlagBadge key={s.courseId + "-" + i} stop={s} isNext={!!(next && s.courseId === next.courseId)} onTap={() => setPopupIdx(popupIdx === i ? null : i)} />
+          ))}
         </div>
       )}
       </div>
       {/* ↑ end of "top stack" — everything below this is the action
           row, pinned to the card's bottom by space-between. */}
 
-      {/* Action row — two branches:
-            - Game already exists: surface a tease chip with the
-              game's format + course; tap = land on that game's
-              sheet. Right-side "+ game" pill adds another (no
-              full-width Create-a-Game button so the existing
-              game stays the visual lead).
-            - No game yet: full-width Create-a-Game CTA. */}
-      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2 }}>
-        {tour.game ? (
-          <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
+      {/* Action row — three layouts:
+            - Single-round w/ game:   flag + game-tease in one row
+            - Single-round w/o game:  flag + Create-a-Game CTA
+            - Multi-stop trip:        full-width game-tease OR CTA
+          The "+ game" add-another button lives in the top-right
+          corner of the whole card now, so the action row no longer
+          carries a secondary pill. */}
+      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2, display: "flex", gap: 7, alignItems: "stretch" }}>
+        {tour.stops.length === 1 && (
+          <div style={{ flexShrink: 0, alignSelf: "stretch", display: "flex", alignItems: "stretch" }}>
+            <FlagBadge stop={tour.stops[0]} isNext={true} onTap={() => setPopupIdx(0)} />
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {tour.game ? (
             <button
               onClick={(e) => { e.stopPropagation(); onOpenGame(tour.game!.id); }}
               style={{
-                flex: 1, minWidth: 0,
-                padding: "8px 10px",
+                width: "100%", height: "100%",
+                padding: "8px 12px",
                 background: "rgba(77,168,98,0.14)",
                 border: "1px solid rgba(77,168,98,0.5)",
                 borderRadius: 10,
@@ -744,6 +742,7 @@ function YourTourCard({
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
+                minHeight: 44,
                 textAlign: "left",
               }}
             >
@@ -761,42 +760,14 @@ function YourTourCard({
                 </div>
               </div>
             </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onGame(); }}
-              aria-label="Add another game"
-              title="Add another game"
-              style={{
-                flexShrink: 0,
-                width: 38,
-                padding: 0,
-                background: "rgba(7,16,10,0.5)",
-                border: "1px solid rgba(77,168,98,0.4)",
-                borderRadius: 10,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-              }}
-            >
-              <GameScorecardIcon color="#7ed28b" />
-              {/* Plus glyph in the top-right corner so the icon reads
-                  as "add another game" rather than "open game". */}
-              <div style={{ position: "absolute", top: 2, right: 2, width: 12, height: 12, borderRadius: "50%", background: "#7ed28b", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0c1c13" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </div>
-            </button>
-          </div>
-        ) : (
-          <ActionCellSingle
-            title="Create a Game"
-            icon={<GameScorecardIcon color="#0c2218" />}
-            onClick={onGame}
-          />
-        )}
+          ) : (
+            <ActionCellSingle
+              title="CREATE A GAME"
+              icon={<GameScorecardIcon color="#0c2218" />}
+              onClick={onGame}
+            />
+          )}
+        </div>
       </div>
 
       {/* Course popup — floating card anchored above the flag strip.
@@ -1410,6 +1381,42 @@ function ActionCell({ label, title, icon, variant, onClick }: {
 // label above the title; just icon + one line of copy, centered on
 // the cross axis so the row stays short. Keeps the same primary
 // pill aesthetic.
+// FlagBadge — 44px course-logo square used inside YourTourCard.
+// Factored out so the standalone strip (multi-stop trips) and the
+// inline-with-action-row variant (single round) render identically.
+function FlagBadge({ stop, isNext, onTap }: { stop: Stop; isNext: boolean; onTap: () => void }) {
+  const logo = stop.course.logoUrl ? cdnImage(stop.course.logoUrl) : null;
+  return (
+    <button
+      onClick={onTap}
+      style={{
+        flexShrink: 0,
+        width: 44, height: 44,
+        borderRadius: 9,
+        background: "#fff",
+        border: isNext ? `2px solid ${GOLD}` : "1px solid rgba(255,255,255,0.55)",
+        padding: 3,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        overflow: "hidden",
+        cursor: "pointer",
+        position: "relative",
+        boxShadow: isNext ? "0 0 8px rgba(212,160,23,0.35)" : "0 1px 2px rgba(0,0,0,0.25)",
+      }}
+      aria-label={stop.course.name}
+      title={stop.course.name}
+    >
+      {logo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+      ) : (
+        <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 13, fontWeight: 800, color: "#0c1c13" }}>
+          {initialsOf(stop.course.name)}
+        </span>
+      )}
+    </button>
+  );
+}
+
 function ActionCellSingle({ title, icon, onClick }: {
   title: string;
   icon: React.ReactNode;
@@ -1420,10 +1427,13 @@ function ActionCellSingle({ title, icon, onClick }: {
       onClick={onClick}
       style={{
         width: "100%",
-        padding: "10px 12px",
+        height: "100%",
+        padding: "8px 12px",
         // Gradient + subtle inset highlight reads as a "premium pill"
         // rather than a flat fill, so the Create-a-Game step on
-        // YourTour gets the inviting moment it deserves.
+        // YourTour gets the inviting moment it deserves. Height
+        // matches the game-ready chip (44px) so the two states
+        // align visually whether or not a game has been created.
         background: "linear-gradient(180deg, #5cbd75 0%, #3f9554 100%)",
         border: "1px solid rgba(126,200,140,0.85)",
         borderRadius: 10,
@@ -1436,7 +1446,7 @@ function ActionCellSingle({ title, icon, onClick }: {
       }}
     >
       <div style={{
-        width: 28, height: 28, borderRadius: 7,
+        width: 24, height: 24, borderRadius: 6,
         background: "rgba(7,16,10,0.16)",
         border: "1px solid rgba(7,16,10,0.22)",
         display: "flex", alignItems: "center", justifyContent: "center",
