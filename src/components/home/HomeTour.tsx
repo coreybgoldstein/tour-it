@@ -653,9 +653,20 @@ function YourTourCard({
           - "+ game" still pinned absolute top-right. */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, paddingRight: 40 }}>
         {(() => {
-          // Identity badge image source — trip image takes priority
-          // when set, then the host course logo.
+          const isRound = tour.stops.length <= 1;
           const hostCourse = tour.stops[0]?.course;
+          // ROUND cards with members → stack of player avatars
+          // rendered as rounded squares (not circles) so the
+          // identity slot communicates "who's playing" instead of
+          // course branding. Per user direction: the course logo
+          // is already in the badge row below, so the top-left
+          // slot is better used to show the foursome.
+          if (isRound && tour.members.length > 0) {
+            return <RoundPlayerStack members={tour.members} />;
+          }
+          // TRIP cards (or rounds with no members loaded yet) →
+          // identity badge: trip image, then host course logo, then
+          // course-initials fallback.
           const identitySrc = tripBadge || (hostCourse?.logoUrl ? cdnImage(hostCourse.logoUrl) : null);
           if (!identitySrc && !hostCourse) return null;
           return (
@@ -1464,6 +1475,70 @@ function ActionCell({ label, title, icon, variant, onClick }: {
 // FlagBadge — 44px course-logo square used inside YourTourCard.
 // Factored out so the standalone strip (multi-stop trips) and the
 // inline-with-action-row variant (single round) render identically.
+// RoundPlayerStack — shown in the top-left identity slot on round
+// cards (when there are members). Each player avatar is rendered as
+// a small rounded SQUARE (same family as the course flag badge,
+// NOT a circular avatar) so the identity slot reads as a tight unit
+// alongside the chip. Side-by-side layout, up to 4 visible; an "N"
+// chip carries the overflow when there are more.
+function RoundPlayerStack({ members }: { members: MemberLite[] }) {
+  const visible = members.slice(0, 4);
+  const extra = members.length - visible.length;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+      {visible.map((m) => {
+        const avatar = m.avatarUrl ? cdnImage(m.avatarUrl) : null;
+        return (
+          <div
+            key={m.userId}
+            style={{
+              width: 28, height: 28,
+              borderRadius: 7,
+              background: avatar ? "#0c1c13" : "rgba(77,168,98,0.18)",
+              border: "1px solid rgba(255,255,255,0.55)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+              flexShrink: 0,
+            }}
+            title={m.displayName || m.username || "Golfer"}
+          >
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: "rgba(126,200,140,0.95)", letterSpacing: "0.02em" }}>
+                {playerInitials(m)}
+              </span>
+            )}
+          </div>
+        );
+      })}
+      {extra > 0 && (
+        <div style={{
+          width: 28, height: 28, borderRadius: 7,
+          background: "rgba(7,16,10,0.6)",
+          border: "1px solid rgba(255,255,255,0.4)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.85)" }}>
+            +{extra}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function playerInitials(m: MemberLite): string {
+  const src = m.displayName || m.username || "";
+  const parts = src.replace(/[^a-zA-Z\s]/g, "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() || "?";
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 // TripTypeIcon — small sage icon shown to the right of the ROUND /
 // TRIP chip. Same shapes as the /tee-up tab icons so visual identity
 // is consistent across the two surfaces:
