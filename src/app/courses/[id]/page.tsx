@@ -23,7 +23,8 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { activeFeaturedTournament } from "@/lib/pgaChampionship";
 import { cdnImage } from "@/lib/cdnImage";
-import { OfficialCourseBadge, ClaimCourseChip } from "@/components/course/OfficialCourseBadge";
+import { OfficialCourseBadge } from "@/components/course/OfficialCourseBadge";
+import ClaimCourseSheet from "@/components/course/ClaimCourseSheet";
 import FromTheCourseBlock from "@/components/course/FromTheCourseBlock";
 type Course = {
   id: string;
@@ -457,6 +458,11 @@ export default function CourseProfilePage() {
   const [extractionMessage, setExtractionMessage] = useState<string | null>(null);
   const [extractionConfidence, setExtractionConfidence] = useState<Record<number, { par?: string; yardage?: string; handicapRank?: string }>>({});
   const [contributeOpen, setContributeOpen] = useState(false);
+  // Course-claim flow — opened from the "Are you the course?" row
+  // inside the Contribute sheet. Kept page-level so the Contribute
+  // sheet can close itself before the claim sheet mounts (avoids
+  // a brief moment with two stacked overlays).
+  const [claimSheetOpen, setClaimSheetOpen] = useState(false);
   // NOTE: do NOT call useKeyboardAwareSheet here — the global
   // <KeyboardSync> + `.tourit-sheet` CSS already drives the lift via
   // --keyboard-height. The legacy hook sets inline `bottom` /
@@ -1286,16 +1292,18 @@ const [editDescription, setEditDescription] = useState("");
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: 6, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
             {course.name}
           </div>
-          {/* Course ownership signal — Managed-by-course badge (when
-              the course has been claimed + verified) OR a subtle
-              Claim CTA (when not). Placed close to the title so it
-              reads as trust signal about the source of the page's
-              info, not a separate feature. */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
-            {course.isClaimed
-              ? <OfficialCourseBadge />
-              : <ClaimCourseChip courseId={course.id} courseName={course.name} />}
-          </div>
+          {/* "Managed by course" badge — shown ONLY when the course
+              has been claimed + verified. The dashed Claim CTA was
+              removed from this slot 2026-05-30 per UX feedback —
+              the claim entry now lives inside the Contribute sheet
+              ("Are you the course?" row) so it's discoverable but
+              doesn't compete with the rest of the header for
+              attention. */}
+          {course.isClaimed && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+              <OfficialCourseBadge />
+            </div>
+          )}
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 12, display: "flex", alignItems: "center", gap: 5 }}>
             {holes.length > 0 && holes.some(h => h.par) && <span>Par {holes.reduce((s, h) => s + (h.par || 0), 0)}</span>}
             {holes.length > 0 && holes.some(h => h.yardage) && <><span style={{ color: "rgba(255,255,255,0.35)" }}>·</span><span>{holes.reduce((s, h) => s + (h.yardage || 0), 0).toLocaleString()} yds</span></>}
@@ -1469,6 +1477,16 @@ const [editDescription, setEditDescription] = useState("");
           teeSheetUrl={course.teeSheetUrl}
         />
       )}
+
+      {/* Claim sheet — entry lives in the Contribute sheet now
+          ("Are you the course?" row). Closed by default; opens via
+          setClaimSheetOpen(true). */}
+      <ClaimCourseSheet
+        courseId={course.id}
+        courseName={course.name}
+        open={claimSheetOpen}
+        onClose={() => setClaimSheetOpen(false)}
+      />
 
 {/* Course-completion nudge — shows when key fields are still null so users
     know there's something useful (and points-earning) they can do. Counts
@@ -2230,6 +2248,34 @@ const [editDescription, setEditDescription] = useState("");
             ) : (
               <>
                 <div className="tourit-sheet-body">
+                {/* "Are you the course?" row — opens ClaimCourseSheet.
+                    Lives here (inside Contribute) rather than under the
+                    course title per UX feedback — discoverable without
+                    competing with the rest of the header. Only shown
+                    when the course is NOT already claimed; once claimed,
+                    operator info is edited from /courses/[id]/manage. */}
+                {!course.isClaimed && (
+                  <button
+                    onClick={() => { setContributeOpen(false); setClaimSheetOpen(true); }}
+                    style={{ width: "100%", marginBottom: 18, display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "rgba(77,168,98,0.08)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 12, cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff" }}>Are you the course?</div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(126,200,140,0.85)", marginTop: 1 }}>
+                        Claim this page to manage official info, staff, and tee sheet.
+                      </div>
+                    </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(126,200,140,0.7)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                )}
+
                 {/* Course Info fields */}
                 <div style={{ marginBottom: 20, display: "flex", flexDirection: "column", gap: 12 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)" }}>Course Info</div>

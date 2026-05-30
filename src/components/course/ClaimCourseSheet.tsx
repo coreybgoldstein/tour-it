@@ -68,8 +68,29 @@ export default function ClaimCourseSheet({ courseId, courseName, open, onClose }
   }
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", zIndex: 250, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "60px 12px 12px" }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 520, background: "#0d2318", borderRadius: 16, padding: "18px 20px 24px", border: "1px solid rgba(77,168,98,0.25)", boxShadow: "0 -10px 40px rgba(0,0,0,0.55)" }}>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", zIndex: 250, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "40px 12px 0" }}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 520,
+          // Sheet anchors to the bottom of the viewport and scrolls
+          // internally when content exceeds the available height
+          // (the previous version capped at content height but had
+          // no overflow handler — so the Submit button could fall
+          // below the screen edge on shorter phones once the
+          // keyboard opened).
+          maxHeight: "calc(100dvh - 40px)",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
+          background: "#0d2318",
+          borderRadius: "16px 16px 0 0",
+          padding: "18px 20px calc(24px + env(safe-area-inset-bottom, 0px))",
+          border: "1px solid rgba(77,168,98,0.25)",
+          borderBottom: "none",
+          boxShadow: "0 -10px 40px rgba(0,0,0,0.55)",
+        }}
+      >
         <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 14px" }} />
 
         {step === "submitted" || step === "already" ? (
