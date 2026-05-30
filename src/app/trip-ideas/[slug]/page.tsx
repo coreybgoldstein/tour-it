@@ -577,26 +577,11 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
           </section>
         )}
 
-        {/* Footer */}
-        <footer style={{ marginTop: 8, paddingTop: 24, borderTop: "1px solid rgba(77,168,98,0.25)", textAlign: "center" }}>
-          <div style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 16, fontWeight: 700, color: "rgba(255,255,255,0.55)",
-            letterSpacing: "0.04em",
-          }}>Tour It</div>
-          <div style={{
-            fontFamily: "'Outfit', sans-serif", fontSize: 11,
-            color: "rgba(255,255,255,0.3)", marginTop: 4,
-            fontStyle: "italic",
-          }}>Scout Before You Play</div>
-          <div style={{
-            fontFamily: "'Outfit', sans-serif", fontSize: 10,
-            color: "rgba(255,255,255,0.25)", marginTop: 16,
-            textTransform: "uppercase", letterSpacing: "0.14em",
-          }}>
-            Thrown by golfers this month: {/* DART_THROW_COUNT — Phase 3B */} —
-          </div>
-        </footer>
+        {/* Footer intentionally removed — the Tour It wordmark +
+            "Scout Before You Play" tagline were rendering as faint
+            text bleeding into the sticky ActionZone below them
+            ("hidden tour it text" per user feedback). The action
+            buttons are the natural page closer. */}
       </div>
 
       {/* ── ACTION ZONE (sticky on mobile) ────────────────────────────────── */}
