@@ -8,9 +8,10 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
+
 // ============================================================
 // ENUMS
 // ============================================================
@@ -142,6 +143,14 @@ enum ReferralStatus {
   VOID
 }
 
+// CourseClaim status — the claim's lifecycle, not the course's claim
+// state. Course.isClaimed flips true on the first VERIFIED claim.
+enum CourseClaimStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 // ============================================================
 // USER
 // ============================================================
@@ -167,32 +176,34 @@ model User {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  uploads          Upload[]
-  rounds           Round[]
-  uploadPhotos     UploadPhoto[]
-  comments         Comment[]
-  likes            Like[]
-  saves            Save[]
-  views            View[]
-  reports          ModerationReport[] @relation("ReportedBy")
-  receivedReports  ModerationReport[] @relation("ReportedUser")
-  followers        Follow[]           @relation("Following")
-  following        Follow[]           @relation("Follower")
-  homeCourse       Course?            @relation("HomeCourse", fields: [homeCourseId], references: [id])
-  createdTrips     GolfTrip[]         @relation("CreatedTrips")
-  tripMemberships  GolfTripMember[]   @relation("TripMemberships")
-  ryderAssignments GolfTripRyderTeam[]
-  tripMessages     TripMessage[]
-  tripNotes        GolfTripNote[]
-  createdTripGames TripGame[]
-  notifications    Notification[]
-  uploadTags       UploadTag[]
-  progression      UserProgression?
-  pointsLedger     UserPointsLedger[]
-  badges           UserBadge[]
+  uploads             Upload[]
+  rounds              Round[]
+  uploadPhotos        UploadPhoto[]
+  comments            Comment[]
+  likes               Like[]
+  saves               Save[]
+  views               View[]
+  reports             ModerationReport[]   @relation("ReportedBy")
+  receivedReports     ModerationReport[]   @relation("ReportedUser")
+  followers           Follow[]             @relation("Following")
+  following           Follow[]             @relation("Follower")
+  homeCourse          Course?              @relation("HomeCourse", fields: [homeCourseId], references: [id])
+  createdTrips        GolfTrip[]           @relation("CreatedTrips")
+  tripMemberships     GolfTripMember[]     @relation("TripMemberships")
+  ryderAssignments    GolfTripRyderTeam[]
+  tripMessages        TripMessage[]
+  tripNotes           GolfTripNote[]
+  createdTripGames    TripGame[]
+  notifications       Notification[]
+  uploadTags          UploadTag[]
+  progression         UserProgression?
+  pointsLedger        UserPointsLedger[]
+  badges              UserBadge[]
   courseContributions CourseContribution[]
   invitesSent         Referral[]           @relation("InvitesSent")
   inviteReceived      Referral?            @relation("InvitesReceived")
+  courseClaims        CourseClaim[]
+  courseManagerships  CourseManager[]
 
   @@index([username])
   @@index([email])
@@ -204,40 +215,59 @@ model User {
 // ============================================================
 
 model Course {
-  id            String   @id @default(cuid())
-  name          String
-  slug          String   @unique
-  city          String
-  state         String
-  country       String   @default("US")
-  latitude      Float?
-  longitude     Float?
-  websiteUrl    String?
-  phone         String?
-  description   String?
-  holeCount     Int      @default(18)
+  id                String      @id @default(cuid())
+  name              String
+  slug              String      @unique
+  city              String
+  state             String
+  country           String      @default("US")
+  latitude          Float?
+  longitude         Float?
+  websiteUrl        String?
+  phone             String?
+  description       String?
+  holeCount         Int         @default(18)
   /// Admin-only moderation flag — set false to hide a record from all listings (e.g. duplicates). NOT the course access type; use `courseType` for PUBLIC/SEMI_PRIVATE/PRIVATE.
-  isPublic      Boolean  @default(true)
-  courseType    CourseType?
-  zipCode       String?
-  yearEstablished Int?
-  isVerified    Boolean  @default(false)
+  isPublic          Boolean     @default(true)
+  courseType        CourseType?
+  zipCode           String?
+  yearEstablished   Int?
+  isVerified        Boolean     @default(false)
   coverImageUrl     String?
   logoUrl           String?
   scorecardImageUrl String?
   searchVector      String?
-  uploadCount   Int      @default(0)
-  saveCount     Int      @default(0)
-  viewCount     Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  uploadCount       Int         @default(0)
+  saveCount         Int         @default(0)
+  viewCount         Int         @default(0)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
-  holes           Hole[]
-  saves           Save[]
-  views           View[]
-  homeUsers       User[]   @relation("HomeCourse")
-  teeBoxes        TeeBox[]
-  itineraryStops  TripItineraryStop[]
+  // ── Course ownership (operator) layer ──────────────────────────
+  // Distinct from `isVerified` (data-quality / admin flag) and from
+  // the UGC `description` (golfer-contributed copy tracked by
+  // CourseFieldContribution). Flips true on the first VERIFIED
+  // CourseClaim.
+  isClaimed           Boolean @default(false)
+  // Operator-authored description. Course header prefers this over
+  // `description` ONLY when isClaimed=true; the UGC description
+  // stays the source of truth on unclaimed courses.
+  officialDescription String?
+  // Operator-supplied booking link rendered in the "From the
+  // course" block as a "Book a tee time" button. Reuses the
+  // existing `websiteUrl` field for the course homepage.
+  teeSheetUrl         String?
+
+  holes          Hole[]
+  saves          Save[]
+  views          View[]
+  homeUsers      User[]                @relation("HomeCourse")
+  teeBoxes       TeeBox[]
+  itineraryStops TripItineraryStop[]
+  claims         CourseClaim[]
+  managers       CourseManager[]
+  staff          CourseStaff[]
+  officialMedia  CourseOfficialMedia[]
 
   @@index([state])
   @@index([city, state])
@@ -265,9 +295,9 @@ model Hole {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  teeBoxes     TeeBox[]
-  uploads      Upload[]
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  teeBoxes TeeBox[]
+  uploads  Upload[]
 
   @@unique([courseId, holeNumber])
   @@index([courseId])
@@ -279,7 +309,7 @@ model Hole {
 // ============================================================
 
 model TeeBox {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   courseId    String
   holeId      String
   color       TeeColor
@@ -287,12 +317,12 @@ model TeeBox {
   yardage     Int
   rating      Float?
   slope       Int?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  hole        Hole      @relation(fields: [holeId], references: [id], onDelete: Cascade)
-  uploads     Upload[]
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  hole    Hole     @relation(fields: [holeId], references: [id], onDelete: Cascade)
+  uploads Upload[]
 
   @@unique([holeId, color])
   @@index([holeId])
@@ -304,27 +334,27 @@ model TeeBox {
 // ============================================================
 
 model Upload {
-  id                   String           @id @default(cuid())
+  id               String  @id @default(cuid())
   // The current owner of this clip — appears on their profile, gets points
   // for engagement. May change when a hero tag is approved (transfer from
   // uploader -> hero). Always a real user id.
-  userId               String
+  userId           String
   // The ORIGINAL uploader of this clip, set only when ownership has been
   // transferred via an approved hero tag. NULL means the current userId
   // is also the uploader (no transfer ever happened). Used to render the
   // small "uploaded by @user" attribution chip on the clip.
-  uploadedByUserId     String?
-  courseId             String
-  holeId               String
-  teeBoxId             String?
+  uploadedByUserId String?
+  courseId         String
+  holeId           String
+  teeBoxId         String?
 
-  mediaType            MediaType
-  mediaUrl             String
-  cloudflareVideoId    String?
-  thumbnailUrl         String?
-  durationSeconds      Int?
-  fileSizeBytes        BigInt?
-  resolution           String?
+  mediaType         MediaType
+  mediaUrl          String
+  cloudflareVideoId String?
+  thumbnailUrl      String?
+  durationSeconds   Int?
+  fileSizeBytes     BigInt?
+  resolution        String?
 
   shotType             ShotType?
   clubUsed             String?
@@ -338,41 +368,41 @@ model Upload {
   whatCameraDoesntShow String?
   datePlayedAt         DateTime?
 
-  caption              String?
-  seriesId             String?
-  seriesOrder          Int?
-  yardageOverlay       String?
-  tripId               String?
-  tripPublic           Boolean          @default(true)
+  caption        String?
+  seriesId       String?
+  seriesOrder    Int?
+  yardageOverlay String?
+  tripId         String?
+  tripPublic     Boolean @default(true)
 
-  clipLat              Float?
-  clipLng              Float?
+  clipLat Float?
+  clipLng Float?
 
-  likeCount            Int              @default(0)
-  commentCount         Int              @default(0)
-  viewCount            Int              @default(0)
-  saveCount            Int              @default(0)
-  watchCompletionRate  Float?
-  rankScore            Float            @default(0)
+  likeCount           Int    @default(0)
+  commentCount        Int    @default(0)
+  viewCount           Int    @default(0)
+  saveCount           Int    @default(0)
+  watchCompletionRate Float?
+  rankScore           Float  @default(0)
 
-  moderationStatus     ModerationStatus @default(PENDING)
-  moderatedAt          DateTime?
-  moderatedBy          String?
+  moderationStatus ModerationStatus @default(PENDING)
+  moderatedAt      DateTime?
+  moderatedBy      String?
 
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  roundId              String?
+  roundId String?
 
-  user                 User             @relation(fields: [userId], references: [id])
-  hole                 Hole             @relation(fields: [holeId], references: [id])
-  teeBox               TeeBox?          @relation(fields: [teeBoxId], references: [id])
-  round                Round?           @relation(fields: [roundId], references: [id])
-  photos               UploadPhoto[]
-  comments             Comment[]
-  likes                Like[]
-  views                View[]
-  reports              ModerationReport[]
+  user     User               @relation(fields: [userId], references: [id])
+  hole     Hole               @relation(fields: [holeId], references: [id])
+  teeBox   TeeBox?            @relation(fields: [teeBoxId], references: [id])
+  round    Round?             @relation(fields: [roundId], references: [id])
+  photos   UploadPhoto[]
+  comments Comment[]
+  likes    Like[]
+  views    View[]
+  reports  ModerationReport[]
 
   @@index([holeId])
   @@index([courseId])
@@ -400,8 +430,8 @@ model Round {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  uploads     Upload[]
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  uploads Upload[]
 
   @@index([userId])
   @@index([courseId])
@@ -420,8 +450,8 @@ model UploadPhoto {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
-  upload    Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
+  upload Upload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
 
   @@index([uploadId])
 }
@@ -439,9 +469,9 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  upload    Upload   @relation(fields: [uploadId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
-  likes     Like[]
+  upload Upload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+  likes  Like[]
 
   @@index([uploadId, createdAt(sort: Desc)])
   @@index([userId])
@@ -458,9 +488,9 @@ model Like {
   commentId String?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
-  upload    Upload?  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
-  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id])
+  upload  Upload?  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, uploadId])
   @@unique([userId, commentId])
@@ -480,8 +510,8 @@ model Save {
   saveType  String?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
-  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id])
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@unique([userId, uploadId])
@@ -501,9 +531,9 @@ model View {
   sessionId String?
   createdAt DateTime @default(now())
 
-  user      User?    @relation(fields: [userId], references: [id])
-  upload    Upload?  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
-  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id])
+  upload Upload? @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([uploadId, createdAt(sort: Desc)])
   @@index([courseId, createdAt(sort: Desc)])
@@ -521,8 +551,8 @@ model Follow {
   status      FollowStatus @default(ACTIVE)
   createdAt   DateTime     @default(now())
 
-  follower    User         @relation("Follower", fields: [followerId], references: [id])
-  following   User         @relation("Following", fields: [followingId], references: [id])
+  follower  User @relation("Follower", fields: [followerId], references: [id])
+  following User @relation("Following", fields: [followingId], references: [id])
 
   @@unique([followerId, followingId])
   @@index([followerId])
@@ -545,33 +575,34 @@ model ModerationReport {
   reviewedBy     String?
   createdAt      DateTime         @default(now())
 
-  reportedBy     User             @relation("ReportedBy", fields: [reportedById], references: [id])
-  reportedUser   User?            @relation("ReportedUser", fields: [reportedUserId], references: [id])
-  upload         Upload?          @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  reportedBy   User    @relation("ReportedBy", fields: [reportedById], references: [id])
+  reportedUser User?   @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  upload       Upload? @relation(fields: [uploadId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([uploadId])
   @@index([reportedById])
 }
+
 // ============================================================
 // GOLF TRIPS
 // ============================================================
 
 model GolfTrip {
-  id          String           @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
   startDate   String?
   endDate     String?
   imageUrl    String?
   createdBy   String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Logistics — captured at trip creation so the trip is useful from
   // day 1 (and so public conversion has real airport + lodging detail).
-  arrivalAirport  String?
-  lodging         String?
+  arrivalAirport String?
+  lodging        String?
   // Structured lodging location — captured when the user picks a
   // result from the LodgingField dropdown (Nominatim returns city +
   // state alongside the display name). Used as the top-priority
@@ -580,17 +611,17 @@ model GolfTrip {
   // the user is actually in Boyne / Harbor Springs).
   // Null when the lodging was typed freehand; we fall back to the
   // raw lodging string in that case.
-  lodgingCity     String?
-  lodgingState    String?
+  lodgingCity    String?
+  lodgingState   String?
 
   // Public conversion. When the user opts to publish, isPublic flips
   // true and publicizedAt is set; we also create a TripItinerary row
   // referencing this trip via sourceGolfTripId.
   // publicizeNotifiedAt is set by the day-after cron so we don't
   // re-prompt the user on every cron run.
-  isPublic              Boolean   @default(false)
-  publicizedAt          DateTime?
-  publicizeNotifiedAt   DateTime?
+  isPublic            Boolean   @default(false)
+  publicizedAt        DateTime?
+  publicizeNotifiedAt DateTime?
 
   // Ryder Cup mode
   ryderCupEnabled Boolean @default(false)
@@ -599,13 +630,13 @@ model GolfTrip {
   redTeamScore    Float   @default(0)
   blueTeamScore   Float   @default(0)
 
-  creator     User             @relation("CreatedTrips", fields: [createdBy], references: [id])
-  courses     GolfTripCourse[]
-  members     GolfTripMember[]
-  messages    TripMessage[]
-  games       TripGame[]
-  ryderTeams  GolfTripRyderTeam[]
-  notes       GolfTripNote[]
+  creator    User                @relation("CreatedTrips", fields: [createdBy], references: [id])
+  courses    GolfTripCourse[]
+  members    GolfTripMember[]
+  messages   TripMessage[]
+  games      TripGame[]
+  ryderTeams GolfTripRyderTeam[]
+  notes      GolfTripNote[]
 
   @@index([createdBy])
   @@index([endDate, isPublic, publicizeNotifiedAt])
@@ -619,14 +650,14 @@ model GolfTripNote {
   id        String   @id @default(cuid())
   tripId    String
   userId    String
-  category  String   // "clubhouse" | "food" | "weather" | "tip" | "logistics" | "course" | "other"
-  subject   String?  // optional title — e.g. restaurant name, course nickname
+  category  String // "clubhouse" | "food" | "weather" | "tip" | "logistics" | "course" | "other"
+  subject   String? // optional title — e.g. restaurant name, course nickname
   body      String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  trip      GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([tripId, category, createdAt(sort: Desc)])
   @@index([userId])
@@ -636,11 +667,11 @@ model GolfTripRyderTeam {
   id        String   @id @default(cuid())
   tripId    String
   userId    String
-  team      String   // "RED" | "BLUE"
+  team      String // "RED" | "BLUE"
   createdAt DateTime @default(now())
 
-  trip      GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tripId, userId])
   @@index([tripId])
@@ -660,7 +691,7 @@ model GolfTripCourse {
   sortOrder         Int      @default(0)
   createdAt         DateTime @default(now())
 
-  trip              GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  trip GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   @@index([tripId])
 }
@@ -672,8 +703,8 @@ model GolfTripMember {
   role      String   @default("member")
   createdAt DateTime @default(now())
 
-  trip      GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user      User     @relation("TripMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  trip GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User     @relation("TripMemberships", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tripId, userId])
   @@index([tripId])
@@ -687,28 +718,28 @@ model TripMessage {
   body      String
   createdAt DateTime @default(now())
 
-  trip      GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([tripId, createdAt(sort: Asc)])
 }
 
 model TripGame {
-  id           String   @id @default(cuid())
-  tripId       String
-  courseId     String
-  courseName   String
-  format       String
-  formatConfig Json
-  players      Json
+  id            String   @id @default(cuid())
+  tripId        String
+  courseId      String
+  courseName    String
+  format        String
+  formatConfig  Json
+  players       Json
   holeHandicaps Json?
-  gameSheet    String
-  shareText    String
-  createdBy    String
-  createdAt    DateTime @default(now())
+  gameSheet     String
+  shareText     String
+  createdBy     String
+  createdAt     DateTime @default(now())
 
-  trip         GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  creator      User     @relation(fields: [createdBy], references: [id])
+  trip    GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  creator User     @relation(fields: [createdBy], references: [id])
 
   @@index([tripId, createdAt(sort: Desc)])
 }
@@ -729,7 +760,7 @@ model Notification {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@index([userId, createdAt(sort: Desc)])
@@ -764,22 +795,22 @@ model SearchLog {
   userId      String?
   createdAt   DateTime @default(now())
 
-  clicks      SearchClick[]
+  clicks SearchClick[]
 
   @@index([userId])
   @@index([createdAt(sort: Desc)])
 }
 
 model SearchClick {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   searchLogId String
   courseId    String
   courseName  String
   position    Int
   userId      String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime @default(now())
 
-  searchLog   SearchLog @relation(fields: [searchLogId], references: [id], onDelete: Cascade)
+  searchLog SearchLog @relation(fields: [searchLogId], references: [id], onDelete: Cascade)
 
   @@index([searchLogId])
   @@index([courseId])
@@ -803,7 +834,7 @@ model UploadTag {
   isHero    Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([uploadId, userId])
   @@index([uploadId])
@@ -829,7 +860,7 @@ model UserProgression {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([totalPoints(sort: Desc)])
   @@index([weeklyPoints(sort: Desc)])
@@ -845,7 +876,7 @@ model UserPointsLedger {
   metadata    Json?
   createdAt   DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([action])
@@ -863,7 +894,7 @@ model Badge {
   requirement Json
   createdAt   DateTime      @default(now())
 
-  userBadges  UserBadge[]
+  userBadges UserBadge[]
 }
 
 model UserBadge {
@@ -872,8 +903,8 @@ model UserBadge {
   badgeId   String
   awardedAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge     Badge    @relation(fields: [badgeId], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id])
 
   @@unique([userId, badgeId])
   @@index([userId])
@@ -890,7 +921,7 @@ model CourseContribution {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@index([courseId, uploadCount(sort: Desc)])
@@ -939,36 +970,36 @@ model RewardsWaitlist {
 // ============================================================
 
 model Referral {
-  id                       String         @id @default(cuid())
-  inviterId                String
-  inviteeId                String?        @unique
-  inviteeUsername          String?
-  status                   ReferralStatus @default(PENDING)
-  signupAt                 DateTime?
-  firstUploadAt            DateTime?
-  signupPointsAwardedAt    DateTime?
-  uploadPointsAwardedAt    DateTime?
-  ipAddressAtSignup        String?
-  createdAt                DateTime       @default(now())
-  updatedAt                DateTime       @updatedAt
+  id                    String         @id @default(cuid())
+  inviterId             String
+  inviteeId             String?        @unique
+  inviteeUsername       String?
+  status                ReferralStatus @default(PENDING)
+  signupAt              DateTime?
+  firstUploadAt         DateTime?
+  signupPointsAwardedAt DateTime?
+  uploadPointsAwardedAt DateTime?
+  ipAddressAtSignup     String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
-  inviter                  User           @relation("InvitesSent", fields: [inviterId], references: [id])
-  invitee                  User?          @relation("InvitesReceived", fields: [inviteeId], references: [id])
+  inviter User  @relation("InvitesSent", fields: [inviterId], references: [id])
+  invitee User? @relation("InvitesReceived", fields: [inviteeId], references: [id])
 
   @@index([inviterId])
 }
 
 model CourseRequest {
-  id          String      @id @default(cuid())
-  userId      String
-  name        String
-  city        String
-  state       String
-  courseType  CourseType?
-  websiteUrl  String?
-  notes       String?
-  status      String      @default("PENDING")
-  createdAt   DateTime    @default(now())
+  id         String      @id @default(cuid())
+  userId     String
+  name       String
+  city       String
+  state      String
+  courseType CourseType?
+  websiteUrl String?
+  notes      String?
+  status     String      @default("PENDING")
+  createdAt  DateTime    @default(now())
 
   @@index([userId])
   @@index([status, createdAt(sort: Desc)])
@@ -979,11 +1010,11 @@ model CourseRequest {
 // ============================================================
 
 model TripItinerary {
-  id              String   @id @default(cuid())
-  slug            String   @unique
+  id              String  @id @default(cuid())
+  slug            String  @unique
   name            String
   tagline         String
-  whyThisTrip     String   @db.Text
+  whyThisTrip     String  @db.Text
   heroImageUrl    String?
   vibeTag         String
   costBand        String
@@ -994,7 +1025,7 @@ model TripItinerary {
   latitude        Float
   longitude       Float
   region          String
-  dartThrowCount  Int      @default(0)
+  dartThrowCount  Int     @default(0)
 
   // User-submitted itineraries. When a GolfTrip is publicized, we
   // create a TripItinerary referencing it via sourceGolfTripId; the
@@ -1003,25 +1034,119 @@ model TripItinerary {
   sourceGolfTripId  String?
   submittedByUserId String?
 
-  stops           TripItineraryStop[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  stops     TripItineraryStop[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
 
   @@index([region])
   @@index([vibeTag])
 }
 
 model TripItineraryStop {
-  id            String        @id @default(cuid())
-  itineraryId   String
-  itinerary     TripItinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
-  courseId      String
-  course        Course        @relation(fields: [courseId], references: [id])
-  day           Int
-  order         Int           @default(1)
-  note          String?
+  id          String        @id @default(cuid())
+  itineraryId String
+  itinerary   TripItinerary @relation(fields: [itineraryId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course        @relation(fields: [courseId], references: [id])
+  day         Int
+  order       Int           @default(1)
+  note        String?
 
   @@unique([itineraryId, day, order])
   @@index([itineraryId])
   @@index([courseId])
+}
+
+// ============================================================
+// COURSE OWNERSHIP / OPERATOR LAYER
+// ============================================================
+//
+// A course operator (GM, head pro, marketing) claims a course; an
+// admin verifies; once verified, one or more CourseManager rows
+// authorize them to edit the official-info layer. The official
+// layer (officialDescription, staff cards, official media, tee
+// sheet) is rendered separately from golfer UGC — the two never
+// collide in the swipe feed or compete for primacy.
+
+model CourseClaim {
+  id               String            @id @default(cuid())
+  courseId         String
+  userId           String
+  status           CourseClaimStatus @default(PENDING)
+  claimantName     String
+  claimantRole     String // "Head PGA Professional", "GM", "Marketing Director", etc.
+  claimantEmail    String // work email; admin uses domain match against course.websiteUrl as a verification hint
+  verificationNote String?
+  requestedAt      DateTime          @default(now())
+  reviewedAt       DateTime?
+  reviewedBy       String? // userId of the admin who actioned the claim
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([userId])
+  @@index([status, requestedAt(sort: Desc)])
+}
+
+// A verified operator's authorization to manage a course's official
+// layer. Multiple managers per course allowed (a head pro AND a
+// marketing director can both edit). Created automatically when an
+// admin verifies a CourseClaim.
+model CourseManager {
+  id        String   @id @default(cuid())
+  courseId  String
+  userId    String
+  role      String // mirrors CourseClaim.claimantRole at time of verification
+  createdAt DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, userId])
+  @@index([courseId])
+  @@index([userId])
+}
+
+// Staff cards rendered in the "From the course" block on a course
+// page (PGA pros, GMs, etc.). Not feed items, not Uploads — these
+// live entirely in the operator layer and are not part of the UGC
+// scoring/rank pipeline.
+model CourseStaff {
+  id        String   @id @default(cuid())
+  courseId  String
+  name      String
+  role      String // "Head PGA Professional", "Director of Golf", etc.
+  bio       String?
+  photoUrl  String?
+  email     String?
+  phone     String?
+  isPublic  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, sortOrder])
+}
+
+// Course-managed media (hole flyovers, official photos) kept SEPARATE
+// from the UGC Upload model. Never injected into the clip swipe feed
+// — rendered only in the "From the course" block / hole detail
+// page's official section.
+model CourseOfficialMedia {
+  id                String   @id @default(cuid())
+  courseId          String
+  holeNumber        Int? // null = course-level (e.g. drone of the property)
+  mediaType         String // "image" | "flyover" | "video"
+  url               String
+  cloudflareVideoId String? // for "flyover"/"video" — mirrors Upload.cloudflareVideoId so the same HLS playback path works
+  caption           String?
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, holeNumber, sortOrder])
 }

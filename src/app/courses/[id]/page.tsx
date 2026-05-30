@@ -23,6 +23,8 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { activeFeaturedTournament } from "@/lib/pgaChampionship";
 import { cdnImage } from "@/lib/cdnImage";
+import { OfficialCourseBadge, ClaimCourseChip } from "@/components/course/OfficialCourseBadge";
+import FromTheCourseBlock from "@/components/course/FromTheCourseBlock";
 type Course = {
   id: string;
   name: string;
@@ -39,6 +41,15 @@ type Course = {
   coverImageUrl: string | null;
   logoUrl: string | null;
   scorecardImageUrl: string | null;
+  // ── Operator layer (Course-claim feature, 2026-05-30) ─────────────
+  // isClaimed flips when at least one CourseClaim is VERIFIED.
+  // officialDescription supersedes `description` ONLY when isClaimed
+  // is true; the UGC description stays primary on unclaimed courses.
+  // teeSheetUrl renders a "Book a tee time" button inside the
+  // FromTheCourseBlock when set.
+  isClaimed: boolean;
+  officialDescription: string | null;
+  teeSheetUrl: string | null;
 };
 
 type Clip = {
@@ -1275,6 +1286,16 @@ const [editDescription, setEditDescription] = useState("");
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: 6, textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
             {course.name}
           </div>
+          {/* Course ownership signal — Managed-by-course badge (when
+              the course has been claimed + verified) OR a subtle
+              Claim CTA (when not). Placed close to the title so it
+              reads as trust signal about the source of the page's
+              info, not a separate feature. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+            {course.isClaimed
+              ? <OfficialCourseBadge />
+              : <ClaimCourseChip courseId={course.id} courseName={course.name} />}
+          </div>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 12, display: "flex", alignItems: "center", gap: 5 }}>
             {holes.length > 0 && holes.some(h => h.par) && <span>Par {holes.reduce((s, h) => s + (h.par || 0), 0)}</span>}
             {holes.length > 0 && holes.some(h => h.yardage) && <><span style={{ color: "rgba(255,255,255,0.35)" }}>·</span><span>{holes.reduce((s, h) => s + (h.yardage || 0), 0).toLocaleString()} yds</span></>}
@@ -1434,6 +1455,20 @@ const [editDescription, setEditDescription] = useState("");
           </div>
         </div>
       </div>
+
+      {/* "From the course" official-info block — rendered only when
+          the course has been claimed + verified. Sits ABOVE the UGC
+          feed but never replaces it; UGC clips remain the primary
+          scrolling experience below. The block self-hides if there's
+          no operator content yet (officialDescription empty + no
+          staff + no teeSheetUrl). */}
+      {course.isClaimed && (
+        <FromTheCourseBlock
+          courseId={course.id}
+          officialDescription={course.officialDescription}
+          teeSheetUrl={course.teeSheetUrl}
+        />
+      )}
 
 {/* Course-completion nudge — shows when key fields are still null so users
     know there's something useful (and points-earning) they can do. Counts
@@ -1775,7 +1810,15 @@ const [editDescription, setEditDescription] = useState("");
               );
             })()}
             <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.7 }}>
-              {course.description || hero.description}
+              {/* Prefer the operator-authored description when the
+                  course has been claimed; fall back to the UGC
+                  description otherwise. The FromTheCourseBlock above
+                  already renders officialDescription with its own
+                  framing, so this is purely a fallback for the
+                  legacy About sheet. */}
+              {(course.isClaimed && course.officialDescription)
+                ? course.officialDescription
+                : (course.description || hero.description)}
             </p>
             <button onClick={() => setAboutOpen(false)} style={{ marginTop: 24, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
           </div>
