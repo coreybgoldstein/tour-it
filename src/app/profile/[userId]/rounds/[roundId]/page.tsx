@@ -174,7 +174,7 @@ export default function RoundDetailPage() {
 
   return (
     <div style={{ minHeight: "100dvh", background: "#07100a", paddingBottom: 100, ...(isDesktop ? { marginLeft: 72 } : {}) }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap'); @keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{` @keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Header */}
       <div style={{ padding: "48px 20px 20px", background: "linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 100%)" }}>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Outfit } from "next/font/google";
+import { Playfair_Display, Outfit, Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import NotificationBell from "@/components/NotificationBell";
 import TourItTopBar from "@/components/TourItTopBar";
@@ -26,6 +26,26 @@ const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
+});
+
+// Tour It typography system v2 — Source Serif 4 (editorial) + Inter
+// (UI) loaded the same way the existing pair is: next/font preloads
+// woff2 from the build output, no runtime fetch, no render block.
+// Previously every page in the app re-imported these via
+// `<style>@import url(...)</style>` which forced a CSS round-trip
+// before any styled text could paint — that's the load lag the user
+// was seeing.
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+  style: ["normal", "italic"],
 });
 
 export const viewport: Viewport = {
@@ -83,7 +103,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${playfair.variable} ${outfit.variable} antialiased`}>
+      <body className={`${playfair.variable} ${outfit.variable} ${inter.variable} ${sourceSerif.variable} antialiased`}>
         {/* Site-wide JSON-LD — WebSite + SearchAction lets Google render
             the search box in results; Organization enables a Knowledge
             Panel for the Tour It brand once we link social profiles. */}

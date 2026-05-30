@@ -763,7 +763,7 @@ export default function TeeUpPage() {
 
   return (
     <main style={{ background: "#07100a", minHeight: "100dvh", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 100 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap'); * { box-sizing: border-box; }`}</style>
+      <style>{` * { box-sizing: border-box; }`}</style>
       <Toast toast={toast} onDismiss={() => setToast(null)} />
 
       {/* Header — title + a context-aware "+ New" button that opens

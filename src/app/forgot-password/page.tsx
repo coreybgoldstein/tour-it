@@ -39,7 +39,7 @@ export default function ForgotPasswordPage() {
   return (
     <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
+        
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .bg-texture { position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: radial-gradient(rgba(255,255,255,0.012) 1px, transparent 1px); background-size: 28px 28px; }
         .bg-glow { position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 700px; height: 500px; pointer-events: none; z-index: 0; background: radial-gradient(ellipse, rgba(56,140,76,0.12) 0%, transparent 68%); }

@@ -27,7 +27,7 @@ export default function JoinLanding({ inviterId, inviterUsername, inviterDisplay
   return (
     <main style={{ minHeight: "100svh", background: "#07100a", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px", fontFamily: "'Outfit', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
+        
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
         .join-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; }

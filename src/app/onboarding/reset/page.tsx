@@ -110,7 +110,7 @@ export default function OnboardingReset() {
 
   return (
     <main style={pageStyle}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap');`}</style>
+      <style>{``}</style>
 
       <div style={{ maxWidth: 440, margin: "0 auto", padding: "32px 20px", display: "flex", flexDirection: "column", minHeight: "100svh" }}>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 32, paddingTop: 32 }}>

@@ -88,7 +88,7 @@ export default function HolesOverviewPage() {
   return (
     <main style={{ height: "100dvh", background: "#07100a", overflow: "hidden auto", fontFamily: "'Outfit', sans-serif", color: "#fff" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
+        
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
         .hole-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 8px 8px 7px; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%; }

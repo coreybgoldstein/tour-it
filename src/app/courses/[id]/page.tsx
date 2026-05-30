@@ -1099,7 +1099,7 @@ const [editDescription, setEditDescription] = useState("");
   return (
     <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingLeft: isDesktop ? 72 : 0 }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
+        
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
         /* Outer feed (vertical between holes). overscroll-behavior: contain

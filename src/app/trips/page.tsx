@@ -56,7 +56,7 @@ export default function TripsPage() {
 
   return (
     <main style={{ minHeight: "100svh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingBottom: 90 }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap'); * { box-sizing: border-box; }`}</style>
+      <style>{` * { box-sizing: border-box; }`}</style>
 
       {/* Header */}
       <div style={{ padding: "52px 20px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>

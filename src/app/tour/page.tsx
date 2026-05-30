@@ -704,7 +704,7 @@ function TourPageInner() {
       style={{ minHeight: "100dvh", background: "#07100a", color: "#fff" }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
+        
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
         .search-wrap { max-width: 600px; margin: 0 auto; padding: 0 20px 120px; }

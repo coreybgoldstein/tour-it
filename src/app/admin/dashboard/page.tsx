@@ -308,7 +308,7 @@ export default function DashboardPage() {
   return (
     <div style={{ minHeight: "100dvh", background: "#07100a", paddingBottom: 60 }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Outfit:wght@300;400;500;600;700&display=swap');
+        
         * { box-sizing: border-box; }
       `}</style>
 

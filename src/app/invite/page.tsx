@@ -74,7 +74,7 @@ export default function InvitePage() {
   return (
     <main style={{ minHeight: "100svh", background: "#07100a", color: "#fff", paddingBottom: 100 }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
+        
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #07100a; }
         @keyframes spin { to { transform: rotate(360deg); } }

@@ -19,7 +19,7 @@ export default function MayCompetitionModal({ onClose }: Props) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600&display=swap');
+        
         @keyframes may-slide-up { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes may-fade-in { from { opacity: 0; } to { opacity: 1; } }
       `}</style>

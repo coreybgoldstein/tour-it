@@ -45,7 +45,7 @@ export default function AboutPage() {
       paddingBottom: 80,
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Outfit:wght@300;400;500;600&display=swap');
+        
         * { box-sizing: border-box; }
       `}</style>
 

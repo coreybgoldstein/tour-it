@@ -103,7 +103,7 @@ export default function OnboardingIntroPage() {
   return (
     <main style={{ height: "100svh", background: "#07100a", display: "flex", flexDirection: "column", overflow: "hidden", position: "relative" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap');
+        
         * { box-sizing: border-box; margin: 0; padding: 0; }
         .intro-scroll { display: flex; overflow-x: scroll; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex: 1; }
         .intro-scroll::-webkit-scrollbar { display: none; }

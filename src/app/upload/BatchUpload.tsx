@@ -473,7 +473,7 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
   return (
     <div style={{ minHeight: "100svh", background: "#07100a", paddingBottom: 120 }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@400;500;600&display=swap');
+        
         .batch-hole-btn { width: 30px; height: 30px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.45); cursor: pointer; flex-shrink: 0; }
         .batch-hole-btn.active { background: rgba(77,168,98,0.2); border-color: rgba(77,168,98,0.6); color: #4da862; }
         .batch-hole-btn:disabled { opacity: 0.35; cursor: default; }
