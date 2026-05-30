@@ -182,6 +182,22 @@ export default function CreateGameSheet({
   // to the first course automatically.
   const [tripCourseIdx, setTripCourseIdx] = useState(0);
 
+  // Retroactive attach — user's upcoming trips/rounds shown at the
+  // top of standalone mode. When the user picks one from this list
+  // we behave as if the sheet was opened with that trip as
+  // presetTrip (course + date are pre-filled, the Course/Date
+  // inputs hide, and submit uses the existing tripId instead of
+  // creating a new GolfTrip).
+  type ExistingTripOption = {
+    id: string;
+    name: string;
+    startDate: string | null;
+    stops: { courseId: string; courseName: string; courseLogoUrl: string | null; playDate: string | null; teeTime: string | null }[];
+    members: { userId: string; displayName: string; avatarUrl: string | null; handicapIndex: number | null }[];
+  };
+  const [existingTrips, setExistingTrips] = useState<ExistingTripOption[]>([]);
+  const [pickedExistingTrip, setPickedExistingTrip] = useState<ExistingTripOption | null>(null);
+
   // ── Reset state when sheet opens. Seed players from preset members
   //    + the current user. Avoid duplicating host if they're already
   //    in the trip's member list. ─────────────────────────────────
@@ -207,6 +223,8 @@ export default function CreateGameSheet({
     setSelectedHoles([]);
     setTripCourseIdx(0);
     setHandicapDrafts({});
+    setPickedExistingTrip(null);
+    setExistingTrips([]);
 
     // Seed player list — host always first, then trip members (deduped),
     // each with their current handicap.
@@ -235,6 +253,49 @@ export default function CreateGameSheet({
     if (seeded.length === 2) seeded[1].teamId = "B";
     setPlayers(seeded);
   }, [open, currentUserId, currentUserDisplayName, currentUserAvatarUrl, currentUserHandicapIndex, presetTrip]);
+
+  // ── Existing-trip picker: fetch user's upcoming trips when the
+  //    sheet opens in standalone mode. Lets the user attach the
+  //    new game to a pre-existing round or trip instead of always
+  //    creating a fresh one. ───────────────────────────────────────
+  useEffect(() => {
+    if (!open || presetTrip) return;
+    let cancelled = false;
+    (async () => {
+      const sb = createClient();
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const { data: memberships } = await sb.from("GolfTripMember").select("tripId").eq("userId", currentUserId);
+      const tripIds = (memberships ?? []).map((m: any) => m.tripId);
+      if (tripIds.length === 0) return;
+      const [{ data: trips }, { data: stopRows }, { data: memberRows }] = await Promise.all([
+        sb.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).or(`endDate.gte.${todayIso},endDate.is.null`).order("startDate", { ascending: true, nullsFirst: false }),
+        sb.from("GolfTripCourse").select("tripId, courseId, playDate, teeTime, sortOrder").in("tripId", tripIds).order("sortOrder", { ascending: true }),
+        sb.from("GolfTripMember").select("tripId, userId").in("tripId", tripIds),
+      ]);
+      const courseIds = Array.from(new Set((stopRows ?? []).map((s: any) => s.courseId).filter(Boolean)));
+      const memberUserIds = Array.from(new Set((memberRows ?? []).map((m: any) => m.userId).filter(Boolean)));
+      const [{ data: coursesRaw }, { data: usersRaw }] = await Promise.all([
+        courseIds.length ? sb.from("Course").select("id, name, logoUrl").in("id", courseIds) : Promise.resolve({ data: [] as any[] }),
+        memberUserIds.length ? sb.from("User").select("id, displayName, avatarUrl, handicapIndex").in("id", memberUserIds) : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const courseById = new Map((coursesRaw ?? []).map((c: any) => [c.id, c]));
+      const userById = new Map((usersRaw ?? []).map((u: any) => [u.id, u]));
+      const builtTrips: ExistingTripOption[] = (trips ?? []).map((t: any) => {
+        const stops = (stopRows ?? []).filter((s: any) => s.tripId === t.id).map((s: any) => {
+          const c: any = courseById.get(s.courseId);
+          return { courseId: s.courseId, courseName: c?.name ?? "Unknown", courseLogoUrl: c?.logoUrl ?? null, playDate: s.playDate, teeTime: s.teeTime };
+        }).filter((s: any) => s.courseName !== "Unknown");
+        const members = (memberRows ?? []).filter((m: any) => m.tripId === t.id).map((m: any) => {
+          const u: any = userById.get(m.userId);
+          if (!u) return null;
+          return { userId: m.userId, displayName: u.displayName, avatarUrl: u.avatarUrl, handicapIndex: u.handicapIndex };
+        }).filter((m: any): m is { userId: string; displayName: string; avatarUrl: string | null; handicapIndex: number | null } => m != null);
+        return { id: t.id, name: t.name, startDate: t.startDate, stops, members };
+      }).filter((t: ExistingTripOption) => t.stops.length > 0);
+      if (!cancelled) setExistingTrips(builtTrips);
+    })();
+    return () => { cancelled = true; };
+  }, [open, presetTrip, currentUserId]);
 
   // ── Course search (debounced) ────────────────────────────────────
   useEffect(() => {
@@ -311,10 +372,13 @@ export default function CreateGameSheet({
     const nowIso = new Date().toISOString();
 
     try {
-      // ── 1. Ensure we have a tripId. Standalone path creates the
-      //    GolfTrip + GolfTripCourse + GolfTripMember rows first so
-      //    the game has somewhere to live. ──────────────────────────
-      let tripId = presetTrip?.id ?? null;
+      // ── 1. Ensure we have a tripId. Three paths:
+      //    a) presetTrip (sheet was opened from a trip page) → use it
+      //    b) pickedExistingTrip (user attached to an existing trip
+      //       from the standalone-mode picker) → use that trip's id
+      //    c) Otherwise create a new GolfTrip + GolfTripCourse +
+      //       GolfTripMember so the game has somewhere to live.
+      let tripId = presetTrip?.id ?? pickedExistingTrip?.id ?? null;
       if (!tripId) {
         tripId = crypto.randomUUID();
         const playDate = date || new Date().toISOString().slice(0, 10);
@@ -578,8 +642,94 @@ export default function CreateGameSheet({
 
         {/* Scrollable body */}
         <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "4px 20px 20px" }}>
+          {/* ── ATTACH TO EXISTING (standalone only) ─────────────── */}
+          {!presetTrip && existingTrips.length > 0 && (
+            <Section label={pickedExistingTrip ? "Attached to" : "Attach to existing"}>
+              {pickedExistingTrip ? (
+                <button
+                  onClick={() => {
+                    setPickedExistingTrip(null);
+                    setCourse(null);
+                    setDate(new Date().toISOString().slice(0, 10));
+                    setTeeTime("");
+                    setTripCourseIdx(0);
+                    // Reset players back to just the host so the user
+                    // can build a fresh roster (or pick again to
+                    // re-import the trip's members).
+                    setPlayers([{ userId: currentUserId, displayName: currentUserDisplayName || "You", avatarUrl: currentUserAvatarUrl, handicapIndex: currentUserHandicapIndex ?? 0, teamId: "A" }]);
+                  }}
+                  style={{ ...resultRowStyle, borderColor: "rgba(77,168,98,0.5)", background: "rgba(77,168,98,0.12)" }}
+                >
+                  <div style={resultIconStyle(pickedExistingTrip.stops[0]?.courseLogoUrl ?? null)}>
+                    {pickedExistingTrip.stops[0]?.courseLogoUrl
+                      ? <img src={cdnImage(pickedExistingTrip.stops[0].courseLogoUrl!)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pickedExistingTrip.name}</div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(126,200,140,0.85)" }}>
+                      {pickedExistingTrip.stops.length === 1 ? "Round" : `${pickedExistingTrip.stops.length} stops`} · tap to change
+                    </div>
+                  </div>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {existingTrips.map((t) => {
+                    const subtitle = t.stops.length === 1
+                      ? `${t.stops[0].courseName}${t.startDate ? ` · ${new Date(t.startDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}`
+                      : `${t.stops.length} stops${t.startDate ? ` · starts ${new Date(t.startDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""}`;
+                    const firstLogo = t.stops[0]?.courseLogoUrl ?? null;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          setPickedExistingTrip(t);
+                          const firstStop = t.stops[0];
+                          // Pre-fill course + date + tee time from the
+                          // first stop. For multi-stop trips the user
+                          // can change which stop with the existing
+                          // Course picker further down.
+                          setCourse({ id: firstStop.courseId, name: firstStop.courseName, city: null, state: null, logoUrl: firstStop.courseLogoUrl });
+                          setDate(firstStop.playDate || t.startDate || new Date().toISOString().slice(0, 10));
+                          setTeeTime(firstStop.teeTime || "");
+                          setTripCourseIdx(0);
+                          // Merge the trip's members into the player
+                          // list (host stays first).
+                          const merged: GamePlayer[] = [{ userId: currentUserId, displayName: currentUserDisplayName || "You", avatarUrl: currentUserAvatarUrl, handicapIndex: currentUserHandicapIndex ?? 0, teamId: "A" }];
+                          for (const m of t.members) {
+                            if (m.userId === currentUserId) continue;
+                            merged.push({ userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarUrl, handicapIndex: m.handicapIndex ?? 0, teamId: "A" });
+                          }
+                          if (merged.length === 2) merged[1].teamId = "B";
+                          setPlayers(merged);
+                        }}
+                        style={resultRowStyle}
+                      >
+                        <div style={resultIconStyle(firstLogo)}>
+                          {firstLogo
+                            ? <img src={cdnImage(firstLogo)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</div>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {!pickedExistingTrip && (
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, color: "rgba(255,255,255,0.4)", marginTop: 8, textAlign: "center" }}>
+                  — or fill in a new course + date below —
+                </div>
+              )}
+            </Section>
+          )}
+
           {/* ── COURSE ───────────────────────────────────────────── */}
-          {!presetTrip && (
+          {!presetTrip && !pickedExistingTrip && (
             <Section label="Course">
               {course ? (
                 <SelectedCoursePill course={course} onClear={() => setCourse(null)} />
@@ -645,8 +795,9 @@ export default function CreateGameSheet({
             </Section>
           )}
 
-          {/* ── DATE (standalone only) ───────────────────────────── */}
-          {!presetTrip && (
+          {/* ── DATE (standalone only, hidden when attached to a
+              pre-existing trip — the trip already has the date) ──── */}
+          {!presetTrip && !pickedExistingTrip && (
             <Section label="Date">
               {/* iOS WKWebView renders native date/time controls with
                   an absolutely-positioned indicator capsule that
@@ -659,6 +810,48 @@ export default function CreateGameSheet({
               <DateInput value={date} onChange={setDate} placeholder="Select date" />
               <div style={{ height: 8 }} />
               <TimeInput value={teeTime} onChange={setTeeTime} placeholder="Tee time (optional)" />
+            </Section>
+          )}
+
+          {/* When attached to a multi-stop existing trip, let the user
+              pick which stop the game is being played on. Mirrors the
+              presetTrip multi-course picker below. */}
+          {!presetTrip && pickedExistingTrip && pickedExistingTrip.stops.length > 1 && (
+            <Section label="Which stop">
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {pickedExistingTrip.stops.map((s, idx) => (
+                  <button
+                    key={s.courseId + "-" + idx}
+                    onClick={() => {
+                      setTripCourseIdx(idx);
+                      setCourse({ id: s.courseId, name: s.courseName, city: null, state: null, logoUrl: s.courseLogoUrl });
+                      setDate(s.playDate || pickedExistingTrip.startDate || new Date().toISOString().slice(0, 10));
+                      setTeeTime(s.teeTime || "");
+                    }}
+                    style={{
+                      ...resultRowStyle,
+                      borderColor: idx === tripCourseIdx ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.08)",
+                      background: idx === tripCourseIdx ? "rgba(77,168,98,0.1)" : "rgba(255,255,255,0.03)",
+                    }}
+                  >
+                    <div style={resultIconStyle(s.courseLogoUrl)}>
+                      {s.courseLogoUrl
+                        ? <img src={cdnImage(s.courseLogoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{s.courseName}</div>
+                      {(s.playDate || s.teeTime) && (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(126,200,140,0.85)" }}>
+                          {s.playDate ? new Date(s.playDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                          {s.playDate && s.teeTime ? " · " : ""}
+                          {s.teeTime || ""}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </Section>
           )}
 

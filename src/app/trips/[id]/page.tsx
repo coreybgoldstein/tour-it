@@ -1285,15 +1285,53 @@ export default function TripPage() {
                     )}
                   </div>
                 </div>
-                {(dateLabel || teeTimeRaw) && (
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
-                    {dateLabel && (
-                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.7)", lineHeight: 1 }}>{dateLabel}</div>
-                    )}
-                    {teeTimeRaw && (
-                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, color: "#4da862", fontWeight: 800, textShadow: "0 2px 10px rgba(0,0,0,0.7)", letterSpacing: "0.01em" }}>· {formatTime12(teeTimeRaw)}</div>
-                    )}
-                  </div>
+                {(dateLabel || teeTimeRaw || (isOwner && tc)) && (
+                  // The whole date / tee-time row is now a tap-target
+                  // for owners → opens the edit-course modal directly
+                  // on the round's only course, so changing the tee
+                  // time doesn't require scrolling down to find the
+                  // tiny pencil on the courses list.
+                  isOwner && tc ? (
+                    <button
+                      onClick={() => openEditCourse(tc)}
+                      aria-label="Edit date and tee time"
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap",
+                        background: "rgba(7,16,10,0.45)",
+                        border: "1px solid rgba(126,200,140,0.35)",
+                        borderRadius: 12,
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        backdropFilter: "blur(6px)",
+                        WebkitBackdropFilter: "blur(6px)",
+                        textAlign: "left",
+                      }}
+                    >
+                      {dateLabel && (
+                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.7)", lineHeight: 1 }}>{dateLabel}</div>
+                      )}
+                      {teeTimeRaw ? (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, color: "#4da862", fontWeight: 800, textShadow: "0 2px 10px rgba(0,0,0,0.7)", letterSpacing: "0.01em" }}>· {formatTime12(teeTimeRaw)}</div>
+                      ) : (
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(126,200,140,0.95)", fontWeight: 700, letterSpacing: "0.02em" }}>
+                          + Tee time
+                        </div>
+                      )}
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2 }}>
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+                      {dateLabel && (
+                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.7)", lineHeight: 1 }}>{dateLabel}</div>
+                      )}
+                      {teeTimeRaw && (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, color: "#4da862", fontWeight: 800, textShadow: "0 2px 10px rgba(0,0,0,0.7)", letterSpacing: "0.01em" }}>· {formatTime12(teeTimeRaw)}</div>
+                      )}
+                    </div>
+                  )
                 )}
               </div>
             </div>
