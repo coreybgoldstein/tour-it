@@ -23,7 +23,10 @@ type Props = {
 const FRAME = 280;
 const OUTPUT_SIZE = 512;
 const MIN_SCALE = 1;
-const MAX_SCALE = 4;
+// 3× cover is plenty for "zoom in to fit better in the space". 4×
+// felt too aggressive in testing — pinch went from "frame my face"
+// to "zoom into my left eye" too quickly.
+const MAX_SCALE = 3;
 
 export default function AvatarCropSheet({ src, onCancel, onSave, saving }: Props) {
   // Pan offset (screen px) of the image relative to the frame center.
