@@ -1459,24 +1459,31 @@ export default function TripPage() {
             </div>
             )}
 
-            {/* Members + chat + invite — centered */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
-              <button onClick={() => setMembersOpen(true)} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            {/* Members + chat + invite — centered. Avatars bumped
+                32 → 36px and overlap loosened, with each member's
+                first name listed beneath the stack so the user sees
+                WHO is in the round/trip at a glance instead of just
+                a "2 golfers" count. */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <button onClick={() => setMembersOpen(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0, maxWidth: "92vw" }}>
                 <div style={{ display: "flex" }}>
-                  {members.slice(0, 4).map((m, i) => {
+                  {members.slice(0, 5).map((m, i) => {
                     const t = trip.ryderCupEnabled ? teamOf(m.userId) : null;
                     const ringColor = t === "RED" ? "#c8102e" : t === "BLUE" ? "#3b82f6" : "#07100a";
                     return (
-                      <div key={m.id} style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", border: `2px solid ${ringColor}`, background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -6 : 0, flexShrink: 0, zIndex: members.length - i }}>
+                      <div key={m.id} style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: `2.5px solid ${ringColor}`, background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -8 : 0, flexShrink: 0, zIndex: members.length - i, boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
                         {m.user.avatarUrl
                           ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         }
                       </div>
                     );
                   })}
                 </div>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.15)" }}>{members.length} {members.length === 1 ? "golfer" : "golfers"}</span>
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.7)", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "0.01em" }}>
+                  {members.slice(0, 4).map(m => (m.user.displayName || m.user.username || "").split(/\s+/)[0]).filter(Boolean).join(" · ")}
+                  {members.length > 4 ? ` · +${members.length - 4}` : ""}
+                </span>
               </button>
               {/* Chat hidden in round-mode — too short of a session to need it; a quick text outside the app covers it */}
               {!isRound && (
@@ -1898,21 +1905,23 @@ export default function TripPage() {
 
                     {/* Players row — round mode shows the players as a
                         stacked-avatar pill so users see WHO's in the game,
-                        not just a count. Tappable in the parent card. */}
+                        not just a count. Avatars bumped 26 → 34px and
+                        names bumped 11 → 12.5px so the players actually
+                        register at a glance. */}
                     {isRound && Array.isArray(g.players) && g.players.length > 0 && (
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(77,168,98,0.15)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(77,168,98,0.15)" }}>
                         <div style={{ display: "flex" }}>
                           {g.players.slice(0, 5).map((p: any, i: number) => (
-                            <div key={p.userId} style={{ width: 26, height: 26, borderRadius: "50%", overflow: "hidden", border: "2px solid #0d2318", background: "rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -8 : 0, zIndex: (g.players?.length || 0) - i, flexShrink: 0 }}>
+                            <div key={p.userId} style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", border: "2.5px solid #0d2318", background: "rgba(77,168,98,0.22)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -10 : 0, zIndex: (g.players?.length || 0) - i, flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
                               {p.avatarUrl
                                 ? <img src={cdnImage(p.avatarUrl)} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
+                                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>}
                             </div>
                           ))}
                         </div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.55)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {g.players.slice(0, 2).map((p: any) => p.displayName || "@?").join(" · ")}
-                          {g.players.length > 2 && ` +${g.players.length - 2}`}
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 500, color: "rgba(255,255,255,0.78)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {g.players.slice(0, 3).map((p: any) => p.displayName || "@?").join(" · ")}
+                          {g.players.length > 3 && ` · +${g.players.length - 3}`}
                         </div>
                       </div>
                     )}
