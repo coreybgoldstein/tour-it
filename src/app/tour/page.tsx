@@ -711,20 +711,23 @@ function TourPageInner() {
         /* Bottom-sheet styles (.tourit-sheet, .tourit-sheet-backdrop,
            .tourit-sheet-grip, .tourit-sheet-footer) live in globals.css
            so every sheet across the app stays uniform. */
-        /* Search box mirrors the home "Tour It All" hero: green-rim
-           glow, italic Playfair serif input, the small Outfit subtitle
-           below it. Tighter padding so it sits compactly against the
-           recent / near / popular sections below. */
+        /* Search box mirrors the home "Tour It All" hero EXACTLY —
+           green-rim glow, stacked Source Serif 4 placeholder + Inter
+           subtitle inside the box, identical paddings + dimensions. */
         .search-box { display: flex; align-items: center; gap: 10px; background: rgba(7,30,15,0.85); border: 1px solid rgba(77,168,98,0.55); border-radius: 12px; padding: 11px 16px; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 0 0 1px rgba(77,168,98,0.2), 0 0 18px rgba(77,168,98,0.18); }
         .search-box.focused { border-color: rgba(77,168,98,0.85); box-shadow: 0 0 0 1px rgba(77,168,98,0.4), 0 0 22px rgba(77,168,98,0.25); }
-        /* Input itself: white sans-serif at a comfortable reading
-           size. User feedback — they like the italic green Playfair
-           look when the placeholder is showing, but typed text in
-           that same style was hard to scan. Placeholder overrides
-           below restore the Playfair italic for the empty state. */
-        .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Outfit', sans-serif; font-style: normal; font-size: 15px; font-weight: 500; color: #fff; letter-spacing: 0.005em; }
-        .search-input::placeholder { font-family: 'Playfair Display', serif; color: rgba(77,168,98,0.55); font-style: italic; font-size: 17px; font-weight: 800; letter-spacing: 0.01em; }
-        .search-subtitle { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 500; color: rgba(126,200,140,0.7); letter-spacing: 0.04em; margin-top: 6px; padding-left: 4px; }
+        /* Text column — input on top, subtitle below, both INSIDE the
+           green-bordered box. Matches the home version's stacked
+           span structure. */
+        .search-text-col { flex: 1; display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; min-width: 0; }
+        /* Input itself: white Inter when typed, Source Serif 4 +
+           full-saturation green for the "Tour It All" placeholder.
+           Same look as the home button's title row. */
+        .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Inter', sans-serif; font-style: normal; font-size: 17px; font-weight: 600; color: #fff; letter-spacing: 0.005em; padding: 0; }
+        .search-input::placeholder { font-family: 'Source Serif 4', serif; color: #4da862; font-style: normal; font-size: 17px; font-weight: 800; letter-spacing: 0.01em; opacity: 1; }
+        /* Subtitle: Inter, matching home exactly. Sits inside the
+           box on the second line. */
+        .search-subtitle { font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 500; color: rgba(126,200,140,0.7); letter-spacing: 0.04em; margin-top: 2px; }
         .clear-btn { background: rgba(255,255,255,0.08); border: none; cursor: pointer; color: rgba(255,255,255,0.5); border-radius: 99px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .section-label { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 10px; margin-top: 24px; }
         .course-row { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: opacity 0.15s; }
@@ -779,27 +782,32 @@ function TourPageInner() {
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
-            <input
-              ref={setInputRef}
-              className="search-input"
-              type="text"
-              inputMode="search"
-              enterKeyHint="search"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              onKeyDown={e => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
-              placeholder="Tour It All"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              // NOTE: no autoFocus. User feedback — they don't want
-              // the keyboard to pop up the moment they land on the
-              // search page. It now appears only when they tap the
-              // input themselves.
-            />
+            {/* Text column — input on row 1, subtitle on row 2.
+                Mirrors the home button's stacked structure exactly. */}
+            <div className="search-text-col">
+              <input
+                ref={setInputRef}
+                className="search-input"
+                type="text"
+                inputMode="search"
+                enterKeyHint="search"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                onKeyDown={e => { if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur(); }}
+                placeholder="Tour It All"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                // NOTE: no autoFocus. User feedback — they don't want
+                // the keyboard to pop up the moment they land on the
+                // search page. It now appears only when they tap the
+                // input themselves.
+              />
+              <div className="search-subtitle">courses · holes · trips · golfers</div>
+            </div>
             {query && (
               <button className="clear-btn" onClick={() => { setQuery(""); inputRef.current?.focus(); }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -808,9 +816,6 @@ function TourPageInner() {
               </button>
             )}
           </div>
-          {/* (Subtitle below the search box removed — the placeholder
-              already says "Tour It All" so the "courses · holes ·
-              trips · golfers" caption read as duplicative.) */}
 
           {/* PlannerCTA under the search bar. Per user direction this
               is Tour It's headline differentiator and should be
