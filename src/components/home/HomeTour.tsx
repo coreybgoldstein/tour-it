@@ -48,6 +48,13 @@ type CourseLite = {
   coverImageUrl: string | null;
   logoUrl: string | null;
   uploadCount?: number;
+  /** Sum of Hole.par for the course (typically 72). Computed
+   *  client-side in the tour loader. Null when no hole data
+   *  has been entered for the course yet. */
+  totalPar?: number | null;
+  /** Sum of Hole.yardage for the course (default tees). Null
+   *  when yardage isn't filled in for every hole. */
+  totalYardage?: number | null;
 };
 
 type MemberLite = {
@@ -223,12 +230,35 @@ export default function HomeTour() {
       const courseIds = Array.from(new Set((allStopRows ?? []).map((s: any) => s.courseId).filter(Boolean)));
       const memberUserIds = Array.from(new Set((allMemberRows ?? []).map((m: any) => m.userId).filter(Boolean)));
 
-      const [{ data: coursesRaw }, { data: usersRaw }] = await Promise.all([
+      const [{ data: coursesRaw }, { data: usersRaw }, { data: holeRows }] = await Promise.all([
         courseIds.length ? sb.from("Course").select("id, name, city, state, coverImageUrl, logoUrl, uploadCount").in("id", courseIds) : Promise.resolve({ data: [] as any[] }),
         memberUserIds.length ? sb.from("User").select("id, displayName, username, avatarUrl").in("id", memberUserIds) : Promise.resolve({ data: [] as any[] }),
+        // Hole rows for ALL courses in any trip — used to compute
+        // total par / total yardage that the round card surfaces
+        // next to the course badge.
+        courseIds.length ? sb.from("Hole").select("courseId, par, yardage").in("courseId", courseIds) : Promise.resolve({ data: [] as any[] }),
       ]);
 
-      const courseById = new Map((coursesRaw ?? []).map((c: any) => [c.id, c]));
+      // Per-course aggregates (totalPar, totalYardage). Null when
+      // the course has no holes filled in or any single hole is
+      // missing its yardage value (don't surface a misleadingly
+      // low number).
+      const holesByCourse = new Map<string, { par: number | null; yardage: number | null }[]>();
+      for (const h of (holeRows ?? []) as any[]) {
+        const arr = holesByCourse.get(h.courseId) || [];
+        arr.push({ par: h.par ?? null, yardage: h.yardage ?? null });
+        holesByCourse.set(h.courseId, arr);
+      }
+
+      const courseById = new Map<string, any>();
+      for (const c of (coursesRaw ?? []) as any[]) {
+        const holes = holesByCourse.get(c.id) || [];
+        const pars = holes.map((h) => h.par).filter((p): p is number => typeof p === "number");
+        const yards = holes.map((h) => h.yardage).filter((y): y is number => typeof y === "number");
+        const totalPar = pars.length > 0 ? pars.reduce((a, b) => a + b, 0) : null;
+        const totalYardage = yards.length > 0 && yards.length === holes.length ? yards.reduce((a, b) => a + b, 0) : null;
+        courseById.set(c.id, { ...c, totalPar, totalYardage });
+      }
       const userById = new Map((usersRaw ?? []).map((u: any) => [u.id, u]));
 
       const builtTours: ActiveTour[] = tripsArr.map((t: any) => {
@@ -606,18 +636,17 @@ function YourTourCard({
       }}
     >
       {/* ── Header row ───────────────────────────────────────────────
-          Trip cover image (or logo) + ROUND / TRIP chip + the
-          "+ add a game" affordance pinned top-right. Right padding
-          on the row reserves the corner for that absolute button. */}
+          Trip cover image (when set) + ROUND / TRIP chip + the
+          "+ add a game" affordance pinned top-right. Round cards
+          with no trip image show JUST the chip (no calendar
+          placeholder — that was reading as a stray icon). Right
+          padding on the row reserves the corner for the absolute
+          + button. */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, paddingRight: 40 }}>
-        {tripBadge ? (
+        {tripBadge && (
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fff", padding: 2.5, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={tripBadge} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-          </div>
-        ) : (
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <CalendarMini />
           </div>
         )}
         <span style={{
@@ -661,10 +690,13 @@ function YourTourCard({
       </button>
 
       {/* ── Title ────────────────────────────────────────────────────
-          Source Serif 4 display, single line ellipsis. Trip name is
-          the editorial heart of the card so it gets the most weight. */}
+          For ROUND cards (1 stop), use the course name directly —
+          users name their trips a lot of ways ("Hampshire Country
+          Club — Sun Jun 21" etc.) and the date is already in the
+          meta below. For multi-stop TRIP cards, use the trip name
+          (that's the user's intentional name for the whole trip). */}
       <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 18, fontWeight: 700, fontVariationSettings: "'opsz' 60", color: "#fff", lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, letterSpacing: "-0.005em" }}>
-        {tour.name}
+        {tour.stops.length <= 1 ? (tour.stops[0]?.course.name || tour.name) : tour.name}
       </div>
 
       {/* ── Meta block ───────────────────────────────────────────────
@@ -698,14 +730,13 @@ function YourTourCard({
       <div style={{ height: 1, background: "linear-gradient(to right, transparent 0%, rgba(126,200,140,0.18) 20%, rgba(126,200,140,0.18) 80%, transparent 100%)", marginTop: 1 }} />
 
       {/* ── Course badges ───────────────────────────────────────────
-          The heart of the card — these are the courses the user is
-          playing. 4-5 visible on a typical trip card width with the
-          5th+ scrolling. The "next up" badge gets a gold ring + soft
-          glow so it reads as the active stop. */}
+          For multi-stop trips: scrollable row of badges, 4-5 visible.
+          For single rounds: one flag + a stats column (par / yardage)
+          to the right, filling the space that was empty before. */}
       {tour.stops.length > 0 && (
         <div
           onClick={(e) => e.stopPropagation()}
-          style={{ display: "flex", gap: 7, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 2, marginLeft: -2, marginRight: -2, paddingLeft: 2, paddingRight: 2 }}
+          style={{ display: "flex", gap: 10, overflowX: tour.stops.length > 1 ? "auto" : "visible", WebkitOverflowScrolling: "touch", paddingBottom: 2, marginLeft: -2, marginRight: -2, paddingLeft: 2, paddingRight: 2, alignItems: "center" }}
         >
           {tour.stops.map((s, i) => (
             <FlagBadge
@@ -715,6 +746,7 @@ function YourTourCard({
               onTap={() => setPopupIdx(popupIdx === i ? null : i)}
             />
           ))}
+          {tour.stops.length === 1 && <CourseStats course={tour.stops[0].course} />}
         </div>
       )}
 
@@ -1406,6 +1438,35 @@ function ActionCell({ label, title, icon, variant, onClick }: {
 // FlagBadge — 44px course-logo square used inside YourTourCard.
 // Factored out so the standalone strip (multi-stop trips) and the
 // inline-with-action-row variant (single round) render identically.
+// CourseStats — inline stats column shown next to the flag on round
+// cards: PAR / YARDAGE. Each stat hides when its data isn't filled
+// in for the course, so a freshly-added course with no hole data
+// simply renders nothing (instead of "PAR —" looking broken).
+function CourseStats({ course }: { course: CourseLite }) {
+  const par = course.totalPar ?? null;
+  const yards = course.totalYardage ?? null;
+  if (par == null && yards == null) return null;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+      {par != null && <StatCell label="Par" value={String(par)} />}
+      {yards != null && <StatCell label="Yards" value={yards.toLocaleString()} />}
+    </div>
+  );
+}
+
+function StatCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.05, minWidth: 0 }}>
+      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(126,200,140,0.85)" }}>
+        {label}
+      </span>
+      <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 17, fontWeight: 700, fontVariationSettings: "'opsz' 60", color: "#fff", letterSpacing: "-0.005em", marginTop: 2 }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function FlagBadge({ stop, isNext, onTap }: { stop: Stop; isNext: boolean; onTap: () => void }) {
   const logo = stop.course.logoUrl ? cdnImage(stop.course.logoUrl) : null;
   return (
