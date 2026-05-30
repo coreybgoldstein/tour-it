@@ -636,19 +636,37 @@ function YourTourCard({
       }}
     >
       {/* ── Header row ───────────────────────────────────────────────
-          Trip cover image (when set) + ROUND / TRIP chip + the
-          "+ add a game" affordance pinned top-right. Round cards
-          with no trip image show JUST the chip (no calendar
-          placeholder — that was reading as a stray icon). Right
-          padding on the row reserves the corner for the absolute
-          + button. */}
+          Both card types now share the same 3-slot pattern so the
+          chip lands at the same x-position no matter which card you
+          look at:
+            [identity badge 32px] [ROUND/TRIP chip] [type icon]
+          - identity badge:
+              * Trip → trip cover image
+              * Round → host course logo (so the slot is never empty)
+          - type icon: the matching tab icon from /tee-up
+              * Round → flag-with-pole
+              * Trip  → airplane
+          - "+ game" still pinned absolute top-right. */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, paddingRight: 40 }}>
-        {tripBadge && (
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fff", padding: 2.5, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={tripBadge} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-          </div>
-        )}
+        {(() => {
+          // Identity badge image source — trip image takes priority
+          // when set, then the host course logo.
+          const hostCourse = tour.stops[0]?.course;
+          const identitySrc = tripBadge || (hostCourse?.logoUrl ? cdnImage(hostCourse.logoUrl) : null);
+          if (!identitySrc && !hostCourse) return null;
+          return (
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fff", padding: 2.5, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
+              {identitySrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={identitySrc} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              ) : (
+                <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>
+                  {hostCourse ? initialsOf(hostCourse.name) : ""}
+                </span>
+              )}
+            </div>
+          );
+        })()}
         <span style={{
           fontFamily: "'Inter', sans-serif",
           fontSize: 10,
@@ -662,6 +680,7 @@ function YourTourCard({
           border: "1px solid rgba(77,168,98,0.3)",
           whiteSpace: "nowrap",
         }}>{tripContextLabel(tour)}</span>
+        <TripTypeIcon kind={tour.stops.length <= 1 ? "round" : "trip"} />
       </div>
 
       {/* "+ game" pinned top-right. Scorecard glyph + tiny corner
@@ -1438,6 +1457,35 @@ function ActionCell({ label, title, icon, variant, onClick }: {
 // FlagBadge — 44px course-logo square used inside YourTourCard.
 // Factored out so the standalone strip (multi-stop trips) and the
 // inline-with-action-row variant (single round) render identically.
+// TripTypeIcon — small sage icon shown to the right of the ROUND /
+// TRIP chip. Same shapes as the /tee-up tab icons so visual identity
+// is consistent across the two surfaces:
+//   - round → flag with pole (the Rounds tab icon)
+//   - trip  → airplane (the Trips tab icon)
+function TripTypeIcon({ kind }: { kind: "round" | "trip" }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      width: 22, height: 22, borderRadius: 6,
+      background: "rgba(77,168,98,0.12)",
+      border: "1px solid rgba(77,168,98,0.3)",
+      color: "rgba(126,200,140,0.95)",
+      flexShrink: 0,
+    }}>
+      {kind === "round" ? (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="6" y1="21" x2="6" y2="3" />
+          <path d="M6 4h12l-3 4 3 4H6" />
+        </svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 // CourseStats — inline stats column shown next to the flag on round
 // cards: PAR / YARDAGE. Each stat hides when its data isn't filled
 // in for the course, so a freshly-added course with no hole data
