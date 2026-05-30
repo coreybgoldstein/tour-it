@@ -1452,20 +1452,13 @@ export default function ProfilePage() {
         />
       )}
 
-      {/* Avatar lightbox */}
+      {/* Avatar lightbox — view-only. The "Change photo" affordance
+          here was removed per user direction: changing the photo
+          should only happen from the Edit Profile sheet, so there's
+          one consistent flow that always goes through the crop step. */}
       {showAvatarModal && profile.avatarUrl && (
         <div onClick={() => setShowAvatarModal(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 300, gap: 20 }}>
           <img src={cdnImage(profile.avatarUrl)} alt="avatar" style={{ width: 240, height: 240, borderRadius: "50%", objectFit: "cover", outline: `3px solid ${getRankColor(profileRank)}` }} onClick={e => e.stopPropagation()} />
-          {isOwner && (
-            <>
-              {/* Same label/input pattern as the edit sheet — native
-                  iOS-WebView-safe photo picker without JS click(). */}
-              <label htmlFor="profile-avatar-modal-file" onClick={e => e.stopPropagation()} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "9px 22px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
-                Change photo
-              </label>
-              <input id="profile-avatar-modal-file" type="file" accept="image/*" style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }} onChange={(e) => { setShowAvatarModal(false); handleAvatarUpload(e); }} />
-            </>
-          )}
         </div>
       )}
 
