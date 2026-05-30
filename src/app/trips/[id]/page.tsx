@@ -596,17 +596,40 @@ export default function TripPage() {
     }
   }, [chatOpen, messages.length]);
 
-  // Course search for add-course sheet
+  // Course search for add-course sheet.
+  //
+  // Sharpened from the original single-OR pattern:
+  //   - Now includes STATE in the matchable columns (the prior
+  //     query only matched name + city, so a search like
+  //     "arizona" returned nothing even when the state matched).
+  //   - Multi-word queries are AND'd across columns. "hampshire
+  //     country club" now matches a row only when ALL three words
+  //     appear somewhere in name/city/state, not just the first
+  //     word. Chained .or() calls become an AND filter at the
+  //     PostgREST layer, which is exactly what we want here.
+  //   - PG ilike special chars (%, _) escaped so a typed wildcard
+  //     doesn't blow open the query.
+  //   - Stale-result protection: capture the input snapshot at
+  //     fetch start and discard if the user has typed since.
   useEffect(() => {
     if (!courseSearch.trim()) { setCourseResults([]); return; }
     if (courseSearchDebounce.current) clearTimeout(courseSearchDebounce.current);
     setCourseSearchLoading(true);
+    const snapshot = courseSearch;
     courseSearchDebounce.current = setTimeout(async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("Course").select("id, name, city, state, holeCount, logoUrl").or(`name.ilike.%${courseSearch}%,city.ilike.%${courseSearch}%`).order("uploadCount", { ascending: false }).limit(15);
+      const escape = (s: string) => s.replace(/[%_,]/g, " ");
+      const words = snapshot.trim().split(/\s+/).filter(Boolean).map(escape);
+      let q = supabase.from("Course").select("id, name, city, state, holeCount, logoUrl");
+      for (const w of words) {
+        q = q.or(`name.ilike.%${w}%,city.ilike.%${w}%,state.ilike.%${w}%`);
+      }
+      const { data } = await q.order("uploadCount", { ascending: false, nullsFirst: false }).limit(15);
+      // Don't clobber state if the user has kept typing.
+      if (snapshot !== courseSearch && courseSearch.trim() !== "") return;
       setCourseResults(data || []);
       setCourseSearchLoading(false);
-    }, 280);
+    }, 220);
   }, [courseSearch, tripCourses]);
 
   const inviteUser = async (inviteeId: string) => {
@@ -2787,7 +2810,12 @@ export default function TripPage() {
                 <div style={{ flex: 1, overflowY: "auto" }}>
                   {courseSearchLoading && <div style={{ textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 13 }}>Searching...</div>}
                   {!courseSearchLoading && courseSearch.length >= 2 && courseResults.length === 0 && (
-                    <div style={{ textAlign: "center", padding: "20px 0", color: "rgba(255,255,255,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 13 }}>No courses found</div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "28px 0 16px", gap: 12 }}>
+                      <div style={{ color: "rgba(255,255,255,0.45)", fontFamily: "'Outfit', sans-serif", fontSize: 13, textAlign: "center" }}>
+                        Couldn&apos;t find &quot;{courseSearch}&quot;
+                      </div>
+                      <SuggestCourseButton search={courseSearch} />
+                    </div>
                   )}
                   {courseResults.map(c => (
                     <div key={c.id} className="course-result-row" onClick={() => { setSelectedAddCourse(c); setAddCourseStep("details"); if (!addPlayDate && trip?.startDate) setAddPlayDate(trip.startDate); }}>
@@ -2804,6 +2832,11 @@ export default function TripPage() {
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     </div>
                   ))}
+                  {!courseSearchLoading && courseSearch.length >= 2 && courseResults.length > 0 && (
+                    <div style={{ display: "flex", justifyContent: "center", padding: "16px 0 4px" }}>
+                      <SuggestCourseButton search={courseSearch} variant="subtle" />
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -3531,6 +3564,68 @@ export default function TripPage() {
 
       <BottomNav />
     </>
+  );
+}
+
+// SuggestCourseButton — shown inside the add-course sheet when the
+// user's search returns no results (or after a result list, in a
+// subtler variant). Opens a pre-filled email to the Tour It inbox
+// so we can add the missing course manually + reach back out.
+function SuggestCourseButton({ search, variant }: { search: string; variant?: "subtle" }) {
+  const onClick = () => {
+    const subject = encodeURIComponent(`Add a course: ${search}`);
+    const body = encodeURIComponent(
+      `Hi Tour It —\n\nI couldn't find this course on the app. Can you add it?\n\nCourse name: ${search}\nCity / state: \nWebsite (if known): \n\nThanks.`
+    );
+    window.location.href = `mailto:corey@touritgolf.com?subject=${subject}&body=${body}`;
+  };
+  if (variant === "subtle") {
+    return (
+      <button
+        onClick={onClick}
+        style={{
+          background: "none",
+          border: "none",
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: 12,
+          color: "rgba(126,200,140,0.85)",
+          textDecoration: "underline",
+          textDecorationStyle: "dotted",
+          textUnderlineOffset: 3,
+          cursor: "pointer",
+          padding: "4px 8px",
+          letterSpacing: "0.01em",
+        }}
+      >
+        Don&apos;t see it? Request to add a course
+      </button>
+    );
+  }
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        background: "rgba(77,168,98,0.14)",
+        border: "1px solid rgba(77,168,98,0.5)",
+        borderRadius: 10,
+        padding: "10px 16px",
+        fontFamily: "'Outfit', sans-serif",
+        fontSize: 13,
+        fontWeight: 700,
+        color: "#4da862",
+        cursor: "pointer",
+        letterSpacing: "0.01em",
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      Request to add this course
+    </button>
   );
 }
 

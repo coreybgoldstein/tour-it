@@ -215,8 +215,11 @@ export default function ActionZone({ itinerary, budgetRange, siteUrl, isAuthenti
             boxShadow: "0 4px 16px rgba(45,122,66,0.35)",
           }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 21h16M12 15V2"/>
+          {/* Sparkles — reads as "AI / let's-do-this magic", much
+              clearer than the prior flag-pin which looked like a
+              tee or an upside-down letter. */}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m12 3-1.9 5.8a2 2 0 0 1-1.287 1.288L3 12l5.8 1.9a2 2 0 0 1 1.288 1.287L12 21l1.9-5.8a2 2 0 0 1 1.287-1.288L21 12l-5.8-1.9a2 2 0 0 1-1.288-1.287Z" />
           </svg>
           {saving ? "Building your trip…" : "Start Planning"}
         </button>
@@ -231,7 +234,7 @@ export default function ActionZone({ itinerary, budgetRange, siteUrl, isAuthenti
               <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 18px" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                 <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 21h16M12 15V2"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.287 1.288L3 12l5.8 1.9a2 2 0 0 1 1.288 1.287L12 21l1.9-5.8a2 2 0 0 1 1.287-1.288L21 12l-5.8-1.9a2 2 0 0 1-1.288-1.287Z"/></svg>
                 </div>
                 <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
                   Let&apos;s build {itinerary.name}
