@@ -193,7 +193,10 @@ export default function BottomNav() {
       display: "flex", alignItems: "center",
       // Bottom padding includes the iOS home-indicator safe area so the
       // tab bar doesn't sit on top of the swipe-up bar in Capacitor.
-      padding: "10px 4px calc(18px + env(safe-area-inset-bottom))",
+      // Tightened from 10/18 → 6/10 per user feedback ("bring bottom
+      // nav bar up a little") — reclaims ~12px of vertical real
+      // estate on every page that uses the nav.
+      padding: "6px 4px calc(10px + env(safe-area-inset-bottom))",
       background: "rgba(4,12,6,0.98)",
       // Backdrop blur is dropped while hiding so the brief residual frame
       // during keyboard-open doesn't show a frosted gradient through the

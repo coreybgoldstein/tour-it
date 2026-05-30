@@ -475,7 +475,7 @@ export default function HomeTour() {
   // connections — worse than the brief skeleton it was suppressing.
 
   return (
-    <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 140, paddingLeft: isDesktop ? 72 : 0 }}>
+    <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 110, paddingLeft: isDesktop ? 72 : 0 }}>
       {/* Tour It typography system v2 — Source Serif 4 (editorial)
           + Inter (UI). Both loaded once via next/font in layout.tsx,
           no per-page @import. */}
@@ -624,12 +624,16 @@ function YourTourCard({
         background: "linear-gradient(160deg, #0f2719 0%, #08160e 100%)",
         border: "1px solid rgba(77,168,98,0.3)",
         borderRadius: 16,
-        padding: 14,
+        // Padding + section gap tightened from 14 / 10 → 12 / 7 so
+        // the card's vertical footprint shrinks ~16-20px. That
+        // savings is what lets the Tour-the-Feed thumbnails peek
+        // above the fold per user direction.
+        padding: 12,
         cursor: "pointer",
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
-        gap: 10,
+        gap: 7,
         minWidth: 0,
         position: "relative",
         boxShadow: "0 6px 18px rgba(0,0,0,0.32), inset 0 1px 0 rgba(126,200,140,0.08)",
@@ -668,19 +672,22 @@ function YourTourCard({
           );
         })()}
         <span style={{
+          display: "inline-flex", alignItems: "center", gap: 5,
           fontFamily: "'Inter', sans-serif",
           fontSize: 10,
           fontWeight: 700,
           letterSpacing: "0.18em",
           textTransform: "uppercase",
           color: "rgba(126,200,140,0.95)",
-          padding: "3px 9px",
+          padding: "3px 9px 3px 7px",
           borderRadius: 99,
           background: "rgba(77,168,98,0.12)",
           border: "1px solid rgba(77,168,98,0.3)",
           whiteSpace: "nowrap",
-        }}>{tripContextLabel(tour)}</span>
-        <TripTypeIcon kind={tour.stops.length <= 1 ? "round" : "trip"} />
+        }}>
+          <TripTypeIcon kind={tour.stops.length <= 1 ? "round" : "trip"} inline />
+          {tripContextLabel(tour)}
+        </span>
       </div>
 
       {/* "+ game" pinned top-right. Scorecard glyph + tiny corner
@@ -1462,7 +1469,22 @@ function ActionCell({ label, title, icon, variant, onClick }: {
 // is consistent across the two surfaces:
 //   - round → flag with pole (the Rounds tab icon)
 //   - trip  → airplane (the Trips tab icon)
-function TripTypeIcon({ kind }: { kind: "round" | "trip" }) {
+function TripTypeIcon({ kind, inline }: { kind: "round" | "trip"; inline?: boolean }) {
+  const svg = kind === "round" ? (
+    <svg width={inline ? 11 : 12} height={inline ? 11 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="6" y1="21" x2="6" y2="3" />
+      <path d="M6 4h12l-3 4 3 4H6" />
+    </svg>
+  ) : (
+    <svg width={inline ? 11 : 12} height={inline ? 11 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+    </svg>
+  );
+  // Inline variant: just the glyph (used inside the ROUND/TRIP chip
+  // so the chip wraps the icon + label as one unit).
+  if (inline) {
+    return <span style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>{svg}</span>;
+  }
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", justifyContent: "center",
@@ -1471,18 +1493,7 @@ function TripTypeIcon({ kind }: { kind: "round" | "trip" }) {
       border: "1px solid rgba(77,168,98,0.3)",
       color: "rgba(126,200,140,0.95)",
       flexShrink: 0,
-    }}>
-      {kind === "round" ? (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="6" y1="21" x2="6" y2="3" />
-          <path d="M6 4h12l-3 4 3 4H6" />
-        </svg>
-      ) : (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
-        </svg>
-      )}
-    </span>
+    }}>{svg}</span>
   );
 }
 
