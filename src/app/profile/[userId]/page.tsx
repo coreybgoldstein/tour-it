@@ -979,14 +979,27 @@ export default function ProfilePage() {
     // never serves the stale image. (Previously `avatar.${ext}` so
     // the URL never changed even after a fresh upload.)
     const path = `${profile.id}/avatar-${Date.now()}.jpg`;
-    const { error } = await supabase.storage.from("tour-it-photos").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
-    if (!error) {
-      const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
-      await supabase.from("User").update({ avatarUrl: publicUrl }).eq("id", profile.id);
-      setProfile(p => p ? { ...p, avatarUrl: publicUrl } : p);
+    const { error: uploadErr } = await supabase.storage.from("tour-it-photos").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+    if (uploadErr) {
+      console.error("[avatar upload] storage error:", uploadErr);
+      alert(`Couldn't save photo: ${uploadErr.message}`);
+      setUploadingAvatar(false);
+      return;
     }
+    const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+    const { error: updErr } = await supabase.from("User").update({ avatarUrl: publicUrl }).eq("id", profile.id);
+    if (updErr) {
+      console.error("[avatar upload] DB update error:", updErr);
+      alert(`Saved the photo but couldn't link it: ${updErr.message}`);
+      setUploadingAvatar(false);
+      return;
+    }
+    setProfile(p => p ? { ...p, avatarUrl: publicUrl } : p);
     setUploadingAvatar(false);
     setAvatarCropSrc(null);
+    // Close the lightbox modal too so the user lands back on the
+    // profile and sees the new avatar.
+    setShowAvatarModal(false);
   }
 
   async function handleSaveProfile() {
@@ -1440,9 +1453,26 @@ export default function ProfilePage() {
         </>
       )}
 
+      {/* Shared avatar file input — page-level so it stays mounted
+          regardless of whether the lightbox or the Edit Profile
+          sheet is currently open. Both surfaces' "Change photo"
+          labels target this single input via htmlFor. Keeping the
+          input page-level avoids the iOS WebView race where the
+          modal containing the input could unmount during the file-
+          picker async cycle and silently drop the picked file. */}
+      {isOwner && (
+        <input
+          id="profile-avatar-file-shared"
+          type="file"
+          accept="image/*"
+          style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
+          onChange={handleAvatarUpload}
+        />
+      )}
+
       {/* Avatar crop sheet — opens after the user picks a file from
-          the file input. Pan + zoom inside a round frame, then Save
-          uploads the cropped 512×512 JPEG. */}
+          the shared input above. Pinch to resize the crop circle,
+          drag to move it, then Save uploads the 512×512 JPEG. */}
       {avatarCropSrc && (
         <AvatarCropSheet
           src={avatarCropSrc}
@@ -1458,22 +1488,16 @@ export default function ProfilePage() {
           <img src={cdnImage(profile.avatarUrl)} alt="avatar" style={{ width: 240, height: 240, borderRadius: "50%", objectFit: "cover", outline: `3px solid ${getRankColor(profileRank)}` }} onClick={e => e.stopPropagation()} />
           {isOwner && (
             <>
-              {/* Restored "Change photo" affordance directly on the
-                  avatar lightbox — uses the SAME crop-sheet flow as
-                  Edit Profile so the pinch-to-zoom + drag-to-position
-                  step always runs no matter which entry point is
-                  used. iOS-WebView-safe label/input pattern (no JS
-                  click() on a hidden input). */}
-              <label htmlFor="profile-avatar-modal-file" onClick={e => e.stopPropagation()} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "9px 22px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
+              {/* Change photo label points at the shared page-level
+                  input above (htmlFor). The modal stays open until
+                  the crop sheet appears — saveCroppedAvatar closes
+                  both after a successful save. */}
+              <label htmlFor="profile-avatar-file-shared" onClick={e => e.stopPropagation()} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "9px 22px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
                 Change photo
               </label>
-              <input
-                id="profile-avatar-modal-file"
-                type="file"
-                accept="image/*"
-                style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }}
-                onChange={(e) => { setShowAvatarModal(false); handleAvatarUpload(e); }}
-              />
+              {/* (No local input — uses the shared page-level
+                  input above so the modal closing doesn't unmount
+                  it mid-file-picker.) */}
             </>
           )}
         </div>
@@ -1556,11 +1580,16 @@ export default function ProfilePage() {
                   click change photo, it doesn't let me change my
                   photo." This label/htmlFor approach is the native
                   HTML primitive; no JS click() needed. */}
-              <label htmlFor="profile-avatar-file" style={{ padding: "7px 14px", background: "rgba(26,158,66,0.15)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42", cursor: "pointer", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center" }}>
+              <label htmlFor="profile-avatar-file-shared" style={{ padding: "7px 14px", background: "rgba(26,158,66,0.15)", border: "1px solid rgba(26,158,66,0.3)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#1a9e42", cursor: "pointer", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center" }}>
                 {uploadingAvatar ? "Uploading…" : "Change photo"}
               </label>
             </div>
-            <input id="profile-avatar-file" ref={fileInputRef} type="file" accept="image/*" style={{ position: "absolute", left: -9999, width: 1, height: 1, opacity: 0 }} onChange={handleAvatarUpload} />
+            {/* File input lives at the page level (id="profile-
+                avatar-file-shared") so both this sheet and the
+                avatar lightbox target it via htmlFor. Kept this
+                hidden ref so existing fileInputRef references
+                further down don't crash. */}
+            <input ref={fileInputRef} type="hidden" />
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6, fontFamily: "'Outfit', sans-serif" }}>Username</label>
               <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.06)", border: `1px solid ${usernameError ? "rgba(240,120,90,0.6)" : "rgba(255,255,255,0.1)"}`, borderRadius: 10, paddingLeft: 12 }}>
