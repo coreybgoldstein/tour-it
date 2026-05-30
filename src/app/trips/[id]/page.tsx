@@ -300,6 +300,11 @@ export default function TripPage() {
   const [editDesc, setEditDesc] = useState("");
   const [editStart, setEditStart] = useState("");
   const [editEnd, setEditEnd] = useState("");
+  // Tee-time string ("HH:MM"). Edited inline on the round/game edit
+  // sheet so the user doesn't have to open a separate sheet for the
+  // course row underneath. On save, written to the round's only
+  // GolfTripCourse alongside the GolfTrip update.
+  const [editTeeTime, setEditTeeTime] = useState("");
   const [editAirport, setEditAirport] = useState("");
   const [editLodging, setEditLodging] = useState("");
   const [editLodgingCity, setEditLodgingCity] = useState<string | null>(null);
@@ -734,6 +739,7 @@ export default function TripPage() {
   const saveEdit = async () => {
     if (!editName.trim() || saving) return;
     setSaving(true);
+    const supabase = createClient();
     const updates = {
       name: editName.trim(),
       description: editDesc.trim() || null,
@@ -744,8 +750,25 @@ export default function TripPage() {
       lodgingCity: editLodgingCity,
       lodgingState: editLodgingState,
     };
-    await createClient().from("GolfTrip").update(updates).eq("id", id as string);
+    await supabase.from("GolfTrip").update(updates).eq("id", id as string);
     setTrip(prev => prev ? { ...prev, ...updates } : prev);
+
+    // For rounds and games (single-stop), also persist the tee time
+    // alongside the trip update — user expects everything in one
+    // sheet, one save. Trips have per-stop teeTimes managed on the
+    // courses list, so this only fires for non-trip flavors with
+    // exactly one course.
+    if (flavor !== "trip" && tripCourses.length === 1) {
+      const tc = tripCourses[0];
+      const teeTimeValue = editTeeTime || null;
+      const playDateValue = editStart || null;
+      await supabase
+        .from("GolfTripCourse")
+        .update({ teeTime: teeTimeValue, playDate: playDateValue })
+        .eq("id", tc.id);
+      setTripCourses(prev => prev.map(x => x.id === tc.id ? { ...x, teeTime: teeTimeValue, playDate: playDateValue } : x));
+    }
+
     setSaving(false);
     setEditOpen(false);
   };
@@ -1256,7 +1279,7 @@ export default function TripPage() {
               {/* Edit pill — top-right */}
               {isOwner && (
                 <button
-                  onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
+                  onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditTeeTime(tripCourses[0]?.teeTime || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
                   aria-label="Edit round"
                   style={{ position: "absolute", top: 14, right: 14, display: "flex", alignItems: "center", gap: 4, background: "rgba(7,16,10,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "6px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.95)", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
                 >
@@ -1285,53 +1308,15 @@ export default function TripPage() {
                     )}
                   </div>
                 </div>
-                {(dateLabel || teeTimeRaw || (isOwner && tc)) && (
-                  // The whole date / tee-time row is now a tap-target
-                  // for owners → opens the edit-course modal directly
-                  // on the round's only course, so changing the tee
-                  // time doesn't require scrolling down to find the
-                  // tiny pencil on the courses list.
-                  isOwner && tc ? (
-                    <button
-                      onClick={() => openEditCourse(tc)}
-                      aria-label="Edit date and tee time"
-                      style={{
-                        display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap",
-                        background: "rgba(7,16,10,0.45)",
-                        border: "1px solid rgba(126,200,140,0.35)",
-                        borderRadius: 12,
-                        padding: "6px 12px",
-                        cursor: "pointer",
-                        backdropFilter: "blur(6px)",
-                        WebkitBackdropFilter: "blur(6px)",
-                        textAlign: "left",
-                      }}
-                    >
-                      {dateLabel && (
-                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.7)", lineHeight: 1 }}>{dateLabel}</div>
-                      )}
-                      {teeTimeRaw ? (
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, color: "#4da862", fontWeight: 800, textShadow: "0 2px 10px rgba(0,0,0,0.7)", letterSpacing: "0.01em" }}>· {formatTime12(teeTimeRaw)}</div>
-                      ) : (
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(126,200,140,0.95)", fontWeight: 700, letterSpacing: "0.02em" }}>
-                          + Tee time
-                        </div>
-                      )}
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2 }}>
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
-                      {dateLabel && (
-                        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.7)", lineHeight: 1 }}>{dateLabel}</div>
-                      )}
-                      {teeTimeRaw && (
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, color: "#4da862", fontWeight: 800, textShadow: "0 2px 10px rgba(0,0,0,0.7)", letterSpacing: "0.01em" }}>· {formatTime12(teeTimeRaw)}</div>
-                      )}
-                    </div>
-                  )
+                {(dateLabel || teeTimeRaw) && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+                    {dateLabel && (
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.7)", lineHeight: 1 }}>{dateLabel}</div>
+                    )}
+                    {teeTimeRaw && (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 18, color: "#4da862", fontWeight: 800, textShadow: "0 2px 10px rgba(0,0,0,0.7)", letterSpacing: "0.01em" }}>· {formatTime12(teeTimeRaw)}</div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -1381,7 +1366,7 @@ export default function TripPage() {
                         </button>
                       )}
                       <button
-                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
+                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditTeeTime(tripCourses[0]?.teeTime || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
                         aria-label="Edit trip"
                         style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
                       >
@@ -2609,6 +2594,22 @@ export default function TripPage() {
                   </>
                 )}
               </div>
+              {/* Tee time — round/game flavor only (trips have per-stop
+                  times on the courses list, not a single time). Sits
+                  right under the date so both pieces of timing live in
+                  one sheet — user feedback: "you should have just added
+                  a time editor on this sheet". */}
+              {flavor !== "trip" && (
+                <div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 10 }}>Tee Time <span style={{ fontWeight: 400 }}>(optional)</span></div>
+                  <input
+                    type="time"
+                    value={editTeeTime}
+                    onChange={e => setEditTeeTime(e.target.value)}
+                    style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: editTeeTime ? "#fff" : "rgba(255,255,255,0.42)", outline: "none", colorScheme: "dark" }}
+                  />
+                </div>
+              )}
             </div>
             <div style={{ marginTop: 28, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               {confirmDelete ? (
