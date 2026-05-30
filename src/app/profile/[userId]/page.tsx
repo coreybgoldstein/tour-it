@@ -5,6 +5,7 @@ import { useSwipeDownToDismiss } from "@/hooks/useSwipeDownToDismiss";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import AvatarCropSheet from "@/components/AvatarCropSheet";
 import LikesSheet from "@/components/LikesSheet";
 import NotificationsPanel from "@/components/NotificationsPanel";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
@@ -507,6 +508,10 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  // Data URL of the freshly picked file. When non-null the crop
+  // sheet renders so the user can pan + zoom into the round frame
+  // before the cropped result is uploaded.
+  const [avatarCropSrc, setAvatarCropSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Refs for swipe-down-to-dismiss on the profile-edit sheet. The
   // hook attaches touch listeners to the grip; dragging it down past
@@ -943,20 +948,45 @@ export default function ProfilePage() {
     router.push("/");
   }
 
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files?.[0] || !profile || !isOwner) return;
+  // Opens the avatar crop sheet with the picked file. The actual
+  // upload happens AFTER the user positions + zooms the image inside
+  // the round frame and taps Save — handled by `saveCroppedAvatar`
+  // below. Two-stage was added because (1) the previous flow saved
+  // the raw user image with no crop / position control, and (2)
+  // re-uploads weren't visibly changing the avatar — the path was
+  // `${id}/avatar.${ext}` so the URL was identical each time and the
+  // browser served the cached old image even after a successful
+  // upload. The new flow uses a timestamped filename so each save
+  // produces a fresh URL that defeats the cache.
+  function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !profile || !isOwner) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === "string" ? reader.result : null;
+      if (dataUrl) setAvatarCropSrc(dataUrl);
+    };
+    reader.readAsDataURL(file);
+    // Reset the input so picking the same file twice still fires onChange.
+    try { e.target.value = ""; } catch {}
+  }
+
+  async function saveCroppedAvatar(blob: Blob) {
+    if (!profile || !isOwner) return;
     setUploadingAvatar(true);
-    const file = e.target.files[0];
     const supabase = createClient();
-    const ext = file.name.split(".").pop();
-    const path = `${profile.id}/avatar.${ext}`;
-    const { error } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: true });
+    // Timestamped filename → new public URL on every save → cache
+    // never serves the stale image. (Previously `avatar.${ext}` so
+    // the URL never changed even after a fresh upload.)
+    const path = `${profile.id}/avatar-${Date.now()}.jpg`;
+    const { error } = await supabase.storage.from("tour-it-photos").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
     if (!error) {
       const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
       await supabase.from("User").update({ avatarUrl: publicUrl }).eq("id", profile.id);
       setProfile(p => p ? { ...p, avatarUrl: publicUrl } : p);
     }
     setUploadingAvatar(false);
+    setAvatarCropSrc(null);
   }
 
   async function handleSaveProfile() {
@@ -1408,6 +1438,18 @@ export default function ProfilePage() {
             )}
           </div>
         </>
+      )}
+
+      {/* Avatar crop sheet — opens after the user picks a file from
+          the file input. Pan + zoom inside a round frame, then Save
+          uploads the cropped 512×512 JPEG. */}
+      {avatarCropSrc && (
+        <AvatarCropSheet
+          src={avatarCropSrc}
+          onCancel={() => setAvatarCropSrc(null)}
+          onSave={saveCroppedAvatar}
+          saving={uploadingAvatar}
+        />
       )}
 
       {/* Avatar lightbox */}
