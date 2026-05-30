@@ -515,7 +515,7 @@ export default function HomeTour() {
             // vs plan-another).
             <div style={{ display: "flex", alignItems: "stretch", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch", marginRight: -16, paddingRight: 16, scrollSnapType: "x proximity" }}>
               {tours.map((t) => (
-                <div key={t.id} style={{ flexShrink: 0, scrollSnapAlign: "start", width: 268, display: "flex" }}>
+                <div key={t.id} style={{ flexShrink: 0, scrollSnapAlign: "start", width: 296, display: "flex" }}>
                   <YourTourCard
                     tour={t}
                     // ?createGame=1 → the trip page auto-opens the
@@ -591,71 +591,43 @@ function YourTourCard({
       style={{
         width: "100%",
         height: "100%",
-        background: "linear-gradient(160deg, #0e2418 0%, #0a1a11 100%)",
-        border: "1px solid rgba(77,168,98,0.32)",
-        borderRadius: 14,
-        padding: "10px 12px 11px",
+        background: "linear-gradient(160deg, #0f2719 0%, #08160e 100%)",
+        border: "1px solid rgba(77,168,98,0.3)",
+        borderRadius: 16,
+        padding: 14,
         cursor: "pointer",
         textAlign: "left",
         display: "flex",
         flexDirection: "column",
-        // Natural top-down flow (no space-between). Round + Trip cards
-        // share the same vertical rhythm so the action row lands at
-        // the same y-position across the entire rail.
-        gap: 7,
+        gap: 10,
         minWidth: 0,
         position: "relative",
+        boxShadow: "0 6px 18px rgba(0,0,0,0.32), inset 0 1px 0 rgba(126,200,140,0.08)",
       }}
     >
-      {/* "+ game" — top-right of every card. Uses the same scorecard
-          icon as the action row + a tiny green "+" dot in the corner,
-          so the affordance reads as "add a game" specifically, not a
-          generic plus. Always present whether or not a game exists. */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onGame(); }}
-        aria-label="Add a game"
-        title="Add a game"
-        style={{
-          position: "absolute", top: 8, right: 8, zIndex: 2,
-          width: 34, height: 30, padding: 0,
-          background: "rgba(7,16,10,0.55)",
-          border: "1px solid rgba(77,168,98,0.45)",
-          borderRadius: 8,
-          cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}
-      >
-        <GameScorecardIcon color="#7ed28b" />
-        {/* Small plus dot in the corner — same affordance pattern
-            as the old inline add-another button. */}
-        <div style={{ position: "absolute", top: -4, right: -4, width: 14, height: 14, borderRadius: "50%", background: "#7ed28b", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #0a1a10" }}>
-          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0c1c13" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </div>
-      </button>
-
-      {/* Top stack — everything above the action row is grouped so
-          space-between cleanly pushes the action row to the bottom. */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 7, minWidth: 0 }}>
-      {/* Top row: trip badge + UPCOMING TRIP / ROUND chip. Right
-          padding accommodates the absolute "+ game" button. */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, paddingRight: 36 }}>
-        {tripBadge && (
-          <div style={{ width: 26, height: 26, borderRadius: 6, background: "#fff", padding: 2, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+      {/* ── Header row ───────────────────────────────────────────────
+          Trip cover image (or logo) + ROUND / TRIP chip + the
+          "+ add a game" affordance pinned top-right. Right padding
+          on the row reserves the corner for that absolute button. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, paddingRight: 40 }}>
+        {tripBadge ? (
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fff", padding: 2.5, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={tripBadge} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
+        ) : (
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <CalendarMini />
           </div>
         )}
         <span style={{
           fontFamily: "'Inter', sans-serif",
           fontSize: 10,
           fontWeight: 700,
-          letterSpacing: "0.16em",
+          letterSpacing: "0.18em",
           textTransform: "uppercase",
           color: "rgba(126,200,140,0.95)",
-          padding: "3px 8px",
+          padding: "3px 9px",
           borderRadius: 99,
           background: "rgba(77,168,98,0.12)",
           border: "1px solid rgba(77,168,98,0.3)",
@@ -663,134 +635,161 @@ function YourTourCard({
         }}>{tripContextLabel(tour)}</span>
       </div>
 
-      {/* Title — Source Serif 4 in its display optical size,
-          weight 700 (the editorial-headline weight, less heavy
-          than 800 which felt over-bold for trip names). Single
-          line forced so card heights stay equal across the rail. */}
-      <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 18, fontWeight: 700, fontVariationSettings: "'opsz' 60", color: "#fff", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, letterSpacing: "-0.005em" }}>
+      {/* "+ game" pinned top-right. Scorecard glyph + tiny corner
+          plus dot — affordance reads as "add a game" specifically. */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onGame(); }}
+        aria-label="Add a game"
+        title="Add a game"
+        style={{
+          position: "absolute", top: 11, right: 11, zIndex: 2,
+          width: 36, height: 32, padding: 0,
+          background: "rgba(7,16,10,0.6)",
+          border: "1px solid rgba(77,168,98,0.5)",
+          borderRadius: 9,
+          cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        <GameScorecardIcon color="#7ed28b" />
+        <div style={{ position: "absolute", top: -5, right: -5, width: 15, height: 15, borderRadius: "50%", background: "#7ed28b", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #0a1a10" }}>
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0c1c13" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </div>
+      </button>
+
+      {/* ── Title ────────────────────────────────────────────────────
+          Source Serif 4 display, single line ellipsis. Trip name is
+          the editorial heart of the card so it gets the most weight. */}
+      <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 18, fontWeight: 700, fontVariationSettings: "'opsz' 60", color: "#fff", lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, letterSpacing: "-0.005em" }}>
         {tour.name}
       </div>
 
-      {/* Meta block — TWO lines max (project rule per user). Row 1
-          is always date (+ tee time for single rounds, or date
-          window for trips). Row 2 carries location + golfer count
-          separated by a dot. When the card is too narrow for both
-          to fit on row 2, the golfer count wraps to a third line —
-          we trim the location instead via whiteSpace + ellipsis
-          to keep the 2-line ceiling. */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 2, fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.78)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", minWidth: 0 }}>
-            <CalendarMini /> {dateLabel}
-          </span>
-        </div>
+      {/* ── Meta block ───────────────────────────────────────────────
+          Two clean lines. Row 1 = date (+ tee time for rounds).
+          Row 2 = location + golfer count. Both Inter, light sage. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 3, fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.82)" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}>
+          <CalendarMini /> {dateLabel}
+        </span>
         {(locationLabel || tour.members.length > 0) && (
-          <div style={{ display: "flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
             {locationLabel && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, overflow: "hidden", flex: "0 1 auto" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, minWidth: 0, overflow: "hidden", flex: "0 1 auto" }}>
                 <PinMini />
                 <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{locationLabel}</span>
               </span>
             )}
             {locationLabel && tour.members.length > 0 && <Dot />}
             {tour.members.length > 0 && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap", flexShrink: 0 }}>
-                <UsersMini /> {tour.members.length} {tour.members.length === 1 ? "golfer" : "golfers"}
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap", flexShrink: 0 }}>
+                <UsersMini /> {tour.members.length}
               </span>
             )}
           </div>
         )}
       </div>
 
-      </div>
-      {/* ↑ end of the "top stack" of static content (chip, title,
-          meta). Below this row is the unified flag+game row that
-          both round and trip cards render identically. */}
+      {/* ── Hairline separator ──────────────────────────────────────
+          A very subtle horizontal line gives the badge row its own
+          visual zone without feeling boxy. */}
+      <div style={{ height: 1, background: "linear-gradient(to right, transparent 0%, rgba(126,200,140,0.18) 20%, rgba(126,200,140,0.18) 80%, transparent 100%)", marginTop: 1 }} />
 
-      {/* Unified action row — flags + game button in a single row,
-          for BOTH single-round and multi-stop trip cards. The flags
-          scroll horizontally inside their container; the game button
-          is anchored on the right and never scrolls away. So
-          regardless of whether the trip has 1 stop or 8, the user
-          always sees the game CTA at the same screen position, with
-          extra flags hidden behind a scroll edge. Per user:
-          "Bring the create a game/created game button to the same
-          lines as the course badges, fit it in there and hide some
-          of the course badges if necessary for the trip modules,
-          remember the course badges is still on a rail that you can
-          scroll." */}
-      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 2, display: "flex", gap: 7, alignItems: "stretch", minWidth: 0 }}>
-        {/* Flag rail — horizontal scroll. flex:1 with minWidth:0 +
-            overflow-x:auto means it shrinks first so the game
-            button on the right always keeps its width. */}
-        {tour.stops.length > 0 && (
-          <div style={{ flex: 1, minWidth: 0, display: "flex", gap: 7, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 2, alignItems: "stretch" }}>
-            {tour.stops.map((s, i) => (
-              <FlagBadge key={s.courseId + "-" + i} stop={s} isNext={!!(next && s.courseId === next.courseId)} onTap={() => setPopupIdx(popupIdx === i ? null : i)} />
-            ))}
-          </div>
-        )}
+      {/* ── Course badges ───────────────────────────────────────────
+          The heart of the card — these are the courses the user is
+          playing. 4-5 visible on a typical trip card width with the
+          5th+ scrolling. The "next up" badge gets a gold ring + soft
+          glow so it reads as the active stop. */}
+      {tour.stops.length > 0 && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ display: "flex", gap: 7, overflowX: "auto", WebkitOverflowScrolling: "touch", paddingBottom: 2, marginLeft: -2, marginRight: -2, paddingLeft: 2, paddingRight: 2 }}
+        >
+          {tour.stops.map((s, i) => (
+            <FlagBadge
+              key={s.courseId + "-" + i}
+              stop={s}
+              isNext={!!(next && s.courseId === next.courseId)}
+              onTap={() => setPopupIdx(popupIdx === i ? null : i)}
+            />
+          ))}
+        </div>
+      )}
 
-        {/* Game CTA — fixed width on the right. Same minHeight as
-            the flag badge (44px) so the row is visually balanced.
-            The game tease and Create-a-Game both render at the same
-            size; only the content swaps. */}
-        <div style={{ flexShrink: 0, width: tour.game ? 138 : 132, display: "flex", alignItems: "stretch" }}>
-          {tour.game ? (
-            <button
-              onClick={(e) => { e.stopPropagation(); onOpenGame(tour.game!.id); }}
-              style={{
-                width: "100%",
-                padding: "6px 8px",
-                background: "rgba(77,168,98,0.14)",
-                border: "1px solid rgba(77,168,98,0.5)",
-                borderRadius: 9,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                minHeight: 44,
-                textAlign: "left",
-              }}
-            >
+      {/* ── Game CTA — full-width ──────────────────────────────────
+          When a game exists: a dark green chip showing "Game Ready"
+          + format/stakes — tap opens that game sheet.
+          When none: gradient green Create-a-Game pill. Same height
+          and visual weight either way so the card balance stays. */}
+      <div onClick={(e) => e.stopPropagation()} style={{ marginTop: "auto", paddingTop: 2 }}>
+        {tour.game ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenGame(tour.game!.id); }}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              background: "linear-gradient(180deg, rgba(77,168,98,0.22) 0%, rgba(77,168,98,0.12) 100%)",
+              border: "1px solid rgba(77,168,98,0.55)",
+              borderRadius: 10,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              minHeight: 44,
+              textAlign: "left",
+              boxShadow: "inset 0 1px 0 rgba(126,200,140,0.15)",
+            }}
+          >
+            <div style={{ width: 26, height: 26, borderRadius: 6, background: "rgba(126,200,140,0.18)", border: "1px solid rgba(126,200,140,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <GameScorecardIcon color="#7ed28b" />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 7.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
-                  {tour.gameCount > 1 ? `${tour.gameCount} games` : "Game ready"}
-                </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 10.5, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
-                  {(() => {
-                    const name = gameFormatLabel(tour.game.format);
-                    const stakes = gameStakesLabel(tour.game.format, tour.game.formatConfig);
-                    return stakes ? `${name} · ${stakes}` : name;
-                  })()}
-                </div>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
+                {tour.gameCount > 1 ? `${tour.gameCount} Games · Latest` : "Game Ready"}
               </div>
-            </button>
-          ) : (
-            <button
-              onClick={(e) => { e.stopPropagation(); onGame(); }}
-              style={{
-                width: "100%",
-                padding: "6px 10px",
-                background: "linear-gradient(180deg, #5cbd75 0%, #3f9554 100%)",
-                border: "1px solid rgba(126,200,140,0.85)",
-                borderRadius: 9,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                minHeight: 44,
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)",
-              }}
-            >
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
+                {(() => {
+                  const name = gameFormatLabel(tour.game.format);
+                  const stakes = gameStakesLabel(tour.game.format, tour.game.formatConfig);
+                  return stakes ? `${name} · ${stakes}` : name;
+                })()}
+              </div>
+            </div>
+            <ChevronRightSage />
+          </button>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); onGame(); }}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              background: "linear-gradient(180deg, #5cbd75 0%, #3f9554 100%)",
+              border: "1px solid rgba(126,200,140,0.85)",
+              borderRadius: 10,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              minHeight: 44,
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), 0 1px 0 rgba(0,0,0,0.18)",
+            }}
+          >
+            <div style={{ width: 26, height: 26, borderRadius: 6, background: "rgba(7,16,10,0.18)", border: "1px solid rgba(7,16,10,0.24)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <GameScorecardIcon color="#0c2218" />
-              <div style={{ flex: 1, minWidth: 0, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: "#0a1a10", letterSpacing: "0.04em", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: "#0a1a10", letterSpacing: "0.04em", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 CREATE A GAME
               </div>
-            </button>
-          )}
-        </div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9.5, fontWeight: 600, color: "rgba(10,26,16,0.65)", marginTop: 1, letterSpacing: "0.04em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                Format · stakes · strokes
+              </div>
+            </div>
+            <ChevronRightDark />
+          </button>
+        )}
       </div>
 
       {/* Course popup — floating card anchored above the flag strip.
@@ -1497,6 +1496,14 @@ function ActionCellSingle({ title, icon, onClick }: {
       </div>
       <ChevronRightDark />
     </button>
+  );
+}
+
+function ChevronRightSage() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
   );
 }
 
