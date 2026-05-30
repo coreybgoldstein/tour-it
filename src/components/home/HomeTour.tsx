@@ -122,27 +122,24 @@ export default function HomeTour() {
   const [userId, setUserId] = useState<string | null>(null);
   const [authResolved, setAuthResolved] = useState(false);
 
-  const [nearMe, setNearMe] = useState<CourseLite[]>([]);
+  // Initial state for each section reads from localStorage cache
+  // FIRST (instant render of last-known-good data), then the same
+  // useEffects below fire a fresh query and update. SWR-style. On a
+  // user's second+ visit, every section paints immediately with the
+  // previous values while the fresh fetch happens in the background.
+  // First-time visitors see the empty state until the first fetch
+  // resolves — same as before.
+  const [nearMe, setNearMe] = useState<CourseLite[]>(() => readCache<CourseLite[]>("nearMe") ?? []);
   const [nearMeRadius, setNearMeRadius] = useState<10 | 25 | 50>(50);
   const [locStatus, setLocStatus] = useState<"unknown" | "denied" | "granted" | "loading">("unknown");
-  // True once a Near-Me query has actually completed at the current
-  // (lat, lng, radius). Gates the "No courses found" empty-state so
-  // it doesn't flash during the window between locStatus=granted and
-  // the courses arriving from Supabase.
-  const [nearMeQueried, setNearMeQueried] = useState(false);
+  const [nearMeQueried, setNearMeQueried] = useState(() => (readCache<CourseLite[]>("nearMe")?.length ?? 0) > 0);
 
-  // tours = ALL upcoming trips (each rendered as a card in the
-  // horizontal YourTour rail). The earlier single-tour shape was kept
-  // for the v1 home which only surfaced the soonest trip; user
-  // feedback: "it should be a scrolling [rail] so you can see
-  // everything you have lined up". `tour` retained as a convenience
-  // alias for the first entry — many call sites still read it.
-  const [tours, setTours] = useState<ActiveTour[]>([]);
+  const [tours, setTours] = useState<ActiveTour[]>(() => readCache<ActiveTour[]>("tours") ?? []);
   const tour = tours[0] ?? null;
-  const [tourLoaded, setTourLoaded] = useState(false);
+  const [tourLoaded, setTourLoaded] = useState(() => readCache<ActiveTour[]>("tours") != null);
 
-  const [tripIdeas, setTripIdeas] = useState<TripIdea[]>([]);
-  const [feedTeasers, setFeedTeasers] = useState<FeedTeaser[]>([]);
+  const [tripIdeas, setTripIdeas] = useState<TripIdea[]>(() => readCache<TripIdea[]>("tripIdeas") ?? []);
+  const [feedTeasers, setFeedTeasers] = useState<FeedTeaser[]>(() => readCache<FeedTeaser[]>("feedTeasers") ?? []);
 
   // ── Auth ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -187,7 +184,7 @@ export default function HomeTour() {
         .eq("userId", userId);
       const tripIds = (memberships ?? []).map((m: any) => m.tripId);
       if (tripIds.length === 0) {
-        if (!cancelled) { setTours([]); setTourLoaded(true); }
+        if (!cancelled) { setTours([]); setTourLoaded(true); writeCache("tours", []); }
         return;
       }
 
@@ -219,7 +216,7 @@ export default function HomeTour() {
       ]);
       const tripsArr = (trips ?? []) as any[];
       if (tripsArr.length === 0) {
-        if (!cancelled) { setTours([]); setTourLoaded(true); }
+        if (!cancelled) { setTours([]); setTourLoaded(true); writeCache("tours", []); }
         return;
       }
 
@@ -282,6 +279,7 @@ export default function HomeTour() {
       if (!cancelled) {
         setTours(builtTours);
         setTourLoaded(true);
+        writeCache("tours", builtTours);
       }
     })();
     return () => { cancelled = true; };
@@ -309,6 +307,7 @@ export default function HomeTour() {
       const pool = seasonal.length >= 6 ? seasonal : (data as any[]);
       const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 6);
       setTripIdeas(shuffled as TripIdea[]);
+      writeCache("tripIdeas", shuffled);
     })();
     return () => { cancelled = true; };
   }, []);
@@ -357,6 +356,7 @@ export default function HomeTour() {
         };
       });
       setFeedTeasers(teasers);
+      writeCache("feedTeasers", teasers);
     })();
     return () => { cancelled = true; };
   }, []);
@@ -411,8 +411,10 @@ export default function HomeTour() {
       .order("uploadCount", { ascending: false, nullsFirst: false })
       .order("name", { ascending: true })
       .limit(20);
-    setNearMe((data ?? []) as CourseLite[]);
+    const list = (data ?? []) as CourseLite[];
+    setNearMe(list);
     setNearMeQueried(true);
+    writeCache("nearMe", list);
   }
 
   function changeRadius(r: 10 | 25 | 50) {
@@ -1745,6 +1747,39 @@ function gameStakesLabel(format: string, cfg: Record<string, unknown> | null): s
     return amt != null ? `${dollars(amt)}/team` : null;
   }
   return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// HomeTour cache — last-known-good values for each section persisted to
+// localStorage so the second-visit render paints instantly with the
+// previous values. Fresh data still fetches in the background and
+// replaces what's on screen when it arrives.
+//
+// Entries expire after 24h to avoid stale "your tour" cards lingering
+// after a trip was deleted or edited from another device. Reads are
+// safe-guarded against parse errors so bad cache entries don't crash
+// the page.
+// ─────────────────────────────────────────────────────────────────────
+
+const CACHE_PREFIX = "tourit-home-cache:";
+const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function readCache<T>(key: string): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(CACHE_PREFIX + key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { ts: number; data: T };
+    if (Date.now() - parsed.ts > CACHE_MAX_AGE_MS) return null;
+    return parsed.data;
+  } catch { return null; }
+}
+
+function writeCache<T>(key: string, data: T) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), data }));
+  } catch {}
 }
 
 function formatNextUpDate(tour: ActiveTour, next: Stop | null): string {
