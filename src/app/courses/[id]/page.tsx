@@ -583,6 +583,12 @@ const [editDescription, setEditDescription] = useState("");
   const [editCourseType, setEditCourseType] = useState<"PUBLIC" | "PRIVATE" | "SEMI_PRIVATE" | "">("");
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [user, setUser] = useState<any>(null);
+  // True when the logged-in user is the verified operator of THIS course
+  // (a CourseManager row) or a Tour It admin. Gates the manager hamburger
+  // menu in the header — the only in-app entry point to the manage
+  // dashboard. Mirrors requireCourseManager() server-side.
+  const [isManager, setIsManager] = useState(false);
+  const [managerMenuOpen, setManagerMenuOpen] = useState(false);
   const [reportClipId, setReportClipId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState<string | null>(null);
   const [submittingReport, setSubmittingReport] = useState(false);
@@ -664,11 +670,16 @@ const [editDescription, setEditDescription] = useState("");
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
       if (data.user) {
-        const { data: follows } = await supabase.from("Follow").select("followingId").eq("followerId", data.user.id).eq("status", "ACTIVE");
+        const [{ data: follows }, { data: mgr }, { data: profile }] = await Promise.all([
+          supabase.from("Follow").select("followingId").eq("followerId", data.user.id).eq("status", "ACTIVE"),
+          supabase.from("CourseManager").select("id").eq("courseId", id).eq("userId", data.user.id).maybeSingle(),
+          supabase.from("User").select("isAdmin").eq("id", data.user.id).maybeSingle(),
+        ]);
         setFollowingIds(new Set((follows || []).map((f: any) => f.followingId)));
+        setIsManager(!!mgr || !!profile?.isAdmin);
       }
     });
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (!commentUploadId) { setCommentItems([]); return; }
@@ -1354,6 +1365,21 @@ const [editDescription, setEditDescription] = useState("");
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#1a9e42", display: course.logoUrl ? "none" : "inline" }}>{abbr}</span>
         </button>
 
+        {/* Manager hamburger — the in-app entry point to the manage
+            dashboard. Only rendered for the verified operator (or an
+            admin); standout green so it's unmistakable against the hero
+            imagery. Shifts left of the PGA badge when a major is hosting
+            so the two top-right elements don't overlap. */}
+        {isManager && (
+          <button
+            onClick={() => setManagerMenuOpen(true)}
+            aria-label="Course owner menu"
+            style={{ position: "absolute", top: (fromMap || fromTripIdea) ? "calc(env(safe-area-inset-top, 0px) + 58px)" : "calc(env(safe-area-inset-top, 0px) + 8px)", right: (isHostingMajor && tournament) ? 84 : 16, zIndex: 11, width: 46, height: 46, borderRadius: 12, background: "#2d7a42", border: "1.5px solid #4da862", boxShadow: "0 3px 12px rgba(45,122,66,0.55), 0 0 14px rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+        )}
+
         {/* Logo lightbox */}
         {logoLightboxOpen && course.logoUrl && (
           <div
@@ -1608,6 +1634,34 @@ const [editDescription, setEditDescription] = useState("");
         open={claimSheetOpen}
         onClose={() => setClaimSheetOpen(false)}
       />
+
+      {/* Course-owner menu — opens from the manager hamburger. Slides up
+          from the bottom like every other Tour It sheet. Holds the manage
+          dashboard entry (edit official info, upload logo/cover, post
+          official media). */}
+      {managerMenuOpen && (
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => setManagerMenuOpen(false)} />
+          <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.85)", marginBottom: 12 }}>Course owner</div>
+            <button
+              onClick={() => { setManagerMenuOpen(false); router.push(`/courses/${id}/manage`); }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "14px 14px", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 12, cursor: "pointer", textAlign: "left" }}
+            >
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff" }}>Manage course</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>Edit official info, logo, cover & media</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(126,200,140,0.7)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button onClick={() => setManagerMenuOpen(false)} style={{ marginTop: 14, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
+          </div>
+        </>
+      )}
 
 {/* Course-completion nudge — shows when key fields are still null so users
     know there's something useful (and points-earning) they can do. Counts
