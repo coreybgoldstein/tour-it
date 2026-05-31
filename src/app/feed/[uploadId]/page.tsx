@@ -631,19 +631,20 @@ function FeedClip({
           }
         </div>
         <div style={{ flex: 1, minWidth: 0, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 1, minWidth: 0 }}>
-              {clip.courseName ?? "Unknown course"}
-            </span>
-            {holeMeta.length > 0 && (
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 600, color: "#4da862", whiteSpace: "nowrap", flexShrink: 0 }}>
-                · {holeMeta.join(" · ")}
-              </span>
-            )}
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
+            {clip.courseName ?? "Unknown course"}
           </div>
-          {(clip.courseCity || clip.courseState) && (
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1 }}>
-              {[clip.courseCity, clip.courseState].filter(Boolean).join(", ")}
+          {(holeMeta.length > 0 || clip.courseCity || clip.courseState) && (
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1, minWidth: 0 }}>
+              {holeMeta.length > 0 && (
+                <span style={{ fontWeight: 600, color: "#4da862" }}>{holeMeta.join(" · ")}</span>
+              )}
+              {holeMeta.length > 0 && (clip.courseCity || clip.courseState) && (
+                <span style={{ color: "rgba(255,255,255,0.4)" }}>{"  ·  "}</span>
+              )}
+              {(clip.courseCity || clip.courseState) && (
+                <span style={{ color: "rgba(255,255,255,0.55)" }}>{[clip.courseCity, clip.courseState].filter(Boolean).join(", ")}</span>
+              )}
             </div>
           )}
         </div>
