@@ -140,10 +140,10 @@ export default function CourseManagePage() {
     <main style={{ minHeight: "100svh", background: "#07100a", color: "#fff", paddingBottom: 80 }}>
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "20px 18px 40px" }}>
         <button onClick={() => router.push(`/courses/${courseId}`)} style={backBtn}>← Back to course</button>
-        <h1 style={{ fontFamily: "'Source Serif 4', serif", fontSize: 28, fontWeight: 800, margin: "6px 0 2px", lineHeight: 1.15 }}>
+        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 800, margin: "6px 0 2px", lineHeight: 1.15 }}>
           {course.name}
         </h1>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>
           Manage official info · {course.city}, {course.state}
         </div>
 
@@ -323,7 +323,7 @@ function BrandSection({ courseId, initial }: {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={cdnImage(logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(126,200,140,0.6)", letterSpacing: "0.08em" }}>LOGO</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(126,200,140,0.6)", letterSpacing: "0.08em" }}>LOGO</span>
           )}
         </div>
         <div>
@@ -344,7 +344,7 @@ function BrandSection({ courseId, initial }: {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={cdnImage(coverImageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(126,200,140,0.6)", letterSpacing: "0.08em" }}>No cover photo</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(126,200,140,0.6)", letterSpacing: "0.08em" }}>No cover photo</span>
           )}
         </div>
         <label style={brandUploadBtn}>
@@ -355,7 +355,7 @@ function BrandSection({ courseId, initial }: {
         </label>
       </div>
 
-      {err && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(220,100,100,0.95)", marginTop: 8 }}>{err}</div>}
+      {err && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(220,100,100,0.95)", marginTop: 8 }}>{err}</div>}
     </Section>
   );
 }
@@ -430,17 +430,17 @@ function StaffRow({ staff, onEdit, onRemove, busy }: { staff: Staff; onEdit: () 
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cdnImage(staff.photoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 800, color: "rgba(126,200,140,0.95)" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 800, color: "rgba(126,200,140,0.95)" }}>
             {(staff.name.split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join("") || "?").toUpperCase()}
           </span>
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff" }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff" }}>
           {staff.name}
           {!staff.isPublic && <span style={{ marginLeft: 6, fontSize: 10, color: "rgba(255,255,255,0.45)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>· hidden</span>}
         </div>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(126,200,140,0.85)" }}>{staff.role}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(126,200,140,0.85)" }}>{staff.role}</div>
       </div>
       <div style={{ display: "flex", gap: 6 }}>
         <button onClick={onEdit} disabled={busy} style={ghostBtn}>Edit</button>
@@ -484,7 +484,7 @@ function StaffEditorSheet({ courseId, initial, onClose, onSaved }: {
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "60px 12px 12px" }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 520, background: "#0d2318", borderRadius: 16, padding: "18px 20px 22px", border: "1px solid rgba(77,168,98,0.18)", boxShadow: "0 -10px 40px rgba(0,0,0,0.5)" }}>
-        <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 19, fontWeight: 700, marginBottom: 12 }}>{isNew ? "Add staff" : "Edit staff"}</div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 700, marginBottom: 12 }}>{isNew ? "Add staff" : "Edit staff"}</div>
 
         <Label>Name</Label>
         <input value={vals.name} onChange={(e) => setVals(v => ({ ...v, name: e.target.value }))} style={inputStyle} placeholder="Jane Doe" />
@@ -509,7 +509,7 @@ function StaffEditorSheet({ courseId, initial, onClose, onSaved }: {
           </div>
         </div>
 
-        <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, fontFamily: "'Inter', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}>
           <input type="checkbox" checked={vals.isPublic} onChange={(e) => setVals(v => ({ ...v, isPublic: e.target.checked }))} />
           Show on the public course page
         </label>
@@ -645,17 +645,17 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {media.map((m) => (
             <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: 10 }}>
-              <div style={{ width: 64, height: 44, borderRadius: 7, overflow: "hidden", background: "rgba(7,16,10,0.6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.7)" }}>
+              <div style={{ width: 64, height: 44, borderRadius: 7, overflow: "hidden", background: "rgba(7,16,10,0.6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(126,200,140,0.7)" }}>
                 {m.mediaType === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={cdnImage(m.url)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : m.mediaType.toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff" }}>
                   {m.caption || formatHoleLabel(m)}
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
                   {m.mediaType.charAt(0).toUpperCase() + m.mediaType.slice(1)} · {formatHoleLabel(m)}
                 </div>
               </div>
@@ -720,7 +720,7 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
           {/* Upload progress / pick file */}
           {uploadState === "uploading" ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: "rgba(126,200,140,0.95)" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(126,200,140,0.95)" }}>
                 {vals.mediaType === "image" ? "Uploading image…" : `Uploading video… ${uploadPct}%`}
               </div>
               <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden" }}>
@@ -737,7 +737,7 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
                   borderRadius: 10,
                   background: "rgba(77,168,98,0.06)",
                   cursor: "pointer",
-                  fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(126,200,140,0.95)",
+                  fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(126,200,140,0.95)",
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -757,7 +757,7 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
                 />
               </label>
               {uploadErr && (
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(220,100,100,0.95)" }}>{uploadErr}</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(220,100,100,0.95)" }}>{uploadErr}</div>
               )}
             </>
           )}
@@ -783,8 +783,8 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
   return (
     <section style={{ marginTop: 22, padding: 16, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14 }}>
       <div style={{ marginBottom: 12 }}>
-        <h2 style={{ fontFamily: "'Source Serif 4', serif", fontSize: 18, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>{title}</h2>
-        {subtitle && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{subtitle}</div>}
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>{title}</h2>
+        {subtitle && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{subtitle}</div>}
       </div>
       {children}
     </section>
@@ -792,20 +792,20 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 }
 
 function Label({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 4, ...(style || {}) }}>{children}</div>;
+  return <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 4, ...(style || {}) }}>{children}</div>;
 }
 
 function Loading({ inline }: { inline?: boolean }) {
-  return <div style={{ fontFamily: "'Inter', sans-serif", color: "rgba(255,255,255,0.35)", fontSize: 13, padding: inline ? "10px 0" : "30px 0", textAlign: "center" }}>Loading…</div>;
+  return <div style={{ fontFamily: "'Outfit', sans-serif", color: "rgba(255,255,255,0.35)", fontSize: 13, padding: inline ? "10px 0" : "30px 0", textAlign: "center" }}>Loading…</div>;
 }
 
 function EmptyHint({ text }: { text: string }) {
-  return <div style={{ fontFamily: "'Inter', sans-serif", color: "rgba(255,255,255,0.35)", fontSize: 12.5, padding: "12px 0" }}>{text}</div>;
+  return <div style={{ fontFamily: "'Outfit', sans-serif", color: "rgba(255,255,255,0.35)", fontSize: 12.5, padding: "12px 0" }}>{text}</div>;
 }
 
 function Forbidden({ onBack }: { onBack: () => void }) {
   return (
-    <div style={{ textAlign: "center", color: "rgba(255,255,255,0.6)", fontFamily: "'Inter', sans-serif", fontSize: 14 }}>
+    <div style={{ textAlign: "center", color: "rgba(255,255,255,0.6)", fontFamily: "'Outfit', sans-serif", fontSize: 14 }}>
       You aren&apos;t a verified manager for this course.
       <div style={{ marginTop: 14 }}>
         <button onClick={onBack} style={ghostBtn}>Back to course</button>
@@ -820,18 +820,18 @@ const inputStyle: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.1)",
   borderRadius: 9,
   padding: "10px 12px",
-  fontFamily: "'Inter', sans-serif", fontSize: 13.5,
+  fontFamily: "'Outfit', sans-serif", fontSize: 13.5,
   color: "#fff", outline: "none",
 };
-const textareaStyle: React.CSSProperties = { ...inputStyle, fontFamily: "'Inter', sans-serif", lineHeight: 1.4, resize: "vertical" as const };
+const textareaStyle: React.CSSProperties = { ...inputStyle, fontFamily: "'Outfit', sans-serif", lineHeight: 1.4, resize: "vertical" as const };
 
 const hintStyle: React.CSSProperties = {
-  fontFamily: "'Inter', sans-serif", fontSize: 11.5,
+  fontFamily: "'Outfit', sans-serif", fontSize: 11.5,
   color: "rgba(255,255,255,0.4)", marginTop: 6,
 };
 
-const backBtn: React.CSSProperties = { background: "none", border: "none", padding: 0, color: "rgba(255,255,255,0.5)", cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: 12 };
-const primaryBtn: React.CSSProperties = { background: "#2d7a42", border: "1px solid #4da862", borderRadius: 8, padding: "9px 18px", fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.02em" };
-const ghostBtn: React.CSSProperties = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 14px", fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)", cursor: "pointer" };
-const subtleDangerBtn: React.CSSProperties = { background: "transparent", border: "1px solid rgba(200,60,60,0.3)", borderRadius: 8, padding: "8px 14px", fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(220,100,100,0.85)", cursor: "pointer" };
-const brandUploadBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 8, padding: "8px 16px", fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 600, color: "rgba(126,200,140,0.95)", cursor: "pointer" };
+const backBtn: React.CSSProperties = { background: "none", border: "none", padding: 0, color: "rgba(255,255,255,0.5)", cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 12 };
+const primaryBtn: React.CSSProperties = { background: "#2d7a42", border: "1px solid #4da862", borderRadius: 8, padding: "9px 18px", fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.02em" };
+const ghostBtn: React.CSSProperties = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)", cursor: "pointer" };
+const subtleDangerBtn: React.CSSProperties = { background: "transparent", border: "1px solid rgba(200,60,60,0.3)", borderRadius: 8, padding: "8px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(220,100,100,0.85)", cursor: "pointer" };
+const brandUploadBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 8, padding: "8px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 600, color: "rgba(126,200,140,0.95)", cursor: "pointer" };

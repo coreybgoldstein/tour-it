@@ -89,7 +89,7 @@ export default function AdminClaimsPage() {
 
   if (unauthorized) return (
     <div style={shellStyle}>
-      <div style={{ fontFamily: "'Inter', sans-serif", color: "rgba(255,255,255,0.6)", fontSize: 14 }}>Admin only.</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", color: "rgba(255,255,255,0.6)", fontSize: 14 }}>Admin only.</div>
     </div>
   );
 
@@ -98,8 +98,8 @@ export default function AdminClaimsPage() {
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "16px 18px 40px" }}>
         <div style={{ marginBottom: 18 }}>
           <button onClick={() => router.push("/admin")} style={backBtn}>← Back to admin</button>
-          <h1 style={{ fontFamily: "'Source Serif 4', serif", fontSize: 28, fontWeight: 800, margin: "6px 0 4px" }}>Course claims</h1>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", margin: 0 }}>
+          <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 28, fontWeight: 800, margin: "6px 0 4px" }}>Course claims</h1>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", margin: 0 }}>
             Verify the human → create a CourseManager → flip Course.isClaimed.
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function AdminClaimsPage() {
                 background: tab === t ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.04)",
                 border: `1px solid ${tab === t ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.08)"}`,
                 borderRadius: 99,
-                fontFamily: "'Inter', sans-serif",
+                fontFamily: "'Outfit', sans-serif",
                 fontSize: 12,
                 fontWeight: 700,
                 letterSpacing: "0.06em",
@@ -127,9 +127,9 @@ export default function AdminClaimsPage() {
         </div>
 
         {loading ? (
-          <div style={{ fontFamily: "'Inter', sans-serif", color: "rgba(255,255,255,0.35)", fontSize: 13, padding: "30px 0" }}>Loading…</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", color: "rgba(255,255,255,0.35)", fontSize: 13, padding: "30px 0" }}>Loading…</div>
         ) : claims.length === 0 ? (
-          <div style={{ fontFamily: "'Inter', sans-serif", color: "rgba(255,255,255,0.35)", fontSize: 13, padding: "30px 0", textAlign: "center" }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", color: "rgba(255,255,255,0.35)", fontSize: 13, padding: "30px 0", textAlign: "center" }}>
             No {tab.toLowerCase()} claims.
           </div>
         ) : (
@@ -166,10 +166,10 @@ function ClaimCard({ claim, onVerify, onReject, busy }: { claim: Claim; onVerify
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 17, fontWeight: 700, color: "#fff", lineHeight: 1.15 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, color: "#fff", lineHeight: 1.15 }}>
             {claim.course?.name ?? "—"}
           </div>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
             {claim.course ? `${claim.course.city}, ${claim.course.state}` : "Course missing"}
             {claim.course?.isClaimed && <span style={{ color: "#4da862", marginLeft: 8 }}>· Already claimed</span>}
           </div>
@@ -179,7 +179,7 @@ function ClaimCard({ claim, onVerify, onReject, busy }: { claim: Claim; onVerify
           borderRadius: 99,
           background: claim.domainMatchHint ? "rgba(77,168,98,0.18)" : "rgba(255,255,255,0.06)",
           border: `1px solid ${claim.domainMatchHint ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`,
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 9.5,
           fontWeight: 800,
           letterSpacing: "0.1em",
@@ -190,7 +190,7 @@ function ClaimCard({ claim, onVerify, onReject, busy }: { claim: Claim; onVerify
         }}>{claim.domainMatchHint ? "Domain match" : "No match"}</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontFamily: "'Inter', sans-serif", fontSize: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>
         <Field label="Claimant" value={`${claim.claimantName} (${claim.claimantRole})`} />
         <Field label="Work email" value={claim.claimantEmail} mono />
         <Field label="Course website" value={claim.course?.websiteUrl || "—"} mono />
@@ -198,14 +198,14 @@ function ClaimCard({ claim, onVerify, onReject, busy }: { claim: Claim; onVerify
       </div>
 
       {claim.verificationNote && (
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.45 }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, padding: "8px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.65)", lineHeight: 1.45 }}>
           <span style={{ color: "rgba(255,255,255,0.4)", marginRight: 6, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>Note</span>
           {claim.verificationNote}
         </div>
       )}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
           Requested {requestedAgo}
         </span>
         {isPending && (
@@ -222,8 +222,8 @@ function ClaimCard({ claim, onVerify, onReject, busy }: { claim: Claim; onVerify
 function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontFamily: mono ? "monospace" : "'Inter', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.82)", wordBreak: "break-word" }}>{value || "—"}</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontFamily: mono ? "monospace" : "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.82)", wordBreak: "break-word" }}>{value || "—"}</div>
     </div>
   );
 }
@@ -233,19 +233,19 @@ const shellStyle: React.CSSProperties = { minHeight: "100svh", background: "#071
 const backBtn: React.CSSProperties = {
   background: "none", border: "none", padding: 0,
   color: "rgba(255,255,255,0.5)", cursor: "pointer",
-  fontFamily: "'Inter', sans-serif", fontSize: 12,
+  fontFamily: "'Outfit', sans-serif", fontSize: 12,
 };
 
 const primaryBtn: React.CSSProperties = {
   background: "#2d7a42", border: "1px solid #4da862",
   borderRadius: 8, padding: "8px 16px",
-  fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 700,
+  fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700,
   color: "#fff", cursor: "pointer", letterSpacing: "0.02em",
 };
 
 const dangerBtn: React.CSSProperties = {
   background: "rgba(200,60,60,0.12)", border: "1px solid rgba(200,60,60,0.35)",
   borderRadius: 8, padding: "8px 16px",
-  fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600,
+  fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600,
   color: "rgba(220,100,100,0.95)", cursor: "pointer", letterSpacing: "0.02em",
 };

@@ -67,13 +67,13 @@ export default function FromTheCourseBlock({ courseId, officialDescription, teeS
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <CourseGlyph />
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
+        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
           From the course
         </span>
       </div>
 
       {officialDescription && (
-        <p style={{ fontFamily: "'Source Serif 4', serif", fontSize: 14.5, lineHeight: 1.55, color: "rgba(255,255,255,0.86)", margin: "0 0 12px", whiteSpace: "pre-wrap" }}>
+        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 14.5, lineHeight: 1.55, color: "rgba(255,255,255,0.86)", margin: "0 0 12px", whiteSpace: "pre-wrap" }}>
           {officialDescription}
         </p>
       )}
@@ -89,7 +89,7 @@ export default function FromTheCourseBlock({ courseId, officialDescription, teeS
             background: "linear-gradient(180deg, #5cbd75 0%, #3f9554 100%)",
             border: "1px solid rgba(126,200,140,0.85)",
             borderRadius: 10,
-            fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800,
+            fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 800,
             color: "#0a1a10", textDecoration: "none",
             letterSpacing: "0.02em",
             marginBottom: staff.length > 0 || membershipInquiryUrl ? 10 : 0,
@@ -114,7 +114,7 @@ export default function FromTheCourseBlock({ courseId, officialDescription, teeS
             background: "rgba(77,168,98,0.14)",
             border: "1px solid rgba(126,200,140,0.5)",
             borderRadius: 10,
-            fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700,
+            fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700,
             color: "#7ed28b", textDecoration: "none",
             letterSpacing: "0.02em",
             marginBottom: staff.length > 0 ? 14 : 0,
@@ -144,16 +144,16 @@ function StaffCard({ staff }: { staff: Staff }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={cdnImage(staff.photoUrl)} alt={staff.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 800, color: "rgba(126,200,140,0.9)" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "rgba(126,200,140,0.9)" }}>
             {(staff.name.split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join("") || "?").toUpperCase()}
           </span>
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 15, fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>{staff.name}</div>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11.5, fontWeight: 600, color: "rgba(126,200,140,0.95)", letterSpacing: "0.04em", marginTop: 2 }}>{staff.role}</div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>{staff.name}</div>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11.5, fontWeight: 600, color: "rgba(126,200,140,0.95)", letterSpacing: "0.04em", marginTop: 2 }}>{staff.role}</div>
         {staff.bio && (
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, margin: "6px 0 0" }}>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, margin: "6px 0 0" }}>
             {staff.bio}
           </p>
         )}
@@ -182,6 +182,6 @@ const contactBtn: React.CSSProperties = {
   background: "rgba(77,168,98,0.16)",
   border: "1px solid rgba(77,168,98,0.4)",
   borderRadius: 99,
-  fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600,
+  fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600,
   color: "#4da862", textDecoration: "none", letterSpacing: "0.01em",
 };

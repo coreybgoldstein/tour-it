@@ -497,10 +497,6 @@ export default function HomeTour() {
 
   return (
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 110, paddingLeft: isDesktop ? 72 : 0 }}>
-      {/* Tour It typography system v2 — Source Serif 4 (editorial)
-          + Inter (UI). Both loaded once via next/font in layout.tsx,
-          no per-page @import. */}
-
       <MayCompetitionBanner />
 
       <div style={{ padding: "12px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
@@ -526,10 +522,10 @@ export default function HomeTour() {
         >
           <SearchIcon />
           <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.1 }}>
-            <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 17, fontWeight: 800, letterSpacing: "0.01em" }}>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, letterSpacing: "0.01em" }}>
               Tour It All
             </span>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10.5, fontWeight: 500, color: "rgba(126,200,140,0.7)", marginTop: 2, letterSpacing: "0.04em" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 500, color: "rgba(126,200,140,0.7)", marginTop: 2, letterSpacing: "0.04em" }}>
               courses · holes · trips · golfers
             </span>
           </span>
@@ -696,7 +692,7 @@ function YourTourCard({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={identitySrc} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               ) : (
-                <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>
+                <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>
                   {hostCourse ? initialsOf(hostCourse.name) : ""}
                 </span>
               )}
@@ -705,7 +701,7 @@ function YourTourCard({
         })()}
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 5,
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 10,
           fontWeight: 700,
           letterSpacing: "0.18em",
@@ -753,14 +749,14 @@ function YourTourCard({
           Club — Sun Jun 21" etc.) and the date is already in the
           meta below. For multi-stop TRIP cards, use the trip name
           (that's the user's intentional name for the whole trip). */}
-      <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 18, fontWeight: 700, fontVariationSettings: "'opsz' 60", color: "#fff", lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, letterSpacing: "-0.005em" }}>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 700, fontVariationSettings: "'opsz' 60", color: "#fff", lineHeight: 1.15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, letterSpacing: "-0.005em" }}>
         {tour.stops.length <= 1 ? (tour.stops[0]?.course.name || tour.name) : tour.name}
       </div>
 
       {/* ── Meta block — two lines max ──────────────────────────────
           Row 1 = date (+ tee time on rounds).
           Row 2 = location · golfer count. */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 3, fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.82)" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 3, fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(244,236,214,0.82)" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, whiteSpace: "nowrap" }}>
           <CalendarMini /> {dateLabel}
         </span>
@@ -831,7 +827,7 @@ function YourTourCard({
             }}
           >
             <GameScorecardIcon color="#7ed28b" size={18} />
-            <div style={{ flex: 1, minWidth: 0, fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
+            <div style={{ flex: 1, minWidth: 0, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
               {(() => {
                 const name = gameFormatLabel(tour.game.format);
                 const stakes = gameStakesLabel(tour.game.format, tour.game.formatConfig);
@@ -858,7 +854,7 @@ function YourTourCard({
             }}
           >
             <GameScorecardIcon color="#7ed28b" size={18} />
-            <div style={{ flex: 1, minWidth: 0, textAlign: "left", fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 700, color: "rgba(220,245,226,0.95)", letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ flex: 1, minWidth: 0, textAlign: "left", fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "rgba(220,245,226,0.95)", letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               Create a game
             </div>
             <ChevronRightSage />
@@ -892,13 +888,13 @@ function YourTourCard({
             <div style={{ width: 36, height: 36, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.5)", padding: 3, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
               {popupStop.course.logoUrl
                 ? <img src={cdnImage(popupStop.course.logoUrl)!} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                : <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{initialsOf(popupStop.course.name)}</span>}
+                : <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{initialsOf(popupStop.course.name)}</span>}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {popupStop.course.name}
               </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: "rgba(126,200,140,0.85)" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(126,200,140,0.85)" }}>
                 {formatStopPlayLabel(popupStop, tour)}
               </div>
             </div>
@@ -991,13 +987,13 @@ function PlanAnotherTile({ onClick }: { onClick: () => void }) {
           <img src="/tour-it-pin.png" alt="" style={{ width: "100%", height: "100%", objectFit: "contain", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.55))" }} />
         </div>
         <div>
-          <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 2 }}>
             Plan Another
           </div>
-          <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
             Round or Trip
           </div>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: "rgba(244,236,214,0.65)", marginTop: 4, lineHeight: 1.3 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(244,236,214,0.65)", marginTop: 4, lineHeight: 1.3 }}>
             Where to next?
           </div>
         </div>
@@ -1066,7 +1062,7 @@ function NearMeRail({
               key={r}
               onClick={() => onChangeRadius(r)}
               style={{
-                fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 600,
+                fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600,
                 padding: "4px 9px",
                 borderRadius: 99,
                 border: `1px solid ${radius === r ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`,
@@ -1095,7 +1091,7 @@ function NearMeRail({
 
       {locStatus !== "granted" && (
         <div style={{ padding: "12px 14px", background: "rgba(244,236,214,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>
             Allow location to see courses within {radius} miles of you.
           </div>
           <button
@@ -1104,7 +1100,7 @@ function NearMeRail({
             style={{
               padding: "7px 14px", borderRadius: 99,
               background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.45)",
-              fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862",
+              fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862",
               cursor: "pointer",
             }}
           >
@@ -1114,7 +1110,7 @@ function NearMeRail({
       )}
 
       {locStatus === "granted" && queried && courses.length === 0 && (
-        <div style={{ padding: "16px", background: "rgba(244,236,214,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, fontFamily: "'Inter', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
+        <div style={{ padding: "16px", background: "rgba(244,236,214,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
           No courses found within {radius} miles. Try a wider radius.
         </div>
       )}
@@ -1165,14 +1161,14 @@ function NearCourseCard({ course, onClick }: { course: CourseLite; onClick: () =
         )}
       </div>
       <div style={{ padding: "9px 10px 11px" }}>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {course.name}
         </div>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 10.5, color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
           {[course.city, course.state].filter(Boolean).join(", ")}
         </div>
         {!!course.uploadCount && course.uploadCount > 0 && (
-          <div style={{ marginTop: 6, display: "inline-block", fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 99, padding: "1px 8px" }}>
+          <div style={{ marginTop: 6, display: "inline-block", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 99, padding: "1px 8px" }}>
             {course.uploadCount} {course.uploadCount === 1 ? "clip" : "clips"}
           </div>
         )}
@@ -1194,7 +1190,7 @@ function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea
         <SectionLabel inline>Where to next?</SectionLabel>
         <button
           onClick={onBrowseAll}
-          style={{ background: "transparent", border: "none", fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", cursor: "pointer", letterSpacing: "0.02em" }}
+          style={{ background: "transparent", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", cursor: "pointer", letterSpacing: "0.02em" }}
         >
           Browse all →
         </button>
@@ -1233,12 +1229,12 @@ function WhereToNext({ ideas, onIdea, onBrowseAll }: { ideas: TripIdea[]; onIdea
                 <Badge variant="ghost">{i.durationDays}D · {i.costBand}</Badge>
               </div>
               <div style={{ position: "absolute", left: 10, bottom: 8, right: 10 }}>
-                <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
                   {i.name}
                 </div>
               </div>
             </div>
-            <div style={{ padding: "9px 11px 11px", fontFamily: "'Inter', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.6)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            <div style={{ padding: "9px 11px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 11.5, color: "rgba(255,255,255,0.6)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
               {i.tagline}
             </div>
           </button>
@@ -1319,7 +1315,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                     // white badge frame.
                     <img src={t.courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 3, borderRadius: 5 }} />
                   ) : (
-                    <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 13, fontWeight: 800, color: "#4da862", letterSpacing: "0.04em" }}>
+                    <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#4da862", letterSpacing: "0.04em" }}>
                       {initials || "TI"}
                     </span>
                   )}
@@ -1342,7 +1338,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                   type below. */}
               <div style={{ position: "absolute", left: 6, right: 6, bottom: 6, textAlign: "center" }}>
                 <div style={{
-                  fontFamily: "'Inter', sans-serif",
+                  fontFamily: "'Outfit', sans-serif",
                   fontSize: 10.5, fontWeight: 800, color: "#fff",
                   lineHeight: 1.1,
                   overflow: "hidden", textOverflow: "ellipsis",
@@ -1354,7 +1350,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                 {(t.holeNumber || shotLabel) && (
                   <div style={{
                     marginTop: 3,
-                    fontFamily: "'Inter', sans-serif",
+                    fontFamily: "'Outfit', sans-serif",
                     fontSize: 8.5, fontWeight: 700, color: "#7ee098",
                     letterSpacing: "0.08em",
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
@@ -1378,12 +1374,11 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
 // ─────────────────────────────────────────────────────────────────────
 
 function SectionLabel({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
-  // Editorial section label — Source Serif 4 italic, the magazine
+  // Editorial section label — Playfair Display italic, the magazine
   // department-tag feel ("The Cut", "Lookbook", "Where to Next").
-  // Optical sizing tuned for headers, generous tracking.
   return (
     <div style={{
-      fontFamily: "'Source Serif 4', serif",
+      fontFamily: "'Playfair Display', serif",
       fontStyle: "italic",
       fontSize: 14,
       fontWeight: 700,
@@ -1403,7 +1398,7 @@ function Badge({ children, variant }: { children: React.ReactNode; variant: "sol
     <span style={{
       display: "inline-flex",
       alignItems: "center",
-      fontFamily: "'Inter', sans-serif",
+      fontFamily: "'Outfit', sans-serif",
       fontSize: 9.5,
       fontWeight: 800,
       letterSpacing: "0.1em",
@@ -1448,7 +1443,7 @@ function ActionCell({ label, title, icon, variant, onClick }: {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontFamily: "'Source Serif 4', serif",
+          fontFamily: "'Playfair Display', serif",
           fontSize: 9.5,
           fontWeight: 800,
           letterSpacing: "0.14em",
@@ -1457,7 +1452,7 @@ function ActionCell({ label, title, icon, variant, onClick }: {
           marginBottom: 1,
         }}>{label}</div>
         <div style={{
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 13,
           fontWeight: 700,
           color: isPrimary ? "#0a1a10" : "#fff",
@@ -1512,7 +1507,7 @@ function RoundPlayerStack({ members }: { members: MemberLite[] }) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
-              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 800, color: "rgba(126,200,140,0.95)", letterSpacing: "0.02em" }}>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "rgba(126,200,140,0.95)", letterSpacing: "0.02em" }}>
                 {playerInitials(m)}
               </span>
             )}
@@ -1527,7 +1522,7 @@ function RoundPlayerStack({ members }: { members: MemberLite[] }) {
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.85)" }}>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.85)" }}>
             +{extra}
           </span>
         </div>
@@ -1596,10 +1591,10 @@ function CourseStats({ course }: { course: CourseLite }) {
 function StatCell({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", lineHeight: 1.05, minWidth: 0 }}>
-      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(126,200,140,0.85)" }}>
+      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(126,200,140,0.85)" }}>
         {label}
       </span>
-      <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 17, fontWeight: 700, fontVariationSettings: "'opsz' 60", color: "#fff", letterSpacing: "-0.005em", marginTop: 2 }}>
+      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 700, fontVariationSettings: "'opsz' 60", color: "#fff", letterSpacing: "-0.005em", marginTop: 2 }}>
         {value}
       </span>
     </div>
@@ -1631,7 +1626,7 @@ function FlagBadge({ stop, isNext, onTap }: { stop: Stop; isNext: boolean; onTap
         // eslint-disable-next-line @next/next/no-img-element
         <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
       ) : (
-        <span style={{ fontFamily: "'Source Serif 4', serif", fontSize: 13, fontWeight: 800, color: "#0c1c13" }}>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#0c1c13" }}>
           {initialsOf(stop.course.name)}
         </span>
       )}
@@ -1678,7 +1673,7 @@ function ActionCellSingle({ title, icon, onClick }: {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 13.5, fontWeight: 800,
           color: "#0a1a10",
           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
@@ -1686,7 +1681,7 @@ function ActionCellSingle({ title, icon, onClick }: {
           lineHeight: 1.1,
         }}>{title}</div>
         <div style={{
-          fontFamily: "'Inter', sans-serif",
+          fontFamily: "'Outfit', sans-serif",
           fontSize: 9.5, fontWeight: 600,
           color: "rgba(10,26,16,0.62)",
           marginTop: 1,
@@ -1748,7 +1743,7 @@ function FairwayPlaceholder({ logo, courseName }: { logo: string | null; courseN
             <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
         ) : (
-          <div style={{ width: 86, height: 86, borderRadius: 16, background: "rgba(244,236,214,0.06)", border: "1px solid rgba(244,236,214,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Source Serif 4', serif", fontSize: 32, fontWeight: 800, color: "rgba(244,236,214,0.7)", letterSpacing: "0.05em" }}>
+          <div style={{ width: 86, height: 86, borderRadius: 16, background: "rgba(244,236,214,0.06)", border: "1px solid rgba(244,236,214,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display', serif", fontSize: 32, fontWeight: 800, color: "rgba(244,236,214,0.7)", letterSpacing: "0.05em" }}>
             {initialsOf(courseName)}
           </div>
         )}
@@ -1785,7 +1780,7 @@ function AvatarStack({ members }: { members: MemberLite[] }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={cdnImage(m.avatarUrl)} alt={m.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.65)" }}>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.65)" }}>
               {(m.displayName || m.username || "?").charAt(0).toUpperCase()}
             </span>
           )}
@@ -1797,7 +1792,7 @@ function AvatarStack({ members }: { members: MemberLite[] }) {
 
 function PulsingHint() {
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#4da862", textTransform: "uppercase" }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#4da862", textTransform: "uppercase" }}>
       <style>{`@keyframes tourit-hint-pulse { 0%,100% { transform: translateY(0); opacity:1 } 50% { transform: translateY(-2px); opacity:0.5 } }`}</style>
       Swipe up
       <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "tourit-hint-pulse 1.6s ease-in-out infinite" }}>

@@ -81,7 +81,7 @@ export default function OfficialMediaCard({ media, width = 132 }: { media: Offic
             background: "rgba(7,16,10,0.78)",
             border: "1px solid rgba(126,200,140,0.7)",
             borderRadius: 99,
-            fontFamily: "'Inter', sans-serif",
+            fontFamily: "'Outfit', sans-serif",
             fontSize: 8.5, fontWeight: 800,
             letterSpacing: "0.12em", textTransform: "uppercase",
             color: "#7ed28b",
@@ -108,7 +108,7 @@ export default function OfficialMediaCard({ media, width = 132 }: { media: Offic
         <div style={{ position: "absolute", left: 8, right: 8, bottom: 8 }}>
           {media.caption && (
             <div style={{
-              fontFamily: "'Inter', sans-serif", fontSize: 11.5, fontWeight: 700,
+              fontFamily: "'Outfit', sans-serif", fontSize: 11.5, fontWeight: 700,
               color: "#fff",
               lineHeight: 1.2,
               display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
@@ -120,7 +120,7 @@ export default function OfficialMediaCard({ media, width = 132 }: { media: Offic
             </div>
           )}
           <div style={{
-            fontFamily: "'Inter', sans-serif", fontSize: 9, fontWeight: 700,
+            fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700,
             letterSpacing: "0.1em", textTransform: "uppercase",
             color: "rgba(126,200,140,0.95)",
           }}>
@@ -156,7 +156,7 @@ function OfficialMediaFullscreen({ media, displaySrc, thumbnail, isVideo, onClos
 
       {/* FROM THE COURSE pill — anchored top-left so it's visible
           on top of either the image or the playing video. */}
-      <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0) + 14px)", left: 14, zIndex: 2, display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", background: "rgba(7,16,10,0.78)", border: "1px solid rgba(126,200,140,0.7)", borderRadius: 99, fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7ed28b", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}>
+      <div style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0) + 14px)", left: 14, zIndex: 2, display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", background: "rgba(7,16,10,0.78)", border: "1px solid rgba(126,200,140,0.7)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7ed28b", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" />
         </svg>
@@ -180,7 +180,7 @@ function OfficialMediaFullscreen({ media, displaySrc, thumbnail, isVideo, onClos
           <img src={cdnImage(media.url)} alt={media.caption ?? "Official media"} style={{ width: "100%", maxHeight: "75vh", objectFit: "contain", borderRadius: 12, background: "#000" }} />
         )}
         {media.caption && (
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)", textAlign: "center", lineHeight: 1.4, padding: "0 12px" }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)", textAlign: "center", lineHeight: 1.4, padding: "0 12px" }}>
             {media.caption}
           </div>
         )}

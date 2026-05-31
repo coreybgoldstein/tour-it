@@ -712,7 +712,7 @@ function TourPageInner() {
            .tourit-sheet-grip, .tourit-sheet-footer) live in globals.css
            so every sheet across the app stays uniform. */
         /* Search box mirrors the home "Tour It All" hero EXACTLY —
-           green-rim glow, stacked Source Serif 4 placeholder + Inter
+           green-rim glow, stacked Playfair Display placeholder + Outfit
            subtitle inside the box, identical paddings + dimensions. */
         .search-box { display: flex; align-items: center; gap: 10px; background: rgba(7,30,15,0.85); border: 1px solid rgba(77,168,98,0.55); border-radius: 12px; padding: 11px 16px; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 0 0 1px rgba(77,168,98,0.2), 0 0 18px rgba(77,168,98,0.18); }
         .search-box.focused { border-color: rgba(77,168,98,0.85); box-shadow: 0 0 0 1px rgba(77,168,98,0.4), 0 0 22px rgba(77,168,98,0.25); }
@@ -720,14 +720,14 @@ function TourPageInner() {
            green-bordered box. Matches the home version's stacked
            span structure. */
         .search-text-col { flex: 1; display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; min-width: 0; }
-        /* Input itself: white Inter when typed, Source Serif 4 +
+        /* Input itself: white Outfit when typed, Playfair Display +
            full-saturation green for the "Tour It All" placeholder.
            Same look as the home button's title row. */
-        .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Inter', sans-serif; font-style: normal; font-size: 17px; font-weight: 600; color: #fff; letter-spacing: 0.005em; padding: 0; }
-        .search-input::placeholder { font-family: 'Source Serif 4', serif; color: #4da862; font-style: normal; font-size: 17px; font-weight: 800; letter-spacing: 0.01em; opacity: 1; }
+        .search-input { background: none; border: none; outline: none; width: 100%; font-family: 'Outfit', sans-serif; font-style: normal; font-size: 17px; font-weight: 600; color: #fff; letter-spacing: 0.005em; padding: 0; }
+        .search-input::placeholder { font-family: 'Playfair Display', serif; color: #4da862; font-style: normal; font-size: 17px; font-weight: 800; letter-spacing: 0.01em; opacity: 1; }
         /* Subtitle: Inter, matching home exactly. Sits inside the
            box on the second line. */
-        .search-subtitle { font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 500; color: rgba(126,200,140,0.7); letter-spacing: 0.04em; margin-top: 2px; }
+        .search-subtitle { font-family: 'Outfit', sans-serif; font-size: 10.5px; font-weight: 500; color: rgba(126,200,140,0.7); letter-spacing: 0.04em; margin-top: 2px; }
         .clear-btn { background: rgba(255,255,255,0.08); border: none; cursor: pointer; color: rgba(255,255,255,0.5); border-radius: 99px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .section-label { font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 10px; margin-top: 24px; }
         .course-row { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: opacity 0.15s; }

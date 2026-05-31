@@ -97,13 +97,13 @@ export default function ClaimCourseSheet({ courseId, courseName, open, onClose }
           <Confirm step={step} courseName={courseName} onClose={onClose} />
         ) : (
           <>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 4 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)", marginBottom: 4 }}>
               Course operator
             </div>
-            <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.18, marginBottom: 6 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.18, marginBottom: 6 }}>
               Claim {courseName}
             </div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.55)", lineHeight: 1.45, marginBottom: 14 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.55)", lineHeight: 1.45, marginBottom: 14 }}>
               Verify you work here and we&apos;ll give you a manager dashboard to edit official info, add staff cards, and link a tee sheet. We&apos;ll review and email you back.
             </div>
 
@@ -123,7 +123,7 @@ export default function ClaimCourseSheet({ courseId, courseName, open, onClose }
             </Field>
 
             {error && (
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(220,100,100,0.95)", marginTop: 6 }}>{error}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(220,100,100,0.95)", marginTop: 6 }}>{error}</div>
             )}
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
@@ -147,8 +147,8 @@ function Confirm({ step, courseName, onClose }: { step: "submitted" | "already";
       <div style={{ width: 56, height: 56, margin: "0 auto 12px", borderRadius: "50%", background: "rgba(77,168,98,0.16)", border: "1px solid rgba(77,168,98,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
       </div>
-      <div style={{ fontFamily: "'Source Serif 4', serif", fontSize: 19, fontWeight: 700, color: "#fff", marginBottom: 8 }}>{title}</div>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.5, marginBottom: 18 }}>{body}</div>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 19, fontWeight: 700, color: "#fff", marginBottom: 8 }}>{title}</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.5, marginBottom: 18 }}>{body}</div>
       <button onClick={onClose} style={primaryBtn}>Done</button>
     </div>
   );
@@ -157,7 +157,7 @@ function Confirm({ step, courseName, onClose }: { step: "submitted" | "already";
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 10 }}>
-      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>{label}</div>
       {children}
     </div>
   );
@@ -169,8 +169,8 @@ const inputStyle: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.1)",
   borderRadius: 9,
   padding: "10px 12px",
-  fontFamily: "'Inter', sans-serif", fontSize: 13.5,
+  fontFamily: "'Outfit', sans-serif", fontSize: 13.5,
   color: "#fff", outline: "none",
 };
-const ghostBtn: React.CSSProperties = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "9px 16px", fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 600, color: "rgba(255,255,255,0.85)", cursor: "pointer" };
-const primaryBtn: React.CSSProperties = { background: "#2d7a42", border: "1px solid #4da862", borderRadius: 8, padding: "9px 18px", fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.02em" };
+const ghostBtn: React.CSSProperties = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "9px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 600, color: "rgba(255,255,255,0.85)", cursor: "pointer" };
+const primaryBtn: React.CSSProperties = { background: "#2d7a42", border: "1px solid #4da862", borderRadius: 8, padding: "9px 18px", fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.02em" };
