@@ -9,6 +9,7 @@ import { useLike, seedLikedCache } from "@/hooks/useLike";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { useSave } from "@/hooks/useSave";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
+import { ClipRail } from "@/components/clip/ClipRail";
 import { HoleSideBar } from "@/components/clip/HoleSideBar";
 import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
 import { IntelPanel } from "@/components/clip/IntelPanel";
@@ -244,7 +245,6 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
   const isDesktop = useIsDesktop();
   const [muted, setMuted] = useState(sessionMute.get());
   const [videoPaused, setVideoPaused] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [intelOpen, setIntelOpen] = useState(false);
   const { liked, likeCount, toggleLike } = useLike({
     uploadId: clip.id,
@@ -284,15 +284,6 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
     sessionMute.set(next);
   };
 
-  const handleShare = async () => {
-    const base = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
-    const url = `${base}?clip=${clip.id}`;
-    const text = `Tour It — ${course?.name || ""}${clip.holeNumber ? ` — Hole ${clip.holeNumber}` : ""}`;
-    try {
-      if (navigator.share) await navigator.share({ title: text, text, url });
-      else { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); }
-    } catch {}
-  };
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100svh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}>
@@ -344,62 +335,24 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
       <HoleIdentityCard holeNumber={holeNumber} holePar={holePar} clipCount={totalClips} flush />
 
       {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
-      <div style={{ position: "absolute", right: 12, bottom: "calc(90px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
-        {hasNotes && !isOfficial && (
-          <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-            <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            </div>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
-          </button>
-        )}
-        {/* Avatar removed from right rail — now lives inline next to the
-            uploader's username in the bottom overlay (see below). */}
-        {/* Heart toggles like; count below opens the "Who liked this"
-            sheet. Same split as the home-feed RightPanel. Hidden on
-            operator media — it has no Upload row to engage with. */}
-        {!isOfficial && (
-        <>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <button onClick={toggleLike} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </div>
-          </button>
-          <button
-            onClick={onShowLikes && likeCount > 0 ? () => onShowLikes(clip.id) : undefined}
-            disabled={!onShowLikes || likeCount === 0}
-            style={{ background: "none", border: "none", padding: "0 4px", cursor: onShowLikes && likeCount > 0 ? "pointer" : "default" }}
-          >
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCount}</span>
-          </button>
-        </div>
-        <button onClick={onComment} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: commented ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${commented ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill={commented ? "#fff" : "none"} stroke={commented ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{clip.commentCount || 0}</span>
-        </button>
-        </>
-        )}
-        <button onClick={handleShare} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: copied ? "rgba(26,158,66,0.2)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${copied ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {copied
-              ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 }}><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.05em" }}>SENT</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 3 }}><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em", marginRight: "-0.12em" }}>SEND</span><div style={{ width: 20, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} /><span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span></div>
-            }
-          </div>
-          <span style={{ height: 13, display: "block" }} />
-        </button>
-        {/* Kebab — edit (own clip) or report (others') — sits below SEND IT */}
-        {(onEdit || onReport) && (
-          <button onClick={onEdit ?? onReport} aria-label={onEdit ? "Clip options" : "Report clip"} style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "50%", width: 34, height: 34, cursor: "pointer", padding: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
-            </svg>
-          </button>
-        )}
-      </div>
+      <ClipRail
+        bottom="calc(90px + env(safe-area-inset-bottom))"
+        zIndex={10}
+        onIntel={hasNotes && !isOfficial ? () => setIntelOpen(o => !o) : undefined}
+        intelActive={intelOpen}
+        showEngagement={!isOfficial}
+        liked={liked}
+        likeCount={likeCount}
+        onToggleLike={toggleLike}
+        onShowLikes={onShowLikes ? () => onShowLikes(clip.id) : undefined}
+        commented={commented}
+        commentCount={clip.commentCount || 0}
+        onComment={onComment}
+        sharePath={`/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}?clip=${clip.id}`}
+        shareTitle={`Tour It — ${course?.name || ""}${clip.holeNumber ? ` — Hole ${clip.holeNumber}` : ""}`}
+        kebab={onEdit ? "options" : onReport ? "report" : undefined}
+        onKebab={onEdit ?? onReport}
+      />
 
       <IntelPanel
         open={intelOpen}

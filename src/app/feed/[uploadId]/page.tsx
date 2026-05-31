@@ -17,6 +17,8 @@ import { createClient } from "@/lib/supabase/client";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { cdnImage } from "@/lib/cdnImage";
+import { ClipRail } from "@/components/clip/ClipRail";
+import EditClipSheet from "@/components/EditClipSheet";
 
 type CommentItem = {
   id: string;
@@ -40,6 +42,7 @@ type Clip = {
   courseCity: string | null;
   courseState: string | null;
   courseLogoUrl: string | null;
+  holeId: string | null;
   holeNumber: number | null;
   holePar: number | null;
   holeYardage: number | null;
@@ -145,6 +148,14 @@ export default function FeedPage() {
     window.setTimeout(() => { commentJustOpenedRef.current = false; }, 500);
     setCommentUploadId(uploadId);
   }, []);
+  // Kebab menu — the clip whose 3-dot was tapped. Owner clips open the
+  // edit/delete options sheet; others open the report sheet.
+  const [menuClip, setMenuClip] = useState<Clip | null>(null);
+  const [editClip, setEditClip] = useState<Clip | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [reportReason, setReportReason] = useState<string | null>(null);
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
   // Current user — fetched once, used for posting + the sign-in CTA.
   const [me, setMe] = useState<{ id: string; username: string | null; displayName: string | null; avatarUrl: string | null } | null>(null);
   useEffect(() => {
@@ -247,6 +258,16 @@ export default function FeedPage() {
     setSubmittingComment(false);
   }
 
+  async function deleteMenuClip() {
+    if (!menuClip || !me || deleting) return;
+    setDeleting(true);
+    const sb = createClient();
+    await sb.from("Upload").delete().eq("id", menuClip.id).eq("userId", me.id);
+    setClips(prev => prev.filter(c => c.id !== menuClip.id));
+    setDeleting(false);
+    setMenuClip(null);
+  }
+
   // Fetch the requested clip + a window of recent approved clips so
   // the user has something to swipe through. The requested clip is
   // pinned to the front of the array — anyone landing on the page
@@ -320,6 +341,7 @@ export default function FeedPage() {
           courseCity: c?.city ?? null,
           courseState: c?.state ?? null,
           courseLogoUrl: c?.logoUrl ?? null,
+          holeId: r.holeId ?? null,
           holeNumber: h?.holeNumber ?? null,
           holePar: h?.par ?? null,
           holeYardage: h?.yardage ?? null,
@@ -414,6 +436,8 @@ export default function FeedPage() {
               onCourse={() => router.push(`/courses/${c.courseId}`)}
               onUser={() => c.uploaderUsername && router.push(`/profile/${c.uploaderUsername}`)}
               onComment={() => openCommentSheet(c.id)}
+              onKebab={(e) => { e.stopPropagation(); setMenuClip(c); }}
+              currentUserId={me?.id ?? null}
               registerVideo={(el) => (videoRefs.current[c.id] = el)}
               isActive={i === activeIndex}
             />
@@ -484,12 +508,103 @@ export default function FeedPage() {
           </div>
         </>
       )}
+
+      {/* Kebab menu — owner sees edit/delete options; others see the
+          report sheet. Single source: menuClip + me decide which. */}
+      {menuClip && me && menuClip.uploaderId === me.id && (
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => setMenuClip(null)} />
+          <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
+            <button
+              onClick={() => { setEditClip(menuClip); setMenuClip(null); }}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "none", border: "none", padding: "14px 6px", cursor: "pointer", textAlign: "left" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>Edit clip</span>
+            </button>
+            <button
+              onClick={deleteMenuClip}
+              disabled={deleting}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", background: "none", border: "none", padding: "14px 6px", cursor: "pointer", textAlign: "left", opacity: deleting ? 0.6 : 1 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(220,60,60,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "rgba(220,60,60,0.85)" }}>{deleting ? "Deleting…" : "Delete clip"}</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Report sheet — non-owner clips. Same ModerationReport pipeline
+          as the hole/course/profile pages. */}
+      {menuClip && (!me || menuClip.uploaderId !== me.id) && (
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => { setMenuClip(null); setReportReason(null); setReportDone(false); }} />
+          <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
+            {reportDone ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>Report submitted</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Thanks for keeping Tour It quality.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>Report clip</div>
+                {[
+                  { value: "WRONG_HOLE", label: "Wrong hole" },
+                  { value: "WRONG_COURSE", label: "Wrong course" },
+                  { value: "LOW_QUALITY", label: "Low quality / unviewable" },
+                  { value: "INAPPROPRIATE", label: "Inappropriate content" },
+                  { value: "SPAM", label: "Spam" },
+                  { value: "COPYRIGHT", label: "Copyright issue" },
+                  { value: "OTHER", label: "Other" },
+                ].map(opt => (
+                  <button key={opt.value} onClick={() => setReportReason(opt.value)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: reportReason === opt.value ? "rgba(255,255,255,0.06)" : "none", border: reportReason === opt.value ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent", borderRadius: 10, padding: "11px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.75)", textAlign: "left" }}>
+                    {opt.label}
+                    {reportReason === opt.value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </button>
+                ))}
+                <button
+                  disabled={!reportReason || submittingReport}
+                  onClick={async () => {
+                    if (!reportReason || !me || !menuClip) return;
+                    setSubmittingReport(true);
+                    await createClient().from("ModerationReport").insert({ id: crypto.randomUUID(), reportedById: me.id, uploadId: menuClip.id, reason: reportReason, createdAt: new Date().toISOString() });
+                    setSubmittingReport(false);
+                    setReportDone(true);
+                    setTimeout(() => { setMenuClip(null); setReportReason(null); setReportDone(false); }, 1800);
+                  }}
+                  style={{ width: "100%", marginTop: 8, background: reportReason ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: reportReason ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)", cursor: reportReason ? "pointer" : "not-allowed" }}>
+                  {submittingReport ? "Submitting…" : "Submit report"}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Edit clip sheet — own clips. Patches local state on save. */}
+      {editClip && (
+        <EditClipSheet
+          uploadId={editClip.id}
+          courseId={editClip.courseId}
+          currentHoleId={editClip.holeId}
+          currentHoleNumber={editClip.holeNumber}
+          currentUserId={me?.id ?? null}
+          onClose={() => setEditClip(null)}
+          onSaved={(data) => {
+            setClips(prev => prev.map(c => c.id === editClip.id ? { ...c, shotType: data.shotType, holeNumber: data.holeNumber, holeId: data.holeId } : c));
+            setEditClip(null);
+          }}
+        />
+      )}
     </>
   );
 }
 
 function FeedClip({
-  clip, muted, onToggleMute, onBack, onCourse, onUser, onComment, registerVideo, isActive,
+  clip, muted, onToggleMute, onBack, onCourse, onUser, onComment, onKebab, currentUserId, registerVideo, isActive,
 }: {
   clip: Clip;
   muted: boolean;
@@ -498,6 +613,8 @@ function FeedClip({
   onCourse: () => void;
   onUser: () => void;
   onComment: () => void;
+  onKebab: (e: React.MouseEvent) => void;
+  currentUserId: string | null;
   registerVideo: (el: HTMLVideoElement | null) => void;
   isActive: boolean;
 }) {
@@ -506,9 +623,7 @@ function FeedClip({
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(clip.likeCount);
   const [progress, setProgress] = useState(0); // 0..1
-  // "Sent" flash state — mirrors the pattern in profile/[userId]
-  // and courses/[id] clip cards (SEND → SENT ✓ for 2 seconds).
-  const [shareSent, setShareSent] = useState(false);
+  const isOwner = !!currentUserId && clip.uploaderId === currentUserId;
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Track current user's like state on this clip — single Like row
@@ -671,69 +786,23 @@ function FeedClip({
         }
       </button>
 
-      {/* Right rail — INTEL · LIKE · COMMENT · SEND IT · MORE.
-          Visually matches the classic feed's vertical stack. Intel /
-          Comment / Send / More are placeholder-routes for now (open the
-          course page or no-op); Like is wired through to the DB. */}
-      <div data-overlay-control style={{ position: "absolute", right: 12, bottom: "calc(env(safe-area-inset-bottom, 0px) + 100px)", display: "flex", flexDirection: "column", gap: 14, alignItems: "center", zIndex: 5 }}>
-        {/* Intel */}
-        <RailButton label="INTEL" onClick={(e) => { e.stopPropagation(); onCourse(); }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>
-        </RailButton>
-        {/* Like */}
-        <RailButton label={String(likeCount)} onClick={toggleLike} filled={liked}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </RailButton>
-        {/* Comment — opens the bottom-sheet (lifted state on FeedPage). */}
-        <RailButton label={String(clip.commentCount)} onClick={(e) => { e.stopPropagation(); onComment(); }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-        </RailButton>
-        {/* SEND IT — visual copied 1:1 from profile/[userId] line ~185.
-            Dark circle with backdrop-blur, white SEND / bright-green IT
-            stacked text, divider line between, SENT ✓ flash on share.
-            Behaves identically: Web Share → clipboard fallback → flash
-            "SENT" for 2s. */}
-        <button
-          onClick={async (e) => {
-            e.stopPropagation();
-            const url = `${window.location.origin}/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`;
-            try {
-              if (typeof navigator !== "undefined" && (navigator as any).share) {
-                await (navigator as any).share({ title: clip.courseName ?? "Tour It clip", url });
-              } else {
-                await navigator.clipboard.writeText(url);
-              }
-              setShareSent(true);
-              setTimeout(() => setShareSent(false), 2000);
-            } catch {}
-          }}
-          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", padding: 0 }}
-        >
-          <div style={{
-            width: 40, height: 40, borderRadius: "50%",
-            background: shareSent ? "rgba(26,158,66,0.2)" : "rgba(0,0,0,0.6)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            border: `1px solid ${shareSent ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            {shareSent
-              ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.05em" }}>SENT</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                </div>
-              : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 3 }}>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em", marginRight: "-0.12em" }}>SEND</span>
-                  <div style={{ width: 20, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} />
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span>
-                </div>
-            }
-          </div>
-          <span style={{ height: 13, display: "block" }} />
-        </button>
-      </div>
+      {/* Right rail — shared ClipRail (uniform across all clip surfaces).
+          INTEL opens the course page here; owner clips get the edit/delete
+          kebab, others get the report kebab. */}
+      <ClipRail
+        bottom="calc(env(safe-area-inset-bottom, 0px) + 100px)"
+        zIndex={5}
+        onIntel={(e) => { e.stopPropagation(); onCourse(); }}
+        liked={liked}
+        likeCount={likeCount}
+        onToggleLike={toggleLike}
+        commentCount={clip.commentCount}
+        onComment={(e) => { e.stopPropagation(); onComment(); }}
+        sharePath={`/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`}
+        shareTitle={clip.courseName ?? "Tour It clip"}
+        kebab={isOwner ? "options" : "report"}
+        onKebab={onKebab}
+      />
 
       {/* Bottom-left: uploader avatar + username + date */}
       <button
@@ -768,20 +837,3 @@ function FeedClip({
   );
 }
 
-function RailButton({ children, label, onClick, filled }: { children: React.ReactNode; label?: string; onClick: (e: React.MouseEvent) => void; filled?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
-    >
-      <div style={{ width: 42, height: 42, borderRadius: "50%", background: filled ? "rgba(77,168,98,0.95)" : "rgba(77,168,98,0.85)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
-        {children}
-      </div>
-      {label && (
-        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 700, color: "#fff", letterSpacing: "0.04em", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>
-          {label}
-        </span>
-      )}
-    </button>
-  );
-}

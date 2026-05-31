@@ -8,6 +8,7 @@ import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
+import { ClipRail } from "@/components/clip/ClipRail";
 
 type Round = {
   id: string; userId: string; courseId: string; date: string;
@@ -55,6 +56,13 @@ export default function RoundDetailPage() {
   const [editPutts, setEditPutts] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Report clip sheet — non-owner clips get a report kebab (clip-rail
+  // uniformity). Same ModerationReport pipeline as the hole/course pages.
+  const [reportClipId, setReportClipId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState<string | null>(null);
+  const [submittingReport, setSubmittingReport] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
 
   useEffect(() => {
     if (!roundId || !userId) return;
@@ -309,43 +317,22 @@ export default function RoundDetailPage() {
                   </div>
                 )}
 
-                {/* Right panel */}
-                <div style={{ position: "absolute", right: 12, bottom: "calc(90px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
-                  {/* Uploader avatar */}
-                  <button onClick={() => router.push(`/profile/${clip.uploaderId}`)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.5)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {clip.uploaderAvatarUrl
-                        ? <img src={clip.uploaderAvatarUrl} alt={clip.uploaderUsername} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                      }
-                    </div>
-                  </button>
-                  {/* Like */}
-                  <button onClick={() => toggleLike(clip.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: likedIds.has(clip.id) ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${likedIds.has(clip.id) ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill={likedIds.has(clip.id) ? "#fff" : "none"} stroke={likedIds.has(clip.id) ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    </div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{likeCounts[clip.id] ?? 0}</span>
-                  </button>
-                  {/* Comment */}
-                  <button onClick={() => router.push(`/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    </div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{clip.commentCount}</span>
-                  </button>
-                  {/* Share */}
-                  <button onClick={() => { const url = `${window.location.origin}/courses/${clip.courseId}`; if (navigator.share) navigator.share({ title: course?.name ?? "", url }).catch(() => {}); else navigator.clipboard.writeText(url).catch(() => {}); }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 3 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em" }}>SEND</span>
-                        <div style={{ width: 20, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} />
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em" }}>IT</span>
-                      </div>
-                    </div>
-                    <span style={{ height: 13, display: "block" }} />
-                  </button>
-                </div>
+                {/* Right rail — shared ClipRail (uniform across all clip
+                    surfaces). No INTEL here; comment routes to the hole page.
+                    Non-owner clips get the report kebab. */}
+                <ClipRail
+                  bottom="calc(90px + env(safe-area-inset-bottom))"
+                  zIndex={10}
+                  liked={likedIds.has(clip.id)}
+                  likeCount={likeCounts[clip.id] ?? 0}
+                  onToggleLike={() => toggleLike(clip.id)}
+                  commentCount={clip.commentCount}
+                  onComment={() => router.push(`/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`)}
+                  sharePath={`/courses/${clip.courseId}`}
+                  shareTitle={course?.name ?? ""}
+                  kebab={currentUserId && clip.uploaderId !== currentUserId ? "report" : undefined}
+                  onKebab={currentUserId && clip.uploaderId !== currentUserId ? () => setReportClipId(clip.id) : undefined}
+                />
 
                 {/* Hole # badge */}
                 {clip.holeNumber && (
@@ -394,6 +381,54 @@ export default function RoundDetailPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Report clip sheet */}
+      {reportClipId && (
+        <>
+          <div className="tourit-sheet-backdrop" onClick={() => { setReportClipId(null); setReportReason(null); setReportDone(false); }} />
+          <div className="tourit-sheet tourit-sheet--auto" onClick={e => e.stopPropagation()}>
+            <div className="tourit-sheet-grip" />
+            {reportDone ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 6 }}>Report submitted</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>Thanks for keeping Tour It quality.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 14 }}>Report clip</div>
+                {[
+                  { value: "WRONG_HOLE", label: "Wrong hole" },
+                  { value: "WRONG_COURSE", label: "Wrong course" },
+                  { value: "LOW_QUALITY", label: "Low quality / unviewable" },
+                  { value: "INAPPROPRIATE", label: "Inappropriate content" },
+                  { value: "SPAM", label: "Spam" },
+                  { value: "COPYRIGHT", label: "Copyright issue" },
+                  { value: "OTHER", label: "Other" },
+                ].map(opt => (
+                  <button key={opt.value} onClick={() => setReportReason(opt.value)}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: reportReason === opt.value ? "rgba(255,255,255,0.06)" : "none", border: reportReason === opt.value ? "1px solid rgba(255,255,255,0.12)" : "1px solid transparent", borderRadius: 10, padding: "11px 14px", marginBottom: 6, cursor: "pointer", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.75)", textAlign: "left" }}>
+                    {opt.label}
+                    {reportReason === opt.value && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                  </button>
+                ))}
+                <button
+                  disabled={!reportReason || submittingReport}
+                  onClick={async () => {
+                    if (!reportReason || !currentUserId) return;
+                    setSubmittingReport(true);
+                    await createClient().from("ModerationReport").insert({ id: crypto.randomUUID(), reportedById: currentUserId, uploadId: reportClipId, reason: reportReason, createdAt: new Date().toISOString() });
+                    setSubmittingReport(false);
+                    setReportDone(true);
+                    setTimeout(() => { setReportClipId(null); setReportReason(null); setReportDone(false); }, 1800);
+                  }}
+                  style={{ width: "100%", marginTop: 8, background: reportReason ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: reportReason ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)", cursor: reportReason ? "pointer" : "not-allowed" }}>
+                  {submittingReport ? "Submitting…" : "Submit report"}
+                </button>
+              </>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

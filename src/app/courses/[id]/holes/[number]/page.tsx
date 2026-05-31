@@ -9,6 +9,7 @@ import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { HoleSideBar } from "@/components/clip/HoleSideBar";
 import { HoleIdentityCard } from "@/components/clip/HoleIdentityCard";
+import { ClipRail } from "@/components/clip/ClipRail";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
@@ -301,7 +302,26 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
   );
 }
 
-function ClipActions({ upload, likedIds, currentUserId, onShowLikes }: { upload: Upload; likedIds?: Set<string>; currentUserId?: string | null; onShowLikes?: (uploadId: string) => void }) {
+// Keyed per active upload so useLike re-seeds when the user swipes between
+// clips. Wraps the shared ClipRail while preserving the full like pipeline
+// (notification + points) that useLike provides.
+function HoleClipRail({
+  upload, likedIds, commented, currentUserId, onShowLikes,
+  onIntel, intelActive, onComment, sharePath, shareTitle, kebab, onKebab,
+}: {
+  upload: Upload;
+  likedIds?: Set<string>;
+  commented?: boolean;
+  currentUserId?: string | null;
+  onShowLikes?: (uploadId: string) => void;
+  onIntel?: (e: React.MouseEvent) => void;
+  intelActive?: boolean;
+  onComment: (e: React.MouseEvent) => void;
+  sharePath: string;
+  shareTitle?: string;
+  kebab?: "options" | "report";
+  onKebab?: (e: React.MouseEvent) => void;
+}) {
   const { liked, likeCount, toggleLike } = useLike({
     uploadId: upload.id,
     initialLikeCount: upload.likeCount || 0,
@@ -309,23 +329,22 @@ function ClipActions({ upload, likedIds, currentUserId, onShowLikes }: { upload:
     currentUserId: currentUserId ?? null,
   });
   return (
-    // Heart toggles like; the count below is its own tap target that
-    // opens the "Who liked this" sheet (clip uniformity rule —
-    // matches home feed + course profile FeedCard).
-    <div className="action-btn" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <button onClick={toggleLike} style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-        <div className="action-icon" style={liked ? { borderColor: "#1a9e42", background: "#1a9e42" } : {}}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "#fff" : "none"} stroke={liked ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </div>
-      </button>
-      <button
-        onClick={onShowLikes && likeCount > 0 ? () => onShowLikes(upload.id) : undefined}
-        disabled={!onShowLikes || likeCount === 0}
-        style={{ background: "none", border: "none", padding: "0 4px", cursor: onShowLikes && likeCount > 0 ? "pointer" : "default" }}
-      >
-        <span className="action-label">{likeCount}</span>
-      </button>
-    </div>
+    <ClipRail
+      bottom="calc(90px + env(safe-area-inset-bottom))"
+      onIntel={onIntel}
+      intelActive={intelActive}
+      liked={liked}
+      likeCount={likeCount}
+      onToggleLike={toggleLike}
+      onShowLikes={onShowLikes ? () => onShowLikes(upload.id) : undefined}
+      commented={commented}
+      commentCount={upload.commentCount || 0}
+      onComment={onComment}
+      sharePath={sharePath}
+      shareTitle={shareTitle}
+      kebab={kebab}
+      onKebab={onKebab}
+    />
   );
 }
 
@@ -359,7 +378,6 @@ export default function HolePage() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [intelOpen, setIntelOpen] = useState(false);
   const [muted, setMuted] = useState(sessionMute.get());
-  const [copied, setCopied] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
@@ -785,22 +803,6 @@ export default function HolePage() {
     );
   }
 
-  const handleShare = async () => {
-    const activeClipId = feed[activeIndex]?.id;
-    const base = `${window.location.origin}/courses/${id}/holes/${number}`;
-    const url = activeClipId ? `${base}?clip=${activeClipId}` : base;
-    const shareText = `Tour It — ${course?.name} — ${pageTitle}`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: shareText, text: shareText, url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch {}
-  };
-
   const holeNum = multiHoleKey ? null : Number(number);
   const par = hole?.par || 4;
   const pageTitle = multiHoleKey ? multiHoleKey.label : holeNum ? `Hole ${holeNum}` : "";
@@ -951,76 +953,40 @@ export default function HolePage() {
               );
             })()}
 
-            {/* Right sidebar — Intel → Avatar → Like → Comment → SEND IT → Report */}
-            <div className="right-actions">
-
-              {/* Intel */}
-              {hasIntel && (
-                <button className="action-btn" onClick={() => setIntelOpen(o => !o)}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                  </div>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "0.5px", color: "rgba(255,255,255,0.85)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>INTEL</span>
-                </button>
-              )}
-
-              {/* Uploader avatar removed from right rail — now lives inline
-                  next to the uploader's username in the bottom overlay
-                  (see below). Follow + button dropped from the avatar; the
-                  follow action still lives on the uploader's profile page. */}
-
-              {/* Like + Comment — suppressed on operator media, which has
-                  no Upload backing to engage with. */}
-              {!isOfficial && (
-                <>
-                  <ClipActions key={activeUpload.id} upload={activeUpload} likedIds={likedIds} currentUserId={user?.id ?? null} onShowLikes={(uploadId) => setLikesUploadId(uploadId)} />
-
-                  {/* Comment — filled green when the current user has
-                      commented on this clip, matching home feed + course
-                      profile + user profile. */}
-                  {(() => {
-                    const commented = !!commentedIds?.has(activeUpload.id);
-                    return (
-                      <button className="action-btn" onClick={() => setCommentUploadId(activeUpload.id)}>
-                        <div className="action-icon" style={commented ? { background: "#1a9e42", borderColor: "#1a9e42" } : undefined}>
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill={commented ? "#fff" : "none"} stroke={commented ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        </div>
-                        <span className="action-label">{activeUpload.commentCount || 0}</span>
-                      </button>
-                    );
-                  })()}
-                </>
-              )}
-
-              {/* SEND IT */}
-              <button className="action-btn" onClick={handleShare}>
-                <div className="action-icon" style={copied ? { borderColor: "rgba(26,158,66,0.5)", background: "rgba(26,158,66,0.2)" } : {}}>
-                  {copied
-                    ? <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.05em" }}>SENT</span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      </div>
-                    : <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, marginTop: 3 }}>
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#fff", letterSpacing: "0.12em", marginRight: "-0.12em" }}>SEND</span>
-                        <div style={{ width: 20, height: 1, background: "rgba(255,255,255,0.25)", margin: "2px 0" }} />
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span>
-                      </div>
-                  }
-                </div>
-                <span style={{ height: 13, display: "block" }} />
-              </button>
-
-              {/* Report (non-owner only) */}
-              {!isOfficial && user && activeUpload && activeUpload.userId !== user.id && (
-                <button className="action-btn" onClick={() => setReportClipId(activeUpload.id)}>
-                  <div className="action-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-                  </div>
-                  <span style={{ height: 13, display: "block" }} />
-                </button>
-              )}
-
-            </div>
+            {/* Right sidebar — shared ClipRail (uniform across all clip
+                surfaces). Operator media suppresses like/comment and the
+                report kebab; non-owners get the report kebab. */}
+            {isOfficial ? (
+              <ClipRail
+                bottom="calc(90px + env(safe-area-inset-bottom))"
+                onIntel={hasIntel ? () => setIntelOpen(o => !o) : undefined}
+                intelActive={intelOpen}
+                showEngagement={false}
+                liked={false}
+                likeCount={0}
+                onToggleLike={() => {}}
+                commentCount={0}
+                onComment={() => {}}
+                sharePath={`/courses/${id}/holes/${number}?clip=${activeUpload.id}`}
+                shareTitle={`Tour It — ${course?.name} — ${pageTitle}`}
+              />
+            ) : (
+              <HoleClipRail
+                key={activeUpload.id}
+                upload={activeUpload}
+                likedIds={likedIds}
+                commented={!!commentedIds?.has(activeUpload.id)}
+                currentUserId={user?.id ?? null}
+                onShowLikes={(uploadId) => setLikesUploadId(uploadId)}
+                onIntel={hasIntel ? () => setIntelOpen(o => !o) : undefined}
+                intelActive={intelOpen}
+                onComment={() => setCommentUploadId(activeUpload.id)}
+                sharePath={`/courses/${id}/holes/${number}?clip=${activeUpload.id}`}
+                shareTitle={`Tour It — ${course?.name} — ${pageTitle}`}
+                kebab={user && activeUpload.userId !== user.id ? "report" : undefined}
+                onKebab={user && activeUpload.userId !== user.id ? () => setReportClipId(activeUpload.id) : undefined}
+              />
+            )}
 
             {/* End-of-content toast */}
             {endOfContent && (

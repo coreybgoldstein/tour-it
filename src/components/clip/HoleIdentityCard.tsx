@@ -63,11 +63,14 @@ export function HoleIdentityCard({
         }}
       >
         {clipCount > 1 && (
-          <div style={{ position: "absolute", top: 8, right: 8, opacity: 0.55, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.8))" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="7" width="15" height="14" rx="2" />
-              <path d="M7 4h12a2 2 0 0 1 2 2v12" />
+          // "More clips here — swipe" affordance. Green pill + double
+          // up-chevron that bobs to draw the eye toward the vertical swipe.
+          <div style={{ position: "absolute", top: 6, right: 6, display: "flex", alignItems: "center", gap: 3, background: "rgba(77,168,98,0.95)", borderRadius: 99, padding: "3px 7px 3px 5px", boxShadow: "0 2px 8px rgba(0,0,0,0.45)" }}>
+            <svg className="clip-swipe-bob" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="18 15 12 9 6 15" />
+              <polyline points="18 21 12 15 6 21" opacity="0.5" />
             </svg>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "#fff", lineHeight: 1 }}>{clipCount}</span>
           </div>
         )}
         <div style={{
