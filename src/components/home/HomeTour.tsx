@@ -369,6 +369,9 @@ export default function HomeTour() {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
       }
+      // Videos lead, photos sink to the back (stable within each group so the
+      // shuffle still randomizes order) — matches the /feed video-first rule.
+      shuffled.sort((a, b) => (a.mediaType === "VIDEO" ? 0 : 1) - (b.mediaType === "VIDEO" ? 0 : 1));
       const seen = new Set<string>();
       const primary: any[] = [];
       const leftovers: any[] = [];

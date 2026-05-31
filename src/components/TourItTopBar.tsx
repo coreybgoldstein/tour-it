@@ -24,7 +24,7 @@ const HIDDEN_EXACT = new Set<string>([
   "/feedback",
   "/play",
 ]);
-const HIDDEN_PREFIXES = ["/courses/", "/onboarding", "/admin"];
+const HIDDEN_PREFIXES = ["/courses/", "/onboarding", "/admin", "/feed/"];
 
 // Home route ("/") is conditional. HomeClassic renders its own inline
 // TopBar (legacy feed home), so we MUST hide this one there to avoid

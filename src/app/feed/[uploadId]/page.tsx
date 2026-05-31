@@ -273,12 +273,20 @@ export default function FeedPage() {
       // Everything except the tapped clip, shuffled fresh each open then
       // interleaved so no course repeats within COURSE_GAP. The tapped
       // clip is always pinned to the front (the user came to see it).
+      // Videos lead; photos sink to the back — each group shuffled and
+      // course-spaced on its own, so a photo-heavy course can't crowd out
+      // the video reel up top.
       const rest = (feed as any[]).filter((u) => !starting || u.id !== starting.id);
-      const spaced = spaceByCourse(
-        shuffle(rest),
+      const leadCourseId = starting ? (starting as any).courseId : undefined;
+      const vids = rest.filter((u) => u.mediaType === "VIDEO");
+      const pics = rest.filter((u) => u.mediaType !== "VIDEO");
+      const spacedVids = spaceByCourse(shuffle(vids), COURSE_GAP, leadCourseId);
+      const spacedPics = spaceByCourse(
+        shuffle(pics),
         COURSE_GAP,
-        starting ? (starting as any).courseId : undefined,
+        spacedVids.length ? (spacedVids[spacedVids.length - 1] as any).courseId : leadCourseId,
       );
+      const spaced = [...spacedVids, ...spacedPics];
       const rows: any[] = starting ? [starting, ...spaced] : spaced;
 
       const courseIds = Array.from(new Set(rows.map((r) => r.courseId).filter(Boolean)));
