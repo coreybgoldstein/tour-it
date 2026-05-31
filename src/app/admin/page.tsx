@@ -79,6 +79,7 @@ type Stats = {
   clipsToday: number;
   pendingReports: number;
   pendingRequests: number;
+  pendingClaims: number;
   rejectedClips: number;
 };
 
@@ -129,6 +130,7 @@ export default function AdminPage() {
         { count: pendingReports },
         { count: rejectedClips },
         { count: pendingRequests },
+        { count: pendingClaims },
       ] = await Promise.all([
         supabase.from("Upload").select("*", { count: "exact", head: true }),
         supabase.from("User").select("*", { count: "exact", head: true }),
@@ -137,6 +139,7 @@ export default function AdminPage() {
         supabase.from("ModerationReport").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
         supabase.from("Upload").select("*", { count: "exact", head: true }).eq("moderationStatus", "REJECTED"),
         supabase.from("CourseRequest").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
+        supabase.from("CourseClaim").select("*", { count: "exact", head: true }).eq("status", "PENDING"),
       ]);
       setStats({
         totalClips: totalClips || 0,
@@ -145,6 +148,7 @@ export default function AdminPage() {
         clipsToday: clipsToday || 0,
         pendingReports: pendingReports || 0,
         pendingRequests: pendingRequests || 0,
+        pendingClaims: pendingClaims || 0,
         rejectedClips: rejectedClips || 0,
       });
 
@@ -375,8 +379,26 @@ export default function AdminPage() {
           <button onClick={() => router.push("/admin/courses")} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
             Courses →
           </button>
-          <button onClick={() => router.push("/admin/claims")} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
-            Claims →
+          <button
+            onClick={() => router.push("/admin/claims")}
+            style={{
+              position: "relative",
+              padding: "7px 14px",
+              background: (stats?.pendingClaims ?? 0) > 0 ? "rgba(232,53,58,0.12)" : "rgba(255,255,255,0.06)",
+              border: `1px solid ${(stats?.pendingClaims ?? 0) > 0 ? "rgba(232,53,58,0.45)" : "rgba(255,255,255,0.1)"}`,
+              borderRadius: 99,
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 12,
+              color: (stats?.pendingClaims ?? 0) > 0 ? "#ff6b6b" : "rgba(255,255,255,0.6)",
+              cursor: "pointer",
+              display: "inline-flex", alignItems: "center", gap: 6,
+            }}
+          >
+            Claims
+            {(stats?.pendingClaims ?? 0) > 0 && (
+              <span style={{ background: "#e8353a", color: "#fff", borderRadius: 99, padding: "1px 7px", fontSize: 10, fontWeight: 700 }}>{stats!.pendingClaims}</span>
+            )}
+            <span aria-hidden>→</span>
           </button>
         </div>
       </div>

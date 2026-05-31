@@ -51,6 +51,7 @@ type Course = {
   isClaimed: boolean;
   officialDescription: string | null;
   teeSheetUrl: string | null;
+  membershipInquiryUrl: string | null;
 };
 
 type Clip = {
@@ -1475,6 +1476,7 @@ const [editDescription, setEditDescription] = useState("");
           courseId={course.id}
           officialDescription={course.officialDescription}
           teeSheetUrl={course.teeSheetUrl}
+          membershipInquiryUrl={course.membershipInquiryUrl}
         />
       )}
 

@@ -27,11 +27,13 @@ type CourseOfficial = {
   name: string;
   city: string;
   state: string;
+  courseType: "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE" | null;
   isClaimed: boolean;
   description: string | null;
   officialDescription: string | null;
   websiteUrl: string | null;
   teeSheetUrl: string | null;
+  membershipInquiryUrl: string | null;
 };
 
 type Staff = {
@@ -86,7 +88,7 @@ export default function CourseManagePage() {
 
       const { data: row } = await supabase
         .from("Course")
-        .select("id, name, city, state, isClaimed, description, officialDescription, websiteUrl, teeSheetUrl")
+        .select("id, name, city, state, courseType, isClaimed, description, officialDescription, websiteUrl, teeSheetUrl, membershipInquiryUrl")
         .eq("id", courseId)
         .single();
 
@@ -110,19 +112,23 @@ export default function CourseManagePage() {
           Manage official info · {course.city}, {course.state}
         </div>
 
-        <OfficialInfoSection
-          courseId={course.id}
-          initial={{
-            officialDescription: course.officialDescription || "",
-            websiteUrl: course.websiteUrl || "",
-            teeSheetUrl: course.teeSheetUrl || "",
-          }}
-          ugcDescription={course.description}
-        />
+        {/* Section order per latest UX direction: media is the most
+            visual + most user-facing piece of operator content, so
+            it leads. Staff second. Text-only Official Info last. */}
+        <OfficialMediaSection courseId={course.id} />
 
         <StaffSection courseId={course.id} />
 
-        <OfficialMediaSection courseId={course.id} />
+        <OfficialInfoSection
+          courseId={course.id}
+          courseType={course.courseType}
+          initial={{
+            officialDescription: course.officialDescription || "",
+            websiteUrl: course.websiteUrl || "",
+            membershipInquiryUrl: course.membershipInquiryUrl || "",
+          }}
+          ugcDescription={course.description}
+        />
       </div>
     </main>
   );
@@ -132,14 +138,20 @@ export default function CourseManagePage() {
 // Official info
 // ─────────────────────────────────────────────────────────────────────
 
-function OfficialInfoSection({ courseId, initial, ugcDescription }: {
+function OfficialInfoSection({ courseId, courseType, initial, ugcDescription }: {
   courseId: string;
-  initial: { officialDescription: string; websiteUrl: string; teeSheetUrl: string };
+  courseType: "PUBLIC" | "PRIVATE" | "SEMI_PRIVATE" | null;
+  initial: { officialDescription: string; websiteUrl: string; membershipInquiryUrl: string };
   ugcDescription: string | null;
 }) {
   const [vals, setVals] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Membership-inquiry input shown on PRIVATE courses only. Public /
+  // semi-private will eventually get a booking-link field; that's
+  // explicitly deferred (roadmap item) so we don't surface it yet.
+  const showMembershipField = courseType === "PRIVATE";
 
   async function save() {
     setSaving(true);
@@ -149,7 +161,9 @@ function OfficialInfoSection({ courseId, initial, ugcDescription }: {
       body: JSON.stringify({
         officialDescription: vals.officialDescription || null,
         websiteUrl: vals.websiteUrl || null,
-        teeSheetUrl: vals.teeSheetUrl || null,
+        // membershipInquiryUrl always submitted (and cleared when not
+        // shown) so the DB field tracks the form intent precisely.
+        membershipInquiryUrl: showMembershipField ? (vals.membershipInquiryUrl || null) : null,
       }),
     });
     setSaving(false);
@@ -186,16 +200,20 @@ function OfficialInfoSection({ courseId, initial, ugcDescription }: {
         style={inputStyle}
       />
 
-      <Label style={{ marginTop: 14 }}>Tee sheet link</Label>
-      <input
-        value={vals.teeSheetUrl}
-        onChange={(e) => setVals(v => ({ ...v, teeSheetUrl: e.target.value }))}
-        placeholder="https://book.yourcourse.com or GolfNow/etc."
-        style={inputStyle}
-      />
-      <div style={hintStyle}>
-        Renders as a &ldquo;Book a tee time&rdquo; button in the From-the-course block.
-      </div>
+      {showMembershipField && (
+        <>
+          <Label style={{ marginTop: 14 }}>Membership inquiry link <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.06em", color: "rgba(255,255,255,0.3)" }}>(optional)</span></Label>
+          <input
+            value={vals.membershipInquiryUrl}
+            onChange={(e) => setVals(v => ({ ...v, membershipInquiryUrl: e.target.value }))}
+            placeholder="https://yourcourse.com/membership"
+            style={inputStyle}
+          />
+          <div style={hintStyle}>
+            Shown as an &ldquo;Inquire about membership&rdquo; button to prospective members.
+          </div>
+        </>
+      )}
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
         <button onClick={save} disabled={saving} style={primaryBtn}>
@@ -377,7 +395,13 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
   const [media, setMedia] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
-  const [vals, setVals] = useState<{ mediaType: "image" | "flyover" | "video"; url: string; cloudflareVideoId: string; caption: string; holeNumber: string }>({ mediaType: "image", url: "", cloudflareVideoId: "", caption: "", holeNumber: "" });
+  // Add-form state. mediaType drives both the file accept= and the
+  // upload path: image → Supabase Storage; video/flyover →
+  // Cloudflare Stream direct-upload (same path as user clip uploads).
+  const [vals, setVals] = useState<{ mediaType: "image" | "flyover" | "video"; caption: string; holeNumber: string }>({ mediaType: "image", caption: "", holeNumber: "" });
+  const [uploadState, setUploadState] = useState<"idle" | "uploading" | "error">("idle");
+  const [uploadPct, setUploadPct] = useState(0);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -389,27 +413,79 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
 
   useEffect(() => { load(); }, [load]);
 
-  async function add() {
-    if (!vals.url.trim()) { alert("URL required"); return; }
-    const res = await fetch(`/api/courses/${courseId}/official-media`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mediaType: vals.mediaType,
-        url: vals.url.trim(),
-        cloudflareVideoId: vals.cloudflareVideoId.trim() || null,
-        caption: vals.caption.trim() || null,
-        holeNumber: vals.holeNumber ? parseInt(vals.holeNumber, 10) : null,
-        sortOrder: media.length * 10,
-      }),
+  // Image upload → Supabase Storage tour-it-photos bucket, same
+  // bucket the rest of the app uses. Path:
+  //   course-official/{courseId}/{Date.now()}.{ext}
+  async function uploadImage(file: File): Promise<string> {
+    const supabase = createClient();
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `course-official/${courseId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: false, contentType: file.type });
+    if (error) throw new Error(error.message);
+    const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+    return publicUrl;
+  }
+
+  // Video upload → Cloudflare Stream via the same direct-upload
+  // endpoint the user-clip flow uses. We POST to /api/cloudflare-
+  // stream/direct-upload, then PUT the file body to the resulting
+  // signed URL. Returns { uid, playbackUrl }.
+  async function uploadVideo(file: File): Promise<{ cloudflareVideoId: string; url: string }> {
+    const directRes = await fetch("/api/cloudflare-stream/direct-upload", { method: "POST" });
+    if (!directRes.ok) throw new Error((await directRes.json().catch(() => null))?.error || "Couldn't start upload");
+    const { uploadUrl, uid } = await directRes.json();
+    // Use XHR so we can wire up onprogress for the UI bar.
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) setUploadPct(Math.round((e.loaded / e.total) * 100));
+      });
+      xhr.addEventListener("load", () => xhr.status < 400 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+      xhr.addEventListener("error", () => reject(new Error("Network error")));
+      xhr.open("POST", uploadUrl);
+      const fd = new FormData();
+      fd.append("file", file);
+      xhr.send(fd);
     });
-    if (res.ok) {
+    const playback = `https://videodelivery.net/${uid}/manifest/video.m3u8`;
+    return { cloudflareVideoId: uid, url: playback };
+  }
+
+  async function onFilePicked(file: File) {
+    if (uploadState === "uploading") return;
+    setUploadErr(null);
+    setUploadState("uploading");
+    setUploadPct(0);
+    try {
+      let url: string;
+      let cloudflareVideoId: string | null = null;
+      if (vals.mediaType === "image") {
+        url = await uploadImage(file);
+      } else {
+        const res = await uploadVideo(file);
+        url = res.url;
+        cloudflareVideoId = res.cloudflareVideoId;
+      }
+      const insertRes = await fetch(`/api/courses/${courseId}/official-media`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mediaType: vals.mediaType,
+          url,
+          cloudflareVideoId,
+          caption: vals.caption.trim() || null,
+          holeNumber: vals.holeNumber ? parseInt(vals.holeNumber, 10) : null,
+          sortOrder: media.length * 10,
+        }),
+      });
+      if (!insertRes.ok) throw new Error((await insertRes.json().catch(() => null))?.error || "Couldn't save");
+      setUploadState("idle");
       setAdding(false);
-      setVals({ mediaType: "image", url: "", cloudflareVideoId: "", caption: "", holeNumber: "" });
+      setVals({ mediaType: "image", caption: "", holeNumber: "" });
       load();
-    } else {
-      const d = await res.json().catch(() => null);
-      alert(d?.error || "Couldn't add");
+    } catch (e: any) {
+      setUploadState("error");
+      setUploadErr(e?.message || "Upload failed");
     }
   }
 
@@ -419,8 +495,10 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
     if (res.ok) setMedia((prev) => prev.filter((m) => m.id !== id));
   }
 
+  const acceptForType = vals.mediaType === "image" ? "image/*" : "video/*";
+
   return (
-    <Section title="Official media" subtitle="Photos and hole flyovers. Never injected into the UGC clip feed.">
+    <Section title="Official media" subtitle="Photos and hole flyovers. Tagged 'From the course' when they appear in the public feed.">
       {loading ? <Loading inline /> : media.length === 0 ? (
         <EmptyHint text="No media added yet." />
       ) : (
@@ -437,7 +515,9 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff" }}>
                   {m.caption || (m.holeNumber ? `Hole ${m.holeNumber}` : "Course-level")}
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.url}</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+                  {m.mediaType.charAt(0).toUpperCase() + m.mediaType.slice(1)}{m.holeNumber ? ` · Hole ${m.holeNumber}` : ""}
+                </div>
               </div>
               <button onClick={() => remove(m.id)} style={subtleDangerBtn}>Remove</button>
             </div>
@@ -447,43 +527,100 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
 
       {!adding && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-          <button onClick={() => setAdding(true)} style={ghostBtn}>+ Add media</button>
+          <button onClick={() => { setAdding(true); setUploadErr(null); setUploadState("idle"); }} style={ghostBtn}>+ Add media</button>
         </div>
       )}
 
       {adding && (
-        <div style={{ marginTop: 12, padding: 12, background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.22)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <div>
+        <div style={{ marginTop: 12, padding: 12, background: "rgba(77,168,98,0.06)", border: "1px solid rgba(77,168,98,0.22)", borderRadius: 10, display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Type + Hole row — fixed alignment. Each cell wraps its
+              own label+input in a stretching column so a long label
+              ("Hole — blank = course-level") doesn't shove the
+              input below the sibling. */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch" }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               <Label>Type</Label>
-              <select value={vals.mediaType} onChange={(e) => setVals(v => ({ ...v, mediaType: e.target.value as Media["mediaType"] }))} style={inputStyle}>
+              <select
+                value={vals.mediaType}
+                onChange={(e) => setVals(v => ({ ...v, mediaType: e.target.value as Media["mediaType"] }))}
+                style={inputStyle}
+                disabled={uploadState === "uploading"}
+              >
                 <option value="image">Image</option>
                 <option value="flyover">Flyover</option>
                 <option value="video">Video</option>
               </select>
             </div>
-            <div>
-              <Label>Hole (blank = course-level)</Label>
-              <input value={vals.holeNumber} onChange={(e) => setVals(v => ({ ...v, holeNumber: e.target.value }))} style={inputStyle} placeholder="e.g. 7" />
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <Label>Hole</Label>
+              <input
+                value={vals.holeNumber}
+                onChange={(e) => setVals(v => ({ ...v, holeNumber: e.target.value }))}
+                style={inputStyle}
+                placeholder="optional — e.g. 7"
+                disabled={uploadState === "uploading"}
+              />
             </div>
           </div>
-          <div>
-            <Label>URL</Label>
-            <input value={vals.url} onChange={(e) => setVals(v => ({ ...v, url: e.target.value }))} style={inputStyle} placeholder="https://…" />
-          </div>
-          {(vals.mediaType === "flyover" || vals.mediaType === "video") && (
-            <div>
-              <Label>Cloudflare Stream ID (optional)</Label>
-              <input value={vals.cloudflareVideoId} onChange={(e) => setVals(v => ({ ...v, cloudflareVideoId: e.target.value }))} style={inputStyle} placeholder="abc123def456" />
-            </div>
-          )}
+
           <div>
             <Label>Caption</Label>
-            <input value={vals.caption} onChange={(e) => setVals(v => ({ ...v, caption: e.target.value }))} style={inputStyle} placeholder="Optional" />
+            <input
+              value={vals.caption}
+              onChange={(e) => setVals(v => ({ ...v, caption: e.target.value }))}
+              style={inputStyle}
+              placeholder="Optional — shown under the media"
+              disabled={uploadState === "uploading"}
+            />
           </div>
+
+          {/* Upload progress / pick file */}
+          {uploadState === "uploading" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, color: "rgba(126,200,140,0.95)" }}>
+                {vals.mediaType === "image" ? "Uploading image…" : `Uploading video… ${uploadPct}%`}
+              </div>
+              <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 99, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${vals.mediaType === "image" ? 100 : uploadPct}%`, background: "linear-gradient(90deg, #4da862, #7ed28b)", transition: "width 0.2s" }} />
+              </div>
+            </div>
+          ) : (
+            <>
+              <label
+                style={{
+                  marginTop: 4, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  padding: "16px 12px",
+                  border: "1.5px dashed rgba(126,200,140,0.4)",
+                  borderRadius: 10,
+                  background: "rgba(77,168,98,0.06)",
+                  cursor: "pointer",
+                  fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(126,200,140,0.95)",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                {vals.mediaType === "image" ? "Pick image to upload" : "Pick video to upload"}
+                <input
+                  type="file"
+                  accept={acceptForType}
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) onFilePicked(f);
+                    // Reset value so picking the same file twice still fires onChange
+                    try { e.target.value = ""; } catch {}
+                  }}
+                />
+              </label>
+              {uploadErr && (
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(220,100,100,0.95)" }}>{uploadErr}</div>
+              )}
+            </>
+          )}
+
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button onClick={() => setAdding(false)} style={ghostBtn}>Cancel</button>
-            <button onClick={add} style={primaryBtn}>Add</button>
+            <button onClick={() => setAdding(false)} disabled={uploadState === "uploading"} style={ghostBtn}>Cancel</button>
           </div>
         </div>
       )}

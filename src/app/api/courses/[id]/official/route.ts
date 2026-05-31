@@ -14,7 +14,7 @@ import { requireCourseManager } from "@/lib/courseManagerAuth";
 // validate it here the same way (https:// prefix, parseable, max
 // 500). Updating it via this route does NOT award points (the
 // operator owns the field, not a contributor).
-const ALLOWED = new Set(["officialDescription", "websiteUrl", "teeSheetUrl"]);
+const ALLOWED = new Set(["officialDescription", "websiteUrl", "teeSheetUrl", "membershipInquiryUrl"]);
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const v = updates.officialDescription;
     updates.officialDescription = typeof v === "string" ? v.trim().slice(0, 4000) || null : null;
   }
-  for (const urlField of ["websiteUrl", "teeSheetUrl"] as const) {
+  for (const urlField of ["websiteUrl", "teeSheetUrl", "membershipInquiryUrl"] as const) {
     if (!(urlField in updates)) continue;
     const raw = updates[urlField];
     if (raw == null || raw === "") {

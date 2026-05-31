@@ -256,7 +256,16 @@ model Course {
   // Operator-supplied booking link rendered in the "From the
   // course" block as a "Book a tee time" button. Reuses the
   // existing `websiteUrl` field for the course homepage.
+  // NOTE 2026-05-30: hidden from the manage dashboard for now per
+  // product decision (booking partnerships are a separate roadmap
+  // item). API + render path are kept so flipping it back on is
+  // a one-line change.
   teeSheetUrl         String?
+  // Operator-supplied membership inquiry link — surfaced only on
+  // PRIVATE courses since public/semi-private courses use the
+  // booking flow instead. Renders as "Inquire about membership"
+  // inside the "From the course" block when set.
+  membershipInquiryUrl String?
 
   holes          Hole[]
   saves          Save[]
