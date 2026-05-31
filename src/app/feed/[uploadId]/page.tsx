@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/client";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { cdnImage } from "@/lib/cdnImage";
+import { useLike } from "@/hooks/useLike";
 import { ClipRail } from "@/components/clip/ClipRail";
 import EditClipSheet from "@/components/EditClipSheet";
 
@@ -620,41 +621,16 @@ function FeedClip({
 }) {
   const isVideo = clip.mediaType === "VIDEO";
   const src = useMemo(() => isVideo ? getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId) : null, [clip.mediaUrl, clip.cloudflareVideoId, isVideo]);
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(clip.likeCount);
+  // Canonical like pipeline (counter + rankScore + points + milestone
+  // notifications) via the shared hook — same as every other surface.
+  const { liked, likeCount, toggleLike } = useLike({
+    uploadId: clip.id,
+    initialLikeCount: clip.likeCount,
+    currentUserId,
+  });
   const [progress, setProgress] = useState(0); // 0..1
   const isOwner = !!currentUserId && clip.uploaderId === currentUserId;
   const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  // Track current user's like state on this clip — single Like row
-  // check on mount; tap toggles optimistically.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const sb = createClient();
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user || cancelled) return;
-      const { data } = await sb.from("Like").select("id").eq("uploadId", clip.id).eq("userId", user.id).maybeSingle();
-      if (!cancelled) setLiked(!!data);
-    })();
-    return () => { cancelled = true; };
-  }, [clip.id]);
-
-  async function toggleLike(e: React.MouseEvent) {
-    e.stopPropagation();
-    const sb = createClient();
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) return;
-    if (liked) {
-      setLiked(false);
-      setLikeCount((c) => Math.max(0, c - 1));
-      await sb.from("Like").delete().eq("uploadId", clip.id).eq("userId", user.id);
-    } else {
-      setLiked(true);
-      setLikeCount((c) => c + 1);
-      await sb.from("Like").insert({ id: crypto.randomUUID(), uploadId: clip.id, userId: user.id, createdAt: new Date().toISOString() });
-    }
-  }
 
   function tapToTogglePlay(e: React.MouseEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest("[data-overlay-control]")) return;

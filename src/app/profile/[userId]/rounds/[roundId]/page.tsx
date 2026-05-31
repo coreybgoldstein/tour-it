@@ -9,6 +9,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { ClipRail } from "@/components/clip/ClipRail";
+import { useLike } from "@/hooks/useLike";
 
 type Round = {
   id: string; userId: string; courseId: string; date: string;
@@ -21,6 +22,44 @@ type Clip = {
   uploaderId: string; uploaderUsername: string; uploaderAvatarUrl: string | null;
 };
 type Course = { id: string; name: string; city: string; state: string; logoUrl: string | null };
+
+// Keyed per clip so useLike re-seeds on swipe. Routes likes through the
+// shared hook (/api/likes/toggle) so the round viewer gets the same
+// counter + points + notification pipeline as every other clip surface.
+function RoundClipRail({
+  clip, initialLiked, currentUserId, courseName, onComment, sharePath, kebab, onKebab,
+}: {
+  clip: Clip;
+  initialLiked: boolean;
+  currentUserId: string | null;
+  courseName: string;
+  onComment: (e: React.MouseEvent) => void;
+  sharePath: string;
+  kebab?: "options" | "report";
+  onKebab?: (e: React.MouseEvent) => void;
+}) {
+  const { liked, likeCount, toggleLike } = useLike({
+    uploadId: clip.id,
+    initialLikeCount: clip.likeCount,
+    initialLiked,
+    currentUserId,
+  });
+  return (
+    <ClipRail
+      bottom="calc(90px + env(safe-area-inset-bottom))"
+      zIndex={10}
+      liked={liked}
+      likeCount={likeCount}
+      onToggleLike={toggleLike}
+      commentCount={clip.commentCount}
+      onComment={onComment}
+      sharePath={sharePath}
+      shareTitle={courseName}
+      kebab={kebab}
+      onKebab={onKebab}
+    />
+  );
+}
 
 export default function RoundDetailPage() {
   const { userId, roundId } = useParams();
@@ -35,7 +74,6 @@ export default function RoundDetailPage() {
   const [isOwner, setIsOwner] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
-  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   // Edit state
   // Feed overlay state
@@ -121,7 +159,6 @@ export default function RoundDetailPage() {
           uploaderAvatarUrl: uploaderMap.get(c.userId)?.avatarUrl ?? null,
         }));
         setClips(resolved);
-        setLikeCounts(Object.fromEntries(resolved.map(c => [c.id, c.likeCount])));
         // Fetch liked status for current user
         if (authUser?.id) {
           const { data: liked } = await supabase.from("Like").select("uploadId").eq("userId", authUser.id).in("uploadId", resolved.map(c => c.id));
@@ -150,19 +187,6 @@ export default function RoundDetailPage() {
     setRound(r => r ? { ...r, ...updates } : r);
     setEditOpen(false);
     setSaving(false);
-  }
-
-  async function toggleLike(clipId: string) {
-    if (!currentUserId) return;
-    const supabase = createClient();
-    const isLiked = likedIds.has(clipId);
-    setLikedIds(prev => { const s = new Set(prev); isLiked ? s.delete(clipId) : s.add(clipId); return s; });
-    setLikeCounts(prev => ({ ...prev, [clipId]: (prev[clipId] ?? 0) + (isLiked ? -1 : 1) }));
-    if (isLiked) {
-      await supabase.from("Like").delete().eq("userId", currentUserId).eq("uploadId", clipId);
-    } else {
-      await supabase.from("Like").upsert({ id: crypto.randomUUID(), userId: currentUserId, uploadId: clipId, createdAt: new Date().toISOString() }, { onConflict: "userId,uploadId" });
-    }
   }
 
   const [y, m, d] = (round?.date || "2000-01-01").split("-").map(Number);
@@ -317,19 +341,18 @@ export default function RoundDetailPage() {
                   </div>
                 )}
 
-                {/* Right rail — shared ClipRail (uniform across all clip
-                    surfaces). No INTEL here; comment routes to the hole page.
-                    Non-owner clips get the report kebab. */}
-                <ClipRail
-                  bottom="calc(90px + env(safe-area-inset-bottom))"
-                  zIndex={10}
-                  liked={likedIds.has(clip.id)}
-                  likeCount={likeCounts[clip.id] ?? 0}
-                  onToggleLike={() => toggleLike(clip.id)}
-                  commentCount={clip.commentCount}
+                {/* Right rail — shared ClipRail via the keyed RoundClipRail
+                    wrapper (preserves the full like pipeline). No INTEL here;
+                    comment routes to the hole page. Non-owner clips get the
+                    report kebab. */}
+                <RoundClipRail
+                  key={clip.id}
+                  clip={clip}
+                  initialLiked={likedIds.has(clip.id)}
+                  currentUserId={currentUserId}
+                  courseName={course?.name ?? ""}
                   onComment={() => router.push(`/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`)}
                   sharePath={`/courses/${clip.courseId}`}
-                  shareTitle={course?.name ?? ""}
                   kebab={currentUserId && clip.uploaderId !== currentUserId ? "report" : undefined}
                   onKebab={currentUserId && clip.uploaderId !== currentUserId ? () => setReportClipId(clip.id) : undefined}
                 />
