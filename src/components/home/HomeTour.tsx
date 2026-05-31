@@ -808,44 +808,36 @@ function YourTourCard({
         </div>
       )}
 
-      {/* ── Game CTA — full-width ──────────────────────────────────
-          When a game exists: a dark green chip showing "Game Ready"
-          + format/stakes — tap opens that game sheet.
-          When none: gradient green Create-a-Game pill. Same height
-          and visual weight either way so the card balance stays. */}
+      {/* ── Game CTA — slim outlined chip ─────────────────────────
+          Both states share one quiet treatment: a thin green-outlined
+          chip, single line, ~32px tall. No bright gradient fill so it
+          doesn't compete with the course name above it. */}
       <div onClick={(e) => e.stopPropagation()} style={{ marginTop: "auto", paddingTop: 2 }}>
         {tour.game ? (
           <button
             onClick={(e) => { e.stopPropagation(); onOpenGame(tour.game!.id); }}
             style={{
               width: "100%",
-              padding: "8px 12px",
-              background: "linear-gradient(180deg, rgba(77,168,98,0.22) 0%, rgba(77,168,98,0.12) 100%)",
-              border: "1px solid rgba(77,168,98,0.55)",
-              borderRadius: 10,
+              padding: "6px 10px",
+              background: "rgba(77,168,98,0.10)",
+              border: "1px solid rgba(77,168,98,0.45)",
+              borderRadius: 9,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              minHeight: 44,
+              gap: 8,
+              minHeight: 32,
               textAlign: "left",
-              boxShadow: "inset 0 1px 0 rgba(126,200,140,0.15)",
             }}
           >
-            <div style={{ width: 26, height: 26, borderRadius: 6, background: "rgba(126,200,140,0.18)", border: "1px solid rgba(126,200,140,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <GameScorecardIcon color="#7ed28b" />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 8.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(126,200,140,0.95)" }}>
-                {tour.gameCount > 1 ? `${tour.gameCount} Games · Latest` : "Game Ready"}
-              </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
-                {(() => {
-                  const name = gameFormatLabel(tour.game.format);
-                  const stakes = gameStakesLabel(tour.game.format, tour.game.formatConfig);
-                  return stakes ? `${name} · ${stakes}` : name;
-                })()}
-              </div>
+            <GameScorecardIcon color="#7ed28b" size={18} />
+            <div style={{ flex: 1, minWidth: 0, fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: "0.005em" }}>
+              {(() => {
+                const name = gameFormatLabel(tour.game.format);
+                const stakes = gameStakesLabel(tour.game.format, tour.game.formatConfig);
+                const label = stakes ? `${name} · ${stakes}` : name;
+                return tour.gameCount > 1 ? `${tour.gameCount} games · ${label}` : label;
+              })()}
             </div>
             <ChevronRightSage />
           </button>
@@ -854,30 +846,22 @@ function YourTourCard({
             onClick={(e) => { e.stopPropagation(); onGame(); }}
             style={{
               width: "100%",
-              padding: "8px 12px",
-              background: "linear-gradient(180deg, #5cbd75 0%, #3f9554 100%)",
-              border: "1px solid rgba(126,200,140,0.85)",
-              borderRadius: 10,
+              padding: "6px 10px",
+              background: "rgba(77,168,98,0.08)",
+              border: "1px solid rgba(77,168,98,0.5)",
+              borderRadius: 9,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 10,
-              minHeight: 44,
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), 0 1px 0 rgba(0,0,0,0.18)",
+              gap: 8,
+              minHeight: 32,
             }}
           >
-            <div style={{ width: 26, height: 26, borderRadius: 6, background: "rgba(7,16,10,0.18)", border: "1px solid rgba(7,16,10,0.24)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <GameScorecardIcon color="#0c2218" />
+            <GameScorecardIcon color="#7ed28b" size={18} />
+            <div style={{ flex: 1, minWidth: 0, textAlign: "left", fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 700, color: "rgba(220,245,226,0.95)", letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              Create a game
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 800, color: "#0a1a10", letterSpacing: "0.04em", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                CREATE A GAME
-              </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9.5, fontWeight: 600, color: "rgba(10,26,16,0.65)", marginTop: 1, letterSpacing: "0.04em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                Format · stakes · strokes
-              </div>
-            </div>
-            <ChevronRightDark />
+            <ChevronRightSage />
           </button>
         )}
       </div>
@@ -1877,9 +1861,9 @@ function ScorecardPencilIcon({ color = "#4da862" }: { color?: string }) {
 // Stroke pattern: row1 gets 2 dots, row2 gets 1 dot, row3 gets 3
 // dots — a deliberately uneven distribution that reads as
 // "competitive handicapping" rather than a tidy template.
-function GameScorecardIcon({ color = "#4da862" }: { color?: string }) {
+function GameScorecardIcon({ color = "#4da862", size = 20 }: { color?: string; size?: number }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       {/* Card body */}
       <rect x="2.5" y="4" width="14" height="16" rx="1.8" />
       {/* Player-row dividers */}
