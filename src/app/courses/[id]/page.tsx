@@ -401,17 +401,11 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
       )}
 
       {!isOfficial && (uploader?.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
-        // Avatar + username + date. left:100 when there's a hole number
-        // so the row clears the HoleIdentityCard sitting bottom-left.
-        // Offsets are lowered vs. the other surfaces because the course
-        // feed-modal is full-screen (no BottomNav) — bottom lifts above the
-        // VideoScrubber on video clips, sits near the home indicator on
-        // photos. When the attribution chip is present, the whole stack
-        // shifts up so the chip slots in BELOW the username row.
+        // Avatar + username + date — anchored at the same bottom offset as
+        // the tour-the-feed uploader row. left shifts right when there's a
+        // hole number so the row clears the HoleIdentityCard bottom-left.
         <div style={{ position: "absolute", left: !holeNumber ? 16 : holeNumber >= 10 ? 105 : 80, right: 80,
-          bottom: clip.mediaType === "VIDEO"
-            ? `calc(${clip.uploadedByUsername ? 78 : 70}px + env(safe-area-inset-bottom))`
-            : `calc(${clip.uploadedByUsername ? 56 : 42}px + env(safe-area-inset-bottom))`,
+          bottom: `calc(22px + env(safe-area-inset-bottom))`,
           zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => router.push(`/profile/${clip.userId}`)} aria-label={`Open ${uploader?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>

@@ -168,15 +168,11 @@ const ProfileFeedCard = memo(function ProfileFeedCardImpl({
         uploaderHandicap={uploaderInfo.handicapIndex}
       />
       {(uploaderInfo.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
-        // Avatar + username + date. Bottom lifted above scrubber on video
-        // and above BottomNav (Face ID home indicator) on photos. The
-        // isTagged check on the avatar marks clips the user was tagged in.
-        // When the attribution chip is present the whole stack shifts up
-        // so the chip slots in BELOW the username row.
+        // Avatar + username + date — anchored at the same bottom offset as
+        // the tour-the-feed uploader row. The isTagged check marks clips the
+        // user was tagged in; the attribution chip (if any) slots in below.
         <div style={{ position: "absolute", left: 16, right: 80,
-          bottom: clip.mediaType === "VIDEO"
-            ? `calc(${clip.uploadedByUsername ? 78 : 70}px + env(safe-area-inset-bottom))`
-            : `calc(${clip.uploadedByUsername ? 56 : 42}px + env(safe-area-inset-bottom))`,
+          bottom: `calc(22px + env(safe-area-inset-bottom))`,
           zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => { onClose(); router.push(`/profile/${uploaderInfo.id}`); }} aria-label={`Open ${uploaderInfo.username}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
