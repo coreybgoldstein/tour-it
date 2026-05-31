@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/courseManagerAuth";
+
+function escapeHtml(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 // POST /api/admin/claims/[id]/verify
 // Admin action: mark a CourseClaim as VERIFIED, create the matching
@@ -15,7 +26,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const { data: claim } = await supabase
     .from("CourseClaim")
-    .select("id, courseId, userId, status, claimantRole")
+    .select("id, courseId, userId, status, claimantRole, claimantName, claimantEmail")
     .eq("id", claimId)
     .maybeSingle();
   if (!claim) return NextResponse.json({ error: "Claim not found" }, { status: 404 });
@@ -63,6 +74,39 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     createdAt: nowIso,
     updatedAt: nowIso,
   });
+
+  // 5) Email the claimant too (best-effort — don't fail the request if email errors).
+  if (claim.claimantEmail) {
+    const { data: course } = await supabase
+      .from("Course")
+      .select("name")
+      .eq("id", claim.courseId)
+      .maybeSingle();
+    const courseName = course?.name ?? "your course";
+    const firstName = (claim.claimantName ?? "").trim().split(/\s+/)[0] || "there";
+    const manageUrl = `https://www.touritgolf.com/courses/${claim.courseId}/manage`;
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      await resend.emails.send({
+        from: "Tour It <hello@touritgolf.com>",
+        to: claim.claimantEmail,
+        subject: `You're now managing ${courseName} on Tour It`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; color: #111;">
+            <h2 style="color: #2d7a42;">Your claim was approved</h2>
+            <p>Hi ${escapeHtml(firstName)},</p>
+            <p>You're now a verified manager of <strong>${escapeHtml(courseName)}</strong> on Tour It. You can edit your official description, upload your logo and cover photo, add staff cards, link a tee sheet, and post media straight into your course's holes.</p>
+            <p style="margin: 24px 0;">
+              <a href="${manageUrl}" style="background: #2d7a42; color: #fff; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: 600;">Open your manager dashboard</a>
+            </p>
+            <p style="color: #666; font-size: 13px;">If the button doesn't work, paste this into your browser:<br />${manageUrl}</p>
+          </div>
+        `,
+      });
+    } catch (err) {
+      console.error("Claim approval email failed:", err);
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }

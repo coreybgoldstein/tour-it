@@ -34,6 +34,8 @@ type CourseOfficial = {
   websiteUrl: string | null;
   teeSheetUrl: string | null;
   membershipInquiryUrl: string | null;
+  logoUrl: string | null;
+  coverImageUrl: string | null;
 };
 
 type Staff = {
@@ -121,7 +123,7 @@ export default function CourseManagePage() {
 
       const { data: row } = await supabase
         .from("Course")
-        .select("id, name, city, state, courseType, isClaimed, description, officialDescription, websiteUrl, teeSheetUrl, membershipInquiryUrl")
+        .select("id, name, city, state, courseType, isClaimed, description, officialDescription, websiteUrl, teeSheetUrl, membershipInquiryUrl, logoUrl, coverImageUrl")
         .eq("id", courseId)
         .single();
 
@@ -159,6 +161,11 @@ export default function CourseManagePage() {
             membershipInquiryUrl: course.membershipInquiryUrl || "",
           }}
           ugcDescription={course.description}
+        />
+
+        <BrandSection
+          courseId={course.id}
+          initial={{ logoUrl: course.logoUrl, coverImageUrl: course.coverImageUrl }}
         />
 
         <OfficialMediaSection courseId={course.id} />
@@ -255,6 +262,100 @@ function OfficialInfoSection({ courseId, courseType, initial, ugcDescription }: 
           {saving ? "Saving…" : saved ? "Saved ✓" : "Save info"}
         </button>
       </div>
+    </Section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Brand — logo / crest + cover photo
+// ─────────────────────────────────────────────────────────────────────
+
+function BrandSection({ courseId, initial }: {
+  courseId: string;
+  initial: { logoUrl: string | null; coverImageUrl: string | null };
+}) {
+  const [logoUrl, setLogoUrl] = useState(initial.logoUrl);
+  const [coverImageUrl, setCoverImageUrl] = useState(initial.coverImageUrl);
+  const [busy, setBusy] = useState<"logo" | "cover" | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  // Upload to tour-it-photos at the CLAUDE.md course-images path, then
+  // PATCH /official with ONLY the field that changed — so an operator
+  // setting just the logo never clobbers an existing cover, and
+  // vice-versa.
+  async function upload(kind: "logo" | "cover", file: File) {
+    if (busy) return;
+    setErr(null);
+    setBusy(kind);
+    try {
+      const supabase = createClient();
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `course-images/${courseId}-${kind}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("tour-it-photos")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw new Error(upErr.message);
+      const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
+      // Cache-bust so the new image shows immediately after re-upload to
+      // the same path.
+      const busted = `${publicUrl}?v=${Date.now()}`;
+      const field = kind === "logo" ? "logoUrl" : "coverImageUrl";
+      const res = await fetch(`/api/courses/${courseId}/official`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: busted }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.error || "Couldn't save");
+      if (kind === "logo") setLogoUrl(busted); else setCoverImageUrl(busted);
+    } catch (e: any) {
+      setErr(e?.message || "Upload failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Section title="Logo & cover" subtitle="Your crest and the wide photo shown across the course page.">
+      <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 14, alignItems: "center" }}>
+        {/* Logo / crest */}
+        <div style={{ width: 76, height: 76, borderRadius: 14, overflow: "hidden", background: "rgba(7,16,10,0.6)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cdnImage(logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(126,200,140,0.6)", letterSpacing: "0.08em" }}>LOGO</span>
+          )}
+        </div>
+        <div>
+          <Label>Logo / crest</Label>
+          <label style={brandUploadBtn}>
+            {busy === "logo" ? "Uploading…" : logoUrl ? "Replace logo" : "Upload logo"}
+            <input type="file" accept="image/*" style={{ display: "none" }} disabled={!!busy}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) upload("logo", f); try { e.target.value = ""; } catch {} }}
+            />
+          </label>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <Label>Cover photo</Label>
+        <div style={{ width: "100%", aspectRatio: "16 / 7", borderRadius: 12, overflow: "hidden", background: "rgba(7,16,10,0.6)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+          {coverImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={cdnImage(coverImageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(126,200,140,0.6)", letterSpacing: "0.08em" }}>No cover photo</span>
+          )}
+        </div>
+        <label style={brandUploadBtn}>
+          {busy === "cover" ? "Uploading…" : coverImageUrl ? "Replace cover" : "Upload cover"}
+          <input type="file" accept="image/*" style={{ display: "none" }} disabled={!!busy}
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) upload("cover", f); try { e.target.value = ""; } catch {} }}
+          />
+        </label>
+      </div>
+
+      {err && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: "rgba(220,100,100,0.95)", marginTop: 8 }}>{err}</div>}
     </Section>
   );
 }
@@ -733,3 +834,4 @@ const backBtn: React.CSSProperties = { background: "none", border: "none", paddi
 const primaryBtn: React.CSSProperties = { background: "#2d7a42", border: "1px solid #4da862", borderRadius: 8, padding: "9px 18px", fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", cursor: "pointer", letterSpacing: "0.02em" };
 const ghostBtn: React.CSSProperties = { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 14px", fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)", cursor: "pointer" };
 const subtleDangerBtn: React.CSSProperties = { background: "transparent", border: "1px solid rgba(200,60,60,0.3)", borderRadius: 8, padding: "8px 14px", fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(220,100,100,0.85)", cursor: "pointer" };
+const brandUploadBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 8, padding: "8px 16px", fontFamily: "'Inter', sans-serif", fontSize: 12.5, fontWeight: 600, color: "rgba(126,200,140,0.95)", cursor: "pointer" };

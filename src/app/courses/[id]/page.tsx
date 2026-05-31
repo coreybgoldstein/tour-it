@@ -26,7 +26,7 @@ import { cdnImage } from "@/lib/cdnImage";
 import { OfficialCourseBadge } from "@/components/course/OfficialCourseBadge";
 import ClaimCourseSheet from "@/components/course/ClaimCourseSheet";
 import FromTheCourseBlock from "@/components/course/FromTheCourseBlock";
-import OfficialMediaCard, { type OfficialMedia } from "@/components/course/OfficialMediaCard";
+import { type OfficialMedia } from "@/components/course/OfficialMediaCard";
 type Course = {
   id: string;
   name: string;
@@ -83,6 +83,12 @@ type Clip = {
   uploadedByUserId?: string | null;
   uploadedByUsername?: string | null;
   createdAt: string;
+  // Operator media folded into the feed. When true this "clip" is a
+  // CourseOfficialMedia row mapped into Clip shape — it has no Upload
+  // backing, so FeedCard suppresses like/comment/follow/report and shows
+  // a "From the course" highlight instead of an uploader row.
+  isOfficial?: boolean;
+  officialCaption?: string | null;
 };
 
 type SuggestedCourse = {
@@ -101,6 +107,54 @@ const SHOT_LABEL: Record<string, string> = {
   CHIP: "Chip", PITCH: "Pitch", PUTT: "Putt",
   BUNKER: "Bunker", FULL_HOLE: "Full Hole",
 };
+
+// Map an operator CourseOfficialMedia row into a Clip so it can live
+// natively inside the hole feeds / Extended Play rail next to UGC. The
+// `official-` id prefix keeps it from colliding with real Upload ids,
+// and isOfficial flips FeedCard into its no-engagement "From the course"
+// presentation.
+function officialMediaToClip(m: OfficialMedia, courseId: string, courseName?: string): Clip {
+  return {
+    id: `official-${m.id}`,
+    mediaType: m.mediaType === "image" ? "PHOTO" : "VIDEO",
+    mediaUrl: m.url,
+    cloudflareVideoId: m.cloudflareVideoId,
+    shotType: null, clubUsed: null, strategyNote: null, landingZoneNote: null,
+    whatCameraDoesntShow: null, windCondition: null, datePlayedAt: null,
+    rankScore: 0, holeId: null, courseId,
+    likeCount: 0, commentCount: 0,
+    holeNumber: m.holeNumber ?? undefined,
+    courseName, userId: "", createdAt: "",
+    isOfficial: true, officialCaption: m.caption,
+  };
+}
+
+// Fold operator media into a freshly-built UGC hole map + Extended Play
+// list. Hole-assigned media leads its hole bucket (and fans out across
+// ranges); course-level media leads the Extended Play rail. Returns the
+// merged map/extended plus the holes that now have any content.
+function foldOfficialMedia(
+  media: OfficialMedia[],
+  map: Record<number, Clip[]>,
+  extended: Clip[],
+  courseId: string,
+  courseName?: string,
+): { map: Record<number, Clip[]>; extended: Clip[]; holesWithContent: number[] } {
+  const mergedMap: Record<number, Clip[]> = { ...map };
+  for (const m of media) {
+    if (m.holeNumber == null) continue;
+    const start = m.holeNumber;
+    const end = m.holeRangeEnd && m.holeRangeEnd > start ? m.holeRangeEnd : start;
+    for (let h = start; h <= end; h++) {
+      mergedMap[h] = [officialMediaToClip(m, courseId, courseName), ...(mergedMap[h] ?? [])];
+    }
+  }
+  const courseLevel = media
+    .filter(m => m.holeNumber == null)
+    .map(m => officialMediaToClip(m, courseId, courseName));
+  const holesWithContent = Object.keys(mergedMap).map(Number).sort((a, b) => a - b);
+  return { map: mergedMap, extended: [...courseLevel, ...extended], holesWithContent };
+}
 
 const COURSE_HEROES: Record<string, { gradient: string; description: string; designer?: string; year?: number }> = {
   "kiawah": {
@@ -181,6 +235,10 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
   commentOpen?: boolean;
 }) {
   const commented = !!commentedIds?.has(clip.id);
+  // Operator media folded into the feed — no Upload backing, so we hide
+  // like/comment/follow/report and show a "From the course" highlight
+  // in place of the uploader row.
+  const isOfficial = !!clip.isOfficial;
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
   const isDesktop = useIsDesktop();
@@ -286,7 +344,7 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
 
       {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
       <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
-        {hasNotes && (
+        {hasNotes && !isOfficial && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -297,7 +355,10 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
         {/* Avatar removed from right rail — now lives inline next to the
             uploader's username in the bottom overlay (see below). */}
         {/* Heart toggles like; count below opens the "Who liked this"
-            sheet. Same split as the home-feed RightPanel. */}
+            sheet. Same split as the home-feed RightPanel. Hidden on
+            operator media — it has no Upload row to engage with. */}
+        {!isOfficial && (
+        <>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
           <button onClick={toggleLike} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             <div style={{ width: 40, height: 40, borderRadius: "50%", background: liked ? "#1a9e42" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${liked ? "#1a9e42" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -318,6 +379,8 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
           </div>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.8)", textShadow: "0 1px 6px rgba(0,0,0,0.95)" }}>{clip.commentCount || 0}</span>
         </button>
+        </>
+        )}
         <button onClick={handleShare} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: copied ? "rgba(26,158,66,0.2)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", border: `1px solid ${copied ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
             {copied
@@ -357,7 +420,34 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
         uploaderHandicap={uploader?.handicapIndex ?? null}
       />
 
-      {(uploader?.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
+      {isOfficial && (
+        // "From the course" highlight — replaces the uploader row for
+        // operator media. Course logo + name + a green pill so it reads
+        // as native feed content that's clearly posted by the course.
+        <div style={{ position: "absolute", left: !holeNumber ? 16 : holeNumber >= 10 ? 105 : 80, right: 80,
+          bottom: clip.mediaType === "VIDEO"
+            ? `calc(130px + env(safe-area-inset-bottom))`
+            : `calc(85px + env(safe-area-inset-bottom))`,
+          zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 7 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, overflow: "hidden", border: "1px solid rgba(126,200,140,0.6)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              {course?.logoUrl
+                ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg>}
+            </div>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{course?.name ?? "The course"}</span>
+          </div>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(126,200,140,0.7)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7ed28b", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg>
+            From the course
+          </span>
+          {clip.officialCaption && (
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.92)", lineHeight: 1.35, textShadow: "0 1px 4px rgba(0,0,0,0.85)", maxWidth: "100%" }}>{clip.officialCaption}</span>
+          )}
+        </div>
+      )}
+
+      {!isOfficial && (uploader?.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
         // Avatar + username + date. left:100 when there's a hole number
         // so the row clears the HoleIdentityCard sitting bottom-left.
         // Bottom lifts above the VideoScrubber on video clips and clears
@@ -439,14 +529,6 @@ export default function CourseProfilePage() {
   const [holeClipsMap, setHoleClipsMap] = useState<Record<number, Clip[]>>({});
   const [extendedClips, setExtendedClips] = useState<Clip[]>([]);
   const [holesWithClips, setHolesWithClips] = useState<number[]>([]);
-  // Operator-uploaded media (CourseOfficialMedia). Kept in a flat list +
-  // a per-hole derived map so the rail can show course-level items and
-  // hole tiles can render a small "from-the-course" badge when at least
-  // one official item covers that hole. The full list is loaded once
-  // alongside the UGC clips so we don't double-fetch on hole open.
-  const [officialMedia, setOfficialMedia] = useState<OfficialMedia[]>([]);
-  const [officialByHole, setOfficialByHole] = useState<Record<number, OfficialMedia[]>>({});
-  const [courseLevelOfficial, setCourseLevelOfficial] = useState<OfficialMedia[]>([]);
   const [extendedClip, setExtendedClip] = useState<Clip | null>(null);
   const [hasMoreClips, setHasMoreClips] = useState(false);
   const [loadingMoreClips, setLoadingMoreClips] = useState(false);
@@ -455,6 +537,9 @@ export default function CourseProfilePage() {
   const holeScrollRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const holesWithClipsRef = useRef<number[]>([]);
   const holeMapRef = useRef<Record<string, number>>({});
+  // Raw operator media list, kept so loadMoreClips can re-fold it into
+  // the rebuilt hole map / Extended Play rail (the rebuild is UGC-only).
+  const officialMediaRef = useRef<OfficialMedia[]>([]);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scorecardOpen, setScorecardOpen] = useState(false);
   const [holes, setHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null; imageUrl: string | null; description: string | null }[]>([]);
@@ -822,29 +907,25 @@ const [editDescription, setEditDescription] = useState("");
         .limit(2);
       setSuggestedCourses(suggested || []);
 
-      // Official media (operator uploads). Fetched once for the full
-      // course; per-hole expansion happens in-memory below so the hole
-      // detail page + per-hole pip on the grid don't need extra calls.
+      // Official media (operator uploads) folded natively into the feed.
+      // Hole-assigned media is prepended to its hole bucket (operator
+      // content leads each hole); ranges fan out across every covered
+      // hole. Course-level media goes to the Extended Play rail. Each
+      // item carries an isOfficial flag so FeedCard shows the "From the
+      // course" highlight instead of an uploader/engagement row.
       try {
         const omRes = await fetch(`/api/courses/${id}/official-media`);
         if (omRes.ok) {
           const omJson: { media: OfficialMedia[] } = await omRes.json();
           const list = Array.isArray(omJson.media) ? omJson.media : [];
-          setOfficialMedia(list);
-
-          const byHole: Record<number, OfficialMedia[]> = {};
-          const courseLevel: OfficialMedia[] = [];
-          for (const m of list) {
-            if (m.holeNumber == null) { courseLevel.push(m); continue; }
-            const start = m.holeNumber;
-            const end = m.holeRangeEnd && m.holeRangeEnd > start ? m.holeRangeEnd : start;
-            for (let h = start; h <= end; h++) {
-              if (!byHole[h]) byHole[h] = [];
-              byHole[h].push(m);
-            }
+          officialMediaRef.current = list;
+          if (list.length > 0) {
+            const folded = foldOfficialMedia(list, map, extended, id as string, courseData?.name);
+            setHoleClipsMap(folded.map);
+            setExtendedClips(folded.extended);
+            setHolesWithClips(folded.holesWithContent);
+            holesWithClipsRef.current = folded.holesWithContent;
           }
-          setOfficialByHole(byHole);
-          setCourseLevelOfficial(courseLevel);
         }
       } catch {
         // Non-fatal — UGC grid still renders without official media.
@@ -888,11 +969,12 @@ const [editDescription, setEditDescription] = useState("");
         map[Number(holeNum)].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
       }
       extended.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
-      setHoleClipsMap(map);
-      setExtendedClips(extended);
-      const hw = Object.keys(map).map(Number).sort((a, b) => a - b);
-      setHolesWithClips(hw);
-      holesWithClipsRef.current = hw;
+      // Re-fold operator media so it survives the UGC-only rebuild.
+      const folded = foldOfficialMedia(officialMediaRef.current, map, extended, id as string, course?.name);
+      setHoleClipsMap(folded.map);
+      setExtendedClips(folded.extended);
+      setHolesWithClips(folded.holesWithContent);
+      holesWithClipsRef.current = folded.holesWithContent;
       // Fetch uploaders for new clips
       const newUserIds = [...new Set(newClips.map((c) => c.userId).filter(Boolean))];
       if (newUserIds.length > 0) {
@@ -1588,13 +1670,17 @@ const [editDescription, setEditDescription] = useState("");
   </button>
 </div>
 
-      {/* Series card — only when real multi-hole content exists. The
-          'Post a multi-hole series' dashed CTA was removed; the regular
-          Upload action button covers it. */}
-      {extendedClips.length > 0 && (
+      {/* Series card — only when real multi-hole UGC content exists.
+          Operator course-level media also lives in extendedClips but is
+          surfaced by the Extended Play rail below, not counted as a
+          "playthrough" here. */}
+      {(() => {
+        const seriesClips = extendedClips.filter(c => !c.isOfficial);
+        if (seriesClips.length === 0) return null;
+        return (
         <div style={{ padding: "0 16px 16px" }}>
           <button
-            onClick={() => setExtendedClip(extendedClips[0])}
+            onClick={() => setExtendedClip(seriesClips[0])}
             style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}
           >
             <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -1602,47 +1688,13 @@ const [editDescription, setEditDescription] = useState("");
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>Multi-hole series</div>
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{extendedClips.length} playthrough{extendedClips.length !== 1 ? "s" : ""}</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{seriesClips.length} playthrough{seriesClips.length !== 1 ? "s" : ""}</div>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
-      )}
-
-      {/* From-the-course rail — horizontal scroll of operator-uploaded
-          media (images, flyovers, videos). Renders ONLY when at least
-          one CourseOfficialMedia row exists. Sits ABOVE the UGC hole
-          grid so users see official content first when the course is
-          claimed, but never blocks scroll to the rest of the page.
-          Per-hole official items still also appear on the hole detail
-          page; this rail is the entry point at the course level. */}
-      {officialMedia.length > 0 && (
-        <div style={{ padding: "0 0 18px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px 10px" }}>
-            <div style={{ width: 3, height: 14, background: "#7ed28b", borderRadius: 1, flexShrink: 0 }} />
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#7ed28b", letterSpacing: "1.6px", textTransform: "uppercase" }}>From the course</span>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{officialMedia.length} item{officialMedia.length === 1 ? "" : "s"}</span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              gap: 10,
-              overflowX: "auto",
-              padding: "0 16px 4px",
-              scrollSnapType: "x mandatory",
-              WebkitOverflowScrolling: "touch",
-            }}
-          >
-            {/* Course-level items first, then per-hole items in upload order. */}
-            {[...courseLevelOfficial, ...officialMedia.filter(m => m.holeNumber != null)].map(m => (
-              <div key={m.id} style={{ scrollSnapAlign: "start" }}>
-                <OfficialMediaCard media={m} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Holes grid — Front 9 always; Back 9 only on 18-hole courses.
           Show the grid whenever EITHER there are user clips OR we've seeded
@@ -1816,20 +1868,6 @@ const [editDescription, setEditDescription] = useState("");
                                   <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
                                 </div>
                               ) : <span />}
-                              {/* From-the-course pip — present when an
-                                  operator has uploaded official media
-                                  covering this hole (single-hole or
-                                  range). Tiny house glyph + count so
-                                  it doesn't compete with the clip
-                                  count above; tap still routes to the
-                                  hole detail page which renders the
-                                  full official-media list. */}
-                              {(officialByHole[holeNum]?.length ?? 0) > 0 && (
-                                <div title="From the course" style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 6px", borderRadius: 99, background: "rgba(126,200,140,0.14)", border: "1px solid rgba(126,200,140,0.45)" }}>
-                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg>
-                                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#7ed28b", letterSpacing: "0.04em" }}>{officialByHole[holeNum].length}</span>
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -1866,10 +1904,16 @@ const [editDescription, setEditDescription] = useState("");
                   <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%)" }} />
+                {clip.isOfficial && (
+                  <div style={{ position: "absolute", top: 6, left: 6, display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 6px", background: "rgba(7,16,10,0.78)", border: "1px solid rgba(126,200,140,0.7)", borderRadius: 99 }}>
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 7.5, fontWeight: 800, letterSpacing: "0.08em", textTransform: "uppercase", color: "#7ed28b" }}>Course</span>
+                  </div>
+                )}
                 <div style={{ position: "absolute", bottom: 6, right: 6 }}>
                   <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", display: "inline-flex", alignItems: "center" }}>
                     <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
-                      {clip.shotType === "FULL_ROUND" ? "Full 18" : clip.shotType === "FRONT_NINE" ? "Front 9" : clip.shotType === "BACK_NINE" ? "Back 9" : clip.shotType === "THREE_HOLE" ? "3 Holes" : "Extended"}
+                      {clip.isOfficial ? "Course" : clip.shotType === "FULL_ROUND" ? "Full 18" : clip.shotType === "FRONT_NINE" ? "Front 9" : clip.shotType === "BACK_NINE" ? "Back 9" : clip.shotType === "THREE_HOLE" ? "3 Holes" : "Extended"}
                     </span>
                   </div>
                 </div>
@@ -2569,8 +2613,8 @@ const [editDescription, setEditDescription] = useState("");
                           feedRef.current?.scrollBy({ top: window.innerHeight, behavior: "smooth" });
                         }
                       }}
-                      onReport={user && clip.userId !== user.id ? () => setReportClipId(clip.id) : undefined}
-                      onEdit={user && clip.userId === user.id ? () => setEditClipInfo({ id: clip.id, holeId: clip.holeId ?? null, holeNumber: clip.holeNumber ?? null }) : undefined}
+                      onReport={!clip.isOfficial && user && clip.userId !== user.id ? () => setReportClipId(clip.id) : undefined}
+                      onEdit={!clip.isOfficial && user && clip.userId === user.id ? () => setEditClipInfo({ id: clip.id, holeId: clip.holeId ?? null, holeNumber: clip.holeNumber ?? null }) : undefined}
                       currentUserId={user?.id}
                       followingIds={followingIds}
                       likedIds={likedIds}
@@ -2661,9 +2705,16 @@ const [editDescription, setEditDescription] = useState("");
             <button onClick={() => setExtendedClip(null)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
-              {extendedClip.shotType === "FULL_ROUND" ? "Full Round" : extendedClip.shotType === "FRONT_NINE" ? "Front 9" : extendedClip.shotType === "BACK_NINE" ? "Back 9" : extendedClip.shotType === "THREE_HOLE" ? "3 Holes" : "Extended Play"}
-            </div>
+            {extendedClip.isOfficial ? (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(126,200,140,0.7)", borderRadius: 99, fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#7ed28b" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg>
+                From the course
+              </div>
+            ) : (
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>
+                {extendedClip.shotType === "FULL_ROUND" ? "Full Round" : extendedClip.shotType === "FRONT_NINE" ? "Front 9" : extendedClip.shotType === "BACK_NINE" ? "Back 9" : extendedClip.shotType === "THREE_HOLE" ? "3 Holes" : "Extended Play"}
+              </div>
+            )}
             <div style={{ width: 36 }} />
           </div>
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -2673,9 +2724,11 @@ const [editDescription, setEditDescription] = useState("");
               <img src={extendedClip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             )}
           </div>
-          {(extendedClip.strategyNote || extendedClip.landingZoneNote || extendedClip.whatCameraDoesntShow) && (
+          {(extendedClip.officialCaption || extendedClip.strategyNote || extendedClip.landingZoneNote || extendedClip.whatCameraDoesntShow) && (
             <div style={{ position: "absolute", bottom: 80, left: 16, right: 80, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.5, textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-              {[extendedClip.strategyNote, extendedClip.landingZoneNote, extendedClip.whatCameraDoesntShow].filter(Boolean).join(" · ")}
+              {extendedClip.isOfficial
+                ? extendedClip.officialCaption
+                : [extendedClip.strategyNote, extendedClip.landingZoneNote, extendedClip.whatCameraDoesntShow].filter(Boolean).join(" · ")}
             </div>
           )}
         </div>

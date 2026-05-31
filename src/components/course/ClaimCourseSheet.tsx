@@ -140,7 +140,7 @@ export default function ClaimCourseSheet({ courseId, courseName, open, onClose }
 function Confirm({ step, courseName, onClose }: { step: "submitted" | "already"; courseName: string; onClose: () => void }) {
   const title = step === "submitted" ? "We'll verify and get back to you" : "You already manage this course";
   const body = step === "submitted"
-    ? `Your request to claim ${courseName} is in the queue. We typically respond within 1-2 business days.`
+    ? `Your request to claim ${courseName} is in the queue. We typically respond within 24 hours.`
     : "Your manager dashboard is already live.";
   return (
     <div style={{ textAlign: "center", padding: "8px 4px 4px" }}>

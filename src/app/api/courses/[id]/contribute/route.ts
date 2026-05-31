@@ -26,6 +26,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (ALLOWED_FIELDS.has(key)) updates[key] = body[key];
   }
 
+  // Lock to operator: once a course is claimed, the verified manager
+  // owns the brand imagery. UGC contributors can still enrich text/meta
+  // but can no longer overwrite the operator's logo or cover photo.
+  if ("coverImageUrl" in updates || "logoUrl" in updates) {
+    const { data: claimed } = await supabase
+      .from("Course")
+      .select("isClaimed")
+      .eq("id", id)
+      .single();
+    if (claimed?.isClaimed) {
+      delete updates.coverImageUrl;
+      delete updates.logoUrl;
+    }
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }

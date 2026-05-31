@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
@@ -18,7 +18,7 @@ import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { cdnImage } from "@/lib/cdnImage";
-import OfficialMediaCard, { type OfficialMedia } from "@/components/course/OfficialMediaCard";
+import { type OfficialMedia } from "@/components/course/OfficialMediaCard";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 6px rgba(0,0,0,0.4)" }}>
@@ -72,6 +72,11 @@ type Upload = {
   commentCount: number;
   uploadedByUserId?: string | null;
   uploadedByUsername?: string | null;
+  // Operator media folded into the feed (CourseOfficialMedia). No Upload
+  // backing — engagement is suppressed and a "From the course" highlight
+  // replaces the uploader row.
+  isOfficial?: boolean;
+  officialCaption?: string | null;
 };
 
 type CommentItem = {
@@ -96,6 +101,36 @@ const SHOT_LABEL: Record<string, string> = {
   CHIP: "Chip", PITCH: "Pitch", PUTT: "Putt",
   BUNKER: "Bunker", FULL_HOLE: "Full Hole", RECOVERY: "Recovery",
 };
+
+// Map a CourseOfficialMedia row into an Upload-shaped object so operator
+// content can ride the same single-active-card feed as UGC. No real Upload
+// backing — engagement (like/comment/report/intel) is suppressed by
+// `isOfficial`, and a "From the course" highlight replaces the uploader row.
+function officialMediaToUpload(m: OfficialMedia): Upload {
+  return {
+    id: `official-${m.id}`,
+    mediaType: m.mediaType === "image" ? "PHOTO" : "VIDEO",
+    mediaUrl: m.url,
+    cloudflareVideoId: m.cloudflareVideoId,
+    shotType: null,
+    clubUsed: null,
+    strategyNote: null,
+    landingZoneNote: null,
+    whatCameraDoesntShow: null,
+    windCondition: null,
+    datePlayedAt: null,
+    rankScore: 0,
+    userId: "",
+    createdAt: "",
+    seriesId: null,
+    seriesOrder: null,
+    yardageOverlay: null,
+    likeCount: 0,
+    commentCount: 0,
+    isOfficial: true,
+    officialCaption: m.caption,
+  };
+}
 
 // Horizontal swipe player for a series
 function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void }) {
@@ -328,6 +363,15 @@ export default function HolePage() {
   const [copied, setCopied] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+
+  // Operator media folded to the FRONT of the single-clip feed so it reads
+  // as native content (the user's core directive: official media lives in
+  // the main feed, not a separate section, with a "From the course"
+  // highlight). Engagement is suppressed per-clip via `isOfficial`.
+  const feed = useMemo<Upload[]>(
+    () => [...officialMedia.map(officialMediaToUpload), ...uploads],
+    [officialMedia, uploads]
+  );
 
   // Batch-fetch the current user's like state across the hole's visible
   // clips so the heart icon never flickers from unfilled to filled on
@@ -661,12 +705,12 @@ export default function HolePage() {
 
   // Jump to linked clip when ?clip= param is present
   useEffect(() => {
-    if (!uploads.length) return;
+    if (!feed.length) return;
     const clipId = searchParams.get("clip");
     if (!clipId) return;
-    const idx = uploads.findIndex(u => u.id === clipId);
+    const idx = feed.findIndex(u => u.id === clipId);
     if (idx > 0) setActiveIndex(idx);
-  }, [uploads]);
+  }, [feed]);
 
   // Manage video playback for single clips. When the comment sheet is
   // open, pause the active video so it doesn't keep playing under the
@@ -675,7 +719,7 @@ export default function HolePage() {
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([clipId, videoEl]) => {
       if (!videoEl) return;
-      const clipIndex = uploads.findIndex(u => u.id === clipId);
+      const clipIndex = feed.findIndex(u => u.id === clipId);
       if (clipIndex === activeIndex) {
         if (commentUploadId) {
           // Pause without resetting — resumes from same point on close.
@@ -689,7 +733,7 @@ export default function HolePage() {
       }
     });
     setIntelOpen(false);
-  }, [activeIndex, uploads, commentUploadId]);
+  }, [activeIndex, feed, commentUploadId]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
@@ -727,7 +771,7 @@ export default function HolePage() {
     }
 
     // HORIZONTAL swipe — switch between clips on this hole
-    if (deltaX > 50 && activeIndex < uploads.length - 1) {
+    if (deltaX > 50 && activeIndex < feed.length - 1) {
       setActiveIndex(prev => prev + 1);
     } else if (deltaX < -50 && activeIndex > 0) {
       setActiveIndex(prev => prev - 1);
@@ -743,7 +787,7 @@ export default function HolePage() {
   }
 
   const handleShare = async () => {
-    const activeClipId = uploads[activeIndex]?.id;
+    const activeClipId = feed[activeIndex]?.id;
     const base = `${window.location.origin}/courses/${id}/holes/${number}`;
     const url = activeClipId ? `${base}?clip=${activeClipId}` : base;
     const shareText = `Tour It — ${course?.name} — ${pageTitle}`;
@@ -761,18 +805,10 @@ export default function HolePage() {
   const holeNum = multiHoleKey ? null : Number(number);
   const par = hole?.par || 4;
   const pageTitle = multiHoleKey ? multiHoleKey.label : holeNum ? `Hole ${holeNum}` : "";
-  const hasContent = uploads.length > 0 || series.length > 0;
-  const hasOfficial = officialMedia.length > 0;
+  const hasContent = feed.length > 0 || series.length > 0;
   const courseAbbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
 
   if (!hasContent) {
-    // Generic no-content state for courses where we don't have any clips or
-    // seeded official content yet. (Aronimink and any other course where
-    // @tourit has posted intel goes down the regular populated path below.)
-    // When operator official media exists for this hole, render it as a
-    // rail so the user gets something useful and the empty CTA still
-    // sits beneath it (we want UGC eventually — operator content alone
-    // is the fallback, not the goal).
     return (
       <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff", display: "flex", flexDirection: "column" }}>
         <style>{` *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
@@ -783,39 +819,22 @@ export default function HolePage() {
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>{course?.name} — {pageTitle}</span>
         </div>
 
-        {hasOfficial && (
-          <div style={{ padding: "20px 0 4px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px 10px" }}>
-              <div style={{ width: 3, height: 14, background: "#7ed28b", borderRadius: 1, flexShrink: 0 }} />
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#7ed28b", letterSpacing: "1.6px", textTransform: "uppercase" }}>From the course</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{officialMedia.length} item{officialMedia.length === 1 ? "" : "s"}</span>
-            </div>
-            <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 4px", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
-              {officialMedia.map(m => (
-                <div key={m.id} style={{ scrollSnapAlign: "start" }}>
-                  <OfficialMediaCard media={m} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
           <div style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
           </div>
-          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>{hasOfficial ? "No golfer clips yet" : "No clips yet"}</p>
-          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>{hasOfficial ? <>Be the first golfer to share<br/>scout intel for {pageTitle}.</> : <>Be the first to upload intel<br/>for {course?.name} — {pageTitle}</>}</p>
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</p>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>Be the first to upload intel<br/>for {course?.name} — {pageTitle}</p>
           <button onClick={() => router.push(`/upload?courseId=${id}${holeNum ? `&holeNumber=${holeNum}` : ""}`)} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Upload a clip</button>
         </div>
       </main>
     );
   }
 
-  const activeUpload = uploads[activeIndex];
+  const activeUpload = feed[activeIndex];
   const uploader = activeUpload ? uploaders[activeUpload.userId] : null;
-  const hasIntel = activeUpload && (activeUpload.shotType || activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow || activeUpload.clubUsed || activeUpload.windCondition || activeUpload.datePlayedAt);
+  const isOfficial = !!activeUpload?.isOfficial;
+  const hasIntel = activeUpload && !isOfficial && (activeUpload.shotType || activeUpload.strategyNote || activeUpload.landingZoneNote || activeUpload.whatCameraDoesntShow || activeUpload.clubUsed || activeUpload.windCondition || activeUpload.datePlayedAt);
 
   return (
     <>
@@ -856,7 +875,7 @@ export default function HolePage() {
         `}</style>
 
         {/* Show series cards or single clip feed */}
-        {uploads.length > 0 ? (
+        {feed.length > 0 ? (
           <div
             style={{ position: "relative", width: "100%", height: "100dvh", ...(isDesktop ? { background: "#000", display: "flex", justifyContent: "center" } : {}) }}
             onTouchStart={handleTouchStart}
@@ -927,7 +946,7 @@ export default function HolePage() {
               return (
                 <>
                   <HoleSideBar holeIndex={scoutedHoles.indexOf(holeNum ?? -1)} scoutedHoles={scoutedHoles} />
-                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={uploads.length} />
+                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={feed.length} />
                 </>
               );
             })()}
@@ -950,23 +969,28 @@ export default function HolePage() {
                   (see below). Follow + button dropped from the avatar; the
                   follow action still lives on the uploader's profile page. */}
 
-              {/* Like */}
-              <ClipActions key={activeUpload.id} upload={activeUpload} likedIds={likedIds} currentUserId={user?.id ?? null} onShowLikes={(uploadId) => setLikesUploadId(uploadId)} />
+              {/* Like + Comment — suppressed on operator media, which has
+                  no Upload backing to engage with. */}
+              {!isOfficial && (
+                <>
+                  <ClipActions key={activeUpload.id} upload={activeUpload} likedIds={likedIds} currentUserId={user?.id ?? null} onShowLikes={(uploadId) => setLikesUploadId(uploadId)} />
 
-              {/* Comment — filled green when the current user has
-                  commented on this clip, matching home feed + course
-                  profile + user profile. */}
-              {(() => {
-                const commented = !!commentedIds?.has(activeUpload.id);
-                return (
-                  <button className="action-btn" onClick={() => setCommentUploadId(activeUpload.id)}>
-                    <div className="action-icon" style={commented ? { background: "#1a9e42", borderColor: "#1a9e42" } : undefined}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill={commented ? "#fff" : "none"} stroke={commented ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    </div>
-                    <span className="action-label">{activeUpload.commentCount || 0}</span>
-                  </button>
-                );
-              })()}
+                  {/* Comment — filled green when the current user has
+                      commented on this clip, matching home feed + course
+                      profile + user profile. */}
+                  {(() => {
+                    const commented = !!commentedIds?.has(activeUpload.id);
+                    return (
+                      <button className="action-btn" onClick={() => setCommentUploadId(activeUpload.id)}>
+                        <div className="action-icon" style={commented ? { background: "#1a9e42", borderColor: "#1a9e42" } : undefined}>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill={commented ? "#fff" : "none"} stroke={commented ? "#fff" : "rgba(255,255,255,0.8)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
+                        <span className="action-label">{activeUpload.commentCount || 0}</span>
+                      </button>
+                    );
+                  })()}
+                </>
+              )}
 
               {/* SEND IT */}
               <button className="action-btn" onClick={handleShare}>
@@ -987,7 +1011,7 @@ export default function HolePage() {
               </button>
 
               {/* Report (non-owner only) */}
-              {user && activeUpload && activeUpload.userId !== user.id && (
+              {!isOfficial && user && activeUpload && activeUpload.userId !== user.id && (
                 <button className="action-btn" onClick={() => setReportClipId(activeUpload.id)}>
                   <div className="action-icon">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
@@ -1007,7 +1031,7 @@ export default function HolePage() {
               </div>
             )}
 
-            {(uploaders[activeUpload.userId]?.username || formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)) && (
+            {!isOfficial && (uploaders[activeUpload.userId]?.username || formatClipDate(activeUpload.datePlayedAt, activeUpload.createdAt)) && (
               // Avatar + username + date. left adapts to hole digit count
               // (80 for 1-9, 105 for 10+) so the row hugs the HoleIdentityCard
               // without floating. Bottom lifts above the VideoScrubber on
@@ -1042,6 +1066,35 @@ export default function HolePage() {
                       uploaded by @{activeUpload.uploadedByUsername}
                     </span>
                   </button>
+                )}
+              </div>
+            )}
+
+            {/* From-the-course highlight — replaces the uploader row on
+                operator media so it reads as native content but is clearly
+                attributed to the course. Mirrors the course-page FeedCard. */}
+            {isOfficial && (
+              <div style={{ position: "absolute", left: (holeNum ?? 0) >= 10 ? 105 : 80, right: 80,
+                bottom: activeUpload.mediaType === "VIDEO"
+                  ? "calc(130px + env(safe-area-inset-bottom))"
+                  : "calc(85px + env(safe-area-inset-bottom))",
+                zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <button onClick={() => router.push(`/courses/${id}`)} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, overflow: "hidden", background: "rgba(26,158,66,0.2)", border: "1.5px solid rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {course?.logoUrl
+                      ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a9e42" }}>{courseAbbr}</span>}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 3 }}>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>{course?.name}</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(26,158,66,0.22)", border: "1px solid rgba(126,210,139,0.5)", borderRadius: 99, padding: "2px 8px" }}>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 700, color: "#7ed28b", letterSpacing: "0.8px", textTransform: "uppercase" }}>From the course</span>
+                    </span>
+                  </div>
+                </button>
+                {activeUpload.officialCaption && (
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.85)", textShadow: "0 1px 3px rgba(0,0,0,0.8)", lineHeight: 1.4 }}>{activeUpload.officialCaption}</span>
                 )}
               </div>
             )}
@@ -1184,7 +1237,7 @@ export default function HolePage() {
         </>
       )}
 
-      {activeUpload && (
+      {activeUpload && !isOfficial && (
         <IntelPanel
           open={intelOpen}
           onClose={() => setIntelOpen(false)}
