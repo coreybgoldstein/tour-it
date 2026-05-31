@@ -18,6 +18,7 @@ import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { cdnImage } from "@/lib/cdnImage";
+import OfficialMediaCard, { type OfficialMedia } from "@/components/course/OfficialMediaCard";
 function FlagBadge({ label }: { label: string | number }) {
   return (
     <div style={{ background: "#1a5c30", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 4, padding: "6px 14px 7px", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 6px rgba(0,0,0,0.4)" }}>
@@ -302,6 +303,11 @@ export default function HolePage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [hole, setHole] = useState<Hole | null>(null);
   const [uploads, setUploads] = useState<Upload[]>([]);
+  // CourseOfficialMedia rows that cover this specific hole (single-hole
+  // and range-overlap). Loaded once per hole; powers the "From the
+  // course" rail in the empty state and the top-of-page CTA when the
+  // UGC feed has content.
+  const [officialMedia, setOfficialMedia] = useState<OfficialMedia[]>([]);
   // Pre-batched set of upload IDs the current user has liked across this
   // hole's visible clips. Same pattern as home/course/profile pages.
   const [likedIds, setLikedIds] = useState<Set<string> | undefined>(undefined);
@@ -541,6 +547,19 @@ export default function HolePage() {
       return;
     }
 
+    // Fire the official-media fetch alongside the existing Course/Hole
+    // pair. Single-hole pages only — multi-hole keys (front-9 etc.) are
+    // a virtual grouping and don't map to a CourseOfficialMedia row.
+    if (!multiHoleKey) {
+      const n = Number(number);
+      if (!Number.isNaN(n)) {
+        fetch(`/api/courses/${id}/official-media?hole=${n}`)
+          .then(r => (r.ok ? r.json() : { media: [] }))
+          .then((j: { media: OfficialMedia[] }) => setOfficialMedia(Array.isArray(j.media) ? j.media : []))
+          .catch(() => {});
+      }
+    }
+
     Promise.all([
       supabase.from("Course").select("id, name, city, state, logoUrl").eq("id", id).single(),
       supabase.from("Hole").select("*").eq("courseId", id).eq("holeNumber", Number(number)).single(),
@@ -743,12 +762,17 @@ export default function HolePage() {
   const par = hole?.par || 4;
   const pageTitle = multiHoleKey ? multiHoleKey.label : holeNum ? `Hole ${holeNum}` : "";
   const hasContent = uploads.length > 0 || series.length > 0;
+  const hasOfficial = officialMedia.length > 0;
   const courseAbbr = course?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase() || "?";
 
   if (!hasContent) {
     // Generic no-content state for courses where we don't have any clips or
     // seeded official content yet. (Aronimink and any other course where
     // @tourit has posted intel goes down the regular populated path below.)
+    // When operator official media exists for this hole, render it as a
+    // rail so the user gets something useful and the empty CTA still
+    // sits beneath it (we want UGC eventually — operator content alone
+    // is the fallback, not the goal).
     return (
       <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff", display: "flex", flexDirection: "column" }}>
         <style>{` *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
@@ -758,12 +782,31 @@ export default function HolePage() {
           </button>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 600, color: "#fff" }}>{course?.name} — {pageTitle}</span>
         </div>
+
+        {hasOfficial && (
+          <div style={{ padding: "20px 0 4px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px 10px" }}>
+              <div style={{ width: 3, height: 14, background: "#7ed28b", borderRadius: 1, flexShrink: 0 }} />
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#7ed28b", letterSpacing: "1.6px", textTransform: "uppercase" }}>From the course</span>
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{officialMedia.length} item{officialMedia.length === 1 ? "" : "s"}</span>
+            </div>
+            <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "0 16px 4px", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}>
+              {officialMedia.map(m => (
+                <div key={m.id} style={{ scrollSnapAlign: "start" }}>
+                  <OfficialMediaCard media={m} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
           <div style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
           </div>
-          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>No clips yet</p>
-          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>Be the first to upload intel<br/>for {course?.name} — {pageTitle}</p>
+          <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginBottom: 8 }}>{hasOfficial ? "No golfer clips yet" : "No clips yet"}</p>
+          <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, marginBottom: 28 }}>{hasOfficial ? <>Be the first golfer to share<br/>scout intel for {pageTitle}.</> : <>Be the first to upload intel<br/>for {course?.name} — {pageTitle}</>}</p>
           <button onClick={() => router.push(`/upload?courseId=${id}${holeNum ? `&holeNumber=${holeNum}` : ""}`)} style={{ background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 28px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Upload a clip</button>
         </div>
       </main>

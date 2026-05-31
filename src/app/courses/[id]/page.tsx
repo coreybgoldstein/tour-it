@@ -26,6 +26,7 @@ import { cdnImage } from "@/lib/cdnImage";
 import { OfficialCourseBadge } from "@/components/course/OfficialCourseBadge";
 import ClaimCourseSheet from "@/components/course/ClaimCourseSheet";
 import FromTheCourseBlock from "@/components/course/FromTheCourseBlock";
+import OfficialMediaCard, { type OfficialMedia } from "@/components/course/OfficialMediaCard";
 type Course = {
   id: string;
   name: string;
@@ -438,6 +439,14 @@ export default function CourseProfilePage() {
   const [holeClipsMap, setHoleClipsMap] = useState<Record<number, Clip[]>>({});
   const [extendedClips, setExtendedClips] = useState<Clip[]>([]);
   const [holesWithClips, setHolesWithClips] = useState<number[]>([]);
+  // Operator-uploaded media (CourseOfficialMedia). Kept in a flat list +
+  // a per-hole derived map so the rail can show course-level items and
+  // hole tiles can render a small "from-the-course" badge when at least
+  // one official item covers that hole. The full list is loaded once
+  // alongside the UGC clips so we don't double-fetch on hole open.
+  const [officialMedia, setOfficialMedia] = useState<OfficialMedia[]>([]);
+  const [officialByHole, setOfficialByHole] = useState<Record<number, OfficialMedia[]>>({});
+  const [courseLevelOfficial, setCourseLevelOfficial] = useState<OfficialMedia[]>([]);
   const [extendedClip, setExtendedClip] = useState<Clip | null>(null);
   const [hasMoreClips, setHasMoreClips] = useState(false);
   const [loadingMoreClips, setLoadingMoreClips] = useState(false);
@@ -812,6 +821,34 @@ const [editDescription, setEditDescription] = useState("");
         .order("uploadCount", { ascending: false })
         .limit(2);
       setSuggestedCourses(suggested || []);
+
+      // Official media (operator uploads). Fetched once for the full
+      // course; per-hole expansion happens in-memory below so the hole
+      // detail page + per-hole pip on the grid don't need extra calls.
+      try {
+        const omRes = await fetch(`/api/courses/${id}/official-media`);
+        if (omRes.ok) {
+          const omJson: { media: OfficialMedia[] } = await omRes.json();
+          const list = Array.isArray(omJson.media) ? omJson.media : [];
+          setOfficialMedia(list);
+
+          const byHole: Record<number, OfficialMedia[]> = {};
+          const courseLevel: OfficialMedia[] = [];
+          for (const m of list) {
+            if (m.holeNumber == null) { courseLevel.push(m); continue; }
+            const start = m.holeNumber;
+            const end = m.holeRangeEnd && m.holeRangeEnd > start ? m.holeRangeEnd : start;
+            for (let h = start; h <= end; h++) {
+              if (!byHole[h]) byHole[h] = [];
+              byHole[h].push(m);
+            }
+          }
+          setOfficialByHole(byHole);
+          setCourseLevelOfficial(courseLevel);
+        }
+      } catch {
+        // Non-fatal — UGC grid still renders without official media.
+      }
 
       setLoading(false);
     }
@@ -1572,6 +1609,41 @@ const [editDescription, setEditDescription] = useState("");
         </div>
       )}
 
+      {/* From-the-course rail — horizontal scroll of operator-uploaded
+          media (images, flyovers, videos). Renders ONLY when at least
+          one CourseOfficialMedia row exists. Sits ABOVE the UGC hole
+          grid so users see official content first when the course is
+          claimed, but never blocks scroll to the rest of the page.
+          Per-hole official items still also appear on the hole detail
+          page; this rail is the entry point at the course level. */}
+      {officialMedia.length > 0 && (
+        <div style={{ padding: "0 0 18px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px 10px" }}>
+            <div style={{ width: 3, height: 14, background: "#7ed28b", borderRadius: 1, flexShrink: 0 }} />
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#7ed28b", letterSpacing: "1.6px", textTransform: "uppercase" }}>From the course</span>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>{officialMedia.length} item{officialMedia.length === 1 ? "" : "s"}</span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              overflowX: "auto",
+              padding: "0 16px 4px",
+              scrollSnapType: "x mandatory",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            {/* Course-level items first, then per-hole items in upload order. */}
+            {[...courseLevelOfficial, ...officialMedia.filter(m => m.holeNumber != null)].map(m => (
+              <div key={m.id} style={{ scrollSnapAlign: "start" }}>
+                <OfficialMediaCard media={m} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Holes grid — Front 9 always; Back 9 only on 18-hole courses.
           Show the grid whenever EITHER there are user clips OR we've seeded
           hole imagery (Aronimink during PGA week, etc). Generic empty state
@@ -1737,12 +1809,28 @@ const [editDescription, setEditDescription] = useState("");
                                 pills removed 2026-05-24 to keep the
                                 hole grid clean; per-clip engagement
                                 still lives on user profile thumbnails. */}
-                            {hasClips && (
-                              <div style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
-                              </div>
-                            )}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+                              {hasClips ? (
+                                <div style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#4da862", flexShrink: 0 }} />
+                                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "#4da862" }}>{clipCount} clip{clipCount !== 1 ? "s" : ""}</span>
+                                </div>
+                              ) : <span />}
+                              {/* From-the-course pip — present when an
+                                  operator has uploaded official media
+                                  covering this hole (single-hole or
+                                  range). Tiny house glyph + count so
+                                  it doesn't compete with the clip
+                                  count above; tap still routes to the
+                                  hole detail page which renders the
+                                  full official-media list. */}
+                              {(officialByHole[holeNum]?.length ?? 0) > 0 && (
+                                <div title="From the course" style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 6px", borderRadius: 99, background: "rgba(126,200,140,0.14)", border: "1px solid rgba(126,200,140,0.45)" }}>
+                                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#7ed28b" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-6h6v6" /></svg>
+                                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#7ed28b", letterSpacing: "0.04em" }}>{officialByHole[holeNum].length}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
