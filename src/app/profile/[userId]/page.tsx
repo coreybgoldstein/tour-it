@@ -133,7 +133,6 @@ const ProfileFeedCard = memo(function ProfileFeedCardImpl({
       {/* Right rail — shared ClipRail (uniform across all clip surfaces).
           Owner gets the edit/delete kebab; non-owners get the report kebab. */}
       <ClipRail
-        bottom="calc(90px + env(safe-area-inset-bottom))"
         onIntel={hasNotes ? () => setIntelOpen(o => !o) : undefined}
         intelActive={intelOpen}
         liked={liked}

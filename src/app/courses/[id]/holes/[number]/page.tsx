@@ -330,7 +330,6 @@ function HoleClipRail({
   });
   return (
     <ClipRail
-      bottom="calc(90px + env(safe-area-inset-bottom))"
       onIntel={onIntel}
       intelActive={intelActive}
       liked={liked}
@@ -958,7 +957,6 @@ export default function HolePage() {
                 report kebab; non-owners get the report kebab. */}
             {isOfficial ? (
               <ClipRail
-                bottom="calc(90px + env(safe-area-inset-bottom))"
                 onIntel={hasIntel ? () => setIntelOpen(o => !o) : undefined}
                 intelActive={intelOpen}
                 showEngagement={false}

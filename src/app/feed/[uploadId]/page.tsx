@@ -766,7 +766,6 @@ function FeedClip({
           INTEL opens the course page here; owner clips get the edit/delete
           kebab, others get the report kebab. */}
       <ClipRail
-        bottom="calc(env(safe-area-inset-bottom, 0px) + 100px)"
         zIndex={5}
         onIntel={(e) => { e.stopPropagation(); onCourse(); }}
         liked={liked}
@@ -806,7 +805,7 @@ function FeedClip({
       {/* Video progress bar — thin line pinned to the bottom of the
           clip frame, sits above the BottomNav by a few px so it stays
           visible. */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", height: 3, background: "rgba(255,255,255,0.18)", zIndex: 4 }}>
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", height: 5, background: "rgba(255,255,255,0.18)", zIndex: 4 }}>
         <div style={{ height: "100%", width: `${Math.min(100, Math.max(0, progress * 100))}%`, background: "#4da862", transition: "width 0.15s linear" }} />
       </div>
     </div>

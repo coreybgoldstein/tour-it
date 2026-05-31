@@ -336,7 +336,6 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
 
       {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
       <ClipRail
-        bottom="calc(90px + env(safe-area-inset-bottom))"
         zIndex={10}
         onIntel={hasNotes && !isOfficial ? () => setIntelOpen(o => !o) : undefined}
         intelActive={intelOpen}

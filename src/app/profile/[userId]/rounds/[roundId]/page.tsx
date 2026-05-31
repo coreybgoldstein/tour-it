@@ -46,7 +46,6 @@ function RoundClipRail({
   });
   return (
     <ClipRail
-      bottom="calc(90px + env(safe-area-inset-bottom))"
       zIndex={10}
       liked={liked}
       likeCount={likeCount}

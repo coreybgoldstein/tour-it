@@ -36,7 +36,7 @@ function GreenButton({
 }
 
 export function ClipRail({
-  bottom = "calc(env(safe-area-inset-bottom, 0px) + 90px)",
+  bottom = "calc(env(safe-area-inset-bottom, 0px) + 24px)",
   zIndex = 30,
   onIntel,
   intelActive,
@@ -120,7 +120,16 @@ export function ClipRail({
       </GreenButton>
       )}
 
-      {/* SEND IT — dark stacked button, SENT check on share. */}
+      {/* Kebab — green circle, bold dots. Owner: edit/delete. Others: report. */}
+      {kebab && onKebab && (
+        <GreenButton onClick={onKebab} label={null}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none">
+            <circle cx="5" cy="12" r="2.1" /><circle cx="12" cy="12" r="2.1" /><circle cx="19" cy="12" r="2.1" />
+          </svg>
+        </GreenButton>
+      )}
+
+      {/* SEND IT — dark stacked button, SENT check on share. Always last. */}
       <button onClick={share} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
         <div style={{ width: 42, height: 42, borderRadius: "50%", background: sent ? "rgba(26,158,66,0.2)" : "rgba(0,0,0,0.6)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", border: `1px solid ${sent ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.15)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {sent
@@ -135,17 +144,7 @@ export function ClipRail({
               </div>
           }
         </div>
-        <span style={{ height: 13, display: "block" }} />
       </button>
-
-      {/* Kebab — green circle, bold dots. Owner: edit/delete. Others: report. */}
-      {kebab && onKebab && (
-        <GreenButton onClick={onKebab} label={null}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="none">
-            <circle cx="5" cy="12" r="2.1" /><circle cx="12" cy="12" r="2.1" /><circle cx="19" cy="12" r="2.1" />
-          </svg>
-        </GreenButton>
-      )}
     </div>
   );
 }

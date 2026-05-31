@@ -44,7 +44,7 @@ export function VideoScrubber({ videoRef, left = 16, bottom = 4 }: { videoRef: R
       onPointerCancel={() => { draggingRef.current = false; setDragging(false); }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div style={{ width: "100%", height: dragging ? 5 : 3, background: "rgba(255,255,255,0.22)", borderRadius: 99, position: "relative", transition: "height 0.12s" }}>
+      <div style={{ width: "100%", height: dragging ? 7 : 5, background: "rgba(255,255,255,0.22)", borderRadius: 99, position: "relative", transition: "height 0.12s" }}>
         <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${progress * 100}%`, background: "#4da862", borderRadius: 99 }} />
         {dragging && (
           <div style={{
