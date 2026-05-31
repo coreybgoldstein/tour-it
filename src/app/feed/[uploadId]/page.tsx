@@ -630,24 +630,31 @@ function FeedClip({
             : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, color: "#0c1c13" }}>{(clip.courseName ?? "TI").slice(0, 2).toUpperCase()}</span>
           }
         </div>
-        <div style={{ flex: 1, minWidth: 0, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
+        {/* Left column — course name over location, vertically centered. */}
+        <div style={{ flexShrink: 1, minWidth: 0, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
             {clip.courseName ?? "Unknown course"}
           </div>
-          {(holeMeta.length > 0 || clip.courseCity || clip.courseState) && (
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1, minWidth: 0 }}>
-              {holeMeta.length > 0 && (
-                <span style={{ fontWeight: 600, color: "#4da862" }}>{holeMeta.join(" · ")}</span>
-              )}
-              {holeMeta.length > 0 && (clip.courseCity || clip.courseState) && (
-                <span style={{ color: "rgba(255,255,255,0.4)" }}>{"  ·  "}</span>
-              )}
-              {(clip.courseCity || clip.courseState) && (
-                <span style={{ color: "rgba(255,255,255,0.55)" }}>{[clip.courseCity, clip.courseState].filter(Boolean).join(", ")}</span>
-              )}
+          {(clip.courseCity || clip.courseState) && (
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1, minWidth: 0 }}>
+              {[clip.courseCity, clip.courseState].filter(Boolean).join(", ")}
             </div>
           )}
         </div>
+        {/* Right side — hole · par · yards laid out horizontally and
+            vertically centered, after a separator dot. Holds its width
+            (no shrink) so the details never get crowded by the name. */}
+        {holeMeta.length > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 9, flexShrink: 0, marginLeft: 2 }}>
+            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 13 }}>·</span>
+            {holeMeta.map((m, i) => (
+              <span key={m} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                {i > 0 && <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 13 }}>·</span>}
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 600, color: i === 0 ? "#4da862" : "rgba(255,255,255,0.92)", whiteSpace: "nowrap" }}>{m}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </button>
 
       {/* Mute toggle — top-right, height-matched to back + pill so
