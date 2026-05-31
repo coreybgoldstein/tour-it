@@ -584,10 +584,11 @@ const [editDescription, setEditDescription] = useState("");
   const [editCourseType, setEditCourseType] = useState<"PUBLIC" | "PRIVATE" | "SEMI_PRIVATE" | "">("");
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [user, setUser] = useState<any>(null);
-  // True when the logged-in user is the verified operator of THIS course
-  // (a CourseManager row) or a Tour It admin. Gates the manager hamburger
-  // menu in the header — the only in-app entry point to the manage
-  // dashboard. Mirrors requireCourseManager() server-side.
+  // True only when the logged-in user is the verified operator of THIS
+  // course (a CourseManager row). Gates the owner hamburger menu in the
+  // header. Admins are intentionally excluded — they manage courses they
+  // don't own from the admin dashboard, so the "Course owner" menu never
+  // appears on a course they don't actually manage.
   const [isManager, setIsManager] = useState(false);
   const [managerMenuOpen, setManagerMenuOpen] = useState(false);
   const [reportClipId, setReportClipId] = useState<string | null>(null);
@@ -671,13 +672,16 @@ const [editDescription, setEditDescription] = useState("");
     supabase.auth.getUser().then(async ({ data }) => {
       setUser(data.user);
       if (data.user) {
-        const [{ data: follows }, { data: mgr }, { data: profile }] = await Promise.all([
+        const [{ data: follows }, { data: mgr }] = await Promise.all([
           supabase.from("Follow").select("followingId").eq("followerId", data.user.id).eq("status", "ACTIVE"),
           supabase.from("CourseManager").select("id").eq("courseId", id).eq("userId", data.user.id).maybeSingle(),
-          supabase.from("User").select("isAdmin").eq("id", data.user.id).maybeSingle(),
         ]);
         setFollowingIds(new Set((follows || []).map((f: any) => f.followingId)));
-        setIsManager(!!mgr || !!profile?.isAdmin);
+        // Owner hamburger is gated on actual course ownership — a CourseManager
+        // row for THIS course. Admins manage other courses via the admin
+        // dashboard, not this menu, so being an admin no longer surfaces a
+        // misleading "Course owner" menu on courses they don't manage.
+        setIsManager(!!mgr);
       }
     });
   }, [id]);
