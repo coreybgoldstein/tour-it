@@ -296,17 +296,9 @@ export default function RoundDetailPage() {
                   muted={muted}
                   onMuteToggle={() => setMuted(m => !m)}
                   onTapCourse={() => router.push(`/courses/${clip.courseId}`)}
+                  onBack={() => setFeedIndex(null)}
                   visible={true}
                 />
-
-                {/* Back button — sits below the course pill */}
-                <button
-                  onClick={() => setFeedIndex(null)}
-                  style={{ position: "absolute", top: 68, left: 16, zIndex: 20, display: "flex", alignItems: "center", gap: 5, background: "rgba(0,0,0,0.45)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 20, padding: "5px 10px 5px 7px", cursor: "pointer" }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>Round</span>
-                </button>
 
                 {/* Vertical dot indicator — left side, centered */}
                 {clips.length > 1 && (
@@ -318,7 +310,7 @@ export default function RoundDetailPage() {
                 )}
 
                 {/* Right panel */}
-                <div style={{ position: "absolute", right: 12, bottom: 110, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+                <div style={{ position: "absolute", right: 12, bottom: "calc(90px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
                   {/* Uploader avatar */}
                   <button onClick={() => router.push(`/profile/${clip.uploaderId}`)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                     <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.5)", background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -357,14 +349,13 @@ export default function RoundDetailPage() {
 
                 {/* Hole # badge */}
                 {clip.holeNumber && (
-                  <div style={{ position: "absolute", bottom: 66, left: 0, zIndex: 10, background: "rgba(7,16,10,0.82)", backdropFilter: "blur(10px)", borderRadius: "0 16px 0 0", borderTop: "1px solid rgba(77,168,98,0.2)", borderRight: "1px solid rgba(77,168,98,0.2)", padding: "12px 16px 16px 14px", pointerEvents: "none" }}>
+                  <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 10, background: "rgba(7,16,10,0.82)", backdropFilter: "blur(10px)", borderRadius: "0 16px 0 0", borderTop: "1.5px solid rgba(77,168,98,0.7)", borderRight: "1.5px solid rgba(77,168,98,0.7)", boxShadow: "0 -2px 18px rgba(77,168,98,0.18)", padding: "12px 18px calc(14px + env(safe-area-inset-bottom)) 14px", pointerEvents: "none" }}>
                     <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 52, fontWeight: 400, color: "#fff", lineHeight: 1, letterSpacing: "-1px" }}>{clip.holeNumber}</div>
                   </div>
                 )}
               </div>
             ))}
           </div>
-          <BottomNav />
         </div>
       )}
 

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLike, seedLikedCache } from "@/hooks/useLike";
-import BottomNav from "@/components/BottomNav";
 import LikesSheet from "@/components/LikesSheet";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
@@ -864,7 +863,7 @@ export default function HolePage() {
              VideoScrubber, which is at calc(100 + safe-area-inset-bottom).
              Old value put them at the same height, making the buttons feel
              cramped against the scrubber line. */
-          .right-actions { position: absolute; right: 12px; bottom: calc(150px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 14px; z-index: 30; }
+          .right-actions { position: absolute; right: 12px; bottom: calc(90px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 14px; z-index: 30; }
           .action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; cursor: pointer; }
           .action-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; }
           .action-label { font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,0.95); }
@@ -937,6 +936,7 @@ export default function HolePage() {
               muted={muted}
               onMuteToggle={() => { const n = !muted; setMuted(n); sessionMute.set(n); }}
               onTapCourse={() => router.push(`/courses/${id}`)}
+              onBack={() => router.back()}
               visible={true}
               showParYardage={false}
             />
@@ -946,7 +946,7 @@ export default function HolePage() {
               return (
                 <>
                   <HoleSideBar holeIndex={scoutedHoles.indexOf(holeNum ?? -1)} scoutedHoles={scoutedHoles} />
-                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={feed.length} />
+                  <HoleIdentityCard holeNumber={holeNum} holePar={!multiHoleKey ? par : undefined} clipCount={feed.length} flush />
                 </>
               );
             })()}
@@ -1040,8 +1040,8 @@ export default function HolePage() {
               // so the chip slots in BELOW the username row.
               <div style={{ position: "absolute", left: (holeNum ?? 0) >= 10 ? 105 : 80, right: 80,
                 bottom: activeUpload.mediaType === "VIDEO"
-                  ? `calc(${activeUpload.uploadedByUsername ? 138 : 130}px + env(safe-area-inset-bottom))`
-                  : `calc(${activeUpload.uploadedByUsername ? 100 : 85}px + env(safe-area-inset-bottom))`,
+                  ? `calc(${activeUpload.uploadedByUsername ? 78 : 70}px + env(safe-area-inset-bottom))`
+                  : `calc(${activeUpload.uploadedByUsername ? 56 : 42}px + env(safe-area-inset-bottom))`,
                 zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <button onClick={() => router.push(`/profile/${activeUpload.userId}`)} aria-label={`Open ${uploaders[activeUpload.userId]?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
@@ -1258,8 +1258,6 @@ export default function HolePage() {
           uploaderHandicap={uploaders[activeUpload.userId]?.handicapIndex ?? null}
         />
       )}
-
-      <BottomNav />
 
       {/* "Who liked this" sheet — opens from the like-count tap. */}
       <LikesSheet
