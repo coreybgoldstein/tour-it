@@ -352,13 +352,31 @@ export default function HomeTour() {
     let cancelled = false;
     (async () => {
       const sb = createClient();
-      const { data: uploads } = await sb
+      const { data: pool } = await sb
         .from("Upload")
         .select("id, courseId, cloudflareVideoId, mediaUrl, mediaType, shotType, holeId")
         .eq("moderationStatus", "APPROVED")
         .order("createdAt", { ascending: false })
-        .limit(8);
-      if (cancelled || !uploads) return;
+        .limit(120);
+      if (cancelled || !pool) return;
+
+      // Shuffle so the rail varies each open, then spread by course so a
+      // single course that just got a burst of uploads can't fill the rail
+      // (mirrors the /feed shuffle + de-dup). One clip per course first,
+      // then backfill from leftovers if we have fewer than 8 distinct courses.
+      const shuffled = [...(pool as any[])];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const seen = new Set<string>();
+      const primary: any[] = [];
+      const leftovers: any[] = [];
+      for (const u of shuffled) {
+        if (u.courseId && !seen.has(u.courseId)) { seen.add(u.courseId); primary.push(u); }
+        else leftovers.push(u);
+      }
+      const uploads = [...primary, ...leftovers].slice(0, 8);
 
       const courseIds = Array.from(new Set(uploads.map((u: any) => u.courseId).filter(Boolean)));
       const holeIds = Array.from(new Set(uploads.map((u: any) => u.holeId).filter(Boolean)));

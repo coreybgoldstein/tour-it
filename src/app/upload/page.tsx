@@ -84,6 +84,10 @@ function UploadPageInner() {
   const preselectedHoleNumber = searchParams.get("holeNumber") ? Number(searchParams.get("holeNumber")) : null;
   const preselectedTripId = searchParams.get("tripId");
   const [tripName, setTripName] = useState<string | null>(null);
+  // Same GolfTrip row can be a single-day "round", a "game", or a multi-stop
+  // "trip" — mirror the flavor logic from /trips/[id] so the badge verbiage
+  // matches what the user actually created.
+  const [tripFlavor, setTripFlavor] = useState<"round" | "game" | "trip">("trip");
   const [tripPublic, setTripPublic] = useState(true);
 
   const [step, setStep] = useState(1);
@@ -191,8 +195,21 @@ function UploadPageInner() {
         }
         if (preselectedHoleNumber) setSelectedHole(preselectedHoleNumber);
         if (preselectedTripId) {
-          const { data: trip } = await supabase.from("GolfTrip").select("name").eq("id", preselectedTripId).single();
-          if (trip) setTripName(trip.name);
+          const [{ data: trip }, { data: tCourses }, { data: tGames }] = await Promise.all([
+            supabase.from("GolfTrip").select("name, startDate, endDate").eq("id", preselectedTripId).single(),
+            supabase.from("GolfTripCourse").select("secondaryCourseId").eq("tripId", preselectedTripId),
+            supabase.from("TripGame").select("id").eq("tripId", preselectedTripId).limit(1),
+          ]);
+          if (trip) {
+            setTripName(trip.name);
+            const stripDate = (s: string | null | undefined) => (s ? s.slice(0, 10) : "");
+            const start = stripDate(trip.startDate);
+            const end = stripDate(trip.endDate);
+            const isRound = (tCourses?.length ?? 0) === 1
+              && !tCourses?.[0]?.secondaryCourseId
+              && !!start && !!end && start === end;
+            setTripFlavor((tGames?.length ?? 0) > 0 ? "game" : isRound ? "round" : "trip");
+          }
         }
       }
     });
@@ -1007,9 +1024,9 @@ function UploadPageInner() {
             <p className="step-sub">Video or photo — we&apos;ll help fill in the rest.</p>
             {tripName && (
               <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.25)", borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
-                <span style={{ fontSize: 16 }}>✈️</span>
+                <span style={{ fontSize: 16 }}>{tripFlavor === "trip" ? "✈️" : "⛳️"}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 1 }}>Part of trip</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 1 }}>Part of {tripFlavor}</div>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862" }}>{tripName}</div>
                 </div>
                 <button
@@ -1019,7 +1036,7 @@ function UploadPageInner() {
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={tripPublic ? "#4da862" : "rgba(255,255,255,0.4)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     {tripPublic ? <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></> : <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>}
                   </svg>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: tripPublic ? "#4da862" : "rgba(255,255,255,0.4)" }}>{tripPublic ? "Public" : "Trip only"}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: tripPublic ? "#4da862" : "rgba(255,255,255,0.4)" }}>{tripPublic ? "Public" : tripFlavor === "round" ? "Round only" : tripFlavor === "game" ? "Game only" : "Trip only"}</span>
                 </button>
               </div>
             )}

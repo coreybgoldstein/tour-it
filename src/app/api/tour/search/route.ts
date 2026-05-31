@@ -62,11 +62,11 @@ export async function POST(req: NextRequest) {
     const { data: cached } = await sb
       .from("TripPlannerCache")
       .select("response, expiresAt")
-      .eq("briefHash", `tour-${cacheKey}`)
+      .eq("briefHash", `tour-v2-${cacheKey}`)
       .gt("expiresAt", new Date().toISOString())
       .maybeSingle();
     if (cached) {
-      sb.from("TripPlannerCache").update({ hits: ((cached as any).hits ?? 0) + 1 }).eq("briefHash", `tour-${cacheKey}`).then(() => {}, () => {});
+      sb.from("TripPlannerCache").update({ hits: ((cached as any).hits ?? 0) + 1 }).eq("briefHash", `tour-v2-${cacheKey}`).then(() => {}, () => {});
       return NextResponse.json(cached.response);
     }
   }
@@ -111,13 +111,15 @@ JSON schema:
 }
 
 Guidelines:
-- If the query starts with @ or matches a short username pattern → intent "people".
+- This is a golf COURSE app first. When in doubt, lean "courses" or "all" — never "people".
+- A bare single word or short phrase (e.g. "overpeck", "pinehurst", "pebble beach", "bethpage") is almost always a COURSE or place name. Put it in nameKeywords AND cityKeywords and set intent "all" (so courses are searched). Do NOT classify a bare word as "people".
+- Only choose intent "people" when there is an explicit person signal: the query starts with "@", or contains words like "golfer", "user", "player named", "profile", or is clearly a person's full name ("John Smith"). Even then, also populate nameKeywords so courses still get a chance.
+- "@jack" → intent "people". "jack nicklaus" (a person's full name) → intent "all" with personKeywords.
 - If the query mentions "trip", "buddy trip", "bachelor", "weekend", "honeymoon", "itinerary" → intent likely "trips" or "all".
-- If the query mentions a specific course name → intent likely "courses".
+- If the query mentions a specific course name (e.g. ends in "golf course", "country club", "GC", "CC", "links") → intent "courses".
 - "links courses near LAX" → intent "courses".
 - "buddy trip in April with good bars" → intent "trips".
 - "Pinehurst" → intent "all" (could mean the resort/course or the trip).
-- A short bare-word like "corey" or "@jack" → intent "people".
 - Empty arrays beat guesses. Never invent a state that isn't implied.`,
       messages: [{ role: "user", content: q }],
     });
@@ -208,7 +210,33 @@ Guidelines:
     return data ?? [];
   })() : Promise.resolve([]);
 
-  const [courseRows, tripRows, peopleRows] = await Promise.all([coursePromise, tripPromise, peoplePromise]);
+  let [courseRows, tripRows, peopleRows] = await Promise.all([coursePromise, tripPromise, peoplePromise]);
+
+  // ─── Last-resort literal fallback ───────────────────────────────
+  // If the classifier picked the wrong sources (or its keywords missed),
+  // we can end up with zero hits for a query that clearly matches a real
+  // course/person. Re-run a dumb literal search across Course + User on
+  // the raw query before giving up.
+  if (courseRows.length === 0 && tripRows.length === 0 && peopleRows.length === 0) {
+    const term = q.toLowerCase().replace(/^@/, "");
+    const [lc, lp] = await Promise.all([
+      sb
+        .from("Course")
+        .select("id, name, city, state, logoUrl, coverImageUrl, uploadCount, isPublic")
+        .or(`name.ilike.%${term}%,city.ilike.%${term}%,state.ilike.%${term}%`)
+        .order("uploadCount", { ascending: false, nullsFirst: false })
+        .order("name")
+        .limit(12),
+      sb
+        .from("User")
+        .select("id, username, displayName, avatarUrl, reputationScore")
+        .or(`username.ilike.%${term}%,displayName.ilike.%${term}%`)
+        .order("reputationScore", { ascending: false, nullsFirst: false })
+        .limit(8),
+    ]);
+    courseRows = lc.data ?? [];
+    peopleRows = lp.data ?? [];
+  }
 
   // ─── Shape response ────────────────────────────────────────────
   const results = [
@@ -253,7 +281,7 @@ Guidelines:
   // Cache for CACHE_TTL_DAYS via the existing TripPlannerCache table.
   const expiresAt = new Date(Date.now() + CACHE_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
   sb.from("TripPlannerCache").upsert({
-    briefHash: `tour-${cacheKey}`,
+    briefHash: `tour-v2-${cacheKey}`,
     brief: { query: q },
     response: responseBody,
     hits: 0,
