@@ -13,11 +13,14 @@
 // classic feed home. No code edits required.
 
 import HomeTour from "@/components/home/HomeTour";
-import HomeClassic from "@/components/home/HomeClassic";
+import HomeSkinSwitch from "@/components/home/HomeSkinSwitch";
 
 export default function Page() {
   if (process.env.NEXT_PUBLIC_HOME_MODE === "classic") {
-    return <HomeClassic />;
+    // Classic mode now routes through the skin switch, which picks
+    // between the live classic home and the new editorial aesthetic.
+    // Flip with ?skin=classic | ?skin=editorial (see HomeSkinSwitch).
+    return <HomeSkinSwitch />;
   }
   return <HomeTour />;
 }
