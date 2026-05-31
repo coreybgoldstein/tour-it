@@ -6,10 +6,15 @@ export function HoleIdentityCard({
   holeNumber,
   holePar,
   clipCount,
+  flush = false,
 }: {
   holeNumber?: number | null;
   holePar?: number | null;
   clipCount: number;
+  // Full-screen feed-modal mode (no BottomNav): pins the card to the true
+  // bottom-left corner with a brighter green outline on the top + right
+  // edges only. Other surfaces keep the BottomNav-clearing offset.
+  flush?: boolean;
 }) {
   const isFirst = useRef(true);
   const [opacity, setOpacity] = useState(1);
@@ -26,10 +31,10 @@ export function HoleIdentityCard({
     <div
       style={{
         position: "absolute",
-        // Sits flush against the BottomNav's top edge (BottomNav height ≈
-        // 67px + safe-area-inset-bottom). Was 78 + safe-area which left a
-        // visible gap between the card and the nav.
-        bottom: "calc(68px + env(safe-area-inset-bottom))",
+        // flush: pinned to the true bottom-left corner (full-screen modal,
+        // no BottomNav). Otherwise sits flush against the BottomNav's top
+        // edge (BottomNav height ≈ 67px + safe-area-inset-bottom).
+        bottom: flush ? 0 : "calc(68px + env(safe-area-inset-bottom))",
         left: 0,
         zIndex: 101,
         display: "flex",
@@ -46,9 +51,14 @@ export function HoleIdentityCard({
           background: "rgba(7,16,10,0.82)",
           backdropFilter: "blur(10px)",
           borderRadius: "0 16px 0 0",
-          borderTop: "1px solid rgba(77,168,98,0.2)",
-          borderRight: "1px solid rgba(77,168,98,0.2)",
-          padding: "12px 16px 16px 14px",
+          borderTop: flush ? "1.5px solid rgba(77,168,98,0.7)" : "1px solid rgba(77,168,98,0.2)",
+          borderRight: flush ? "1.5px solid rgba(77,168,98,0.7)" : "1px solid rgba(77,168,98,0.2)",
+          // flush corner sits on the home indicator — pad the content up by
+          // the safe-area inset so the box background still reaches the edge.
+          padding: flush
+            ? "12px 18px calc(14px + env(safe-area-inset-bottom)) 14px"
+            : "12px 16px 16px 14px",
+          boxShadow: flush ? "0 -2px 18px rgba(77,168,98,0.18)" : undefined,
           position: "relative",
         }}
       >

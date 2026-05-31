@@ -5,6 +5,7 @@ export function ClipTopPill({
   holeNumber, holePar, holeYardage,
   muted, onMuteToggle,
   onTapCourse,
+  onBack,
   visible,
   showParYardage = true,
 }: {
@@ -17,6 +18,10 @@ export function ClipTopPill({
   muted: boolean;
   onMuteToggle: () => void;
   onTapCourse: () => void;
+  // Opt-in back chevron, aligned to the pill height. Only the course
+  // feed-modal passes this (it's a full-screen experience with no
+  // BottomNav); home/profile/hole surfaces omit it to stay uniform.
+  onBack?: () => void;
   visible: boolean;
   showParYardage?: boolean;
 }) {
@@ -46,6 +51,19 @@ export function ClipTopPill({
         pointerEvents: visible ? "auto" : "none",
       }}
     >
+      {/* Back chevron — only rendered when onBack is supplied (course
+          feed-modal). Same 32px circle geometry + height as the mute
+          button so it sits level with the pill. */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          aria-label="Back"
+          style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.72)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+      )}
+
       {/* Pill — entire pill navigates to course page */}
       <button
         onClick={onTapCourse}

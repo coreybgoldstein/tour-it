@@ -48,7 +48,65 @@ type Clip = {
   uploaderId: string;
 };
 
-const FEED_LIMIT = 40;
+// Candidate pool pulled from the DB. Larger than the rendered feed so
+// the course-spacing pass has room to interleave — and so the user can
+// keep swiping deep without a refetch. Fetched concurrently with the
+// starting clip so the bigger pull doesn't delay first paint.
+const FEED_POOL = 120;
+// Minimum number of clips between two clips from the SAME course. 8 per
+// product spec — no course may repeat inside an 8-clip window.
+const COURSE_GAP = 8;
+// Only the clips within this many positions of the active one mount a
+// real <video>/<img>; the rest render an empty snap-cell. Lets the pool
+// be large (deep swiping) without firing 120 manifest/segment loads at
+// once — those are the egress + jank cost. Look-ahead is bigger than
+// look-behind so the NEXT clip is already buffered when you swipe to it.
+const WINDOW_AHEAD = 2;
+const WINDOW_BEHIND = 1;
+
+// Fisher-Yates shuffle (new array). Called on every open so the feed
+// order is fresh each session.
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Greedy reorder that keeps any single course at least COURSE_GAP apart.
+// `leadCourseId` seeds the cooldown for a clip already pinned at the
+// front (the tapped clip) so its course doesn't reappear immediately.
+// When no course can satisfy the gap (tail of a thin pool), it picks the
+// course seen longest ago — so we still never place two of the same
+// course back-to-back unless that course is literally all that's left.
+function spaceByCourse<T extends { courseId: string }>(items: T[], minGap: number, leadCourseId?: string): T[] {
+  const remaining = [...items];
+  const result: T[] = [];
+  const lastIdx = new Map<string, number>();
+  if (leadCourseId) lastIdx.set(leadCourseId, -1);
+  while (remaining.length) {
+    let pick = remaining.findIndex((it) => {
+      const last = lastIdx.has(it.courseId) ? (lastIdx.get(it.courseId) as number) : -Infinity;
+      return result.length - last >= minGap;
+    });
+    if (pick === -1) {
+      // Forced: choose the course whose last placement is furthest back.
+      let bestDist = -Infinity;
+      pick = 0;
+      for (let i = 0; i < remaining.length; i++) {
+        const last = lastIdx.has(remaining[i].courseId) ? (lastIdx.get(remaining[i].courseId) as number) : -Infinity;
+        const dist = result.length - last;
+        if (dist > bestDist) { bestDist = dist; pick = i; }
+      }
+    }
+    const [chosen] = remaining.splice(pick, 1);
+    lastIdx.set(chosen.courseId, result.length);
+    result.push(chosen);
+  }
+  return result;
+}
 
 export default function FeedPage() {
   const router = useRouter();
@@ -199,29 +257,29 @@ export default function FeedPage() {
     (async () => {
       const sb = createClient();
       const cols = "id, mediaUrl, cloudflareVideoId, mediaType, shotType, courseId, holeId, userId, createdAt, likeCount, commentCount";
-      const { data: starting } = await sb
-        .from("Upload")
-        .select(cols)
-        .eq("id", uploadId)
-        .maybeSingle();
-
-      const { data: feed } = await sb
-        .from("Upload")
-        .select(cols)
-        .eq("moderationStatus", "APPROVED")
-        .order("createdAt", { ascending: false })
-        .limit(FEED_LIMIT);
+      // Starting clip + candidate pool fetched concurrently so the
+      // larger pool pull doesn't add to time-to-first-clip.
+      const [{ data: starting }, { data: feed }] = await Promise.all([
+        sb.from("Upload").select(cols).eq("id", uploadId).maybeSingle(),
+        sb.from("Upload")
+          .select(cols)
+          .eq("moderationStatus", "APPROVED")
+          .order("createdAt", { ascending: false })
+          .limit(FEED_POOL),
+      ]);
 
       if (cancelled || !feed) return;
 
-      const rows: any[] = starting && !feed.some((u: any) => u.id === starting.id)
-        ? [starting, ...feed]
-        : feed;
-      // Pull starting clip to the front if it's already in the list.
-      if (starting) {
-        const idx = rows.findIndex((r) => r.id === starting.id);
-        if (idx > 0) { const [el] = rows.splice(idx, 1); rows.unshift(el); }
-      }
+      // Everything except the tapped clip, shuffled fresh each open then
+      // interleaved so no course repeats within COURSE_GAP. The tapped
+      // clip is always pinned to the front (the user came to see it).
+      const rest = (feed as any[]).filter((u) => !starting || u.id !== starting.id);
+      const spaced = spaceByCourse(
+        shuffle(rest),
+        COURSE_GAP,
+        starting ? (starting as any).courseId : undefined,
+      );
+      const rows: any[] = starting ? [starting, ...spaced] : spaced;
 
       const courseIds = Array.from(new Set(rows.map((r) => r.courseId).filter(Boolean)));
       const holeIds = Array.from(new Set(rows.map((r) => r.holeId).filter(Boolean)));
@@ -329,20 +387,30 @@ export default function FeedPage() {
         .feed-clip { height: 100svh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; background: #000; }
       `}</style>
       <div ref={containerRef} className="feed-scroller">
-        {clips.map((c, i) => (
-          <FeedClip
-            key={c.id}
-            clip={c}
-            muted={muted}
-            onToggleMute={() => setMuted((m) => !m)}
-            onBack={close}
-            onCourse={() => router.push(`/courses/${c.courseId}`)}
-            onUser={() => c.uploaderUsername && router.push(`/profile/${c.uploaderUsername}`)}
-            onComment={() => openCommentSheet(c.id)}
-            registerVideo={(el) => (videoRefs.current[c.id] = el)}
-            isActive={i === activeIndex}
-          />
-        ))}
+        {clips.map((c, i) => {
+          // Windowed mount — see WINDOW_AHEAD/BEHIND. Out-of-window clips
+          // still render their snap-cell (keeps scroll height + the
+          // IntersectionObserver target) but skip the heavy media + hls
+          // instance until they scroll near.
+          const mounted = i >= activeIndex - WINDOW_BEHIND && i <= activeIndex + WINDOW_AHEAD;
+          if (!mounted) {
+            return <div key={c.id} className="feed-clip" data-clip-id={c.id} />;
+          }
+          return (
+            <FeedClip
+              key={c.id}
+              clip={c}
+              muted={muted}
+              onToggleMute={() => setMuted((m) => !m)}
+              onBack={close}
+              onCourse={() => router.push(`/courses/${c.courseId}`)}
+              onUser={() => c.uploaderUsername && router.push(`/profile/${c.uploaderUsername}`)}
+              onComment={() => openCommentSheet(c.id)}
+              registerVideo={(el) => (videoRefs.current[c.id] = el)}
+              isActive={i === activeIndex}
+            />
+          );
+        })}
       </div>
 
       {/* Comment sheet — slides up from the bottom. Closes on backdrop

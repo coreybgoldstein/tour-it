@@ -312,7 +312,7 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
         <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
-      {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} left={holeNumber ? 100 : 16} />}
+      {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} left={holeNumber ? 100 : 16} bottom={40} />}
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.65) 100%)", pointerEvents: "none", zIndex: 5 }} />
 
@@ -334,16 +334,17 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
         muted={muted}
         onMuteToggle={handleMuteToggle}
         onTapCourse={onClose}
+        onBack={onClose}
         visible={true}
       />
 
 
       <HoleSideBar holeIndex={holeIndex} scoutedHoles={scoutedHoles} />
 
-      <HoleIdentityCard holeNumber={holeNumber} holePar={holePar} clipCount={totalClips} />
+      <HoleIdentityCard holeNumber={holeNumber} holePar={holePar} clipCount={totalClips} flush />
 
       {/* Right rail — Intel → Avatar → Like → Comment → SEND IT → Report */}
-      <div style={{ position: "absolute", right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
+      <div style={{ position: "absolute", right: 12, bottom: "calc(90px + env(safe-area-inset-bottom))", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, zIndex: 10 }}>
         {hasNotes && !isOfficial && (
           <button onClick={() => setIntelOpen(o => !o)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer" }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: intelOpen ? "#3b8b4c" : "#4da862", border: "1.5px solid #4da862", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(77,168,98,0.35)" }}>
@@ -450,15 +451,15 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
       {!isOfficial && (uploader?.username || formatClipDate(clip.datePlayedAt, clip.createdAt)) && (
         // Avatar + username + date. left:100 when there's a hole number
         // so the row clears the HoleIdentityCard sitting bottom-left.
-        // Bottom lifts above the VideoScrubber on video clips and clears
-        // the BottomNav (Face ID home indicator included) on photos.
-        // When the attribution chip is present, the whole stack shifts up
-        // so the chip slots in BELOW the username row without overlapping
-        // the scrubber.
+        // Offsets are lowered vs. the other surfaces because the course
+        // feed-modal is full-screen (no BottomNav) — bottom lifts above the
+        // VideoScrubber on video clips, sits near the home indicator on
+        // photos. When the attribution chip is present, the whole stack
+        // shifts up so the chip slots in BELOW the username row.
         <div style={{ position: "absolute", left: !holeNumber ? 16 : holeNumber >= 10 ? 105 : 80, right: 80,
           bottom: clip.mediaType === "VIDEO"
-            ? `calc(${clip.uploadedByUsername ? 138 : 130}px + env(safe-area-inset-bottom))`
-            : `calc(${clip.uploadedByUsername ? 100 : 85}px + env(safe-area-inset-bottom))`,
+            ? `calc(${clip.uploadedByUsername ? 78 : 70}px + env(safe-area-inset-bottom))`
+            : `calc(${clip.uploadedByUsername ? 56 : 42}px + env(safe-area-inset-bottom))`,
           zIndex: 10, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => router.push(`/profile/${clip.userId}`)} aria-label={`Open ${uploader?.username || "uploader"}'s profile`} style={{ display: "flex", alignItems: "center", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
@@ -3105,7 +3106,7 @@ const [editDescription, setEditDescription] = useState("");
         </SheetPortal>
       )}
 
-      <BottomNav />
+      {!feedOpen && <BottomNav />}
 
       {/* "Who liked this" sheet — opens from the like-count tap on any
           FeedCard. Page-level mount so it works from inside the feed
