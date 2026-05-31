@@ -56,7 +56,7 @@ export function HoleIdentityCard({
           // flush corner sits on the home indicator — pad the content up by
           // the safe-area inset so the box background still reaches the edge.
           padding: flush
-            ? "12px 18px calc(14px + env(safe-area-inset-bottom)) 14px"
+            ? "8px 18px calc(4px + env(safe-area-inset-bottom)) 14px"
             : "12px 16px 16px 14px",
           boxShadow: flush ? "0 -2px 18px rgba(77,168,98,0.18)" : undefined,
           position: "relative",
@@ -64,13 +64,12 @@ export function HoleIdentityCard({
       >
         {clipCount > 1 && (
           // "More clips here — swipe" affordance. Green pill + double
-          // up-chevron that bobs to draw the eye toward the vertical swipe.
-          <div style={{ position: "absolute", top: 6, right: 6, display: "flex", alignItems: "center", gap: 3, background: "rgba(77,168,98,0.95)", borderRadius: 99, padding: "3px 7px 3px 5px", boxShadow: "0 2px 8px rgba(0,0,0,0.45)" }}>
-            <svg className="clip-swipe-bob" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="18 15 12 9 6 15" />
-              <polyline points="18 21 12 15 6 21" opacity="0.5" />
+          // right-chevron that bobs to draw the eye toward the swipe.
+          <div style={{ position: "absolute", top: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(77,168,98,0.95)", borderRadius: 99, padding: "5px 6px", boxShadow: "0 2px 8px rgba(0,0,0,0.45)" }}>
+            <svg className="clip-swipe-bob" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="7 6 13 12 7 18" />
+              <polyline points="13 6 19 12 13 18" opacity="0.5" />
             </svg>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 800, color: "#fff", lineHeight: 1 }}>{clipCount}</span>
           </div>
         )}
         <div style={{

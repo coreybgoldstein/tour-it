@@ -303,7 +303,7 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
         <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
-      {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} left={holeNumber ? 100 : 16} bottom={40} />}
+      {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} left={holeNumber ? 100 : 16} />}
 
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 25%, transparent 55%, rgba(0,0,0,0.65) 100%)", pointerEvents: "none", zIndex: 5 }} />
 

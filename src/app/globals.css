@@ -83,10 +83,10 @@ input, textarea, select {
 }
 .legend-ring { animation: legendPulse 2.2s ease-in-out infinite; }
 
-/* Multi-clip swipe affordance — bobs the up-chevron in the hole square */
+/* Multi-clip swipe affordance — bobs the right-chevron in the hole square */
 @keyframes clipSwipeBob {
-  0%, 100% { transform: translateY(1px); }
-  50%      { transform: translateY(-2px); }
+  0%, 100% { transform: translateX(-1px); }
+  50%      { transform: translateX(2px); }
 }
 .clip-swipe-bob { animation: clipSwipeBob 1.3s ease-in-out infinite; }
 

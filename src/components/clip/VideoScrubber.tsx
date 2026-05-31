@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export function VideoScrubber({ videoRef, left = 16, bottom = 100 }: { videoRef: React.RefObject<HTMLVideoElement | null>; left?: number; bottom?: number }) {
+export function VideoScrubber({ videoRef, left = 16, bottom = 4 }: { videoRef: React.RefObject<HTMLVideoElement | null>; left?: number; bottom?: number }) {
   const [progress, setProgress] = useState(0);
   const [dragging, setDragging] = useState(false);
   const draggingRef = useRef(false);
@@ -32,7 +32,7 @@ export function VideoScrubber({ videoRef, left = 16, bottom = 100 }: { videoRef:
   return (
     <div
       ref={trackRef}
-      style={{ position: "absolute", bottom: `calc(${bottom}px + env(safe-area-inset-bottom))`, left, right: 16, height: 28, zIndex: 110, display: "flex", alignItems: "center", cursor: "pointer", touchAction: "pan-y" }}
+      style={{ position: "absolute", bottom: `calc(${bottom}px + env(safe-area-inset-bottom))`, left, right: 16, height: 28, zIndex: 110, display: "flex", alignItems: "flex-end", cursor: "pointer", touchAction: "pan-y" }}
       onPointerDown={(e) => {
         draggingRef.current = true;
         setDragging(true);
