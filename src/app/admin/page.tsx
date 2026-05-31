@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BottomNav from "@/components/BottomNav";
 import SeoTab from "./SeoTab";
 
 type Tab = "overview" | "clips" | "reports" | "requests" | "trips" | "seo";
@@ -336,7 +337,7 @@ export default function AdminPage() {
   );
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#07100a", paddingBottom: 40 }}>
+    <div style={{ minHeight: "100dvh", background: "#07100a", paddingBottom: 100, paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <style>{`
         .admin-stat { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; }
         .admin-tab { padding: 8px 16px; border-radius: 99px; border: none; cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; }
@@ -346,8 +347,23 @@ export default function AdminPage() {
         .action-pill { padding: 5px 12px; border-radius: 99px; border: none; cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 600; }
       `}</style>
 
+      {/* Top row: Home back button + Admin title — the safe-area
+          inset is applied to the outer container, this row sits
+          below the iOS status bar / Dynamic Island. */}
+      <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+        <button
+          onClick={() => router.push("/")}
+          aria-label="Home"
+          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12L12 3l9 9" /><path d="M5 10v10a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1V10" />
+          </svg>
+        </button>
+      </div>
+
       {/* Header */}
-      <div style={{ padding: "20px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ padding: "8px 16px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: "#fff" }}>Admin</div>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>Tour It — internal</div>
@@ -667,6 +683,7 @@ export default function AdminPage() {
         )}
 
       </div>
+      <BottomNav />
     </div>
   );
 }

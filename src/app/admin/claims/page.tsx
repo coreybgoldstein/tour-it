@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BottomNav from "@/components/BottomNav";
 
 type Claim = {
   id: string;
@@ -93,8 +94,8 @@ export default function AdminClaimsPage() {
   );
 
   return (
-    <main style={{ minHeight: "100svh", background: "#07100a", color: "#fff", paddingBottom: 60 }}>
-      <div style={{ maxWidth: 880, margin: "0 auto", padding: "20px 18px 40px" }}>
+    <main style={{ minHeight: "100svh", background: "#07100a", color: "#fff", paddingBottom: 100, paddingTop: "env(safe-area-inset-top, 0px)" }}>
+      <div style={{ maxWidth: 880, margin: "0 auto", padding: "16px 18px 40px" }}>
         <div style={{ marginBottom: 18 }}>
           <button onClick={() => router.push("/admin")} style={backBtn}>← Back to admin</button>
           <h1 style={{ fontFamily: "'Source Serif 4', serif", fontSize: 28, fontWeight: 800, margin: "6px 0 4px" }}>Course claims</h1>
@@ -145,6 +146,7 @@ export default function AdminClaimsPage() {
           </div>
         )}
       </div>
+      <BottomNav />
     </main>
   );
 }

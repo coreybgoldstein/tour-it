@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useUnreadNotifications } from "@/hooks/useUnreadNotifications";
+// useUnreadNotifications import removed — the hamburger red dot
+// no longer signals general unread notifications (Profile is the
+// home for those). Dot now signals pending admin work only.
 
 // Routes where the bar is hidden — clip-heavy / feed pages, auth, and pages
 // that already render their own header (map, notifications, course detail).
@@ -33,9 +35,14 @@ export default function TourItTopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const unreadNotifications = useUnreadNotifications();
   const [signedIn, setSignedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  // Pending-admin-work count — drives the red dot on the hamburger
+  // button AND the dot beside the "Admin" drawer entry. Counts
+  // PENDING claims + PENDING moderation reports + PENDING course
+  // requests. Refetched on every menu mount (the hidden flip on
+  // route change is enough).
+  const [adminPending, setAdminPending] = useState(0);
 
   const hidden =
     !pathname ||
@@ -48,15 +55,23 @@ export default function TourItTopBar() {
     if (hidden) return;
     createClient().auth.getUser().then(async ({ data: { user } }) => {
       setSignedIn(!!user);
-      // Admin drawer entry is gated on the User.isAdmin flag. We
-      // re-check on each menu mount (the hook above re-fires when
-      // hidden flips, so promotion takes effect without a hard
-      // refresh).
-      if (user) {
-        const { data: profile } = await createClient().from("User").select("isAdmin").eq("id", user.id).maybeSingle();
-        setIsAdmin(!!profile?.isAdmin);
+      if (!user) { setIsAdmin(false); setAdminPending(0); return; }
+      const sb = createClient();
+      const { data: profile } = await sb.from("User").select("isAdmin").eq("id", user.id).maybeSingle();
+      const admin = !!profile?.isAdmin;
+      setIsAdmin(admin);
+      // Pending-admin counts fire only for admins (regular users
+      // never see the dot or the Admin entry, so the query is
+      // wasted work otherwise).
+      if (admin) {
+        const [{ count: claims }, { count: reports }, { count: requests }] = await Promise.all([
+          sb.from("CourseClaim").select("id", { count: "exact", head: true }).eq("status", "PENDING"),
+          sb.from("ModerationReport").select("id", { count: "exact", head: true }).eq("status", "PENDING"),
+          sb.from("CourseRequest").select("id", { count: "exact", head: true }).eq("status", "PENDING"),
+        ]);
+        setAdminPending((claims ?? 0) + (reports ?? 0) + (requests ?? 0));
       } else {
-        setIsAdmin(false);
+        setAdminPending(0);
       }
     });
   }, [hidden]);
@@ -122,7 +137,12 @@ export default function TourItTopBar() {
             <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
             <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
             <span style={{ width: 16, height: 1.5, background: "rgba(255,255,255,0.85)", borderRadius: 99, display: "block" }} />
-            {unreadNotifications > 0 && (
+            {/* Red dot on the hamburger now ONLY signals PENDING
+                ADMIN WORK (claims + moderation reports + course
+                requests). General unread notifications are not
+                shown here anymore — the profile tab is the home
+                for those, this dot stays domain-specific. */}
+            {isAdmin && adminPending > 0 && (
               <span style={{ position: "absolute", top: 1, right: 1, width: 9, height: 9, borderRadius: "50%", background: "#e8353a", border: "1.5px solid #1c4425", boxShadow: "0 0 6px rgba(232,53,58,0.6)" }} />
             )}
           </button>
@@ -331,12 +351,17 @@ export default function TourItTopBar() {
                 // when the logged-in user has User.isAdmin=true. The
                 // .filter(Boolean) below removes the null otherwise.
                 isAdmin ? {
-                  label: "Admin",
+                  label: adminPending > 0 ? `Admin · ${adminPending} pending` : "Admin",
                   icon: (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      <path d="M9 12l2 2 4-4" />
-                    </svg>
+                    <span style={{ position: "relative", display: "inline-flex" }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        <path d="M9 12l2 2 4-4" />
+                      </svg>
+                      {adminPending > 0 && (
+                        <span style={{ position: "absolute", top: -2, right: -3, width: 8, height: 8, borderRadius: "50%", background: "#e8353a", border: "1.5px solid #0a1d12", boxShadow: "0 0 6px rgba(232,53,58,0.6)" }} />
+                      )}
+                    </span>
                   ),
                   onClick: () => { setMenuOpen(false); router.push("/admin"); },
                 } : null,
