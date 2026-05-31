@@ -44,11 +44,17 @@ export default function TourItTopBar() {
   // route change is enough).
   const [adminPending, setAdminPending] = useState(0);
 
+  // Exception paths — these match a HIDDEN_PREFIX but should
+  // still render the global TopBar. Currently:
+  //   /courses/{id}/manage — operator dashboard; the user wanted
+  //                          the global bar back for orientation.
+  const SHOWN_OVERRIDES = pathname && /^\/courses\/[^/]+\/manage\/?$/.test(pathname);
+
   const hidden =
     !pathname ||
     (pathname === "/" ? HIDE_ON_HOME : false) ||
     HIDDEN_EXACT.has(pathname) ||
-    HIDDEN_PREFIXES.some((p) => pathname.startsWith(p));
+    (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p)) && !SHOWN_OVERRIDES);
 
   // Used to show/hide the Log Out button in the drawer
   useEffect(() => {

@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   let q = supabase
     .from("CourseOfficialMedia")
-    .select("id, holeNumber, mediaType, url, cloudflareVideoId, caption, sortOrder, createdAt")
+    .select("id, holeNumber, holeRangeEnd, mediaType, url, cloudflareVideoId, caption, sortOrder, createdAt")
     .eq("courseId", courseId)
     .order("sortOrder", { ascending: true });
 
@@ -28,7 +28,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     q = q.is("holeNumber", null);
   } else if (holeParam) {
     const n = parseInt(holeParam, 10);
-    if (!Number.isNaN(n)) q = q.eq("holeNumber", n);
+    if (!Number.isNaN(n)) {
+      // Match a single-hole row OR a range row that covers this hole.
+      // PostgREST .or filter — both branches AND'd against the
+      // existing eq("courseId").
+      q = q.or(`and(holeNumber.eq.${n},holeRangeEnd.is.null),and(holeNumber.lte.${n},holeRangeEnd.gte.${n})`);
+    }
   }
 
   const { data, error } = await q;
@@ -50,6 +55,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const cloudflareVideoId = body.cloudflareVideoId ? String(body.cloudflareVideoId).trim().slice(0, 200) || null : null;
   const caption = body.caption ? String(body.caption).trim().slice(0, 500) || null : null;
   const holeNumber = body.holeNumber == null ? null : Math.max(1, Math.min(18, Math.floor(Number(body.holeNumber))));
+  const holeRangeEnd = body.holeRangeEnd == null ? null : Math.max(1, Math.min(18, Math.floor(Number(body.holeRangeEnd))));
+  // Range validation — end must be > start when both set; same-hole
+  // (start==end) collapses to a single-hole row with end=null.
+  let finalRangeEnd: number | null = null;
+  if (holeNumber != null && holeRangeEnd != null && holeRangeEnd > holeNumber) {
+    finalRangeEnd = holeRangeEnd;
+  }
   const sortOrder = typeof body.sortOrder === "number" ? Math.max(0, Math.min(9999, Math.floor(body.sortOrder))) : 0;
 
   if (!MEDIA_TYPES.has(mediaType)) {
@@ -69,6 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       id: crypto.randomUUID(),
       courseId,
       holeNumber,
+      holeRangeEnd: finalRangeEnd,
       mediaType,
       url: url.slice(0, 500),
       cloudflareVideoId,
@@ -76,7 +89,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       sortOrder,
       createdAt: new Date().toISOString(),
     })
-    .select("id, holeNumber, mediaType, url, cloudflareVideoId, caption, sortOrder, createdAt")
+    .select("id, holeNumber, holeRangeEnd, mediaType, url, cloudflareVideoId, caption, sortOrder, createdAt")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ media: data });

@@ -1147,7 +1147,12 @@ model CourseStaff {
 model CourseOfficialMedia {
   id                String   @id @default(cuid())
   courseId          String
-  holeNumber        Int? // null = course-level (e.g. drone of the property)
+  // holeNumber is the START of the range when holeRangeEnd is set
+  // (e.g. holeNumber=1 + holeRangeEnd=3 means "holes 1-3"), or the
+  // single hole when holeRangeEnd is null. holeNumber=null +
+  // holeRangeEnd=null = course-level (drone of the property, etc).
+  holeNumber        Int?
+  holeRangeEnd      Int? // inclusive end of a multi-hole range
   mediaType         String // "image" | "flyover" | "video"
   url               String
   cloudflareVideoId String? // for "flyover"/"video" — mirrors Upload.cloudflareVideoId so the same HLS playback path works

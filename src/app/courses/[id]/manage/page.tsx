@@ -51,12 +51,45 @@ type Staff = {
 type Media = {
   id: string;
   holeNumber: number | null;
+  holeRangeEnd: number | null;
   mediaType: "image" | "flyover" | "video";
   url: string;
   cloudflareVideoId: string | null;
   caption: string | null;
   sortOrder: number;
 };
+
+// Dropdown options for the hole selector — "course-level" + each
+// single hole + the standard three-hole stretches. Encoded as a
+// single string token that we parse back into {holeNumber,
+// holeRangeEnd} on submit / format on render.
+const HOLE_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "Course-level" },
+  ...Array.from({ length: 18 }, (_, i) => ({ value: String(i + 1), label: `Hole ${i + 1}` })),
+  { value: "1-3", label: "Holes 1-3" },
+  { value: "4-6", label: "Holes 4-6" },
+  { value: "7-9", label: "Holes 7-9" },
+  { value: "10-12", label: "Holes 10-12" },
+  { value: "13-15", label: "Holes 13-15" },
+  { value: "16-18", label: "Holes 16-18" },
+];
+
+function parseHoleValue(v: string): { holeNumber: number | null; holeRangeEnd: number | null } {
+  if (!v) return { holeNumber: null, holeRangeEnd: null };
+  if (v.includes("-")) {
+    const [a, b] = v.split("-").map((s) => parseInt(s, 10));
+    return { holeNumber: a, holeRangeEnd: b };
+  }
+  return { holeNumber: parseInt(v, 10), holeRangeEnd: null };
+}
+
+function formatHoleLabel(m: { holeNumber: number | null; holeRangeEnd: number | null }): string {
+  if (m.holeNumber == null) return "Course-level";
+  if (m.holeRangeEnd != null && m.holeRangeEnd > m.holeNumber) {
+    return `Holes ${m.holeNumber}-${m.holeRangeEnd}`;
+  }
+  return `Hole ${m.holeNumber}`;
+}
 
 export default function CourseManagePage() {
   const router = useRouter();
@@ -112,13 +145,11 @@ export default function CourseManagePage() {
           Manage official info · {course.city}, {course.state}
         </div>
 
-        {/* Section order per latest UX direction: media is the most
-            visual + most user-facing piece of operator content, so
-            it leads. Staff second. Text-only Official Info last. */}
-        <OfficialMediaSection courseId={course.id} />
-
-        <StaffSection courseId={course.id} />
-
+        {/* Section order per latest UX direction:
+              1. Official Info — the operator-authored description
+                 sets context for everything else
+              2. Official Media — the most visual operator content
+              3. Staff — supporting cards last */}
         <OfficialInfoSection
           courseId={course.id}
           courseType={course.courseType}
@@ -129,6 +160,10 @@ export default function CourseManagePage() {
           }}
           ugcDescription={course.description}
         />
+
+        <OfficialMediaSection courseId={course.id} />
+
+        <StaffSection courseId={course.id} />
       </div>
     </main>
   );
@@ -398,7 +433,9 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
   // Add-form state. mediaType drives both the file accept= and the
   // upload path: image → Supabase Storage; video/flyover →
   // Cloudflare Stream direct-upload (same path as user clip uploads).
-  const [vals, setVals] = useState<{ mediaType: "image" | "flyover" | "video"; caption: string; holeNumber: string }>({ mediaType: "image", caption: "", holeNumber: "" });
+  // `hole` is the dropdown token from HOLE_OPTIONS; parsed into
+  // {holeNumber, holeRangeEnd} at submit.
+  const [vals, setVals] = useState<{ mediaType: "image" | "flyover" | "video"; caption: string; hole: string }>({ mediaType: "image", caption: "", hole: "" });
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "error">("idle");
   const [uploadPct, setUploadPct] = useState(0);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
@@ -466,6 +503,7 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
         url = res.url;
         cloudflareVideoId = res.cloudflareVideoId;
       }
+      const { holeNumber, holeRangeEnd } = parseHoleValue(vals.hole);
       const insertRes = await fetch(`/api/courses/${courseId}/official-media`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -474,14 +512,15 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
           url,
           cloudflareVideoId,
           caption: vals.caption.trim() || null,
-          holeNumber: vals.holeNumber ? parseInt(vals.holeNumber, 10) : null,
+          holeNumber,
+          holeRangeEnd,
           sortOrder: media.length * 10,
         }),
       });
       if (!insertRes.ok) throw new Error((await insertRes.json().catch(() => null))?.error || "Couldn't save");
       setUploadState("idle");
       setAdding(false);
-      setVals({ mediaType: "image", caption: "", holeNumber: "" });
+      setVals({ mediaType: "image", caption: "", hole: "" });
       load();
     } catch (e: any) {
       setUploadState("error");
@@ -513,10 +552,10 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff" }}>
-                  {m.caption || (m.holeNumber ? `Hole ${m.holeNumber}` : "Course-level")}
+                  {m.caption || formatHoleLabel(m)}
                 </div>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
-                  {m.mediaType.charAt(0).toUpperCase() + m.mediaType.slice(1)}{m.holeNumber ? ` · Hole ${m.holeNumber}` : ""}
+                  {m.mediaType.charAt(0).toUpperCase() + m.mediaType.slice(1)} · {formatHoleLabel(m)}
                 </div>
               </div>
               <button onClick={() => remove(m.id)} style={subtleDangerBtn}>Remove</button>
@@ -553,13 +592,16 @@ function OfficialMediaSection({ courseId }: { courseId: string }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column" }}>
               <Label>Hole</Label>
-              <input
-                value={vals.holeNumber}
-                onChange={(e) => setVals(v => ({ ...v, holeNumber: e.target.value }))}
+              <select
+                value={vals.hole}
+                onChange={(e) => setVals(v => ({ ...v, hole: e.target.value }))}
                 style={inputStyle}
-                placeholder="optional — e.g. 7"
                 disabled={uploadState === "uploading"}
-              />
+              >
+                {HOLE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
