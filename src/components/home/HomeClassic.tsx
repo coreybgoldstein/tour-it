@@ -1815,7 +1815,7 @@ export default function HomeClassic() {
           .discovery-hero { font-size: 22px !important; }
           .discovery-search-btn { padding: 12px 16px !important; }
           .discovery-search-btn span { font-size: 14px !important; }
-          .discovery-section-label { font-size: 11px !important; padding-bottom: 6px !important; }
+          .discovery-section-label { font-size: 13px !important; padding-bottom: 6px !important; }
           .discovery-section { margin-top: 4px !important; }
           .discovery-row-pad { padding-top: 12px !important; padding-bottom: 10px !important; }
           .course-card-compact { width: 132px !important; height: 144px !important; }
@@ -2076,7 +2076,7 @@ export default function HomeClassic() {
             const deduped = trendingCourses.filter(c => !nearMeIds.has(c.id) || c.id === featured?.courseId);
             return (
               <div style={{ flexShrink: 0 }}>
-                <div className="discovery-section-label" style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
+                <div className="discovery-section-label" style={{ padding: "0 20px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)" }}>
                   Popular on Tour It
                 </div>
                 <div className="courses-row">
@@ -2100,7 +2100,7 @@ export default function HomeClassic() {
           {locationStatus !== "denied" && (
             <div className="discovery-section" style={{ flexShrink: 0, marginTop: 10 }}>
               <div style={{ padding: "0 20px 10px", display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", flexShrink: 0 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.75)", flexShrink: 0 }}>
                   Courses Near Me
                 </div>
                 <button onClick={() => router.push("/map")} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(26,158,66,0.18)", border: "1px solid rgba(26,158,66,0.45)", borderRadius: 99, padding: "3px 9px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
