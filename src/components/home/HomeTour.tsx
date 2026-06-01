@@ -1374,16 +1374,12 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
 // ─────────────────────────────────────────────────────────────────────
 
 function SectionLabel({ children, inline }: { children: React.ReactNode; inline?: boolean }) {
-  // Editorial section label — Playfair Display italic, the magazine
-  // department-tag feel ("The Cut", "Lookbook", "Where to Next").
   return (
     <div style={{
-      fontFamily: "'Playfair Display', serif",
-      fontStyle: "italic",
-      fontSize: 14,
-      fontWeight: 700,
-      fontVariationSettings: "'opsz' 32",
-      letterSpacing: "0.12em",
+      fontFamily: "'Outfit', sans-serif",
+      fontSize: 12,
+      fontWeight: 800,
+      letterSpacing: "0.18em",
       textTransform: "uppercase",
       color: SAGE_BRIGHT,
       marginBottom: inline ? 0 : 10,
