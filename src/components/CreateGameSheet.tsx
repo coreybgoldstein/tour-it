@@ -433,21 +433,25 @@ export default function CreateGameSheet({
       //    for handicap math. Auto-derive holeHandicaps from the Hole
       //    table; fall back to 1–18 sequential if the course hasn't
       //    been seeded yet. ──────────────────────────────────────────
-      const { data: courseRow } = await supabase
-        .from("Course")
-        .select("par, teeSlope, teeRating, holeCount")
-        .eq("id", activeCourse.id)
-        .single();
-      const coursePar = (courseRow as { par?: number | null } | null)?.par ?? null;
-      const teeSlope = (courseRow as { teeSlope?: number | null } | null)?.teeSlope ?? null;
-      const teeRating = (courseRow as { teeRating?: number | null } | null)?.teeRating ?? null;
-      const holeCount = (courseRow as { holeCount?: number | null } | null)?.holeCount ?? 18;
-
+      // Course rating + slope are NOT stored at the course level — they
+      // live on TeeBox (per hole, per tee color) and most courses aren't
+      // seeded with them. Par comes from the Hole rows; the API falls back
+      // to a neutral slope (113) and rating == par when tee data is
+      // absent, i.e. Course HCP == Handicap Index (the standard
+      // simplification). This replaced a query that selected par/teeSlope/
+      // teeRating off Course, which don't exist there — it returned nulls
+      // and collapsed every Course HCP to 0 (no strokes for anyone).
       const { data: holeRows } = await supabase
         .from("Hole")
-        .select("holeNumber, handicapRank")
+        .select("holeNumber, par, handicapRank")
         .eq("courseId", activeCourse.id)
         .order("holeNumber");
+      const holeList = (holeRows ?? []) as Array<{ holeNumber: number; par: number | null; handicapRank: number | null }>;
+      const holeCount = holeList.length === 9 ? 9 : 18;
+      const parSum = holeList.reduce((sum, h) => sum + (h.par ?? 0), 0);
+      const coursePar = parSum > 0 ? parSum : null;
+      const teeSlope: number | null = null;
+      const teeRating: number | null = null;
       const expectedHoles = holeCount === 9 ? 9 : 18;
       // Build the holeHandicaps array indexed by hole position. If any
       // hole is missing a handicapRank in the DB, fall back to the

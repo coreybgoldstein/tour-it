@@ -13,8 +13,23 @@ function sb() {
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-function calcCourseHandicap(hi: number, slope: number, rating: number, par: number): number {
-  return Math.round(hi * (slope / 113) + (rating - par));
+// Course Handicap = HI × (Slope / 113) + (Rating − Par).
+// Tee rating/slope are frequently unavailable (not stored course-level),
+// so we neutralize gracefully: missing slope → 113, and the (rating − par)
+// term drops to 0 unless BOTH rating and par are known. With neutral
+// inputs this reduces to Course HCP = round(Handicap Index), the standard
+// fallback — never NaN, never a silent 0 from null arithmetic.
+function calcCourseHandicap(
+  hi: number,
+  slope?: number | null,
+  rating?: number | null,
+  par?: number | null
+): number {
+  const idx = Number(hi);
+  if (!Number.isFinite(idx)) return 0;
+  const s = slope && slope > 0 ? slope : 113;
+  const ratingTerm = rating != null && par != null ? rating - par : 0;
+  return Math.round(idx * (s / 113) + ratingTerm);
 }
 
 function getStrokeHoles(netStrokes: number, holeHandicaps: number[]): number[] {
