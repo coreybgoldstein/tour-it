@@ -87,6 +87,7 @@ type GamePlayer = { userId: string; displayName: string; avatarUrl: string | nul
 type TripGameRecord = {
   id: string; courseId: string; courseName: string; format: string;
   formatConfig: Record<string, unknown>; players: any[]; gameSheet: string; shareText: string; createdAt: string;
+  holeHandicaps?: number[] | null;
   courseLogoUrl?: string | null;
 };
 
@@ -104,6 +105,87 @@ const HOLE_PICKED_FORMATS = SHARED_HOLE_PICKED;
 // split per teammate.
 const TEAM_WAGER_FORMATS = SHARED_TEAM_WAGER;
 const MULTI_SEGMENT_FORMATS = SHARED_MULTI_SEGMENT;
+
+// ── Pops-per-hole scorecard ─────────────────────────────────────────────────
+// Renders a real scorecard grid: holes across the top, one row per player,
+// a green dot in each hole the player gets a stroke on. High handicaps
+// (net > 18) can collect a second dot on the hardest holes — strokeHoles
+// lists those holes twice, so we count occurrences per hole. Horizontally
+// scrollable so all 18 holes fit on a phone.
+function GamePopsScorecard({ players, holeHandicaps }: {
+  players: any[];
+  holeHandicaps?: number[] | null;
+}) {
+  const anyStrokes = players.some(p => (p.strokeHoles?.length ?? 0) > 0);
+  if (!anyStrokes) return null;
+
+  const inferredMax = Math.max(
+    18,
+    ...players.flatMap(p => (p.strokeHoles ?? []) as number[]),
+  );
+  const holeCount = holeHandicaps && holeHandicaps.length ? holeHandicaps.length : (inferredMax > 18 ? 18 : inferredMax);
+  const holes = Array.from({ length: holeCount }, (_, i) => i + 1);
+  const showHcpRow = !!(holeHandicaps && holeHandicaps.length === holeCount);
+
+  const popsFor = (p: any): Map<number, number> => {
+    const m = new Map<number, number>();
+    for (const h of (p.strokeHoles ?? []) as number[]) m.set(h, (m.get(h) ?? 0) + 1);
+    return m;
+  };
+
+  const NAME_W = 92;
+  const CELL = 28;
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "14px 0 14px 16px" }}>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12, paddingRight: 16 }}>Stroke Allocation</div>
+      <div style={{ overflowX: "auto", paddingRight: 16 }}>
+        <div style={{ display: "inline-block", minWidth: "100%" }}>
+          {/* Hole number row */}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ width: NAME_W, flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Hole</div>
+            {holes.map(h => (
+              <div key={h} style={{ width: CELL, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{h}</div>
+            ))}
+          </div>
+          {/* HCP rank row */}
+          {showHcpRow && (
+            <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
+              <div style={{ width: NAME_W, flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>HCP</div>
+              {holes.map((h, i) => (
+                <div key={h} style={{ width: CELL, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9.5, color: "rgba(255,255,255,0.32)" }}>{holeHandicaps![i]}</div>
+              ))}
+            </div>
+          )}
+          {/* One row per player */}
+          {players.map((p, pi) => {
+            const pops = popsFor(p);
+            const total = p.strokeHoles?.length ?? 0;
+            return (
+              <div key={pi} style={{ display: "flex", alignItems: "center", marginTop: 6, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                <div style={{ width: NAME_W, flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 11.5, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", paddingRight: 6 }}>
+                  {p.displayName}{total > 0 ? <span style={{ color: "rgba(77,168,98,0.75)", fontWeight: 700 }}> ({total})</span> : null}
+                </div>
+                {holes.map(h => {
+                  const n = pops.get(h) ?? 0;
+                  return (
+                    <div key={h} style={{ width: CELL, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                      {n === 0
+                        ? <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,0.09)" }} />
+                        : Array.from({ length: Math.min(n, 4) }, (_, di) => (
+                            <span key={di} style={{ width: 6, height: 6, borderRadius: "50%", background: "#4da862" }} />
+                          ))}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Inline date-range calendar ──────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -489,7 +571,7 @@ export default function TripPage() {
       const { data: clipsData } = await supabase.from("Upload").select("id, mediaType, mediaUrl, cloudflareVideoId, courseId, tripPublic, strategyNote, shotType").eq("tripId", id).order("createdAt", { ascending: false });
       if (clipsData) setClips(clipsData);
 
-      const { data: gamesData } = await supabase.from("TripGame").select("id, courseId, courseName, format, formatConfig, players, gameSheet, shareText, createdAt").eq("tripId", id).order("createdAt", { ascending: false });
+      const { data: gamesData } = await supabase.from("TripGame").select("id, courseId, courseName, format, formatConfig, players, gameSheet, shareText, holeHandicaps, createdAt").eq("tripId", id).order("createdAt", { ascending: false });
       if (gamesData && gamesData.length > 0) {
         const gcIds = [...new Set(gamesData.map((g: any) => g.courseId))];
         const { data: gcLogos } = await supabase.from("Course").select("id, logoUrl").in("id", gcIds);
@@ -3317,7 +3399,7 @@ export default function TripPage() {
                               <div style={{ padding: "3px 10px", borderRadius: 7, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>Team {p.teamId}</div>
                             )}
                           </div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginBottom: p.strokeHoles?.length > 0 ? 10 : 0 }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 }}>
                             {[
                               { label: "HI", value: p.handicapIndex },
                               { label: "Course HCP", value: p.courseHandicap },
@@ -3332,14 +3414,12 @@ export default function TripPage() {
                               );
                             })}
                           </div>
-                          {p.strokeHoles?.length > 0 && (
-                            <div style={{ background: "rgba(77,168,98,0.06)", borderRadius: 8, padding: "8px 12px" }}>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginRight: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Strokes on holes:</span>
-                              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#4da862" }}>{p.strokeHoles.join(", ")}</span>
-                            </div>
-                          )}
                         </div>
                       ))}
+
+                      {/* Pops-per-hole scorecard — green dot on every hole each
+                          player strokes, just like a paper card. */}
+                      <GamePopsScorecard players={viewGame.players ?? []} holeHandicaps={viewGame.holeHandicaps} />
 
                       {/* Rules */}
                       {sheetData.rules && (
