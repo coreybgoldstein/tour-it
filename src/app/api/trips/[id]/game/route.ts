@@ -58,6 +58,32 @@ function getStrokeHoles(netStrokes: number, holeHandicaps: number[]): number[] {
   return strokeHoles.sort((a, b) => a - b);
 }
 
+// One compact, SMS-friendly line describing where a player strokes.
+// strokeHoles may list a hole twice (net > 18 wraps onto the hardest
+// holes), so we count occurrences and render "h(x2)" for doubles.
+function strokeLine(p: { displayName: string; strokeHoles?: number[] }, holeCount: number): string {
+  const sh = p.strokeHoles ?? [];
+  if (sh.length === 0) return `${p.displayName}: no strokes (scratch)`;
+  const counts = new Map<number, number>();
+  for (const h of sh) counts.set(h, (counts.get(h) ?? 0) + 1);
+  const allSingles = counts.size === holeCount && [...counts.values()].every(v => v === 1);
+  if (allSingles) return `${p.displayName}: 1 stroke on every hole (${sh.length} total)`;
+  const parts = [...counts.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([h, n]) => (n > 1 ? `${h}(x${n})` : `${h}`));
+  return `${p.displayName}: strokes on ${parts.join(", ")} (${sh.length} total)`;
+}
+
+// Deterministic pops block appended to every share text so the per-hole
+// stroke allocation is always correct in SMS, regardless of what the LLM
+// returns. This is the source of truth — the LLM only writes the vibe.
+function buildStrokeBlock(
+  players: Array<{ displayName: string; strokeHoles?: number[] }>,
+  holeCount: number
+): string {
+  return ["Pops:", ...players.map(p => `  ${strokeLine(p, holeCount)}`)].join("\n");
+}
+
 const FORMAT_NAMES: Record<string, string> = {
   nassau: "Nassau",
   skins: "Skins",
@@ -117,12 +143,10 @@ function buildFallbackSheet(args: {
   const teamLines = teams.length > 0
     ? teams.map(t => `${t.name}: ${t.playerIds.map(pid => players.find(p => (p as any).userId === pid)?.displayName || pid).join(" & ")}`).join("\n")
     : "";
-  const playerLines = players.map(p => `${p.displayName} — net ${p.netStrokes}`).join("\n");
   const shareText = [
     `${courseName} — ${formatName}`,
     stakesLine,
     teamLines,
-    playerLines,
     "Good luck out there.",
   ].filter(Boolean).join("\n");
 
@@ -131,9 +155,9 @@ function buildFallbackSheet(args: {
 
 function buildPrompt(data: {
   courseName: string;
-  coursePar: number;
-  teeSlope: number;
-  teeRating: number;
+  coursePar: number | null;
+  teeSlope: number | null;
+  teeRating: number | null;
   format: string;
   formatConfig: Record<string, unknown>;
   players: Array<{ displayName: string; handicapIndex: number; courseHandicap: number; netStrokes: number; strokeHoles: number[]; teamId: string }>;
@@ -142,6 +166,11 @@ function buildPrompt(data: {
 }): string {
   const { courseName, coursePar, teeSlope, teeRating, format, formatConfig, players, teams } = data;
   const formatName = FORMAT_NAMES[format] || format;
+  const teeMeta = [
+    teeSlope != null ? `Slope ${teeSlope}` : null,
+    teeRating != null ? `Rating ${teeRating}` : null,
+    coursePar != null ? `Par ${coursePar}` : null,
+  ].filter(Boolean).join(" / ") || "standard";
 
   const playerLines = players
     .map(p => `  ${p.displayName} (Team ${p.teamId}): HI ${p.handicapIndex} → Course HCP ${p.courseHandicap} → Net ${p.netStrokes} strokes → Holes with stroke: ${p.strokeHoles.length > 0 ? p.strokeHoles.join(", ") : "none"}`)
@@ -171,7 +200,7 @@ function buildPrompt(data: {
 Return ONLY valid JSON with exactly three string fields: "rules", "tip", and "shareText".
 No markdown, no code blocks — just raw JSON.
 
-COURSE: ${courseName} | TEE: Slope ${teeSlope} / Rating ${teeRating} / Par ${coursePar}
+COURSE: ${courseName} | TEE: ${teeMeta}
 FORMAT: ${formatName} — ${formatDetails}
 
 PLAYERS:
@@ -188,11 +217,10 @@ One practical, specific tip for this format and group (e.g. which holes matter m
 
 For "shareText" (SMS-ready plain text, under 280 words):
 - Line 1: "${courseName} — ${formatName}"
-- Line 2: Tee: Slope ${teeSlope} / Rating ${teeRating}
-- Teams: brief breakdown
-- Each player: name, net shots, stroke holes (compact)
-- 1-line rules reminder
-- Fun sign-off`;
+- Teams: brief breakdown (skip if individual)
+- 1-line rules reminder (stakes + how to win)
+- Fun sign-off
+Do NOT list per-hole strokes or net shots — a precise pops breakdown is appended automatically after your text.`;
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -290,6 +318,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     gameSheet = JSON.stringify({ rules: fallback.rules, tip: fallback.tip });
     shareText = fallback.shareText;
   }
+
+  // Append the authoritative per-hole pops breakdown so SMS always carries
+  // the exact stroke allocation, independent of the LLM's prose.
+  shareText = `${shareText.trim()}\n\n${buildStrokeBlock(enrichedPlayers, holeHandicaps.length)}`;
 
   // Save hole handicaps to Hole table
   if (holeHandicaps.every((r: number) => r > 0)) {
