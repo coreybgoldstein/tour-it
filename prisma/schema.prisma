@@ -439,11 +439,30 @@ model Round {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  uploads Upload[]
+  // Links the score ledger to the shared trip/round container so clips,
+  // games, and head-to-head all line up on one course+date.
+  golfTripId  String?
+  tripGameId  String?
+
+  // Scorecard / GHIN ingestion fields. holeScores is an Int[] of gross
+  // strokes by hole (index 0 = hole 1); null entries allowed for blanks.
+  // source distinguishes how the round was filled.
+  teeColor         String?
+  courseRating     Float?
+  slope            Int?
+  scoreToPar       Int?
+  greensInReg      Int?
+  fairwaysPossible Int?
+  holeScores       Json?
+  source           String? // "ghin" | "scorecard" | "manual"
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  golfTrip GolfTrip? @relation(fields: [golfTripId], references: [id], onDelete: SetNull)
+  uploads  Upload[]
 
   @@index([userId])
   @@index([courseId])
+  @@index([golfTripId])
 }
 
 // ============================================================
@@ -646,6 +665,7 @@ model GolfTrip {
   games      TripGame[]
   ryderTeams GolfTripRyderTeam[]
   notes      GolfTripNote[]
+  rounds     Round[]
 
   @@index([createdBy])
   @@index([endDate, isPublic, publicizeNotifiedAt])
@@ -744,6 +764,14 @@ model TripGame {
   holeHandicaps Json?
   gameSheet     String
   shareText     String
+  // Per-player hole-by-hole gross scores entered after play, including
+  // guests not in the app. Shape: { [playerKey]: (number|null)[] } where
+  // playerKey is the userId when matched, else the player's display name.
+  scores        Json?
+  // Settled result the user confirmed: proposed winners + net $ breakdown
+  // per format segment. Null until scores are entered and settlement is
+  // confirmed.
+  settlement    Json?
   createdBy     String
   createdAt     DateTime @default(now())
 
