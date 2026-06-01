@@ -308,7 +308,7 @@ function UpcomingTripCard({ trip, onClick }: { trip: ProfileTrip; onClick: () =>
       onClick={onClick}
       style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "12px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}
     >
-      <div style={{ width: 44, height: 44, borderRadius: 0, background: trip.imageUrl || trip.firstCourseLogo ? "transparent" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 44, height: 44, borderRadius: 10, background: trip.imageUrl || trip.firstCourseLogo ? "transparent" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {trip.imageUrl
           ? <img src={cdnImage(trip.imageUrl)} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : trip.firstCourseLogo
@@ -2040,7 +2040,7 @@ export default function ProfilePage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {filtered.map(s => (
                   <button key={s.id} onClick={() => router.push(`/courses/${s.course.id}`)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, cursor: "pointer", textAlign: "left" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 0, background: s.course.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: s.course.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                       {s.course.logoUrl ? (
                         <img src={cdnImage(s.course.logoUrl)} alt={s.course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
@@ -2097,7 +2097,7 @@ export default function ProfilePage() {
                       Only renders when the course has a logoUrl; no initials
                       fallback at 24px (would read as clutter). */}
                   {courseLogoUrl && (
-                    <div style={{ position: "absolute", top: 4, left: 4, width: 24, height: 24, borderRadius: 0, background: "#fff", border: "1.5px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 5px rgba(0,0,0,0.4)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+                    <div style={{ position: "absolute", top: 4, left: 4, width: 24, height: 24, borderRadius: 6, background: "#fff", border: "1.5px solid rgba(255,255,255,0.2)", boxShadow: "0 2px 5px rgba(0,0,0,0.4)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
                       <img src={courseLogoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                   )}

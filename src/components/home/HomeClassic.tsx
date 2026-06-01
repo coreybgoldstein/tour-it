@@ -231,9 +231,9 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
       {!course.coverImageUrl && (
         <div style={{ position: "absolute", top: "32%", left: "50%", transform: "translate(-50%, -50%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {course.logoUrl ? (
-            <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: 68, height: 42, objectFit: "cover", objectPosition: "center", borderRadius: 0, backgroundColor: "#fff" }} />
+            <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: 68, height: 42, objectFit: "cover", objectPosition: "center", borderRadius: 8, backgroundColor: "#fff" }} />
           ) : (
-            <div style={{ width: 46, height: 46, borderRadius: 0, background: "rgba(26,158,66,0.12)", border: "1px solid rgba(26,158,66,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(26,158,66,0.6)" }}>{abbr}</div>
+            <div style={{ width: 46, height: 46, borderRadius: 10, background: "rgba(26,158,66,0.12)", border: "1px solid rgba(26,158,66,0.22)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "rgba(26,158,66,0.6)" }}>{abbr}</div>
           )}
         </div>
       )}
@@ -248,7 +248,7 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
           intentionally — top-right is reserved for the featured/PGA
           badge so they coexist. */}
       {course.coverImageUrl && course.logoUrl && (
-        <div style={{ position: "absolute", top: 6, left: 6, width: 28, height: 28, borderRadius: 0, background: "#fff", border: "1.5px solid rgba(255,255,255,0.18)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
+        <div style={{ position: "absolute", top: 6, left: 6, width: 28, height: 28, borderRadius: 7, background: "#fff", border: "1.5px solid rgba(255,255,255,0.18)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
           <img src={cdnImage(course.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
       )}
@@ -257,7 +257,7 @@ function CourseCard({ course, onClick, compact, featured }: { course: TrendingCo
           Tries the tournament logo asset; falls back to a gold text crest
           when the image isn't present in /public yet. */}
       {featured && (
-        <div style={{ position: "absolute", top: 6, right: 6, width: 36, height: 36, borderRadius: 0, background: "#fff", border: `1.5px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.35)" }}>
+        <div style={{ position: "absolute", top: 6, right: 6, width: 36, height: 36, borderRadius: 8, background: "#fff", border: `1.5px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.35)" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={featured.logoSrc}

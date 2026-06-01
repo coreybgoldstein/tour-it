@@ -174,7 +174,7 @@ export default function GamePage() {
           boxShadow: "0 6px 24px rgba(0,0,0,0.28)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 0, background: courseLogoUrl ? "#fff" : "rgba(77,168,98,0.15)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: courseLogoUrl ? "#fff" : "rgba(77,168,98,0.15)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {courseLogoUrl
                 ? <img src={courseLogoUrl} alt={game.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}

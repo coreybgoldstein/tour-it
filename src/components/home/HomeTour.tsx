@@ -687,7 +687,7 @@ function YourTourCard({
           const identitySrc = tripBadge || (hostCourse?.logoUrl ? cdnImage(hostCourse.logoUrl) : null);
           if (!identitySrc && !hostCourse) return null;
           return (
-            <div style={{ width: 32, height: 32, borderRadius: 0, background: "#fff", padding: 2.5, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fff", padding: 2.5, border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
               {identitySrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={identitySrc} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
@@ -885,7 +885,7 @@ function YourTourCard({
               cursor: "pointer",
             }}
           >
-            <div style={{ width: 36, height: 36, borderRadius: 0, background: "#fff", border: "1px solid rgba(255,255,255,0.5)", padding: 3, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: "#fff", border: "1px solid rgba(255,255,255,0.5)", padding: 3, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
               {popupStop.course.logoUrl
                 ? <img src={cdnImage(popupStop.course.logoUrl)!} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 : <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 800, color: "#0c1c13" }}>{initialsOf(popupStop.course.name)}</span>}
@@ -1154,7 +1154,7 @@ function NearCourseCard({ course, onClick }: { course: CourseLite; onClick: () =
           <div style={{ width: "100%", height: "100%", background: "linear-gradient(160deg, rgba(45,122,66,0.4), rgba(7,16,10,0.9))" }} />
         )}
         {logo && (
-          <div style={{ position: "absolute", top: 8, left: 8, width: 30, height: 30, borderRadius: 0, background: "#fff", border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 3 }}>
+          <div style={{ position: "absolute", top: 8, left: 8, width: 30, height: 30, borderRadius: 6, background: "#fff", border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 3 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
@@ -1300,7 +1300,7 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                 position: "absolute", left: 0, right: 0, top: 6, display: "flex", justifyContent: "center",
               }}>
                 <div style={{
-                  width: 34, height: 34, borderRadius: 0,
+                  width: 34, height: 34, borderRadius: 8,
                   background: t.courseLogo ? "rgba(255,255,255,0.96)" : "rgba(10,28,18,0.96)",
                   border: "0.5px solid rgba(255,255,255,0.55)",
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -1309,7 +1309,11 @@ function FeedTease({ teasers, onTap }: { teasers: FeedTeaser[]; onTap: (uploadId
                 }}>
                   {t.courseLogo ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={t.courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 3, borderRadius: 0 }} />
+                    // Inner img gets its own borderRadius so logos with
+                    // dark backgrounds (e.g. Coyote Moon's black bg)
+                    // don't reveal hard square corners against the
+                    // white badge frame.
+                    <img src={t.courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 3, borderRadius: 5 }} />
                   ) : (
                     <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 800, color: "#4da862", letterSpacing: "0.04em" }}>
                       {initials || "TI"}
