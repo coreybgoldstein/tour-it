@@ -103,6 +103,16 @@ type SuggestedCourse = {
 
 const US_STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
 
+// Tee colors users can rate (slope/rating). Swatch drives the editor chip.
+const TEE_COLORS: { color: string; label: string; swatch: string }[] = [
+  { color: "BLACK", label: "Black", swatch: "#111317" },
+  { color: "BLUE", label: "Blue", swatch: "#3b6fd4" },
+  { color: "WHITE", label: "White", swatch: "#e9e9ea" },
+  { color: "GOLD", label: "Gold", swatch: "#c8a23a" },
+  { color: "GREEN", label: "Green", swatch: "#4da862" },
+  { color: "RED", label: "Red", swatch: "#d2484b" },
+];
+
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", LAY_UP: "Layup",
   CHIP: "Chip", PITCH: "Pitch", PUTT: "Putt",
@@ -494,6 +504,19 @@ export default function CourseProfilePage() {
   const [scorecardEditMode, setScorecardEditMode] = useState(false);
   const [editedHoles, setEditedHoles] = useState<{ id: string; holeNumber: number; par: number; handicapRank: number; yardage: number | null; imageUrl: string | null; description: string | null }[]>([]);
   const [savingScorecard, setSavingScorecard] = useState(false);
+  // Tee ratings (slope/rating per color) — drive the per-player Course
+  // Handicap calc in games. Loaded from TeeBox (one entry per color); edited
+  // as strings so inputs can sit empty. Saved back to all of a color's holes.
+  const [courseTees, setCourseTees] = useState<{ color: string; slope: number | null; rating: number | null }[]>([]);
+  const [editedTees, setEditedTees] = useState<{ color: string; slope: string; rating: string }[]>([]);
+  const seedEditedTees = () => {
+    const seeded = courseTees.map(t => ({
+      color: t.color,
+      slope: t.slope != null ? String(t.slope) : "",
+      rating: t.rating != null ? String(t.rating) : "",
+    }));
+    setEditedTees(seeded.length > 0 ? seeded : [{ color: "WHITE", slope: "", rating: "" }]);
+  };
   const [scorecardView, setScorecardView] = useState<"digital" | "photo">("digital");
   const [uploadingScorecardPhoto, setUploadingScorecardPhoto] = useState(false);
   const scorecardPhotoRef = useRef<HTMLInputElement>(null);
@@ -791,6 +814,20 @@ const [editDescription, setEditDescription] = useState("");
           if (scorecardParam === "edit") setScorecardEditMode(true);
         }
       }
+
+      // Tee ratings — one entry per color (slope/rating repeat across a
+      // color's holes, so dedupe).
+      const { data: teeData } = await supabase.from("TeeBox").select("color, slope, rating").eq("courseId", id);
+      const teeByColor = new Map<string, { color: string; slope: number | null; rating: number | null }>();
+      for (const t of (teeData ?? []) as Array<{ color: string; slope: number | null; rating: number | null }>) {
+        if (!teeByColor.has(t.color)) teeByColor.set(t.color, { color: t.color, slope: t.slope, rating: t.rating });
+        else {
+          const e = teeByColor.get(t.color)!;
+          if (e.slope == null && t.slope != null) e.slope = t.slope;
+          if (e.rating == null && t.rating != null) e.rating = t.rating;
+        }
+      }
+      setCourseTees(Array.from(teeByColor.values()));
 
       const { data: uploads } = await supabase
         .from("Upload").select("*").eq("courseId", id).eq("moderationStatus", "APPROVED").order("rankScore", { ascending: false }).range(0, 49);
@@ -1991,6 +2028,7 @@ const [editDescription, setEditDescription] = useState("");
                     const template = holes.length > 0 ? [...holes] :
                       Array.from({ length: 18 }, (_, i) => ({ id: `new-${i + 1}`, holeNumber: i + 1, par: 4, handicapRank: i + 1, yardage: null, imageUrl: null, description: null }));
                     setEditedHoles(template);
+                    seedEditedTees();
                     setScorecardEditMode(true);
                   }}
                   style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "7px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
@@ -2022,6 +2060,39 @@ const [editDescription, setEditDescription] = useState("");
                       }
                       setHoles(saved);
                       setEditedHoles(saved);
+
+                      // Tee slope/rating: write across every hole of each color
+                      // (TeeBox stores them per hole; yardage column is required,
+                      // so preserve any existing yardage, else fall back to the
+                      // hole yardage, else 0).
+                      const nextCourseTees: typeof courseTees = [];
+                      for (const t of editedTees) {
+                        const slopeNum = t.slope.trim() === "" ? null : parseInt(t.slope);
+                        const ratingNum = t.rating.trim() === "" ? null : parseFloat(t.rating);
+                        if ((slopeNum == null || Number.isNaN(slopeNum)) && (ratingNum == null || Number.isNaN(ratingNum))) continue;
+                        const cleanSlope = slopeNum != null && !Number.isNaN(slopeNum) ? slopeNum : null;
+                        const cleanRating = ratingNum != null && !Number.isNaN(ratingNum) ? ratingNum : null;
+                        const { data: existingTees } = await supabase.from("TeeBox").select("id, holeId, yardage").eq("courseId", id).eq("color", t.color);
+                        const exByHole = new Map((existingTees ?? []).map((r: any) => [r.holeId, r]));
+                        const now = new Date().toISOString();
+                        const rows = saved.map(h => {
+                          const ex = exByHole.get(h.id);
+                          return {
+                            id: ex?.id ?? crypto.randomUUID(),
+                            courseId: id,
+                            holeId: h.id,
+                            color: t.color,
+                            yardage: ex?.yardage ?? h.yardage ?? 0,
+                            slope: cleanSlope,
+                            rating: cleanRating,
+                            updatedAt: now,
+                          };
+                        });
+                        await supabase.from("TeeBox").upsert(rows, { onConflict: "holeId,color" });
+                        nextCourseTees.push({ color: t.color, slope: cleanSlope, rating: cleanRating });
+                      }
+                      setCourseTees(nextCourseTees);
+
                       setScorecardEditMode(false);
                       setSavingScorecard(false);
                     }}
@@ -2168,6 +2239,7 @@ const [editDescription, setEditDescription] = useState("");
 
                   setEditedHoles(merged);
                   setExtractionConfidence(confByNum);
+                  seedEditedTees();
                   setScorecardView("digital");
                   setScorecardEditMode(true);
                   setExtractionMessage(`Filled from photo — review and save${data.tee ? ` (yardages from ${data.tee} tee)` : ""}`);
@@ -2276,6 +2348,76 @@ const [editDescription, setEditDescription] = useState("");
                     </div>
                   );
                 })}
+
+                {/* Tee ratings editor — drives the per-player Course Handicap in games */}
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 4 }}>Tee Ratings</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 10, lineHeight: 1.4 }}>Slope &amp; course rating per tee. Used to calculate how many strokes each player gets in a game.</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 28px", gap: 6, marginBottom: 6 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Tee</div>
+                    {["Slope", "Rating"].map(l => (
+                      <div key={l} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.06em", textAlign: "center" }}>{l}</div>
+                    ))}
+                    <div />
+                  </div>
+                  {editedTees.map((t, idx) => {
+                    const meta = TEE_COLORS.find(c => c.color === t.color);
+                    return (
+                      <div key={idx} style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr 28px", gap: 6, marginBottom: 6, alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                          <span style={{ width: 14, height: 14, borderRadius: "50%", background: meta?.swatch ?? "#888", border: "1px solid rgba(255,255,255,0.25)", flexShrink: 0 }} />
+                          <select
+                            className="sc-input"
+                            style={{ textAlign: "left", padding: "8px 6px" }}
+                            value={t.color}
+                            onChange={e => {
+                              const v = e.target.value;
+                              setEditedTees(prev => prev.map((et, i) => i === idx ? { ...et, color: v } : et));
+                            }}
+                          >
+                            {TEE_COLORS.map(c => <option key={c.color} value={c.color} style={{ background: "#07100a" }}>{c.label}</option>)}
+                          </select>
+                        </div>
+                        <input
+                          className="sc-input"
+                          type="number" min={55} max={155}
+                          inputMode="numeric"
+                          value={t.slope}
+                          placeholder="—"
+                          onChange={e => setEditedTees(prev => prev.map((et, i) => i === idx ? { ...et, slope: e.target.value } : et))}
+                        />
+                        <input
+                          className="sc-input"
+                          type="number" step="0.1" min={50} max={85}
+                          inputMode="decimal"
+                          value={t.rating}
+                          placeholder="—"
+                          onChange={e => setEditedTees(prev => prev.map((et, i) => i === idx ? { ...et, rating: e.target.value } : et))}
+                        />
+                        <button
+                          aria-label="Remove tee"
+                          onClick={() => setEditedTees(prev => prev.filter((_, i) => i !== idx))}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.45)", cursor: "pointer", padding: 0 }}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {editedTees.length < TEE_COLORS.length && (
+                    <button
+                      onClick={() => {
+                        const used = new Set(editedTees.map(t => t.color));
+                        const next = TEE_COLORS.find(c => !used.has(c.color));
+                        if (next) setEditedTees(prev => [...prev, { color: next.color, slope: "", rating: "" }]);
+                      }}
+                      style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "8px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.55)", cursor: "pointer" }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                      Add tee
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -2336,6 +2478,23 @@ const [editDescription, setEditDescription] = useState("");
                 {holes.some(h => h.yardage) && (
                   <div style={{ marginTop: 12, fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.5 }}>
                     Yardages shown are from the championship (tips) tees.
+                  </div>
+                )}
+                {courseTees.some(t => t.slope != null || t.rating != null) && (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Tee Ratings</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {courseTees.filter(t => t.slope != null || t.rating != null).map(t => {
+                        const meta = TEE_COLORS.find(c => c.color === t.color);
+                        return (
+                          <div key={t.color} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "8px 12px" }}>
+                            <span style={{ width: 12, height: 12, borderRadius: "50%", background: meta?.swatch ?? "#888", border: "1px solid rgba(255,255,255,0.25)" }} />
+                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>{meta?.label ?? t.color}</span>
+                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{t.rating != null ? t.rating.toFixed(1) : "—"} / {t.slope ?? "—"}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </>
