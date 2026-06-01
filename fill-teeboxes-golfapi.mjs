@@ -6,9 +6,18 @@
 
 import { existsSync, readFileSync, writeFileSync, createWriteStream } from 'fs';
 
-const SUPABASE_URL = 'https://awlbxzpevwidowxxvuef.supabase.co';
-const SERVICE_KEY = '***REMOVED_SERVICE_ROLE_KEY***';
-const GOLF_API_KEY = '6IRZMMWMW2T7G5UM7POZTKGSXQ';
+// Load .env (keys must never be hardcoded — see CLAUDE.md)
+for (const line of readFileSync('.env', 'utf8').split(/\r?\n/)) {
+  const m = line.match(/^([A-Z_0-9]+)=(.*)$/);
+  if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+}
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const GOLF_API_KEY = process.env.GOLF_COURSE_API_KEY;
+if (!SUPABASE_URL || !SERVICE_KEY || !GOLF_API_KEY) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or GOLF_COURSE_API_KEY in .env');
+}
 const GOLF_API_BASE = 'https://api.golfcourseapi.com/v1';
 const PROGRESS_FILE = 'teeboxes-progress.json';
 const LOG_FILE = 'teeboxes-log.txt';
