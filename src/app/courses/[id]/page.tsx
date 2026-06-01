@@ -446,6 +446,7 @@ export default function CourseProfilePage() {
   const fromMap = searchParams.get("from") === "map";
   const fromTripIdea = searchParams.get("from") === "trip-idea";
   const tripIdeaSlug = fromTripIdea ? searchParams.get("slug") : null;
+  const fromFeed = searchParams.get("from") === "feed";
   const scorecardParam = searchParams.get("scorecard");
   const scorecardAutoOpenedRef = useRef(false);
   const isDesktop = useIsDesktop();
@@ -1277,8 +1278,8 @@ const [editDescription, setEditDescription] = useState("");
           </div>
         )}
 
-        {/* Back pill — shown when arrived from /map or a trip-idea page */}
-        {(fromMap || fromTripIdea) && (
+        {/* Back pill — shown when arrived from /map, a trip-idea page, or a feed clip */}
+        {(fromMap || fromTripIdea || fromFeed) && (
           <button
             onClick={() => {
               if (fromTripIdea && tripIdeaSlug) {
@@ -1290,7 +1291,7 @@ const [editDescription, setEditDescription] = useState("");
             style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 8px)", left: 16, zIndex: 11, display: "flex", alignItems: "center", gap: 6, background: "rgba(7,16,10,0.85)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "8px 14px 8px 10px", cursor: "pointer", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{fromTripIdea ? "Trip" : "Map"}</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{fromTripIdea ? "Trip" : fromFeed ? "Video" : "Map"}</span>
           </button>
         )}
 
@@ -1303,7 +1304,7 @@ const [editDescription, setEditDescription] = useState("");
             felt cluttered on the Stonebridge / Noonan courses. */}
         <button
           onClick={() => course.logoUrl ? setLogoLightboxOpen(true) : router.back()}
-          style={{ position: "absolute", top: (fromMap || fromTripIdea) ? "calc(env(safe-area-inset-top, 0px) + 58px)" : "calc(env(safe-area-inset-top, 0px) + 8px)", left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 3px 10px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
+          style={{ position: "absolute", top: (fromMap || fromTripIdea || fromFeed) ? "calc(env(safe-area-inset-top, 0px) + 58px)" : "calc(env(safe-area-inset-top, 0px) + 8px)", left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 3px 10px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
         >
           {course.logoUrl ? (
             <img
@@ -1325,7 +1326,7 @@ const [editDescription, setEditDescription] = useState("");
           <button
             onClick={() => setManagerMenuOpen(true)}
             aria-label="Course owner menu"
-            style={{ position: "absolute", top: (fromMap || fromTripIdea) ? "calc(env(safe-area-inset-top, 0px) + 58px)" : "calc(env(safe-area-inset-top, 0px) + 8px)", right: (isHostingMajor && tournament) ? 84 : 16, zIndex: 11, width: 46, height: 46, borderRadius: 12, background: "#2d7a42", border: "1.5px solid #4da862", boxShadow: "0 3px 12px rgba(45,122,66,0.55), 0 0 14px rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
+            style={{ position: "absolute", top: (fromMap || fromTripIdea || fromFeed) ? "calc(env(safe-area-inset-top, 0px) + 58px)" : "calc(env(safe-area-inset-top, 0px) + 8px)", right: (isHostingMajor && tournament) ? 84 : 16, zIndex: 11, width: 46, height: 46, borderRadius: 12, background: "#2d7a42", border: "1.5px solid #4da862", boxShadow: "0 3px 12px rgba(45,122,66,0.55), 0 0 14px rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
@@ -1353,7 +1354,7 @@ const [editDescription, setEditDescription] = useState("");
         )}
 
 
-        <div style={{ position: "relative", padding: "0 20px 14px", zIndex: 10, marginTop: (fromMap || fromTripIdea) ? "calc(env(safe-area-inset-top, 0px) + 118px)" : "calc(env(safe-area-inset-top, 0px) + 68px)" }}>
+        <div style={{ position: "relative", padding: "0 20px 14px", zIndex: 10, marginTop: (fromMap || fromTripIdea || fromFeed) ? "calc(env(safe-area-inset-top, 0px) + 118px)" : "calc(env(safe-area-inset-top, 0px) + 68px)" }}>
           {(() => {
             // Universal Google Maps URL — WKWebView on iOS intercepts and
             // offers "Open in Maps" / "Open in Google Maps." Constructed

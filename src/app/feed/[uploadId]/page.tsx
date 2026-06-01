@@ -434,7 +434,7 @@ export default function FeedPage() {
               muted={muted}
               onToggleMute={() => setMuted((m) => !m)}
               onBack={close}
-              onCourse={() => router.push(`/courses/${c.courseId}`)}
+              onCourse={() => router.push(`/courses/${c.courseId}?from=feed&clip=${c.id}`)}
               onUser={() => c.uploaderId && router.push(`/profile/${c.uploaderId}`)}
               onComment={() => openCommentSheet(c.id)}
               onKebab={(e) => { e.stopPropagation(); setMenuClip(c); }}
