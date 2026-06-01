@@ -262,11 +262,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  // Calculate course handicaps + stroke allocations
-  const lowestCH = Math.min(...players.map((p: any) => calcCourseHandicap(p.handicapIndex, teeSlope, teeRating, coursePar)));
+  // Calculate course handicaps + stroke allocations. Each player can carry
+  // their own tee's slope/rating (per-player tee selection); fall back to
+  // the body-level tee values, then to the neutral round(HI) when neither
+  // is present.
+  const chOf = (p: any) => calcCourseHandicap(
+    p.handicapIndex,
+    p.slope ?? teeSlope,
+    p.rating ?? teeRating,
+    coursePar
+  );
+  const lowestCH = Math.min(...players.map(chOf));
 
   const enrichedPlayers = players.map((p: any) => {
-    const ch = calcCourseHandicap(p.handicapIndex, teeSlope, teeRating, coursePar);
+    const ch = chOf(p);
     const net = Math.max(0, ch - lowestCH);
     return {
       ...p,

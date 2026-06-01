@@ -56,7 +56,28 @@ type GamePlayer = {
   avatarUrl: string | null;
   handicapIndex: number;
   teamId: string;
+  // Tee the player is using for this game. slope/rating are resolved from
+  // the course's TeeBox data for that color and drive the per-player Course
+  // Handicap calc. Null when the course has no tee data seeded yet.
+  teeColor?: string | null;
+  slope?: number | null;
+  rating?: number | null;
 };
+
+// Display order + swatch color for the tee picker. Default selection walks
+// this list and picks the first tee the course actually has.
+const TEE_META: { color: string; label: string; swatch: string; ring?: boolean }[] = [
+  { color: "BLACK", label: "Black", swatch: "#111", ring: true },
+  { color: "BLUE", label: "Blue", swatch: "#3b82f6" },
+  { color: "WHITE", label: "White", swatch: "#e8e8e8", ring: true },
+  { color: "GOLD", label: "Gold", swatch: "#d4af37" },
+  { color: "GREEN", label: "Green", swatch: "#4da862" },
+  { color: "RED", label: "Red", swatch: "#dc2626" },
+];
+// Preference order for the default tee (most common men's set first).
+const DEFAULT_TEE_ORDER = ["WHITE", "BLUE", "GOLD", "GREEN", "BLACK", "RED"];
+
+type CourseTee = { color: string; slope: number | null; rating: number | null; yardage: number | null };
 
 const GAME_FORMATS: { id: string; name: string; desc: string }[] = [
   { id: "nassau", name: "Nassau", desc: "3 bets: front 9, back 9, full 18" },
@@ -128,6 +149,11 @@ export default function CreateGameSheet({
   const [players, setPlayers] = useState<GamePlayer[]>([]);
   const [friendSearch, setFriendSearch] = useState("");
   const [friendResults, setFriendResults] = useState<FriendRow[]>([]);
+
+  // ── Tees ───────────────────────────────────────────────────────────
+  // Available tee sets (color + slope/rating) for the active course,
+  // derived from TeeBox. Empty when the course has no tee data seeded.
+  const [availableTees, setAvailableTees] = useState<CourseTee[]>([]);
 
   // ── Format + stakes ──────────────────────────────────────────────
   const [format, setFormat] = useState<string>("");
@@ -360,6 +386,64 @@ export default function CreateGameSheet({
       ? { id: course.id, name: course.name, logoUrl: course.logoUrl }
       : null;
   }, [presetTrip, tripCourseIdx, course]);
+
+  // ── Load tee sets for the active course ─────────────────────────────
+  // TeeBox stores slope/rating per hole per color, so the same slope/rating
+  // repeats across a color's holes — we dedupe to one row per color and sum
+  // yardage. Drives the per-player tee picker + Course Handicap calc.
+  useEffect(() => {
+    const courseId = activeCourse?.id;
+    if (!open || !courseId) { setAvailableTees([]); return; }
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("TeeBox")
+        .select("color, slope, rating, yardage")
+        .eq("courseId", courseId);
+      if (cancelled) return;
+      const byColor = new Map<string, CourseTee>();
+      for (const r of (data ?? []) as Array<{ color: string; slope: number | null; rating: number | null; yardage: number | null }>) {
+        const existing = byColor.get(r.color);
+        if (!existing) {
+          byColor.set(r.color, { color: r.color, slope: r.slope, rating: r.rating, yardage: r.yardage ?? 0 });
+        } else {
+          // keep first slope/rating seen; accumulate yardage across holes
+          if (existing.slope == null && r.slope != null) existing.slope = r.slope;
+          if (existing.rating == null && r.rating != null) existing.rating = r.rating;
+          existing.yardage = (existing.yardage ?? 0) + (r.yardage ?? 0);
+        }
+      }
+      const tees = TEE_META
+        .map(m => byColor.get(m.color))
+        .filter((t): t is CourseTee => !!t && t.slope != null);
+      setAvailableTees(tees);
+    })();
+    return () => { cancelled = true; };
+  }, [open, activeCourse?.id]);
+
+  // Default every player to a sensible tee once tee data loads (or clear
+  // tee fields when the course has none). Respects an explicit user pick.
+  useEffect(() => {
+    if (availableTees.length === 0) {
+      setPlayers(prev => prev.some(p => p.teeColor)
+        ? prev.map(p => ({ ...p, teeColor: null, slope: null, rating: null }))
+        : prev);
+      return;
+    }
+    const defColor = DEFAULT_TEE_ORDER.find(c => availableTees.some(t => t.color === c)) ?? availableTees[0].color;
+    const def = availableTees.find(t => t.color === defColor)!;
+    setPlayers(prev => {
+      let changed = false;
+      const next = prev.map(p => {
+        const stillValid = p.teeColor && availableTees.some(t => t.color === p.teeColor);
+        if (stillValid) return p;
+        changed = true;
+        return { ...p, teeColor: def.color, slope: def.slope, rating: def.rating };
+      });
+      return changed ? next : prev;
+    });
+  }, [availableTees]);
 
   // ── Submit ────────────────────────────────────────────────────────
   const canSubmit = !!activeCourse && !!format && players.length >= 1 && !submitting;
@@ -863,7 +947,8 @@ export default function CreateGameSheet({
           <Section label={`Players · ${players.length}`}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {players.map((p, i) => (
-                <div key={p.userId} style={playerRowStyle}>
+                <div key={p.userId} style={playerCardStyle}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={avatarStyle(p.avatarUrl)}>
                     {p.avatarUrl
                       ? <img src={cdnImage(p.avatarUrl)} alt={p.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -926,8 +1011,47 @@ export default function CreateGameSheet({
                       >×</button>
                     )}
                   </div>
+                  </div>
+
+                  {/* Tee picker — only when the course has seeded tee data.
+                      Drives this player's Course Handicap via slope/rating. */}
+                  {availableTees.length > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.4)", marginRight: 2 }}>Tee</span>
+                      {availableTees.map(t => {
+                        const meta = TEE_META.find(m => m.color === t.color);
+                        const selected = p.teeColor === t.color;
+                        return (
+                          <button
+                            key={t.color}
+                            type="button"
+                            onClick={() => setPlayers(prev => prev.map((pl, idx) => idx === i ? { ...pl, teeColor: t.color, slope: t.slope, rating: t.rating } : pl))}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 6,
+                              padding: "5px 10px", borderRadius: 8, cursor: "pointer",
+                              background: selected ? "rgba(77,168,98,0.15)" : "rgba(255,255,255,0.04)",
+                              border: selected ? "1px solid rgba(77,168,98,0.5)" : "1px solid rgba(255,255,255,0.1)",
+                            }}
+                          >
+                            <span style={{ width: 10, height: 10, borderRadius: "50%", background: meta?.swatch ?? "#888", boxShadow: meta?.ring ? "inset 0 0 0 1px rgba(255,255,255,0.4)" : undefined, flexShrink: 0 }} />
+                            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: selected ? "#fff" : "rgba(255,255,255,0.7)" }}>{meta?.label ?? t.color}</span>
+                            {t.slope != null && <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{t.slope}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               ))}
+
+              {/* No tee data — strokes fall back to handicap index only.
+                  Point the user at the course scorecard to add slope/rating. */}
+              {!!activeCourse && availableTees.length === 0 && !HOLE_PICKED_FORMATS.has(format) && (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", background: "rgba(255,170,0,0.06)", border: "1px solid rgba(255,170,0,0.2)", borderRadius: 10 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,170,0,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}>No tee data for this course yet, so strokes use handicap index only. Add slope &amp; rating on the course scorecard for exact pops.</span>
+                </div>
+              )}
 
               {/* Add friend search */}
               <SearchInput
@@ -1233,6 +1357,15 @@ const playerRowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 12,
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 12,
+  padding: "10px 12px",
+};
+
+const playerCardStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
   background: "rgba(255,255,255,0.04)",
   border: "1px solid rgba(255,255,255,0.08)",
   borderRadius: 12,
