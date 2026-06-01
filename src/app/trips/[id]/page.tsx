@@ -474,6 +474,7 @@ export default function TripPage() {
   // beauty PNG file or sending an iMessage-friendly link with og:image.
   const [sendRoundChooserOpen, setSendRoundChooserOpen] = useState(false);
   const [sendingMode, setSendingMode] = useState<"image" | "link" | null>(null);
+  const [sendingGameImage, setSendingGameImage] = useState(false);
   // Inline toast for non-blocking errors/successes — replaces native alert().
   const [toast, setToast] = useState<ToastState>(null);
   const [scorecardHoles, setScorecardHoles] = useState<Array<{ holeNumber: number; par: number | null; yardage: number | null; handicapRank: number | null }>>([]);
@@ -3445,17 +3446,41 @@ export default function TripPage() {
             </div>
             <div style={{ padding: "12px 20px 28px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 10, flexShrink: 0 }}>
               <button
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({ title: `${viewGame.courseName} — ${GAME_FORMATS.find(f => f.id === viewGame.format)?.name || viewGame.format}`, text: viewGame.shareText });
-                  } else {
-                    navigator.clipboard.writeText(viewGame.shareText);
+                disabled={sendingGameImage}
+                onClick={async () => {
+                  const title = `${viewGame.courseName} — ${GAME_FORMATS.find(f => f.id === viewGame.format)?.name || viewGame.format}`;
+                  setSendingGameImage(true);
+                  try {
+                    const url = `/api/trips/${id}/game/${viewGame.id}/scorecard-image?ts=${Date.now()}`;
+                    const res = await fetch(url, { redirect: "follow" });
+                    if (!res.ok) throw new Error(`status ${res.status}`);
+                    const blob = await res.blob();
+                    if (blob.size < 1000) throw new Error("image came back empty");
+                    const file = new File([blob], `tour-it-game-${viewGame.id}.png`, { type: "image/png" });
+                    const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+                    if (nav.canShare?.({ files: [file] })) {
+                      await navigator.share({ files: [file], title, text: viewGame.shareText });
+                    } else if (navigator.share) {
+                      await navigator.share({ title, text: viewGame.shareText });
+                    } else {
+                      window.open(url, "_blank");
+                    }
+                  } catch (e) {
+                    console.error("Scorecard image share failed", e);
+                    // fall back to text-only share so the group still gets the game
+                    if (navigator.share) {
+                      try { await navigator.share({ title, text: viewGame.shareText }); } catch {}
+                    } else {
+                      navigator.clipboard.writeText(viewGame.shareText);
+                    }
+                  } finally {
+                    setSendingGameImage(false);
                   }
                 }}
-                style={{ flex: 1, padding: "14px", borderRadius: 12, border: "none", background: "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                style={{ flex: 1, padding: "14px", borderRadius: 12, border: "none", background: "#2d7a42", fontFamily: "'Outfit', sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", cursor: sendingGameImage ? "default" : "pointer", opacity: sendingGameImage ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Send to Group
+                {sendingGameImage ? "Preparing…" : "Send to Group"}
               </button>
               <button
                 onClick={() => { navigator.clipboard.writeText(viewGame.shareText); }}
