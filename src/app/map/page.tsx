@@ -136,7 +136,7 @@ export default function MapPage() {
       const logoLayer = course.logoUrl
         ? `<defs>
              <clipPath id="${clipId}">
-               <rect x="9" y="8" width="26" height="26" rx="5"/>
+               <rect x="9" y="8" width="26" height="26" rx="0"/>
              </clipPath>
            </defs>
            <image href="${course.logoUrl}" x="9" y="8" width="26" height="26"
@@ -531,7 +531,7 @@ export default function MapPage() {
                         onMouseDown={() => handleSelectSuggestion(s)}
                         style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", transition: "background 0.1s" }}
                       >
-                        <div style={{ width: 32, height: 32, borderRadius: 7, flexShrink: 0, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 0, flexShrink: 0, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {s.logoUrl ? (
                             <img src={cdnImage(s.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           ) : (
@@ -622,7 +622,7 @@ export default function MapPage() {
                     transition: "border-color 0.2s, background 0.2s",
                   }}
                 >
-                  <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 0, flexShrink: 0, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {course.logoUrl ? (
                       <img src={cdnImage(course.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : course.coverImageUrl ? (

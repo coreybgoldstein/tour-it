@@ -1316,7 +1316,7 @@ export default function TripPage() {
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)" }}>Upcoming Round</div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
                   {(roundCourse?.logoUrl) && (
-                    <div style={{ width: 52, height: 52, borderRadius: 12, background: "#fff", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 0, background: "#fff", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                       <img src={cdnImage(roundCourse.logoUrl)} alt={roundCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                   )}
@@ -1356,7 +1356,7 @@ export default function TripPage() {
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
               <div
                 onClick={() => trip.imageUrl && setTripImageExpanded(true)}
-                style={{ width: 66, height: 66, borderRadius: 16, flexShrink: 0, overflow: "hidden", background: trip.imageUrl || (isRound && roundCourse?.logoUrl) ? "#fff" : "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: trip.imageUrl ? "pointer" : "default" }}
+                style={{ width: 66, height: 66, borderRadius: 0, flexShrink: 0, overflow: "hidden", background: trip.imageUrl || (isRound && roundCourse?.logoUrl) ? "#fff" : "linear-gradient(135deg, rgba(77,168,98,0.3), rgba(45,122,66,0.2))", border: "1.5px solid rgba(77,168,98,0.4)", display: "flex", alignItems: "center", justifyContent: "center", cursor: trip.imageUrl ? "pointer" : "default" }}
               >
                 {uploadingImage ? (
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>...</div>
@@ -1731,14 +1731,14 @@ export default function TripPage() {
                             >
                               {/* Logo column */}
                               <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ position: "relative", width: 44, height: 44, flexShrink: 0, cursor: "pointer", alignSelf: "center" }}>
-                                <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                                <div style={{ width: 44, height: 44, borderRadius: 0, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                                   {tc.course.logoUrl
                                     ? <img src={cdnImage(tc.course.logoUrl)} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                                     : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862" }}>{abbr(tc.course.name)}</span>
                                   }
                                 </div>
                                 {tc.secondaryCourse && (
-                                  <div style={{ position: "absolute", bottom: -4, right: -4, width: 22, height: 22, borderRadius: 6, background: "rgba(7,16,10,0.95)", border: "1.5px solid #4da862", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                  <div style={{ position: "absolute", bottom: -4, right: -4, width: 22, height: 22, borderRadius: 0, background: "rgba(7,16,10,0.95)", border: "1.5px solid #4da862", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                     {tc.secondaryCourse.logoUrl
                                       ? <img src={cdnImage(tc.secondaryCourse.logoUrl)} alt={tc.secondaryCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                                       : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#4da862" }}>{abbr(tc.secondaryCourse.name)}</span>
@@ -2828,7 +2828,7 @@ export default function TripPage() {
                   )}
                   {courseResults.map(c => (
                     <div key={c.id} className="course-result-row" onClick={() => { setSelectedAddCourse(c); setAddCourseStep("details"); if (!addPlayDate && trip?.startDate) setAddPlayDate(trip.startDate); }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 0, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
                         {c.logoUrl
                           ? <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                           : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>{abbr(c.name)}</span>
@@ -2873,7 +2873,7 @@ export default function TripPage() {
                   }}>
                     {pairCourse ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 0, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
                           {pairCourse.logoUrl
                             ? <img src={cdnImage(pairCourse.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862" }}>{abbr(pairCourse.name)}</span>
@@ -2971,7 +2971,7 @@ export default function TripPage() {
                   )}
                   {pairResults.map(c => (
                     <div key={c.id} className="course-result-row" onClick={() => { setPairCourse(c); setAddCourseStep("details"); }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 0, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
                         {c.logoUrl
                           ? <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
                           : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862" }}>{abbr(c.name)}</span>

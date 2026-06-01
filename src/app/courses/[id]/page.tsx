@@ -1303,13 +1303,13 @@ const [editDescription, setEditDescription] = useState("");
             felt cluttered on the Stonebridge / Noonan courses. */}
         <button
           onClick={() => course.logoUrl ? setLogoLightboxOpen(true) : router.back()}
-          style={{ position: "absolute", top: (fromMap || fromTripIdea) ? "calc(env(safe-area-inset-top, 0px) + 58px)" : "calc(env(safe-area-inset-top, 0px) + 8px)", left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 12, background: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 3px 10px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
+          style={{ position: "absolute", top: (fromMap || fromTripIdea) ? "calc(env(safe-area-inset-top, 0px) + 58px)" : "calc(env(safe-area-inset-top, 0px) + 8px)", left: 16, zIndex: 10, width: 46, height: 46, borderRadius: 0, background: "#fff", border: "1.5px solid rgba(255,255,255,0.22)", boxShadow: "0 3px 10px rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", cursor: "pointer", padding: 0 }}
         >
           {course.logoUrl ? (
             <img
               src={cdnImage(course.logoUrl)}
               alt={course.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 0, backgroundColor: "#fff" }}
               onError={e => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute("style"); }}
             />
           ) : null}
@@ -1341,7 +1341,7 @@ const [editDescription, setEditDescription] = useState("");
               src={cdnImage(course.logoUrl)}
               alt={course.name}
               onClick={e => e.stopPropagation()}
-              style={{ maxWidth: "80vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 16, backgroundColor: "#fff", padding: 16, boxShadow: "0 8px 48px rgba(0,0,0,0.6)" }}
+              style={{ maxWidth: "80vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 0, backgroundColor: "#fff", padding: 16, boxShadow: "0 8px 48px rgba(0,0,0,0.6)" }}
             />
             <button
               onClick={() => setLogoLightboxOpen(false)}
@@ -2521,11 +2521,11 @@ const [editDescription, setEditDescription] = useState("");
                 <div style={{ marginBottom: 20 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 8 }}>Course Logo</div>
                   <label style={{ display: "block", cursor: "pointer" }}>
-                    <div style={{ width: 80, height: 80, borderRadius: 12, border: "1.5px dashed rgba(26,158,66,0.4)", background: "rgba(26,158,66,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                    <div style={{ width: 80, height: 80, borderRadius: 0, border: "1.5px dashed rgba(26,158,66,0.4)", background: "rgba(26,158,66,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                       {logoPreview ? (
-                        <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10 }} />
+                        <img src={logoPreview} alt="logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 0 }} />
                       ) : course.logoUrl ? (
-                        <img src={cdnImage(course.logoUrl)} alt="current logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, opacity: 0.5 }} />
+                        <img src={cdnImage(course.logoUrl)} alt="current logo" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 0, opacity: 0.5 }} />
                       ) : (
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                       )}

@@ -972,7 +972,7 @@ export default function TeeUpPage() {
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>Course</div>
               {quickCourse ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(77,168,98,0.10)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 8, background: quickCourse.logoUrl ? "#fff" : "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 0, background: quickCourse.logoUrl ? "#fff" : "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.25)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {quickCourse.logoUrl
                       ? <img src={cdnImage(quickCourse.logoUrl)} alt={quickCourse.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#4da862" }}>{quickCourse.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}</span>
@@ -1003,7 +1003,7 @@ export default function TeeUpPage() {
                     <div style={{ marginTop: 6, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, maxHeight: 240, overflowY: "auto" }}>
                       {quickResults.map(c => (
                         <button key={c.id} onClick={() => { setQuickCourse(c); setQuickSearch(""); setQuickResults([]); }} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: "pointer", textAlign: "left" }}>
-                          <div style={{ width: 30, height: 30, borderRadius: 7, background: c.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.18)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <div style={{ width: 30, height: 30, borderRadius: 0, background: c.logoUrl ? "#fff" : "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.18)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             {c.logoUrl
                               ? <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 700, color: "#4da862" }}>{c.name.split(" ").filter(w => w.length > 2).map(w => w[0]).slice(0, 3).join("").toUpperCase()}</span>
@@ -1298,7 +1298,7 @@ function GameCard({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 11, background: game.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 44, height: 44, borderRadius: 0, background: game.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {game.courseLogoUrl
             ? <img src={game.courseLogoUrl} alt={game.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
@@ -1360,7 +1360,7 @@ function LoggedRoundCard({ round, onClick }: { round: RoundRow; onClick: () => v
         gap: 12,
       }}
     >
-      <div style={{ width: 44, height: 44, borderRadius: 11, background: round.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 44, height: 44, borderRadius: 0, background: round.courseLogoUrl ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
         {round.courseLogoUrl
           ? <img src={round.courseLogoUrl} alt={round.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M7 21c0-3.5 2.5-6 5-6s5 2.5 5 6M12 15V2M12 2 L19 5 L12 8Z"/></svg>}
@@ -1435,7 +1435,7 @@ function TripCard({ trip, onClick }: { trip: TripRow; onClick: () => void }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 11, background: trip.imageUrl || trip.firstCourseLogo ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 44, height: 44, borderRadius: 0, background: trip.imageUrl || trip.firstCourseLogo ? "#fff" : "rgba(77,168,98,0.14)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
           {trip.imageUrl
             ? <img src={cdnImage(trip.imageUrl)} alt={trip.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : trip.firstCourseLogo

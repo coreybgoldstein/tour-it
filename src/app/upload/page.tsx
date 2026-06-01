@@ -840,9 +840,9 @@ function UploadPageInner() {
             onClick={() => router.push(`/courses/${selectedCourse?.id}`)}
             style={{ width: "100%", background: "#2d7a42", border: "none", borderRadius: 14, padding: "14px 20px", marginBottom: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
             {selectedCourse?.logoUrl ? (
-              <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 28, height: 28, borderRadius: 7, objectFit: "cover", backgroundColor: "#fff" }} />
+              <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 28, height: 28, borderRadius: 0, objectFit: "cover", backgroundColor: "#fff" }} />
             ) : (
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
+              <div style={{ width: 28, height: 28, borderRadius: 0, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
                 {selectedCourse?.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}
               </div>
             )}
@@ -912,7 +912,7 @@ function UploadPageInner() {
         .course-item { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; }
         .course-item:hover { background: rgba(77,168,98,0.08); border-color: rgba(77,168,98,0.2); }
         .course-item.selected { background: rgba(77,168,98,0.12); border-color: rgba(77,168,98,0.4); }
-        .course-abbr { width: 40px; height: 40px; border-radius: 10px; background: rgba(77,168,98,0.15); border: 1px solid rgba(77,168,98,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; }
+        .course-abbr { width: 40px; height: 40px; border-radius: 0; background: rgba(77,168,98,0.15); border: 1px solid rgba(77,168,98,0.25); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: #4da862; flex-shrink: 0; }
         .course-name-text { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.85); }
         .course-location-text { font-family: 'Outfit', sans-serif; font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 2px; }
         .holes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
@@ -1134,7 +1134,7 @@ function UploadPageInner() {
                   return (
                     <button key={course.id} className="course-item" onClick={() => { setSelectedCourse(course); setStep(3); }}>
                       {course.logoUrl
-                        ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                        ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 0, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
                         : <div className="course-abbr">{abbr}</div>}
                       <div>
                         <div className="course-name-text">{course.name}</div>
@@ -1167,7 +1167,7 @@ function UploadPageInner() {
                       return (
                         <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
                           {course.logoUrl
-                            ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                            ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 0, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
                             : <div className="course-abbr">{abbr}</div>}
                           <div>
                             <div className="course-name-text">{course.name}</div>
@@ -1192,7 +1192,7 @@ function UploadPageInner() {
                   return (
                     <button className="course-item selected" onClick={() => setStep(3)}>
                       {selectedCourse.logoUrl
-                        ? <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                        ? <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 0, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
                         : <div className="course-abbr">{abbr}</div>}
                       <div>
                         <div className="course-name-text">{selectedCourse.name}</div>
@@ -1226,7 +1226,7 @@ function UploadPageInner() {
                 return (
                   <button key={course.id} className={`course-item ${selectedCourse?.id === course.id ? "selected" : ""}`} onClick={() => { setSelectedCourse(course); setStep(3); }}>
                     {course.logoUrl
-                      ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
+                      ? <img src={cdnImage(course.logoUrl)} alt="" style={{ width: 40, height: 40, borderRadius: 0, objectFit: "cover", backgroundColor: "#fff", flexShrink: 0 }} />
                       : <div className="course-abbr">{abbr}</div>}
                     <div>
                       <div className="course-name-text">{course.name}</div>
@@ -1247,9 +1247,9 @@ function UploadPageInner() {
             )}
             <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px" }}>
               {selectedCourse.logoUrl ? (
-                <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)", backgroundColor: "#fff" }} />
+                <img src={cdnImage(selectedCourse.logoUrl)} alt="" style={{ width: 44, height: 44, borderRadius: 0, objectFit: "cover", flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)", backgroundColor: "#fff" }} />
               ) : (
-                <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>
+                <div style={{ width: 44, height: 44, borderRadius: 0, background: "rgba(77,168,98,0.2)", border: "1px solid rgba(77,168,98,0.35)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 700, color: "#4da862" }}>
                   {selectedCourse.name.split(" ").filter((w: string) => w.length > 2).map((w: string) => w[0]).join("").slice(0, 3).toUpperCase()}
                 </div>
               )}

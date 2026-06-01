@@ -179,7 +179,7 @@ export function NotifIcon({
             right: -4,
             width: 22,
             height: 22,
-            borderRadius: "50%",
+            borderRadius: 0,
             border: "2px solid #07100a",
             background: "#fff",
             objectFit: "cover",

@@ -1239,7 +1239,7 @@ function resultIconStyle(logoUrl: string | null | undefined): React.CSSPropertie
   return {
     width: 36,
     height: 36,
-    borderRadius: 9,
+    borderRadius: 0,
     background: logoUrl ? "#fff" : "rgba(77,168,98,0.14)",
     border: "1px solid rgba(255,255,255,0.08)",
     overflow: "hidden",

@@ -733,7 +733,7 @@ function TourPageInner() {
         .course-row { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: opacity 0.15s; }
         .course-row:last-child { border-bottom: none; }
         .course-row:active { opacity: 0.7; }
-        .course-badge { width: 46px; height: 46px; border-radius: 10px; flex-shrink: 0; background: rgba(77,168,98,0.1); border: 1px solid rgba(77,168,98,0.2); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: rgba(77,168,98,0.7); }
+        .course-badge { width: 46px; height: 46px; border-radius: 0; flex-shrink: 0; background: rgba(77,168,98,0.1); border: 1px solid rgba(77,168,98,0.2); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700; color: rgba(77,168,98,0.7); }
         .course-badge.has-clips { background: rgba(77,168,98,0.15); border-color: rgba(77,168,98,0.35); color: #4da862; }
         .course-name { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .course-meta { font-family: 'Outfit', sans-serif; font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 2px; }
@@ -891,7 +891,7 @@ function TourPageInner() {
                     onClick={() => router.push(`/courses/${r.id}`)}
                     style={{ background: "#0c1c13", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, padding: 10, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
                   >
-                    <div style={{ width: 56, height: 56, borderRadius: 9, overflow: "hidden", flexShrink: 0, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 0, overflow: "hidden", flexShrink: 0, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
                       {r.logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={cdnImage(r.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 6, background: "#fff" }} />
@@ -1233,7 +1233,7 @@ function TourPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 0, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -1270,7 +1270,7 @@ function TourPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 0, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -1322,7 +1322,7 @@ function TourPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 0, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -1349,7 +1349,7 @@ function TourPageInner() {
                 return (
                   <div key={course.id} className="course-row" style={{ position: "relative" }} onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className={`course-badge ${course.uploadCount > 0 ? "has-clips" : ""}`} style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 0, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>
@@ -1376,7 +1376,7 @@ function TourPageInner() {
                 return (
                   <div key={course.id} className="course-row" onClick={() => { addRecentSearch(course); router.push(`/courses/${course.id}`); }}>
                     <div className="course-badge has-clips" style={{ overflow: "hidden", padding: course.logoUrl ? 0 : undefined }}>
-                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 10, backgroundColor: "#fff" }} /> : abbr}
+                      {course.logoUrl ? <img src={cdnImage(course.logoUrl)} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", borderRadius: 0, backgroundColor: "#fff" }} /> : abbr}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="course-name">{course.name}</div>

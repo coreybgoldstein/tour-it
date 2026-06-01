@@ -470,7 +470,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
                 <div style={card}>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                     <div style={{
-                      width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+                      width: 44, height: 44, borderRadius: 0, flexShrink: 0,
                       background: "rgba(255,255,255,0.05)",
                       border: "1px solid rgba(255,255,255,0.1)",
                       overflow: "hidden",
