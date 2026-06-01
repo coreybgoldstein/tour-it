@@ -2009,6 +2009,21 @@ export default function TripPage() {
                       </div>
                     )}
 
+                    {/* Pops scorecard preview — vital info up front. Renders
+                        nothing when the game is scratch (nobody gets strokes).
+                        Tap anywhere on the card to open the full sheet. */}
+                    {isRound && !isHolePicked && Array.isArray(g.players) && (
+                      <div style={{ marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
+                        <GamePopsScorecard players={g.players} holeHandicaps={g.holeHandicaps} />
+                        <div
+                          onClick={() => { setViewGame(g); setViewGameOpen(true); }}
+                          style={{ marginTop: 8, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(77,168,98,0.8)", cursor: "pointer", padding: "4px 0" }}
+                        >
+                          View full game →
+                        </div>
+                      </div>
+                    )}
+
                     {/* CTP / Longest Drive — per-hole scorecard cells.
                         Sharp 3px corners + Playfair italic label give
                         the row a printed-card feel instead of the
