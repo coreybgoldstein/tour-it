@@ -19,6 +19,7 @@ import { getVideoSrc } from "@/lib/getVideoSrc";
 import { cdnImage } from "@/lib/cdnImage";
 import { useLike } from "@/hooks/useLike";
 import { ClipRail } from "@/components/clip/ClipRail";
+import { IntelPanel } from "@/components/clip/IntelPanel";
 import EditClipSheet from "@/components/EditClipSheet";
 
 type CommentItem = {
@@ -47,8 +48,16 @@ type Clip = {
   holeNumber: number | null;
   holePar: number | null;
   holeYardage: number | null;
+  holeDescription: string | null;
+  clubUsed: string | null;
+  windCondition: string | null;
+  strategyNote: string | null;
+  landingZoneNote: string | null;
+  whatCameraDoesntShow: string | null;
+  datePlayedAt: string | null;
   uploaderUsername: string | null;
   uploaderAvatarUrl: string | null;
+  uploaderHandicap: number | null;
   uploaderId: string;
 };
 
@@ -278,7 +287,7 @@ export default function FeedPage() {
     let cancelled = false;
     (async () => {
       const sb = createClient();
-      const cols = "id, mediaUrl, cloudflareVideoId, mediaType, shotType, courseId, holeId, userId, createdAt, likeCount, commentCount";
+      const cols = "id, mediaUrl, cloudflareVideoId, mediaType, shotType, courseId, holeId, userId, createdAt, likeCount, commentCount, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt";
       // Starting clip + candidate pool fetched concurrently so the
       // larger pool pull doesn't add to time-to-first-clip.
       const [{ data: starting }, { data: feed }] = await Promise.all([
@@ -316,14 +325,14 @@ export default function FeedPage() {
       const userIds = Array.from(new Set(rows.map((r) => r.userId).filter(Boolean)));
       const [{ data: courses }, { data: holes }, { data: users }] = await Promise.all([
         courseIds.length ? sb.from("Course").select("id, name, city, state, logoUrl").in("id", courseIds) : Promise.resolve({ data: [] }),
-        holeIds.length ? sb.from("Hole").select("id, holeNumber, par, yardage").in("id", holeIds) : Promise.resolve({ data: [] }),
-        userIds.length ? sb.from("User").select("id, username, avatarUrl").in("id", userIds) : Promise.resolve({ data: [] }),
+        holeIds.length ? sb.from("Hole").select("id, holeNumber, par, yardage, description").in("id", holeIds) : Promise.resolve({ data: [] }),
+        userIds.length ? sb.from("User").select("id, username, avatarUrl, handicapIndex").in("id", userIds) : Promise.resolve({ data: [] }),
       ]);
       if (cancelled) return;
 
       const courseById = new Map((courses ?? []).map((c: any) => [c.id, { name: c.name as string, city: c.city as string | null, state: c.state as string | null, logoUrl: c.logoUrl as string | null }]));
-      const holeById = new Map((holes ?? []).map((h: any) => [h.id, { holeNumber: h.holeNumber as number, par: h.par as number | null, yardage: h.yardage as number | null }]));
-      const userById = new Map((users ?? []).map((u: any) => [u.id, { username: u.username as string, avatarUrl: u.avatarUrl as string | null }]));
+      const holeById = new Map((holes ?? []).map((h: any) => [h.id, { holeNumber: h.holeNumber as number, par: h.par as number | null, yardage: h.yardage as number | null, description: h.description as string | null }]));
+      const userById = new Map((users ?? []).map((u: any) => [u.id, { username: u.username as string, avatarUrl: u.avatarUrl as string | null, handicapIndex: u.handicapIndex as number | null }]));
 
       const built: Clip[] = rows.map((r) => {
         const c = courseById.get(r.courseId);
@@ -346,9 +355,17 @@ export default function FeedPage() {
           holeNumber: h?.holeNumber ?? null,
           holePar: h?.par ?? null,
           holeYardage: h?.yardage ?? null,
+          holeDescription: h?.description ?? null,
+          clubUsed: r.clubUsed ?? null,
+          windCondition: r.windCondition ?? null,
+          strategyNote: r.strategyNote ?? null,
+          landingZoneNote: r.landingZoneNote ?? null,
+          whatCameraDoesntShow: r.whatCameraDoesntShow ?? null,
+          datePlayedAt: r.datePlayedAt ?? null,
           uploaderId: r.userId,
           uploaderUsername: userById.get(r.userId)?.username ?? null,
           uploaderAvatarUrl: userById.get(r.userId)?.avatarUrl ?? null,
+          uploaderHandicap: userById.get(r.userId)?.handicapIndex ?? null,
         };
       });
 
@@ -629,8 +646,16 @@ function FeedClip({
     currentUserId,
   });
   const [progress, setProgress] = useState(0); // 0..1
+  const [intelOpen, setIntelOpen] = useState(false);
   const isOwner = !!currentUserId && clip.uploaderId === currentUserId;
+  const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt || clip.holeDescription);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Close the intel sheet when this clip scrolls off-screen so it
+  // doesn't linger over the next clip.
+  useEffect(() => {
+    if (!isActive) setIntelOpen(false);
+  }, [isActive]);
 
   function tapToTogglePlay(e: React.MouseEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest("[data-overlay-control]")) return;
@@ -763,11 +788,12 @@ function FeedClip({
       </button>
 
       {/* Right rail — shared ClipRail (uniform across all clip surfaces).
-          INTEL opens the course page here; owner clips get the edit/delete
-          kebab, others get the report kebab. */}
+          INTEL opens the scout-notes sheet (same as every other surface);
+          owner clips get the edit/delete kebab, others get the report kebab. */}
       <ClipRail
         zIndex={5}
-        onIntel={(e) => { e.stopPropagation(); onCourse(); }}
+        onIntel={hasNotes ? (e) => { e.stopPropagation(); setIntelOpen((o) => !o); } : undefined}
+        intelActive={intelOpen}
         liked={liked}
         likeCount={likeCount}
         onToggleLike={toggleLike}
@@ -808,6 +834,26 @@ function FeedClip({
       <div style={{ position: "absolute", left: 0, right: 0, bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", height: 5, background: "rgba(255,255,255,0.18)", zIndex: 4 }}>
         <div style={{ height: "100%", width: `${Math.min(100, Math.max(0, progress * 100))}%`, background: "#4da862", transition: "width 0.15s linear" }} />
       </div>
+
+      <IntelPanel
+        open={intelOpen}
+        onClose={() => setIntelOpen(false)}
+        holeNumber={clip.holeNumber}
+        holePar={clip.holePar}
+        holeYardage={clip.holeYardage}
+        holeDescription={clip.holeDescription}
+        clubUsed={clip.clubUsed}
+        windCondition={clip.windCondition}
+        strategyNote={clip.strategyNote}
+        landingZoneNote={clip.landingZoneNote}
+        whatCameraDoesntShow={clip.whatCameraDoesntShow}
+        datePlayedAt={clip.datePlayedAt}
+        uploaderUsername={clip.uploaderUsername ?? "golfer"}
+        uploaderAvatarUrl={uploaderAvatar}
+        uploaderId={clip.uploaderId}
+        currentUserId={currentUserId}
+        uploaderHandicap={clip.uploaderHandicap}
+      />
     </div>
   );
 }
