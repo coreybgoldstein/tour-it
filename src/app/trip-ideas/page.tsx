@@ -68,8 +68,8 @@ export default async function TripIdeasIndex() {
                 <div style={{ width: "100%", height: "100%", background: "linear-gradient(160deg, rgba(45,122,66,0.4), rgba(7,16,10,0.9))" }} />
               )}
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 50%, rgba(7,16,10,0.85))" }} />
-              <div style={{ position: "absolute", left: 8, top: 8, fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 99, color: "rgba(244,236,214,0.85)", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(244,236,214,0.18)" }}>{i.region}</div>
-              <div style={{ position: "absolute", right: 8, top: 8, fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 99, color: "rgba(244,236,214,0.85)", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(244,236,214,0.18)" }}>{i.durationDays}D · {i.costBand}</div>
+              <div style={{ position: "absolute", left: 8, top: 8, maxWidth: "calc(100% - 84px)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 99, color: "rgba(244,236,214,0.85)", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(244,236,214,0.18)" }}>{i.region}</div>
+              <div style={{ position: "absolute", right: 8, top: 8, whiteSpace: "nowrap", fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 99, color: "rgba(244,236,214,0.85)", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(244,236,214,0.18)" }}>{i.durationDays}D · {i.costBand}</div>
             </div>
             <div style={{ padding: "10px 12px 12px" }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 800, color: "#fff", lineHeight: 1.15 }}>{i.name}</div>

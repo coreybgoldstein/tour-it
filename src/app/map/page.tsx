@@ -56,6 +56,9 @@ export default function MapPage() {
   const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipNextMoveRef = useRef(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  // Leaflet marker pinned at the dart's landing centroid — stays stuck
+  // in the map through the reveal so users can see where it landed.
+  const dartMarkerRef = useRef<any>(null);
 
   const [courses, setCourses] = useState<MapCourse[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -169,6 +172,13 @@ export default function MapPage() {
 
       markersRef.current.push(marker);
     });
+  }, []);
+
+  const clearDartMarker = useCallback(() => {
+    if (dartMarkerRef.current && mapRef.current) {
+      try { mapRef.current.removeLayer(dartMarkerRef.current); } catch {}
+    }
+    dartMarkerRef.current = null;
   }, []);
 
   // Fetch suggestions: courses from DB + locations from Nominatim (+ fast ZIP via zippopotam.us)
@@ -797,9 +807,40 @@ export default function MapPage() {
                 //   600+1600ms reveal sheet slides up
                 setTimeout(() => {
                   setDartPhase("zooming");
-                  if (mapRef.current) {
+                  const map = mapRef.current;
+                  if (map) {
                     skipNextMoveRef.current = true;
-                    mapRef.current.flyTo([result.latitude, result.longitude], 7, { duration: 1.6 });
+                    const targetZoom = 7;
+                    // Offset the camera so the landing point sits in the
+                    // visible map area ABOVE the reveal sheet (which covers
+                    // the lower ~55%), instead of dead-center behind it.
+                    let center: [number, number] = [result.latitude, result.longitude];
+                    try {
+                      const pt = map.project([result.latitude, result.longitude], targetZoom);
+                      const shifted = L.point(pt.x, pt.y + window.innerHeight * 0.26);
+                      const ll = map.unproject(shifted, targetZoom);
+                      center = [ll.lat, ll.lng];
+                    } catch {}
+                    map.flyTo(center, targetZoom, { duration: 1.6 });
+
+                    // Drop a dart marker that stays pinned at the true
+                    // centroid through the reveal.
+                    clearDartMarker();
+                    const dartHtml = `
+                      <div style="filter:drop-shadow(0 6px 8px rgba(0,0,0,0.55))">
+                        <svg width="32" height="56" viewBox="0 0 32 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M16 2 L26 13 L16 9 Z" fill="#dc2626"/>
+                          <path d="M16 2 L6 13 L16 9 Z" fill="#ef4444"/>
+                          <path d="M6 13 L13 16 L16 9 Z" fill="#b91c1c"/>
+                          <path d="M26 13 L19 16 L16 9 Z" fill="#b91c1c"/>
+                          <rect x="14" y="13" width="4" height="22" fill="#f3f4f6"/>
+                          <rect x="13" y="33" width="6" height="13" rx="1" fill="#71717a"/>
+                          <path d="M13 46 L19 46 L16 55 Z" fill="#a1a1aa"/>
+                          <path d="M16 49 L16 55 L19 46 Z" fill="#71717a"/>
+                        </svg>
+                      </div>`;
+                    const dartIcon = L.divIcon({ html: dartHtml, className: "", iconSize: [32, 56], iconAnchor: [16, 55] });
+                    dartMarkerRef.current = L.marker([result.latitude, result.longitude], { icon: dartIcon, interactive: false, zIndexOffset: 1000 }).addTo(map);
                   }
                 }, 600);
                 setTimeout(() => setDartPhase("revealing"), 2400);
@@ -985,7 +1026,7 @@ export default function MapPage() {
         {dartMode && dartPhase === "revealing" && dartResult && (
           <>
             <div
-              onClick={() => { setDartMode(false); setDartPhase("idle"); setDartResult(null); setDartPosition(null); setLockedX(null); setAimAxis("x"); }}
+              onClick={() => { clearDartMarker(); setDartMode(false); setDartPhase("idle"); setDartResult(null); setDartPosition(null); setLockedX(null); setAimAxis("x"); }}
               style={{ position: "absolute", inset: 0, zIndex: 601 }}
             />
             <div style={{
@@ -1079,6 +1120,7 @@ export default function MapPage() {
 
               <button
                 onClick={() => {
+                  clearDartMarker();
                   setDartResult(null);
                   setDartPosition(null);
                   setLockedX(null);

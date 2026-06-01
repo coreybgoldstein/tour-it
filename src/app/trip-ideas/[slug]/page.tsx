@@ -290,7 +290,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
   );
 
   return (
-    <div style={{ background: "#07100a", minHeight: "100svh", color: "#fff", paddingBottom: 120 }}>
+    <div style={{ background: "#07100a", minHeight: "100svh", color: "#fff", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 220px)" }}>
       {it.heroImageUrl ? (
         // ── DRAMATIC HERO (when an image is set) ─────────────────────────
         <div style={{ position: "relative", height: "65svh", minHeight: 440, maxHeight: 620, overflow: "hidden" }}>

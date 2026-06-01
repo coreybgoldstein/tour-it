@@ -23,6 +23,9 @@ const HIDDEN_EXACT = new Set<string>([
   "/terms",
   "/feedback",
   "/play",
+  // Trip Ideas index renders its own "< Back" header — global bar here
+  // created a doubled top stack with a large empty band between them.
+  "/trip-ideas",
 ]);
 const HIDDEN_PREFIXES = ["/courses/", "/onboarding", "/admin", "/feed/"];
 
