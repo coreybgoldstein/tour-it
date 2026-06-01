@@ -145,7 +145,7 @@ function GamePopsScorecard({ players, holeHandicaps }: {
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ width: NAME_W, flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Hole</div>
             {holes.map(h => (
-              <div key={h} style={{ width: CELL, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)" }}>{h}</div>
+              <div key={h} style={{ width: CELL, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>{h}</div>
             ))}
           </div>
           {/* HCP rank row */}
@@ -153,7 +153,7 @@ function GamePopsScorecard({ players, holeHandicaps }: {
             <div style={{ display: "flex", alignItems: "center", marginTop: 4 }}>
               <div style={{ width: NAME_W, flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em" }}>HCP</div>
               {holes.map((h, i) => (
-                <div key={h} style={{ width: CELL, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9.5, color: "rgba(255,255,255,0.32)" }}>{holeHandicaps![i]}</div>
+                <div key={h} style={{ width: CELL, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 9.5, color: "rgba(255,255,255,0.32)", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>{holeHandicaps![i]}</div>
               ))}
             </div>
           )}
@@ -169,7 +169,7 @@ function GamePopsScorecard({ players, holeHandicaps }: {
                 {holes.map(h => {
                   const n = pops.get(h) ?? 0;
                   return (
-                    <div key={h} style={{ width: CELL, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                    <div key={h} style={{ width: CELL, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 2, borderLeft: "1px solid rgba(255,255,255,0.05)" }}>
                       {n === 0
                         ? <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(255,255,255,0.09)" }} />
                         : Array.from({ length: Math.min(n, 4) }, (_, di) => (

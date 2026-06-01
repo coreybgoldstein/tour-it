@@ -1442,6 +1442,12 @@ const [editDescription, setEditDescription] = useState("");
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 12, display: "flex", alignItems: "center", gap: 5 }}>
             {holes.length > 0 && holes.some(h => h.par) && <span>Par {holes.reduce((s, h) => s + (h.par || 0), 0)}</span>}
             {holes.length > 0 && holes.some(h => h.yardage) && <><span style={{ color: "rgba(255,255,255,0.35)" }}>·</span><span>{holes.reduce((s, h) => s + (h.yardage || 0), 0).toLocaleString()} yds</span></>}
+            {(() => {
+              const rated = courseTees.filter(t => t.slope != null);
+              if (rated.length === 0) return null;
+              const tips = rated.reduce((a, b) => ((b.slope ?? 0) > (a.slope ?? 0) ? b : a));
+              return <><span style={{ color: "rgba(255,255,255,0.35)" }}>·</span><span>Slope {tips.slope}</span></>;
+            })()}
             {/* "X clips" removed 2026-05-24 — the hero meta line was
                 getting too busy alongside Par + yards + pills below.
                 Clip count is still surfaced inside each hole tile. */}
