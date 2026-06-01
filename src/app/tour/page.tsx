@@ -932,7 +932,7 @@ function TourPageInner() {
                 ) : (
                   <button
                     key={`p-${r.id}`}
-                    onClick={() => router.push(`/profile/${r.username}`)}
+                    onClick={() => router.push(`/profile/${r.id}`)}
                     style={{ background: "#0c1c13", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, padding: 10, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
                   >
                     <div style={{ width: 48, height: 48, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "rgba(77,168,98,0.18)", border: "1px solid rgba(77,168,98,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1760,9 +1760,7 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
           it as the natural next move after Near You + Popular.
           Popular capped + spacing tightened above so this fits
           on-screen on first paint. */}
-      <div style={{ marginTop: 0, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
-        <TourWhereToNext />
-      </div>
+      <TourWhereToNext />
     </div>
   );
 }
@@ -1818,13 +1816,13 @@ function TourWhereToNext() {
 
   if (ideas.length === 0) return null;
   return (
-    <section style={{ marginTop: 22, padding: "0 16px 28px" }}>
+    <section style={{ marginTop: 22, padding: "0 0 28px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ fontFamily: "'Playfair Display', serif", fontStyle: "italic", fontSize: 12, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(244,236,214,0.92)" }}>
           Where to next?
         </div>
         <button
-          onClick={() => router.push("/tour?tab=trips")}
+          onClick={() => router.push("/trip-ideas")}
           style={{ background: "transparent", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#4da862", cursor: "pointer", letterSpacing: "0.02em" }}
         >
           Browse all →

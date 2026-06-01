@@ -1448,14 +1448,10 @@ const [editDescription, setEditDescription] = useState("");
               <svg width="11" height="11" viewBox="0 0 24 24" fill={saved ? "#1a9e42" : "none"} stroke={saved ? "#1a9e42" : "rgba(255,255,255,0.6)"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
               <span style={{ color: saved ? "#1a9e42" : "rgba(255,255,255,0.5)" }}>{saved ? "Saved" : "Save"}</span>
             </button>
-            {/* SEND IT pill — opens the native share sheet so the course
-                page can be sent the same way clips already can. Visual
-                language matches the "SEND IT" badge on individual clip
-                pages (white SEND / divider / green IT) so the share
-                affordance is the same wherever a user encounters it,
-                scaled down here to sit alongside Plan Round + Save
-                without making the hero row taller. Falls back to
-                clipboard with a green "Sent" toast when navigator.share
+            {/* Share pill — paper-airplane icon (the universal share
+                glyph) so the affordance reads instantly without copy.
+                Opens the native share sheet; falls back to clipboard
+                with a green "Sent" state when navigator.share
                 is unavailable. The recipient's link preview is driven
                 by the per-course Open Graph image we already generate
                 at /courses/[id]/opengraph-image — iMessage / WhatsApp /
@@ -1483,35 +1479,29 @@ const [editDescription, setEditDescription] = useState("");
                   // User cancelled the share sheet — no-op.
                 }
               }}
-              aria-label="Send this course"
+              aria-label="Share this course"
               style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 11,
                 background: courseShared ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.06)",
                 border: `1px solid ${courseShared ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.1)"}`,
                 borderRadius: 99,
-                padding: "1px 10px",
+                padding: "4px 10px",
                 cursor: "pointer",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
-                lineHeight: 1,
-                // Match the Save pill's hit-height — Save is fontSize 11
-                // + padding 4px = ~21px. Stacked two-line content here
-                // needs slightly more vertical room (~24px) to keep both
-                // labels readable.
-                minHeight: 24,
+                gap: 5,
               }}
             >
               {courseShared ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 800, color: "#1a9e42", letterSpacing: "0.12em" }}>SENT</span>
-                </div>
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1a9e42" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span style={{ color: "#1a9e42", fontWeight: 600 }}>Sent</span>
+                </>
               ) : (
                 <>
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 800, color: "#fff", letterSpacing: "0.12em", marginRight: "-0.12em" }}>SEND</span>
-                  <div style={{ width: 16, height: 1, background: "rgba(255,255,255,0.25)", margin: "1px 0" }} />
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8, fontWeight: 800, color: "#4ade80", letterSpacing: "0.22em", marginRight: "-0.22em" }}>IT</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                  <span style={{ color: "rgba(255,255,255,0.5)" }}>Share</span>
                 </>
               )}
             </button>

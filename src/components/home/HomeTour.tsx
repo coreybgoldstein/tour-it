@@ -462,7 +462,12 @@ export default function HomeTour() {
       .order("uploadCount", { ascending: false, nullsFirst: false })
       .order("name", { ascending: true })
       .limit(20);
-    const list = (data ?? []) as CourseLite[];
+    const raw = (data ?? []) as CourseLite[];
+    // Surface courses with real cover photos first so the rail doesn't lead
+    // with blank placeholder tiles; preserve uploadCount order within groups.
+    const list = [...raw].sort(
+      (a, b) => Number(!!b.coverImageUrl) - Number(!!a.coverImageUrl)
+    );
     setNearMe(list);
     setNearMeQueried(true);
     writeCache("nearMe", list);
@@ -1146,12 +1151,17 @@ function NearCourseCard({ course, onClick }: { course: CourseLite; onClick: () =
         flexDirection: "column",
       }}
     >
-      <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 3" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 3", background: "linear-gradient(160deg, rgba(45,122,66,0.4), rgba(7,16,10,0.9))" }}>
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover} alt={course.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={cover} alt={course.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
-          <div style={{ width: "100%", height: "100%", background: "linear-gradient(160deg, rgba(45,122,66,0.4), rgba(7,16,10,0.9))" }} />
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(244,236,214,0.45)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M5 21V4l11 3.5L5 11" />
+              <line x1="5" y1="21" x2="5" y2="11" />
+            </svg>
+          </div>
         )}
         {logo && (
           <div style={{ position: "absolute", top: 8, left: 8, width: 30, height: 30, borderRadius: 6, background: "#fff", border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 3 }}>

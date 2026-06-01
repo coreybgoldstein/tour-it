@@ -44,7 +44,7 @@ type Itinerary = {
   longitude: number;
   region: string;
   sourceGolfTripId: string | null;
-  submittedBy: { username: string; displayName: string; avatarUrl: string | null } | null;
+  submittedBy: { id: string; username: string; displayName: string; avatarUrl: string | null } | null;
   stops: Stop[];
 };
 
@@ -84,7 +84,7 @@ async function fetchItinerary(slug: string): Promise<Itinerary | null> {
   if ((it as any).submittedByUserId) {
     const { data: u } = await sb
       .from("User")
-      .select("username, displayName, avatarUrl")
+      .select("id, username, displayName, avatarUrl")
       .eq("id", (it as any).submittedByUserId)
       .maybeSingle();
     if (u) submittedBy = u as Itinerary["submittedBy"];
@@ -330,7 +330,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>Submitted by a Tour It member</div>
-              <Link href={`/profile/${it.submittedBy.username}`} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", textDecoration: "none" }}>
+              <Link href={`/profile/${it.submittedBy.id}`} style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", textDecoration: "none" }}>
                 @{it.submittedBy.username}
               </Link>
             </div>
