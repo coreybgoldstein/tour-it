@@ -58,7 +58,7 @@ export default function ScoreEntrySheet({
   golfTripId: string;
   roundDate: string;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (scoreMap: Record<string, (number | null)[]>) => void;
 }) {
   const holeCount = game.holeHandicaps?.length && game.holeHandicaps.length > 0 ? game.holeHandicaps.length : 18;
   const supabase = createClient();
@@ -215,7 +215,9 @@ export default function ScoreEntrySheet({
       });
       const data = await res.json();
       if (!res.ok || !data?.ok) throw new Error(data?.error || "Save failed");
-      onSaved();
+      const scoreMap: Record<string, (number | null)[]> = {};
+      for (const r of filled) scoreMap[r.userId || r.name] = r.holeScores;
+      onSaved(scoreMap);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");

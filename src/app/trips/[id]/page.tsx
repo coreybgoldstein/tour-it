@@ -14,6 +14,7 @@ import AirportField from "@/components/AirportField";
 import LodgingField from "@/components/LodgingField";
 import ScorecardCell from "@/components/ScorecardCell";
 import ScoreEntrySheet from "@/components/ScoreEntrySheet";
+import SettlementSheet from "@/components/SettlementSheet";
 import Toast, { type ToastState } from "@/components/Toast";
 import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER, MULTI_SEGMENT_FORMATS as SHARED_MULTI_SEGMENT } from "@/lib/gameFormats";
 import { cdnImage } from "@/lib/cdnImage";
@@ -90,6 +91,8 @@ type TripGameRecord = {
   formatConfig: Record<string, unknown>; players: any[]; gameSheet: string; shareText: string; createdAt: string;
   holeHandicaps?: number[] | null;
   courseLogoUrl?: string | null;
+  scores?: Record<string, (number | null)[]> | null;
+  settlement?: { net?: { userId: string; name: string; amount: number }[] } | null;
 };
 
 // Game format catalog now lives in @/lib/gameFormats — single source
@@ -471,6 +474,8 @@ export default function TripPage() {
   // Score-entry sheet (Phase 2) — opens over the game view to record
   // per-hole gross scores via scan or manual grid.
   const [scoreEntryGame, setScoreEntryGame] = useState<TripGameRecord | null>(null);
+  // Settlement proposal sheet (Phase 3).
+  const [settleGameTarget, setSettleGameTarget] = useState<TripGameRecord | null>(null);
   // Scorecard verify sheet — opens over the game view so users can confirm
   // par/yardage/handicap-rank without losing the game context.
   const [scorecardSheetOpen, setScorecardSheetOpen] = useState(false);
@@ -576,7 +581,7 @@ export default function TripPage() {
       const { data: clipsData } = await supabase.from("Upload").select("id, mediaType, mediaUrl, cloudflareVideoId, courseId, tripPublic, strategyNote, shotType").eq("tripId", id).order("createdAt", { ascending: false });
       if (clipsData) setClips(clipsData);
 
-      const { data: gamesData } = await supabase.from("TripGame").select("id, courseId, courseName, format, formatConfig, players, gameSheet, shareText, holeHandicaps, createdAt").eq("tripId", id).order("createdAt", { ascending: false });
+      const { data: gamesData } = await supabase.from("TripGame").select("id, courseId, courseName, format, formatConfig, players, gameSheet, shareText, holeHandicaps, scores, settlement, createdAt").eq("tripId", id).order("createdAt", { ascending: false });
       if (gamesData && gamesData.length > 0) {
         const gcIds = [...new Set(gamesData.map((g: any) => g.courseId))];
         const { data: gcLogos } = await supabase.from("Course").select("id, logoUrl").in("id", gcIds);
@@ -1131,6 +1136,18 @@ export default function TripPage() {
       const cfg = (g.formatConfig as { stake?: number; wager?: number; winners?: Record<string, string> } | null) ?? {};
       const winners = cfg.winners ?? {};
       const players: Player[] = Array.isArray(g.players) ? g.players : [];
+
+      // A confirmed settlement is authoritative — it covers every format
+      // (including skins, which the winner-based math below can't). Use its
+      // net directly and skip the manual-winner computation for this game.
+      const settledNet = g.settlement?.net;
+      if (Array.isArray(settledNet) && settledNet.length > 0) {
+        for (const n of settledNet) {
+          const gp = players.find(p => p.userId === n.userId);
+          bump({ userId: n.userId, displayName: n.name, avatarUrl: gp?.avatarUrl ?? null }, n.amount);
+        }
+        continue;
+      }
 
       // CTP / Longest Drive — per-hole stake
       if (HOLE_PICKED_FORMATS.has(g.format)) {
@@ -3464,13 +3481,22 @@ export default function TripPage() {
               })()}
             </div>
             <div style={{ padding: "12px 20px 28px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", gap: 10, flexShrink: 0 }}>
-              <button
-                onClick={() => { setScoreEntryGame(viewGame); setViewGameOpen(false); }}
-                style={{ width: "100%", padding: "13px", borderRadius: 12, border: "1px solid rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.12)", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                Enter Scores
-              </button>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={() => { setScoreEntryGame(viewGame); setViewGameOpen(false); }}
+                  style={{ flex: 1, padding: "13px", borderRadius: 12, border: "1px solid rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.12)", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  Enter Scores
+                </button>
+                <button
+                  onClick={() => { setSettleGameTarget(viewGame); setViewGameOpen(false); }}
+                  style={{ flex: 1, padding: "13px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.85)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  Settle Up
+                </button>
+              </div>
               <div style={{ display: "flex", gap: 10 }}>
               <button
                 disabled={sendingGameImage}
@@ -3532,10 +3558,27 @@ export default function TripPage() {
             golfTripId={String(id)}
             roundDate={roundDate}
             onClose={() => setScoreEntryGame(null)}
-            onSaved={() => setToast({ msg: "Scores saved", kind: "success" })}
+            onSaved={(scoreMap) => {
+              setGames(prev => prev.map(g => g.id === scoreEntryGame.id ? { ...g, scores: scoreMap } : g));
+              setToast({ msg: "Scores saved — tap Settle Up to calculate", kind: "success" });
+            }}
           />
         );
       })()}
+
+      {/* Settlement proposal sheet (Phase 3) */}
+      {settleGameTarget && (
+        <SettlementSheet
+          game={settleGameTarget}
+          onClose={() => setSettleGameTarget(null)}
+          onConfirmed={(winners, settlement) => {
+            setGames(prev => prev.map(g => g.id === settleGameTarget.id
+              ? { ...g, formatConfig: { ...(g.formatConfig || {}), winners }, settlement }
+              : g));
+            setToast({ msg: "Result saved", kind: "success" });
+          }}
+        />
+      )}
 
       {/* Scorecard verify sheet — pops over the game view so the user can
           check stroke allocation without losing context. Footer has an
