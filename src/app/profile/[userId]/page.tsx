@@ -1120,13 +1120,44 @@ export default function ProfilePage() {
   // sits after `if (loading) return …`, the first render (loading
   // = true) skips them, and once data lands React sees more hooks
   // than before → "Couldn't load this profile" white screen.
-  const allClips = useMemo(
-    () => [
-      ...uploads,
-      ...(isOwner ? taggedUploads : []),
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-    [uploads, taggedUploads, isOwner]
-  );
+  // A "round" = one course on one calendar day. We key on the date the
+  // round was played (datePlayedAt) and fall back to the upload time.
+  const roundKey = (u: Upload) => `${u.courseId}|${(u.datePlayedAt ?? u.createdAt).slice(0, 10)}`;
+
+  const allClips = useMemo(() => {
+    const merged = [...uploads, ...(isOwner ? taggedUploads : [])]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Re-order so clips from the same round sit consecutively. The grid
+    // bundles each round into one tile; keeping the feed in the same order
+    // means tapping a bundle and swiping walks that round's clips before
+    // moving on to the next.
+    const byRound = new Map<string, Upload[]>();
+    const order: string[] = [];
+    for (const u of merged) {
+      const k = roundKey(u);
+      if (!byRound.has(k)) { byRound.set(k, []); order.push(k); }
+      byRound.get(k)!.push(u);
+    }
+    return order.flatMap(k => byRound.get(k)!);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploads, taggedUploads, isOwner]);
+
+  // One entry per round. startIndex is the clip's position in the (already
+  // round-ordered) allClips array, so openFeed(startIndex) lands on the
+  // round's first clip.
+  const clipGroups = useMemo(() => {
+    const groups: { clips: Upload[]; startIndex: number }[] = [];
+    let i = 0;
+    while (i < allClips.length) {
+      const k = roundKey(allClips[i]);
+      const startIndex = i;
+      const clips: Upload[] = [];
+      while (i < allClips.length && roundKey(allClips[i]) === k) { clips.push(allClips[i]); i++; }
+      groups.push({ clips, startIndex });
+    }
+    return groups;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allClips]);
 
   // O(1) course lookup — without this the feed modal does 3 linear
   // scans of coursesPlayed for every clip every render. On an owner
@@ -2096,17 +2127,21 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
-              {allClips.map((upload, i) => {
-                const c = coursesById.get(upload.courseId);
+              {clipGroups.map((group, i) => {
+                const cover = group.clips[0];
+                const count = group.clips.length;
+                const isBundle = count > 1;
+                const c = coursesById.get(cover.courseId);
                 const courseLogoUrl = c?.logoUrl ?? null;
                 const courseName = c?.name || "";
+                const dateLabel = formatClipDate(cover.datePlayedAt, cover.createdAt);
                 return (
-                <div key={upload.id + (upload.isTagged ? "-t" : "")} className="clip-thumb" onClick={() => openFeed(i)}
+                <div key={cover.id + (cover.isTagged ? "-t" : "")} className="clip-thumb" onClick={() => openFeed(group.startIndex)}
                   style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}>
-                  {upload.mediaType === "PHOTO"
-                    ? <img src={upload.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : upload.cloudflareVideoId
-                      ? <img src={`https://videodelivery.net/${upload.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400`} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  {cover.mediaType === "PHOTO"
+                    ? <img src={cover.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : cover.cloudflareVideoId
+                      ? <img src={`https://videodelivery.net/${cover.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400`} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg></div>
                   }
                   {/* Course crest — top-left corner. Quick visual context so
@@ -2119,31 +2154,40 @@ export default function ProfilePage() {
                       <img src={courseLogoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                   )}
-                  {/* Engagement pill — top-right. IG-style at-a-glance
-                      like + comment counts so users gauge a clip's
-                      action before tapping in. Only rendered when
-                      there's something to show (≥1 of either) so the
-                      thumbnail stays clean on brand-new uploads. */}
-                  {((upload.likeCount ?? 0) > 0 || (upload.commentCount ?? 0) > 0) && (
+                  {/* Top-right pill. Bundles (a round with multiple clips/
+                      photos) show a stacked-layers icon so the grid reads as
+                      "tap to see the whole round". Single clips keep the
+                      IG-style at-a-glance like + comment counts. */}
+                  {isBundle ? (
+                    <div style={{ position: "absolute", top: 4, right: 4, zIndex: 2, display: "flex", alignItems: "center", gap: 3, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "3px 7px" }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>{count}</span>
+                    </div>
+                  ) : ((cover.likeCount ?? 0) > 0 || (cover.commentCount ?? 0) > 0) && (
                     <div style={{ position: "absolute", top: 4, right: 4, zIndex: 2, display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "3px 7px" }}>
-                      {(upload.likeCount ?? 0) > 0 && (
+                      {(cover.likeCount ?? 0) > 0 && (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                          {upload.likeCount}
+                          {cover.likeCount}
                         </span>
                       )}
-                      {(upload.commentCount ?? 0) > 0 && (
+                      {(cover.commentCount ?? 0) > 0 && (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                          {upload.commentCount}
+                          {cover.commentCount}
                         </span>
                       )}
                     </div>
                   )}
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
-                  <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.9)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, flex: 1, marginRight: 4 }}>{courseName}</div>
-                    <FlagBadge label={upload.holeNumber ?? "·"} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 55%)" }} />
+                  <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 4 }}>
+                    <div style={{ minWidth: 0, flex: 1, marginRight: 4 }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.95)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{courseName}</div>
+                      {isBundle && dateLabel && (
+                        <div style={{ fontSize: 8, fontWeight: 500, color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{dateLabel}</div>
+                      )}
+                    </div>
+                    <FlagBadge label={cover.holeNumber ?? "·"} />
                   </div>
                 </div>
                 );
