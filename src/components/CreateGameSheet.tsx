@@ -6,7 +6,8 @@
  * One sheet replaces both wizards (Tee-Up "Play a Game" 2-step + the
  * trip-page Create Game 5-step). All inputs live in a single scrollable
  * body with a sticky submit footer — Schedule a Round vibes, no more
- * step-by-step paging. After submit, the user lands on /games/[id].
+ * step-by-step paging. After submit, the user lands on the game
+ * scoreboard at /trips/[id]?game=[gameId].
  *
  * Two modes:
  *   - Standalone (no `presetTrip`): user picks course + date in-sheet
@@ -121,7 +122,7 @@ export interface CreateGameSheetProps {
   currentUserAvatarUrl: string | null;
   currentUserHandicapIndex: number | null;
   // Fires after a successful create with the new game id so the caller
-  // can navigate (default: route to /games/[id]).
+  // can navigate to the scoreboard at /trips/[id]?game=[gameId].
   onCreated?: (gameId: string, tripId: string) => void;
 }
 

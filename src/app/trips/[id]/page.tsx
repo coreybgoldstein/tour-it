@@ -3357,7 +3357,7 @@ export default function TripPage() {
             currentUserDisplayName={host?.user.displayName || "You"}
             currentUserAvatarUrl={host?.user.avatarUrl ?? null}
             currentUserHandicapIndex={host?.user.handicapIndex ?? null}
-            onCreated={(gameId) => router.push(`/games/${gameId}`)}
+            onCreated={(gameId, tripId) => router.push(`/trips/${tripId}?game=${gameId}`)}
           />
         );
       })()}

@@ -1255,7 +1255,7 @@ export default function TeeUpPage() {
           currentUserDisplayName={userDisplayName || "You"}
           currentUserAvatarUrl={userAvatar}
           currentUserHandicapIndex={userHandicap}
-          onCreated={(gameId) => router.push(`/games/${gameId}`)}
+          onCreated={(gameId, tripId) => router.push(`/trips/${tripId}?game=${gameId}`)}
         />
       )}
 
