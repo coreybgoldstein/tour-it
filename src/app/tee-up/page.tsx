@@ -1447,7 +1447,7 @@ function SwipeableRow({ children, onEdit, onDelete }: { children: React.ReactNod
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onClickCapture={onClickCapture}
-        style={{ position: "relative", zIndex: 1, transform: `translateX(${tx}px)`, transition: swiping ? "none" : "transform 0.25s ease", touchAction: "pan-y" }}
+        style={{ position: "relative", zIndex: 1, background: "#07100a", borderRadius: 16, transform: `translateX(${tx}px)`, transition: swiping ? "none" : "transform 0.25s ease", touchAction: "pan-y" }}
       >
         {children}
       </div>
