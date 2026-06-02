@@ -63,7 +63,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       ?? null;
   }
 
-  const image = trip.imageUrl || courseCoverImage || DEFAULT_OG_IMAGE;
+  // Prefer the generated beauty card (matches the live round/trip page
+  // look) when the trip has at least one course — the /api/round/[id]/beauty
+  // route is keyed by trip id and 404s without a course, so fall back to the
+  // raw cover photo otherwise.
+  const beautyImage = courseCount > 0 ? canonical(`/api/round/${id}/beauty`) : null;
+  const fallbackImage = trip.imageUrl || courseCoverImage || DEFAULT_OG_IMAGE;
+  const image = beautyImage || fallbackImage;
+  // Beauty card is 4:5 portrait (1080×1350); the raw fallback is landscape.
+  const imageW = beautyImage ? 1080 : 1200;
+  const imageH = beautyImage ? 1350 : 630;
 
   const dateRange = formatDateRange(trip.startDate, trip.endDate);
   const parts: string[] = [];
@@ -88,7 +97,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       url,
       siteName: "Tour It",
       type: "website",
-      images: [{ url: image, width: 1200, height: 630, alt: trip.name }],
+      images: [{ url: image, width: imageW, height: imageH, alt: trip.name }],
     },
     twitter: { card: "summary_large_image", title: trip.name, description, images: [image] },
     alternates: { canonical: url },

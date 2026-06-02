@@ -105,7 +105,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const tc = tcRows[0];
   const { data: course } = await sb
     .from("Course")
-    .select("id, name, city, state, coverImageUrl")
+    .select("id, name, city, state, coverImageUrl, logoUrl")
     .eq("id", tc.courseId)
     .maybeSingle();
 
@@ -143,56 +143,35 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
 
-  // Background gradient (Tour It brand green → near-black)
+  // Base background (shows behind the lower game block) — matches the
+  // page's #0d1f12 → #07100a wash under the cover photo.
   {
     const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, "#1c4425");
-    grad.addColorStop(0.55, "#0a1d10");
+    grad.addColorStop(0, "#0d1f12");
     grad.addColorStop(1, "#07100a");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
   }
 
-  // --- Tour It logo (top, 96px tall, centered) ---
-  try {
-    const logoImg = await loadImage(LOGO_PATH);
-    const targetH = 96;
-    const targetW = (logoImg.width / logoImg.height) * targetH;
-    ctx.drawImage(logoImg, (W - targetW) / 2, 56, targetW, targetH);
-  } catch {
-    // Logo not found — leave blank, eyebrow still anchors the top
-  }
+  // --- Full-bleed cover hero (mirrors the trip/round page header) ---
+  const HERO_H = 760;
+  const PAD = 70;
 
-  // --- Eyebrow "UPCOMING ROUND" below the logo ---
-  ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.font = "700 22px Outfit";
-  ctx.textBaseline = "alphabetic";
-  fillTextSpaced(ctx, "UPCOMING ROUND", W / 2, 188, 6, "center");
-
-  // --- Cover photo card 960×370, rounded 32px ---
-  const cardX = 60;
-  const cardY = 218;
-  const cardW = 960;
-  const cardH = 370;
-  const cardR = 32;
-
-  ctx.save();
-  roundedRect(ctx, cardX, cardY, cardW, cardH, cardR);
-  ctx.clip();
-
-  // Cover photo (cover-fit into card)
   let coverDrawn = false;
   if (coverUrl) {
     const buf = await fetchImageBuffer(coverUrl);
     if (buf) {
       try {
         const img = await loadImage(buf);
-        const scale = Math.max(cardW / img.width, cardH / img.height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, W, HERO_H);
+        ctx.clip();
+        const scale = Math.max(W / img.width, HERO_H / img.height);
         const dW = img.width * scale;
         const dH = img.height * scale;
-        const dx = cardX + (cardW - dW) / 2;
-        const dy = cardY + (cardH - dH) / 2;
-        ctx.drawImage(img, dx, dy, dW, dH);
+        ctx.drawImage(img, (W - dW) / 2, (HERO_H - dH) / 2, dW, dH);
+        ctx.restore();
         coverDrawn = true;
       } catch {
         // bad image — fall through to fallback fill
@@ -200,66 +179,150 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     }
   }
   if (!coverDrawn) {
-    const g = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-    g.addColorStop(0, "#2d7a42");
-    g.addColorStop(1, "#1c4425");
+    const g = ctx.createLinearGradient(0, 0, W, HERO_H);
+    g.addColorStop(0, "#1c4425");
+    g.addColorStop(1, "#07100a");
     ctx.fillStyle = g;
-    ctx.fillRect(cardX, cardY, cardW, cardH);
+    ctx.fillRect(0, 0, W, HERO_H);
   }
 
-  // Bottom-fade scrim for legibility of overlaid text
-  const scrim = ctx.createLinearGradient(0, cardY, 0, cardY + cardH);
-  scrim.addColorStop(0, "rgba(0,0,0,0)");
-  scrim.addColorStop(0.55, "rgba(0,0,0,0)");
-  scrim.addColorStop(1, "rgba(0,0,0,0.85)");
-  ctx.fillStyle = scrim;
-  ctx.fillRect(cardX, cardY, cardW, cardH);
+  // Vertical scrim over the hero — same ramp the page uses so the
+  // overlaid identity stays legible without burying the photo.
+  {
+    const scrim = ctx.createLinearGradient(0, 0, 0, HERO_H);
+    scrim.addColorStop(0, "rgba(7,16,10,0.30)");
+    scrim.addColorStop(0.45, "rgba(7,16,10,0.40)");
+    scrim.addColorStop(1, "rgba(7,16,10,0.97)");
+    ctx.fillStyle = scrim;
+    ctx.fillRect(0, 0, W, HERO_H);
+  }
 
-  // Course name — auto-shrink the font until the full name fits on one line
-  const courseMaxWidth = cardW - 64;
-  let courseNameSize = 60;
+  // --- Tour It logo (top-left over the hero) ---
+  try {
+    const logoImg = await loadImage(LOGO_PATH);
+    const targetH = 58;
+    const targetW = (logoImg.width / logoImg.height) * targetH;
+    ctx.drawImage(logoImg, PAD, 58, targetW, targetH);
+  } catch {
+    // Logo not found — overlay still anchors the card
+  }
+
+  // --- Bottom overlay: eyebrow + identity + date + players ---
+  ctx.textBaseline = "alphabetic";
+
+  // Eyebrow
+  ctx.fillStyle = "rgba(255,255,255,0.72)";
+  ctx.font = "700 24px Outfit";
+  fillTextSpaced(ctx, "UPCOMING ROUND", PAD, HERO_H - 268, 6, "left");
+
+  // Course logo (white rounded square) + name + location
+  let nameX = PAD;
+  if (course?.logoUrl) {
+    const logoBuf = await fetchImageBuffer(course.logoUrl);
+    if (logoBuf) {
+      try {
+        const lImg = await loadImage(logoBuf);
+        const box = 92;
+        const bx = PAD;
+        const by = HERO_H - 244;
+        ctx.save();
+        roundedRect(ctx, bx, by, box, box, 18);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+        ctx.clip();
+        const s = Math.max(box / lImg.width, box / lImg.height);
+        ctx.drawImage(lImg, bx + (box - lImg.width * s) / 2, by + (box - lImg.height * s) / 2, lImg.width * s, lImg.height * s);
+        ctx.restore();
+        nameX = bx + box + 26;
+      } catch {
+        // logo failed — name slides back to the left edge
+      }
+    }
+  }
+
+  const nameMaxWidth = W - nameX - PAD;
+  let courseNameSize = 62;
   ctx.font = `900 ${courseNameSize}px Playfair`;
-  while (ctx.measureText(courseName).width > courseMaxWidth && courseNameSize > 32) {
+  while (ctx.measureText(courseName).width > nameMaxWidth && courseNameSize > 30) {
     courseNameSize -= 2;
     ctx.font = `900 ${courseNameSize}px Playfair`;
   }
   ctx.fillStyle = "#fff";
-  ctx.fillText(courseName, cardX + 32, cardY + cardH - 78);
+  ctx.fillText(courseName, nameX, HERO_H - 188);
 
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  ctx.font = "500 24px Outfit";
-  ctx.fillText(courseLocation, cardX + 32, cardY + cardH - 36);
-
-  ctx.restore();
-
-  // Hairline border on the card
-  roundedRect(ctx, cardX, cardY, cardW, cardH, cardR);
-  ctx.strokeStyle = "rgba(255,255,255,0.10)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // --- Date ---
-  ctx.fillStyle = "#fff";
-  ctx.font = "900 50px Playfair";
-  ctx.textAlign = "center";
-  ctx.fillText(dateLine, W / 2, 665);
-  ctx.textAlign = "left";
-
-  // --- Tee time ---
-  if (teeTime) {
-    ctx.fillStyle = "#4da862";
-    ctx.font = "700 30px Outfit";
-    ctx.textAlign = "center";
-    ctx.fillText(`Tee off at ${teeTime}`, W / 2, 715);
-    ctx.textAlign = "left";
+  if (courseLocation) {
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.font = "500 26px Outfit";
+    ctx.fillText(courseLocation, nameX, HERO_H - 152);
   }
 
-  // --- Thin divider above the game block ---
+  // Date · tee time
+  if (dateLine) {
+    ctx.fillStyle = "#fff";
+    ctx.font = "900 46px Playfair";
+    ctx.fillText(dateLine, PAD, HERO_H - 92);
+    const dateW = ctx.measureText(dateLine).width;
+    if (teeTime) {
+      ctx.fillStyle = "#4da862";
+      ctx.font = "800 30px Outfit";
+      ctx.fillText(`· ${teeTime}`, PAD + dateW + 18, HERO_H - 92);
+    }
+  } else if (teeTime) {
+    ctx.fillStyle = "#4da862";
+    ctx.font = "800 32px Outfit";
+    ctx.fillText(`Tee off at ${teeTime}`, PAD, HERO_H - 92);
+  }
+
+  // Player avatars (overlapping) + first names — who's playing, at a glance
+  if (players.length > 0) {
+    const av = 46;
+    const overlap = 14;
+    let ax = PAD;
+    const ay = HERO_H - 58;
+    players.forEach((p, i) => {
+      const cx = ax + av / 2;
+      const cy = ay + av / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, av / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      if (p.avatarImg) {
+        ctx.drawImage(p.avatarImg, ax, ay, av, av);
+      } else {
+        ctx.fillStyle = "#2d7a42";
+        ctx.fillRect(ax, ay, av, av);
+        ctx.fillStyle = "#fff";
+        ctx.font = "900 22px Outfit";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText((p.displayName || "?").slice(0, 1).toUpperCase(), cx, cy + 1);
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+      }
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(cx, cy, av / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(7,16,10,0.9)";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ax += av - overlap;
+    });
+
+    const names = players.map(p => (p.displayName || "").split(/\s+/)[0]).filter(Boolean).join(" · ");
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.font = "600 24px Outfit";
+    ctx.textBaseline = "middle";
+    ctx.fillText(truncate(names, 40), ax + 16, ay + av / 2);
+    ctx.textBaseline = "alphabetic";
+  }
+
+  // --- Thin divider between the hero and the game block ---
   ctx.strokeStyle = "rgba(255,255,255,0.10)";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(120, 770);
-  ctx.lineTo(W - 120, 770);
+  ctx.moveTo(120, HERO_H + 28);
+  ctx.lineTo(W - 120, HERO_H + 28);
   ctx.stroke();
 
   // --- Game format label — bright white + flanked by green accent dots ---

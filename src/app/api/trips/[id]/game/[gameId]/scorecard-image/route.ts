@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { GlobalFonts, createCanvas, type SKRSContext2D } from "@napi-rs/canvas";
+import { GlobalFonts, createCanvas, loadImage, type SKRSContext2D } from "@napi-rs/canvas";
 import { join } from "path";
 import { createClient } from "@supabase/supabase-js";
 import { gameFormatLabel } from "@/lib/gameFormats";
@@ -10,13 +10,25 @@ export const dynamic = "force-dynamic";
 // Per-hole pops scorecard PNG for a TripGame share. Renders a real scorecard
 // grid (HOLE / PAR / HCP rows + one row per player with green pop-dots per
 // hole), front-9 / back-9 stacked for 18-hole courses. Mirrors the beauty
-// route's @napi-rs/canvas setup (registered TTF fonts, roundedRect helpers).
+// route's @napi-rs/canvas setup (registered TTF fonts, roundedRect helpers)
+// and its cover-photo hero so the share card matches the live page header.
 
 const W = 1080;
 
 const FONTS_DIR = join(process.cwd(), "public", "fonts");
+const LOGO_PATH = join(process.cwd(), "public", "tour-it-logo-full.png");
 GlobalFonts.registerFromPath(join(FONTS_DIR, "PlayfairDisplay.ttf"), "Playfair");
 GlobalFonts.registerFromPath(join(FONTS_DIR, "Outfit.ttf"), "Outfit");
+
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    return Buffer.from(await res.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
 
 const BG = "#07100a";
 const GREEN = "#4da862";
@@ -96,6 +108,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const holeHandicaps: number[] = Array.isArray(game.holeHandicaps) ? (game.holeHandicaps as unknown as number[]) : [];
 
+  // Course cover + logo for the hero header (matches the page look).
+  const { data: courseRow } = await sb
+    .from("Course")
+    .select("coverImageUrl, logoUrl, city, state")
+    .eq("id", game.courseId)
+    .maybeSingle();
+  const coverUrl = (courseRow as { coverImageUrl?: string | null } | null)?.coverImageUrl ?? null;
+  const courseLogoUrl = (courseRow as { logoUrl?: string | null } | null)?.logoUrl ?? null;
+  const courseLocation = [(courseRow as { city?: string | null } | null)?.city, (courseRow as { state?: string | null } | null)?.state].filter(Boolean).join(", ");
+
   // Par per hole number — fall back to 0 (rendered blank) when absent.
   const { data: holeRows } = await sb
     .from("Hole")
@@ -130,7 +152,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const sectionTitleH = holeCount === 9 ? 0 : 38;
   const sectionGap = holeCount === 9 ? 0 : 28;
 
-  const topPad = 230; // header block
+  const HERO_H = 300; // cover-photo header band
+  const topPad = HERO_H + 30; // grid starts below the hero
   const perSectionH = sectionTitleH + (headerRows + players.length) * rowH;
   const bodyH = sections.length * perSectionH + (sections.length - 1) * sectionGap;
   const footerH = 110;
@@ -143,20 +166,103 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, W, H);
 
-  // ---------- Header ----------
+  // ---------- Cover-photo hero header (mirrors the page header) ----------
+  let coverDrawn = false;
+  if (coverUrl) {
+    const buf = await fetchImageBuffer(coverUrl);
+    if (buf) {
+      try {
+        const img = await loadImage(buf);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, W, HERO_H);
+        ctx.clip();
+        const scale = Math.max(W / img.width, HERO_H / img.height);
+        const dW = img.width * scale;
+        const dH = img.height * scale;
+        ctx.drawImage(img, (W - dW) / 2, (HERO_H - dH) / 2, dW, dH);
+        ctx.restore();
+        coverDrawn = true;
+      } catch {
+        // bad image — fall through to gradient
+      }
+    }
+  }
+  if (!coverDrawn) {
+    const g = ctx.createLinearGradient(0, 0, W, HERO_H);
+    g.addColorStop(0, "#1c4425");
+    g.addColorStop(1, "#07100a");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, HERO_H);
+  }
+
+  // Scrim
+  {
+    const scrim = ctx.createLinearGradient(0, 0, 0, HERO_H);
+    scrim.addColorStop(0, "rgba(7,16,10,0.30)");
+    scrim.addColorStop(0.45, "rgba(7,16,10,0.42)");
+    scrim.addColorStop(1, "rgba(7,16,10,0.97)");
+    ctx.fillStyle = scrim;
+    ctx.fillRect(0, 0, W, HERO_H);
+  }
+
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = GREEN;
-  ctx.font = "600 24px Outfit";
-  fillTextSpaced(ctx, "SCORECARD · POPS PER HOLE", MARGIN, 78, 3, "left");
 
+  // Tour It logo (top-left)
+  try {
+    const logoImg = await loadImage(LOGO_PATH);
+    const targetH = 50;
+    const targetW = (logoImg.width / logoImg.height) * targetH;
+    ctx.drawImage(logoImg, MARGIN, 46, targetW, targetH);
+  } catch {
+    // no logo — eyebrow still anchors the top
+  }
+
+  // Eyebrow
+  ctx.fillStyle = "rgba(255,255,255,0.72)";
+  ctx.font = "700 22px Outfit";
+  fillTextSpaced(ctx, "SCORECARD · POPS PER HOLE", MARGIN, HERO_H - 138, 4, "left");
+
+  // Course logo (white rounded square) + name + location
+  let nameX = MARGIN;
+  if (courseLogoUrl) {
+    const logoBuf = await fetchImageBuffer(courseLogoUrl);
+    if (logoBuf) {
+      try {
+        const lImg = await loadImage(logoBuf);
+        const box = 84;
+        const bx = MARGIN;
+        const by = HERO_H - 118;
+        ctx.save();
+        roundedRect(ctx, bx, by, box, box, 16);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+        ctx.clip();
+        const s = Math.max(box / lImg.width, box / lImg.height);
+        ctx.drawImage(lImg, bx + (box - lImg.width * s) / 2, by + (box - lImg.height * s) / 2, lImg.width * s, lImg.height * s);
+        ctx.restore();
+        nameX = bx + box + 24;
+      } catch {
+        // logo failed — name stays at the left margin
+      }
+    }
+  }
+
+  const courseName = game.courseName ?? "Course";
+  const nameMaxWidth = W - nameX - MARGIN;
+  let nameSize = 54;
+  ctx.font = `900 ${nameSize}px Playfair`;
+  while (ctx.measureText(courseName).width > nameMaxWidth && nameSize > 28) {
+    nameSize -= 2;
+    ctx.font = `900 ${nameSize}px Playfair`;
+  }
   ctx.fillStyle = WHITE;
-  ctx.font = "900 52px Playfair";
-  ctx.fillText(truncate(game.courseName ?? "Course", 30), MARGIN, 140);
+  ctx.fillText(courseName, nameX, HERO_H - 76);
 
-  ctx.fillStyle = MUTED;
-  ctx.font = "500 26px Outfit";
-  const sub = [gameFormatLabel(game.format), fmtDate(game.createdAt)].filter(Boolean).join("  ·  ");
-  ctx.fillText(sub, MARGIN, 182);
+  ctx.fillStyle = "#4da862";
+  ctx.font = "700 24px Outfit";
+  const sub = [gameFormatLabel(game.format), courseLocation, fmtDate(game.createdAt)].filter(Boolean).join("  ·  ");
+  ctx.fillText(sub, nameX, HERO_H - 40);
 
   // ---------- Sections ----------
   let y = topPad;
