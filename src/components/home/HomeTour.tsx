@@ -583,13 +583,13 @@ export default function HomeTour() {
                 </div>
               ))}
               <div style={{ flexShrink: 0, scrollSnapAlign: "start", width: 178, display: "flex" }}>
-                <PlanAnotherTile onClick={() => router.push("/tour?tab=trips")} />
+                <PlanAnotherTile onClick={() => router.push("/tour?plan=1")} />
               </div>
             </div>
           )}
 
           {tourLoaded && tours.length === 0 && (
-            <PlannerCTA onClick={() => router.push("/tour?tab=trips")} />
+            <PlannerCTA onClick={() => router.push("/tour?plan=1")} />
           )}
         </section>
 

@@ -152,7 +152,10 @@ function TourPageInner() {
   const [tripResults, setTripResults] = useState<TripCardData[]>([]);
   const [tripsLoaded, setTripsLoaded] = useState(false);
   const [activeBestFor, setActiveBestFor] = useState<string | null>(null);
-  const [plannerOpen, setPlannerOpen] = useState(false);
+  // Auto-open the trip planner when arriving via ?plan=1 (the PlannerCTA
+  // on /tee-up and Home deep-link here). The Trips tab that used to host
+  // the planner is hidden, so this is the only entry point now.
+  const [plannerOpen, setPlannerOpen] = useState(searchParams.get("plan") === "1");
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const lastQueryRef = useRef<{ q: string; coords: { lat: number; lng: number } | null; state: string; city: string; holes: string; courseType: string; radius: string } | null>(null);
@@ -826,7 +829,7 @@ function TourPageInner() {
               (query has text) to keep the results focused. */}
           {!query && (
             <div style={{ marginTop: 8 }}>
-              <PlannerCTA variant="compact" />
+              <PlannerCTA variant="compact" onClick={() => setPlannerOpen(true)} />
             </div>
           )}
 

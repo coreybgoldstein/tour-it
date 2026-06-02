@@ -23,7 +23,7 @@ type Variant = "hero" | "compact";
 
 export default function PlannerCTA({
   variant = "hero",
-  href = "/tour?tab=trips",
+  href = "/tour?plan=1",
   onClick,
 }: {
   variant?: Variant;

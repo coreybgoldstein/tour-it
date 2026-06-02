@@ -1037,7 +1037,7 @@ export default function TeeUpPage() {
               its own. */}
           {(tab === "rounds" || tab === "trips") && (
             <div style={{ marginTop: 24 }}>
-              <PlannerCTA variant="compact" />
+              <PlannerCTA variant="compact" href="/tour?plan=1" />
             </div>
           )}
         </div>
