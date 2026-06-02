@@ -1403,17 +1403,29 @@ export default function TripPage() {
               {/* Vertical dark scrim — readable text without burying the photo */}
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.30) 0%, rgba(7,16,10,0.35) 45%, rgba(7,16,10,0.92) 100%)", pointerEvents: "none" }} />
 
-              {/* Edit pill — top-right */}
-              {isOwner && (
+              {/* Share + Edit cluster — top-right. Share is a compact pill
+                  here instead of a full-width button so it doesn't dominate
+                  the page; tapping opens the image/link chooser. */}
+              <div style={{ position: "absolute", top: 14, right: 14, display: "flex", alignItems: "center", gap: 8 }}>
                 <button
-                  onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditTeeTime(tripCourses[0]?.teeTime || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
-                  aria-label="Edit round"
-                  style={{ position: "absolute", top: 14, right: 14, display: "flex", alignItems: "center", gap: 4, background: "rgba(7,16,10,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "6px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.95)", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
+                  onClick={() => setSendRoundChooserOpen(true)}
+                  aria-label="Share the round"
+                  style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(45,122,66,0.9)", border: "1px solid rgba(126,200,140,0.5)", borderRadius: 99, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#fff", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
                 >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  Edit
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Share
                 </button>
-              )}
+                {isOwner && (
+                  <button
+                    onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditTeeTime(tripCourses[0]?.teeTime || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
+                    aria-label="Edit round"
+                    style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(7,16,10,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "6px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.95)", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit
+                  </button>
+                )}
+              </div>
 
               {/* Bottom overlay: course identity + when */}
               <div style={{ position: "absolute", left: 18, right: 18, bottom: 18, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1445,15 +1457,39 @@ export default function TripPage() {
                     )}
                   </div>
                 )}
+                {/* Players — overlaid on the cover so WHO's playing reads at
+                    a glance without a separate section below. Tap opens the
+                    members sheet. */}
+                {members.length > 0 && (
+                  <button onClick={() => setMembersOpen(true)} style={{ display: "flex", alignItems: "center", gap: 9, background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4, maxWidth: "100%" }}>
+                    <div style={{ display: "flex" }}>
+                      {members.slice(0, 5).map((m, i) => {
+                        const t = trip.ryderCupEnabled ? teamOf(m.userId) : null;
+                        const ringColor = t === "RED" ? "#c8102e" : t === "BLUE" ? "#3b82f6" : "rgba(7,16,10,0.9)";
+                        return (
+                          <div key={m.id} style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", border: `2px solid ${ringColor}`, background: "rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: i > 0 ? -8 : 0, flexShrink: 0, zIndex: members.length - i, boxShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                            {m.user.avatarUrl
+                              ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.65)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.92)", textShadow: "0 1px 6px rgba(0,0,0,0.7)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {members.slice(0, 4).map(m => (m.user.displayName || m.user.username || "").split(/\s+/)[0]).filter(Boolean).join(" · ")}
+                      {members.length > 4 ? ` · +${members.length - 4}` : ""}
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
           );
         })()}
 
-        {/* Header
-            In round-mode the entire avatar/name/date block is hidden — that
-            content lives on the cover photo overlay above. Only the
-            Members/Chat/Invite row renders so golfers stay one tap away. */}
+        {/* Header — trips only. In round-mode the course/date/players all
+            live on the cover photo overlay above, so this whole block is
+            skipped to avoid an empty divider + duplicate members row. */}
+        {!isRound && (
         <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ padding: isRound ? "12px 20px" : "12px 20px 14px" }}>
             {!isRound && (
@@ -1600,6 +1636,7 @@ export default function TripPage() {
 
           </div>
         </div>
+        )}
 
         {/* ── Ryder Cup — hidden in round-mode (a single-day round is too short for it) */}
         {!isRound && (trip.ryderCupEnabled ? (
@@ -1663,12 +1700,11 @@ export default function TripPage() {
           ))
         )}
 
-        {/* Courses */}
+        {/* Courses — trips only. A round has a single stop already shown on
+            the cover, and sharing moved to the cover pill, so this entire
+            section is skipped in round-mode. */}
+        {!isRound && (
         <div style={{ padding: "16px 20px 0" }}>
-          {/* Section header + Add Course button are hidden in round-mode —
-              the course is already chosen and a round only has one stop, so
-              the section reduces to just the course card itself. */}
-          {!isRound && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>
               Itinerary
@@ -1693,24 +1729,8 @@ export default function TripPage() {
               Add Course
             </button>
           </div>
-          )}
 
-          {/* Round-mode share button — opens a chooser sheet (image vs link). */}
-          {isRound && (
-            <button
-              onClick={() => setSendRoundChooserOpen(true)}
-              style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)", border: "none", borderRadius: 14, padding: "14px", marginBottom: 10, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", letterSpacing: "0.04em", boxShadow: "0 6px 20px rgba(45,122,66,0.45)" }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              Share the {flavorUpper}
-            </button>
-          )}
-
-          {/* Round-mode: When block dropped — course/date/time live on the
-              cover photo overlay now. We jump straight from header → Send the
-              Round → Games → Clips. The "Courses" section is fully empty in
-              round-mode (header + button hidden above, this empty here). */}
-          {isRound ? null : tripCourses.length === 0 ? (
+          {tripCourses.length === 0 ? (
             <div style={{ textAlign: "center", padding: "28px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 13, lineHeight: 1.7 }}>
               No courses yet.<br />Tap <span style={{ color: "#4da862" }}>+ Add Course</span> to build your itinerary.
             </div>
@@ -1905,9 +1925,10 @@ export default function TripPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Games */}
-        <div style={{ padding: "24px 20px 0" }}>
+        <div style={{ padding: isRound ? "16px 20px 0" : "24px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>Games{games.length > 0 && <span className="count">{games.length}</span>}</div>
             <button
@@ -2195,10 +2216,10 @@ export default function TripPage() {
           );
         })()}
 
-        {/* Clips section — label flips with page flavor so a game page
-            says "Game Clips", a round page says "Round Clips", a trip
-            page says "Trip Clips". Matches the framing decision in the
-            page header. */}
+        {/* Clips section — trips only. In round-mode a personal Round is
+            auto-created and clips matching the course + date auto-pair to
+            that round page, so a clips section here would be redundant. */}
+        {!isRound && (
         <div style={{ padding: "24px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>{flavorUpper} Clips{clips.length > 0 && <span className="count">{clips.length}</span>}</div>
@@ -2238,6 +2259,7 @@ export default function TripPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Trip Notes — collaborative knowledge layer. Renders only
             on real Trips, not single-day Rounds (notes don't add
