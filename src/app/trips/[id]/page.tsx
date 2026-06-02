@@ -94,6 +94,7 @@ type TripGameRecord = {
   courseLogoUrl?: string | null;
   scores?: Record<string, (number | null)[]> | null;
   settlement?: { net?: { userId: string; name: string; amount: number }[] } | null;
+  scorecardPhotos?: string[] | null;
 };
 
 // Game format catalog now lives in @/lib/gameFormats — single source
@@ -551,8 +552,65 @@ export default function TripPage() {
   const [sendRoundChooserOpen, setSendRoundChooserOpen] = useState(false);
   const [sendingMode, setSendingMode] = useState<"image" | "link" | null>(null);
   const [sendingGameImage, setSendingGameImage] = useState(false);
+  // Scorecard photo keepsakes — upload a picture of the paper card and keep
+  // it attached to the game (works for past rounds too). Distinct from the
+  // AI scan-to-extract flow in ScoreEntrySheet.
+  const scorecardFileRef = useRef<HTMLInputElement>(null);
+  const [scorecardUploading, setScorecardUploading] = useState(false);
+  const [photoViewerUrl, setPhotoViewerUrl] = useState<string | null>(null);
   // Inline toast for non-blocking errors/successes — replaces native alert().
   const [toast, setToast] = useState<ToastState>(null);
+
+  async function uploadScorecardPhoto(game: TripGameRecord, file: File) {
+    setScorecardUploading(true);
+    try {
+      const supabase = createClient();
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `scorecards/photo-${game.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("tour-it-photos").upload(path, file, { upsert: true });
+      if (upErr) throw new Error(upErr.message);
+      const url = supabase.storage.from("tour-it-photos").getPublicUrl(path).data.publicUrl;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Not signed in");
+      const res = await fetch(`/api/trips/${id}/game/${game.id}/scorecard-photo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "Upload failed");
+      const photos: string[] = data.scorecardPhotos ?? [];
+      setGames(prev => prev.map(g => g.id === game.id ? { ...g, scorecardPhotos: photos } : g));
+      setViewGame(prev => prev && prev.id === game.id ? { ...prev, scorecardPhotos: photos } : prev);
+      setToast({ msg: "Scorecard photo added", kind: "success" });
+    } catch (err) {
+      setToast({ msg: err instanceof Error ? err.message : "Upload failed", kind: "error" });
+    } finally {
+      setScorecardUploading(false);
+    }
+  }
+
+  async function removeScorecardPhoto(game: TripGameRecord, url: string) {
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Not signed in");
+      const res = await fetch(`/api/trips/${id}/game/${game.id}/scorecard-photo`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "Remove failed");
+      const photos: string[] = data.scorecardPhotos ?? [];
+      setGames(prev => prev.map(g => g.id === game.id ? { ...g, scorecardPhotos: photos } : g));
+      setViewGame(prev => prev && prev.id === game.id ? { ...prev, scorecardPhotos: photos } : prev);
+    } catch (err) {
+      setToast({ msg: err instanceof Error ? err.message : "Remove failed", kind: "error" });
+    }
+  }
   const [scorecardHoles, setScorecardHoles] = useState<Array<{ holeNumber: number; par: number | null; yardage: number | null; handicapRank: number | null }>>([]);
   const [scorecardLoading, setScorecardLoading] = useState(false);
   async function openScorecardSheet(courseId: string) {
@@ -648,7 +706,7 @@ export default function TripPage() {
       const { data: clipsData } = await supabase.from("Upload").select("id, mediaType, mediaUrl, cloudflareVideoId, courseId, tripPublic, strategyNote, shotType").eq("tripId", id).order("createdAt", { ascending: false });
       if (clipsData) setClips(clipsData);
 
-      const { data: gamesData } = await supabase.from("TripGame").select("id, courseId, courseName, format, formatConfig, players, gameSheet, shareText, holeHandicaps, scores, settlement, createdAt").eq("tripId", id).order("createdAt", { ascending: false });
+      const { data: gamesData } = await supabase.from("TripGame").select("id, courseId, courseName, format, formatConfig, players, gameSheet, shareText, holeHandicaps, scores, settlement, scorecardPhotos, createdAt").eq("tripId", id).order("createdAt", { ascending: false });
       if (gamesData && gamesData.length > 0) {
         const gcIds = [...new Set(gamesData.map((g: any) => g.courseId))];
         const { data: gcLogos } = await supabase.from("Course").select("id, logoUrl").in("id", gcIds);
@@ -3583,6 +3641,63 @@ export default function TripPage() {
                       {/* Final results — appears once scores are entered. */}
                       <GameResultsScorecard players={viewGame.players ?? []} scores={viewGame.scores} />
 
+                      {/* Scorecard photos — keepsake pictures of the paper
+                          card. Anyone can view; members/creator can add or
+                          remove. Available regardless of the round's date. */}
+                      {(() => {
+                        const photos = viewGame.scorecardPhotos ?? [];
+                        const canEdit = !!user && (isOwner || members.some((m) => m.userId === user.id));
+                        if (photos.length === 0 && !canEdit) return null;
+                        return (
+                          <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "14px 16px" }}>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>Scorecard Photos</div>
+                            {photos.length > 0 && (
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: canEdit ? 12 : 0 }}>
+                                {photos.map((p) => (
+                                  <div key={p} style={{ position: "relative", aspectRatio: "1", borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)" }}>
+                                    <img
+                                      src={cdnImage(p)}
+                                      alt="Scorecard"
+                                      onClick={() => setPhotoViewerUrl(p)}
+                                      style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
+                                    />
+                                    {canEdit && (
+                                      <button
+                                        onClick={() => removeScorecardPhoto(viewGame, p)}
+                                        aria-label="Remove photo"
+                                        style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                                      >
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {canEdit && (
+                              <button
+                                onClick={() => scorecardFileRef.current?.click()}
+                                disabled={scorecardUploading}
+                                style={{ width: "100%", background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 10, padding: "11px", fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 700, color: "#4da862", cursor: scorecardUploading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                              >
+                                {scorecardUploading ? (
+                                  <>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" style={{ animation: "tourit-spin 0.8s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                                    <style>{`@keyframes tourit-spin { to { transform: rotate(360deg); } }`}</style>
+                                    Uploading…
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    {photos.length > 0 ? "Add another photo" : "Upload scorecard photo"}
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })()}
+
                       {/* Rules */}
                       {sheetData.rules && (
                         <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "14px 16px" }}>
@@ -3669,6 +3784,37 @@ export default function TripPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Hidden file input for scorecard-photo uploads — targets whichever
+          game is open in the view sheet. */}
+      <input
+        ref={scorecardFileRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file && viewGame) uploadScorecardPhoto(viewGame, file);
+        }}
+      />
+
+      {/* Full-screen scorecard photo viewer. */}
+      {photoViewerUrl && (
+        <div
+          onClick={() => setPhotoViewerUrl(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.92)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <img src={cdnImage(photoViewerUrl)} alt="Scorecard" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", borderRadius: 8 }} />
+          <button
+            onClick={() => setPhotoViewerUrl(null)}
+            aria-label="Close"
+            style={{ position: "absolute", top: "calc(16px + env(safe-area-inset-top))", right: 16, width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
       )}
 

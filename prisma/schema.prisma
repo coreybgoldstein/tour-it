@@ -778,6 +778,10 @@ model TripGame {
   // per format segment. Null until scores are entered and settlement is
   // confirmed.
   settlement    Json?
+  // Uploaded photos of the physical/paper scorecard, kept as a keepsake
+  // artifact (distinct from the AI scan-to-extract flow). Shape: string[]
+  // of Supabase Storage public URLs.
+  scorecardPhotos Json?
   createdBy     String
   createdAt     DateTime @default(now())
 
