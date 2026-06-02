@@ -19,6 +19,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import ProgressionTracker from "@/components/ProgressionTracker";
+import ProfileStats from "@/components/ProfileStats";
 import { SheetPortal } from "@/components/SheetPortal";
 import { rateLimit } from "@/lib/rateLimit";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
@@ -1990,6 +1991,15 @@ export default function ProfilePage() {
 
       {/* Progression tracker */}
       <ProgressionTracker userId={userId as string} isOwner={isOwner} />
+
+      {/* All-time scoring stats + head-to-head vs the viewer */}
+      <ProfileStats
+        userId={userId as string}
+        currentUserId={currentUserId}
+        isOwner={isOwner}
+        profileHandicap={profile.handicapIndex}
+        displayName={profile.displayName}
+      />
 
       {/* Clips / Lists tabs (Lists is owner-only — saves are private) */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 0 }}>
