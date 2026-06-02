@@ -237,14 +237,6 @@ const ProfileFeedCard = memo(function ProfileFeedCardImpl({
     && prev.uploaderInfo.rank === next.uploaderInfo.rank;
 });
 
-function FlagBadge({ label }: { label: string | number }) {
-  return (
-    <div style={{ background: "#1a5c30", border: "1px solid rgba(255,255,255,0.45)", borderRadius: 3, padding: "2px 6px 3px", boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.1), 0 1px 4px rgba(0,0,0,0.4)", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 10, fontWeight: 700, color: "#fff" }}>{label}</span>
-    </div>
-  );
-}
-
 const RARITY_COLOR: Record<string, string> = {
   COMMON: "rgba(210,210,210,0.6)",
   UNCOMMON: "#4da862",
@@ -1125,20 +1117,21 @@ export default function ProfilePage() {
   const roundKey = (u: Upload) => `${u.courseId}|${(u.datePlayedAt ?? u.createdAt).slice(0, 10)}`;
 
   const allClips = useMemo(() => {
-    const merged = [...uploads, ...(isOwner ? taggedUploads : [])]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    // Re-order so clips from the same round sit consecutively. The grid
-    // bundles each round into one tile; keeping the feed in the same order
-    // means tapping a bundle and swiping walks that round's clips before
-    // moving on to the next.
     const byRound = new Map<string, Upload[]>();
-    const order: string[] = [];
-    for (const u of merged) {
+    for (const u of [...uploads, ...(isOwner ? taggedUploads : [])]) {
       const k = roundKey(u);
-      if (!byRound.has(k)) { byRound.set(k, []); order.push(k); }
+      if (!byRound.has(k)) byRound.set(k, []);
       byRound.get(k)!.push(u);
     }
-    return order.flatMap(k => byRound.get(k)!);
+    // Rounds run most-recent-first; within each round clips run in
+    // chronological order (oldest first) so tapping a bundle and swiping
+    // replays the round in the order it was played.
+    const rounds = [...byRound.values()].map(clips => {
+      clips.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      return { day: (clips[0].datePlayedAt ?? clips[0].createdAt).slice(0, 10), clips };
+    });
+    rounds.sort((a, b) => b.day.localeCompare(a.day));
+    return rounds.flatMap(r => r.clips);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uploads, taggedUploads, isOwner]);
 
@@ -2134,7 +2127,11 @@ export default function ProfilePage() {
                 const c = coursesById.get(cover.courseId);
                 const courseLogoUrl = c?.logoUrl ?? null;
                 const courseName = c?.name || "";
-                const dateLabel = formatClipDate(cover.datePlayedAt, cover.createdAt);
+                // Engagement is aggregated across the whole round so a
+                // bundle shows the round's combined likes/comments, and a
+                // single clip shows its own. Same treatment either way.
+                const likeSum = group.clips.reduce((n, u) => n + (u.likeCount ?? 0), 0);
+                const commentSum = group.clips.reduce((n, u) => n + (u.commentCount ?? 0), 0);
                 return (
                 <div key={cover.id + (cover.isTagged ? "-t" : "")} className="clip-thumb" onClick={() => openFeed(group.startIndex)}
                   style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}>
@@ -2154,40 +2151,35 @@ export default function ProfilePage() {
                       <img src={courseLogoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                   )}
-                  {/* Top-right pill. Bundles (a round with multiple clips/
-                      photos) show a stacked-layers icon so the grid reads as
-                      "tap to see the whole round". Single clips keep the
-                      IG-style at-a-glance like + comment counts. */}
-                  {isBundle ? (
-                    <div style={{ position: "absolute", top: 4, right: 4, zIndex: 2, display: "flex", alignItems: "center", gap: 3, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "3px 7px" }}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>
-                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>{count}</span>
-                    </div>
-                  ) : ((cover.likeCount ?? 0) > 0 || (cover.commentCount ?? 0) > 0) && (
+                  {/* Engagement pill — top-right. Same on every tile:
+                      aggregated like + comment counts for the round (a
+                      single clip is just a round of one). Only shown when
+                      there's something to display so new uploads stay clean. */}
+                  {(likeSum > 0 || commentSum > 0) && (
                     <div style={{ position: "absolute", top: 4, right: 4, zIndex: 2, display: "flex", alignItems: "center", gap: 6, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "3px 7px" }}>
-                      {(cover.likeCount ?? 0) > 0 && (
+                      {likeSum > 0 && (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                          {cover.likeCount}
+                          {likeSum}
                         </span>
                       )}
-                      {(cover.commentCount ?? 0) > 0 && (
+                      {commentSum > 0 && (
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="#fff"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                          {cover.commentCount}
+                          {commentSum}
                         </span>
                       )}
                     </div>
                   )}
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 55%)" }} />
-                  <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 4 }}>
-                    <div style={{ minWidth: 0, flex: 1, marginRight: 4 }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.95)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{courseName}</div>
-                      {isBundle && dateLabel && (
-                        <div style={{ fontSize: 8, fontWeight: 500, color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{dateLabel}</div>
-                      )}
-                    </div>
-                    <FlagBadge label={cover.holeNumber ?? "·"} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 58%)" }} />
+                  <div style={{ position: "absolute", bottom: 6, left: 6, right: 6, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 5 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, lineHeight: 1.2, color: "#fff", minWidth: 0, flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{courseName}</div>
+                    {isBundle && (
+                      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 3, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", borderRadius: 99, padding: "3px 7px" }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "#fff" }}>{count}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 );
