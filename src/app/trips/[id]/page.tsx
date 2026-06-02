@@ -469,6 +469,30 @@ export default function TripPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deletingTrip, setDeletingTrip] = useState(false);
 
+  // ?edit=1 deep-link — fired by the swipe-left "Edit" action on a Tee
+  // Up card. Once the trip + courses have loaded and we've confirmed
+  // ownership, populate the edit fields and open the edit sheet, then
+  // strip the param so a back-navigation doesn't replay it. Runs once.
+  const editDeepLinkConsumed = useRef(false);
+  useEffect(() => {
+    if (editDeepLinkConsumed.current) return;
+    if (searchParams.get("edit") !== "1") return;
+    if (!trip || !isOwner) return;
+    editDeepLinkConsumed.current = true;
+    setEditName(trip.name);
+    setEditDesc(trip.description || "");
+    setEditStart(trip.startDate || "");
+    setEditEnd(trip.endDate || "");
+    setEditTeeTime(tripCourses[0]?.teeTime || "");
+    setEditAirport(trip.arrivalAirport || "");
+    setEditLodging(trip.lodging || "");
+    setEditLodgingCity(trip.lodgingCity || null);
+    setEditLodgingState(trip.lodgingState || null);
+    setEditOpen(true);
+    if (typeof window !== "undefined") window.history.replaceState({}, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip, isOwner, tripCourses]);
+
   async function handleDeleteTrip() {
     if (!trip || deletingTrip) return;
     setDeletingTrip(true);

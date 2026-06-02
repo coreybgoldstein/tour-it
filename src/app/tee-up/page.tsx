@@ -157,6 +157,39 @@ export default function TeeUpPage() {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
+  // Swipe-to-reveal delete confirmation. Keyed by entity kind so one
+  // bottom sheet handles trips, games, and logged rounds. Edit is a
+  // straight navigation (no confirm); delete is destructive so it
+  // routes through this confirm sheet per the "all popups slide up
+  // from the bottom" rule.
+  const [confirmDelete, setConfirmDelete] = useState<{ kind: "trip" | "game" | "round"; id: string; label: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function performDelete() {
+    if (!confirmDelete || deleting) return;
+    setDeleting(true);
+    const supabase = createClient();
+    const { kind, id } = confirmDelete;
+    try {
+      if (kind === "trip") {
+        await supabase.from("GolfTrip").delete().eq("id", id);
+        setTrips(prev => prev.filter(t => t.id !== id));
+        setGames(prev => prev.filter(g => g.tripId !== id));
+      } else if (kind === "game") {
+        await supabase.from("TripGame").delete().eq("id", id);
+        setGames(prev => prev.filter(g => g.id !== id));
+      } else {
+        await supabase.from("Round").delete().eq("id", id);
+        setPastRounds(prev => prev.filter(r => r.id !== id));
+      }
+      setToast({ msg: "Deleted", kind: "success" });
+    } catch {
+      setToast({ msg: "Couldn't delete. Try again.", kind: "error" });
+    }
+    setDeleting(false);
+    setConfirmDelete(null);
+  }
+
   // Quick Round sheet
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickCourse, setQuickCourse] = useState<CourseSearchRow | null>(null);
@@ -922,14 +955,22 @@ export default function TeeUpPage() {
                   onCta={() => openPlayAGame()}
                 />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {activeGames.map(g => <GameCard key={g.id} game={g} onClick={() => router.push(`/trips/${g.tripId}`)} />)}
+                  {activeGames.map(g => (
+                    <SwipeableRow key={g.id} onEdit={() => router.push(`/trips/${g.tripId}`)} onDelete={() => setConfirmDelete({ kind: "game", id: g.id, label: gameFormatLabel(g.format) })}>
+                      <GameCard game={g} onClick={() => router.push(`/trips/${g.tripId}`)} />
+                    </SwipeableRow>
+                  ))}
                 </div>
           )}
           {tab === "games" && archiveOpen.games && (
             archivedGames.length === 0
               ? <EmptyState title="No archived games yet" subtitle="Finished games will land here." />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {archivedGames.map(g => <GameCard key={g.id} game={g} onClick={() => router.push(`/trips/${g.tripId}`)} archived />)}
+                  {archivedGames.map(g => (
+                    <SwipeableRow key={g.id} onEdit={() => router.push(`/trips/${g.tripId}`)} onDelete={() => setConfirmDelete({ kind: "game", id: g.id, label: gameFormatLabel(g.format) })}>
+                      <GameCard game={g} onClick={() => router.push(`/trips/${g.tripId}`)} archived />
+                    </SwipeableRow>
+                  ))}
                 </div>
           )}
 
@@ -938,15 +979,27 @@ export default function TeeUpPage() {
             futureRounds.length === 0
               ? <EmptyState title="No upcoming rounds" subtitle="Plan a single-day round, add friends, attach a game." ctaLabel="Schedule a round" onCta={() => setQuickOpen(true)} />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {futureRounds.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
+                  {futureRounds.map(t => (
+                    <SwipeableRow key={t.id} onEdit={() => router.push(`/trips/${t.id}?edit=1`)} onDelete={() => setConfirmDelete({ kind: "trip", id: t.id, label: t.name })}>
+                      <TripCard trip={t} onClick={() => router.push(`/trips/${t.id}`)} />
+                    </SwipeableRow>
+                  ))}
                 </div>
           )}
           {tab === "rounds" && archiveOpen.rounds && (
             pastRoundTrips.length === 0 && pastRounds.length === 0
               ? <EmptyState title="No archived rounds" subtitle="Past rounds you've logged will appear here. Open one to enter scores or upload a scorecard." />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {pastRoundTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
-                  {pastRounds.map(r => <LoggedRoundCard key={r.id} round={r} onClick={() => router.push(`/courses/${r.courseId}`)} />)}
+                  {pastRoundTrips.map(t => (
+                    <SwipeableRow key={t.id} onEdit={() => router.push(`/trips/${t.id}?edit=1`)} onDelete={() => setConfirmDelete({ kind: "trip", id: t.id, label: t.name })}>
+                      <TripCard trip={t} onClick={() => router.push(`/trips/${t.id}`)} />
+                    </SwipeableRow>
+                  ))}
+                  {pastRounds.map(r => (
+                    <SwipeableRow key={r.id} onDelete={() => setConfirmDelete({ kind: "round", id: r.id, label: r.courseName })}>
+                      <LoggedRoundCard round={r} onClick={() => router.push(`/courses/${r.courseId}`)} />
+                    </SwipeableRow>
+                  ))}
                 </div>
           )}
 
@@ -955,14 +1008,22 @@ export default function TeeUpPage() {
             futureTrips.length === 0
               ? <EmptyState title="No upcoming trips" subtitle="Plan a multi-day buddy trip with multiple courses." ctaLabel="Plan a trip" onCta={() => setNewTripOpen(true)} />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {futureTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
+                  {futureTrips.map(t => (
+                    <SwipeableRow key={t.id} onEdit={() => router.push(`/trips/${t.id}?edit=1`)} onDelete={() => setConfirmDelete({ kind: "trip", id: t.id, label: t.name })}>
+                      <TripCard trip={t} onClick={() => router.push(`/trips/${t.id}`)} />
+                    </SwipeableRow>
+                  ))}
                 </div>
           )}
           {tab === "trips" && archiveOpen.trips && (
             pastTrips.length === 0
               ? <EmptyState title="No archived trips" subtitle="Trips that have ended will appear here." />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {pastTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
+                  {pastTrips.map(t => (
+                    <SwipeableRow key={t.id} onEdit={() => router.push(`/trips/${t.id}?edit=1`)} onDelete={() => setConfirmDelete({ kind: "trip", id: t.id, label: t.name })}>
+                      <TripCard trip={t} onClick={() => router.push(`/trips/${t.id}`)} />
+                    </SwipeableRow>
+                  ))}
                 </div>
           )}
 
@@ -1270,8 +1331,127 @@ export default function TeeUpPage() {
       )}
 
 
+      {/* Delete confirmation — bottom sheet (per "all popups slide up
+          from the bottom"). Opened from a swipe-left Delete action on
+          any Tee Up card. */}
+      {confirmDelete && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", zIndex: 200, display: "flex", flexDirection: "column" }} onClick={() => { if (!deleting) setConfirmDelete(null); }}>
+          <div style={{ flex: 1, background: "rgba(0,0,0,0.6)", minHeight: 40 }} />
+          <div onClick={e => e.stopPropagation()} style={{ background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "14px 20px calc(28px + env(safe-area-inset-bottom))", flexShrink: 0 }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.18)", borderRadius: 99, margin: "0 auto 16px" }} />
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff", lineHeight: 1.15 }}>
+              Delete {confirmDelete.kind === "trip" ? "this" : confirmDelete.kind === "game" ? "this game" : "this round"}?
+            </div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 6, lineHeight: 1.5 }}>
+              <span style={{ color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>{confirmDelete.label}</span> will be permanently removed. This can&apos;t be undone.
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
+              <button
+                onClick={() => { if (!deleting) setConfirmDelete(null); }}
+                style={{ flex: 1, padding: "13px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={performDelete}
+                disabled={deleting}
+                style={{ flex: 1, padding: "13px", background: "rgba(220,80,80,0.95)", border: "none", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: "#fff", cursor: deleting ? "default" : "pointer", opacity: deleting ? 0.6 : 1 }}
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </main>
+  );
+}
+
+// SwipeableRow — wraps a Tee Up card so swiping left reveals Edit
+// (green) + Delete (red) actions in Tour It's palette. Touch-driven:
+// locks to the horizontal axis only after the gesture clearly moves
+// sideways, so vertical list scrolling is never hijacked. The card
+// foreground has its own opaque background and covers the actions
+// when closed (no overflow:hidden, so the card's drop shadow is
+// preserved). A click while open — or right after a drag — is
+// swallowed so it doesn't navigate into the card.
+function SwipeableRow({ children, onEdit, onDelete }: { children: React.ReactNode; onEdit?: () => void; onDelete: () => void }) {
+  const ACTION_W = onEdit ? 150 : 84;
+  const [tx, setTx] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const txRef = useRef(0);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const base = useRef(0);
+  const axis = useRef<null | "h" | "v">(null);
+  const moved = useRef(false);
+  const open = tx <= -ACTION_W + 1;
+
+  const set = (v: number) => { txRef.current = v; setTx(v); };
+  const close = () => set(0);
+
+  function onTouchStart(e: React.TouchEvent) {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    base.current = txRef.current;
+    axis.current = null;
+    moved.current = false;
+    setSwiping(true);
+  }
+  function onTouchMove(e: React.TouchEvent) {
+    const dx = e.touches[0].clientX - startX.current;
+    const dy = e.touches[0].clientY - startY.current;
+    if (!axis.current) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      axis.current = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+    }
+    if (axis.current !== "h") return;
+    moved.current = true;
+    set(Math.max(-ACTION_W, Math.min(0, base.current + dx)));
+  }
+  function onTouchEnd() {
+    setSwiping(false);
+    if (axis.current === "h") set(txRef.current <= -ACTION_W / 2 ? -ACTION_W : 0);
+  }
+  function onClickCapture(e: React.MouseEvent) {
+    if (open || moved.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      moved.current = false;
+      if (open) close();
+    }
+  }
+
+  const ActionBtn = ({ kind, label, onTap }: { kind: "edit" | "delete"; label: string; onTap: () => void }) => (
+    <button
+      onClick={() => { close(); onTap(); }}
+      style={{ flex: 1, border: "none", cursor: "pointer", background: kind === "edit" ? "#2d7a42" : "rgba(220,80,80,0.95)", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700 }}
+    >
+      {kind === "edit"
+        ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>}
+      {label}
+    </button>
+  );
+
+  return (
+    <div style={{ position: "relative", borderRadius: 16 }}>
+      <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: ACTION_W, display: "flex", borderRadius: "0 16px 16px 0", overflow: "hidden" }}>
+        {onEdit && <ActionBtn kind="edit" label="Edit" onTap={onEdit} />}
+        <ActionBtn kind="delete" label="Delete" onTap={onDelete} />
+      </div>
+      <div
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onClickCapture={onClickCapture}
+        style={{ position: "relative", zIndex: 1, transform: `translateX(${tx}px)`, transition: swiping ? "none" : "transform 0.25s ease", touchAction: "pan-y" }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 
