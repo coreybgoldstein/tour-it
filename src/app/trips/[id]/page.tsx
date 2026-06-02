@@ -2225,6 +2225,30 @@ export default function TripPage() {
                         </div>
                       );
                     })()}
+
+                    {/* Score + settle actions live right on the card in
+                        round mode — they're the main thing you do with a
+                        game, so they shouldn't be buried in the detail
+                        sheet. Members only; tapping must not bubble up to
+                        the card's open-sheet handler. */}
+                    {isRound && !!user && (isOwner || members.some((m) => m.userId === user.id)) && (
+                      <div style={{ display: "flex", gap: 8, marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(77,168,98,0.15)" }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => setScoreEntryGame(g)}
+                          style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.14)", fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 700, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                          Enter Scores
+                        </button>
+                        <button
+                          onClick={() => setSettleGameTarget(g)}
+                          style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 700, color: "rgba(255,255,255,0.85)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                          Settle Up
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -2294,10 +2318,9 @@ export default function TripPage() {
           );
         })()}
 
-        {/* Clips section — trips only. In round-mode a personal Round is
-            auto-created and clips matching the course + date auto-pair to
-            that round page, so a clips section here would be redundant. */}
-        {!isRound && (
+        {/* Clips section — on rounds and trips alike. Clips uploaded for
+            this course + date auto-pair here, so the crew's media lives
+            right on the round/trip it belongs to. */}
         <div style={{ padding: "24px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>{flavorUpper} Clips{clips.length > 0 && <span className="count">{clips.length}</span>}</div>
@@ -2337,7 +2360,6 @@ export default function TripPage() {
             </div>
           )}
         </div>
-        )}
 
         {/* Trip Notes — collaborative knowledge layer. Renders only
             on real Trips, not single-day Rounds (notes don't add
