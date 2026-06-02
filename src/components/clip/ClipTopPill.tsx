@@ -82,9 +82,10 @@ export function ClipTopPill({
           cursor: "pointer",
         }}
       >
-        {/* Flag badge — standalone circle, same height as the pill body,
-            sits on top of the body's flush left edge to hide the seam. */}
-        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", border: "1.5px solid rgba(255,255,255,0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", zIndex: 1 }}>
+        {/* Flag badge — standalone rounded square (unchanged shape), same
+            height as the pill body, sits on top of the body's flush left
+            edge to hide the seam. */}
+        <div style={{ width: 40, height: 40, borderRadius: 9, background: "#fff", border: "1.5px solid rgba(255,255,255,0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", zIndex: 1 }}>
           {courseLogoUrl
             ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
             : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a5c30" }}>{abbr}</span>

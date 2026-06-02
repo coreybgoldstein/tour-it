@@ -459,7 +459,12 @@ export default function ProfilePage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showEditSheet, setShowEditSheet] = useState(false);
-  const [editData, setEditData] = useState<{ holeNumber: number | null; datePlayedAt: string; shotType: string; strategyNote: string; clubUsed: string; windCondition: string; landingZoneNote: string; whatCameraDoesntShow: string; taggedUsers: EditTagUser[]; originalTagIds: Set<string>; heroUser: EditTagUser | null; originalHeroUserId: string | null } | null>(null);
+  const [editData, setEditData] = useState<{ holeNumber: number | null; datePlayedAt: string; courseId: string; courseName: string; shotType: string; strategyNote: string; clubUsed: string; windCondition: string; landingZoneNote: string; whatCameraDoesntShow: string; taggedUsers: EditTagUser[]; originalTagIds: Set<string>; heroUser: EditTagUser | null; originalHeroUserId: string | null } | null>(null);
+  // Course reassignment search inside the edit sheet.
+  const [editCourseOpen, setEditCourseOpen] = useState(false);
+  const [editCourseSearch, setEditCourseSearch] = useState("");
+  const [editCourseResults, setEditCourseResults] = useState<CoursePlayed[]>([]);
+  const editCourseDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Hero search inside the edit sheet — mirrors the upload-flow picker.
   const [editHeroPick, setEditHeroPick] = useState<"me" | "someone">("me");
   const [editHeroInput, setEditHeroInput] = useState("");
@@ -477,6 +482,17 @@ export default function ProfilePage() {
       setEditHeroResults((data || []).filter((u: EditTagUser) => !excluded.has(u.id)));
     }, 280);
   }, [editHeroInput, editData?.taggedUsers]);
+
+  useEffect(() => {
+    if (editCourseDebounce.current) clearTimeout(editCourseDebounce.current);
+    if (!editCourseSearch.trim()) { setEditCourseResults([]); return; }
+    editCourseDebounce.current = setTimeout(async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("Course").select("id, name, city, state, logoUrl").ilike("name", `%${editCourseSearch.trim()}%`).limit(8);
+      setEditCourseResults((data ?? []) as CoursePlayed[]);
+    }, 220);
+  }, [editCourseSearch]);
+
   const [editLoading, setEditLoading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editTagInput, setEditTagInput] = useState("");
@@ -1004,9 +1020,12 @@ export default function ProfilePage() {
       .filter((r: any) => r.isHero !== true)
       .map((r: any) => r.user as EditTagUser | null)
       .filter((u): u is EditTagUser => !!u);
+    setEditCourseOpen(false); setEditCourseSearch(""); setEditCourseResults([]);
     setEditData({
       holeNumber: selectedClip.holeNumber ?? null,
       datePlayedAt: (selectedClip.datePlayedAt ?? selectedClip.createdAt).slice(0, 10),
+      courseId: selectedClip.courseId,
+      courseName: coursesById.get(selectedClip.courseId)?.name || "",
       shotType: data?.shotType || "",
       strategyNote: data?.strategyNote || "",
       clubUsed: data?.clubUsed || "",
@@ -1028,17 +1047,23 @@ export default function ProfilePage() {
     if (!selectedClip || !editData || editSaving || !isOwner || !currentUserId) return;
     setEditSaving(true);
     const supabase = createClient();
+    const targetCourseId = editData.courseId;
+    const courseChanged = targetCourseId !== selectedClip.courseId;
+    const targetHoleNumber = editData.holeNumber ?? selectedClip.holeNumber ?? null;
+    // Resolve the hole on the TARGET course. A course reassignment must
+    // re-point holeId to a hole that belongs to the new course (find it or
+    // create it), otherwise the clip would dangle on the old course's hole.
     let holeId = selectedClip.holeId;
-    if (editData.holeNumber && editData.holeNumber !== selectedClip.holeNumber) {
-      const { data: existing } = await supabase.from("Hole").select("id").eq("courseId", selectedClip.courseId).eq("holeNumber", editData.holeNumber).maybeSingle();
+    if (targetHoleNumber && (courseChanged || targetHoleNumber !== selectedClip.holeNumber)) {
+      const { data: existing } = await supabase.from("Hole").select("id").eq("courseId", targetCourseId).eq("holeNumber", targetHoleNumber).maybeSingle();
       if (existing?.id) { holeId = existing.id; } else {
         const newId = crypto.randomUUID(); const now = new Date().toISOString();
-        await supabase.from("Hole").insert({ id: newId, courseId: selectedClip.courseId, holeNumber: editData.holeNumber, par: 0, uploadCount: 0, createdAt: now, updatedAt: now });
+        await supabase.from("Hole").insert({ id: newId, courseId: targetCourseId, holeNumber: targetHoleNumber, par: 0, uploadCount: 0, createdAt: now, updatedAt: now });
         holeId = newId;
       }
     }
     const newDatePlayedAt = editData.datePlayedAt ? `${editData.datePlayedAt}T12:00:00.000Z` : null;
-    await supabase.from("Upload").update({ holeId, datePlayedAt: newDatePlayedAt, shotType: editData.shotType || null, clubUsed: editData.clubUsed || null, windCondition: editData.windCondition || null, strategyNote: editData.strategyNote || null, landingZoneNote: editData.landingZoneNote || null, whatCameraDoesntShow: editData.whatCameraDoesntShow || null, updatedAt: new Date().toISOString() }).eq("id", selectedClip.id).eq("userId", currentUserId);
+    await supabase.from("Upload").update({ courseId: targetCourseId, holeId, datePlayedAt: newDatePlayedAt, shotType: editData.shotType || null, clubUsed: editData.clubUsed || null, windCondition: editData.windCondition || null, strategyNote: editData.strategyNote || null, landingZoneNote: editData.landingZoneNote || null, whatCameraDoesntShow: editData.whatCameraDoesntShow || null, updatedAt: new Date().toISOString() }).eq("id", selectedClip.id).eq("userId", currentUserId);
 
     // Co-star tagging was retired; the edit sheet no longer accepts new
     // co-stars and any existing ones are left untouched (visible only on
@@ -1069,7 +1094,7 @@ export default function ProfilePage() {
       // Fire the hero notification + push.
       const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", currentUserId).single();
       const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
-      const courseName = coursesPlayed.find(c => c.id === selectedClip.courseId)?.name || "a course";
+      const courseName = editData.courseName || coursesById.get(targetCourseId)?.name || "a course";
       const holeText = (editData.holeNumber ?? selectedClip.holeNumber) ? ` — Hole ${editData.holeNumber ?? selectedClip.holeNumber}` : "";
       const heroHoleNumber = editData.holeNumber ?? selectedClip.holeNumber;
       await supabase.from("Notification").insert({
@@ -1079,8 +1104,8 @@ export default function ProfilePage() {
         title: `${taggerName} uploaded a clip of you`,
         body: `${taggerName} says this is your shot at ${courseName}${holeText}. Claim it on your profile?`,
         linkUrl: heroHoleNumber
-          ? `/courses/${selectedClip.courseId}/holes/${heroHoleNumber}?clip=${selectedClip.id}`
-          : `/courses/${selectedClip.courseId}`,
+          ? `/courses/${targetCourseId}/holes/${heroHoleNumber}?clip=${selectedClip.id}`
+          : `/courses/${targetCourseId}`,
         referenceId: selectedClip.id,
         read: false,
         createdAt: now,
@@ -1088,7 +1113,7 @@ export default function ProfilePage() {
       });
     }
 
-    setUploads(prev => prev.map(u => u.id === selectedClip.id ? { ...u, holeNumber: editData.holeNumber ?? u.holeNumber, holeId, datePlayedAt: newDatePlayedAt } : u));
+    setUploads(prev => prev.map(u => u.id === selectedClip.id ? { ...u, courseId: targetCourseId, holeNumber: editData.holeNumber ?? u.holeNumber, holeId, datePlayedAt: newDatePlayedAt } : u));
     setEditSaving(false); setShowEditSheet(false);
   }
 
@@ -1125,11 +1150,17 @@ export default function ProfilePage() {
       if (!byRound.has(k)) byRound.set(k, []);
       byRound.get(k)!.push(u);
     }
-    // Rounds run most-recent-first; within each round clips run in
-    // chronological order (oldest first) so tapping a bundle and swiping
-    // replays the round in the order it was played.
+    // Rounds run most-recent-first; within each round clips run in hole
+    // order (1 → 18) so tapping a bundle and swiping — and scrolling the
+    // profile feed — replays the round the way it was played. Clips with
+    // no hole number sort last, broken ties by upload time.
     const rounds = [...byRound.values()].map(clips => {
-      clips.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      clips.sort((a, b) => {
+        const ha = a.holeNumber ?? Infinity;
+        const hb = b.holeNumber ?? Infinity;
+        if (ha !== hb) return ha - hb;
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
       return { day: (clips[0].datePlayedAt ?? clips[0].createdAt).slice(0, 10), clips };
     });
     rounds.sort((a, b) => b.day.localeCompare(a.day));
@@ -1369,6 +1400,43 @@ export default function ProfilePage() {
                   )}
                 </div>
 
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Course</div>
+                  {!editCourseOpen ? (
+                    <button onClick={() => { setEditCourseOpen(true); setEditCourseSearch(""); setEditCourseResults([]); }}
+                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", cursor: "pointer", textAlign: "left" }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{editData.courseName || "Select a course"}</span>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862", flexShrink: 0 }}>Change</span>
+                    </button>
+                  ) : (
+                    <>
+                      <input autoFocus value={editCourseSearch} onChange={e => setEditCourseSearch(e.target.value)} placeholder="Search courses…"
+                        style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box" }} />
+                      {editCourseResults.length > 0 && (
+                        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4, maxHeight: 220, overflowY: "auto" }}>
+                          {editCourseResults.map(c => (
+                            <button key={c.id} onClick={() => {
+                              setCoursesPlayed(prev => prev.some(p => p.id === c.id) ? prev : [...prev, c]);
+                              setEditData(d => d ? { ...d, courseId: c.id, courseName: c.name } : d);
+                              setEditCourseOpen(false); setEditCourseSearch(""); setEditCourseResults([]);
+                            }}
+                              style={{ display: "flex", alignItems: "center", gap: 10, background: c.id === editData.courseId ? "rgba(26,158,66,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${c.id === editData.courseId ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, padding: "9px 11px", cursor: "pointer", textAlign: "left" }}>
+                              <div style={{ width: 30, height: 30, borderRadius: 8, background: "#fff", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {c.logoUrl ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                              </div>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
+                                {(c.city || c.state) && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{[c.city, c.state].filter(Boolean).join(", ")}</div>}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <button onClick={() => { setEditCourseOpen(false); setEditCourseSearch(""); setEditCourseResults([]); }}
+                        style={{ marginTop: 6, background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", cursor: "pointer", padding: "4px 0" }}>Cancel</button>
+                    </>
+                  )}
+                </div>
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Hole</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
