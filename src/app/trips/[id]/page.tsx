@@ -192,6 +192,72 @@ function GamePopsScorecard({ players, holeHandicaps }: {
   );
 }
 
+// ── Final scores scorecard ──────────────────────────────────────────────────
+// Renders entered scores as a real results grid: holes across the top, one
+// row per player, the gross score in each cell, a Total column on the right.
+// Players are sorted leader-first (lowest total) with the leader highlighted.
+// Read-only — every viewer of the shared/social trip page sees the result,
+// not just the round owner. Returns null until at least one score is entered.
+function GameResultsScorecard({ players, scores }: {
+  players: any[];
+  scores?: Record<string, (number | null)[]> | null;
+}) {
+  if (!scores) return null;
+  const scoreKey = (p: any) => p.userId || p.displayName;
+  const totalOf = (arr: (number | null)[] | undefined) =>
+    (arr ?? []).reduce((s: number, v) => (typeof v === "number" ? s + v : s), 0);
+
+  const ranked = players
+    .map((p) => ({ p, holeScores: scores[scoreKey(p)] ?? [], total: totalOf(scores[scoreKey(p)]) }))
+    .filter((r) => r.total > 0)
+    .sort((a, b) => a.total - b.total);
+  if (ranked.length === 0) return null;
+
+  const holeCount = Math.max(18, ...ranked.map((r) => r.holeScores.length));
+  const holes = Array.from({ length: holeCount }, (_, i) => i + 1);
+  const NAME_W = 92;
+  const CELL = 28;
+  const best = ranked[0].total;
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, padding: "14px 0 14px 16px" }}>
+      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12, paddingRight: 16 }}>Final Scores</div>
+      <div style={{ overflowX: "auto", paddingRight: 16 }}>
+        <div style={{ display: "inline-block", minWidth: "100%" }}>
+          {/* Hole number row */}
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ width: NAME_W, flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Hole</div>
+            {holes.map((h) => (
+              <div key={h} style={{ width: CELL, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>{h}</div>
+            ))}
+            <div style={{ width: CELL + 8, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#4da862", textTransform: "uppercase", borderLeft: "1px solid rgba(255,255,255,0.08)" }}>Tot</div>
+          </div>
+          {/* One row per player, leader first */}
+          {ranked.map(({ p, holeScores, total }, ri) => {
+            const isLeader = total === best;
+            return (
+              <div key={ri} style={{ display: "flex", alignItems: "center", marginTop: 6, paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                <div style={{ width: NAME_W, flexShrink: 0, fontFamily: "'Outfit', sans-serif", fontSize: 11.5, fontWeight: 600, color: isLeader ? "#4da862" : "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", paddingRight: 6 }}>
+                  {p.displayName}
+                </div>
+                {holes.map((h, i) => {
+                  const v = holeScores[i];
+                  return (
+                    <div key={h} style={{ width: CELL, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11.5, fontWeight: 600, color: typeof v === "number" ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.15)", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>
+                      {typeof v === "number" ? v : "·"}
+                    </div>
+                  );
+                })}
+                <div style={{ width: CELL + 8, flexShrink: 0, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 800, color: isLeader ? "#4da862" : "#fff", borderLeft: "1px solid rgba(255,255,255,0.08)" }}>{total}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Inline date-range calendar ──────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -2055,20 +2121,28 @@ export default function TripPage() {
                       </div>
                     )}
 
-                    {/* Pops scorecard preview — vital info up front. Renders
-                        nothing when the game is scratch (nobody gets strokes).
-                        Tap anywhere on the card to open the full sheet. */}
-                    {isRound && !isHolePicked && Array.isArray(g.players) && (
-                      <div style={{ marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
-                        <GamePopsScorecard players={g.players} holeHandicaps={g.holeHandicaps} />
-                        <div
-                          onClick={() => { setViewGame(g); setViewGameOpen(true); }}
-                          style={{ marginTop: 8, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(77,168,98,0.8)", cursor: "pointer", padding: "4px 0" }}
-                        >
-                          View full game →
+                    {/* Scorecard preview — vital info up front. Once scores are
+                        entered the final results take over (leader-first grid,
+                        visible to every viewer of the shared trip page);
+                        before that we show the stroke-allocation pops. Renders
+                        nothing when the game is scratch + unscored. Tap anywhere
+                        on the card to open the full sheet. */}
+                    {isRound && !isHolePicked && Array.isArray(g.players) && (() => {
+                      const hasScores = !!g.scores && Object.values(g.scores).some((arr) => (arr ?? []).some((v) => typeof v === "number"));
+                      return (
+                        <div style={{ marginTop: 12 }} onClick={(e) => e.stopPropagation()}>
+                          {hasScores
+                            ? <GameResultsScorecard players={g.players} scores={g.scores} />
+                            : <GamePopsScorecard players={g.players} holeHandicaps={g.holeHandicaps} />}
+                          <div
+                            onClick={() => { setViewGame(g); setViewGameOpen(true); }}
+                            style={{ marginTop: 8, textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(77,168,98,0.8)", cursor: "pointer", padding: "4px 0" }}
+                          >
+                            View full game →
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* CTP / Longest Drive — per-hole scorecard cells.
                         Sharp 3px corners + Playfair italic label give
@@ -3483,6 +3557,9 @@ export default function TripPage() {
                       {/* Pops-per-hole scorecard — green dot on every hole each
                           player strokes, just like a paper card. */}
                       <GamePopsScorecard players={viewGame.players ?? []} holeHandicaps={viewGame.holeHandicaps} />
+
+                      {/* Final results — appears once scores are entered. */}
+                      <GameResultsScorecard players={viewGame.players ?? []} scores={viewGame.scores} />
 
                       {/* Rules */}
                       {sheetData.rules && (
