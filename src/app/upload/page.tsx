@@ -115,6 +115,10 @@ function UploadPageInner() {
   const [courseSearch, setCourseSearch] = useState("");
   const [uploading, setUploading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  // "Which round is this for?" — set when a clip matched more than one of
+  // the user's trips on the same course+date. Cleared once they pick.
+  const [tripPicker, setTripPicker] = useState<{ uploadId: string; candidates: { id: string; name: string }[] } | null>(null);
+  const [tripPickSaving, setTripPickSaving] = useState(false);
   const [error, setError] = useState("");
   const [compressing, setCompressing] = useState(false);
   const [compressStage, setCompressStage] = useState("");
@@ -711,6 +715,12 @@ function UploadPageInner() {
         return;
       }
 
+      // Clip matched more than one of the user's trips on this course+date —
+      // ask which round it belongs to on the success screen.
+      if ((finalize.tripCandidates?.length ?? 0) > 1) {
+        setTripPicker({ uploadId, candidates: finalize.tripCandidates! });
+      }
+
       // Award contribution points + upsert CourseContribution (fire-and-forget)
       ;(async () => {
         const actions: string[] = ["upload_clip"];
@@ -835,6 +845,43 @@ function UploadPageInner() {
           <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 300, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, marginBottom: 24 }}>
             Your intel for {selectedCourse?.name}{selectedHole ? ` — Hole ${selectedHole}` : ""} is live.
           </p>
+          {/* "Which round?" — clip matched more than one trip on this date */}
+          {tripPicker && (
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px", marginBottom: 16, textAlign: "left" }}>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", marginBottom: 4 }}>Which round is this for?</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 12, lineHeight: 1.4 }}>You played this course more than once that day — pick where this clip should show up.</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {tripPicker.candidates.map(c => (
+                  <button
+                    key={c.id}
+                    disabled={tripPickSaving}
+                    onClick={async () => {
+                      setTripPickSaving(true);
+                      try {
+                        await fetch(`/api/uploads/${tripPicker.uploadId}/trip`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ tripId: c.id }),
+                        });
+                        setTripPicker(null);
+                      } finally {
+                        setTripPickSaving(false);
+                      }
+                    }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: tripPickSaving ? 0.6 : 1 }}
+                  >
+                    <span>{c.name}</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                ))}
+                <button
+                  disabled={tripPickSaving}
+                  onClick={() => setTripPicker(null)}
+                  style={{ background: "transparent", border: "none", padding: "6px 0 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)", cursor: "pointer", textAlign: "center" }}
+                >Skip — don't link to a round</button>
+              </div>
+            </div>
+          )}
           {/* Primary CTA — go to course */}
           <button
             onClick={() => router.push(`/courses/${selectedCourse?.id}`)}
@@ -866,6 +913,7 @@ function UploadPageInner() {
                 setHeroInput("");
                 setHeroResults([]);
                 setSubmitted(false);
+                setTripPicker(null);
               }}
               style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, padding: "12px 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "rgba(255,255,255,0.55)", cursor: "pointer" }}>
               Upload another

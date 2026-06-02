@@ -34,6 +34,11 @@ export type FinalizeUploadResult = {
   roundId: string | null;
   holeId: string;
   courseUploadCount: number;
+  // The trip the clip auto-paired to, if any.
+  tripId?: string | null;
+  // Populated only when the clip matched more than one of the user's
+  // trips on this course+date and none was auto-selected.
+  tripCandidates?: { id: string; name: string }[];
 };
 
 // Optional progress hook. Fires once before each attempt with the

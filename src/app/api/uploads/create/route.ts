@@ -46,6 +46,56 @@ type Body = {
   tripPublic: boolean;
 };
 
+// Find GolfTrips the uploader belongs to (member or creator) that cover
+// this course on this date. Used to auto-pair a clip to the shared
+// trip/round page. Returns every match so the caller can disambiguate
+// when the user played the same course twice in a day.
+async function findCandidateTrips(
+  admin: ReturnType<typeof createServiceClient<any, "public">>,
+  userId: string,
+  courseId: string,
+  roundDate: string,
+): Promise<{ id: string; name: string }[]> {
+  const tripIds = new Set<string>();
+  const { data: memberships } = await admin.from("GolfTripMember").select("tripId").eq("userId", userId);
+  for (const m of (memberships ?? []) as { tripId: string }[]) tripIds.add(m.tripId);
+  const { data: created } = await admin.from("GolfTrip").select("id").eq("createdBy", userId);
+  for (const t of (created ?? []) as { id: string }[]) tripIds.add(t.id);
+  if (tripIds.size === 0) return [];
+
+  const { data: stops } = await admin
+    .from("GolfTripCourse")
+    .select("tripId, courseId, secondaryCourseId, playDate")
+    .in("tripId", Array.from(tripIds));
+  const stopsByTrip = new Map<string, { playDate: string | null }[]>();
+  for (const s of (stops ?? []) as { tripId: string; courseId: string; secondaryCourseId: string | null; playDate: string | null }[]) {
+    if (s.courseId !== courseId && s.secondaryCourseId !== courseId) continue;
+    if (!stopsByTrip.has(s.tripId)) stopsByTrip.set(s.tripId, []);
+    stopsByTrip.get(s.tripId)!.push({ playDate: s.playDate });
+  }
+  if (stopsByTrip.size === 0) return [];
+
+  const { data: trips } = await admin
+    .from("GolfTrip")
+    .select("id, name, startDate, endDate")
+    .in("id", Array.from(stopsByTrip.keys()));
+  const out: { id: string; name: string }[] = [];
+  for (const trip of (trips ?? []) as { id: string; name: string; startDate: string | null; endDate: string | null }[]) {
+    const tStops = stopsByTrip.get(trip.id) ?? [];
+    const dateMatch = tStops.some((s) => {
+      const pd = s.playDate ? String(s.playDate).split("T")[0] : null;
+      if (pd) return pd === roundDate;
+      const sd = trip.startDate ? String(trip.startDate).split("T")[0] : null;
+      const ed = trip.endDate ? String(trip.endDate).split("T")[0] : null;
+      if (sd && ed) return roundDate >= sd && roundDate <= ed;
+      if (sd) return roundDate === sd;
+      return true; // trip has no date info — accept on course match alone
+    });
+    if (dateMatch) out.push({ id: trip.id, name: trip.name });
+  }
+  return out;
+}
+
 export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -178,6 +228,26 @@ export async function POST(req: Request) {
   }
   await admin.from("Upload").update({ roundId }).eq("id", body.uploadId);
 
+  // Auto-pair the clip to a shared GolfTrip ("round/trip page"). If the
+  // client passed an explicit tripId (uploading from inside a trip), trust
+  // it. Otherwise look for trips the user belongs to that cover this
+  // course on this date: exactly one → auto-pair; more than one → leave
+  // unset and hand candidates back so the client can ask which round.
+  let pairedTripId: string | null = body.tripId ?? null;
+  let tripCandidates: { id: string; name: string }[] = [];
+  if (!pairedTripId) {
+    tripCandidates = await findCandidateTrips(admin, user.id, body.courseId, roundDate);
+    if (tripCandidates.length === 1) pairedTripId = tripCandidates[0].id;
+  }
+  if (pairedTripId) {
+    if (!body.tripId) {
+      await admin.from("Upload").update({ tripId: pairedTripId }).eq("id", body.uploadId);
+    }
+    // Link the score ledger to the same trip so games + head-to-head line
+    // up. Only fill when empty so we never clobber an existing pairing.
+    await admin.from("Round").update({ golfTripId: pairedTripId }).eq("id", roundId).is("golfTripId", null);
+  }
+
   // Award round-creation points only when a NEW Round row was inserted —
   // not on every subsequent clip uploaded to the same round/date. The
   // ONE_TIME_ACTIONS / REFERENCE_DEDUPED_ACTIONS guards in awardPoints
@@ -206,5 +276,9 @@ export async function POST(req: Request) {
     roundId,
     holeId,
     courseUploadCount: (c?.uploadCount || 0) + 1, // for client first-for-course detection
+    tripId: pairedTripId,
+    // Populated only when the clip matched more than one of the user's
+    // trips and none was auto-selected. Client prompts "which round?".
+    tripCandidates: pairedTripId ? [] : tripCandidates,
   });
 }
