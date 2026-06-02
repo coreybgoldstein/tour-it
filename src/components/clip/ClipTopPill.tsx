@@ -64,43 +64,38 @@ export function ClipTopPill({
         </button>
       )}
 
-      {/* Pill — entire pill navigates to course page */}
+      {/* Course unit — entire unit navigates to course page. The flag
+          badge is a standalone full-height circle; the pill body has a
+          squared (flush) left edge tucked behind the badge with a rounded
+          right end cap, so badge + body read as one connected capsule. */}
       <button
         onClick={onTapCourse}
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 8,
           flexShrink: 1,
           minWidth: 0,
           maxWidth: "calc(100% - 48px)",
-          // Solid pill — no backdrop blur. Replaced the previous translucent
-          // blurred treatment with a more opaque flat color so the pill reads
-          // as one consistent surface instead of picking up the video behind
-          // it. Single-color treatment across every clip surface (home feed,
-          // course page, hole page, profile, round).
-          background: "rgba(0,0,0,0.72)",
-          borderRadius: 999,
-          // Reduced vertical padding from 5px to 2px to keep the pill at
-          // its original height (36px) even with the larger 32px badge
-          // (up from 26px). Text fields stay at their existing font
-          // sizes and align to pill center.
-          padding: "2px 12px 2px 5px",
-          overflow: "hidden",
+          background: "none",
           border: "none",
+          padding: 0,
           cursor: "pointer",
         }}
       >
-        {/* Course badge — white background + white-tinted border + drop
-            shadow, matching the larger crest treatment on the course
-            profile page. Sits inside the same pill geometry; the pill's
-            text fields stay at their current sizes. */}
-        <div style={{ width: 32, height: 32, borderRadius: 9, background: "#fff", border: "1.5px solid rgba(255,255,255,0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        {/* Flag badge — standalone circle, same height as the pill body,
+            sits on top of the body's flush left edge to hide the seam. */}
+        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", border: "1.5px solid rgba(255,255,255,0.30)", boxShadow: "0 2px 6px rgba(0,0,0,0.35)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", zIndex: 1 }}>
           {courseLogoUrl
             ? <img src={courseLogoUrl} alt={courseName} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
-            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#1a5c30" }}>{abbr}</span>
+            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700, color: "#1a5c30" }}>{abbr}</span>
           }
         </div>
+
+        {/* Pill body — solid flat color (no backdrop blur) so it reads as one
+            consistent surface across every clip surface. Squared left edge
+            (-20 margin) tucks behind the badge; 20px right radius = half the
+            40px height for a clean semicircle end cap. */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0, height: 40, background: "rgba(0,0,0,0.72)", borderRadius: "0 20px 20px 0", paddingLeft: 28, paddingRight: 14, marginLeft: -20, overflow: "hidden" }}>
         <div style={{ display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
           <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {courseName}
@@ -137,6 +132,7 @@ export function ClipTopPill({
             )}
           </>
         )}
+        </div>
       </button>
 
       {/* Mute button — always pinned to far right */}
