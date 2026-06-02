@@ -173,9 +173,9 @@ export default function ProfileStats({
   const firstName = displayName.split(" ")[0] || displayName;
 
   return (
-    <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
+    <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
       {h2h && h2h.together > 0 && (
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "16px 16px 14px" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px 12px" }}>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>You vs {firstName}</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{h2h.together} round{h2h.together === 1 ? "" : "s"} together</div>
@@ -196,7 +196,7 @@ export default function ProfileStats({
       )}
 
       {stats && (
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "16px 16px 14px" }}>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px 12px" }}>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>All-Time Stats</div>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{stats.count} round{stats.count === 1 ? "" : "s"}</div>

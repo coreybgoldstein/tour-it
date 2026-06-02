@@ -1849,7 +1849,7 @@ export default function ProfilePage() {
       {/* Identity band — matches the trip page pattern. Avatar is vertically
           centered in the band so it sits cleanly between the green top bar
           and the progression card below */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px 12px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px 8px" }}>
         {/* Avatar + username nameplate. The wrapper is position:relative so
             the @username pill can sit on the lower quarter of the avatar
             without being clipped by the avatar's overflow:hidden. */}
@@ -1972,7 +1972,7 @@ export default function ProfilePage() {
         {/* Follow + Schedule a game — right side of band for non-owners.
             @tourit is a system account, not a real follow target — hide entirely. */}
         {!isOwner && profile.username !== "tourit" && currentUserId && (
-          <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ flexShrink: 0, alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => router.push(`/tee-up?withUser=${userId}`)} title="Schedule a game" style={{ flexShrink: 0, width: 34, height: 34, borderRadius: 10, border: "1px solid rgba(77,168,98,0.4)", background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -1985,7 +1985,7 @@ export default function ProfilePage() {
           </div>
         )}
         {!isOwner && profile.username !== "tourit" && !currentUserId && (
-          <button onClick={() => router.push("/login")} style={{ flexShrink: 0, padding: "8px 16px", borderRadius: 10, background: "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Follow</button>
+          <button onClick={() => router.push("/login")} style={{ flexShrink: 0, alignSelf: "flex-start", padding: "8px 16px", borderRadius: 10, background: "#2d7a42", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Follow</button>
         )}
       </div>
 
