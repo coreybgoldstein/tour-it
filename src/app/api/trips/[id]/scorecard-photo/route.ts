@@ -19,29 +19,26 @@ async function getAuthedUser(req: NextRequest) {
 export const dynamic = "force-dynamic";
 
 // Only a creator/member of the trip may touch its scorecard photos.
-async function authorize(req: NextRequest, tripId: string, gameId: string) {
+async function authorize(req: NextRequest, tripId: string) {
   const user = await getAuthedUser(req);
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   const admin = sb();
-  const [{ data: game }, { data: member }, { data: trip }] = await Promise.all([
-    admin.from("TripGame").select("id, tripId, scorecardPhotos").eq("id", gameId).maybeSingle(),
+  const [{ data: trip }, { data: member }] = await Promise.all([
+    admin.from("GolfTrip").select("id, createdBy, scorecardPhotos").eq("id", tripId).maybeSingle(),
     admin.from("GolfTripMember").select("id").eq("tripId", tripId).eq("userId", user.id).maybeSingle(),
-    admin.from("GolfTrip").select("id, createdBy").eq("id", tripId).maybeSingle(),
   ]);
-  if (!trip || !game || game.tripId !== tripId) {
-    return { error: NextResponse.json({ error: "not found" }, { status: 404 }) };
-  }
+  if (!trip) return { error: NextResponse.json({ error: "not found" }, { status: 404 }) };
   if (!member && trip.createdBy !== user.id) {
     return { error: NextResponse.json({ error: "not a member of this trip" }, { status: 403 }) };
   }
-  const photos: string[] = Array.isArray(game.scorecardPhotos) ? (game.scorecardPhotos as string[]) : [];
+  const photos: string[] = Array.isArray(trip.scorecardPhotos) ? (trip.scorecardPhotos as string[]) : [];
   return { admin, photos };
 }
 
 // Attach a scorecard photo URL (already uploaded to Supabase Storage).
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string; gameId: string }> }) {
-  const { id: tripId, gameId } = await params;
-  const auth = await authorize(req, tripId, gameId);
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: tripId } = await params;
+  const auth = await authorize(req, tripId);
   if ("error" in auth) return auth.error;
 
   let url: string;
@@ -55,15 +52,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const next = auth.photos.includes(url) ? auth.photos : [...auth.photos, url];
-  const { error } = await auth.admin.from("TripGame").update({ scorecardPhotos: next }).eq("id", gameId);
+  const { error } = await auth.admin.from("GolfTrip").update({ scorecardPhotos: next }).eq("id", tripId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, scorecardPhotos: next });
 }
 
 // Remove a scorecard photo URL.
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string; gameId: string }> }) {
-  const { id: tripId, gameId } = await params;
-  const auth = await authorize(req, tripId, gameId);
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: tripId } = await params;
+  const auth = await authorize(req, tripId);
   if ("error" in auth) return auth.error;
 
   let url: string;
@@ -74,7 +71,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
 
   const next = auth.photos.filter((p) => p !== url);
-  const { error } = await auth.admin.from("TripGame").update({ scorecardPhotos: next }).eq("id", gameId);
+  const { error } = await auth.admin.from("GolfTrip").update({ scorecardPhotos: next }).eq("id", tripId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, scorecardPhotos: next });
 }

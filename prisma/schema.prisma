@@ -651,6 +651,10 @@ model GolfTrip {
   publicizedAt        DateTime?
   publicizeNotifiedAt DateTime?
 
+  // Uploaded photos of the paper scorecard for this round/trip, kept as a
+  // keepsake artifact. Shape: string[] of Supabase Storage public URLs.
+  scorecardPhotos Json?
+
   // Ryder Cup mode
   ryderCupEnabled Boolean @default(false)
   redTeamName     String?
@@ -778,10 +782,6 @@ model TripGame {
   // per format segment. Null until scores are entered and settlement is
   // confirmed.
   settlement    Json?
-  // Uploaded photos of the physical/paper scorecard, kept as a keepsake
-  // artifact (distinct from the AI scan-to-extract flow). Shape: string[]
-  // of Supabase Storage public URLs.
-  scorecardPhotos Json?
   createdBy     String
   createdAt     DateTime @default(now())
 
