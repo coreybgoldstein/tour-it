@@ -459,7 +459,7 @@ export default function ProfilePage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showEditSheet, setShowEditSheet] = useState(false);
-  const [editData, setEditData] = useState<{ holeNumber: number | null; shotType: string; strategyNote: string; clubUsed: string; windCondition: string; landingZoneNote: string; whatCameraDoesntShow: string; taggedUsers: EditTagUser[]; originalTagIds: Set<string>; heroUser: EditTagUser | null; originalHeroUserId: string | null } | null>(null);
+  const [editData, setEditData] = useState<{ holeNumber: number | null; datePlayedAt: string; shotType: string; strategyNote: string; clubUsed: string; windCondition: string; landingZoneNote: string; whatCameraDoesntShow: string; taggedUsers: EditTagUser[]; originalTagIds: Set<string>; heroUser: EditTagUser | null; originalHeroUserId: string | null } | null>(null);
   // Hero search inside the edit sheet — mirrors the upload-flow picker.
   const [editHeroPick, setEditHeroPick] = useState<"me" | "someone">("me");
   const [editHeroInput, setEditHeroInput] = useState("");
@@ -1006,6 +1006,7 @@ export default function ProfilePage() {
       .filter((u): u is EditTagUser => !!u);
     setEditData({
       holeNumber: selectedClip.holeNumber ?? null,
+      datePlayedAt: (selectedClip.datePlayedAt ?? selectedClip.createdAt).slice(0, 10),
       shotType: data?.shotType || "",
       strategyNote: data?.strategyNote || "",
       clubUsed: data?.clubUsed || "",
@@ -1036,7 +1037,8 @@ export default function ProfilePage() {
         holeId = newId;
       }
     }
-    await supabase.from("Upload").update({ holeId, shotType: editData.shotType || null, clubUsed: editData.clubUsed || null, windCondition: editData.windCondition || null, strategyNote: editData.strategyNote || null, landingZoneNote: editData.landingZoneNote || null, whatCameraDoesntShow: editData.whatCameraDoesntShow || null, updatedAt: new Date().toISOString() }).eq("id", selectedClip.id).eq("userId", currentUserId);
+    const newDatePlayedAt = editData.datePlayedAt ? `${editData.datePlayedAt}T12:00:00.000Z` : null;
+    await supabase.from("Upload").update({ holeId, datePlayedAt: newDatePlayedAt, shotType: editData.shotType || null, clubUsed: editData.clubUsed || null, windCondition: editData.windCondition || null, strategyNote: editData.strategyNote || null, landingZoneNote: editData.landingZoneNote || null, whatCameraDoesntShow: editData.whatCameraDoesntShow || null, updatedAt: new Date().toISOString() }).eq("id", selectedClip.id).eq("userId", currentUserId);
 
     // Co-star tagging was retired; the edit sheet no longer accepts new
     // co-stars and any existing ones are left untouched (visible only on
@@ -1086,7 +1088,7 @@ export default function ProfilePage() {
       });
     }
 
-    setUploads(prev => prev.map(u => u.id === selectedClip.id ? { ...u, holeNumber: editData.holeNumber ?? u.holeNumber, holeId } : u));
+    setUploads(prev => prev.map(u => u.id === selectedClip.id ? { ...u, holeNumber: editData.holeNumber ?? u.holeNumber, holeId, datePlayedAt: newDatePlayedAt } : u));
     setEditSaving(false); setShowEditSheet(false);
   }
 
@@ -1375,6 +1377,11 @@ export default function ProfilePage() {
                         style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${editData.holeNumber === n ? "rgba(26,158,66,0.6)" : "rgba(255,255,255,0.1)"}`, background: editData.holeNumber === n ? "rgba(26,158,66,0.2)" : "rgba(255,255,255,0.04)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: editData.holeNumber === n ? "#1a9e42" : "rgba(255,255,255,0.45)", cursor: "pointer" }}>{n}</button>
                     ))}
                   </div>
+                </div>
+                <div style={{ marginBottom: 18 }}>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Date played</div>
+                  <input type="date" value={editData.datePlayedAt} onChange={e => setEditData(d => d ? { ...d, datePlayedAt: e.target.value } : d)}
+                    style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, padding: "10px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none", boxSizing: "border-box", colorScheme: "dark" }} />
                 </div>
                 <div style={{ marginBottom: 18 }}>
                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: 8 }}>Shot type</div>
