@@ -720,13 +720,12 @@ export default function TeeUpPage() {
     });
   }, [router]);
 
-  // Round is the unit of play; a game is a wager attached to a round.
-  // To avoid the same tee-up showing in two tabs, any round that has a
-  // game lives in the Games tab — the Rounds tab holds only plain rounds.
-  const tripIdsWithGames = new Set(games.map(g => g.tripId));
-  const futureRounds = trips.filter(t => t.isRound && !t.isPast && !tripIdsWithGames.has(t.id)).sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
+  const futureRounds = trips.filter(t => t.isRound && !t.isPast).sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
   const futureTrips = trips.filter(t => !t.isRound && !t.isPast).sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
-  const pastTrips = trips.filter(t => t.isPast).sort((a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? ""));
+  // Past round-trips belong in the Rounds archive (they carry the game +
+  // score sheet) — only multi-day trips land in the Trips archive.
+  const pastRoundTrips = trips.filter(t => t.isRound && t.isPast).sort((a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? ""));
+  const pastTrips = trips.filter(t => !t.isRound && t.isPast).sort((a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? ""));
 
   const activeGames = games.filter(g => !g.isArchived).sort((a, b) => (b.tripDate ?? "").localeCompare(a.tripDate ?? ""));
   const archivedGames = games.filter(g => g.isArchived).sort((a, b) => (b.tripDate ?? "").localeCompare(a.tripDate ?? ""));
@@ -864,7 +863,7 @@ export default function TeeUpPage() {
           {(() => {
             const archiveCounts: Record<Tab, number> = {
               games: archivedGames.length,
-              rounds: pastRounds.length,
+              rounds: pastRoundTrips.length + pastRounds.length,
               trips: pastTrips.length,
             };
             const isArchive = archiveOpen[tab];
@@ -943,9 +942,10 @@ export default function TeeUpPage() {
                 </div>
           )}
           {tab === "rounds" && archiveOpen.rounds && (
-            pastRounds.length === 0
-              ? <EmptyState title="No archived rounds" subtitle="Past rounds you've logged will appear here." />
+            pastRoundTrips.length === 0 && pastRounds.length === 0
+              ? <EmptyState title="No archived rounds" subtitle="Past rounds you've logged will appear here. Open one to enter scores or upload a scorecard." />
               : <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {pastRoundTrips.map(t => <TripCard key={t.id} trip={t} onClick={() => router.push(`/trips/${t.id}`)} />)}
                   {pastRounds.map(r => <LoggedRoundCard key={r.id} round={r} onClick={() => router.push(`/courses/${r.courseId}`)} />)}
                 </div>
           )}
