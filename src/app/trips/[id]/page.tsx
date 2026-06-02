@@ -60,6 +60,7 @@ type Member = {
   id: string;
   userId: string;
   role: string;
+  status?: string; // "accepted" | "pending" — pending = invited, not yet joined
   // handicapIndex is hydrated into Member.user so the unified
   // CreateGameSheet can pre-fill each player's HI without a second
   // fetch when the sheet opens.
@@ -568,7 +569,7 @@ export default function TripPage() {
       const { data: ryderData } = await supabase.from("GolfTripRyderTeam").select("userId, team").eq("tripId", id);
       if (ryderData) setRyderAssignments(ryderData as RyderAssignment[]);
 
-      const { data: memberData } = await supabase.from("GolfTripMember").select("id, userId, role").eq("tripId", id);
+      const { data: memberData } = await supabase.from("GolfTripMember").select("id, userId, role, status").eq("tripId", id);
       if (memberData && memberData.length > 0) {
         const userIds = memberData.map((m: any) => m.userId);
         const { data: usersData } = await supabase.from("User").select("id, username, displayName, avatarUrl, handicapIndex").in("id", userIds);
@@ -728,11 +729,14 @@ export default function TripPage() {
     if (!user || inviting) return;
     setInviting(inviteeId);
     const supabase = createClient();
-    const { error } = await supabase.from("GolfTripMember").insert({ id: crypto.randomUUID(), tripId: id as string, userId: inviteeId, role: "member" });
+    // Invitees join as "pending" — the trip stays hidden from their lists
+    // + profile until they accept. The owner still sees them in the roster
+    // marked "invited".
+    const { error } = await supabase.from("GolfTripMember").insert({ id: crypto.randomUUID(), tripId: id as string, userId: inviteeId, role: "member", status: "pending" });
     if (!error) {
       const invited = inviteResults.find(u => u.id === inviteeId);
       if (invited) {
-        setMembers(prev => [...prev, { id: crypto.randomUUID(), userId: inviteeId, role: "member", user: { username: invited.username, displayName: invited.displayName, avatarUrl: invited.avatarUrl } }]);
+        setMembers(prev => [...prev, { id: crypto.randomUUID(), userId: inviteeId, role: "member", status: "pending", user: { username: invited.username, displayName: invited.displayName, avatarUrl: invited.avatarUrl } }]);
         setInviteResults(prev => prev.filter(u => u.id !== inviteeId));
       }
 
@@ -746,7 +750,7 @@ export default function TripPage() {
         userId: inviteeId,
         type: "trip_invite",
         title: "You've been invited!",
-        body: `${inviterName} added you to "${tripName}"`,
+        body: `${inviterName} invited you to "${tripName}"`,
         linkUrl: `/trips/${id}`,
         referenceId: id as string,
         read: false,

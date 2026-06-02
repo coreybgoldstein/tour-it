@@ -17,6 +17,7 @@ const VALID_TYPES = new Set([
   "new_clips",
   "tag",
   "trip_invite",
+  "invite_declined",
   "comment_mention",
 ]);
 
@@ -166,7 +167,16 @@ export async function POST(req: NextRequest) {
     if (!trip) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const name = await getSenderName(user.id);
     title = "You've been invited!";
-    body = `${name} added you to "${trip.name}"`;
+    body = `${name} invited you to "${trip.name}"`;
+    url = `/trips/${referenceId}`;
+
+  } else if (type === "invite_declined") {
+    if (!referenceId) return NextResponse.json({ error: "Missing referenceId" }, { status: 400 });
+    const { data: trip } = await sb.from("GolfTrip").select("name").eq("id", referenceId).maybeSingle();
+    if (!trip) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const name = await getSenderName(user.id);
+    title = "Invite declined";
+    body = `${name} can't make "${trip.name}"`;
     url = `/trips/${referenceId}`;
 
   } else {

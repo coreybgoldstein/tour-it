@@ -1004,7 +1004,7 @@ const [editDescription, setEditDescription] = useState("");
     setSelectedTripId(null); setSelectedTripName("");
     if (user) {
       const supabase = createClient();
-      const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id);
+      const { data: memberData } = await supabase.from("GolfTripMember").select("tripId").eq("userId", user.id).eq("status", "accepted");
       if (memberData && memberData.length > 0) {
         const tripIds = memberData.map((m: { tripId: string }) => m.tripId);
         const { data: tripsData } = await supabase.from("GolfTrip").select("id, name, startDate, endDate").in("id", tripIds).order("createdAt", { ascending: false });

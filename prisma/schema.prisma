@@ -730,6 +730,12 @@ model GolfTripMember {
   tripId    String
   userId    String
   role      String   @default("member")
+  // Invite gating: "accepted" shows the trip/game/round in the member's
+  // lists + profile; "pending" hides it until they accept the invite
+  // notification. Defaulting to "accepted" backfills every existing row
+  // (and keeps trip creators visible). New non-creator invitees are
+  // inserted as "pending". Declining deletes the row entirely.
+  status    String   @default("accepted")
   createdAt DateTime @default(now())
 
   trip GolfTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)

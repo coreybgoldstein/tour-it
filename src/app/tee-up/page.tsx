@@ -370,12 +370,16 @@ export default function TeeUpPage() {
 
     // Add invited friends as trip members + send each a notification
     if (invitedFriends.length > 0) {
+      // Invited players join as "pending" — the trip/round/game stays
+      // hidden from their lists + profile until they accept the invite
+      // notification. The host (inserted above) is "accepted" by default.
       await supabase.from("GolfTripMember").insert(
         invitedFriends.map(f => ({
           id: crypto.randomUUID(),
           tripId,
           userId: f.id,
           role: "member",
+          status: "pending",
           createdAt: now,
         }))
       );
@@ -387,7 +391,7 @@ export default function TeeUpPage() {
           userId: f.id,
           type: "trip_invite",
           title: "You've been invited!",
-          body: `${inviterName} added you to "${tripName}"`,
+          body: `${inviterName} invited you to "${tripName}"`,
           linkUrl: `/trips/${tripId}`,
           referenceId: tripId,
           read: false,
@@ -554,11 +558,13 @@ export default function TeeUpPage() {
           }
         });
 
-      // 1) Trip IDs where user is a member
+      // 1) Trip IDs where user is an accepted member — pending invites
+      //    stay hidden from the Games/Rounds tabs until accepted.
       const { data: memberRows } = await supabase
         .from("GolfTripMember")
         .select("tripId")
-        .eq("userId", uid);
+        .eq("userId", uid)
+        .eq("status", "accepted");
       const tripIds = Array.from(new Set((memberRows ?? []).map((r: any) => r.tripId)));
 
       // 2) Enrich each trip with course/member/game counts

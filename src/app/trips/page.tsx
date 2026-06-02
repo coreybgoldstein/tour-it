@@ -27,11 +27,13 @@ export default function TripsPage() {
       if (!data.user) { router.replace("/login?next=/trips"); return; }
       setUserId(data.user.id);
 
-      // Trips where user is a member
+      // Trips where user is an accepted member — pending invites stay
+      // hidden until the user accepts the invite notification.
       const { data: memberRows } = await supabase
         .from("GolfTripMember")
         .select("tripId")
-        .eq("userId", data.user.id);
+        .eq("userId", data.user.id)
+        .eq("status", "accepted");
 
       const tripIds = (memberRows || []).map((r: any) => r.tripId);
       if (tripIds.length > 0) {

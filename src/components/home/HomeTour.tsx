@@ -183,12 +183,14 @@ export default function HomeTour() {
       const sb = createClient();
       const todayIso = new Date().toISOString().slice(0, 10);
 
-      // 1) Trips the user belongs to (creator OR member). The creator
-      //    also has a membership row, so this catches both.
+      // 1) Trips the user belongs to (creator OR accepted member). The
+      //    creator's membership is "accepted" by default; pending invites
+      //    stay hidden from "Your Tour" until accepted.
       const { data: memberships } = await sb
         .from("GolfTripMember")
         .select("tripId")
-        .eq("userId", userId);
+        .eq("userId", userId)
+        .eq("status", "accepted");
       const tripIds = (memberships ?? []).map((m: any) => m.tripId);
       if (tripIds.length === 0) {
         if (!cancelled) { setTours([]); setTourLoaded(true); writeCache("tours", []); }

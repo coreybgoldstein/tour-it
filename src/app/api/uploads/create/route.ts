@@ -57,7 +57,9 @@ async function findCandidateTrips(
   roundDate: string,
 ): Promise<{ id: string; name: string }[]> {
   const tripIds = new Set<string>();
-  const { data: memberships } = await admin.from("GolfTripMember").select("tripId").eq("userId", userId);
+  // Only auto-link clips to trips the user has accepted into (creator rows
+  // are "accepted" by default); pending invites don't pull in clips.
+  const { data: memberships } = await admin.from("GolfTripMember").select("tripId").eq("userId", userId).eq("status", "accepted");
   for (const m of (memberships ?? []) as { tripId: string }[]) tripIds.add(m.tripId);
   const { data: created } = await admin.from("GolfTrip").select("id").eq("createdBy", userId);
   for (const t of (created ?? []) as { id: string }[]) tripIds.add(t.id);

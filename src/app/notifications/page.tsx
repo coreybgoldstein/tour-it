@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { getClipThumbnail } from "@/lib/getVideoSrc";
 import { NotifIcon, extractCourseIdFromLink } from "@/components/NotifIcon";
+import { sendPushToUser } from "@/lib/sendPush";
 
 interface Notification {
   id: string;
@@ -18,6 +19,7 @@ interface Notification {
   read: boolean;
   createdAt: string;
   tagStatus?: "pending" | "approved" | "denied"; // resolved client-side for clip_tag
+  inviteStatus?: "pending" | "accepted" | "declined"; // resolved client-side for trip_invite
   isHeroTag?: boolean; // resolved client-side; true = hero tag, ownership transfers on approve
   clipThumbnail?: string | null; // resolved client-side; static thumb URL
   clipDeepLink?: string | null;  // resolved client-side; routes to the exact clip
@@ -97,6 +99,25 @@ export default function NotificationsPage() {
         });
       }
 
+      // For trip_invite notifications, resolve the viewer's current
+      // membership status on the referenced trip: "pending" → show
+      // Accept/Decline; "accepted" → joined; missing row → declined.
+      const inviteNotifs = notifs.filter(n => n.type === "trip_invite" && n.referenceId);
+      const inviteStatusMap: Record<string, "pending" | "accepted" | "declined"> = {};
+      if (inviteNotifs.length > 0) {
+        const inviteTripIds = [...new Set(inviteNotifs.map(n => n.referenceId!))];
+        const { data: memberRows } = await supabase
+          .from("GolfTripMember")
+          .select("tripId, status")
+          .eq("userId", user.id)
+          .in("tripId", inviteTripIds);
+        const byTrip = new Map((memberRows || []).map((m: any) => [m.tripId, m.status]));
+        for (const tid of inviteTripIds) {
+          const st = byTrip.get(tid);
+          inviteStatusMap[tid] = st === "accepted" ? "accepted" : st === "pending" ? "pending" : "declined";
+        }
+      }
+
       // Single batched logo fetch covers both link-derived and clip-derived
       // course references.
       const courseLogoMap: Record<string, string | null> = {};
@@ -118,6 +139,7 @@ export default function NotificationsPage() {
         return {
           ...n,
           tagStatus: isClipTag ? (tagStatusMap[n.referenceId!] ?? "pending") : undefined,
+          inviteStatus: n.type === "trip_invite" && n.referenceId ? (inviteStatusMap[n.referenceId] ?? "declined") : undefined,
           isHeroTag: isClipTag ? !!tagIsHeroMap[n.referenceId!] : undefined,
           clipThumbnail: isClipTag ? (clipThumbMap[n.referenceId!] ?? null) : undefined,
           clipDeepLink: isClipTag ? (clipLinkMap[n.referenceId!] ?? n.linkUrl) : undefined,
@@ -176,6 +198,42 @@ export default function NotificationsPage() {
     }
 
     setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: approve ? "approved" : "denied" } : n));
+    setActing(null);
+  }
+
+  // Accept or decline a trip/round/game invite. Accept flips the member
+  // row to "accepted" (the trip then appears in their tabs + profile);
+  // decline removes the row entirely and notifies the trip creator.
+  async function handleInviteAction(notifId: string, tripId: string, accept: boolean) {
+    if (!userId || acting) return;
+    setActing(notifId);
+    const supabase = createClient();
+    if (accept) {
+      await supabase.from("GolfTripMember").update({ status: "accepted" }).eq("userId", userId).eq("tripId", tripId);
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, inviteStatus: "accepted" } : n));
+    } else {
+      const { data: trip } = await supabase.from("GolfTrip").select("name, createdBy").eq("id", tripId).maybeSingle();
+      await supabase.from("GolfTripMember").delete().eq("userId", userId).eq("tripId", tripId);
+      if (trip?.createdBy && trip.createdBy !== userId) {
+        const { data: me } = await supabase.from("User").select("displayName, username").eq("id", userId).single();
+        const myName = me?.displayName || me?.username || "Someone";
+        const now = new Date().toISOString();
+        await supabase.from("Notification").insert({
+          id: crypto.randomUUID(),
+          userId: trip.createdBy,
+          type: "invite_declined",
+          title: "Invite declined",
+          body: `${myName} can't make "${trip.name}"`,
+          linkUrl: `/trips/${tripId}`,
+          referenceId: tripId,
+          read: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+        sendPushToUser("invite_declined", trip.createdBy, tripId);
+      }
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, inviteStatus: "declined" } : n));
+    }
     setActing(null);
   }
 
@@ -314,6 +372,40 @@ export default function NotificationsPage() {
                         </div>
                       ) : (
                         <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>{n.isHeroTag ? "Marked not me" : "Declined"}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Accept / Decline for pending trip-round-game invites */}
+                  {n.type === "trip_invite" && n.referenceId && (
+                    <div style={{ marginTop: 10 }}>
+                      {n.inviteStatus === "pending" ? (
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleInviteAction(n.id, n.referenceId!, true); }}
+                            disabled={acting === n.id}
+                            style={{ flex: 1, background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}
+                          >
+                            {acting === n.id ? "..." : "Accept"}
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleInviteAction(n.id, n.referenceId!, false); }}
+                            disabled={acting === n.id}
+                            style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 0", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.4)", cursor: "pointer", opacity: acting === n.id ? 0.5 : 1 }}
+                          >
+                            Decline
+                          </button>
+                        </div>
+                      ) : n.inviteStatus === "accepted" ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "#4da862" }}>You&apos;re in</span>
+                          {n.linkUrl && (
+                            <button onClick={(e) => { e.stopPropagation(); router.push(n.linkUrl!); }} style={{ marginLeft: "auto", background: "none", border: "none", fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", cursor: "pointer", textDecoration: "underline" }}>View</button>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)" }}>Declined</span>
                       )}
                     </div>
                   )}
