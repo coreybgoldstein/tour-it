@@ -720,7 +720,11 @@ export default function TeeUpPage() {
     });
   }, [router]);
 
-  const futureRounds = trips.filter(t => t.isRound && !t.isPast).sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
+  // Round is the unit of play; a game is a wager attached to a round.
+  // To avoid the same tee-up showing in two tabs, any round that has a
+  // game lives in the Games tab — the Rounds tab holds only plain rounds.
+  const tripIdsWithGames = new Set(games.map(g => g.tripId));
+  const futureRounds = trips.filter(t => t.isRound && !t.isPast && !tripIdsWithGames.has(t.id)).sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
   const futureTrips = trips.filter(t => !t.isRound && !t.isPast).sort((a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""));
   const pastTrips = trips.filter(t => t.isPast).sort((a, b) => (b.startDate ?? "").localeCompare(a.startDate ?? ""));
 
