@@ -510,6 +510,27 @@ export default function TeeUpPage() {
     return () => { cancelled = true; };
   }, [searchParams, router]);
 
+  // Deep-link from a user's profile "Schedule a game" button:
+  // ?withUser=<userId> opens Quick Round with that golfer pre-invited.
+  useEffect(() => {
+    const withUser = searchParams.get("withUser");
+    if (!withUser) return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("User")
+        .select("id, username, displayName, avatarUrl")
+        .eq("id", withUser)
+        .single();
+      if (cancelled || !data) return;
+      setInvitedFriends(prev => prev.some(f => f.id === data.id) ? prev : [...prev, data as FriendRow]);
+      setQuickOpen(true);
+      router.replace("/tee-up");
+    })();
+    return () => { cancelled = true; };
+  }, [searchParams, router]);
+
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data }) => {
