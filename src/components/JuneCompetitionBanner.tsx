@@ -3,23 +3,28 @@
 import Link from "next/link";
 import { useState } from "react";
 import { isJuneActive } from "@/lib/competitions";
+import { cdnImage } from "@/lib/cdnImage";
 
 // June 2026 competition banner — Wilson Golf sponsored. Full-bleed
 // strip (edge-to-edge, IAB Large Mobile Banner height of 100px) that
 // sits flush beneath the sticky Tour It top bar. Background is the
-// warm off-white of the Wilson product photography so the product
-// cut-outs blend in seamlessly with no visible tile edges.
+// warm off-white of the Wilson product photography; product shots use
+// mixBlendMode:multiply so their white backgrounds drop out and they
+// blend in seamlessly with no visible tile edges.
 //
-// Assets live in /public/competitions/wilson/. Each <img> hides on
-// error so the unit stays clean until the files are dropped in.
+// Assets live in Supabase Storage (the repo gitignores *.png), under
+// tour-it-photos/competitions/wilson/. Each <img> hides on error so
+// the unit stays clean if an asset is missing.
 
 const BANNER_BG = "#ece9e2"; // matches Wilson product-shot background
+const ASSET_BASE =
+  "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/competitions/wilson";
 
 function ProductImg({ src, alt }: { src: string; alt: string }) {
   const [ok, setOk] = useState(true);
   if (!ok) return null;
   return (
-    <img src={src} alt={alt} onError={() => setOk(false)} style={{ height: "100%", width: "auto", maxWidth: 64, objectFit: "contain" }} />
+    <img src={cdnImage(src)} alt={alt} onError={() => setOk(false)} style={{ height: "100%", width: "auto", maxWidth: 72, objectFit: "contain", mixBlendMode: "multiply" }} />
   );
 }
 
@@ -54,8 +59,8 @@ export default function JuneCompetitionBanner() {
 
         {/* Right: product photos, blended into the matching background */}
         <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: "8px 16px 8px 8px" }}>
-          <ProductImg src="/competitions/wilson/staff-balls.png" alt="Wilson Staff Model golf balls" />
-          <ProductImg src="/competitions/wilson/rope-hat.png" alt="Wilson Script Rope Hat" />
+          <ProductImg src={`${ASSET_BASE}/staff-balls.png`} alt="Wilson Staff Model golf balls" />
+          <ProductImg src={`${ASSET_BASE}/rope-hat.png`} alt="Wilson Script Rope Hat" />
         </div>
       </div>
     </Link>
@@ -72,6 +77,6 @@ function WilsonMark() {
     );
   }
   return (
-    <img src="/competitions/wilson/wilson-logo.png" alt="Wilson" onError={() => setOk(false)} style={{ height: 15, width: "auto", objectFit: "contain" }} />
+    <img src={cdnImage(`${ASSET_BASE}/wilson-logo.png`)} alt="Wilson" onError={() => setOk(false)} style={{ height: 16, width: "auto", objectFit: "contain", mixBlendMode: "multiply" }} />
   );
 }

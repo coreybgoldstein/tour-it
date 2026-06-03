@@ -3,15 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { POINTS_GROUPS } from "@/lib/pointsGroups";
 import { SwipeGrip } from "@/components/SwipeGrip";
+import { cdnImage } from "@/lib/cdnImage";
 
 type Props = { onClose: () => void };
 
 const COMPETITION_GROUPS = POINTS_GROUPS;
 
+// Assets live in Supabase Storage (the repo gitignores *.png).
+const ASSET_BASE =
+  "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/competitions/wilson";
+
 const PRIZE_PRODUCTS = [
-  { src: "/competitions/wilson/staff-balls.png", alt: "Wilson Staff Model golf balls" },
-  { src: "/competitions/wilson/rope-hat.png", alt: "Wilson Script Rope Hat" },
-  { src: "/competitions/wilson/polo.png", alt: "Wilson golf polo" },
+  { src: `${ASSET_BASE}/staff-balls.png`, alt: "Wilson Staff Model golf balls" },
+  { src: `${ASSET_BASE}/rope-hat.png`, alt: "Wilson Script Rope Hat" },
+  { src: `${ASSET_BASE}/polo.png`, alt: "Wilson golf polo" },
 ];
 
 export default function JuneCompetitionModal({ onClose }: Props) {
@@ -171,7 +176,7 @@ function PrizeImg({ src, alt }: { src: string; alt: string }) {
   if (!ok) return null;
   return (
     <div style={{ flex: 1, minWidth: 0, aspectRatio: "1 / 1", borderRadius: 10, background: "#fff", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <img src={src} alt={alt} onError={() => setOk(false)} style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "multiply" }} />
+      <img src={cdnImage(src)} alt={alt} onError={() => setOk(false)} style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "multiply" }} />
     </div>
   );
 }
@@ -184,7 +189,7 @@ function WilsonMark() {
     );
   }
   return (
-    <img src="/competitions/wilson/wilson-logo.png" alt="Wilson" onError={() => setOk(false)} style={{ height: 15, width: "auto", objectFit: "contain" }} />
+    <img src={cdnImage(`${ASSET_BASE}/wilson-logo.png`)} alt="Wilson" onError={() => setOk(false)} style={{ height: 15, width: "auto", objectFit: "contain" }} />
   );
 }
 
