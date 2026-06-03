@@ -25,6 +25,21 @@ import { rateLimit } from "@/lib/rateLimit";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { cdnImage } from "@/lib/cdnImage";
 
+// Abbreviation → full state name so the gallery course search matches
+// whether the golfer types "NY" or "New York".
+const STATE_NAME: Record<string, string> = {
+  AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",
+  CT:"Connecticut",DE:"Delaware",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",
+  IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",
+  ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",
+  MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",
+  NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",
+  ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",
+  RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",
+  UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",
+  WI:"Wisconsin",WY:"Wyoming",DC:"District of Columbia",
+};
+
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
   PUTT: "Putt", BUNKER: "Bunker", LAY_UP: "Layup", FULL_HOLE: "Full Hole",
@@ -1208,7 +1223,8 @@ export default function ProfilePage() {
     return clipGroups.filter(group => {
       const c = coursesById.get(group.clips[0].courseId);
       if (!c) return false;
-      return [c.name, c.city, c.state].filter(Boolean).join(" ").toLowerCase().includes(q);
+      const stateFull = c.state ? STATE_NAME[c.state.toUpperCase()] : null;
+      return [c.name, c.city, c.state, stateFull].filter(Boolean).join(" ").toLowerCase().includes(q);
     });
   }, [clipGroups, coursesById, clipSearch]);
 
