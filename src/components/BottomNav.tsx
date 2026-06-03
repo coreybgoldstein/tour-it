@@ -65,7 +65,7 @@ export default function BottomNav() {
       ),
     },
     {
-      label: "Tour",
+      label: "Courses",
       active: isSearch,
       onClick: () => {
         if (isSearch) {
@@ -83,11 +83,18 @@ export default function BottomNav() {
           setTimeout(() => ghost.remove(), 1000);
         }
       },
-      icon: (active: boolean) => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? "#4da862" : "rgba(255,255,255,0.85)"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-      ),
+      icon: (active: boolean) => {
+        const c = active ? "#4da862" : "rgba(255,255,255,0.85)";
+        return (
+          // Pin flag planted on a green — the universal "golf course" mark.
+          // Pennant + flagstick + a soft green contour at the base.
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="7.5" y1="3" x2="7.5" y2="19"/>
+            <path d="M7.5 3.5 L15.5 6 L7.5 8.5 Z" fill={c} stroke="none"/>
+            <path d="M3 19 Q12 16 21 19"/>
+          </svg>
+        );
+      },
     },
     {
       label: "Upload",
