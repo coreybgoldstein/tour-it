@@ -7,7 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { rankLabel } from "@/lib/progression";
 import { RANK_COLORS } from "@/config/points-system";
 import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
-import { isMayActive, isJuneActive } from "@/lib/competitions";
+import { isMayActive, isJuneActive, WILSON_ASSET_BASE, WILSON_SHOP_URL } from "@/lib/competitions";
 import MayCompetitionModal from "@/components/MayCompetitionModal";
 import JuneCompetitionModal from "@/components/JuneCompetitionModal";
 import PointsSystemSheet from "@/components/PointsSystemSheet";
@@ -237,6 +237,25 @@ export default function LeaderboardsPage() {
           >
             Rules →
           </button>
+        </div>
+      )}
+
+      {/* Powered-by-Wilson sponsor pill — taps through to the Wilson Golf shop */}
+      {showCompetitionBanner && juneActive && (
+        <div style={{ display: "flex", justifyContent: "center", margin: "0 20px 16px" }}>
+          <a
+            href={WILSON_SHOP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.92)", borderRadius: 99, padding: "5px 12px", textDecoration: "none" }}
+          >
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(17,21,15,0.45)" }}>Powered by</span>
+            <img
+              src={cdnImage(`${WILSON_ASSET_BASE}/wilson-logo.png`)}
+              alt="Wilson"
+              style={{ height: 14, width: "auto", objectFit: "contain", mixBlendMode: "multiply" }}
+            />
+          </a>
         </div>
       )}
 

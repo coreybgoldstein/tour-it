@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { POINTS_GROUPS } from "@/lib/pointsGroups";
 import { SwipeGrip } from "@/components/SwipeGrip";
 import { cdnImage } from "@/lib/cdnImage";
+import { WILSON_ASSET_BASE, WILSON_SHOP_URL } from "@/lib/competitions";
 
 type Props = { onClose: () => void };
 
 const COMPETITION_GROUPS = POINTS_GROUPS;
 
 // Assets live in Supabase Storage (the repo gitignores *.png).
-const ASSET_BASE =
-  "https://awlbxzpevwidowxxvuef.supabase.co/storage/v1/object/public/tour-it-photos/competitions/wilson";
+const ASSET_BASE = WILSON_ASSET_BASE;
 
 const PRIZE_PRODUCTS = [
   { src: `${ASSET_BASE}/staff-balls.png`, alt: "Wilson Staff Model golf balls" },
@@ -70,11 +70,17 @@ export default function JuneCompetitionModal({ onClose }: Props) {
         </button>
 
         <div style={{ padding: "8px 24px 0" }}>
-          {/* Sponsor chip */}
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.92)", borderRadius: 99, padding: "5px 12px", marginBottom: 14 }}>
+          {/* Sponsor chip — taps through to the Wilson Golf shop */}
+          <a
+            href={WILSON_SHOP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.92)", borderRadius: 99, padding: "5px 12px", marginBottom: 14, textDecoration: "none" }}
+          >
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(17,21,15,0.45)" }}>Powered by</span>
             <WilsonMark />
-          </div>
+          </a>
 
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 900, color: "#fff", marginBottom: 6, lineHeight: 1.2 }}>
             🏆 June Competition
