@@ -651,6 +651,11 @@ model GolfTrip {
   lodgingCity    String?
   lodgingState   String?
 
+  // Destination cities for the trip. A trip can span multiple cities
+  // (e.g. a Michigan loop hitting Harbor Springs + Traverse City), so
+  // this is a free-form list the creator adds. Shape: ["Harbor Springs, MI", ...].
+  cities         String[] @default([])
+
   // Public conversion. When the user opts to publish, isPublic flips
   // true and publicizedAt is set; we also create a TripItinerary row
   // referencing this trip via sourceGolfTripId.

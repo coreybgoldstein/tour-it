@@ -33,6 +33,7 @@ type Trip = {
   lodging?: string | null;
   lodgingCity?: string | null;
   lodgingState?: string | null;
+  cities?: string[];
   isPublic?: boolean;
   publicizedAt?: string | null;
   ryderCupEnabled?: boolean;
@@ -463,6 +464,8 @@ export default function TripPage() {
   const [editLodging, setEditLodging] = useState("");
   const [editLodgingCity, setEditLodgingCity] = useState<string | null>(null);
   const [editLodgingState, setEditLodgingState] = useState<string | null>(null);
+  const [editCities, setEditCities] = useState<string[]>([]);
+  const [cityInput, setCityInput] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Delete trip
@@ -488,6 +491,7 @@ export default function TripPage() {
     setEditLodging(trip.lodging || "");
     setEditLodgingCity(trip.lodgingCity || null);
     setEditLodgingState(trip.lodgingState || null);
+    setEditCities(trip.cities || []);
     setEditOpen(true);
     if (typeof window !== "undefined") window.history.replaceState({}, "", window.location.pathname);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1014,6 +1018,7 @@ export default function TripPage() {
       lodging: editLodging.trim() || null,
       lodgingCity: editLodgingCity,
       lodgingState: editLodgingState,
+      cities: editCities,
     };
     await supabase.from("GolfTrip").update(updates).eq("id", id as string);
     setTrip(prev => prev ? { ...prev, ...updates } : prev);
@@ -1577,12 +1582,11 @@ export default function TripPage() {
                 </button>
                 {isOwner && (
                   <button
-                    onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditTeeTime(tripCourses[0]?.teeTime || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
+                    onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditTeeTime(tripCourses[0]?.teeTime || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditCities(trip.cities || []); setEditOpen(true); }}
                     aria-label="Edit round"
-                    style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(7,16,10,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: "6px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.95)", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(7,16,10,0.55)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 99, padding: 8, color: "rgba(255,255,255,0.95)", cursor: "pointer", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
                   >
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    Edit
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   </button>
                 )}
               </div>
@@ -1702,12 +1706,11 @@ export default function TripPage() {
                       )}
                       {isOwner && (
                       <button
-                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditTeeTime(tripCourses[0]?.teeTime || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditOpen(true); }}
+                        onClick={() => { setEditName(trip.name); setEditDesc(trip.description || ""); setEditStart(trip.startDate || ""); setEditEnd(trip.endDate || ""); setEditTeeTime(tripCourses[0]?.teeTime || ""); setEditAirport(trip.arrivalAirport || ""); setEditLodging(trip.lodging || ""); setEditLodgingCity(trip.lodgingCity || null); setEditLodgingState(trip.lodgingState || null); setEditCities(trip.cities || []); setEditOpen(true); }}
                         aria-label="Edit trip"
-                        style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
+                        style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", padding: "2px 4px", margin: "-2px -4px -2px 0", color: "rgba(77,168,98,0.85)", cursor: "pointer", flexShrink: 0 }}
                       >
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      Edit
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                       )}
                     </div>
@@ -1743,8 +1746,19 @@ export default function TripPage() {
                     captured at trip creation so the header isn't
                     just a name + date. Each chip uses a custom
                     green-stroke icon. */}
-                {!isRound && (trip.arrivalAirport || trip.lodging) && (
+                {!isRound && (trip.arrivalAirport || trip.lodging || (trip.cities?.length ?? 0) > 0) && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+                    {(trip.cities ?? []).map((c, i) => (
+                      <button
+                        key={`${c}-${i}`}
+                        onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c)}`, "_blank")}
+                        aria-label={`Open ${c} in Google Maps`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 99, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(126,200,140,0.95)", cursor: "pointer" }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {c}
+                      </button>
+                    ))}
                     {trip.arrivalAirport && (
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 99, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.28)", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "rgba(126,200,140,0.95)" }}>
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" /></svg>
@@ -3004,6 +3018,43 @@ export default function TripPage() {
                       stateHint={tripCourses[0]?.course?.state ?? undefined}
                     />
                   </div>
+                  <div>
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", marginBottom: 5 }}>Cities <span style={{ fontWeight: 400 }}>(add one or more)</span></div>
+                    {editCities.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                        {editCities.map((c, i) => (
+                          <span key={`${c}-${i}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(77,168,98,0.14)", border: "1px solid rgba(77,168,98,0.4)", borderRadius: 99, padding: "5px 6px 5px 11px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff" }}>
+                            {c}
+                            <button onClick={() => setEditCities(prev => prev.filter((_, j) => j !== i))} aria-label={`Remove ${c}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", color: "rgba(255,255,255,0.8)", cursor: "pointer", padding: 0 }}>
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        value={cityInput}
+                        onChange={e => setCityInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = cityInput.trim();
+                            if (v && !editCities.includes(v)) setEditCities(prev => [...prev, v]);
+                            setCityInput("");
+                          }
+                        }}
+                        placeholder="e.g. Harbor Springs, MI"
+                        style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
+                      />
+                      <button
+                        onClick={() => { const v = cityInput.trim(); if (v && !editCities.includes(v)) setEditCities(prev => [...prev, v]); setCityInput(""); }}
+                        style={{ flexShrink: 0, background: "rgba(45,122,66,0.9)", border: "1px solid rgba(126,200,140,0.5)", borderRadius: 10, padding: "0 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
               <div>
@@ -4177,6 +4228,19 @@ function RyderCupHero({
   const blueMembers = ryderAssignments.filter(a => a.team === "BLUE")
     .map(a => members.find(m => m.userId === a.userId)).filter(Boolean) as Member[];
 
+  const collapseKey = `ryderCollapsed:${trip.id}`;
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try { setCollapsed(localStorage.getItem(collapseKey) === "1"); } catch {}
+  }, [collapseKey]);
+  const toggleCollapsed = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem(collapseKey, next ? "1" : "0"); } catch {}
+      return next;
+    });
+  };
+
   const renderTeamSide = (
     team: "RED" | "BLUE",
     name: string | null | undefined,
@@ -4277,45 +4341,62 @@ function RyderCupHero({
         <div style={{ height: 2, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
 
         {/* Title bar */}
-        <div style={{ background: "#0a0a0a", padding: "4px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 800, color: "#d4a017", letterSpacing: "0.18em", textTransform: "uppercase" }}>The Ryder Cup</div>
+        <div style={{ background: "#0a0a0a", padding: "4px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <button
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expand Ryder Cup" : "Collapse Ryder Cup"}
+            aria-expanded={!collapsed}
+            style={{ background: "none", border: "none", padding: 0, margin: 0, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", flex: 1, minWidth: 0 }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#d4a017" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.15s" }}><polyline points="6 9 12 15 18 9"/></svg>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 9, fontWeight: 800, color: "#d4a017", letterSpacing: "0.18em", textTransform: "uppercase" }}>The Ryder Cup</span>
+            {collapsed && (
+              <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 900, color: "#fff", letterSpacing: "0.04em", marginLeft: 2 }}>
+                {formatRyderScore(trip.redTeamScore ?? 0)}<span style={{ color: "rgba(255,255,255,0.4)", margin: "0 4px" }}>–</span>{formatRyderScore(trip.blueTeamScore ?? 0)}
+              </span>
+            )}
+          </button>
           {isOwner && (
-            <button onClick={onEditTeams} aria-label="Edit Ryder Cup teams" style={{ background: "none", border: "none", padding: "2px 2px", margin: "-2px", display: "flex", alignItems: "center", color: "rgba(212,160,23,0.85)", cursor: "pointer" }}>
+            <button onClick={onEditTeams} aria-label="Edit Ryder Cup teams" style={{ background: "none", border: "none", padding: "2px 2px", margin: "-2px", display: "flex", alignItems: "center", color: "rgba(212,160,23,0.85)", cursor: "pointer", flexShrink: 0 }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
           )}
         </div>
 
-        {/* Body — two team panels with trophy badge in the middle */}
-        <div style={{ display: "flex", position: "relative" }}>
-          {renderTeamSide("RED", trip.redTeamName, "Team 1", trip.redTeamScore ?? 0, redMembers, editingRedScore, setEditingRedScore, "left")}
-          {/* Center trophy badge */}
-          <div style={{
-            position: "absolute",
-            top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 36, height: 36, borderRadius: "50%",
-            background: "radial-gradient(circle at 30% 30%, #fde68a 0%, #d4a017 50%, #92580f 100%)",
-            border: "2px solid #fbbf24",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.3)",
-            zIndex: 2,
-            pointerEvents: "none",
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="#7c4a05" stroke="#3d2300" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" fill="none" stroke="#3d2300" strokeWidth="1.4"/>
-              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" fill="none" stroke="#3d2300" strokeWidth="1.4"/>
-              <path d="M4 22h16" stroke="#3d2300" strokeWidth="1.6"/>
-              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" stroke="#3d2300" strokeWidth="1.4" fill="none"/>
-              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" stroke="#3d2300" strokeWidth="1.4" fill="none"/>
-              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" stroke="#3d2300" strokeWidth="1.2"/>
-            </svg>
-          </div>
-          {renderTeamSide("BLUE", trip.blueTeamName, "Team 2", trip.blueTeamScore ?? 0, blueMembers, editingBlueScore, setEditingBlueScore, "right")}
-        </div>
+        {!collapsed && (
+          <>
+            {/* Body — two team panels with trophy badge in the middle */}
+            <div style={{ display: "flex", position: "relative" }}>
+              {renderTeamSide("RED", trip.redTeamName, "Team 1", trip.redTeamScore ?? 0, redMembers, editingRedScore, setEditingRedScore, "left")}
+              {/* Center trophy badge */}
+              <div style={{
+                position: "absolute",
+                top: "50%", left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: 36, height: 36, borderRadius: "50%",
+                background: "radial-gradient(circle at 30% 30%, #fde68a 0%, #d4a017 50%, #92580f 100%)",
+                border: "2px solid #fbbf24",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.3)",
+                zIndex: 2,
+                pointerEvents: "none",
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#7c4a05" stroke="#3d2300" strokeWidth="0.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" fill="none" stroke="#3d2300" strokeWidth="1.4"/>
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" fill="none" stroke="#3d2300" strokeWidth="1.4"/>
+                  <path d="M4 22h16" stroke="#3d2300" strokeWidth="1.6"/>
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" stroke="#3d2300" strokeWidth="1.4" fill="none"/>
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" stroke="#3d2300" strokeWidth="1.4" fill="none"/>
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" stroke="#3d2300" strokeWidth="1.2"/>
+                </svg>
+              </div>
+              {renderTeamSide("BLUE", trip.blueTeamName, "Team 2", trip.blueTeamScore ?? 0, blueMembers, editingBlueScore, setEditingBlueScore, "right")}
+            </div>
 
-        {/* Bottom gold trim */}
-        <div style={{ height: 2, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
+            {/* Bottom gold trim */}
+            <div style={{ height: 2, background: "linear-gradient(to right, #d4a017, #fbbf24, #d4a017)" }} />
+          </>
+        )}
       </div>
     </div>
   );
