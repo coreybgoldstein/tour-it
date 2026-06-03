@@ -544,6 +544,9 @@ const [editDescription, setEditDescription] = useState("");
   const [editHoleCount, setEditHoleCount] = useState<9 | 18>(18);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [caddieOpen, setCaddieOpen] = useState(false);
+  const [caddieData, setCaddieData] = useState<Record<number, { tee?: string; approach?: string; green?: string; general?: string }> | null>(null);
+  const [caddieLoading, setCaddieLoading] = useState(false);
+  const [caddieError, setCaddieError] = useState(false);
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
   const [contributeError, setContributeError] = useState<string | null>(null);
@@ -1235,39 +1238,62 @@ const [editDescription, setEditDescription] = useState("");
     return sorted[0][1].length > 1 ? Number(sorted[0][0]) : null;
   })();
 
-  // Caddie Book — structured per-hole aggregation of scout intel: most-used
-  // club, prevailing wind, and the actual notes golfers logged. Built from
-  // holeClipsMap (UGC clips) joined to the seeded hole meta (par/yds/about).
-  const caddieBook = (() => {
+  // Caddie Book — the written intel golfers logged, bucketed per hole by the
+  // shot phase the clip was filmed at (tee / approach / green). No metadata
+  // chips for now; just the notes. This raw bucketing is fed to the synthesis
+  // route, which de-duplicates and condenses each phase.
+  const phaseOf = (shotType: string | null): "tee" | "approach" | "green" | "general" => {
+    switch (shotType) {
+      case "TEE_SHOT": return "tee";
+      case "APPROACH": case "LAY_UP": return "approach";
+      case "CHIP": case "PITCH": case "PUTT": case "BUNKER": return "green";
+      default: return "general";
+    }
+  };
+  const caddieBookRaw = (() => {
     const holeMeta = new Map(holes.map(h => [h.holeNumber, h]));
-    const tally = (vals: (string | null)[]): [string, number] | null => {
-      const m = new Map<string, number>();
-      vals.forEach(v => { if (v) m.set(v, (m.get(v) ?? 0) + 1); });
-      const sorted = [...m.entries()].sort((a, b) => b[1] - a[1]);
-      return sorted[0] ?? null;
-    };
     return Object.entries(holeClipsMap)
       .map(([h, c]) => [Number(h), c] as const)
       .filter(([, c]) => c.length > 0)
       .sort((a, b) => a[0] - b[0])
       .map(([holeNum, clips]) => {
         const meta = holeMeta.get(holeNum);
-        const notes = clips.flatMap(c =>
-          [c.strategyNote, c.landingZoneNote, c.whatCameraDoesntShow].filter(Boolean) as string[]
-        );
+        const buckets: { tee: string[]; approach: string[]; green: string[]; general: string[] } = { tee: [], approach: [], green: [], general: [] };
+        clips.forEach(c => {
+          const notes = [c.strategyNote, c.landingZoneNote, c.whatCameraDoesntShow].filter(Boolean) as string[];
+          if (notes.length === 0) return;
+          buckets[phaseOf(c.shotType)].push(...notes);
+        });
         return {
           holeNum,
           par: meta?.par ?? null,
           yardage: meta?.yardage ?? null,
           description: meta?.description ?? null,
-          scoutCount: clips.length,
-          topClub: tally(clips.map(c => c.clubUsed)),
-          topWind: tally(clips.map(c => c.windCondition)),
-          notes: notes.slice(0, 4),
+          ...buckets,
         };
-      });
+      })
+      .filter(h => h.tee.length || h.approach.length || h.green.length || h.general.length);
   })();
-  const fmtWind = (w: string) => w.replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase());
+
+  const openCaddieBook = () => {
+    setCaddieOpen(true);
+    if (caddieData || caddieLoading || caddieBookRaw.length === 0) return;
+    setCaddieLoading(true);
+    setCaddieError(false);
+    fetch("/api/caddie-book", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ courseName: course.name, holes: caddieBookRaw }),
+    })
+      .then(r => r.json())
+      .then((data: { holes?: { holeNumber: number; tee?: string; approach?: string; green?: string; general?: string }[] }) => {
+        const map: Record<number, { tee?: string; approach?: string; green?: string; general?: string }> = {};
+        (data.holes ?? []).forEach(h => { map[h.holeNumber] = { tee: h.tee, approach: h.approach, green: h.green, general: h.general }; });
+        setCaddieData(map);
+      })
+      .catch(() => setCaddieError(true))
+      .finally(() => setCaddieLoading(false));
+  };
 
   return (
     <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingLeft: isDesktop ? 72 : 0 }}>
@@ -1781,7 +1807,7 @@ const [editDescription, setEditDescription] = useState("");
         return (
         <div style={{ padding: "0 16px 16px" }}>
           <button
-            onClick={() => setCaddieOpen(true)}
+            onClick={openCaddieBook}
             style={{ width: "100%", background: "linear-gradient(135deg, rgba(45,122,66,0.16) 0%, rgba(13,35,24,0.6) 100%)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}
           >
             <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -2080,10 +2106,10 @@ const [editDescription, setEditDescription] = useState("");
         </div>
       )}
 
-{/* Caddie Book sheet — full-course intel digest. The synthesis engine
-          (AI summary across every scout's per-hole metadata) is still being
-          built; for now the sheet frames what's coming and points scouts to
-          the per-hole intel that already exists. */}
+{/* Caddie Book sheet — per-hole intel digest. The notes golfers logged are
+          bucketed by shot phase (tee/approach/green) on the client, then sent
+          to /api/caddie-book where Claude de-duplicates and condenses each
+          phase using only the supplied notes. Result is cached for the session. */}
       {caddieOpen && (
         <div onClick={() => setCaddieOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
           <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 24px 44px", maxHeight: "90vh", overflowY: "auto" }}>
@@ -2098,59 +2124,53 @@ const [editDescription, setEditDescription] = useState("");
               </div>
             </div>
             <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, margin: "12px 0 18px" }}>
-              The hole-by-hole intel scouts have logged here — most-used clubs, the wind they played, and the notes they left.
+              The intel scouts have logged here, condensed hole by hole — off the tee, on the approach, and around the green.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {caddieBook.map(h => (
-                <div key={h.holeNum} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff" }}>
-                      Hole {h.holeNum}
-                      {(h.par != null || h.yardage != null) && (
-                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.4)", marginLeft: 8 }}>
-                          {[h.par != null ? `Par ${h.par}` : null, h.yardage != null ? `${h.yardage} yds` : null].filter(Boolean).join(" · ")}
-                        </span>
-                      )}
+            {caddieLoading ? (
+              <div style={{ textAlign: "center", padding: "32px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
+                Reading the scout notes…
+              </div>
+            ) : caddieError ? (
+              <div style={{ textAlign: "center", padding: "24px 0" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 14 }}>Couldn&apos;t assemble the Caddie Book just now.</div>
+                <button onClick={openCaddieBook} style={{ background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 10, padding: "9px 20px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#4da862", cursor: "pointer" }}>Try again</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {caddieBookRaw.map(h => {
+                  const s = caddieData?.[h.holeNum];
+                  const sections = ([
+                    ["Tee", s?.tee],
+                    ["Approach", s?.approach],
+                    ["Around the green", s?.green],
+                    [null, s?.general],
+                  ] as [string | null, string | undefined][]).filter(([, v]) => v && v.trim());
+                  if (sections.length === 0) return null;
+                  return (
+                    <div key={h.holeNum} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 10 }}>
+                        Hole {h.holeNum}
+                        {(h.par != null || h.yardage != null) && (
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.4)", marginLeft: 8 }}>
+                            {[h.par != null ? `Par ${h.par}` : null, h.yardage != null ? `${h.yardage} yds` : null].filter(Boolean).join(" · ")}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {sections.map(([label, text], i) => (
+                          <div key={i}>
+                            {label && (
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "1.2px", textTransform: "uppercase", color: "#4da862", marginBottom: 4 }}>{label}</div>
+                            )}
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)", lineHeight: 1.55 }}>{text}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 500, color: "#4da862", background: "rgba(77,168,98,0.12)", borderRadius: 999, padding: "2px 8px", flexShrink: 0 }}>
-                      {h.scoutCount} clip{h.scoutCount !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-
-                  {h.description && (
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.55, marginTop: 8 }}>{h.description}</div>
-                  )}
-
-                  {(h.topClub || h.topWind) && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
-                      {h.topClub && (
-                        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "6px 10px" }}>
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "1px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>Club </span>
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "#fff" }}>{h.topClub[0]}{h.topClub[1] > 1 ? ` (${h.topClub[1]})` : ""}</span>
-                        </div>
-                      )}
-                      {h.topWind && (
-                        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "6px 10px" }}>
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "1px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>Wind </span>
-                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "#fff" }}>{fmtWind(h.topWind[0])}{h.topWind[1] > 1 ? ` (${h.topWind[1]})` : ""}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {h.notes.length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
-                      {h.notes.map((note, i) => (
-                        <div key={i} style={{ display: "flex", gap: 8, fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>
-                          <span style={{ color: "#4da862", flexShrink: 0 }}>“</span>
-                          <span>{note}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  );
+                })}
+              </div>
+            )}
             <button onClick={() => setCaddieOpen(false)} style={{ marginTop: 20, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
           </div>
         </div>
