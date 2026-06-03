@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { isJuneActive } from "@/lib/competitions";
 
-// June 2026 competition banner — Wilson Golf sponsored. Built to the
-// IAB Large Mobile Banner unit (320×100, 3.2:1), centered in the feed
-// so it reads as a standard ad slot. Background is the warm off-white
-// of the Wilson product photography so the product cut-outs blend in
-// seamlessly with no visible tile edges.
+// June 2026 competition banner — Wilson Golf sponsored. Full-bleed
+// strip (edge-to-edge, IAB Large Mobile Banner height of 100px) that
+// sits flush beneath the sticky Tour It top bar. Background is the
+// warm off-white of the Wilson product photography so the product
+// cut-outs blend in seamlessly with no visible tile edges.
 //
 // Assets live in /public/competitions/wilson/. Each <img> hides on
 // error so the unit stays clean until the files are dropped in.
@@ -29,20 +29,16 @@ export default function JuneCompetitionBanner() {
   return (
     <Link href="/leaderboards?period=monthly&competition=1" style={{ display: "block", textDecoration: "none" }}>
       <div style={{
-        width: 320,
-        maxWidth: "100%",
+        width: "100%",
         height: 100,
-        margin: "0 auto",
         display: "flex",
         alignItems: "stretch",
         background: BANNER_BG,
-        border: "1px solid rgba(77,168,98,0.3)",
-        borderRadius: 12,
+        borderBottom: "1px solid rgba(0,0,0,0.08)",
         overflow: "hidden",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
       }}>
         {/* Left: brand + headline + CTA */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 3, padding: "10px 0 10px 12px" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 3, padding: "10px 0 10px 18px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <WilsonMark />
             <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 7.5, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "#2d7a42" }}>June</span>
@@ -57,7 +53,7 @@ export default function JuneCompetitionBanner() {
         </div>
 
         {/* Right: product photos, blended into the matching background */}
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 2, padding: "8px 10px 8px 0" }}>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: "8px 16px 8px 8px" }}>
           <ProductImg src="/competitions/wilson/staff-balls.png" alt="Wilson Staff Model golf balls" />
           <ProductImg src="/competitions/wilson/rope-hat.png" alt="Wilson Script Rope Hat" />
         </div>

@@ -507,10 +507,10 @@ export default function HomeTour() {
     <main style={{ minHeight: "100dvh", background: SITE_BG, color: "#fff", paddingBottom: 110, paddingLeft: isDesktop ? 72 : 0 }}>
       <MayCompetitionBanner />
 
+      {/* June (Wilson) banner — full-bleed, flush under the top bar */}
+      <JuneCompetitionBanner />
+
       <div style={{ padding: "12px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
-        <JuneCompetitionBanner />
-
-
         {/* Unified entry — routes to /tour with the Smart (LLM)
             tab pre-selected. "Tour It All" plays on the brand and
             signals the unified scope (courses + trips). Bolder

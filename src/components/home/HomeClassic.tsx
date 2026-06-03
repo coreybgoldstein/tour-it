@@ -2023,10 +2023,8 @@ export default function HomeClassic() {
           {/* May Competition banner — only renders in May 2026 */}
           <MayCompetitionBanner />
 
-          {/* June Competition (Wilson) banner — only renders in June 2026 */}
-          <div style={{ padding: "10px 20px 0" }}>
-            <JuneCompetitionBanner />
-          </div>
+          {/* June (Wilson) banner — full-bleed, flush under the top bar */}
+          <JuneCompetitionBanner />
 
           {/* Hero text */}
           <div className="discovery-row-pad" style={{ padding: "20px 20px 14px", flexShrink: 0 }}>
