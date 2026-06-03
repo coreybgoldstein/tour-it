@@ -89,8 +89,8 @@ export default function BottomNav() {
           // Pin flag planted on a green — the universal "golf course" mark.
           // Pennant + flagstick + a soft green contour at the base.
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="7.5" y1="3" x2="7.5" y2="19"/>
-            <path d="M7.5 3.5 L15.5 6 L7.5 8.5 Z" fill={c} stroke="none"/>
+            <line x1="7" y1="2" x2="7" y2="19"/>
+            <path d="M7 2.5 L17 5.75 L7 9 Z" fill={c} stroke="none"/>
             <path d="M3 19 Q12 16 21 19"/>
           </svg>
         );
