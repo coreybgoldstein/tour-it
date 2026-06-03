@@ -2122,7 +2122,7 @@ export default function TripPage() {
               style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Create Game
+              Game
             </button>
           </div>
           {games.length === 0 ? (
@@ -2444,8 +2444,30 @@ export default function TripPage() {
           if (photos.length === 0 && !canEdit) return null;
           return (
             <div style={{ padding: "24px 20px 0" }}>
-              <div className="section-label" style={{ marginBottom: 12 }}>
-                Scorecard{photos.length > 0 && <span className="count">{photos.length}</span>}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div className="section-label" style={{ marginBottom: 0 }}>
+                  Scorecard{photos.length > 0 && <span className="count">{photos.length}</span>}
+                </div>
+                {canEdit && (
+                  <button
+                    onClick={() => scorecardFileRef.current?.click()}
+                    disabled={scorecardUploading}
+                    style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: scorecardUploading ? "default" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
+                  >
+                    {scorecardUploading ? (
+                      <>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" style={{ animation: "tourit-spin 0.8s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        <style>{`@keyframes tourit-spin { to { transform: rotate(360deg); } }`}</style>
+                        Uploading…
+                      </>
+                    ) : (
+                      <>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Scorecard
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
               {photos.length > 0 && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: canEdit ? 12 : 0 }}>
@@ -2470,25 +2492,8 @@ export default function TripPage() {
                   ))}
                 </div>
               )}
-              {canEdit && (
-                <button
-                  onClick={() => scorecardFileRef.current?.click()}
-                  disabled={scorecardUploading}
-                  style={{ width: "100%", background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 12, padding: "12px", fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 700, color: "#4da862", cursor: scorecardUploading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-                >
-                  {scorecardUploading ? (
-                    <>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" style={{ animation: "tourit-spin 0.8s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                      <style>{`@keyframes tourit-spin { to { transform: rotate(360deg); } }`}</style>
-                      Uploading…
-                    </>
-                  ) : (
-                    <>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      {photos.length > 0 ? "Add another photo" : "Upload scorecard photo"}
-                    </>
-                  )}
-                </button>
+              {photos.length === 0 && (
+                <div style={{ textAlign: "center", padding: "16px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>No scorecard yet — snap a photo of the paper card</div>
               )}
             </div>
           );
@@ -2504,8 +2509,8 @@ export default function TripPage() {
               onClick={() => router.push(`/upload${primaryCourseId ? `?courseId=${primaryCourseId}&tripId=${id}` : `?tripId=${id}`}`)}
               style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
-              Add Clip
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Clip
             </button>
           </div>
           {clips.length === 0 ? (

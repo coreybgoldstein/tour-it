@@ -112,25 +112,23 @@ export default function TripNotes({ tripId, currentUserId, canEdit }: { tripId: 
             <button
               onClick={() => setAddOpen(true)}
               style={{
-                background: "linear-gradient(135deg, #2d7a42 0%, #4da862 100%)",
-                color: "#fff",
-                border: "1px solid rgba(77,168,98,0.6)",
+                background: "rgba(77,168,98,0.15)",
+                color: "#4da862",
+                border: "1px solid rgba(77,168,98,0.35)",
                 borderRadius: 99,
-                padding: "8px 14px",
+                padding: "5px 12px",
                 fontFamily: "'Outfit', sans-serif",
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: "0.02em",
+                fontSize: 11,
+                fontWeight: 600,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
                 whiteSpace: "nowrap",
-                boxShadow: "0 2px 8px rgba(45,122,66,0.3)",
               }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add note
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Note
             </button>
           )}
         </div>
