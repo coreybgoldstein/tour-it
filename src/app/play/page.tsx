@@ -23,6 +23,8 @@ import { rankLabel } from "@/lib/progression";
 import BottomNav from "@/components/BottomNav";
 import PointsSystemSheet from "@/components/PointsSystemSheet";
 import MayCompetitionModal from "@/components/MayCompetitionModal";
+import JuneCompetitionModal from "@/components/JuneCompetitionModal";
+import { isJuneActive } from "@/lib/competitions";
 
 const RANK_META: Record<RankTierKey, string> = {
   CADDIE:     "Reading the book. Every great one started here.",
@@ -357,7 +359,9 @@ export default function PlayHubPage() {
       <BottomNav />
 
       {showPoints && <PointsSystemSheet onClose={() => setShowPoints(false)} />}
-      {showComp && <MayCompetitionModal onClose={() => setShowComp(false)} />}
+      {showComp && (isJuneActive()
+        ? <JuneCompetitionModal onClose={() => setShowComp(false)} />
+        : <MayCompetitionModal onClose={() => setShowComp(false)} />)}
     </main>
   );
 }

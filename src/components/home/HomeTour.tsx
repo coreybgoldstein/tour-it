@@ -35,6 +35,7 @@ import BottomNav from "@/components/BottomNav";
 // NOTE: TourItTopBar is rendered globally by src/app/layout.tsx — do
 // NOT render it here or the page ends up with a doubled bar.
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
+import JuneCompetitionBanner from "@/components/JuneCompetitionBanner";
 import PlannerCTA from "@/components/PlannerCTA";
 import { gameFormatLabel } from "@/lib/gameFormats";
 import { airportByCode } from "@/data/airports";
@@ -507,6 +508,8 @@ export default function HomeTour() {
       <MayCompetitionBanner />
 
       <div style={{ padding: "12px 16px 0", maxWidth: isDesktop ? 720 : undefined, margin: isDesktop ? "0 auto" : undefined }}>
+        <JuneCompetitionBanner />
+
 
         {/* Unified entry — routes to /tour with the Smart (LLM)
             tab pre-selected. "Tour It All" plays on the brand and

@@ -20,6 +20,7 @@ import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { rateLimit } from "@/lib/rateLimit";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
+import JuneCompetitionBanner from "@/components/JuneCompetitionBanner";
 import { activeFeaturedTournament, type FeaturedTournament } from "@/lib/pgaChampionship";
 import { cdnImage } from "@/lib/cdnImage";
 
@@ -2021,6 +2022,11 @@ export default function HomeClassic() {
 
           {/* May Competition banner — only renders in May 2026 */}
           <MayCompetitionBanner />
+
+          {/* June Competition (Wilson) banner — only renders in June 2026 */}
+          <div style={{ padding: "10px 20px 0" }}>
+            <JuneCompetitionBanner />
+          </div>
 
           {/* Hero text */}
           <div className="discovery-row-pad" style={{ padding: "20px 20px 14px", flexShrink: 0 }}>

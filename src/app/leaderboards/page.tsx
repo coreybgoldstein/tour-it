@@ -7,8 +7,9 @@ import BottomNav from "@/components/BottomNav";
 import { rankLabel } from "@/lib/progression";
 import { RANK_COLORS } from "@/config/points-system";
 import { getRankRingBorder, isLegend } from "@/lib/rank-styles";
-import { isMayActive } from "@/lib/competitions";
+import { isMayActive, isJuneActive } from "@/lib/competitions";
 import MayCompetitionModal from "@/components/MayCompetitionModal";
+import JuneCompetitionModal from "@/components/JuneCompetitionModal";
 import PointsSystemSheet from "@/components/PointsSystemSheet";
 import { cdnImage } from "@/lib/cdnImage";
 
@@ -152,7 +153,8 @@ export default function LeaderboardsPage() {
   const pts = (e: Entry) =>
     period === "all" ? e.totalPoints : e.monthlyPoints;
 
-  const showCompetitionBanner = isMayActive() && period === "monthly";
+  const juneActive = isJuneActive();
+  const showCompetitionBanner = (isMayActive() || juneActive) && period === "monthly";
 
   return (
     <main style={{ minHeight: "100svh", background: "#07100a", paddingBottom: "calc(120px + env(safe-area-inset-bottom))", color: "#fff" }}>
@@ -214,7 +216,9 @@ export default function LeaderboardsPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, color: "rgba(255,255,255,0.85)", minWidth: 0 }}>
             <span aria-hidden style={{ flexShrink: 0 }}>🏆</span>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              May Competition — $100 GolfNow gift card on the line
+              {juneActive
+                ? "June Competition — Wilson Golf prize pack on the line"
+                : "May Competition — $100 GolfNow gift card on the line"}
             </span>
           </div>
           <button
@@ -329,7 +333,9 @@ export default function LeaderboardsPage() {
 
       <BottomNav />
 
-      {showCompModal && <MayCompetitionModal onClose={() => setShowCompModal(false)} />}
+      {showCompModal && (juneActive
+        ? <JuneCompetitionModal onClose={() => setShowCompModal(false)} />
+        : <MayCompetitionModal onClose={() => setShowCompModal(false)} />)}
       {showPointsSheet && <PointsSystemSheet onClose={() => setShowPointsSheet(false)} />}
     </main>
   );
