@@ -49,13 +49,16 @@ export async function GET(req: NextRequest) {
   if (googleKey) {
     try {
       const queryStr = state ? `${q} ${state}` : q;
-      // Text Search returns full place objects with structured
-      // address components in one call — no second Details round-
-      // trip needed. types=lodging restricts to actual hotels /
-      // resorts / condos / B&Bs.
+      // Text Search returns full place objects with structured address
+      // components in one call — no second Details round-trip needed.
+      // We deliberately DON'T pass type=lodging: Google files many real
+      // vacation properties (e.g. "Alpine Village Condominium at The
+      // Highlands at Harbor Springs") as a "Condominium complex" rather
+      // than lodging, and the type filter silently drops them. The query
+      // text the golfer typed already carries the lodging intent, and
+      // Text Search ranks by relevance, so name matches surface fine.
       const params = new URLSearchParams({
         query: queryStr,
-        type: "lodging",
         region: "us",
         key: googleKey,
       });
