@@ -2126,7 +2126,14 @@ const [editDescription, setEditDescription] = useState("");
             <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, margin: "12px 0 18px" }}>
               The intel scouts have logged here, condensed hole by hole — off the tee, on the approach, and around the green.
             </p>
-            {caddieLoading ? (
+            {caddieBookRaw.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "8px 0 24px" }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.65, marginBottom: 16, maxWidth: 280, marginInline: "auto" }}>
+                  No written scout notes on this course yet. Add the club, the line, what the camera doesn&apos;t show — and it&apos;ll start filling the book.
+                </div>
+                <button onClick={() => { setCaddieOpen(false); router.push(`/upload?courseId=${id}`); }} style={{ background: "#2d7a42", border: "none", borderRadius: 11, padding: "11px 24px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer" }}>Add intel</button>
+              </div>
+            ) : caddieLoading ? (
               <div style={{ textAlign: "center", padding: "32px 0", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
                 Reading the scout notes…
               </div>
