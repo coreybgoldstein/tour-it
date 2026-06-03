@@ -12,6 +12,7 @@ import CreateGameSheet from "@/components/CreateGameSheet";
 import TripNotes from "@/components/TripNotes";
 import AirportField from "@/components/AirportField";
 import LodgingField from "@/components/LodgingField";
+import CityField from "@/components/CityField";
 import ScorecardCell from "@/components/ScorecardCell";
 import ScoreEntrySheet from "@/components/ScoreEntrySheet";
 import SettlementSheet from "@/components/SettlementSheet";
@@ -656,6 +657,10 @@ export default function TripPage() {
   const [winnerPicker, setWinnerPicker] = useState<{ gameId: string; key: string; label: string } | null>(null);
   const [tripImageExpanded, setTripImageExpanded] = useState(false);
   const [coursesWithHandicaps, setCoursesWithHandicaps] = useState<Set<string>>(new Set());
+  // Sparse, user-contributed course stats keyed by courseId: par +
+  // yardage summed from Hole rows, slope = highest on file across
+  // TeeBox colors. Any field may be null when data is missing.
+  const [courseStats, setCourseStats] = useState<Record<string, { par: number | null; yardage: number | null; slope: number | null }>>({});
   const [deletingGameId, setDeletingGameId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -749,19 +754,31 @@ export default function TripPage() {
           ...tcData.map((tc: any) => tc.courseId),
           ...tcData.map((tc: any) => tc.secondaryCourseId).filter(Boolean),
         ];
-        const [{ data: coursesMeta }, { data: holesData }] = await Promise.all([
+        const [{ data: coursesMeta }, { data: holesData }, { data: teeData }] = await Promise.all([
           supabase.from("Course").select("id, holeCount").in("id", allCourseIds),
-          supabase.from("Hole").select("courseId, handicapRank").in("courseId", allCourseIds),
+          supabase.from("Hole").select("courseId, handicapRank, par, yardage").in("courseId", allCourseIds),
+          supabase.from("TeeBox").select("courseId, slope").in("courseId", allCourseIds),
         ]);
         const holeCountById: Record<string, number> = {};
         (coursesMeta ?? []).forEach((c: any) => { holeCountById[c.id] = c.holeCount; });
         const haveHandicaps = new Set<string>();
+        const stats: Record<string, { par: number | null; yardage: number | null; slope: number | null }> = {};
         allCourseIds.forEach((cid: string) => {
           const expected = holeCountById[cid] ?? 18;
           const holes = (holesData || []).filter((h: any) => h.courseId === cid);
           if (holes.length === expected && holes.every((h: any) => h.handicapRank > 0)) haveHandicaps.add(cid);
+          // Par + yardage only when every hole carries a value, so the
+          // sum can't read low from a partially-filled course.
+          const par = holes.length === expected && holes.every((h: any) => h.par > 0)
+            ? holes.reduce((s: number, h: any) => s + h.par, 0) : null;
+          const yardage = holes.length === expected && holes.every((h: any) => h.yardage > 0)
+            ? holes.reduce((s: number, h: any) => s + h.yardage, 0) : null;
+          const slopes = (teeData || []).filter((t: any) => t.courseId === cid && typeof t.slope === "number").map((t: any) => t.slope);
+          const slope = slopes.length ? Math.max(...slopes) : null;
+          stats[cid] = { par, yardage, slope };
         });
         setCoursesWithHandicaps(haveHandicaps);
+        setCourseStats(stats);
       }
 
       setLoading(false);
@@ -2071,6 +2088,24 @@ export default function TripPage() {
                                     </>
                                   )}
                                 </div>
+                                {(() => {
+                                  const s = courseStats[tc.courseId];
+                                  if (!s || (s.par == null && s.yardage == null && s.slope == null)) return null;
+                                  const parts: string[] = [];
+                                  if (s.par != null) parts.push(`Par ${s.par}`);
+                                  if (s.yardage != null) parts.push(`${s.yardage.toLocaleString()} yds`);
+                                  if (s.slope != null) parts.push(`Slope ${s.slope}`);
+                                  return (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 600, color: "rgba(77,168,98,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                      {parts.map((p, i) => (
+                                        <span key={p} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                          {i > 0 && <span style={{ color: "rgba(255,255,255,0.2)" }}>·</span>}
+                                          {p}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
                                 {tc.accommodation && (
                                   <div style={{ marginTop: 4, fontFamily: "'Outfit', sans-serif", fontSize: 10.5, color: "rgba(255,255,255,0.32)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                     Stay: {tc.accommodation}
@@ -3037,28 +3072,12 @@ export default function TripPage() {
                         ))}
                       </div>
                     )}
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <input
-                        value={cityInput}
-                        onChange={e => setCityInput(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const v = cityInput.trim();
-                            if (v && !editCities.includes(v)) setEditCities(prev => [...prev, v]);
-                            setCityInput("");
-                          }
-                        }}
-                        placeholder="e.g. Harbor Springs, MI"
-                        style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 14px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "#fff", outline: "none" }}
-                      />
-                      <button
-                        onClick={() => { const v = cityInput.trim(); if (v && !editCities.includes(v)) setEditCities(prev => [...prev, v]); setCityInput(""); }}
-                        style={{ flexShrink: 0, background: "rgba(45,122,66,0.9)", border: "1px solid rgba(126,200,140,0.5)", borderRadius: 10, padding: "0 16px", fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}
-                      >
-                        Add
-                      </button>
-                    </div>
+                    <CityField
+                      value={cityInput}
+                      onChange={setCityInput}
+                      onAdd={(c) => setEditCities(prev => prev.includes(c) ? prev : [...prev, c])}
+                      stateHint={tripCourses[0]?.course?.state ?? undefined}
+                    />
                   </div>
                 </div>
               )}
