@@ -358,6 +358,10 @@ export default function ProfilePage() {
   const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
   const [selectedBadge, setSelectedBadge] = useState<EarnedBadge | null>(null);
   const [profileTab, setProfileTab] = useState<"clips" | "lists">("clips");
+  // Simple text filter over the gallery — owner-only. Matches course
+  // name / city / state so you can quickly find the round you played
+  // at a specific course. Plain substring match, no LLM.
+  const [clipSearch, setClipSearch] = useState("");
   const [savedCourses, setSavedCourses] = useState<SavedCourse[]>([]);
   const [listFilter, setListFilter] = useState<"BUCKET_LIST" | "PLAYED">("BUCKET_LIST");
   const [followerCount, setFollowerCount] = useState(0);
@@ -518,6 +522,7 @@ export default function ProfilePage() {
   const [followSheet, setFollowSheet] = useState<"followers" | "following" | null>(null);
   const [followList, setFollowList] = useState<FollowUser[]>([]);
   const [followListLoading, setFollowListLoading] = useState(false);
+  const [followSearch, setFollowSearch] = useState("");
 
   // Delete account
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
@@ -884,7 +889,7 @@ export default function ProfilePage() {
 
   async function openFollowSheet(type: "followers" | "following") {
     if (!profile) return;
-    setFollowSheet(type); setFollowList([]); setFollowListLoading(true);
+    setFollowSheet(type); setFollowList([]); setFollowSearch(""); setFollowListLoading(true);
     const supabase = createClient();
     const col = type === "followers" ? "followerId" : "followingId";
     const { data } = await supabase.from("Follow").select(col).eq(type === "followers" ? "followingId" : "followerId", profile.id).eq("status", "ACTIVE");
@@ -1195,6 +1200,18 @@ export default function ProfilePage() {
     return m;
   }, [coursesPlayed]);
 
+  // Gallery filter — a round-group matches if its course name, city, or
+  // state contains the query. Empty query (or non-owner) shows everything.
+  const filteredClipGroups = useMemo(() => {
+    const q = clipSearch.trim().toLowerCase();
+    if (!q) return clipGroups;
+    return clipGroups.filter(group => {
+      const c = coursesById.get(group.clips[0].courseId);
+      if (!c) return false;
+      return [c.name, c.city, c.state].filter(Boolean).join(" ").toLowerCase().includes(q);
+    });
+  }, [clipGroups, coursesById, clipSearch]);
+
   if (loading) return (
     <main style={{ background: "#07100a", minHeight: "100dvh", paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 760 : undefined }}>
       {/* Banner */}
@@ -1248,7 +1265,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <main style={{ background: "#07100a", minHeight: "100dvh", fontFamily: "'Outfit', sans-serif", color: "#fff", paddingBottom: isDesktop ? 0 : "80px", paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 760 : undefined }}>
+    <main style={{ background: "#07100a", minHeight: "100dvh", fontFamily: "'Outfit', sans-serif", color: "#fff", paddingBottom: isDesktop ? 0 : "calc(104px + env(safe-area-inset-bottom))", paddingLeft: isDesktop ? 72 : 0, maxWidth: isDesktop ? 760 : undefined }}>
       <style>{`
         
         * { box-sizing: border-box; }
@@ -1859,7 +1876,7 @@ export default function ProfilePage() {
       {/* Back button — only shown when viewing someone else's profile.
           The global TourItTopBar provides the hamburger on the owner's own profile. */}
       {!isOwner && (
-        <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ padding: "8px 16px 0", display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={() => router.back()} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
@@ -1948,7 +1965,7 @@ export default function ProfilePage() {
       {/* Identity band — matches the trip page pattern. Avatar is vertically
           centered in the band so it sits cleanly between the green top bar
           and the progression card below */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px 8px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "4px 16px 8px" }}>
         {/* Avatar + username nameplate. The wrapper is position:relative so
             the @username pill can sit on the lower quarter of the avatar
             without being clipped by the avatar's overflow:hidden. */}
@@ -2184,6 +2201,28 @@ export default function ProfilePage() {
       {/* Clips grid */}
       {profileTab === "clips" && (
         <div style={{ paddingTop: 12 }}>
+          {/* Course search — owner-only. Filters the gallery by course
+              name / city / state so you can find a specific round fast. */}
+          {isOwner && allClips.length > 0 && (
+            <div style={{ padding: "0 20px 12px" }}>
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 12, pointerEvents: "none" }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input
+                  value={clipSearch}
+                  onChange={e => setClipSearch(e.target.value)}
+                  placeholder="Search by course, city, or state"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "9px 36px 9px 34px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                />
+                {clipSearch && (
+                  <button onClick={() => setClipSearch("")} aria-label="Clear search" style={{ position: "absolute", right: 10, display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: 0 }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
           {allClips.length === 0 ? (
             <div style={{ padding: "48px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
               <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(26,158,66,0.07)", border: "1px solid rgba(26,158,66,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -2193,9 +2232,13 @@ export default function ProfilePage() {
               {isOwner && <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.25)", lineHeight: 1.5, maxWidth: 220 }}>Upload clips and hole photos to start building your scouting profile.</div>}
               {isOwner && <button onClick={() => router.push("/upload")} style={{ background: "#2d7a42", border: "none", borderRadius: 12, padding: "11px 28px", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 4, fontFamily: "'Outfit', sans-serif" }}>Upload a clip</button>}
             </div>
+          ) : filteredClipGroups.length === 0 ? (
+            <div style={{ padding: "40px 24px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
+              No rounds match “{clipSearch.trim()}”.
+            </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px" }}>
-              {clipGroups.map((group, i) => {
+            <div style={{ display: "grid", gridTemplateColumns: isDesktop ? "repeat(6, 1fr)" : "repeat(3, 1fr)", gap: "2px", padding: "0 20px 24px" }}>
+              {filteredClipGroups.map((group, i) => {
                 const cover = group.clips[0];
                 const count = group.clips.length;
                 const isBundle = count > 1;
@@ -2394,6 +2437,28 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
+            {/* Name search — appears once there's a list to filter. Plain
+                substring match over display name + @username. */}
+            {!followListLoading && followList.length > 0 && (
+              <div style={{ padding: "0 20px 12px" }}>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 12, pointerEvents: "none" }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input
+                    value={followSearch}
+                    onChange={e => setFollowSearch(e.target.value)}
+                    placeholder="Search names"
+                    spellCheck={false}
+                    autoCorrect="off"
+                    style={{ width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 99, padding: "9px 36px 9px 34px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                  />
+                  {followSearch && (
+                    <button onClick={() => setFollowSearch("")} aria-label="Clear search" style={{ position: "absolute", right: 10, display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: 0 }}>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
             <div style={{ overflowY: "auto", paddingBottom: 40 }}>
               {followListLoading ? (
                 <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}><div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid rgba(26,158,66,0.3)", borderTopColor: "#1a9e42", animation: "spin 0.8s linear infinite" }} /></div>
@@ -2416,7 +2481,13 @@ export default function ProfilePage() {
                     </button>
                   )}
                 </div>
-              ) : followList.map(u => (
+              ) : (() => {
+                const q = followSearch.trim().toLowerCase();
+                const shown = q ? followList.filter(u => [u.displayName, u.username].filter(Boolean).join(" ").toLowerCase().includes(q)) : followList;
+                if (shown.length === 0) {
+                  return <div style={{ padding: "32px 20px", textAlign: "center", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>No names match “{followSearch.trim()}”.</div>;
+                }
+                return shown.map(u => (
                 <button key={u.id} onClick={() => { setFollowSheet(null); router.push(`/profile/${u.id}`); }}
                   style={{ width: "100%", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}>
                   <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(26,158,66,0.15)", border: "1px solid rgba(26,158,66,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -2428,7 +2499,8 @@ export default function ProfilePage() {
                   </div>
                   <svg style={{ marginLeft: "auto" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
-              ))}
+                ));
+              })()}
             </div>
           </div>
         </>
