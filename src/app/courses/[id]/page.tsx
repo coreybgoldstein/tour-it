@@ -24,6 +24,7 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { activeFeaturedTournament } from "@/lib/pgaChampionship";
 import { cdnImage } from "@/lib/cdnImage";
+import CaddieBookIcon from "@/components/CaddieBookIcon";
 import { OfficialCourseBadge } from "@/components/course/OfficialCourseBadge";
 import ClaimCourseSheet from "@/components/course/ClaimCourseSheet";
 import FromTheCourseBlock from "@/components/course/FromTheCourseBlock";
@@ -542,6 +543,7 @@ const [editDescription, setEditDescription] = useState("");
   const [editWebsite, setEditWebsite] = useState("");
   const [editHoleCount, setEditHoleCount] = useState<9 | 18>(18);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [caddieOpen, setCaddieOpen] = useState(false);
   const [contributing, setContributing] = useState(false);
   const [contributeSuccess, setContributeSuccess] = useState(false);
   const [contributeError, setContributeError] = useState<string | null>(null);
@@ -1735,6 +1737,34 @@ const [editDescription, setEditDescription] = useState("");
         );
       })()}
 
+      {/* Caddie Book — course-wide intel digest synthesized from every
+          scout's per-hole clips. Entry point lives above the hole grid so
+          it reads as the "whole course at a glance" before drilling into
+          individual holes. Only surfaced once there's UGC to synthesize. */}
+      {(() => {
+        const scoutedHoleCount = Object.keys(holeClipsMap).filter(h => holeClipsMap[Number(h)]?.length > 0).length;
+        if (scoutedHoleCount === 0) return null;
+        return (
+        <div style={{ padding: "0 16px 16px" }}>
+          <button
+            onClick={() => setCaddieOpen(true)}
+            style={{ width: "100%", background: "linear-gradient(135deg, rgba(45,122,66,0.16) 0%, rgba(13,35,24,0.6) 100%)", border: "1px solid rgba(77,168,98,0.3)", borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", textAlign: "left" }}
+          >
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <CaddieBookIcon size={26} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 800, color: "#fff" }}>Caddie Book</div>
+              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>
+                Course intel from {scoutedHoleCount} scouted hole{scoutedHoleCount !== 1 ? "s" : ""}
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+        );
+      })()}
+
       {/* Holes grid — Front 9 always; Back 9 only on 18-hole courses.
           Show the grid whenever EITHER there are user clips OR we've seeded
           hole imagery (Aronimink during PGA week, etc). Generic empty state
@@ -2012,6 +2042,34 @@ const [editDescription, setEditDescription] = useState("");
                 : (course.description || hero.description)}
             </p>
             <button onClick={() => setAboutOpen(false)} style={{ marginTop: 24, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
+          </div>
+        </div>
+      )}
+
+{/* Caddie Book sheet — full-course intel digest. The synthesis engine
+          (AI summary across every scout's per-hole metadata) is still being
+          built; for now the sheet frames what's coming and points scouts to
+          the per-hole intel that already exists. */}
+      {caddieOpen && (
+        <div onClick={() => setCaddieOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 480, background: "#0d2318", borderRadius: "20px 20px 0 0", padding: "20px 24px 44px", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ width: 36, height: 4, background: "rgba(255,255,255,0.15)", borderRadius: 99, margin: "0 auto 20px" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 11, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <CaddieBookIcon size={28} />
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff" }}>Caddie Book</div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{course.name}</div>
+              </div>
+            </div>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.7, marginTop: 14 }}>
+              Every clip golfers post here — club, wind, landing zones, the line off the tee — is being woven into one course-wide intel digest. The full hole-by-hole Caddie Book is on its way.
+            </p>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginTop: 10 }}>
+              In the meantime, tap any scouted hole below to read what other golfers have logged.
+            </p>
+            <button onClick={() => setCaddieOpen(false)} style={{ marginTop: 24, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
           </div>
         </div>
       )}
