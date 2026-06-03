@@ -544,7 +544,7 @@ const [editDescription, setEditDescription] = useState("");
   const [editHoleCount, setEditHoleCount] = useState<9 | 18>(18);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [caddieOpen, setCaddieOpen] = useState(false);
-  const [caddieData, setCaddieData] = useState<Record<number, { tee?: string; approach?: string; green?: string; general?: string }> | null>(null);
+  const [caddieData, setCaddieData] = useState<Record<number, { overview?: string; tee?: string; approach?: string; green?: string; general?: string }> | null>(null);
   const [caddieLoading, setCaddieLoading] = useState(false);
   const [caddieError, setCaddieError] = useState(false);
   const [contributing, setContributing] = useState(false);
@@ -1252,12 +1252,17 @@ const [editDescription, setEditDescription] = useState("");
   };
   const caddieBookRaw = (() => {
     const holeMeta = new Map(holes.map(h => [h.holeNumber, h]));
-    return Object.entries(holeClipsMap)
-      .map(([h, c]) => [Number(h), c] as const)
-      .filter(([, c]) => c.length > 0)
-      .sort((a, b) => a[0] - b[0])
-      .map(([holeNum, clips]) => {
+    // Union of holes that carry a seeded description and holes that have
+    // clips — a course book should cover both editorial intel and UGC.
+    const holeNums = new Set<number>([
+      ...holes.filter(h => h.description).map(h => h.holeNumber),
+      ...Object.keys(holeClipsMap).map(Number),
+    ]);
+    return [...holeNums]
+      .sort((a, b) => a - b)
+      .map(holeNum => {
         const meta = holeMeta.get(holeNum);
+        const clips = holeClipsMap[holeNum] ?? [];
         const buckets: { tee: string[]; approach: string[]; green: string[]; general: string[] } = { tee: [], approach: [], green: [], general: [] };
         clips.forEach(c => {
           const notes = [c.strategyNote, c.landingZoneNote, c.whatCameraDoesntShow].filter(Boolean) as string[];
@@ -1268,11 +1273,11 @@ const [editDescription, setEditDescription] = useState("");
           holeNum,
           par: meta?.par ?? null,
           yardage: meta?.yardage ?? null,
-          description: meta?.description ?? null,
+          overview: meta?.description ?? null,
           ...buckets,
         };
       })
-      .filter(h => h.tee.length || h.approach.length || h.green.length || h.general.length);
+      .filter(h => h.overview || h.tee.length || h.approach.length || h.green.length || h.general.length);
   })();
 
   const openCaddieBook = () => {
@@ -1286,9 +1291,9 @@ const [editDescription, setEditDescription] = useState("");
       body: JSON.stringify({ courseId: id, courseName: course.name, holes: caddieBookRaw }),
     })
       .then(r => r.json())
-      .then((data: { holes?: { holeNumber: number; tee?: string; approach?: string; green?: string; general?: string }[] }) => {
-        const map: Record<number, { tee?: string; approach?: string; green?: string; general?: string }> = {};
-        (data.holes ?? []).forEach(h => { map[h.holeNumber] = { tee: h.tee, approach: h.approach, green: h.green, general: h.general }; });
+      .then((data: { holes?: { holeNumber: number; overview?: string; tee?: string; approach?: string; green?: string; general?: string }[] }) => {
+        const map: Record<number, { overview?: string; tee?: string; approach?: string; green?: string; general?: string }> = {};
+        (data.holes ?? []).forEach(h => { map[h.holeNumber] = { overview: h.overview, tee: h.tee, approach: h.approach, green: h.green, general: h.general }; });
         setCaddieData(map);
       })
       .catch(() => setCaddieError(true))
@@ -1797,14 +1802,12 @@ const [editDescription, setEditDescription] = useState("");
         );
       })()}
 
-      {/* Caddie Book — course-wide intel digest synthesized from every
-          scout's per-hole clips. Entry point lives above the hole grid so
-          it reads as the "whole course at a glance" before drilling into
-          individual holes. Only surfaced once there's UGC to synthesize. */}
-      {(() => {
-        const scoutedHoleCount = Object.keys(holeClipsMap).filter(h => holeClipsMap[Number(h)]?.length > 0).length;
-        if (scoutedHoleCount === 0) return null;
-        return (
+      {/* Caddie Book — course-wide intel digest: seeded per-hole overviews
+          plus golfers' written scout notes, condensed by /api/caddie-book.
+          Entry point lives above the hole grid so it reads as the "whole
+          course at a glance" before drilling into individual holes. Only
+          surfaced once there's intel (a description or notes) to synthesize. */}
+      {caddieBookRaw.length > 0 && (
         <div style={{ padding: "0 16px 16px" }}>
           <button
             onClick={openCaddieBook}
@@ -1816,14 +1819,13 @@ const [editDescription, setEditDescription] = useState("");
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 800, color: "#fff" }}>Caddie Book</div>
               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>
-                Course intel from {scoutedHoleCount} scouted hole{scoutedHoleCount !== 1 ? "s" : ""}
+                Course intel across {caddieBookRaw.length} hole{caddieBookRaw.length !== 1 ? "s" : ""}
               </div>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
         </div>
-        );
-      })()}
+      )}
 
       {/* Holes grid — Front 9 always; Back 9 only on 18-hole courses.
           Show the grid whenever EITHER there are user clips OR we've seeded
@@ -2146,13 +2148,14 @@ const [editDescription, setEditDescription] = useState("");
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {caddieBookRaw.map(h => {
                   const s = caddieData?.[h.holeNum];
+                  const overview = s?.overview?.trim();
                   const sections = ([
                     ["Tee", s?.tee],
                     ["Approach", s?.approach],
                     ["Around the green", s?.green],
                     [null, s?.general],
                   ] as [string | null, string | undefined][]).filter(([, v]) => v && v.trim());
-                  if (sections.length === 0) return null;
+                  if (!overview && sections.length === 0) return null;
                   return (
                     <div key={h.holeNum} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
                       <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 10 }}>
@@ -2163,16 +2166,21 @@ const [editDescription, setEditDescription] = useState("");
                           </span>
                         )}
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        {sections.map(([label, text], i) => (
-                          <div key={i}>
-                            {label && (
-                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "1.2px", textTransform: "uppercase", color: "#4da862", marginBottom: 4 }}>{label}</div>
-                            )}
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)", lineHeight: 1.55 }}>{text}</div>
-                          </div>
-                        ))}
-                      </div>
+                      {overview && (
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, marginBottom: sections.length ? 12 : 0 }}>{overview}</div>
+                      )}
+                      {sections.length > 0 && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                          {sections.map(([label, text], i) => (
+                            <div key={i}>
+                              {label && (
+                                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "1.2px", textTransform: "uppercase", color: "#4da862", marginBottom: 4 }}>{label}</div>
+                              )}
+                              <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)", lineHeight: 1.55 }}>{text}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

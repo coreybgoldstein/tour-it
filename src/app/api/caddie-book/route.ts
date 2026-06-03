@@ -16,8 +16,8 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // so only the first viewer after the intel changes pays the token cost.
 
 type PhaseNotes = { tee: string[]; approach: string[]; green: string[]; general: string[] };
-type HoleIn = { holeNumber: number; par: number | null; yardage: number | null } & PhaseNotes;
-type HoleOut = { holeNumber: number; tee?: string; approach?: string; green?: string; general?: string };
+type HoleIn = { holeNumber: number; par: number | null; yardage: number | null; overview: string | null } & PhaseNotes;
+type HoleOut = { holeNumber: number; overview?: string; tee?: string; approach?: string; green?: string; general?: string };
 
 // Stable signature of the notes, independent of clip/note ordering, so the
 // cache only busts when the actual intel content changes.
@@ -25,6 +25,7 @@ function signature(holes: HoleIn[]): string {
   const normalized = holes
     .map(h => ({
       n: h.holeNumber,
+      o: h.overview ?? "",
       t: [...(h.tee ?? [])].sort(),
       a: [...(h.approach ?? [])].sort(),
       g: [...(h.green ?? [])].sort(),
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
     holeNumber: h.holeNumber,
     par: h.par,
     yardage: h.yardage,
+    overview: h.overview ?? null,
     tee: (h.tee ?? []).slice(0, 12),
     approach: (h.approach ?? []).slice(0, 12),
     green: (h.green ?? []).slice(0, 12),
@@ -78,23 +80,25 @@ export async function POST(req: NextRequest) {
 
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 2000,
+    max_tokens: 3500,
     messages: [
       {
         role: "user",
         content: `You are building the "Caddie Book" for ${courseName || "a golf course"} — a hole-by-hole intel digest synthesized strictly from notes real golfers logged while scouting each hole.
 
-For each hole below you get the notes golfers wrote, already bucketed by shot phase (tee, approach, green). Some notes have no phase ("general").
+For each hole below you may get two kinds of source material:
+1. An "overview" — a seeded editorial description of the hole (may be null).
+2. Notes golfers wrote, already bucketed by shot phase (tee, approach, green). Some notes have no phase ("general").
 
-Your job, per hole, per phase:
-- Merge notes that say the same thing into ONE clear line. "Left is dead" and "Dead left, miss right" should become a single combined insight, not two bullets.
-- Keep the blunt, useful golfer voice. Do not add marketing fluff.
-- Use ONLY information present in the supplied notes. Never invent yardages, hazards, wind, or advice that isn't there. If a phase has no notes, omit it.
+Your job, per hole:
+- "overview": If an overview is supplied, condense it into one or two tight, useful sentences that set up the hole (its character, the strategic challenge). Drop marketing fluff. If no overview is supplied, omit this key.
+- Per phase (tee/approach/green/general): Merge notes that say the same thing into ONE clear line. "Left is dead" and "Dead left, miss right" should become a single combined insight, not two bullets. Keep the blunt, useful golfer voice.
+- Use ONLY information present in the supplied overview and notes. Never invent yardages, hazards, wind, or advice that isn't there. If a phase has no notes, omit it.
 - Each phase value is a short synthesized string (one or two sentences). Combine multiple distinct points with "; " if needed.
 
 Return ONLY valid JSON, no markdown, in exactly this shape:
-{"holes":[{"holeNumber":1,"tee":"...","approach":"...","green":"...","general":"..."}]}
-Omit any phase key that has no notes for that hole. Omit any hole that ends up with no content.
+{"holes":[{"holeNumber":1,"overview":"...","tee":"...","approach":"...","green":"...","general":"..."}]}
+Omit any key (including "overview") that has no source material for that hole. Omit any hole that ends up with no content.
 
 Here is the data:
 ${JSON.stringify(trimmed)}`,
