@@ -16,7 +16,6 @@ const ASSET_BASE =
 const PRIZE_PRODUCTS = [
   { src: `${ASSET_BASE}/staff-balls.png`, alt: "Wilson Staff Model golf balls" },
   { src: `${ASSET_BASE}/rope-hat.png`, alt: "Wilson Script Rope Hat" },
-  { src: `${ASSET_BASE}/polo.png`, alt: "Wilson golf polo" },
 ];
 
 export default function JuneCompetitionModal({ onClose }: Props) {
@@ -92,7 +91,6 @@ export default function JuneCompetitionModal({ onClose }: Props) {
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
               <PrizeRow>2 boxes of Wilson Staff Model golf balls <span style={{ color: "rgba(255,255,255,0.4)" }}>(24 balls)</span></PrizeRow>
               <PrizeRow>Wilson Script Rope Hat</PrizeRow>
-              <PrizeRow>Wilson golf polo</PrizeRow>
             </div>
             {/* Product photos */}
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
