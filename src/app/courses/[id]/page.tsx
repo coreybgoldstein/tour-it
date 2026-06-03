@@ -1235,6 +1235,40 @@ const [editDescription, setEditDescription] = useState("");
     return sorted[0][1].length > 1 ? Number(sorted[0][0]) : null;
   })();
 
+  // Caddie Book — structured per-hole aggregation of scout intel: most-used
+  // club, prevailing wind, and the actual notes golfers logged. Built from
+  // holeClipsMap (UGC clips) joined to the seeded hole meta (par/yds/about).
+  const caddieBook = (() => {
+    const holeMeta = new Map(holes.map(h => [h.holeNumber, h]));
+    const tally = (vals: (string | null)[]): [string, number] | null => {
+      const m = new Map<string, number>();
+      vals.forEach(v => { if (v) m.set(v, (m.get(v) ?? 0) + 1); });
+      const sorted = [...m.entries()].sort((a, b) => b[1] - a[1]);
+      return sorted[0] ?? null;
+    };
+    return Object.entries(holeClipsMap)
+      .map(([h, c]) => [Number(h), c] as const)
+      .filter(([, c]) => c.length > 0)
+      .sort((a, b) => a[0] - b[0])
+      .map(([holeNum, clips]) => {
+        const meta = holeMeta.get(holeNum);
+        const notes = clips.flatMap(c =>
+          [c.strategyNote, c.landingZoneNote, c.whatCameraDoesntShow].filter(Boolean) as string[]
+        );
+        return {
+          holeNum,
+          par: meta?.par ?? null,
+          yardage: meta?.yardage ?? null,
+          description: meta?.description ?? null,
+          scoutCount: clips.length,
+          topClub: tally(clips.map(c => c.clubUsed)),
+          topWind: tally(clips.map(c => c.windCondition)),
+          notes: notes.slice(0, 4),
+        };
+      });
+  })();
+  const fmtWind = (w: string) => w.replace(/_/g, " ").toLowerCase().replace(/^\w/, c => c.toUpperCase());
+
   return (
     <main style={{ minHeight: "100dvh", background: "#07100a", color: "#fff", fontFamily: "'Outfit', sans-serif", paddingLeft: isDesktop ? 72 : 0 }}>
       <style>{`
@@ -2063,13 +2097,61 @@ const [editDescription, setEditDescription] = useState("");
                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{course.name}</div>
               </div>
             </div>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.7, marginTop: 14 }}>
-              Every clip golfers post here — club, wind, landing zones, the line off the tee — is being woven into one course-wide intel digest. The full hole-by-hole Caddie Book is on its way.
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, margin: "12px 0 18px" }}>
+              The hole-by-hole intel scouts have logged here — most-used clubs, the wind they played, and the notes they left.
             </p>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginTop: 10 }}>
-              In the meantime, tap any scouted hole below to read what other golfers have logged.
-            </p>
-            <button onClick={() => setCaddieOpen(false)} style={{ marginTop: 24, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {caddieBook.map(h => (
+                <div key={h.holeNum} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 800, color: "#fff" }}>
+                      Hole {h.holeNum}
+                      {(h.par != null || h.yardage != null) && (
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 500, color: "rgba(255,255,255,0.4)", marginLeft: 8 }}>
+                          {[h.par != null ? `Par ${h.par}` : null, h.yardage != null ? `${h.yardage} yds` : null].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 500, color: "#4da862", background: "rgba(77,168,98,0.12)", borderRadius: 999, padding: "2px 8px", flexShrink: 0 }}>
+                      {h.scoutCount} clip{h.scoutCount !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  {h.description && (
+                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.55, marginTop: 8 }}>{h.description}</div>
+                  )}
+
+                  {(h.topClub || h.topWind) && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
+                      {h.topClub && (
+                        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "6px 10px" }}>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "1px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>Club </span>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "#fff" }}>{h.topClub[0]}{h.topClub[1] > 1 ? ` (${h.topClub[1]})` : ""}</span>
+                        </div>
+                      )}
+                      {h.topWind && (
+                        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "6px 10px" }}>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 500, letterSpacing: "1px", color: "rgba(255,255,255,0.45)", textTransform: "uppercase" }}>Wind </span>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "#fff" }}>{fmtWind(h.topWind[0])}{h.topWind[1] > 1 ? ` (${h.topWind[1]})` : ""}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {h.notes.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
+                      {h.notes.map((note, i) => (
+                        <div key={i} style={{ display: "flex", gap: 8, fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>
+                          <span style={{ color: "#4da862", flexShrink: 0 }}>“</span>
+                          <span>{note}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setCaddieOpen(false)} style={{ marginTop: 20, width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "13px", fontFamily: "'Outfit', sans-serif", fontSize: 14, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Close</button>
           </div>
         </div>
       )}
