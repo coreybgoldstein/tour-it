@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -9,15 +11,57 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 // reshapes the supplied notes — it never invents intel, since this is a
 // factual scouting product where a hallucinated "water left" would be worse
 // than saying nothing.
+//
+// Result is cached on the Course row keyed by a signature of the input notes,
+// so only the first viewer after the intel changes pays the token cost.
 
 type PhaseNotes = { tee: string[]; approach: string[]; green: string[]; general: string[] };
 type HoleIn = { holeNumber: number; par: number | null; yardage: number | null } & PhaseNotes;
+type HoleOut = { holeNumber: number; tee?: string; approach?: string; green?: string; general?: string };
+
+// Stable signature of the notes, independent of clip/note ordering, so the
+// cache only busts when the actual intel content changes.
+function signature(holes: HoleIn[]): string {
+  const normalized = holes
+    .map(h => ({
+      n: h.holeNumber,
+      t: [...(h.tee ?? [])].sort(),
+      a: [...(h.approach ?? [])].sort(),
+      g: [...(h.green ?? [])].sort(),
+      x: [...(h.general ?? [])].sort(),
+    }))
+    .sort((a, b) => a.n - b.n);
+  return createHash("sha1").update(JSON.stringify(normalized)).digest("hex");
+}
 
 export async function POST(req: NextRequest) {
-  const { courseName, holes } = (await req.json()) as { courseName?: string; holes?: HoleIn[] };
+  const { courseId, courseName, holes } = (await req.json()) as {
+    courseId?: string;
+    courseName?: string;
+    holes?: HoleIn[];
+  };
 
   if (!Array.isArray(holes) || holes.length === 0) {
     return NextResponse.json({ holes: [] });
+  }
+
+  const sig = signature(holes);
+  const supabase = courseId ? createAdminClient() : null;
+
+  // Cache hit — return the stored synthesis without calling the model.
+  if (supabase && courseId) {
+    const { data } = await supabase
+      .from("Course")
+      .select("caddieBookJson, caddieBookSig")
+      .eq("id", courseId)
+      .maybeSingle();
+    if (data?.caddieBookSig === sig && data.caddieBookJson) {
+      try {
+        return NextResponse.json({ holes: JSON.parse(data.caddieBookJson) as HoleOut[], cached: true });
+      } catch {
+        // fall through to regenerate on corrupt cache
+      }
+    }
   }
 
   // Trim payload defensively so a course with thousands of notes can't blow
@@ -62,10 +106,21 @@ ${JSON.stringify(trimmed)}`,
   // Strip code fences if the model wrapped the JSON.
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
+  let outHoles: HoleOut[];
   try {
     const parsed = JSON.parse(cleaned);
-    return NextResponse.json({ holes: Array.isArray(parsed.holes) ? parsed.holes : [] });
+    outHoles = Array.isArray(parsed.holes) ? parsed.holes : [];
   } catch {
     return NextResponse.json({ holes: [], error: "parse_failed" }, { status: 502 });
   }
+
+  // Persist the fresh synthesis so subsequent viewers read it for free.
+  if (supabase && courseId) {
+    await supabase
+      .from("Course")
+      .update({ caddieBookJson: JSON.stringify(outHoles), caddieBookSig: sig, caddieBookAt: new Date().toISOString() })
+      .eq("id", courseId);
+  }
+
+  return NextResponse.json({ holes: outHoles });
 }

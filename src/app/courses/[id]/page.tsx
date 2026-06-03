@@ -1283,7 +1283,7 @@ const [editDescription, setEditDescription] = useState("");
     fetch("/api/caddie-book", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ courseName: course.name, holes: caddieBookRaw }),
+      body: JSON.stringify({ courseId: id, courseName: course.name, holes: caddieBookRaw }),
     })
       .then(r => r.json())
       .then((data: { holes?: { holeNumber: number; tee?: string; approach?: string; green?: string; general?: string }[] }) => {

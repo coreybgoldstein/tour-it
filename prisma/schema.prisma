@@ -267,6 +267,15 @@ model Course {
   // inside the "From the course" block when set.
   membershipInquiryUrl String?
 
+  // ── Caddie Book cache ──────────────────────────────────────────
+  // Server-cached AI synthesis of per-hole scout notes (see
+  // /api/caddie-book). caddieBookSig is a hash of the input notes; the
+  // cache is reused until the notes change (new clips posted), so only
+  // the first viewer after a change pays the synthesis token cost.
+  caddieBookJson String?
+  caddieBookSig  String?
+  caddieBookAt   DateTime?
+
   holes          Hole[]
   saves          Save[]
   views          View[]
