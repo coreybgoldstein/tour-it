@@ -868,7 +868,7 @@ export default function CreateGameSheet({
                           </div>
                           <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                             <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff" }}>{c.name}</div>
-                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{[c.city, c.state].filter(Boolean).join(", ")}</div>
+                            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.62)" }}>{[c.city, c.state].filter(Boolean).join(", ")}</div>
                           </div>
                         </button>
                       ))}
@@ -1329,7 +1329,7 @@ function SelectedCoursePill({ course, onClear }: { course: CourseSearchRow; onCl
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff" }}>{course.name}</div>
         {(course.city || course.state) && (
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{[course.city, course.state].filter(Boolean).join(", ")}</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.62)" }}>{[course.city, course.state].filter(Boolean).join(", ")}</div>
         )}
       </div>
       <button onClick={onClear} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 18, cursor: "pointer", padding: 4 }} aria-label="Clear course">×</button>
