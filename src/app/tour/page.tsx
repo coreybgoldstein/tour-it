@@ -8,7 +8,7 @@ import { BEST_FOR_TAGS, getEnrichment } from "@/lib/tripEnrichment";
 import TripPlannerSheet from "@/components/TripPlannerSheet";
 import PlannerCTA from "@/components/PlannerCTA";
 import { cdnImage } from "@/lib/cdnImage";
-import { readPermission, readCoords, requestLocation } from "@/lib/locationPermission";
+import { resolveInitialPermission, readPermission, readCoords, requestLocation } from "@/lib/locationPermission";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -215,7 +215,6 @@ function TourPageInner() {
   // the home page's fetchNearMe — cache reads are instant, fresh
   // geolocation is requested in the background.
   function fetchNearMeSearch(radius = 50) {
-    if (!navigator.geolocation) return;
     setNearMeStatus("loading");
     const MILES_PER_DEGREE = 69;
     const RANGE = radius / MILES_PER_DEGREE;
@@ -232,35 +231,28 @@ function TourPageInner() {
       setNearMeStatus("granted");
     }
 
-    let usedCache = false;
-    try {
-      const raw = localStorage.getItem("tour-it-location");
-      if (raw) {
-        const { lat, lng, ts } = JSON.parse(raw);
-        if (Date.now() - ts < 3600000) { doFetch(lat, lng); usedCache = true; }
-      }
-    } catch {}
+    // Instant render from any previously-cached fix (shared across all
+    // location surfaces — see lib/locationPermission).
+    const cached = readCoords();
+    if (cached) doFetch(cached.lat, cached.lng);
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        localStorage.setItem("tour-it-location", JSON.stringify({ lat, lng, ts: Date.now() }));
-        if (!usedCache) doFetch(lat, lng);
-      },
-      () => { if (!usedCache) setNearMeStatus("denied"); }
-    );
+    // Then request/refresh via the shared helper. It persists the grant
+    // and only reports denial on a real PERMISSION_DENIED, so a timeout
+    // never demotes the user back to the "Enable" prompt.
+    requestLocation().then((coords) => {
+      if (coords) doFetch(coords.lat, coords.lng);
+      else if (!cached && readPermission() === "denied") setNearMeStatus("denied");
+      else if (!cached) setNearMeStatus("idle");
+    });
   }
 
-  // Auto-fire on mount if location was previously granted (cached
-  // coords within the hour). User never has to tap "Enable" twice.
+  // Auto-fire on mount when location was previously granted, so the user
+  // never has to tap "Enable" again. resolveInitialPermission() also
+  // heals a grant that an old build wrongly demoted to "denied".
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("tour-it-location");
-      if (raw) {
-        const { ts } = JSON.parse(raw);
-        if (Date.now() - ts < 3600000) fetchNearMeSearch();
-      }
-    } catch {}
+    const perm = resolveInitialPermission();
+    if (perm === "granted") fetchNearMeSearch();
+    else if (perm === "denied") setNearMeStatus("denied");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1657,7 +1649,7 @@ function TourEmptyState({ recent, onPickRecent, onClearRecents, router }: TourEm
   }, []);
 
   useEffect(() => {
-    const perm = readPermission();
+    const perm = resolveInitialPermission();
     if (perm === "granted") {
       const cached = readCoords();
       if (cached) {

@@ -12,6 +12,7 @@ import { calcIntelBonus } from "@/config/points-system";
 import { finalizeUpload } from "@/lib/uploadFinalize";
 import exifr from "exifr";
 import { cdnImage } from "@/lib/cdnImage";
+import { writeCoords, setPermission } from "@/lib/locationPermission";
 
 // Dev-only logger — keeps useful tracing for local debugging but stays silent
 // in production so iOS Safari Web Inspector users don't see internal flow.
@@ -367,7 +368,13 @@ function UploadPageInner() {
       const deviceCoordsPromise = new Promise<{ lat: number; lng: number } | null>(resolve => {
         if (!navigator.geolocation) { resolve(null); return; }
         navigator.geolocation.getCurrentPosition(
-          pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          pos => {
+            // A successful fix here is a grant — persist it so home / tour
+            // Near-Me are already enabled without a second prompt.
+            writeCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setPermission("granted");
+            resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          },
           () => resolve(null),
           { timeout: 8000, maximumAge: 60000, enableHighAccuracy: true }
         );

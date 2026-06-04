@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { findClosestItinerary, type ItineraryCentroid } from "@/lib/geo";
 import { cdnImage } from "@/lib/cdnImage";
+import { writeCoords, setPermission } from "@/lib/locationPermission";
 
 type MapCourse = {
   id: string;
@@ -334,6 +335,10 @@ export default function MapPage() {
           (pos) => {
             if (cancelled) return;
             const { latitude, longitude } = pos.coords;
+            // Persist the grant so home / tour Near-Me are already in the
+            // "granted" state without re-prompting (shared store).
+            writeCoords({ lat: latitude, lng: longitude });
+            setPermission("granted");
             skipNextMoveRef.current = true;
             map.flyTo([latitude, longitude], USER_ZOOM, { duration: 1.8 });
 

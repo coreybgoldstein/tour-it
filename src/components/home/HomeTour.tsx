@@ -39,7 +39,7 @@ import JuneCompetitionBanner from "@/components/JuneCompetitionBanner";
 import PlannerCTA from "@/components/PlannerCTA";
 import { gameFormatLabel } from "@/lib/gameFormats";
 import { airportByCode } from "@/data/airports";
-import { readPermission, readCoords, requestLocation } from "@/lib/locationPermission";
+import { resolveInitialPermission, readCoords, requestLocation } from "@/lib/locationPermission";
 
 type CourseLite = {
   id: string;
@@ -423,7 +423,7 @@ export default function HomeTour() {
   // refreshed on mount when permission was previously granted, so
   // first-time-per-session users don't see an enable prompt twice.
   useEffect(() => {
-    const perm = readPermission();
+    const perm = resolveInitialPermission();
     if (perm === "granted") {
       // Use cached coords immediately for an instant render…
       const cached = readCoords();
@@ -432,7 +432,9 @@ export default function HomeTour() {
         fetchNearByCoords(cached.lat, cached.lng, nearMeRadius);
       }
       // …then quietly refresh from the browser in the background so
-      // moving / changing location keeps results fresh.
+      // moving / changing location keeps results fresh. A transient
+      // failure here no longer downgrades the saved grant (see
+      // lib/locationPermission), so the CTA won't flicker back.
       requestLocation().then((coords) => {
         if (coords) { setLocStatus("granted"); fetchNearByCoords(coords.lat, coords.lng, nearMeRadius); }
       });
