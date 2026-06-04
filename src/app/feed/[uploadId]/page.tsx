@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { HlsVideo } from "@/components/HlsVideo";
-import { getVideoSrc } from "@/lib/getVideoSrc";
+import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
 import { cdnImage } from "@/lib/cdnImage";
 import { useLike } from "@/hooks/useLike";
 import { ClipRail } from "@/components/clip/ClipRail";
@@ -34,6 +34,7 @@ type Clip = {
   id: string;
   mediaUrl: string;
   cloudflareVideoId: string | null;
+  thumbnailUrl: string | null;
   mediaType: string;
   shotType: string | null;
   createdAt: string;
@@ -287,7 +288,11 @@ export default function FeedPage() {
     let cancelled = false;
     (async () => {
       const sb = createClient();
-      const cols = "id, mediaUrl, cloudflareVideoId, mediaType, shotType, courseId, holeId, userId, createdAt, likeCount, commentCount, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt";
+      // Resolve the viewer up front so we can sink their own clips to the
+      // very end of the reel (see partition below).
+      const { data: { user: viewer } } = await sb.auth.getUser();
+      const myId = viewer?.id ?? null;
+      const cols = "id, mediaUrl, cloudflareVideoId, thumbnailUrl, mediaType, shotType, courseId, holeId, userId, createdAt, likeCount, commentCount, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt";
       // Starting clip + candidate pool fetched concurrently so the
       // larger pool pull doesn't add to time-to-first-clip.
       const [{ data: starting }, { data: feed }] = await Promise.all([
@@ -308,16 +313,22 @@ export default function FeedPage() {
       // course-spaced on its own, so a photo-heavy course can't crowd out
       // the video reel up top.
       const rest = (feed as any[]).filter((u) => !starting || u.id !== starting.id);
+      // The viewer's OWN clips never appear in the main reel — they sink
+      // to the very end (per product: "don't show your own content until
+      // the very end, if ever"). In practice the pool is large enough that
+      // the user rarely scrolls that far.
+      const mine = myId ? rest.filter((u) => u.userId === myId) : [];
+      const others = myId ? rest.filter((u) => u.userId !== myId) : rest;
       const leadCourseId = starting ? (starting as any).courseId : undefined;
-      const vids = rest.filter((u) => u.mediaType === "VIDEO");
-      const pics = rest.filter((u) => u.mediaType !== "VIDEO");
+      const vids = others.filter((u) => u.mediaType === "VIDEO");
+      const pics = others.filter((u) => u.mediaType !== "VIDEO");
       const spacedVids = spaceByCourse(shuffle(vids), COURSE_GAP, leadCourseId);
       const spacedPics = spaceByCourse(
         shuffle(pics),
         COURSE_GAP,
         spacedVids.length ? (spacedVids[spacedVids.length - 1] as any).courseId : leadCourseId,
       );
-      const spaced = [...spacedVids, ...spacedPics];
+      const spaced = [...spacedVids, ...spacedPics, ...shuffle(mine)];
       const rows: any[] = starting ? [starting, ...spaced] : spaced;
 
       const courseIds = Array.from(new Set(rows.map((r) => r.courseId).filter(Boolean)));
@@ -341,6 +352,7 @@ export default function FeedPage() {
           id: r.id,
           mediaUrl: r.mediaUrl,
           cloudflareVideoId: r.cloudflareVideoId,
+          thumbnailUrl: r.thumbnailUrl ?? null,
           mediaType: r.mediaType,
           shotType: r.shotType,
           createdAt: r.createdAt,
@@ -638,6 +650,14 @@ function FeedClip({
 }) {
   const isVideo = clip.mediaType === "VIDEO";
   const src = useMemo(() => isVideo ? getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId) : null, [clip.mediaUrl, clip.cloudflareVideoId, isVideo]);
+  // Poster = the clip's still thumbnail. Painted immediately while the
+  // HLS manifest + first segment buffer, so swiping to a new clip shows
+  // the frame instead of the black #000 cell underneath. Eliminates the
+  // black flash between clips.
+  const poster = useMemo(
+    () => isVideo ? cdnImage(getClipThumbnail(clip.mediaType, clip.mediaUrl, clip.cloudflareVideoId, clip.thumbnailUrl)) : undefined,
+    [isVideo, clip.mediaType, clip.mediaUrl, clip.cloudflareVideoId, clip.thumbnailUrl],
+  );
   // Canonical like pipeline (counter + rankScore + points + milestone
   // notifications) via the shared hook — same as every other surface.
   const { liked, likeCount, toggleLike } = useLike({
@@ -699,6 +719,8 @@ function FeedClip({
           loop
           muted={muted}
           playsInline
+          poster={poster}
+          preload="auto"
           onTimeUpdate={onTimeUpdate}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
         />
