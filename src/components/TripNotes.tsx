@@ -103,9 +103,9 @@ export default function TripNotes({ tripId, currentUserId, canEdit }: { tripId: 
 
   return (
     <>
-      <div style={{ marginTop: 24, marginBottom: 8 }}>
+      <div style={{ marginTop: 24, marginBottom: 8, padding: "0 20px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div className="section-label" style={{ marginBottom: 0 }}>What the group learned{totalNotes > 0 && <span className="count">{totalNotes}</span>}</div>
+          <div className="section-label" style={{ marginBottom: 0 }}>Trip Notes{totalNotes > 0 && <span className="count">{totalNotes}</span>}</div>
           {canEdit && (
             <SectionAddButton onClick={() => setAddOpen(true)} label="Add note" />
           )}
