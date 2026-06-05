@@ -20,6 +20,7 @@ import { cdnImage } from "@/lib/cdnImage";
 import { useLike } from "@/hooks/useLike";
 import { ClipRail } from "@/components/clip/ClipRail";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
+import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import EditClipSheet from "@/components/EditClipSheet";
 
@@ -147,6 +148,9 @@ export default function FeedPage() {
   // ClipCard opens against the same DOM node.
   const [commentUploadId, setCommentUploadId] = useState<string | null>(null);
   const [commentItems, setCommentItems] = useState<CommentItem[]>([]);
+  // Uploads the current user has already commented on — drives the
+  // filled comment bubble on the right rail, same as every other surface.
+  const [commentedIds, setCommentedIds] = useState<Set<string>>(new Set());
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
@@ -181,6 +185,22 @@ export default function FeedPage() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Prefetch which of the loaded clips the user has commented on, so the
+  // comment bubble renders filled without opening each sheet.
+  useEffect(() => {
+    if (!me || clips.length === 0) return;
+    let cancelled = false;
+    const sb = createClient();
+    sb.from("Comment")
+      .select("uploadId")
+      .eq("userId", me.id)
+      .in("uploadId", clips.map((c) => c.id))
+      .then(({ data }) => {
+        if (!cancelled && data) setCommentedIds(new Set(data.map((r: any) => r.uploadId)));
+      });
+    return () => { cancelled = true; };
+  }, [me, clips]);
 
   // Load comments when the sheet opens.
   useEffect(() => {
@@ -263,8 +283,10 @@ export default function FeedPage() {
         avatarUrl: me.avatarUrl || null,
       }]);
       // Bump local clip's commentCount so the right-rail count
-      // reflects the new total without a re-fetch.
+      // reflects the new total without a re-fetch, and mark this clip
+      // as commented so the bubble fills.
       setClips(prev => prev.map(c => c.id === commentUploadId ? { ...c, commentCount: c.commentCount + 1 } : c));
+      setCommentedIds(prev => { const next = new Set(prev); next.add(commentUploadId); return next; });
       setCommentText("");
     }
     setSubmittingComment(false);
@@ -468,6 +490,7 @@ export default function FeedPage() {
               onUser={() => c.uploaderId && router.push(`/profile/${c.uploaderId}`)}
               onComment={() => openCommentSheet(c.id)}
               onKebab={(e) => { e.stopPropagation(); setMenuClip(c); }}
+              commented={commentedIds.has(c.id)}
               currentUserId={me?.id ?? null}
               registerVideo={(el) => (videoRefs.current[c.id] = el)}
               isActive={i === activeIndex}
@@ -635,7 +658,7 @@ export default function FeedPage() {
 }
 
 function FeedClip({
-  clip, muted, onToggleMute, onBack, onCourse, onUser, onComment, onKebab, currentUserId, registerVideo, isActive,
+  clip, muted, onToggleMute, onBack, onCourse, onUser, onComment, onKebab, commented, currentUserId, registerVideo, isActive,
 }: {
   clip: Clip;
   muted: boolean;
@@ -645,6 +668,7 @@ function FeedClip({
   onUser: () => void;
   onComment: () => void;
   onKebab: (e: React.MouseEvent) => void;
+  commented: boolean;
   currentUserId: string | null;
   registerVideo: (el: HTMLVideoElement | null) => void;
   isActive: boolean;
@@ -666,7 +690,6 @@ function FeedClip({
     initialLikeCount: clip.likeCount,
     currentUserId,
   });
-  const [progress, setProgress] = useState(0); // 0..1
   const [intelOpen, setIntelOpen] = useState(false);
   const isOwner = !!currentUserId && clip.uploaderId === currentUserId;
   const hasNotes = !!(clip.strategyNote || clip.clubUsed || clip.windCondition || clip.landingZoneNote || clip.whatCameraDoesntShow || clip.datePlayedAt || clip.holeDescription);
@@ -691,12 +714,6 @@ function FeedClip({
     registerVideo(el);
   }
 
-  function onTimeUpdate(e: React.SyntheticEvent<HTMLVideoElement>) {
-    const v = e.currentTarget;
-    if (!v.duration) return;
-    setProgress(v.currentTime / v.duration);
-  }
-
   const courseLogo = clip.courseLogoUrl ? cdnImage(clip.courseLogoUrl) : null;
   const uploaderAvatar = clip.uploaderAvatarUrl ? cdnImage(clip.uploaderAvatarUrl) : null;
   const dateLabel = (() => {
@@ -716,7 +733,6 @@ function FeedClip({
           playsInline
           poster={poster}
           preload="auto"
-          onTimeUpdate={onTimeUpdate}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
         />
       ) : (
@@ -755,6 +771,7 @@ function FeedClip({
         likeCount={likeCount}
         onToggleLike={toggleLike}
         commentCount={clip.commentCount}
+        commented={commented}
         onComment={(e) => { e.stopPropagation(); onComment(); }}
         sharePath={`/courses/${clip.courseId}${clip.holeNumber ? `/holes/${clip.holeNumber}` : ""}`}
         shareTitle={clip.courseName ?? "Tour It clip"}
@@ -785,12 +802,9 @@ function FeedClip({
         )}
       </button>
 
-      {/* Video progress bar — thin line pinned to the bottom of the
-          clip frame, sits above the BottomNav by a few px so it stays
-          visible. */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: "calc(env(safe-area-inset-bottom, 0px) + 4px)", height: 5, background: "rgba(255,255,255,0.18)", zIndex: 4 }}>
-        <div style={{ height: "100%", width: `${Math.min(100, Math.max(0, progress * 100))}%`, background: "#4da862", transition: "width 0.15s linear" }} />
-      </div>
+      {/* Draggable seek bar — the same shared VideoScrubber every other
+          clip surface uses, so playback can be scrubbed here too. */}
+      {isVideo && <VideoScrubber videoRef={videoRef} />}
 
       <IntelPanel
         open={intelOpen}
