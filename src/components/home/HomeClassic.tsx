@@ -11,6 +11,7 @@ import LikesSheet from "@/components/LikesSheet";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
+import { byPopularity } from "@/lib/popularity";
 import EditClipSheet from "@/components/EditClipSheet";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
@@ -1073,12 +1074,15 @@ export default function HomeClassic() {
     (async () => {
       const { data } = await supabase
         .from("Course")
-        .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
+        .select("id, name, city, state, uploadCount, saveCount, viewCount, coverImageUrl, logoUrl")
         .gt("uploadCount", 0)
+        .order("uploadCount", { ascending: false, nullsFirst: false })
         .limit(40);
       if (!data) return;
-      const shuffled = [...data].sort(() => Math.random() - 0.5);
-      let picked = shuffled.slice(0, 10);
+      // Rank by real popularity (uploads + saves + views) so "Popular on
+      // Tour It" actually means popular, not a random sample.
+      const ranked = [...data].sort(byPopularity);
+      let picked = ranked.slice(0, 10);
 
       // During tournament week, anchor the featured course (e.g. PGA Aronimink)
       // to the first position. Falls back gracefully if it's already in the
@@ -1091,7 +1095,7 @@ export default function HomeClassic() {
         } else {
           const { data: fc } = await supabase
             .from("Course")
-            .select("id, name, city, state, uploadCount, coverImageUrl, logoUrl")
+            .select("id, name, city, state, uploadCount, saveCount, viewCount, coverImageUrl, logoUrl")
             .eq("id", featured.courseId)
             .maybeSingle();
           if (fc) picked = [fc, ...picked.slice(0, 9)];

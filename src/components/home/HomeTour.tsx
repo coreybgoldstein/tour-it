@@ -40,6 +40,7 @@ import PlannerCTA from "@/components/PlannerCTA";
 import { gameFormatLabel } from "@/lib/gameFormats";
 import { airportByCode } from "@/data/airports";
 import { resolveInitialPermission, readCoords, requestLocation } from "@/lib/locationPermission";
+import { byPopularity } from "@/lib/popularity";
 
 type CourseLite = {
   id: string;
@@ -141,6 +142,11 @@ export default function HomeTour() {
   const [nearMeRadius, setNearMeRadius] = useState<10 | 25 | 50>(50);
   const [locStatus, setLocStatus] = useState<"unknown" | "denied" | "granted" | "loading">("unknown");
   const [nearMeQueried, setNearMeQueried] = useState(() => (readCache<CourseLite[]>("nearMe")?.length ?? 0) > 0);
+  // Course-rail bucket toggle: "near" (location-based) vs "popular"
+  // (most-scouted on Tour It). Popular needs no location so it's the
+  // safe default for users who haven't granted it.
+  const [courseBucket, setCourseBucket] = useState<"near" | "popular">("near");
+  const [popular, setPopular] = useState<CourseLite[]>(() => readCache<CourseLite[]>("popularCourses") ?? []);
 
   const [tours, setTours] = useState<ActiveTour[]>(() => readCache<ActiveTour[]>("tours") ?? []);
   const tour = tours[0] ?? null;
@@ -415,6 +421,31 @@ export default function HomeTour() {
     return () => { cancelled = true; };
   }, []);
 
+  // ── Popular on Tour It ─────────────────────────────────────────────
+  // Most-scouted courses, ranked by a real popularity score (uploads +
+  // saves + views) rather than a random shuffle. No location needed, so
+  // this loads on mount for every user and backs the bucket toggle.
+  useEffect(() => {
+    const sb = createClient();
+    let cancelled = false;
+    (async () => {
+      const { data } = await sb
+        .from("Course")
+        .select("id, name, city, state, coverImageUrl, logoUrl, uploadCount, saveCount, viewCount")
+        .gt("uploadCount", 0)
+        .order("uploadCount", { ascending: false, nullsFirst: false })
+        .limit(40);
+      if (cancelled || !data) return;
+      const ranked = (data as (CourseLite & { saveCount?: number; viewCount?: number })[])
+        .slice()
+        .sort(byPopularity)
+        .slice(0, 12);
+      setPopular(ranked);
+      writeCache("popularCourses", ranked);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   // ── Near Me ────────────────────────────────────────────────────────
   // We use the same proven pattern as the legacy home: navigator
   // Geolocation flow uses the shared lib/locationPermission helpers
@@ -543,9 +574,12 @@ export default function HomeTour() {
           </span>
         </button>
 
-        {/* Courses Near Me */}
+        {/* Courses rail — Near Me / Popular on Tour It toggle */}
         <NearMeRail
           courses={nearMe}
+          popular={popular}
+          bucket={courseBucket}
+          onChangeBucket={setCourseBucket}
           radius={nearMeRadius}
           onChangeRadius={changeRadius}
           locStatus={locStatus}
@@ -1051,9 +1085,12 @@ function TourSkeleton() {
 // segmented control + Map shortcut.
 // ─────────────────────────────────────────────────────────────────────
 function NearMeRail({
-  courses, radius, onChangeRadius, locStatus, onEnable, onMap, onCourse, queried,
+  courses, popular, bucket, onChangeBucket, radius, onChangeRadius, locStatus, onEnable, onMap, onCourse, queried,
 }: {
   courses: CourseLite[];
+  popular: CourseLite[];
+  bucket: "near" | "popular";
+  onChangeBucket: (b: "near" | "popular") => void;
   radius: 10 | 25 | 50;
   onChangeRadius: (r: 10 | 25 | 50) => void;
   locStatus: "unknown" | "denied" | "granted" | "loading";
@@ -1064,44 +1101,77 @@ function NearMeRail({
    *  empty-state copy so it doesn't flash before the response. */
   queried: boolean;
 }) {
+  const isNear = bucket === "near";
   return (
     <section style={{ marginTop: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <SectionLabel inline>Courses Near Me</SectionLabel>
-        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-          {RADII.map((r) => (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 }}>
+        {/* Bucket toggle — two ways to browse the same course pool */}
+        <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: 3 }}>
+          {([["near", "Near Me"], ["popular", "Popular"]] as const).map(([key, label]) => (
             <button
-              key={r}
-              onClick={() => onChangeRadius(r)}
+              key={key}
+              onClick={() => onChangeBucket(key)}
               style={{
-                fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600,
-                padding: "4px 9px",
-                borderRadius: 99,
-                border: `1px solid ${radius === r ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`,
-                background: radius === r ? "rgba(77,168,98,0.15)" : "transparent",
-                color: radius === r ? "#4da862" : "rgba(255,255,255,0.4)",
-                cursor: "pointer",
-                letterSpacing: "0.04em",
+                fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 700,
+                padding: "5px 11px", borderRadius: 99, border: "none", cursor: "pointer",
+                letterSpacing: "0.02em",
+                background: bucket === key ? "rgba(77,168,98,0.22)" : "transparent",
+                color: bucket === key ? "#4da862" : "rgba(255,255,255,0.4)",
               }}
-            >{r}MI</button>
+            >{label}</button>
           ))}
-          <button
-            onClick={onMap}
-            style={{
-              marginLeft: 6,
-              width: 26, height: 26, borderRadius: "50%",
-              background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.3)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer",
-            }}
-            aria-label="Open map"
-          >
-            <MapIcon />
-          </button>
         </div>
+        {isNear && (
+          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+            {RADII.map((r) => (
+              <button
+                key={r}
+                onClick={() => onChangeRadius(r)}
+                style={{
+                  fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600,
+                  padding: "4px 9px",
+                  borderRadius: 99,
+                  border: `1px solid ${radius === r ? "rgba(77,168,98,0.5)" : "rgba(255,255,255,0.1)"}`,
+                  background: radius === r ? "rgba(77,168,98,0.15)" : "transparent",
+                  color: radius === r ? "#4da862" : "rgba(255,255,255,0.4)",
+                  cursor: "pointer",
+                  letterSpacing: "0.04em",
+                }}
+              >{r}MI</button>
+            ))}
+            <button
+              onClick={onMap}
+              style={{
+                marginLeft: 6,
+                width: 26, height: 26, borderRadius: "50%",
+                background: "rgba(77,168,98,0.1)", border: "1px solid rgba(77,168,98,0.3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer",
+              }}
+              aria-label="Open map"
+            >
+              <MapIcon />
+            </button>
+          </div>
+        )}
       </div>
 
-      {locStatus !== "granted" && (
+      {/* Popular bucket — no location needed, ranked by popularity score */}
+      {!isNear && (
+        popular.length > 0 ? (
+          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, WebkitOverflowScrolling: "touch", marginRight: -16, paddingRight: 16 }}>
+            {popular.slice(0, 12).map((c) => (
+              <NearCourseCard key={c.id} course={c} onClick={() => onCourse(c.id)} />
+            ))}
+          </div>
+        ) : (
+          <div style={{ padding: "16px", background: "rgba(244,236,214,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
+            Loading the most-scouted courses…
+          </div>
+        )
+      )}
+
+      {isNear && locStatus !== "granted" && (
         <div style={{ padding: "12px 14px", background: "rgba(244,236,214,0.02)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12 }}>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.55)", marginBottom: 8 }}>
             Allow location to see courses within {radius} miles of you.
@@ -1121,13 +1191,13 @@ function NearMeRail({
         </div>
       )}
 
-      {locStatus === "granted" && queried && courses.length === 0 && (
+      {isNear && locStatus === "granted" && queried && courses.length === 0 && (
         <div style={{ padding: "16px", background: "rgba(244,236,214,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.4)", textAlign: "center" }}>
           No courses found within {radius} miles. Try a wider radius.
         </div>
       )}
 
-      {locStatus === "granted" && courses.length > 0 && (
+      {isNear && locStatus === "granted" && courses.length > 0 && (
         <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, WebkitOverflowScrolling: "touch", marginRight: -16, paddingRight: 16 }}>
           {courses.slice(0, 12).map((c) => (
             <NearCourseCard key={c.id} course={c} onClick={() => onCourse(c.id)} />
