@@ -19,7 +19,7 @@
 
 // ─── Caching layer ───────────────────────────────────────────────────────────
 
-const VERSION = "v1";
+const VERSION = "v2";
 const KILL_SWITCH = false;
 
 const STATIC_CACHE = `tour-it-static-${VERSION}`;
@@ -30,7 +30,15 @@ const OWNED_CACHES = [STATIC_CACHE, HTML_CACHE, IMAGE_CACHE];
 const IMAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const IMAGE_MAX_ENTRIES = 300;
 
-self.addEventListener("install", () => {
+// Last-resort page shown when a navigation can't be served from cache AND
+// the network is unreachable (cold deep-link while offline). Precached on
+// install so it's always available even on the very first offline hit.
+const OFFLINE_URL = "/offline.html";
+
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then(cache => cache.add(OFFLINE_URL)).catch(() => {})
+  );
   self.skipWaiting();
 });
 
@@ -86,7 +94,7 @@ self.addEventListener("fetch", event => {
   const isNavigation = req.mode === "navigate";
   const acceptsHtml = (req.headers.get("accept") || "").includes("text/html");
   if (isNavigation || acceptsHtml) {
-    event.respondWith(staleWhileRevalidate(req, HTML_CACHE));
+    event.respondWith(staleWhileRevalidate(req, HTML_CACHE, isNavigation));
     return;
   }
 });
@@ -123,14 +131,22 @@ async function cacheFirstWithTTL(req, cacheName, ttlMs) {
   }
 }
 
-async function staleWhileRevalidate(req, cacheName) {
+async function staleWhileRevalidate(req, cacheName, isNavigation) {
   const cache = await caches.open(cacheName);
   const hit = await cache.match(req);
   const fetchPromise = fetch(req).then(res => {
     if (res.ok && res.type !== "opaque") cache.put(req, res.clone());
     return res;
   }).catch(() => hit);
-  return hit || fetchPromise;
+  if (hit) return hit;
+  const res = await fetchPromise;
+  // Cache miss + network failure on a navigation → show the offline shell
+  // instead of the browser's dead-end error page.
+  if (!res && isNavigation) {
+    const offline = await caches.match(OFFLINE_URL);
+    if (offline) return offline;
+  }
+  return res;
 }
 
 async function trimCache(cacheName, maxEntries) {

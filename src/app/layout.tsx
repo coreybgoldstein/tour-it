@@ -10,6 +10,7 @@ import AppDownloadBanner from "@/components/AppDownloadBanner";
 import KeyboardSync from "@/components/KeyboardSync";
 import ToastHost from "@/components/ToastHost";
 import GlobalErrorReporter from "@/components/GlobalErrorReporter";
+import OfflineBanner from "@/components/OfflineBanner";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { CANONICAL_HOST, DEFAULT_OG_IMAGE, websiteSchema, organizationSchema, jsonLdScript } from "@/lib/seo";
@@ -100,6 +101,7 @@ export default function RootLayout({
         <KeyboardSync />
         <ToastHost />
         <GlobalErrorReporter />
+        <OfflineBanner />
         {/* b512: debug overlay unmounted for ship candidate. Dark-screen bug
             confirmed fixed in b511, flicker fix added in b512. Re-mount this
             line to restore on-device diagnostics if needed. */}
