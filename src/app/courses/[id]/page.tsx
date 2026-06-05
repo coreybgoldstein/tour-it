@@ -2147,14 +2147,18 @@ const [editDescription, setEditDescription] = useState("");
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {caddieBookRaw.map(h => {
+                  // Prefer the AI-condensed synthesis when present, but fall
+                  // back to the raw seeded overview and logged notes so the
+                  // book never renders blank for a hole the banner counted —
+                  // the count comes from caddieBookRaw, so the render must too.
                   const s = caddieData?.[h.holeNum];
-                  const overview = s?.overview?.trim();
+                  const overview = (s?.overview?.trim() || h.overview?.trim()) || "";
                   const sections = ([
-                    ["Tee", s?.tee],
-                    ["Approach", s?.approach],
-                    ["Around the green", s?.green],
-                    [null, s?.general],
-                  ] as [string | null, string | undefined][]).filter(([, v]) => v && v.trim());
+                    ["Tee", s?.tee?.trim() || h.tee.join("; ")],
+                    ["Approach", s?.approach?.trim() || h.approach.join("; ")],
+                    ["Around the green", s?.green?.trim() || h.green.join("; ")],
+                    [null, s?.general?.trim() || h.general.join("; ")],
+                  ] as [string | null, string][]).filter(([, v]) => v && v.trim());
                   if (!overview && sections.length === 0) return null;
                   return (
                     <div key={h.holeNum} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "14px 16px" }}>
