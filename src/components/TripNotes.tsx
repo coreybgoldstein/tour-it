@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { SectionAddButton } from "@/components/SectionAddButton";
 
 type Note = {
   id: string;
@@ -104,32 +105,9 @@ export default function TripNotes({ tripId, currentUserId, canEdit }: { tripId: 
     <>
       <div style={{ marginTop: 24, marginBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-          <div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(77,168,98,0.75)" }}>Trip Notes</div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff", marginTop: 2, lineHeight: 1.1 }}>What the group learned</div>
-          </div>
+          <div className="section-label" style={{ marginBottom: 0 }}>What the group learned{totalNotes > 0 && <span className="count">{totalNotes}</span>}</div>
           {canEdit && (
-            <button
-              onClick={() => setAddOpen(true)}
-              style={{
-                background: "rgba(77,168,98,0.15)",
-                color: "#4da862",
-                border: "1px solid rgba(77,168,98,0.35)",
-                borderRadius: 99,
-                padding: "5px 12px",
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                whiteSpace: "nowrap",
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Note
-            </button>
+            <SectionAddButton onClick={() => setAddOpen(true)} label="Add note" />
           )}
         </div>
 

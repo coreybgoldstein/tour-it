@@ -19,6 +19,8 @@ import SettlementSheet from "@/components/SettlementSheet";
 import Toast, { type ToastState } from "@/components/Toast";
 import { GAME_FORMATS as SHARED_GAME_FORMATS, gameFormatLabel, HOLE_PICKED_FORMATS as SHARED_HOLE_PICKED, TEAM_WAGER_FORMATS as SHARED_TEAM_WAGER, MULTI_SEGMENT_FORMATS as SHARED_MULTI_SEGMENT } from "@/lib/gameFormats";
 import { cdnImage } from "@/lib/cdnImage";
+import { SwipeableRow } from "@/components/SwipeableRow";
+import { SectionAddButton } from "@/components/SectionAddButton";
 
 type Trip = {
   id: string;
@@ -522,13 +524,6 @@ export default function TripPage() {
   const [editCAccom, setEditCAccom] = useState("");
   const [savingCourse, setSavingCourse] = useState(false);
   const [deletingCourse, setDeletingCourse] = useState(false);
-
-  // Swipe-to-delete
-  const [swipedId, setSwipedId] = useState<string | null>(null);
-  const swipeTouchStartX = useRef<number>(0);
-  const swipeTouchStartY = useRef<number>(0);
-  const swipeCurrentX = useRef<number>(0);
-  const swipeCardRef = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Add course sheet
   const [addCourseOpen, setAddCourseOpen] = useState(false);
@@ -2007,57 +2002,21 @@ export default function TripPage() {
                         const secondaryComplete = !tc.secondaryCourseId || coursesWithHandicaps.has(tc.secondaryCourseId);
                         const scorecardComplete = primaryComplete && secondaryComplete;
                         return (
-                          <div key={tc.id} style={{ position: "relative", overflow: "hidden", borderRadius: 12, marginBottom: 6 }}>
-                            {/* Delete zone revealed on swipe — subtle, icon-only */}
-                            <div
-                              onClick={async () => { await createClient().from("GolfTripCourse").delete().eq("id", tc.id); setTripCourses(prev => prev.filter(c => c.id !== tc.id)); setSwipedId(null); }}
-                              style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: 64, background: "rgba(180,60,60,0.18)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", borderRadius: 12 }}
-                              aria-label="Delete stop"
+                          <div key={tc.id} style={{ marginBottom: 6 }}>
+                            <SwipeableRow
+                              onEdit={() => openEditCourse(tc)}
+                              onDelete={async () => { await createClient().from("GolfTripCourse").delete().eq("id", tc.id); setTripCourses(prev => prev.filter(c => c.id !== tc.id)); }}
                             >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(220,120,120,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                            </div>
-
-                            {/* Swipeable row */}
                             <div
-                              ref={el => { swipeCardRef.current[tc.id] = el; }}
                               style={{
                                 display: "flex", alignItems: "stretch", gap: 12,
                                 background: "#0b140e", border: "1px solid rgba(255,255,255,0.06)",
-                                borderRadius: 12, padding: "12px 12px 12px 12px",
+                                borderRadius: 16, padding: "12px 12px 12px 12px",
                                 position: "relative",
-                                transform: swipedId === tc.id ? "translateX(-64px)" : "translateX(0)",
-                                transition: "transform 0.2s ease",
                               }}
-                              onTouchStart={e => {
-                                swipeTouchStartX.current = e.touches[0].clientX;
-                                swipeTouchStartY.current = e.touches[0].clientY;
-                                swipeCurrentX.current = swipedId === tc.id ? -64 : 0;
-                              }}
-                              onTouchMove={e => {
-                                const dx = e.touches[0].clientX - swipeTouchStartX.current;
-                                const dy = e.touches[0].clientY - swipeTouchStartY.current;
-                                if (Math.abs(dy) > Math.abs(dx)) return;
-                                const base = swipedId === tc.id ? -64 : 0;
-                                const next = Math.max(-64, Math.min(0, base + dx));
-                                const el = swipeCardRef.current[tc.id];
-                                if (el) { el.style.transition = "none"; el.style.transform = `translateX(${next}px)`; }
-                                swipeCurrentX.current = next;
-                              }}
-                              onTouchEnd={() => {
-                                const el = swipeCardRef.current[tc.id];
-                                if (el) el.style.transition = "transform 0.2s ease";
-                                if (swipeCurrentX.current < -32) {
-                                  setSwipedId(tc.id);
-                                  if (el) el.style.transform = "translateX(-64px)";
-                                } else {
-                                  setSwipedId(null);
-                                  if (el) el.style.transform = "translateX(0)";
-                                }
-                              }}
-                              onClick={() => { if (swipedId === tc.id) { setSwipedId(null); } }}
                             >
                               {/* Logo column */}
-                              <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ position: "relative", width: 44, height: 44, flexShrink: 0, cursor: "pointer", alignSelf: "center" }}>
+                              <div onClick={() => router.push(`/courses/${tc.course.id}`)} style={{ position: "relative", width: 44, height: 44, flexShrink: 0, cursor: "pointer", alignSelf: "center" }}>
                                 <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                                   {tc.course.logoUrl
                                     ? <img src={cdnImage(tc.course.logoUrl)} alt={tc.course.name} style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#fff" }} />
@@ -2075,7 +2034,7 @@ export default function TripPage() {
                               </div>
 
                               {/* Main text column */}
-                              <div onClick={e => { if (swipedId === tc.id) { e.stopPropagation(); setSwipedId(null); return; } router.push(`/courses/${tc.course.id}`); }} style={{ flex: 1, minWidth: 0, cursor: "pointer", alignSelf: "center" }}>
+                              <div onClick={() => router.push(`/courses/${tc.course.id}`)} style={{ flex: 1, minWidth: 0, cursor: "pointer", alignSelf: "center" }}>
                                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.25 }}>
                                   {title.headline}
                                 </div>
@@ -2128,14 +2087,10 @@ export default function TripPage() {
                                 ) : (
                                   <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>no time</div>
                                 )}
-                                <div style={{ display: "flex", gap: 6 }}>
-                                  <DirectionsButton course={tc.course} />
-                                  <button onClick={e => { e.stopPropagation(); openEditCourse(tc); }} style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                  </button>
-                                </div>
+                                <DirectionsButton course={tc.course} />
                               </div>
                             </div>
+                            </SwipeableRow>
                           </div>
                         );
                       })}
@@ -2152,13 +2107,7 @@ export default function TripPage() {
         <div style={{ padding: isRound ? "16px 20px 0" : "24px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>Games{games.length > 0 && <span className="count">{games.length}</span>}</div>
-            <button
-              onClick={openGameCreator}
-              style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Game
-            </button>
+            <SectionAddButton onClick={openGameCreator} label="Add game" />
           </div>
           {games.length === 0 ? (
             <div style={{ textAlign: "center", padding: "16px 0 4px", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 12 }}>No games yet — set up Nassau, Skins, and more</div>
@@ -2484,24 +2433,7 @@ export default function TripPage() {
                   Scorecard{photos.length > 0 && <span className="count">{photos.length}</span>}
                 </div>
                 {canEdit && (
-                  <button
-                    onClick={() => scorecardFileRef.current?.click()}
-                    disabled={scorecardUploading}
-                    style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: scorecardUploading ? "default" : "pointer", display: "flex", alignItems: "center", gap: 5 }}
-                  >
-                    {scorecardUploading ? (
-                      <>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" style={{ animation: "tourit-spin 0.8s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                        <style>{`@keyframes tourit-spin { to { transform: rotate(360deg); } }`}</style>
-                        Uploading…
-                      </>
-                    ) : (
-                      <>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Scorecard
-                      </>
-                    )}
-                  </button>
+                  <SectionAddButton onClick={() => scorecardFileRef.current?.click()} label="Add scorecard" busy={scorecardUploading} />
                 )}
               </div>
               {photos.length > 0 && (
@@ -2540,13 +2472,7 @@ export default function TripPage() {
         <div style={{ padding: "24px 20px 0" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div className="section-label" style={{ marginBottom: 0 }}>{flavorUpper} Clips{clips.length > 0 && <span className="count">{clips.length}</span>}</div>
-            <button
-              onClick={() => router.push(`/upload${primaryCourseId ? `?courseId=${primaryCourseId}&tripId=${id}` : `?tripId=${id}`}`)}
-              style={{ background: "rgba(77,168,98,0.15)", border: "1px solid rgba(77,168,98,0.35)", borderRadius: 99, padding: "5px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 11, fontWeight: 600, color: "#4da862", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Clip
-            </button>
+            <SectionAddButton onClick={() => router.push(`/upload${primaryCourseId ? `?courseId=${primaryCourseId}&tripId=${id}` : `?tripId=${id}`}`)} label="Add clip" />
           </div>
           {clips.length === 0 ? (
             <div style={{ textAlign: "center", padding: "28px 0", color: "rgba(255,255,255,0.2)", fontFamily: "'Outfit', sans-serif", fontSize: 13, lineHeight: 1.6 }}>
