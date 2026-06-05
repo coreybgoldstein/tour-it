@@ -422,24 +422,44 @@ export default function HomeTour() {
   }, []);
 
   // ── Popular on Tour It ─────────────────────────────────────────────
-  // Most-scouted courses, ranked by a real popularity score (uploads +
-  // saves + views) rather than a random shuffle. No location needed, so
-  // this loads on mount for every user and backs the bucket toggle.
+  // Curated "best public/resort you can play" courses come first, ordered
+  // by editorial nationalRank. If fewer than the rail needs have a
+  // renderable cover, we backfill with the most-scouted courses (real
+  // popularity score: uploads + saves + views) so the rail never looks
+  // empty. No location needed — loads on mount for every user.
   useEffect(() => {
     const sb = createClient();
     let cancelled = false;
+    const SELECT = "id, name, city, state, coverImageUrl, logoUrl, uploadCount, saveCount, viewCount";
+    const RAIL = 12;
     (async () => {
-      const { data } = await sb
+      const { data: top } = await sb
         .from("Course")
-        .select("id, name, city, state, coverImageUrl, logoUrl, uploadCount, saveCount, viewCount")
-        .gt("uploadCount", 0)
-        .order("uploadCount", { ascending: false, nullsFirst: false })
-        .limit(40);
-      if (cancelled || !data) return;
-      const ranked = (data as (CourseLite & { saveCount?: number; viewCount?: number })[])
-        .slice()
-        .sort(byPopularity)
-        .slice(0, 12);
+        .select(SELECT)
+        .not("nationalRank", "is", null)
+        .not("coverImageUrl", "is", null)
+        .order("nationalRank", { ascending: true })
+        .limit(RAIL);
+      const ranked: (CourseLite & { saveCount?: number; viewCount?: number })[] =
+        ((top as (CourseLite & { saveCount?: number; viewCount?: number })[]) || []).slice();
+
+      if (ranked.length < RAIL) {
+        const { data: pop } = await sb
+          .from("Course")
+          .select(SELECT)
+          .gt("uploadCount", 0)
+          .order("uploadCount", { ascending: false, nullsFirst: false })
+          .limit(40);
+        const seen = new Set(ranked.map((c) => c.id));
+        const filler = ((pop as (CourseLite & { saveCount?: number; viewCount?: number })[]) || [])
+          .filter((c) => !seen.has(c.id))
+          .sort(byPopularity);
+        for (const c of filler) {
+          if (ranked.length >= RAIL) break;
+          ranked.push(c);
+        }
+      }
+      if (cancelled) return;
       setPopular(ranked);
       writeCache("popularCourses", ranked);
     })();

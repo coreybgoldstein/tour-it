@@ -1072,17 +1072,31 @@ export default function HomeClassic() {
     });
 
     (async () => {
-      const { data } = await supabase
+      const POP_SELECT = "id, name, city, state, uploadCount, saveCount, viewCount, coverImageUrl, logoUrl";
+      const RAIL = 10;
+      // Curated "best public/resort you can play" courses lead, ordered by
+      // editorial nationalRank. Backfill with the most-scouted courses (real
+      // popularity score) so the rail never looks empty.
+      const { data: top } = await supabase
         .from("Course")
-        .select("id, name, city, state, uploadCount, saveCount, viewCount, coverImageUrl, logoUrl")
-        .gt("uploadCount", 0)
-        .order("uploadCount", { ascending: false, nullsFirst: false })
-        .limit(40);
-      if (!data) return;
-      // Rank by real popularity (uploads + saves + views) so "Popular on
-      // Tour It" actually means popular, not a random sample.
-      const ranked = [...data].sort(byPopularity);
-      let picked = ranked.slice(0, 10);
+        .select(POP_SELECT)
+        .not("nationalRank", "is", null)
+        .not("coverImageUrl", "is", null)
+        .order("nationalRank", { ascending: true })
+        .limit(RAIL);
+      let picked: any[] = [...(top || [])];
+      if (picked.length < RAIL) {
+        const { data } = await supabase
+          .from("Course")
+          .select(POP_SELECT)
+          .gt("uploadCount", 0)
+          .order("uploadCount", { ascending: false, nullsFirst: false })
+          .limit(40);
+        const seen = new Set(picked.map((c) => c.id));
+        const filler = [...(data || [])].filter((c) => !seen.has(c.id)).sort(byPopularity);
+        picked = [...picked, ...filler].slice(0, RAIL);
+      }
+      if (picked.length === 0) return;
 
       // During tournament week, anchor the featured course (e.g. PGA Aronimink)
       // to the first position. Falls back gracefully if it's already in the
