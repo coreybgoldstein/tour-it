@@ -19,18 +19,23 @@ import { cdnImage } from "@/lib/cdnImage";
 
 const ASSET_BASE = WILSON_ASSET_BASE;
 
-// Both product shots ride together on a single white tile so they read
-// as one connected unit. A secondary-green outline with interior spacing
-// echoes the banner's own border. Each <img> hides on error; the tile
-// disappears entirely only if both are missing.
+// Both product shots ride together on a single light-green tile so they
+// read as one connected unit that sits in the banner's palette instead of
+// a stark white box. The photos are shot on white, so mixBlendMode
+// "multiply" drops their white backgrounds out against the light-green
+// field (white × light-green = light-green) while keeping the product —
+// this only works because the tile is light, not dark. A secondary-green
+// outline with interior spacing echoes the banner's own border. Each
+// <img> hides on error; the tile disappears only if both are missing.
+const TILE_BG = "#dff0e4";
 function ProductDuo({ items }: { items: { src: string; alt: string }[] }) {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const visible = items.filter((it) => !hidden.has(it.src));
   if (visible.length === 0) return null;
   return (
-    <div style={{ height: 52, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, background: "#fff", borderRadius: 12, padding: "5px 13px", border: "1px solid rgba(45,122,66,0.45)", flexShrink: 0 }}>
+    <div style={{ height: 52, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, background: TILE_BG, borderRadius: 12, padding: "5px 13px", border: "1px solid rgba(45,122,66,0.45)", flexShrink: 0 }}>
       {visible.map((it) => (
-        <img key={it.src} src={cdnImage(it.src)} alt={it.alt} onError={() => setHidden((s) => new Set(s).add(it.src))} style={{ height: "100%", width: "auto", maxWidth: 54, objectFit: "contain", display: "block" }} />
+        <img key={it.src} src={cdnImage(it.src)} alt={it.alt} onError={() => setHidden((s) => new Set(s).add(it.src))} style={{ height: "100%", width: "auto", maxWidth: 54, objectFit: "contain", display: "block", mixBlendMode: "multiply" }} />
       ))}
     </div>
   );
