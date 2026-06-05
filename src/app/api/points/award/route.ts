@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { awardPoints } from "@/lib/awardPoints";
-import { PointAction, type PointActionKey } from "@/config/points-system";
+import { PointAction, POINT_VALUES, type PointActionKey } from "@/config/points-system";
 import { checkBadgesForAction } from "@/lib/checkBadges";
+
+// The only actions whose point value is variable and therefore legitimately
+// driven by a client-supplied customAmount, with the maximum the client may
+// request. Anything outside this map ignores customAmount entirely, and any
+// request above the cap is clamped — clients can never self-award arbitrary
+// points. INTEL_BONUS maxes at 10 (see calcIntelBonus).
+const CUSTOM_AMOUNT_CAPS: Partial<Record<PointActionKey, number>> = {
+  [PointAction.INTEL_BONUS]: 10,
+};
 
 // Actions where the caller is the recipient
 const SELF_ACTIONS = new Set<PointActionKey>([
@@ -41,7 +50,13 @@ export async function POST(req: NextRequest) {
   const { action, recipientUserId, referenceId, metadata, customAmount } = await req.json();
   if (!action) return NextResponse.json({ error: "Missing action" }, { status: 400 });
 
-  const isSelf = SELF_ACTIONS.has(action as PointActionKey);
+  // Allowlist: reject any action that isn't a known point action.
+  if (!Object.prototype.hasOwnProperty.call(POINT_VALUES, action)) {
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  }
+  const actionKey = action as PointActionKey;
+
+  const isSelf = SELF_ACTIONS.has(actionKey);
   const targetUserId = isSelf ? user.id : recipientUserId;
 
   if (!targetUserId) return NextResponse.json({ error: "Missing recipientUserId" }, { status: 400 });
@@ -49,16 +64,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Cannot award received action to yourself" }, { status: 400 });
   }
 
+  // Only honor a client-supplied customAmount for actions whose value is
+  // genuinely variable, and clamp it to the action's cap. Everything else
+  // uses the fixed POINT_VALUES amount, so a client can't self-award points.
+  let safeCustomAmount: number | undefined;
+  const cap = CUSTOM_AMOUNT_CAPS[actionKey];
+  if (cap !== undefined && typeof customAmount === "number" && Number.isFinite(customAmount)) {
+    safeCustomAmount = Math.max(0, Math.min(customAmount, cap));
+  }
+
   const result = await awardPoints({
     userId: targetUserId,
-    action: action as PointActionKey,
+    action: actionKey,
     referenceId,
     metadata,
-    customAmount: typeof customAmount === "number" ? customAmount : undefined,
+    customAmount: safeCustomAmount,
   });
 
   // Badge checks run async — don't block the response
-  checkBadgesForAction(targetUserId, action as PointActionKey, referenceId).catch(() => {});
+  checkBadgesForAction(targetUserId, actionKey, referenceId).catch(() => {});
 
   // Broadcast handled inside awardPoints() — fires on every code path now,
   // not just this route.
