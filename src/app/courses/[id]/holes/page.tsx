@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import BackButton from "@/components/BackButton";
 
 type Course = {
   id: string;
@@ -100,14 +101,7 @@ export default function HolesOverviewPage() {
       {/* Sticky header — top padding includes iOS safe-area-inset so the
           back button never sits under the notch / Dynamic Island. */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "calc(20px + env(safe-area-inset-top)) 16px 10px", position: "sticky", top: 0, background: "#07100a", zIndex: 10, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <button
-          onClick={() => router.back()}
-          style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-        </button>
+        <BackButton fallback={`/courses/${id}`} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course?.name}</div>
           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{course?.city}, {course?.state} · {course?.holeCount || 18} holes</div>

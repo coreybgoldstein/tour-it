@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import BackButton from "@/components/BackButton";
 import { gameFormatLabel } from "@/lib/gameFormats";
 import { cdnImage } from "@/lib/cdnImage";
 
@@ -158,11 +159,10 @@ export default function GamePage() {
   return (
     <main style={pageStyle}>
       <div style={{ padding: "24px 20px 100px", maxWidth: 520, margin: "0 auto" }}>
-        {/* Back chip */}
-        <button onClick={() => router.back()} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: "6px 12px 6px 8px", marginBottom: 16, cursor: "pointer" }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.7)" }}>Back</span>
-        </button>
+        {/* Back chip — falls back to the parent trip on cold deep-link open */}
+        <div style={{ marginBottom: 16 }}>
+          <BackButton label="Back" fallback={`/trips/${game.tripId}`} />
+        </div>
 
         {/* Hero card — mirrors GameCard's active treatment */}
         <div style={{
@@ -176,7 +176,7 @@ export default function GamePage() {
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
             <div style={{ width: 56, height: 56, borderRadius: 14, background: courseLogoUrl ? "#fff" : "rgba(77,168,98,0.15)", border: "1px solid rgba(255,255,255,0.1)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {courseLogoUrl
-                ? <img src={courseLogoUrl} alt={game.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ? <img src={cdnImage(courseLogoUrl)} alt={game.courseName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="1.6"><path d="M4 21h16M12 15V2"/></svg>}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>

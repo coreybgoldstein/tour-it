@@ -21,6 +21,7 @@ import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { RANK_TIERS, RANK_COLORS, type RankTierKey } from "@/config/points-system";
 import { rankLabel } from "@/lib/progression";
 import BottomNav from "@/components/BottomNav";
+import BackButton from "@/components/BackButton";
 import PointsSystemSheet from "@/components/PointsSystemSheet";
 import MayCompetitionModal from "@/components/MayCompetitionModal";
 import JuneCompetitionModal from "@/components/JuneCompetitionModal";
@@ -87,13 +88,7 @@ export default function PlayHubPage() {
         padding: "calc(10px + env(safe-area-inset-top)) 20px 10px",
         display: "flex", alignItems: "center", gap: 12,
       }}>
-        <button onClick={() => router.back()} style={{
-          width: 34, height: 34, borderRadius: "50%",
-          background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-          display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
+        <BackButton fallback="/" />
         <span style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>Play Tour It</span>
       </div>
 

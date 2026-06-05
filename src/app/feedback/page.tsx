@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import BackButton from "@/components/BackButton";
 
 const QUESTIONS = [
   { key: "whatsWorking",      label: "What's working well?",                          placeholder: "Things you enjoy or find useful…" },
@@ -69,9 +70,7 @@ export default function FeedbackPage() {
 
       {/* Header */}
       <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#07100a", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "calc(12px + env(safe-area-inset-top)) 20px 12px", display: "flex", alignItems: "center", gap: 12 }}>
-        <button onClick={() => router.back()} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
+        <BackButton fallback="/" />
         <span style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>App Feedback</span>
       </div>
 
