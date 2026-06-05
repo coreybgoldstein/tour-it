@@ -9,6 +9,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { ClipRail } from "@/components/clip/ClipRail";
+import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { useLike } from "@/hooks/useLike";
 
 type Round = {
@@ -80,6 +81,9 @@ export default function RoundDetailPage() {
   const [feedVisible, setFeedVisible] = useState(0);
   const [muted, setMuted] = useState(true);
   const feedRef = useRef<HTMLDivElement>(null);
+  // Single ref — only the active clip mounts an HlsVideo, so the
+  // scrubber binds to whichever video is on screen.
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (feedIndex === null || !feedRef.current) return;
@@ -309,7 +313,7 @@ export default function RoundDetailPage() {
                 {i === feedVisible ? (
                   clip.mediaType === "PHOTO"
                     ? <img src={clip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <HlsVideo src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId ?? undefined)} autoPlay muted={muted} loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <HlsVideo ref={videoRef} src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId ?? undefined)} autoPlay muted={muted} loop playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   <img src={clip.cloudflareVideoId ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400` : clip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                 )}
@@ -361,6 +365,12 @@ export default function RoundDetailPage() {
                   <div style={{ position: "absolute", bottom: 0, left: 0, zIndex: 10, background: "rgba(7,16,10,0.82)", backdropFilter: "blur(10px)", borderRadius: "0 16px 0 0", borderTop: "1.5px solid rgba(77,168,98,0.7)", borderRight: "1.5px solid rgba(77,168,98,0.7)", boxShadow: "0 -2px 18px rgba(77,168,98,0.18)", padding: "12px 18px calc(14px + env(safe-area-inset-bottom)) 14px", pointerEvents: "none" }}>
                     <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 52, fontWeight: 400, color: "#fff", lineHeight: 1, letterSpacing: "-1px" }}>{clip.holeNumber}</div>
                   </div>
+                )}
+
+                {/* Draggable seek bar for the active video — lifted above
+                    the hole-number badge so it stays clear of it. */}
+                {i === feedVisible && clip.mediaType !== "PHOTO" && (
+                  <VideoScrubber videoRef={videoRef} bottom={94} />
                 )}
               </div>
             ))}

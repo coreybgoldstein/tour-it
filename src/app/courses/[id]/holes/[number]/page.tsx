@@ -16,6 +16,7 @@ import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
+import { CommentSwipe } from "@/components/clip/CommentSwipe";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { cdnImage } from "@/lib/cdnImage";
 import { type OfficialMedia } from "@/components/course/OfficialMediaCard";
@@ -85,6 +86,7 @@ type CommentItem = {
   username: string;
   avatarUrl: string | null;
   createdAt: string;
+  userId: string;
   rank?: string | null;
 };
 
@@ -432,6 +434,8 @@ export default function HolePage() {
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
   // All holes with upload counts — used to skip empty holes on swipe
   const [holeList, setHoleList] = useState<{holeNumber: number; uploadCount: number}[]>([]);
   const [endOfContent, setEndOfContent] = useState<"prev" | "next" | null>(null);
@@ -487,6 +491,7 @@ export default function HolePage() {
       .then(({ data }) => {
         if (data) setCommentItems(data.map((c: any) => ({
           id: c.id, body: c.body, createdAt: c.createdAt,
+          userId: c.userId,
           username: c.User?.username || "golfer",
           avatarUrl: c.User?.avatarUrl || null,
           rank: (c.User?.UserProgression as any[])?.[0]?.rank || null,
@@ -559,13 +564,47 @@ export default function HolePage() {
         fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
       }
       setCommentItems(prev => [...prev, {
-        id: Date.now().toString(), body: commentText.trim(), createdAt: new Date().toISOString(),
+        id: newId, body: commentText.trim(), createdAt: new Date().toISOString(),
+        userId: user.id,
         username: user.user_metadata?.username || "you", avatarUrl: null,
       }]);
       setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: (u.commentCount || 0) + 1 } : u));
       setCommentText("");
     }
     setSubmittingComment(false);
+  }
+
+  async function deleteComment(c: CommentItem) {
+    if (!user || c.userId !== user.id || !commentUploadId) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("Comment").delete().eq("id", c.id).eq("userId", user.id);
+    if (error) return;
+    const { data: uploadData } = await supabase
+      .from("Upload")
+      .select("commentCount, likeCount, createdAt")
+      .eq("id", commentUploadId)
+      .single();
+    const newCommentCount = Math.max(0, (uploadData?.commentCount || 1) - 1);
+    const { computeRankScore } = await import("@/lib/rankScore");
+    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
+    await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+    const remaining = commentItems.filter(ci => ci.id !== c.id);
+    setCommentItems(remaining);
+    setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: Math.max(0, (u.commentCount || 0) - 1) } : u));
+    if (!remaining.some(ci => ci.userId === user.id)) {
+      setCommentedIds(prev => { const next = new Set(prev ?? []); next.delete(commentUploadId); return next; });
+    }
+  }
+
+  async function saveCommentEdit() {
+    if (!user || !editingCommentId || !editingCommentText.trim()) return;
+    const body = editingCommentText.trim();
+    const supabase = createClient();
+    const { error } = await supabase.from("Comment").update({ body, updatedAt: new Date().toISOString() }).eq("id", editingCommentId).eq("userId", user.id);
+    if (error) return;
+    setCommentItems(prev => prev.map(ci => ci.id === editingCommentId ? { ...ci, body } : ci));
+    setEditingCommentId(null);
+    setEditingCommentText("");
   }
 
   useEffect(() => {
@@ -1166,18 +1205,40 @@ export default function HolePage() {
               ) : commentItems.length === 0 ? (
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
-                <div key={c.id} style={{ display: "flex", gap: 10, paddingBottom: 14 }}>
-                  <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: getRankRingBorder(c.rank), overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {c.avatarUrl
-                      ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
-                      : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    }
+                <CommentSwipe
+                  key={c.id}
+                  isMine={!!user && c.userId === user.id}
+                  bg="#0d2318"
+                  onEdit={() => { setEditingCommentId(c.id); setEditingCommentText(c.body); }}
+                  onDelete={() => deleteComment(c)}
+                >
+                  <div style={{ display: "flex", gap: 10, padding: "0 0 14px" }}>
+                    <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: getRankRingBorder(c.rank), overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {c.avatarUrl
+                        ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                        : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      }
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
+                      {editingCommentId === c.id ? (
+                        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                          <input
+                            value={editingCommentText}
+                            onChange={(e) => setEditingCommentText(e.target.value)}
+                            autoFocus
+                            style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                            onKeyDown={(e) => { if (e.key === "Enter" && editingCommentText.trim()) saveCommentEdit(); }}
+                          />
+                          <button onClick={saveCommentEdit} disabled={!editingCommentText.trim()} style={{ background: "#2d7a42", border: "none", borderRadius: 8, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: !editingCommentText.trim() ? 0.4 : 1 }}>Save</button>
+                          <button onClick={() => { setEditingCommentId(null); setEditingCommentText(""); }} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 8, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{c.body}</span>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.85)" }}>{c.body}</span>
-                  </div>
-                </div>
+                </CommentSwipe>
               ))}
             </div>
             <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>

@@ -17,6 +17,7 @@ import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
+import { CommentSwipe } from "@/components/clip/CommentSwipe";
 import { rateLimit } from "@/lib/rateLimit";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import MayCompetitionBanner from "@/components/MayCompetitionBanner";
@@ -122,6 +123,7 @@ type CommentItem = {
   id: string;
   body: string;
   createdAt: string;
+  userId: string;
   username: string;
   avatarUrl: string | null;
   rank?: string | null;
@@ -946,6 +948,8 @@ export default function HomeClassic() {
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
   const [showOnboarding, setShowOnboarding] = useState(false);
   // Push-permission smart prompt (audit #23). iOS Capacitor requires
   // requestPermission() to fire from a user tap, so the old
@@ -1591,6 +1595,7 @@ export default function HomeClassic() {
             id: c.id,
             body: c.body,
             createdAt: c.createdAt,
+            userId: c.userId,
             username: c.user?.username || "golfer",
             avatarUrl: c.user?.avatarUrl || null,
             rank: (c.user?.UserProgression as any[])?.[0]?.rank || null,
@@ -1667,6 +1672,7 @@ export default function HomeClassic() {
         id,
         body: commentText.trim(),
         createdAt: new Date().toISOString(),
+        userId: user.id,
         username: userProfile?.username || "golfer",
         avatarUrl: userProfile?.avatarUrl || null,
       }]);
@@ -1697,6 +1703,52 @@ export default function HomeClassic() {
       setCommentText("");
     }
     setSubmittingComment(false);
+  }
+
+  async function deleteComment(c: CommentItem) {
+    if (!user || c.userId !== user.id || !commentUploadId) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("Comment").delete().eq("id", c.id).eq("userId", user.id);
+    if (error) return;
+    const { data: uploadData } = await supabase
+      .from("Upload")
+      .select("commentCount, likeCount, createdAt")
+      .eq("id", commentUploadId)
+      .single();
+    const newCommentCount = Math.max(0, (uploadData?.commentCount || 1) - 1);
+    const { computeRankScore } = await import("@/lib/rankScore");
+    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
+    await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+    const remaining = commentItems.filter(ci => ci.id !== c.id);
+    setCommentItems(remaining);
+    setFeedItems(prev => prev.map(item => {
+      if (item.type === "clip" && item.clip.id === commentUploadId) {
+        return { ...item, clip: { ...item.clip, commentCount: Math.max(0, item.clip.commentCount - 1) } };
+      }
+      if (item.type === "series") {
+        const idx = item.shots.findIndex(s => s.id === commentUploadId);
+        if (idx >= 0) {
+          const shots = item.shots.slice();
+          shots[idx] = { ...shots[idx], commentCount: Math.max(0, (shots[idx].commentCount || 0) - 1) };
+          return { ...item, shots };
+        }
+      }
+      return item;
+    }));
+    if (!remaining.some(ci => ci.userId === user.id)) {
+      setCommentedIds(prev => { const next = new Set(prev ?? []); next.delete(commentUploadId); return next; });
+    }
+  }
+
+  async function saveCommentEdit() {
+    if (!user || !editingCommentId || !editingCommentText.trim()) return;
+    const body = editingCommentText.trim();
+    const supabase = createClient();
+    const { error } = await supabase.from("Comment").update({ body, updatedAt: new Date().toISOString() }).eq("id", editingCommentId).eq("userId", user.id);
+    if (error) return;
+    setCommentItems(prev => prev.map(ci => ci.id === editingCommentId ? { ...ci, body } : ci));
+    setEditingCommentId(null);
+    setEditingCommentText("");
   }
 
   function fetchNearMe(radiusOverride?: number, publicOnlyOverride?: boolean) {
@@ -2356,16 +2408,40 @@ export default function HomeClassic() {
               ) : commentItems.length === 0 ? (
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
-                <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                  <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: getRankRingBorder(c.rank), overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {c.avatarUrl ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                <CommentSwipe
+                  key={c.id}
+                  isMine={!!user && c.userId === user.id}
+                  bg="#0d2318"
+                  onEdit={() => { setEditingCommentId(c.id); setEditingCommentText(c.body); }}
+                  onDelete={() => deleteComment(c)}
+                >
+                  <div style={{ display: "flex", gap: 10, padding: "0 0 16px" }}>
+                    <div className={isLegend(c.rank) ? "legend-ring" : undefined} style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", border: getRankRingBorder(c.rank), overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {c.avatarUrl ? <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
+                      {editingCommentId === c.id ? (
+                        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                          <input
+                            value={editingCommentText}
+                            onChange={(e) => setEditingCommentText(e.target.value)}
+                            autoFocus
+                            style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                            onKeyDown={(e) => { if (e.key === "Enter" && editingCommentText.trim()) saveCommentEdit(); }}
+                          />
+                          <button onClick={saveCommentEdit} disabled={!editingCommentText.trim()} style={{ background: "#2d7a42", border: "none", borderRadius: 8, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: !editingCommentText.trim() ? 0.4 : 1 }}>Save</button>
+                          <button onClick={() => { setEditingCommentId(null); setEditingCommentText(""); }} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 8, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <>
+                          <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)" }}>{c.body}</span>
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{formatTimeAgo(c.createdAt)}</div>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: getRankColor(c.rank) }}>@{c.username} </span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)" }}>{c.body}</span>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 3 }}>{formatTimeAgo(c.createdAt)}</div>
-                  </div>
-                </div>
+                </CommentSwipe>
               ))}
             </div>
             <div style={{ padding: "10px 16px 36px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>

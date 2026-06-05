@@ -21,6 +21,7 @@ import { useLike } from "@/hooks/useLike";
 import { ClipRail } from "@/components/clip/ClipRail";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
+import { CommentSwipe } from "@/components/clip/CommentSwipe";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import EditClipSheet from "@/components/EditClipSheet";
 
@@ -28,6 +29,7 @@ type CommentItem = {
   id: string;
   body: string;
   createdAt: string;
+  userId: string;
   username: string;
   avatarUrl: string | null;
 };
@@ -154,6 +156,9 @@ export default function FeedPage() {
   const [commentText, setCommentText] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  // Inline edit of the user's own comment — id being edited + draft text.
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
   // 500ms grace flag set synchronously when the comment button is
   // tapped, so iOS WKWebView's re-fired touch doesn't immediately
   // dismiss the sheet via the backdrop tap handler. Mirrors the
@@ -217,6 +222,7 @@ export default function FeedPage() {
             id: c.id,
             body: c.body,
             createdAt: c.createdAt,
+            userId: c.userId,
             username: c.user?.username || "golfer",
             avatarUrl: c.user?.avatarUrl || null,
           })));
@@ -279,6 +285,7 @@ export default function FeedPage() {
         id,
         body: commentText.trim(),
         createdAt: new Date().toISOString(),
+        userId: me.id,
         username: me.username || "golfer",
         avatarUrl: me.avatarUrl || null,
       }]);
@@ -290,6 +297,43 @@ export default function FeedPage() {
       setCommentText("");
     }
     setSubmittingComment(false);
+  }
+
+  // Delete the user's own comment: remove the row, decrement the clip's
+  // commentCount + rankScore, prune local list, and clear the filled
+  // bubble if this was the user's last comment on the clip.
+  async function deleteComment(c: CommentItem) {
+    if (!me || c.userId !== me.id || !commentUploadId) return;
+    const sb = createClient();
+    const { error } = await sb.from("Comment").delete().eq("id", c.id).eq("userId", me.id);
+    if (error) return;
+    const { data: uploadData } = await sb
+      .from("Upload")
+      .select("commentCount, likeCount, createdAt")
+      .eq("id", commentUploadId)
+      .single();
+    const newCommentCount = Math.max(0, (uploadData?.commentCount || 1) - 1);
+    const { computeRankScore } = await import("@/lib/rankScore");
+    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
+    await sb.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+    const remaining = commentItems.filter(ci => ci.id !== c.id);
+    setCommentItems(remaining);
+    setClips(prev => prev.map(cl => cl.id === commentUploadId ? { ...cl, commentCount: Math.max(0, cl.commentCount - 1) } : cl));
+    if (!remaining.some(ci => ci.userId === me.id)) {
+      setCommentedIds(prev => { const next = new Set(prev); next.delete(commentUploadId); return next; });
+    }
+  }
+
+  // Save an inline edit to the user's own comment.
+  async function saveCommentEdit() {
+    if (!me || !editingCommentId || !editingCommentText.trim()) return;
+    const body = editingCommentText.trim();
+    const sb = createClient();
+    const { error } = await sb.from("Comment").update({ body, updatedAt: new Date().toISOString() }).eq("id", editingCommentId).eq("userId", me.id);
+    if (error) return;
+    setCommentItems(prev => prev.map(ci => ci.id === editingCommentId ? { ...ci, body } : ci));
+    setEditingCommentId(null);
+    setEditingCommentText("");
   }
 
   async function deleteMenuClip() {
@@ -522,20 +566,42 @@ export default function FeedPage() {
               ) : commentItems.length === 0 ? (
                 <div style={{ textAlign: "center", color: "rgba(255,255,255,0.25)", fontSize: 13, padding: "32px 0", lineHeight: 1.6 }}>No comments yet.<br />Be the first to say something!</div>
               ) : commentItems.map(c => (
-                <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {c.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    )}
+                <CommentSwipe
+                  key={c.id}
+                  isMine={!!me && c.userId === me.id}
+                  bg="#0d2318"
+                  onEdit={() => { setEditingCommentId(c.id); setEditingCommentText(c.body); }}
+                  onDelete={() => deleteComment(c)}
+                >
+                  <div style={{ display: "flex", gap: 10, padding: "0 0 16px" }}>
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(26,158,66,0.2)", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {c.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={cdnImage(c.avatarUrl)} alt={c.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(26,158,66,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      )}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>@{c.username} </span>
+                      {editingCommentId === c.id ? (
+                        <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                          <input
+                            value={editingCommentText}
+                            onChange={(e) => setEditingCommentText(e.target.value)}
+                            autoFocus
+                            style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 10px", fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "#fff", outline: "none" }}
+                            onKeyDown={(e) => { if (e.key === "Enter" && editingCommentText.trim()) saveCommentEdit(); }}
+                          />
+                          <button onClick={saveCommentEdit} disabled={!editingCommentText.trim()} style={{ background: "#2d7a42", border: "none", borderRadius: 8, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#fff", cursor: "pointer", opacity: !editingCommentText.trim() ? 0.4 : 1 }}>Save</button>
+                          <button onClick={() => { setEditingCommentId(null); setEditingCommentText(""); }} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 8, padding: "6px 12px", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)" }}>{c.body}</span>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, color: "#4da862" }}>@{c.username} </span>
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.82)" }}>{c.body}</span>
-                  </div>
-                </div>
+                </CommentSwipe>
               ))}
             </div>
             <div style={{ padding: "10px 16px 36px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
