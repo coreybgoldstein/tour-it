@@ -294,7 +294,7 @@ export default async function TripIdeaPage({ params }: { params: Promise<{ slug:
       {it.heroImageUrl ? (
         // ── DRAMATIC HERO (when an image is set) ─────────────────────────
         <div style={{ position: "relative", height: "65svh", minHeight: 440, maxHeight: 620, overflow: "hidden" }}>
-          <div aria-hidden style={{ position: "absolute", inset: 0, background: `url('${it.heroImageUrl}') center/cover no-repeat` }} />
+          <div aria-hidden style={{ position: "absolute", inset: 0, background: `url('${cdnImage(it.heroImageUrl)}') center/cover no-repeat` }} />
           <div aria-hidden style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(7,16,10,0.95) 100%)" }} />
           {backButton}
           <div style={{ position: "absolute", bottom: 28, left: 0, right: 0, padding: "0 20px", zIndex: 5 }}>

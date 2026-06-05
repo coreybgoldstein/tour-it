@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { cdnImage } from "@/lib/cdnImage";
 import SeoTab from "./SeoTab";
 
 type Tab = "overview" | "clips" | "reports" | "requests" | "trips" | "seo";
@@ -463,7 +464,7 @@ export default function AdminPage() {
                 <div style={{ width: 52, height: 72, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "rgba(255,255,255,0.06)" }}>
                   {clip.mediaType === "VIDEO"
                     ? <img src={clip.cloudflareVideoId ? `https://videodelivery.net/${clip.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=200` : clip.mediaUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <img src={clip.mediaUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <img src={cdnImage(clip.mediaUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   }
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>

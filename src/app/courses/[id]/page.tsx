@@ -312,7 +312,7 @@ function FeedCard({ clip, isActive, onClose, onComment, onShowLikes, course, upl
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }}
         />
       ) : (
-        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={cdnImage(clip.mediaUrl)} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
       {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} left={holeNumber ? 100 : 16} />}
@@ -1385,7 +1385,7 @@ const [editDescription, setEditDescription] = useState("");
         {course.coverImageUrl ? (
           <img src={cdnImage(course.coverImageUrl)} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : courseClips.find(c => c.mediaType === "PHOTO") ? (
-          <img src={courseClips.find(c => c.mediaType === "PHOTO")!.mediaUrl} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={cdnImage(courseClips.find(c => c.mediaType === "PHOTO")!.mediaUrl)} alt={course.name} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <div style={{ position: "absolute", inset: 0, background: hero.gradient }} />
         )}
@@ -3102,7 +3102,7 @@ const [editDescription, setEditDescription] = useState("");
             {extendedClip.mediaType === "VIDEO" ? (
               <HlsVideo src={getVideoSrc(extendedClip.mediaUrl, extendedClip.cloudflareVideoId)} style={{ width: "100%", height: "100%", objectFit: "cover" }} controls playsInline autoPlay muted />
             ) : (
-              <img src={extendedClip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              <img src={cdnImage(extendedClip.mediaUrl)} alt="clip" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             )}
           </div>
           {(extendedClip.officialCaption || extendedClip.strategyNote || extendedClip.landingZoneNote || extendedClip.whatCameraDoesntShow) && (

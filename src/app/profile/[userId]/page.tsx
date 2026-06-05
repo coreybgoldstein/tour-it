@@ -118,7 +118,7 @@ const ProfileFeedCard = memo(function ProfileFeedCardImpl({
           onClick={() => { const v = videoRef.current; if (!v) return; if (v.paused) { v.play().catch(() => {}); setVideoPaused(false); } else { v.pause(); setVideoPaused(true); } }}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
-        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={cdnImage(clip.mediaUrl)} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
       {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} />}
@@ -1493,7 +1493,7 @@ export default function ProfilePage() {
                             }}
                               style={{ display: "flex", alignItems: "center", gap: 10, background: c.id === editData.courseId ? "rgba(26,158,66,0.15)" : "rgba(255,255,255,0.04)", border: `1px solid ${c.id === editData.courseId ? "rgba(26,158,66,0.5)" : "rgba(255,255,255,0.08)"}`, borderRadius: 10, padding: "9px 11px", cursor: "pointer", textAlign: "left" }}>
                               <div style={{ width: 30, height: 30, borderRadius: 8, background: "#fff", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                {c.logoUrl ? <img src={c.logoUrl} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                                {c.logoUrl ? <img src={cdnImage(c.logoUrl)} alt={c.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
                               </div>
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
@@ -2308,7 +2308,7 @@ export default function ProfilePage() {
                 <div key={cover.id + (cover.isTagged ? "-t" : "")} className="clip-thumb" onClick={() => openFeed(group.startIndex)}
                   style={{ aspectRatio: "9/16", borderRadius: "6px", overflow: "hidden", position: "relative", cursor: "pointer", background: i % 3 === 0 ? "linear-gradient(180deg,#1a4d22 0%,#2d7a42 50%,#0f2e18 100%)" : i % 3 === 1 ? "linear-gradient(180deg,#0a2e14 0%,#1e5c30 50%,#0a1e10 100%)" : "linear-gradient(180deg,#1e3a10 0%,#3a6020 50%,#122010 100%)", transition: "opacity 0.15s" }}>
                   {cover.mediaType === "PHOTO"
-                    ? <img src={cover.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ? <img src={cdnImage(cover.mediaUrl)} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : cover.cloudflareVideoId
                       ? <img src={`https://videodelivery.net/${cover.cloudflareVideoId}/thumbnails/thumbnail.jpg?time=0s&width=400`} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg></div>

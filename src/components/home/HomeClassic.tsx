@@ -568,7 +568,7 @@ const SeriesCard = memo(function SeriesCardImpl({
                 <img src={posterSrc} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               )
             ) : (
-              <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
+              <img src={cdnImage(shot.mediaUrl)} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} onClick={() => {}} />
             )}
           </div>
         );
@@ -772,7 +772,7 @@ const VideoCard = memo(function VideoCardImpl({
           onEnded={onEnded}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
       ) : (
-        <img src={clip.mediaUrl} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={cdnImage(clip.mediaUrl)} alt="clip" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
       {clip.mediaType === "VIDEO" && <VideoScrubber videoRef={videoRef} />}

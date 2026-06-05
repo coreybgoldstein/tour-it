@@ -205,7 +205,7 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
               <img src={getClipThumbnail(shot.mediaType, shot.mediaUrl, shot.cloudflareVideoId)} alt="shot" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             )
           ) : (
-            <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={cdnImage(shot.mediaUrl)} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           )}
         </div>
       ))}
@@ -934,7 +934,7 @@ export default function HolePage() {
             <div style={{ position: "relative", width: "100%", maxWidth: isDesktop ? 390 : "100%", height: "100%", overflow: "hidden" }}>
             {activeUpload.mediaType === "PHOTO" ? (
               <>
-                <img src={activeUpload.mediaUrl} className="photo-el" alt="clip" onClick={() => {}} />
+                <img src={cdnImage(activeUpload.mediaUrl)} className="photo-el" alt="clip" onClick={() => {}} />
               </>
             ) : (
               <>

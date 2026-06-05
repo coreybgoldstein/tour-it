@@ -2484,7 +2484,7 @@ export default function TripPage() {
                 <div key={clip.id} className="clip-thumb" onClick={() => { setFeedIndex(i); setFeedOpen(true); }}>
                   {clip.mediaType === "VIDEO"
                     ? <HlsVideo src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} muted playsInline preload="none" />
-                    : <img src={clip.mediaUrl} alt="clip" />
+                    : <img src={cdnImage(clip.mediaUrl)} alt="clip" />
                   }
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
                   {clip.mediaType === "VIDEO" && (
@@ -2730,7 +2730,7 @@ export default function TripPage() {
                     ? <HlsVideo ref={el => { videoRefs.current[clip.id] = el as HTMLVideoElement | null; }} src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     // eslint-disable-next-line @next/next/no-img-element
                     : <img src={getClipThumbnail(clip.mediaType, clip.mediaUrl, clip.cloudflareVideoId)} alt="clip" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)
-                : <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <img src={cdnImage(clip.mediaUrl)} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               }
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none" }} />
               <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 16px 80px" }}>
