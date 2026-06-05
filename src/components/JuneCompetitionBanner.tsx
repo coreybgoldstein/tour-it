@@ -6,24 +6,26 @@ import { isJuneActive, WILSON_ASSET_BASE } from "@/lib/competitions";
 import { cdnImage } from "@/lib/cdnImage";
 
 // June 2026 competition banner — Wilson Golf sponsored. Full-bleed
-// strip (edge-to-edge) that sits flush beneath the sticky Tour It top
-// bar. Background is the warm off-white of the Wilson product
-// photography; product shots use mixBlendMode:multiply so their white
-// backgrounds drop out and they blend in seamlessly with no visible
-// tile edges.
+// strip that sits flush beneath the sticky Tour It top bar. Styled as a
+// native Tour It module (green-tinted card, white headline, green CTA)
+// rather than a drop-in ad: the sponsor logo + product shots ride on
+// small white tiles — the same treatment course logos get across the
+// app — so the white-background photography reads cleanly on the dark
+// green field.
 //
 // Assets live in Supabase Storage (the repo gitignores *.png), under
 // tour-it-photos/competitions/wilson/. Each <img> hides on error so
 // the unit stays clean if an asset is missing.
 
-const BANNER_BG = "#ece9e2"; // matches Wilson product-shot background
 const ASSET_BASE = WILSON_ASSET_BASE;
 
-function ProductImg({ src, alt }: { src: string; alt: string }) {
+function ProductTile({ src, alt }: { src: string; alt: string }) {
   const [ok, setOk] = useState(true);
   if (!ok) return null;
   return (
-    <img src={cdnImage(src)} alt={alt} onError={() => setOk(false)} style={{ height: "100%", width: "auto", maxWidth: 72, objectFit: "contain", mixBlendMode: "multiply" }} />
+    <div style={{ height: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", borderRadius: 10, padding: 5, border: "1px solid rgba(77,168,98,0.25)", flexShrink: 0 }}>
+      <img src={cdnImage(src)} alt={alt} onError={() => setOk(false)} style={{ height: "100%", width: "auto", maxWidth: 54, objectFit: "contain" }} />
+    </div>
   );
 }
 
@@ -34,45 +36,47 @@ export default function JuneCompetitionBanner() {
     <Link href="/leaderboards?period=monthly&competition=1" style={{ display: "block", textDecoration: "none" }}>
       <div style={{
         width: "100%",
-        height: 82,
+        height: 72,
         display: "flex",
         alignItems: "stretch",
-        background: BANNER_BG,
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        background: "linear-gradient(135deg, rgba(77,168,98,0.20) 0%, rgba(45,122,66,0.06) 100%), #0b1f14",
+        borderBottom: "1px solid rgba(77,168,98,0.22)",
         overflow: "hidden",
       }}>
-        {/* Left: brand + headline + CTA */}
-        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 3, padding: "8px 0 8px 18px" }}>
-          <div style={{ display: "flex" }}><WilsonMark /></div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 800, color: "#11150f", lineHeight: 1.1 }}>
+        {/* Left: brand chip + headline + CTA */}
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, padding: "8px 0 8px 18px" }}>
+          <WilsonMark />
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
             Win a Wilson Golf prize pack
           </div>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 700, color: "#2d7a42" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 700, color: "#4da862" }}>
             Play the Tour It June competition!
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </span>
         </div>
 
-        {/* Right: product photos, blended into the matching background */}
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4, padding: "6px 16px 6px 8px" }}>
-          <ProductImg src={`${ASSET_BASE}/staff-balls.png`} alt="Wilson Staff Model golf balls" />
-          <ProductImg src={`${ASSET_BASE}/rope-hat.png`} alt="Wilson Script Rope Hat" />
+        {/* Right: product shots on white tiles */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6, padding: "6px 16px 6px 8px" }}>
+          <ProductTile src={`${ASSET_BASE}/staff-balls.png`} alt="Wilson Staff Model golf balls" />
+          <ProductTile src={`${ASSET_BASE}/rope-hat.png`} alt="Wilson Script Rope Hat" />
         </div>
       </div>
     </Link>
   );
 }
 
-// Real Wilson wordmark; styled text fallback only if the file is
+// Wilson wordmark on a small white chip so the dark-on-white logo stays
+// legible against the green field. Styled-text fallback if the file is
 // missing so the unit is never broken.
 function WilsonMark() {
   const [ok, setOk] = useState(true);
-  if (!ok) {
-    return (
-      <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: "italic", fontSize: 15, fontWeight: 800, color: "#11150f", letterSpacing: "-0.01em" }}>Wilson</span>
-    );
-  }
   return (
-    <img src={cdnImage(`${ASSET_BASE}/wilson-logo.png`)} alt="Wilson" onError={() => setOk(false)} style={{ height: 16, width: "auto", objectFit: "contain", mixBlendMode: "multiply" }} />
+    <span style={{ display: "inline-flex", alignSelf: "flex-start", alignItems: "center", background: "#fff", borderRadius: 6, padding: "2px 7px", border: "1px solid rgba(77,168,98,0.25)" }}>
+      {ok ? (
+        <img src={cdnImage(`${ASSET_BASE}/wilson-logo.png`)} alt="Wilson" onError={() => setOk(false)} style={{ height: 12, width: "auto", objectFit: "contain", display: "block" }} />
+      ) : (
+        <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: "italic", fontSize: 12, fontWeight: 800, color: "#11150f", letterSpacing: "-0.01em" }}>Wilson</span>
+      )}
+    </span>
   );
 }
