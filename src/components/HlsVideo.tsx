@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import Hls from "hls.js";
+import { showToast } from "@/lib/toast";
 
 type Props = Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "src"> & {
   src: string;
@@ -39,6 +40,17 @@ export const HlsVideo = forwardRef<HTMLVideoElement, Props>(
       if (autoPlay) {
         hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
       }
+
+      // Surface only fatal load failures (network/media that hls.js can't
+      // recover from) — once per mount so a flaky clip doesn't spam toasts.
+      // Autoplay-promise rejections above stay silent (expected on iOS).
+      let notified = false;
+      hls.on(Hls.Events.ERROR, (_e, data) => {
+        if (data.fatal && !notified) {
+          notified = true;
+          showToast("Video failed to load — tap to retry");
+        }
+      });
 
       return () => hls.destroy();
     }, [src, autoPlay]);

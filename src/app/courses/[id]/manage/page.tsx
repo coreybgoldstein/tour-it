@@ -21,6 +21,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cdnImage } from "@/lib/cdnImage";
+import { showToast } from "@/lib/toast";
 
 type CourseOfficial = {
   id: string;
@@ -214,7 +215,7 @@ function OfficialInfoSection({ courseId, courseType, initial, ugcDescription }: 
       window.setTimeout(() => setSaved(false), 1800);
     } else {
       const d = await res.json().catch(() => null);
-      alert(d?.error || "Couldn't save");
+      showToast(d?.error || "Couldn't save");
     }
   }
 
@@ -461,7 +462,7 @@ function StaffEditorSheet({ courseId, initial, onClose, onSaved }: {
   const isNew = !initial.id;
 
   async function save() {
-    if (!vals.name.trim() || !vals.role.trim()) { alert("Name and role required"); return; }
+    if (!vals.name.trim() || !vals.role.trim()) { showToast("Name and role required"); return; }
     setSaving(true);
     const payload = {
       name: vals.name,
@@ -478,7 +479,7 @@ function StaffEditorSheet({ courseId, initial, onClose, onSaved }: {
       : await fetch(`/api/courses/${courseId}/staff/${initial.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     setSaving(false);
     if (res.ok) onSaved();
-    else { const d = await res.json().catch(() => null); alert(d?.error || "Couldn't save"); }
+    else { const d = await res.json().catch(() => null); showToast(d?.error || "Couldn't save"); }
   }
 
   return (

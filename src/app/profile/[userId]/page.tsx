@@ -19,6 +19,7 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { CommentSwipe } from "@/components/clip/CommentSwipe";
+import { showToast } from "@/lib/toast";
 import ProgressionTracker from "@/components/ProgressionTracker";
 import ProfileStats from "@/components/ProfileStats";
 import { SheetPortal } from "@/components/SheetPortal";
@@ -988,16 +989,16 @@ export default function ProfilePage() {
     const path = `${profile.id}/avatar-${Date.now()}.jpg`;
     const { error: uploadErr } = await supabase.storage.from("tour-it-photos").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
     if (uploadErr) {
-      console.error("[avatar upload] storage error:", uploadErr);
-      alert(`Couldn't save photo: ${uploadErr.message}`);
+      if (process.env.NODE_ENV !== "production") console.error("[avatar upload] storage error:", uploadErr);
+      showToast(`Couldn't save photo: ${uploadErr.message}`);
       setUploadingAvatar(false);
       return;
     }
     const { data: { publicUrl } } = supabase.storage.from("tour-it-photos").getPublicUrl(path);
     const { error: updErr } = await supabase.from("User").update({ avatarUrl: publicUrl }).eq("id", profile.id);
     if (updErr) {
-      console.error("[avatar upload] DB update error:", updErr);
-      alert(`Saved the photo but couldn't link it: ${updErr.message}`);
+      if (process.env.NODE_ENV !== "production") console.error("[avatar upload] DB update error:", updErr);
+      showToast(`Saved the photo but couldn't link it: ${updErr.message}`);
       setUploadingAvatar(false);
       return;
     }

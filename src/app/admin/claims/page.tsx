@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
+import { showToast } from "@/lib/toast";
 
 type Claim = {
   id: string;
@@ -69,7 +70,7 @@ export default function AdminClaimsPage() {
     setBusy(id);
     const res = await fetch(`/api/admin/claims/${id}/verify`, { method: "POST" });
     if (res.ok) setClaims((prev) => prev.filter((c) => c.id !== id));
-    else { const d = await res.json().catch(() => null); alert(d?.error || "Verify failed"); }
+    else { const d = await res.json().catch(() => null); showToast(d?.error || "Verify failed"); }
     setBusy(null);
   }
 
@@ -83,7 +84,7 @@ export default function AdminClaimsPage() {
       body: JSON.stringify({ reason: reason.trim() || null }),
     });
     if (res.ok) setClaims((prev) => prev.filter((c) => c.id !== id));
-    else { const d = await res.json().catch(() => null); alert(d?.error || "Reject failed"); }
+    else { const d = await res.json().catch(() => null); showToast(d?.error || "Reject failed"); }
     setBusy(null);
   }
 
