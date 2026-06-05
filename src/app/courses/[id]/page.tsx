@@ -1082,9 +1082,14 @@ const [editDescription, setEditDescription] = useState("");
     if (!course || generatingDesc) return;
     setGeneratingDesc(true);
     try {
+      const { data: { session } } = await createClient().auth.getSession();
+      const token = session?.access_token;
       const res = await fetch("/api/generate-course-description", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ name: course.name, city: course.city, state: course.state }),
       });
       const { description } = await res.json();

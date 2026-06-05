@@ -1,9 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
+import { rateLimit } from "@/lib/rateLimit";
+
+function sb() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { data: { user }, error: authError } = await sb().auth.getUser(authHeader.slice(7));
+  if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!rateLimit(`gen-course-desc:${user.id}`, 20, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many requests — try again later" }, { status: 429 });
+  }
+
   const { name, city, state } = await req.json();
 
   if (!name) {

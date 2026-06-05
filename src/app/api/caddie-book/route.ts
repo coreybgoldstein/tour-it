@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimit } from "@/lib/rateLimit";
+
+// No course has more than 18 holes — cap the synthesized set so a crafted
+// payload (especially one with courseId omitted, which skips the cache)
+// can't blow the model context or rack up token cost.
+const MAX_HOLES = 18;
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -36,16 +42,22 @@ function signature(holes: HoleIn[]): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { courseId, courseName, holes } = (await req.json()) as {
+  const ip = req.headers.get("x-forwarded-for") ?? "unknown";
+  if (!rateLimit(`caddie-book:${ip}`, 30, 60_000)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
+  const { courseId, courseName, holes: rawHoles } = (await req.json()) as {
     courseId?: string;
     courseName?: string;
     holes?: HoleIn[];
   };
 
-  if (!Array.isArray(holes) || holes.length === 0) {
+  if (!Array.isArray(rawHoles) || rawHoles.length === 0) {
     return NextResponse.json({ holes: [] });
   }
 
+  const holes = rawHoles.slice(0, MAX_HOLES);
   const sig = signature(holes);
   const supabase = courseId ? createAdminClient() : null;
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { rateLimit } from "@/lib/rateLimit";
 
 function sb() {
   return createServiceClient(
@@ -254,6 +255,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .eq("userId", dbUser.id)
     .maybeSingle();
   if (!member) return NextResponse.json({ error: "Not a member" }, { status: 403 });
+
+  if (!rateLimit(`trip-game:${dbUser.id}`, 20, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: "Too many games created — try again later" }, { status: 429 });
+  }
 
   const body = await req.json();
   const { courseId, courseName, coursePar, teeSlope, teeRating, format, formatConfig, players, holeHandicaps } = body;
