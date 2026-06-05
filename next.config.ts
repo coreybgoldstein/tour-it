@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Strip noisy console.* from the production bundle at build time, but keep
+  // console.error so real failures still surface (and feed reportError()).
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
+  },
   // ffmpeg/wasm runs only in the browser — don't try to bundle it server-side
   // sharp ships a native binary — let Vercel's Linux runtime require it at runtime
   serverExternalPackages: ["@ffmpeg/ffmpeg", "@ffmpeg/util", "sharp", "@napi-rs/canvas"],

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { showToast } from "@/lib/toast";
+import { reportError } from "@/lib/reportError";
 
 // Module-level cache of (userId, uploadId) -> liked. Hydrated as the user
 // browses; subsequent views of any clip set liked=true immediately on
@@ -154,7 +155,7 @@ export function useLike({ uploadId, initialLikeCount, initialLiked, currentUserI
       setLiked(wasLiked);
       setLikeCount(previousCount);
       showToast("Couldn't update like — check your connection");
-      if (process.env.NODE_ENV !== "production") console.error("Like toggle failed:", err);
+      reportError(err, { where: "useLike.toggleLike", uploadId });
     } finally {
       setLoading(false);
     }

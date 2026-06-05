@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { showToast } from "@/lib/toast";
+import { reportError } from "@/lib/reportError";
 
 type SaveType = "PLAYED" | "BUCKET_LIST";
 
@@ -107,7 +108,7 @@ export function useSave({ courseId }: UseSaveOptions): UseSaveReturn {
       }
     } catch (error) {
       showToast("Couldn't save — check your connection");
-      if (process.env.NODE_ENV !== "production") console.error("Error toggling save:", error);
+      reportError(error, { where: "useSave.toggleSave", courseId });
     }
 
     setLoading(false);
@@ -130,7 +131,7 @@ export function useSave({ courseId }: UseSaveOptions): UseSaveReturn {
       setSaveType(null);
     } catch (error) {
       showToast("Couldn't remove save — check your connection");
-      if (process.env.NODE_ENV !== "production") console.error("Error removing save:", error);
+      reportError(error, { where: "useSave.removeSave", courseId });
     }
 
     setLoading(false);
