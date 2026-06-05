@@ -461,6 +461,12 @@ export default function CourseProfilePage() {
   const fromFeed = searchParams.get("from") === "feed";
   const scorecardParam = searchParams.get("scorecard");
   const scorecardAutoOpenedRef = useRef(false);
+  // Course-claim deep link. The claim flow is intentionally NOT a public
+  // CTA — operators reach it through an outbound email that links to
+  // /courses/<id>?claim=1, which Universal Links opens straight into the
+  // app and auto-presents the ClaimCourseSheet.
+  const claimParam = searchParams.get("claim");
+  const claimAutoOpenedRef = useRef(false);
   const isDesktop = useIsDesktop();
   const [course, setCourse] = useState<Course | null>(null);
   const [courseClips, setCourseClips] = useState<Clip[]>([]);
@@ -839,6 +845,14 @@ const [editDescription, setEditDescription] = useState("");
     async function loadData() {
       const { data: courseData } = await supabase.from("Course").select("*").eq("id", id).single();
       if (courseData) setCourse(courseData);
+
+      // Claim deep link (?claim=1) — auto-present the claim sheet for the
+      // operator who arrived from the outbound claim email. Skip if the
+      // course is already claimed + verified so we don't dead-end them.
+      if (claimParam && !claimAutoOpenedRef.current && !courseData?.isClaimed) {
+        claimAutoOpenedRef.current = true;
+        setClaimSheetOpen(true);
+      }
 
       const { data: holesData } = await supabase.from("Hole").select("id, holeNumber, par, handicapRank, yardage, imageUrl, description").eq("courseId", id).order("holeNumber", { ascending: true });
       const holeMap: Record<string, number> = {};
