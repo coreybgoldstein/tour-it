@@ -19,6 +19,7 @@ import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
 import { cdnImage } from "@/lib/cdnImage";
 import { useLike } from "@/hooks/useLike";
 import { ClipRail } from "@/components/clip/ClipRail";
+import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import EditClipSheet from "@/components/EditClipSheet";
 
@@ -703,12 +704,6 @@ function FeedClip({
     const d = new Date(clip.createdAt);
     return d.toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "2-digit" });
   })();
-  const holeMeta = [
-    clip.holeNumber != null ? `Hole ${clip.holeNumber}` : null,
-    clip.holePar != null ? `Par ${clip.holePar}` : null,
-    clip.holeYardage != null ? `${clip.holeYardage} yds` : null,
-  ].filter(Boolean) as string[];
-
   return (
     <div className="feed-clip" data-clip-id={clip.id} onClick={tapToTogglePlay}>
       {isVideo && src ? (
@@ -729,85 +724,25 @@ function FeedClip({
         <img src={cdnImage(clip.mediaUrl)} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       )}
 
-      {/* Single top row — back · course pill · mute. Keeps everything
-          on one horizontal band right below the iOS safe area so the
-          top of the clip frame isn't visually crowded by a stacked
-          stack of controls. */}
-      <button
-        data-overlay-control
-        onClick={(e) => { e.stopPropagation(); onBack(); }}
-        aria-label="Back"
-        style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 12px)", left: 12, width: 36, height: 36, borderRadius: "50%", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 6 }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-      </button>
-
-      {/* Course pill — sits to the right of the back button on the
-          same row, height-matched, with the mute toggle on the far
-          right. Tight gap to back, generous to mute. */}
-      <button
-        data-overlay-control
-        onClick={(e) => { e.stopPropagation(); onCourse(); }}
-        style={{
-          position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 12px)", left: 56, right: 56,
-          height: 36,
-          display: "flex", alignItems: "center", gap: 8,
-          padding: "0 12px 0 4px",
-          background: "rgba(7,16,10,0.72)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: 99,
-          cursor: "pointer",
-          zIndex: 5,
-          minWidth: 0,
-        }}
-        aria-label={`${clip.courseName ?? "Course"} — open course page`}
-      >
-        <div style={{ width: 30, height: 30, borderRadius: 7, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, padding: 2, border: "1px solid rgba(255,255,255,0.5)" }}>
-          {courseLogo
-            ? <img src={courseLogo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            : <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 800, color: "#0c1c13" }}>{(clip.courseName ?? "TI").slice(0, 2).toUpperCase()}</span>
-          }
-        </div>
-        {/* Left column — course name over location, vertically centered. */}
-        <div style={{ flexShrink: 1, minWidth: 0, textAlign: "left", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>
-            {clip.courseName ?? "Unknown course"}
-          </div>
-          {(clip.courseCity || clip.courseState) && (
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10.5, color: "rgba(255,255,255,0.55)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", marginTop: 1, minWidth: 0 }}>
-              {[clip.courseCity, clip.courseState].filter(Boolean).join(", ")}
-            </div>
-          )}
-        </div>
-        {/* Right side — hole · par · yards laid out horizontally and
-            vertically centered, after a separator dot. Holds its width
-            (no shrink) so the details never get crowded by the name. */}
-        {holeMeta.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 9, flexShrink: 0, marginLeft: 2 }}>
-            <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 13 }}>·</span>
-            {holeMeta.map((m, i) => (
-              <span key={m} style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                {i > 0 && <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 13 }}>·</span>}
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, fontWeight: 600, color: i === 0 ? "#4da862" : "rgba(255,255,255,0.92)", whiteSpace: "nowrap" }}>{m}</span>
-              </span>
-            ))}
-          </div>
-        )}
-      </button>
-
-      {/* Mute toggle — top-right, height-matched to back + pill so
-          all three line up on the same row. */}
-      <button
-        data-overlay-control
-        onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
-        aria-label={muted ? "Unmute" : "Mute"}
-        style={{ position: "absolute", top: "calc(env(safe-area-inset-top, 0px) + 12px)", right: 12, width: 36, height: 36, borderRadius: "50%", background: "rgba(7,16,10,0.7)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 6 }}
-      >
-        {muted
-          ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></svg>
-          : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></svg>
-        }
-      </button>
+      {/* Top bar — shared ClipTopPill so the Tour-the-Feed reads
+          identically to the home/course/hole/profile surfaces (badge +
+          connected capsule, back chevron, mute). Wrapped in a
+          data-overlay-control span so taps on it don't toggle play. */}
+      <span data-overlay-control onClick={(e) => e.stopPropagation()}>
+        <ClipTopPill
+          courseLogoUrl={courseLogo}
+          courseName={clip.courseName ?? "Unknown course"}
+          courseLocation={[clip.courseCity, clip.courseState].filter(Boolean).join(", ") || null}
+          holeNumber={clip.holeNumber}
+          holePar={clip.holePar}
+          holeYardage={clip.holeYardage}
+          muted={muted}
+          onMuteToggle={onToggleMute}
+          onTapCourse={onCourse}
+          onBack={onBack}
+          visible={true}
+        />
+      </span>
 
       {/* Right rail — shared ClipRail (uniform across all clip surfaces).
           INTEL opens the scout-notes sheet (same as every other surface);

@@ -19,12 +19,19 @@ import { cdnImage } from "@/lib/cdnImage";
 
 const ASSET_BASE = WILSON_ASSET_BASE;
 
-function ProductTile({ src, alt }: { src: string; alt: string }) {
-  const [ok, setOk] = useState(true);
-  if (!ok) return null;
+// Both product shots ride together on a single white tile so they read
+// as one connected unit. A secondary-green outline with interior spacing
+// echoes the banner's own border. Each <img> hides on error; the tile
+// disappears entirely only if both are missing.
+function ProductDuo({ items }: { items: { src: string; alt: string }[] }) {
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const visible = items.filter((it) => !hidden.has(it.src));
+  if (visible.length === 0) return null;
   return (
-    <div style={{ height: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff", borderRadius: 10, padding: 5, border: "1px solid rgba(77,168,98,0.25)", flexShrink: 0 }}>
-      <img src={cdnImage(src)} alt={alt} onError={() => setOk(false)} style={{ height: "100%", width: "auto", maxWidth: 54, objectFit: "contain" }} />
+    <div style={{ height: 52, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, background: "#fff", borderRadius: 12, padding: "5px 13px", border: "1px solid rgba(45,122,66,0.45)", flexShrink: 0 }}>
+      {visible.map((it) => (
+        <img key={it.src} src={cdnImage(it.src)} alt={it.alt} onError={() => setHidden((s) => new Set(s).add(it.src))} style={{ height: "100%", width: "auto", maxWidth: 54, objectFit: "contain", display: "block" }} />
+      ))}
     </div>
   );
 }
@@ -46,7 +53,7 @@ export default function JuneCompetitionBanner() {
         {/* Left: brand chip + headline + CTA */}
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, padding: "8px 0 8px 18px" }}>
           <WilsonMark />
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16.5, fontWeight: 800, color: "#fff", lineHeight: 1.1 }}>
             Win a Wilson Golf prize pack
           </div>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontFamily: "'Outfit', sans-serif", fontSize: 10.5, fontWeight: 700, color: "#4da862" }}>
@@ -55,10 +62,12 @@ export default function JuneCompetitionBanner() {
           </span>
         </div>
 
-        {/* Right: product shots on white tiles */}
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6, padding: "6px 16px 6px 8px" }}>
-          <ProductTile src={`${ASSET_BASE}/staff-balls.png`} alt="Wilson Staff Model golf balls" />
-          <ProductTile src={`${ASSET_BASE}/rope-hat.png`} alt="Wilson Script Rope Hat" />
+        {/* Right: both product shots on a single connected white tile */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", padding: "6px 16px 6px 8px" }}>
+          <ProductDuo items={[
+            { src: `${ASSET_BASE}/staff-balls.png`, alt: "Wilson Staff Model golf balls" },
+            { src: `${ASSET_BASE}/rope-hat.png`, alt: "Wilson Script Rope Hat" },
+          ]} />
         </div>
       </div>
     </Link>
