@@ -611,8 +611,8 @@ export default function ProfilePage() {
 
       const [{ data: rawUploads }, { count: followers }, { count: following }] = await Promise.all([
         owner
-          ? supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, uploadedByUserId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).order("createdAt", { ascending: false })
-          : supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, uploadedByUserId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).eq("moderationStatus", "APPROVED").order("createdAt", { ascending: false }),
+          ? supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, uploadedByUserId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).order("createdAt", { ascending: false }).limit(300)
+          : supabase.from("Upload").select("id, mediaUrl, cloudflareVideoId, mediaType, courseId, holeId, createdAt, userId, uploadedByUserId, likeCount, commentCount, shotType, clubUsed, windCondition, strategyNote, landingZoneNote, whatCameraDoesntShow, datePlayedAt").eq("userId", userId).eq("moderationStatus", "APPROVED").order("createdAt", { ascending: false }).limit(300),
         supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followingId", userId).eq("status", "ACTIVE"),
         supabase.from("Follow").select("*", { count: "exact", head: true }).eq("followerId", userId).eq("status", "ACTIVE"),
       ]);

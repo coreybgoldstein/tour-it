@@ -629,7 +629,8 @@ export default function HolePage() {
         .eq("courseId", id)
         .eq("shotType", multiHoleKey.shotType)
         .eq("moderationStatus", "APPROVED")
-        .order("rankScore", { ascending: false });
+        .order("rankScore", { ascending: false })
+        .limit(200);
       if (multiHoleKey.group) query = query.eq("yardageOverlay", multiHoleKey.group);
       query.then(async ({ data: uploadsData }) => {
         if (uploadsData) {
@@ -681,7 +682,8 @@ export default function HolePage() {
           .select("*")
           .eq("holeId", holeRes.data.id)
           .eq("moderationStatus", "APPROVED")
-          .order("rankScore", { ascending: false });
+          .order("rankScore", { ascending: false })
+          .limit(200);
 
         if (uploadsData) {
           // Separate series from single clips

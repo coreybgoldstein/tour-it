@@ -33,6 +33,7 @@ export default function AdminCoursesPage() {
   const [courses, setCourses] = useState<CourseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "incomplete">("incomplete");
 
@@ -42,22 +43,36 @@ export default function AdminCoursesPage() {
       if (!data.user) { router.push("/login"); return; }
       const { data: profile } = await supabase.from("User").select("isAdmin").eq("id", data.user.id).single();
       if (!profile?.isAdmin) { setUnauthorized(true); setLoading(false); return; }
-
-      const { data: rows } = await supabase
-        .from("Course")
-        .select("id, name, city, state, country, holeCount, isVerified, uploadCount, holes:Hole(id, holeNumber, par, handicapRank)")
-        .order("name", { ascending: true });
-
-      setCourses((rows as CourseRow[]) || []);
-      setLoading(false);
+      setAuthorized(true);
     });
   }, []);
 
+  // Server-side search so we never pull all 11k courses into the browser.
+  // Empty search loads a capped first page; typing runs a debounced ilike
+  // query against name/city/state, also capped.
+  useEffect(() => {
+    if (!authorized) return;
+    const supabase = createClient();
+    const term = search.trim();
+    const handle = setTimeout(async () => {
+      setLoading(true);
+      let q = supabase
+        .from("Course")
+        .select("id, name, city, state, country, holeCount, isVerified, uploadCount, holes:Hole(id, holeNumber, par, handicapRank)")
+        .order("name", { ascending: true })
+        .limit(term ? 200 : 500);
+      if (term) {
+        const esc = term.replace(/[%,]/g, "");
+        q = q.or(`name.ilike.%${esc}%,city.ilike.%${esc}%,state.ilike.%${esc}%`);
+      }
+      const { data: rows } = await q;
+      setCourses((rows as CourseRow[]) || []);
+      setLoading(false);
+    }, term ? 300 : 0);
+    return () => clearTimeout(handle);
+  }, [authorized, search]);
+
   const filtered = courses.filter(c => {
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.city?.toLowerCase().includes(search.toLowerCase()) ||
-      c.state?.toLowerCase().includes(search.toLowerCase());
-    if (!matchSearch) return false;
     if (filter === "incomplete") return completeness(c).length > 0;
     return true;
   });
