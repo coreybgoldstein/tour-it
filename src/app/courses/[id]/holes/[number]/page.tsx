@@ -14,7 +14,7 @@ import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
-import { getVideoSrc } from "@/lib/getVideoSrc";
+import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { CommentSwipe } from "@/components/clip/CommentSwipe";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
@@ -184,17 +184,26 @@ function SeriesPlayer({ series, onClose }: { series: Series; onClose: () => void
       {series.shots.map((shot, i) => (
         <div key={shot.id} style={{ position: "absolute", inset: 0, opacity: i === shotIndex ? 1 : 0, transition: "opacity 0.2s", pointerEvents: i === shotIndex ? "auto" : "none" }}>
           {shot.mediaType === "VIDEO" ? (
-            <>
-              <HlsVideo
-                ref={el => { videoRefs.current[shot.id] = el as HTMLVideoElement | null; }}
-                src={getVideoSrc(shot.mediaUrl, shot.cloudflareVideoId)}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                loop
-                playsInline
-                muted={muted}
-              />
-              {i === shotIndex && <VideoScrubber videoRef={{ current: videoRefs.current[shot.id] ?? null }} />}
-            </>
+            // Only the active shot mounts a real player — a Full-18 series
+            // has up to 18 shots and iOS WKWebView caps simultaneous video
+            // elements at ~16, which rendered later shots black. Inactive
+            // shots show a static poster and swap in the player on activate.
+            i === shotIndex ? (
+              <>
+                <HlsVideo
+                  ref={el => { videoRefs.current[shot.id] = el as HTMLVideoElement | null; }}
+                  src={getVideoSrc(shot.mediaUrl, shot.cloudflareVideoId)}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  loop
+                  playsInline
+                  muted={muted}
+                />
+                <VideoScrubber videoRef={{ current: videoRefs.current[shot.id] ?? null }} />
+              </>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={getClipThumbnail(shot.mediaType, shot.mediaUrl, shot.cloudflareVideoId)} alt="shot" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            )
           ) : (
             <img src={shot.mediaUrl} alt="shot" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           )}

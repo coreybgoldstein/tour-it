@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { sendPushToUser } from "@/lib/sendPush";
 import { HlsVideo } from "@/components/HlsVideo";
-import { getVideoSrc } from "@/lib/getVideoSrc";
+import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
 import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
 import TripNotes from "@/components/TripNotes";
@@ -2723,7 +2723,13 @@ export default function TripPage() {
           {clips.map((clip, i) => (
             <div key={clip.id} className="feed-snap">
               {clip.mediaType === "VIDEO"
-                ? <HlsVideo ref={el => { videoRefs.current[clip.id] = el as HTMLVideoElement | null; }} src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                // Mount a real player only for the active clip and its
+                // immediate neighbors — keeps scroll smooth while staying
+                // well under iOS WKWebView's ~16 simultaneous-video cap.
+                ? (Math.abs(i - activeClip) <= 1
+                    ? <HlsVideo ref={el => { videoRefs.current[clip.id] = el as HTMLVideoElement | null; }} src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} loop muted={muted} playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    : <img src={getClipThumbnail(clip.mediaType, clip.mediaUrl, clip.cloudflareVideoId)} alt="clip" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)
                 : <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               }
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%)", pointerEvents: "none" }} />

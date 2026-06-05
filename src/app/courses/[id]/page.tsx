@@ -17,7 +17,7 @@ import { sessionMute } from "@/lib/sessionMute";
 import EditClipSheet from "@/components/EditClipSheet";
 import { SheetPortal } from "@/components/SheetPortal";
 import { HlsVideo } from "@/components/HlsVideo";
-import { getVideoSrc } from "@/lib/getVideoSrc";
+import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { CommentSwipe } from "@/components/clip/CommentSwipe";
 import { sendPushToUser } from "@/lib/sendPush";
@@ -1946,11 +1946,11 @@ const [editDescription, setEditDescription] = useState("");
                               start landing). */}
                           {hasClips && topClip ? (
                             <>
-                              {topClip.mediaType === "VIDEO" ? (
-                                <HlsVideo src={getVideoSrc(topClip.mediaUrl, topClip.cloudflareVideoId)} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                              ) : (
-                                <img src={topClip.mediaUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                              )}
+                              {/* Static thumbnail, not a mounted player — this
+                                  is a grid hero tile; mounting HlsVideo here
+                                  loads the manifest + first segment per tile. */}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={getClipThumbnail(topClip.mediaType, topClip.mediaUrl, topClip.cloudflareVideoId)} alt="" loading="lazy" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,16,10,0.45) 0%, rgba(7,16,10,0.25) 40%, rgba(7,16,10,0.5) 100%)" }} />
                             </>
                           ) : holeData?.imageUrl ? (
@@ -2067,11 +2067,9 @@ const [editDescription, setEditDescription] = useState("");
                 onClick={() => setExtendedClip(clip)}
                 style={{ position: "relative", width: 110, flexShrink: 0, aspectRatio: "9/16", borderRadius: 8, overflow: "hidden", background: "#0d2318", cursor: "pointer" }}
               >
-                {clip.mediaType === "VIDEO" ? (
-                  <HlsVideo src={getVideoSrc(clip.mediaUrl, clip.cloudflareVideoId)} muted playsInline preload="metadata" onLoadedMetadata={e => { (e.target as HTMLVideoElement).currentTime = 0.001; }} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <img src={clip.mediaUrl} alt="clip" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                )}
+                {/* Grid tile: static thumbnail, not a mounted HLS player. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={getClipThumbnail(clip.mediaType, clip.mediaUrl, clip.cloudflareVideoId)} alt="clip" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%)" }} />
                 {clip.isOfficial && (
                   <div style={{ position: "absolute", top: 6, left: 6, display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 6px", background: "rgba(7,16,10,0.78)", border: "1px solid rgba(126,200,140,0.7)", borderRadius: 99 }}>
