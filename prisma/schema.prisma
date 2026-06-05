@@ -240,6 +240,10 @@ model Course {
   uploadCount       Int         @default(0)
   saveCount         Int         @default(0)
   viewCount         Int         @default(0)
+  // Editorial national ranking (1 = top course). Set only for the curated
+  // "best public/resort courses you can play" set used to seed the home
+  // "Popular" rail. NULL for the other ~11k courses. Lower = higher.
+  nationalRank      Int?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -292,6 +296,7 @@ model Course {
   @@index([slug])
   @@index([isPublic])
   @@index([uploadCount(sort: Desc)])
+  @@index([nationalRank])
 }
 
 // ============================================================
