@@ -142,10 +142,11 @@ export default function HomeTour() {
   const [nearMeRadius, setNearMeRadius] = useState<10 | 25 | 50>(50);
   const [locStatus, setLocStatus] = useState<"unknown" | "denied" | "granted" | "loading">("unknown");
   const [nearMeQueried, setNearMeQueried] = useState(() => (readCache<CourseLite[]>("nearMe")?.length ?? 0) > 0);
-  // Course-rail bucket toggle: "near" (location-based) vs "popular"
-  // (most-scouted on Tour It). Popular needs no location so it's the
-  // safe default for users who haven't granted it.
-  const [courseBucket, setCourseBucket] = useState<"near" | "popular">("near");
+  // Course-rail bucket toggle: "popular" (top courses on Tour It) vs "near"
+  // (location-based). Popular needs no location and works for everyone on
+  // first load, so it's the default; users toggle to Near Me when they want
+  // location-based results.
+  const [courseBucket, setCourseBucket] = useState<"near" | "popular">("popular");
   const [popular, setPopular] = useState<CourseLite[]>(() => readCache<CourseLite[]>("popularCourses") ?? []);
 
   const [tours, setTours] = useState<ActiveTour[]>(() => readCache<ActiveTour[]>("tours") ?? []);
@@ -1126,7 +1127,7 @@ function NearMeRail({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8 }}>
         {/* Bucket toggle — two ways to browse the same course pool */}
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 99, padding: 3 }}>
-          {([["near", "Near Me"], ["popular", "Popular"]] as const).map(([key, label]) => (
+          {([["popular", "Popular"], ["near", "Near Me"]] as const).map(([key, label]) => (
             <button
               key={key}
               onClick={() => onChangeBucket(key)}
