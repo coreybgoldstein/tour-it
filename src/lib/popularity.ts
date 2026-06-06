@@ -21,3 +21,17 @@ export function popularityScore(c: PopularityInput): number {
 export function byPopularity<T extends PopularityInput>(a: T, b: T): number {
   return popularityScore(b) - popularityScore(a);
 }
+
+// Fisher-Yates. Returns a new array so the input pool isn't mutated. Used by
+// the "Popular on Tour It" rails to rotate which top courses surface each
+// load — every course in the ranked pool is genuinely a top course, so a
+// random sample is still legitimately "popular," it just stops the same
+// dozen from showing every single time.
+export function shuffle<T>(arr: readonly T[]): T[] {
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}

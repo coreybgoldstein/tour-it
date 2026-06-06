@@ -11,7 +11,7 @@ import LikesSheet from "@/components/LikesSheet";
 import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
-import { byPopularity } from "@/lib/popularity";
+import { byPopularity, shuffle } from "@/lib/popularity";
 import EditClipSheet from "@/components/EditClipSheet";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
@@ -1074,17 +1074,16 @@ export default function HomeClassic() {
     (async () => {
       const POP_SELECT = "id, name, city, state, uploadCount, saveCount, viewCount, coverImageUrl, logoUrl";
       const RAIL = 10;
-      // Curated "best public/resort you can play" courses lead, ordered by
-      // editorial nationalRank. Backfill with the most-scouted courses (real
-      // popularity score) so the rail never looks empty.
+      // Every nationalRank course is a genuine top course, so pull the whole
+      // ranked-with-cover pool and randomly sample the rail each load — keeps
+      // it fresh so the same handful don't show every time. Backfill with the
+      // most-scouted courses (real popularity score) if the pool is short.
       const { data: top } = await supabase
         .from("Course")
         .select(POP_SELECT)
         .not("nationalRank", "is", null)
-        .not("coverImageUrl", "is", null)
-        .order("nationalRank", { ascending: true })
-        .limit(RAIL);
-      let picked: any[] = [...(top || [])];
+        .not("coverImageUrl", "is", null);
+      let picked: any[] = shuffle(top || []).slice(0, RAIL);
       if (picked.length < RAIL) {
         const { data } = await supabase
           .from("Course")

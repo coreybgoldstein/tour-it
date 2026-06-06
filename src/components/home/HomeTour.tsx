@@ -40,7 +40,7 @@ import PlannerCTA from "@/components/PlannerCTA";
 import { gameFormatLabel } from "@/lib/gameFormats";
 import { airportByCode } from "@/data/airports";
 import { resolveInitialPermission, readCoords, requestLocation } from "@/lib/locationPermission";
-import { byPopularity } from "@/lib/popularity";
+import { byPopularity, shuffle } from "@/lib/popularity";
 
 type CourseLite = {
   id: string;
@@ -422,11 +422,12 @@ export default function HomeTour() {
   }, []);
 
   // ── Popular on Tour It ─────────────────────────────────────────────
-  // Curated "best public/resort you can play" courses come first, ordered
-  // by editorial nationalRank. If fewer than the rail needs have a
-  // renderable cover, we backfill with the most-scouted courses (real
-  // popularity score: uploads + saves + views) so the rail never looks
-  // empty. No location needed — loads on mount for every user.
+  // Every nationalRank course is a genuine top course, so instead of always
+  // leading with the lowest rank numbers we pull the whole ranked-with-cover
+  // pool and randomly sample the rail on each load — keeps the rail fresh so
+  // the same dozen don't show every time. If the pool can't fill the rail we
+  // backfill with the most-scouted courses (real popularity score: uploads +
+  // saves + views). No location needed — loads on mount for every user.
   useEffect(() => {
     const sb = createClient();
     let cancelled = false;
@@ -437,11 +438,9 @@ export default function HomeTour() {
         .from("Course")
         .select(SELECT)
         .not("nationalRank", "is", null)
-        .not("coverImageUrl", "is", null)
-        .order("nationalRank", { ascending: true })
-        .limit(RAIL);
+        .not("coverImageUrl", "is", null);
       const ranked: (CourseLite & { saveCount?: number; viewCount?: number })[] =
-        ((top as (CourseLite & { saveCount?: number; viewCount?: number })[]) || []).slice();
+        shuffle((top as (CourseLite & { saveCount?: number; viewCount?: number })[]) || []).slice(0, RAIL);
 
       if (ranked.length < RAIL) {
         const { data: pop } = await sb
