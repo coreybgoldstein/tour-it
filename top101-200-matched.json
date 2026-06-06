@@ -1,0 +1,1010 @@
+[
+  {
+    "name": "Pinehurst No. 10",
+    "city": "Pinehurst",
+    "state": "NC",
+    "gwRank": 23,
+    "gmRank": 15,
+    "mergeScore": 19,
+    "courseId": "5ab93b48-963f-4780-96e3-8ec389c52341",
+    "matchedName": "Pinehurst Resort - No. 10",
+    "matchedCity": "Pinehurst",
+    "matchedState": "NC",
+    "isPublic": true,
+    "confidence": 1.05,
+    "alternates": [
+      {
+        "id": "b25a736e-05a6-4892-8143-3534ecb0712e",
+        "name": "Pinehurst Course No. 8"
+      },
+      {
+        "id": "6ca65c3d-4d8c-4eda-89df-f9cf405108be",
+        "name": "Pinehurst Course No. 6"
+      },
+      {
+        "id": "5d6c15f8-443b-494e-9800-d8ce93019545",
+        "name": "Pinehurst Course No. 9"
+      }
+    ],
+    "rank": 101
+  },
+  {
+    "name": "Sedge Valley",
+    "city": "Nekoosa",
+    "state": "WI",
+    "gwRank": 20,
+    "gmRank": 20,
+    "mergeScore": 20,
+    "courseId": "90e036de-6250-4e0e-acb0-2f02df1f34b8",
+    "matchedName": "Sedge Valley at Sand Valley",
+    "matchedCity": "Nekoosa",
+    "matchedState": "WI",
+    "isPublic": true,
+    "confidence": 0.7,
+    "alternates": [
+      {
+        "id": "6a2194c2-fd1e-419f-8026-ffbf4f084162",
+        "name": "The Lido at Sand Valley"
+      },
+      {
+        "id": "574fa1d5-59c2-4e56-a81e-05dda82ca573",
+        "name": "Sand Valley Golf Resort"
+      },
+      {
+        "id": "9bb6fbe1-288b-4b53-a30e-db772c44e84d",
+        "name": "Alpine Valley Resort"
+      }
+    ],
+    "rank": 102
+  },
+  {
+    "name": "Landmand",
+    "city": "Homer",
+    "state": "NE",
+    "gwRank": 18,
+    "gmRank": 46,
+    "mergeScore": 32,
+    "courseId": "318ae1c4-556a-4c42-9dbd-98ed442ab7b0",
+    "matchedName": "Landmand Golf Club",
+    "matchedCity": "Homer",
+    "matchedState": "NE",
+    "isPublic": true,
+    "confidence": 0.533,
+    "alternates": [],
+    "rank": 103
+  },
+  {
+    "name": "Sea Island (Seaside)",
+    "city": "St. Simons Island",
+    "state": "GA",
+    "gwRank": 30,
+    "gmRank": 41,
+    "mergeScore": 35.5,
+    "courseId": "d6c9222a-ec7a-4214-b9e0-087229badd08",
+    "matchedName": "Sea Island Golf Club - Seaside Course",
+    "matchedCity": "St. Simons Island",
+    "matchedState": "GA",
+    "isPublic": true,
+    "confidence": 1.1,
+    "alternates": [
+      {
+        "id": "9ee4bbf2-6b1d-4f5c-9ee6-dc1a5d2b8446",
+        "name": "Jekyll Island Golf Club"
+      },
+      {
+        "id": "0e3910f2-4c83-4720-937e-83d3c375203b",
+        "name": "WIlmington Island Golf Club"
+      },
+      {
+        "id": "c996ac78-0ad8-448f-9575-6a55324d9bf9",
+        "name": "Green Island Hills Golf Course"
+      }
+    ],
+    "rank": 104
+  },
+  {
+    "name": "Cabot Citrus Farms (Karoo)",
+    "city": "Brooksville",
+    "state": "FL",
+    "gwRank": 57,
+    "gmRank": 32,
+    "mergeScore": 44.5,
+    "courseId": "eee8127e-8497-4b60-adee-588f6f711277",
+    "matchedName": "Cabot Citrus Farms - Karoo",
+    "matchedCity": "Brooksville",
+    "matchedState": "FL",
+    "isPublic": true,
+    "confidence": 1.6,
+    "alternates": [
+      {
+        "id": "a8c013f5-2524-4275-bbdb-64dd496213c7",
+        "name": "Citrus Hills Golf & Country Club"
+      },
+      {
+        "id": "f35ce8e5-30ac-4c6c-a5eb-89c259904ae9",
+        "name": "Citrus Springs Golf & Country Club"
+      }
+    ],
+    "rank": 105
+  },
+  {
+    "name": "Rustic Canyon",
+    "city": "Moorpark",
+    "state": "CA",
+    "gwRank": 52,
+    "gmRank": 45,
+    "mergeScore": 48.5,
+    "courseId": "9c084f2b-08aa-4f15-a6fc-ea555e59b75a",
+    "matchedName": "Rustic Canyon Golf Course",
+    "matchedCity": "Moorpark",
+    "matchedState": "CA",
+    "isPublic": true,
+    "confidence": 0.7,
+    "alternates": [
+      {
+        "id": "c16cd7a6-9173-42a5-b97a-b9d323192857",
+        "name": "Steele Canyon Golf"
+      },
+      {
+        "id": "1eb9525f-09a4-4c7d-938a-63aa9402e275",
+        "name": "Eaton Canyon Golf Course"
+      },
+      {
+        "id": "044e54ca-9ba9-4dbe-8d3f-b29b61a28b34",
+        "name": "Shady Canyon Golf Club"
+      }
+    ],
+    "rank": 106
+  },
+  {
+    "name": "Mossy Oak",
+    "city": "West Point",
+    "state": "MS",
+    "gwRank": 47,
+    "gmRank": 75,
+    "mergeScore": 61,
+    "courseId": "6140215b-fd1c-4e44-b044-42b438012ba8",
+    "matchedName": "Mossy Oak Golf Club",
+    "matchedCity": "West Point",
+    "matchedState": "MS",
+    "isPublic": true,
+    "confidence": 0.7,
+    "alternates": [],
+    "rank": 107
+  },
+  {
+    "name": "Belvedere",
+    "city": "Charlevoix",
+    "state": "MI",
+    "gwRank": 99,
+    "gmRank": 40,
+    "mergeScore": 69.5,
+    "courseId": "d4a339a8-6c02-4847-9c49-d572e310bc38",
+    "matchedName": "Belvedere Golf Club",
+    "matchedCity": "Marion Township",
+    "matchedState": "MI",
+    "isPublic": true,
+    "confidence": 0.333,
+    "alternates": [],
+    "rank": 108
+  },
+  {
+    "name": "Caledonia Golf & Fish Club",
+    "city": "Pawleys Island",
+    "state": "SC",
+    "gwRank": 70,
+    "gmRank": 76,
+    "mergeScore": 73,
+    "courseId": "fb15840d-9448-4e25-a932-924faf1a4858",
+    "matchedName": "Caledonia Golf & Fish Club",
+    "matchedCity": "Pawleys Island",
+    "matchedState": "SC",
+    "isPublic": true,
+    "confidence": 1.2,
+    "alternates": [],
+    "rank": 109
+  },
+  {
+    "name": "Bay Hill",
+    "city": "Orlando",
+    "state": "FL",
+    "gwRank": 81,
+    "gmRank": 71,
+    "mergeScore": 76,
+    "courseId": "221690eb-d535-41b4-9367-36b5ffa2fe1e",
+    "matchedName": "Bay Hill Golf Club",
+    "matchedCity": "Orlando",
+    "matchedState": "FL",
+    "isPublic": true,
+    "confidence": 0.7,
+    "alternates": [
+      {
+        "id": "57029c92-e002-42fd-9ac8-4b3dd9809296",
+        "name": "Diamond Hill Golf Club"
+      },
+      {
+        "id": "d863574d-1f9e-41bf-8039-4dcfc0d805f3",
+        "name": "Mallory Hill Country Club (The Villages)"
+      }
+    ],
+    "rank": 110
+  },
+  {
+    "name": "We-Ko-Pa (Saguaro)",
+    "city": "Fort McDowell",
+    "state": "AZ",
+    "gwRank": 92,
+    "gmRank": 61,
+    "mergeScore": 76.5,
+    "courseId": "4d879f5e-9272-4dd3-be11-9c238ea7dd1f",
+    "matchedName": "We-Ko-Pa Golf Club",
+    "matchedCity": "Fort McDowell",
+    "matchedState": "AZ",
+    "isPublic": true,
+    "confidence": 0.9,
+    "alternates": [],
+    "rank": 111
+  },
+  {
+    "name": "Rams Hill",
+    "city": "Borrego Springs",
+    "state": "CA",
+    "gwRank": 78,
+    "gmRank": 93,
+    "mergeScore": 85.5,
+    "courseId": "aa8c0117-c491-423f-9665-7a132f08f5d2",
+    "matchedName": "Rams Hill Golf Club",
+    "matchedCity": "Borrego Springs",
+    "matchedState": "CA",
+    "isPublic": true,
+    "confidence": 0.7,
+    "alternates": [
+      {
+        "id": "ec97c16b-7d39-4cd1-aad4-9c91bf3c7067",
+        "name": "Red Hill Country Club"
+      },
+      {
+        "id": "9b666c9b-05a3-45a3-8534-85db7e067bf4",
+        "name": "Ruby Hill Country Club"
+      },
+      {
+        "id": "8f345e8e-37e8-4a0b-bb8d-c45a3c1892e7",
+        "name": "Pelican Hill Golf Club"
+      }
+    ],
+    "rank": 112
+  },
+  {
+    "name": "Payne's Valley",
+    "city": "Hollister",
+    "state": "MO",
+    "gwRank": 92,
+    "gmRank": 80,
+    "mergeScore": 86,
+    "courseId": "c315c05b-57ac-4a36-8c1b-08c615384a9b",
+    "matchedName": "Payne's Valley at Big Cedar Lodge",
+    "matchedCity": "Hollister",
+    "matchedState": "MO",
+    "isPublic": true,
+    "confidence": 0.533,
+    "alternates": [
+      {
+        "id": "959f8d7a-096e-4474-99db-7c0e0671ca73",
+        "name": "Piney Valley"
+      },
+      {
+        "id": "77a99b08-4291-4978-a86f-d612d57c1390",
+        "name": "Boone Valley Golf Club"
+      },
+      {
+        "id": "e34de69a-48a3-4633-a657-0ce02b964330",
+        "name": "Lake Valley Golf Club"
+      }
+    ],
+    "rank": 113
+  },
+  {
+    "name": "The Lido",
+    "city": null,
+    "state": "WI",
+    "gwRank": null,
+    "gmRank": 4,
+    "mergeScore": 1004,
+    "courseId": "6a2194c2-fd1e-419f-8026-ffbf4f084162",
+    "matchedName": "The Lido at Sand Valley",
+    "matchedCity": "Nekoosa",
+    "matchedState": "WI",
+    "isPublic": true,
+    "confidence": 0.4,
+    "alternates": [],
+    "rank": 114
+  },
+  {
+    "name": "Sweetens Cove",
+    "city": "South Pittsburg",
+    "state": "TN",
+    "gwRank": 38,
+    "gmRank": null,
+    "mergeScore": 1038,
+    "courseId": "029fd16a-52c2-4502-bff8-a389e3c47e7e",
+    "matchedName": "Sweetens Cove Golf Club",
+    "matchedCity": "South Pittsburg",
+    "matchedState": "TN",
+    "isPublic": true,
+    "confidence": 0.7,
+    "alternates": [
+      {
+        "id": "f955e1ee-fe94-4001-ba64-5eb0be8029ad",
+        "name": "Cumberland Cove Golf Course"
+      }
+    ],
+    "rank": 115
+  },
+  {
+    "name": "Mystic Creek",
+    "city": "El Dorado",
+    "state": "AR",
+    "gwRank": 44,
+    "gmRank": null,
+    "mergeScore": 1044,
+    "courseId": "3c24df40-2d4a-4709-b4fc-81518024faad",
+    "matchedName": "Mystic Creek Golf Club",
+    "matchedCity": "El Dorado",
+    "matchedState": "AR",
+    "isPublic": true,
+    "confidence": 0.7,
+    "alternates": [
+      {
+        "id": "1546d3f3-cdff-4fb6-ba60-c76cdbbf527e",
+        "name": "Hickory Creek"
+      },
+      {
+        "id": "c5674f22-7bf2-4f26-9d83-38b0d29cd1c1",
+        "name": "Big Creek"
+      },
+      {
+        "id": "a087b686-e94b-4b2f-bbbf-25ffa32da24e",
+        "name": "Cypress Creek Golf Club"
+      }
+    ],
+    "rank": 116
+  },
+  {
+    "name": "Tot Hill Farm",
+    "city": null,
+    "state": "NC",
+    "gwRank": null,
+    "gmRank": 48,
+    "mergeScore": 1048,
+    "courseId": "a6e5482e-6f27-4270-8c42-859080f08e96",
+    "matchedName": "Tot Hill Farm",
+    "matchedCity": "Asheboro",
+    "matchedState": "NC",
+    "isPublic": true,
+    "confidence": 1.1,
+    "alternates": [
+      {
+        "id": "ea40d558-46c7-42da-92f9-966e8be441f3",
+        "name": "Star Hill"
+      }
+    ],
+    "rank": 117
+  },
+  {
+    "name": "American Dunes",
+    "city": null,
+    "state": "MI",
+    "gwRank": null,
+    "gmRank": 51,
+    "mergeScore": 1051,
+    "courseId": "448ed7ee-b92b-40bc-bf92-10e42f31ca58",
+    "matchedName": "American Dunes Golf Club",
+    "matchedCity": "Grand Haven",
+    "matchedState": "MI",
+    "isPublic": true,
+    "confidence": 0.5,
+    "alternates": [
+      {
+        "id": "1b5afb7f-b77d-4b31-860f-22a0a32488df",
+        "name": "Lost Dunes"
+      },
+      {
+        "id": "4a459066-9a5a-46b0-9125-c51fd8e2d0fe",
+        "name": "Dunes Golf Club"
+      },
+      {
+        "id": "a84f474b-4ff5-4e4c-9607-a1d800ccd58b",
+        "name": "The Dunes Club"
+      }
+    ],
+    "rank": 118
+  },
+  {
+    "name": "Yocha Dehe (Cache Creek)",
+    "city": "Brooks",
+    "state": "CA",
+    "gwRank": 52,
+    "gmRank": null,
+    "mergeScore": 1052,
+    "courseId": "1ec5d71a-bd1e-4768-8387-aaf91b7dafb8",
+    "matchedName": "Yocha Dehe Golf Club",
+    "matchedCity": "Yolo County",
+    "matchedState": "CA",
+    "isPublic": true,
+    "confidence": 0.5,
+    "alternates": [],
+    "rank": 119
+  },
+  {
+    "name": "Sand Hollow",
+    "city": null,
+    "state": "UT",
+    "gwRank": null,
+    "gmRank": 54,
+    "mergeScore": 1054,
+    "courseId": "2a98c2b6-2527-4083-9d75-91c303821976",
+    "matchedName": "Sand Hollow Resort",
+    "matchedCity": "Hurricane",
+    "matchedState": "UT",
+    "isPublic": true,
+    "confidence": 0.667,
+    "alternates": [
+      {
+        "id": "9d0875df-fcd9-41f1-8838-5d5000bcb721",
+        "name": "Soldier Hollow Golf Course"
+      }
+    ],
+    "rank": 120
+  },
+  {
+    "name": "Palmetto Bluff (May River)",
+    "city": null,
+    "state": "SC",
+    "gwRank": null,
+    "gmRank": 58,
+    "mergeScore": 1058,
+    "courseId": "6f413103-9866-48da-a07d-2b7bdb30a4b2",
+    "matchedName": "May River Golf Course",
+    "matchedCity": "Bluffton",
+    "matchedState": "SC",
+    "isPublic": true,
+    "confidence": 0.8,
+    "alternates": [
+      {
+        "id": "207573fb-086b-4e94-9089-bdd7f5d1252c",
+        "name": "Palmetto Hills Golf Club"
+      },
+      {
+        "id": "62c6c513-1f21-4c0c-81eb-5f4aea77f45c",
+        "name": "Palmetto Golf Club"
+      },
+      {
+        "id": "455f2076-324b-4fc6-8347-cc9e2ca7d033",
+        "name": "Palmetto Hall - Robert Cupp Golf Course"
+      }
+    ],
+    "rank": 121
+  },
+  {
+    "name": "Silvies Valley Ranch",
+    "city": null,
+    "state": "OR",
+    "gwRank": null,
+    "gmRank": 59,
+    "mergeScore": 1059,
+    "courseId": "595a7a08-997f-40be-82b5-cdeaeb439a0c",
+    "matchedName": "Silvies Ranch",
+    "matchedCity": "Grant County",
+    "matchedState": "OR",
+    "isPublic": true,
+    "confidence": 0.667,
+    "alternates": [
+      {
+        "id": "01c41f82-6751-4fe5-b6ad-e485adeee4d2",
+        "name": "Valley Golf Club"
+      },
+      {
+        "id": "e9e5733f-f2c2-46d9-91ee-4e78b76372b1",
+        "name": "Christmas Valley Golf Course"
+      },
+      {
+        "id": "9cbad4b8-a9c5-4d69-bf96-0c224c028fa2",
+        "name": "Hidden Valley Golf Course"
+      }
+    ],
+    "rank": 122
+  },
+  {
+    "name": "Cape Arundel",
+    "city": null,
+    "state": "ME",
+    "gwRank": null,
+    "gmRank": 63,
+    "mergeScore": 1063,
+    "courseId": "59796389-831d-4f23-aee4-b7d51335a34d",
+    "matchedName": "Cape Arundel Golf Club",
+    "matchedCity": "Kennebunkport",
+    "matchedState": "ME",
+    "isPublic": true,
+    "confidence": 0.5,
+    "alternates": [
+      {
+        "id": "b76b916d-36ae-4dab-b82e-a06d83a4aa0c",
+        "name": "Cape Arundel Golf Club Practice Area"
+      },
+      {
+        "id": "2c1ca918-9e9b-4448-b163-c71f03e2dff8",
+        "name": "Cape Neddick Golf Club"
+      }
+    ],
+    "rank": 123
+  },
+  {
+    "name": "Bethpage Red",
+    "city": null,
+    "state": "NY",
+    "gwRank": null,
+    "gmRank": 65,
+    "mergeScore": 1065,
+    "courseId": "95cfb249-ec57-43e8-8994-a791587b5d83",
+    "matchedName": "Bethpage Red",
+    "matchedCity": "Farmingdale",
+    "matchedState": "NY",
+    "isPublic": true,
+    "confidence": 1,
+    "alternates": [
+      {
+        "id": "ceb95a05-d039-4f2d-ae01-6bdd954d00c1",
+        "name": "Bethpage Black"
+      },
+      {
+        "id": "25f57067-7c7c-46a6-a5e7-2d5191defdbd",
+        "name": "Bethpage Yellow"
+      },
+      {
+        "id": "3226bbeb-99ba-4b48-b98b-4f1b19da28ba",
+        "name": "Bethpage Blue"
+      }
+    ],
+    "rank": 124
+  },
+  {
+    "name": "TPC Harding Park",
+    "city": null,
+    "state": "CA",
+    "gwRank": null,
+    "gmRank": 66,
+    "mergeScore": 1066,
+    "courseId": "49d6ae55-da62-4050-8358-e5cace7bf610",
+    "matchedName": "TPC Harding Park",
+    "matchedCity": "San Francisco",
+    "matchedState": "CA",
+    "isPublic": true,
+    "confidence": 1.1,
+    "alternates": [
+      {
+        "id": "a89d0150-ef94-4534-b372-569a6a410528",
+        "name": "Harding Golf Course"
+      },
+      {
+        "id": "55cd8e4b-a871-45d4-8b06-7f6780bcbec9",
+        "name": "Skyway Golf Park"
+      },
+      {
+        "id": "661075e3-098d-41a4-9615-a185c54f3031",
+        "name": "Corica Park Golf Course"
+      }
+    ],
+    "rank": 125
+  },
+  {
+    "name": "Wilderness Club",
+    "city": null,
+    "state": "MT",
+    "gwRank": null,
+    "gmRank": 68,
+    "mergeScore": 1068,
+    "courseId": "c3382005-f171-4c88-b463-d282fd8f06c0",
+    "matchedName": "Wilderness Club",
+    "matchedCity": "Eureka",
+    "matchedState": "MT",
+    "isPublic": true,
+    "confidence": 1,
+    "alternates": [],
+    "rank": 126
+  },
+  {
+    "name": "Innisbrook (Copperhead)",
+    "city": null,
+    "state": "FL",
+    "gwRank": null,
+    "gmRank": 69,
+    "mergeScore": 1069,
+    "courseId": "2ecaef68-0515-4807-95c1-52b31bce3917",
+    "matchedName": "Innisbrook Golf Resort",
+    "matchedCity": "Palm Harbor",
+    "matchedState": "FL",
+    "isPublic": true,
+    "confidence": 0.333,
+    "alternates": [],
+    "rank": 127
+  },
+  {
+    "name": "George Wright",
+    "city": null,
+    "state": "MA",
+    "gwRank": null,
+    "gmRank": 70,
+    "mergeScore": 1070,
+    "courseId": "d4005923-48f5-42d4-b18c-9fa290165b2f",
+    "matchedName": "George Wright Golf Course",
+    "matchedCity": "Hyde Park",
+    "matchedState": "MA",
+    "isPublic": true,
+    "confidence": 0.5,
+    "alternates": [],
+    "rank": 128
+  },
+  {
+    "name": "Links of North Dakota",
+    "city": "Ray",
+    "state": "ND",
+    "gwRank": 72,
+    "gmRank": null,
+    "mergeScore": 1072,
+    "courseId": "3ce21d50-5458-41ad-994b-ad2d95044a6e",
+    "matchedName": "The Links of North Dakota at Red Mike Resort",
+    "matchedCity": "Williams County",
+    "matchedState": "ND",
+    "isPublic": true,
+    "confidence": 0.544,
+    "alternates": [
+      {
+        "id": "bcff9556-1579-42b9-b63a-9ce491879faf",
+        "name": "University of North Dakota Golf Course"
+      }
+    ],
+    "rank": 129
+  },
+  {
+    "name": "Minot Country Club",
+    "city": "Minot",
+    "state": "ND",
+    "gwRank": 72,
+    "gmRank": null,
+    "mergeScore": 1072,
+    "courseId": "07aeba63-d429-4cbd-97e2-9fcad80e1c64",
+    "matchedName": "Minot Country Club",
+    "matchedCity": "Minot",
+    "matchedState": "ND",
+    "isPublic": true,
+    "confidence": 1.2,
+    "alternates": [
+      {
+        "id": "12a2db46-d39a-4e6c-b3c3-b2faabacccdb",
+        "name": "Fargo Country Club"
+      },
+      {
+        "id": "f4ab04cf-45e0-4da2-8c68-9dd3c76b0aaa",
+        "name": "Rugby Country Club"
+      },
+      {
+        "id": "b68f7338-7adb-45ad-969e-d84c0b7e461c",
+        "name": "Kulm Country Club"
+      }
+    ],
+    "rank": 130
+  },
+  {
+    "name": "Prairie Club (Pines)",
+    "city": "Valentine",
+    "state": "NE",
+    "gwRank": 81,
+    "gmRank": null,
+    "mergeScore": 1081,
+    "courseId": "3c8aaa5b-6347-4ad3-be66-9a9fd8bf3a80",
+    "matchedName": "The Prairie Club - Pines Course",
+    "matchedCity": "Valentine",
+    "matchedState": "NE",
+    "isPublic": true,
+    "confidence": 1.1,
+    "alternates": [
+      {
+        "id": "0da8b1ed-ddb5-481c-bb6f-85152baa2863",
+        "name": "The Prairie Club"
+      },
+      {
+        "id": "c4395294-0b94-4bc1-b7f9-df197326c221",
+        "name": "The Pines Country Club"
+      },
+      {
+        "id": "79ef40ab-c56c-47ff-be9d-71bf5952d5ed",
+        "name": "Prairie Hills Golf Course"
+      }
+    ],
+    "rank": 131
+  },
+  {
+    "name": "Pumpkin Ridge (Ghost Creek)",
+    "city": "North Plains",
+    "state": "OR",
+    "gwRank": 81,
+    "gmRank": null,
+    "mergeScore": 1081,
+    "courseId": "6a698ee9-be8d-4090-b3c4-89521afb3a93",
+    "matchedName": "Pumpkin Ridge Golf Club",
+    "matchedCity": "Washington County",
+    "matchedState": "OR",
+    "isPublic": true,
+    "confidence": 0.5,
+    "alternates": [
+      {
+        "id": "dd06cb73-1d1e-4618-a9f0-290bb39e75b4",
+        "name": "Stone Ridge Golf Club"
+      }
+    ],
+    "rank": 132
+  },
+  {
+    "name": "Hawktree",
+    "city": "Bismarck",
+    "state": "ND",
+    "gwRank": 84,
+    "gmRank": null,
+    "mergeScore": 1084,
+    "courseId": "64ba6baa-a7a3-4521-a81b-c5775a8f5a6f",
+    "matchedName": "Hawktree Golf Club",
+    "matchedCity": "Burleigh County",
+    "matchedState": "ND",
+    "isPublic": true,
+    "confidence": 0.333,
+    "alternates": [],
+    "rank": 133
+  },
+  {
+    "name": "Warren Course (Notre Dame)",
+    "city": null,
+    "state": "IN",
+    "gwRank": null,
+    "gmRank": 85,
+    "mergeScore": 1085,
+    "courseId": "a4581f18-3180-4454-bd5c-bf9a0aff4bf9",
+    "matchedName": "Warren Golf Course",
+    "matchedCity": "Notre Dame",
+    "matchedState": "IN",
+    "isPublic": true,
+    "confidence": 0.5,
+    "alternates": [],
+    "rank": 134
+  },
+  {
+    "name": "Old Waverly",
+    "city": "West Point",
+    "state": "MS",
+    "gwRank": 87,
+    "gmRank": null,
+    "mergeScore": 1087,
+    "courseId": "7bbc08cf-7ce2-4565-a87a-7f462426e927",
+    "matchedName": "Old Waverly",
+    "matchedCity": "West Point",
+    "matchedState": "MS",
+    "isPublic": true,
+    "confidence": 1.2,
+    "alternates": [],
+    "rank": 135
+  },
+  {
+    "name": "Leatherstocking",
+    "city": "Cooperstown",
+    "state": "NY",
+    "gwRank": 87,
+    "gmRank": null,
+    "mergeScore": 1087,
+    "courseId": "3f6ac976-6b64-45c8-8f7c-9d145a12f844",
+    "matchedName": "Leatherstocking Golf Course",
+    "matchedCity": "Cooperstown",
+    "matchedState": "NY",
+    "isPublic": true,
+    "confidence": 0.533,
+    "alternates": [],
+    "rank": 136
+  },
+  {
+    "name": "Hideout",
+    "city": "Monticello",
+    "state": "UT",
+    "gwRank": 87,
+    "gmRank": null,
+    "mergeScore": 1087,
+    "courseId": "b9563587-33a9-4951-a89b-8e1cb2397608",
+    "matchedName": "The Hideout Golf Club",
+    "matchedCity": "Monticello",
+    "matchedState": "UT",
+    "isPublic": true,
+    "confidence": 0.45,
+    "alternates": [],
+    "rank": 137
+  },
+  {
+    "name": "Memorial Park",
+    "city": null,
+    "state": "TX",
+    "gwRank": null,
+    "gmRank": 88,
+    "mergeScore": 1088,
+    "courseId": "e12f7f0b-ce61-4227-b590-ec90788e731e",
+    "matchedName": "Memorial Park Golf Course",
+    "matchedCity": "Houston",
+    "matchedState": "TX",
+    "isPublic": true,
+    "confidence": 0.5,
+    "alternates": [
+      {
+        "id": "f09c3a3c-71cf-4e23-b858-e0a373deafd4",
+        "name": "Firewheel Golf Park"
+      },
+      {
+        "id": "406a7efb-f777-49b6-b5da-64106638c742",
+        "name": "Brownsville Memorial Golf Course"
+      },
+      {
+        "id": "6e57effe-a5bb-42c5-837d-56191a6b4517",
+        "name": "Hermann Park Golf Course"
+      }
+    ],
+    "rank": 138
+  },
+  {
+    "name": "Omni La Costa (North)",
+    "city": null,
+    "state": "CA",
+    "gwRank": null,
+    "gmRank": 89,
+    "mergeScore": 1089,
+    "courseId": "2f254d90-0bd7-4cb3-bae4-fb222200cf15",
+    "matchedName": "Omni La Costa Golf Club",
+    "matchedCity": "Carlsbad",
+    "matchedState": "CA",
+    "isPublic": true,
+    "confidence": 0.7,
+    "alternates": [
+      {
+        "id": "7d328b6b-91b3-4ca0-b578-3e28967168e7",
+        "name": "La Costa Omni Resort Golf Course"
+      },
+      {
+        "id": "c3dc5787-1089-4b7b-94d4-b0e9fcc0717d",
+        "name": "Torrey Pines North Course"
+      },
+      {
+        "id": "24162f79-2cbe-49a6-8ee8-8cdfc4985d9f",
+        "name": "North Golf Course"
+      }
+    ],
+    "rank": 139
+  },
+  {
+    "name": "Deacon's Lodge",
+    "city": "Brainerd",
+    "state": "MN",
+    "gwRank": 92,
+    "gmRank": null,
+    "mergeScore": 1092,
+    "courseId": "317d7a3f-8a3b-40eb-8940-afc235f5d8a4",
+    "matchedName": "Deacon's Lodge",
+    "matchedCity": "Breezy Point",
+    "matchedState": "MN",
+    "isPublic": true,
+    "confidence": 1,
+    "alternates": [],
+    "rank": 140
+  },
+  {
+    "name": "Stoatin Brae",
+    "city": null,
+    "state": "MI",
+    "gwRank": null,
+    "gmRank": 92,
+    "mergeScore": 1092,
+    "courseId": "1f5188f8-8e84-4d2a-92c5-f858564408a4",
+    "matchedName": "Stoatin Brae Golf Club",
+    "matchedCity": "Augusta",
+    "matchedState": "MI",
+    "isPublic": true,
+    "confidence": 0.5,
+    "alternates": [
+      {
+        "id": "ace90c0b-0a05-42bb-8c97-3091aa50c9e3",
+        "name": "Brae-Burn Golf Club"
+      }
+    ],
+    "rank": 141
+  },
+  {
+    "name": "Cape Cod National",
+    "city": "Brewster",
+    "state": "MA",
+    "gwRank": 96,
+    "gmRank": null,
+    "mergeScore": 1096,
+    "courseId": "daa314cf-3947-42bd-97cb-79f144870ca0",
+    "matchedName": "Cape Cod National Golf Club",
+    "matchedCity": "Brewster",
+    "matchedState": "MA",
+    "isPublic": true,
+    "confidence": 0.9,
+    "alternates": [
+      {
+        "id": "d0a6aa93-05ae-49e7-96a9-3cadae384355",
+        "name": "Cape Cod Country Club"
+      },
+      {
+        "id": "146cc1b7-36b1-4323-819b-730f54474658",
+        "name": "The Cape Club"
+      },
+      {
+        "id": "7a455b31-07aa-4496-b860-39884ece2c0e",
+        "name": "Cape Ann Golf Course"
+      }
+    ],
+    "rank": 142
+  },
+  {
+    "name": "RTJ Grand National (Links)",
+    "city": null,
+    "state": "AL",
+    "gwRank": null,
+    "gmRank": 98,
+    "mergeScore": 1098,
+    "courseId": "2a412092-5a01-4e96-9151-20db268d4562",
+    "matchedName": "RTJ Grand National Golf",
+    "matchedCity": "Opelika",
+    "matchedState": "AL",
+    "isPublic": true,
+    "confidence": 0.85,
+    "alternates": [
+      {
+        "id": "b54812a9-3a01-4028-b8cb-d5db14755755",
+        "name": "The Links at Redstone"
+      },
+      {
+        "id": "63278072-673d-49f7-8877-aceaf3c5162a",
+        "name": "Gulf Links Golf Course"
+      },
+      {
+        "id": "98e29c97-9729-46d5-b7b9-578e9b72ad52",
+        "name": "Jackson Links"
+      }
+    ],
+    "rank": 143
+  },
+  {
+    "name": "Omni Barton Creek (Fazio Canyons)",
+    "city": "Austin",
+    "state": "TX",
+    "gwRank": 99,
+    "gmRank": null,
+    "mergeScore": 1099,
+    "courseId": "3fdc5886-0fb5-4004-b9a7-0d852eb3fafc",
+    "matchedName": "Barton Creek Fazio Canyons",
+    "matchedCity": "Travis County",
+    "matchedState": "TX",
+    "isPublic": true,
+    "confidence": 1.2,
+    "alternates": [
+      {
+        "id": "e3ac25e3-2d62-4d93-aa14-20a7d02af12b",
+        "name": "Barton Creek Fazio Foothills"
+      },
+      {
+        "id": "a280b7b8-aeb8-4aba-a0e1-552dd857bc80",
+        "name": "Barton Creek Crenshaw Cliffside"
+      },
+      {
+        "id": "90bd5ead-02a2-4148-baf9-eaa56a194fd0",
+        "name": "Barton Creek Lakeside Country Club"
+      }
+    ],
+    "rank": 144
+  }
+]

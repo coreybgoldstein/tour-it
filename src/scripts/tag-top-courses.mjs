@@ -64,8 +64,19 @@ async function main() {
   console.error(WRITE ? GREEN("\n=== TAG TOP COURSES (WRITE MODE) ===\n")
                       : YELLOW("\n=== TAG TOP COURSES (DRY RUN — no writes) ===\n"));
 
-  // ── Load verified list ────────────────────────────────────────────────────
+  // ── Load verified lists ───────────────────────────────────────────────────
+  // top100-matched.json = Golf Digest Best Public top 100 (ranks 1-100).
+  // top101-200-matched.json = the Golfweek + GOLF Magazine merge extension
+  // (ranks 101+), produced by match-extra-public.mjs. Both are tagged together
+  // so the stale-clear logic sees the full set.
   const matched = JSON.parse(readFileSync(path.join(REPO_ROOT, "top100-matched.json"), "utf8"));
+  try {
+    const extra = JSON.parse(readFileSync(path.join(REPO_ROOT, "top101-200-matched.json"), "utf8"));
+    matched.push(...extra);
+    console.error(`Loaded extension list: ${extra.length} (ranks 101+)\n`);
+  } catch {
+    console.error("No top101-200-matched.json found — tagging top 100 only.\n");
+  }
   // Dedupe to the lowest (best) rank per courseId — a course mapped twice keeps
   // its highest standing.
   const rankById = new Map();

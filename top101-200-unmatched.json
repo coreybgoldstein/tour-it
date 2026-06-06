@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Keswick (Full Cry)",
+    "state": "VA",
+    "gw": 72,
+    "gm": 94,
+    "alternates": []
+  },
+  {
+    "name": "Lajitas (Black Jack's Crossing)",
+    "state": "TX",
+    "gw": 49,
+    "gm": null,
+    "alternates": []
+  },
+  {
+    "name": "SentryWorld",
+    "state": "WI",
+    "gw": null,
+    "gm": 81,
+    "alternates": []
+  },
+  {
+    "name": "Four Seasons Hualalai",
+    "state": "HI",
+    "gw": 84,
+    "gm": null,
+    "alternates": []
+  },
+  {
+    "name": "McLemore (Highlands)",
+    "state": "GA",
+    "gw": null,
+    "gm": 99,
+    "alternates": []
+  }
+]
