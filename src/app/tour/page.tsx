@@ -886,14 +886,15 @@ function TourPageInner() {
                     onClick={() => router.push(`/courses/${r.id}`)}
                     style={{ background: "#0c1c13", border: "1px solid rgba(77,168,98,0.18)", borderRadius: 12, padding: 10, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
                   >
-                    <div style={{ width: 56, height: 56, borderRadius: 9, overflow: "hidden", flexShrink: 0, background: "rgba(77,168,98,0.1)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 9, overflow: "hidden", flexShrink: 0, background: "#fff", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {r.logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={cdnImage(r.logoUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 6, background: "#fff" }} />
-                      ) : r.coverImageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={cdnImage(r.coverImageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : null}
+                      ) : (
+                        <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: "#1a9e42" }}>
+                          {r.name.split(" ").filter((w) => w.length > 2).map((w) => w[0]).join("").slice(0, 3).toUpperCase()}
+                        </span>
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>

@@ -97,32 +97,6 @@ export default function ProfileStats({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, currentUserId]);
 
-  const stats = useMemo(() => {
-    const scored = profileRounds.filter(r => r.totalScore != null);
-    if (scored.length === 0) return null;
-    const sum = (arr: (number | null)[]) => arr.reduce((a: number, v) => a + (v ?? 0), 0);
-    const scores = scored.map(r => r.totalScore as number);
-    const scoringAvg = sum(scores) / scores.length;
-    const best = Math.min(...scores);
-
-    const toPar = scored.filter(r => r.scoreToPar != null).map(r => r.scoreToPar as number);
-    const avgToPar = toPar.length ? sum(toPar) / toPar.length : null;
-
-    const girRounds = scored.filter(r => r.greensInReg != null);
-    const girPct = girRounds.length ? (sum(girRounds.map(r => r.greensInReg)) / (girRounds.length * 18)) * 100 : null;
-
-    const fwRounds = scored.filter(r => r.fairwaysHit != null && r.fairwaysPossible != null && (r.fairwaysPossible as number) > 0);
-    const fwPct = fwRounds.length ? (sum(fwRounds.map(r => r.fairwaysHit)) / sum(fwRounds.map(r => r.fairwaysPossible))) * 100 : null;
-
-    const puttRounds = scored.filter(r => r.putts != null);
-    const puttsAvg = puttRounds.length ? sum(puttRounds.map(r => r.putts)) / puttRounds.length : null;
-
-    const last5 = scores.slice(0, 5);
-    const last5Avg = last5.length ? sum(last5) / last5.length : null;
-
-    return { count: scored.length, scoringAvg, best, avgToPar, girPct, fwPct, puttsAvg, last5Avg };
-  }, [profileRounds]);
-
   const h2h = useMemo(() => {
     if (!wantH2H) return null;
     const theirByKey = new Map<string, RoundRow>();
@@ -168,7 +142,7 @@ export default function ProfileStats({
   }, [wantH2H, profileRounds, myRounds, myHandicap, profileHandicap, settlements, currentUserId]);
 
   if (!loaded) return null;
-  if (!stats && !(h2h && h2h.together > 0)) return null;
+  if (!(h2h && h2h.together > 0)) return null;
 
   const firstName = displayName.split(" ")[0] || displayName;
 
@@ -194,29 +168,6 @@ export default function ProfileStats({
           </div>
         </div>
       )}
-
-      {stats && (
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px 12px" }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>All-Time Stats</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{stats.count} round{stats.count === 1 ? "" : "s"}</div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <Stat label="Scoring Avg" value={stats.scoringAvg.toFixed(1)} />
-            <Stat label="Best Round" value={String(stats.best)} />
-            <Stat label="Avg vs Par" value={stats.avgToPar == null ? "—" : stats.avgToPar > 0 ? `+${stats.avgToPar.toFixed(1)}` : stats.avgToPar.toFixed(1)} />
-            <Stat label="GIR" value={stats.girPct == null ? "—" : `${Math.round(stats.girPct)}%`} />
-            <Stat label="Fairways" value={stats.fwPct == null ? "—" : `${Math.round(stats.fwPct)}%`} />
-            <Stat label="Putts/Rd" value={stats.puttsAvg == null ? "—" : stats.puttsAvg.toFixed(1)} />
-          </div>
-          {stats.last5Avg != null && stats.count > 5 && (
-            <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12.5, color: "rgba(255,255,255,0.55)" }}>Last 5 rounds avg</span>
-              <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 700, color: stats.last5Avg < stats.scoringAvg ? "#4da862" : "rgba(255,255,255,0.85)" }}>{stats.last5Avg.toFixed(1)}</span>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -235,11 +186,3 @@ function RecordCell({ label, w, l, t }: { label: string; w: number; l: number; t
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={cellBox}>
-      <div style={cellLabel}>{label}</div>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, color: "#fff" }}>{value}</div>
-    </div>
-  );
-}
