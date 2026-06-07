@@ -47,6 +47,17 @@ const ICONS: Record<string, { bg: string; accent: string; svg: ReactNode }> = {
       </svg>
     ),
   },
+  game_challenge: {
+    bg: "rgba(77,168,98,0.15)",
+    accent: "#4da862",
+    svg: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4da862" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 21V4" />
+        <path d="M5 4l11 3-11 3" fill="#4da862" stroke="none" />
+        <path d="M5 4l11 3-3.5 3.5L5 10" />
+      </svg>
+    ),
+  },
   comment: {
     bg: "rgba(255,200,80,0.15)",
     accent: "#ffc850",

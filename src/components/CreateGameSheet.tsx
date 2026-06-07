@@ -465,6 +465,7 @@ export default function CreateGameSheet({
       //    c) Otherwise create a new GolfTrip + GolfTripCourse +
       //       GolfTripMember so the game has somewhere to live.
       let tripId = presetTrip?.id ?? pickedExistingTrip?.id ?? null;
+      const createdNewTrip = !tripId;
       if (!tripId) {
         tripId = crypto.randomUUID();
         const playDate = date || new Date().toISOString().slice(0, 10);
@@ -635,6 +636,66 @@ export default function CreateGameSheet({
           throw new Error(json.error || "Game creation failed");
         }
         createdGameId = json.game.id;
+      }
+
+      // ── Notify the other players that a game was set up. ─────────────
+      // The new-trip path above already sent each invitee a trip_invite
+      // (they must accept to join). For a game added to an EXISTING trip,
+      // nobody was being told — so ping the others here: people already on
+      // the trip get a "game challenge", and anyone not yet a member gets
+      // added (pending) + a trip_invite to accept. Without this, creating a
+      // game on a trip everyone's already in sent zero notifications.
+      if (!createdNewTrip && tripId) {
+        const others = players.filter(p => p.userId !== currentUserId);
+        if (others.length > 0) {
+          const { data: existingMembers } = await supabase
+            .from("GolfTripMember").select("userId").eq("tripId", tripId);
+          const memberIds = new Set((existingMembers ?? []).map((m: { userId: string }) => m.userId));
+          const newInvitees = others.filter(p => !memberIds.has(p.userId));
+          const knownMembers = others.filter(p => memberIds.has(p.userId));
+          const formatName = GAME_FORMATS.find(f => f.id === format)?.name || "game";
+
+          if (newInvitees.length > 0) {
+            await supabase.from("GolfTripMember").insert(newInvitees.map(p => ({
+              id: crypto.randomUUID(),
+              tripId: tripId as string,
+              userId: p.userId,
+              role: "member",
+              status: "pending",
+              createdAt: nowIso,
+            })));
+          }
+
+          const notifRows = [
+            ...newInvitees.map(p => ({
+              id: crypto.randomUUID(),
+              userId: p.userId,
+              type: "trip_invite",
+              title: "You've been invited!",
+              body: `${currentUserDisplayName} invited you to a ${formatName} at ${activeCourse.name}`,
+              linkUrl: `/trips/${tripId}`,
+              referenceId: tripId,
+              read: false,
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            })),
+            ...knownMembers.map(p => ({
+              id: crypto.randomUUID(),
+              userId: p.userId,
+              type: "game_challenge",
+              title: "New game!",
+              body: `${currentUserDisplayName} set up a ${formatName} at ${activeCourse.name}`,
+              linkUrl: `/trips/${tripId}?game=${createdGameId}`,
+              referenceId: tripId,
+              read: false,
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            })),
+          ];
+          if (notifRows.length > 0) await supabase.from("Notification").insert(notifRows);
+          newInvitees.forEach(p => sendPushToUser("trip_invite", p.userId, tripId as string));
+          knownMembers.forEach(p => sendPushToUser("game_challenge", p.userId, tripId as string));
+        }
       }
 
       // Award points — fire-and-forget per the existing pattern.

@@ -19,6 +19,7 @@ const VALID_TYPES = new Set([
   "trip_invite",
   "invite_declined",
   "comment_mention",
+  "game_challenge",
 ]);
 
 async function getSenderName(userId: string): Promise<string> {
@@ -177,6 +178,17 @@ export async function POST(req: NextRequest) {
     const name = await getSenderName(user.id);
     title = "Invite declined";
     body = `${name} can't make "${trip.name}"`;
+    url = `/trips/${referenceId}`;
+
+  } else if (type === "game_challenge") {
+    // referenceId = the trip the game lives on. Players are already trip
+    // members; this just pings them that a game/match was set up.
+    if (!referenceId) return NextResponse.json({ error: "Missing referenceId" }, { status: 400 });
+    const { data: trip } = await sb.from("GolfTrip").select("name").eq("id", referenceId).maybeSingle();
+    if (!trip) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const name = await getSenderName(user.id);
+    title = "New game!";
+    body = `${name} set up a game in "${trip.name}"`;
     url = `/trips/${referenceId}`;
 
   } else {
