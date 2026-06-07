@@ -1473,8 +1473,21 @@ export default function TripPage() {
 
   // Once the end date has passed the outing is in the books, so the
   // "Upcoming …" eyebrow becomes "Played …" (rounds/games) or "Past Trip".
+  // A round/game scheduled for TODAY also flips to "Played" once its tee time
+  // has passed — a date-only check would keep showing "Upcoming" all day even
+  // after an 8:40 AM round was clearly finished.
   const _today = new Date().toISOString().slice(0, 10);
-  const isPast = !!_end && _end < _today;
+  let isPast = !!_end && _end < _today;
+  if (!isPast && _end === _today) {
+    const _teeTime = tripCourses[0]?.teeTime;
+    if (_teeTime) {
+      const [_th, _tm] = _teeTime.split(":").map(Number);
+      if (Number.isFinite(_th)) {
+        const _now = new Date();
+        if (_now.getHours() * 60 + _now.getMinutes() >= _th * 60 + (_tm || 0)) isPast = true;
+      }
+    }
+  }
   const flavorEyebrow = flavor === "game"
     ? (isPast ? "Played Game" : "Upcoming Game")
     : flavor === "round"
