@@ -116,6 +116,12 @@ const HOLE_PICKED_FORMATS = SHARED_HOLE_PICKED;
 const TEAM_WAGER_FORMATS = SHARED_TEAM_WAGER;
 const MULTI_SEGMENT_FORMATS = SHARED_MULTI_SEGMENT;
 
+// Sentinel stored in winners[key] when a segment/hole/game is explicitly a
+// push — declared as a tie with no winner. Distinct from "undeclared" (key
+// absent) so the card reads "Push" instead of an empty "— declare" cell. No
+// player matches it, so the settlement math naturally moves no money.
+const PUSH_WINNER = "__push__";
+
 // ── Pops-per-hole scorecard ─────────────────────────────────────────────────
 // Renders a real scorecard grid: holes across the top, one row per player,
 // a green dot in each hole the player gets a stroke on. High handicaps
@@ -1321,7 +1327,7 @@ export default function TripPage() {
         const stake = Number(cfg.stake) || 0;
         if (!stake) continue;
         for (const winnerId of Object.values(winners)) {
-          if (!winnerId) continue;
+          if (!winnerId || winnerId === PUSH_WINNER) continue;
           const otherCount = players.length - 1;
           if (otherCount <= 0) continue;
           const winner = players.find(p => p.userId === winnerId);
@@ -2252,7 +2258,7 @@ export default function TripPage() {
                       <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 6 }}>
                         {cfg.holes.map((h: number) => {
                           const winnerId = winners[`hole-${h}`];
-                          const name = playerName(winnerId);
+                          const name = winnerId === PUSH_WINNER ? "Push" : playerName(winnerId);
                           const stake = Number(cfg.stake) || 0;
                           return (
                             <ScorecardCell
@@ -2283,7 +2289,7 @@ export default function TripPage() {
                           <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.05)", display: "grid", gridTemplateColumns: `repeat(${segments.length}, 1fr)`, gap: 6 }}>
                             {segments.map((seg) => {
                               const winnerId = winners[seg.key];
-                              const name = winnerId ? (playerName(winnerId) || "") : "";
+                              const name = winnerId === PUSH_WINNER ? "Push" : (winnerId ? (playerName(winnerId) || "") : "");
                               const stake = Number((cfg as any)?.[seg.stakeKey]) || 0;
                               return (
                                 <ScorecardCell
@@ -2305,7 +2311,9 @@ export default function TripPage() {
                       const winnerKey = isTeamWager ? "team" : "overall";
                       const winnerId = winners[winnerKey];
                       let value = "";
-                      if (winnerId) {
+                      if (winnerId === PUSH_WINNER) {
+                        value = "Push";
+                      } else if (winnerId) {
                         if (isTeamWager) {
                           const members = (g.players ?? []).filter((p: any) => (p.teamId || "A") === winnerId);
                           value = `Team ${winnerId}${members.length > 0 ? ` (${members.map((m: any) => m.displayName).join(" + ")})` : ""}`;
@@ -3583,7 +3591,39 @@ export default function TripPage() {
                   );
                 })}
               </div>
-              {currentWinnerId && (
+              {/* Push — explicit "tied, no one won" result. Records a
+                  sentinel so the cell reads "Push" instead of an empty
+                  "— declare", and no money changes hands. */}
+              {(() => {
+                const isPush = currentWinnerId === PUSH_WINNER;
+                return (
+                  <button
+                    onClick={() => declareWinner(winnerPicker.gameId, winnerPicker.key, isPush ? null : PUSH_WINNER)}
+                    style={{
+                      width: "100%",
+                      marginTop: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      border: `1px solid ${isPush ? "rgba(212,160,23,0.55)" : "rgba(255,255,255,0.08)"}`,
+                      background: isPush ? "rgba(212,160,23,0.10)" : "rgba(255,255,255,0.03)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="9" x2="19" y2="9"/><line x1="5" y1="15" x2="19" y2="15"/></svg>
+                    </div>
+                    <div style={{ flex: 1, fontFamily: "'Outfit', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" }}>Push — no one won</div>
+                    {isPush && (
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, color: "#d4a017", letterSpacing: "0.06em" }}>SELECTED · TAP TO CLEAR</div>
+                    )}
+                  </button>
+                );
+              })()}
+              {currentWinnerId && currentWinnerId !== PUSH_WINNER && (
                 <button
                   onClick={() => declareWinner(winnerPicker.gameId, winnerPicker.key, null)}
                   style={{ width: "100%", marginTop: 14, padding: "10px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "rgba(255,255,255,0.55)", fontFamily: "'Outfit', sans-serif", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
