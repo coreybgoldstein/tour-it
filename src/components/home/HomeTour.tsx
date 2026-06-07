@@ -1261,7 +1261,7 @@ function NearCourseCard({ course, onClick }: { course: CourseLite; onClick: () =
           </div>
         )}
         {logo && (
-          <div style={{ position: "absolute", top: 8, left: 8, width: 30, height: 30, borderRadius: 6, background: "#fff", border: "1px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 3 }}>
+          <div style={{ position: "absolute", top: 8, left: 8, width: 42, height: 42, borderRadius: 8, background: "#fff", border: "0.5px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: 2 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logo} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
