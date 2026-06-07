@@ -47,9 +47,11 @@ Return JSON only — no commentary, no markdown, no code fences. Schema:
 }
 
 Rules:
-- Physical scorecard (kind = "scorecard"): extract EVERY player row that has written scores. The player's name is at the start of their row. Do NOT treat the Par, Handicap/Index, Yardage, or tee rows as players. "stats" is null for scorecards.
+- The photo may be ROTATED or taken at an angle (a paper card is often shot sideways, so rows run vertically). Mentally rotate the image so text reads left-to-right before extracting. A scorecard's holes run 1→9 (OUT) then 10→18 (IN); use that ordering to orient yourself.
+- Physical scorecard (kind = "scorecard"): extract EVERY player row that has ANY written/handwritten scores, even faint or messy pencil. Players are usually in the blank rows beneath the printed Par/Yardage rows; the name is handwritten at the start of the row. If a row has scores but no legible name, still return it with name "Player 2" (etc.). Do NOT treat the Par, Handicap/Index, Course/Slope Rating, Yardage (Blue/White/Yellow/Red), or tee rows as players. "stats" is null for scorecards.
+- Read handwritten digits carefully: distinguish 4/9, 1/7, 3/5/8, 0/6. Cross-check a player's OUT/IN/TOTAL written sums against the per-hole digits and correct an obvious misread so the holes add up to the written total.
 - App screenshot (kind = "ghin"): exactly ONE player. Fill "stats" from the screenshot; use null for any stat not shown. scoreToPar is relative to par (e.g. +18 → 18, -2 → -2, even → 0).
-- holeScores MUST have exactly holeCount entries. Use null for any hole you cannot confidently read — never guess.
+- holeScores MUST have exactly holeCount entries. Use null for any hole you cannot confidently read — never guess a digit, but do not skip a whole player row just because it is hard to read.
 - Ignore Out / In / Total / 9 / 18 summary columns for the per-hole arrays. You MAY use the total column to fill "total".
 - holeCount is 9 only if the image clearly shows a 9-hole round; otherwise 18.
 - If the image is neither a scorecard nor a score-app screenshot, return {"error": "not_a_scorecard"}.`;
@@ -83,7 +85,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-6",
       max_tokens: 2500,
       messages: [{
         role: "user",
