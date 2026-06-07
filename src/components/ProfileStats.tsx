@@ -149,18 +149,18 @@ export default function ProfileStats({
   return (
     <div style={{ padding: "0 16px", display: "flex", flexDirection: "column", gap: 8, marginBottom: 8 }}>
       {h2h && h2h.together > 0 && (
-        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "14px 14px 12px" }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>You vs {firstName}</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{h2h.together} round{h2h.together === 1 ? "" : "s"} together</div>
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "9px 11px 10px" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 7 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(77,168,98,0.85)" }}>You vs {firstName}</div>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{h2h.together} round{h2h.together === 1 ? "" : "s"} together</div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: h2h.moneyGames > 0 ? "1fr 1fr 1fr" : "1fr 1fr", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: h2h.moneyGames > 0 ? "1fr 1fr 1fr" : "1fr 1fr", gap: 6 }}>
             <RecordCell label="Gross" w={h2h.grossW} l={h2h.grossL} t={h2h.grossT} />
             <RecordCell label="Net" w={h2h.netW} l={h2h.netL} t={h2h.netT} />
             {h2h.moneyGames > 0 && (
               <div style={cellBox}>
                 <div style={cellLabel}>Net $</div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: h2h.myMoney > 0 ? "#4da862" : h2h.myMoney < 0 ? "#e57373" : "#fff" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: h2h.myMoney > 0 ? "#4da862" : h2h.myMoney < 0 ? "#e57373" : "#fff" }}>
                   {h2h.myMoney > 0 ? `+$${h2h.myMoney}` : h2h.myMoney < 0 ? `-$${Math.abs(h2h.myMoney)}` : "$0"}
                 </div>
               </div>
@@ -172,14 +172,14 @@ export default function ProfileStats({
   );
 }
 
-const cellBox: React.CSSProperties = { background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "10px 8px", textAlign: "center" };
-const cellLabel: React.CSSProperties = { fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 4 };
+const cellBox: React.CSSProperties = { background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "7px 6px", textAlign: "center" };
+const cellLabel: React.CSSProperties = { fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 2 };
 
 function RecordCell({ label, w, l, t }: { label: string; w: number; l: number; t: number }) {
   return (
     <div style={cellBox}>
       <div style={cellLabel}>{label}</div>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 900, color: "#fff" }}>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, fontWeight: 900, color: "#fff" }}>
         {w}-{l}{t > 0 ? `-${t}` : ""}
       </div>
     </div>

@@ -2780,7 +2780,7 @@ export default function TripPage() {
                     {list.length === 0 ? (
                       <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 11, color: "rgba(255,255,255,0.3)", fontStyle: "italic", textAlign: align }}>No players</div>
                     ) : list.map(m => (
-                      <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", flexDirection: align === "right" ? "row-reverse" : "row" }}>
+                      <button key={m.id} onClick={() => router.push(`/profile/${m.userId}`)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 9, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", borderTop: 0, borderLeft: 0, borderRight: 0, background: "transparent", cursor: "pointer", flexDirection: align === "right" ? "row-reverse" : "row" }}>
                         <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: `2px solid ${ringColor}`, background: "rgba(0,0,0,0.3)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 0 1px rgba(0,0,0,0.4)` }}>
                           {m.user.avatarUrl
                             ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -2791,7 +2791,7 @@ export default function TripPage() {
                           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.user.displayName}</div>
                           <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.35)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>@{m.user.username}</div>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 );
@@ -2807,7 +2807,7 @@ export default function TripPage() {
                       <div style={{ marginTop: 8, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                         <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>Unassigned</div>
                         {unassigned.map(m => (
-                          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
+                          <button key={m.id} onClick={() => router.push(`/profile/${m.userId}`)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "8px 0", background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
                             <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(255,255,255,0.15)", background: "rgba(77,168,98,0.12)", flexShrink: 0 }}>
                               {m.user.avatarUrl
                                 ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -2818,7 +2818,7 @@ export default function TripPage() {
                               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>{m.user.displayName}</div>
                               <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 10, color: "rgba(255,255,255,0.3)" }}>@{m.user.username}</div>
                             </div>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -2829,7 +2829,7 @@ export default function TripPage() {
               // ── Default flat list (no Ryder Cup) ─────────────────────
               <div style={{ overflowY: "auto", flex: 1 }}>
                 {members.map(m => (
-                  <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <button key={m.id} onClick={() => router.push(`/profile/${m.userId}`)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "transparent", border: "none", borderTop: 0, borderLeft: 0, borderRight: 0, cursor: "pointer", textAlign: "left" }}>
                     <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(77,168,98,0.3)", background: "rgba(77,168,98,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       {m.user.avatarUrl
                         ? <img src={cdnImage(m.user.avatarUrl)} alt={m.user.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -2843,7 +2843,8 @@ export default function TripPage() {
                     {m.role === "admin" && (
                       <div style={{ padding: "3px 8px", borderRadius: 6, background: "rgba(77,168,98,0.12)", border: "1px solid rgba(77,168,98,0.25)", fontFamily: "'Outfit', sans-serif", fontSize: 10, fontWeight: 600, color: "#4da862" }}>Admin</div>
                     )}
-                  </div>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="m9 18 6-6-6-6"/></svg>
+                  </button>
                 ))}
               </div>
             )}
