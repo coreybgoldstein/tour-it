@@ -89,14 +89,19 @@ export default function TourItTopBar() {
 
   return (
     <>
-      {/* Top bar — sticky so it stays anchored as the page scrolls */}
+      {/* Top bar — fixed so it stays truly anchored on every screen. `sticky`
+          failed to pin on pages where `body { overflow-x: hidden }` (globals.css)
+          turns body into the scroll container, letting the bar scroll away.
+          Fixed sidesteps that entirely; the spacer below reserves its height so
+          page content isn't hidden underneath. */}
       <div
         style={{
-          position: "sticky",
+          position: "fixed",
           top: 0,
+          left: 0,
+          right: 0,
           background: "linear-gradient(180deg, #1c4425 0%, #102916 100%)",
           borderBottom: "1px solid rgba(77,168,98,0.35)",
-          flexShrink: 0,
           zIndex: 90,
         }}
       >
@@ -201,6 +206,14 @@ export default function TourItTopBar() {
           </div>
         </div>
       </div>
+
+      {/* Spacer reserves the fixed bar's height so page content starts below it.
+          Matches the bar row: paddingTop max(10px, safe-area) + 56px logo
+          (tallest cell) + 10px paddingBottom + 1px border. */}
+      <div
+        aria-hidden
+        style={{ height: "calc(max(10px, env(safe-area-inset-top)) + 67px)", flexShrink: 0 }}
+      />
 
       {/* Drawer */}
       {menuOpen && (
