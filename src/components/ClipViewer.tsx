@@ -7,6 +7,8 @@ import { useLike } from "@/hooks/useLike";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc } from "@/lib/getVideoSrc";
 import { cdnImage } from "@/lib/cdnImage";
+import { showToast } from "@/lib/toast";
+import { reportError } from "@/lib/reportError";
 
 const SHOT_LABEL: Record<string, string> = {
   TEE_SHOT: "Tee Shot", APPROACH: "Approach", CHIP: "Chip", PITCH: "Pitch",
@@ -194,6 +196,9 @@ export default function ClipViewer({
       }]);
       setLocalCommentCount(prev => prev + 1);
       setCommentText("");
+    } else {
+      showToast("Couldn't post comment — check your connection");
+      reportError(error, { where: "ClipViewer submitComment", uploadId: clip.id });
     }
     setSubmittingComment(false);
   }

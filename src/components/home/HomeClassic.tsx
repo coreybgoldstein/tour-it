@@ -12,6 +12,8 @@ import { ClipTopPill } from "@/components/clip/ClipTopPill";
 import { IntelPanel } from "@/components/clip/IntelPanel";
 import { sessionMute } from "@/lib/sessionMute";
 import { byPopularity, shuffle } from "@/lib/popularity";
+import { showToast } from "@/lib/toast";
+import { reportError } from "@/lib/reportError";
 import EditClipSheet from "@/components/EditClipSheet";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
@@ -1718,6 +1720,9 @@ export default function HomeClassic() {
         return next;
       });
       setCommentText("");
+    } else {
+      showToast("Couldn't post comment — check your connection");
+      reportError(error, { where: "HomeClassic submitComment", uploadId: commentUploadId });
     }
     setSubmittingComment(false);
   }

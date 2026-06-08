@@ -21,6 +21,8 @@ import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { CommentSwipe } from "@/components/clip/CommentSwipe";
 import { sendPushToUser } from "@/lib/sendPush";
+import { showToast } from "@/lib/toast";
+import { reportError } from "@/lib/reportError";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
 import { activeFeaturedTournament } from "@/lib/pgaChampionship";
@@ -801,6 +803,9 @@ const [editDescription, setEditDescription] = useState("");
       }
 
       setCommentText("");
+    } else {
+      showToast("Couldn't post comment — check your connection");
+      reportError(error, { where: "courses/[id] submitComment", uploadId: commentUploadId });
     }
     setSubmittingComment(false);
   }

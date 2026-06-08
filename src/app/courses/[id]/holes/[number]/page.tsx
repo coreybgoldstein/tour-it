@@ -15,6 +15,8 @@ import { sessionMute } from "@/lib/sessionMute";
 import { formatClipDate } from "@/lib/formatClipDate";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
+import { showToast } from "@/lib/toast";
+import { reportError } from "@/lib/reportError";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { CommentSwipe } from "@/components/clip/CommentSwipe";
 import { getRankColor, getRankRingBorder, isLegend } from "@/lib/rank-styles";
@@ -579,6 +581,9 @@ export default function HolePage() {
       }]);
       setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: (u.commentCount || 0) + 1 } : u));
       setCommentText("");
+    } else {
+      showToast("Couldn't post comment — check your connection");
+      reportError(error, { where: "holes/[number] submitComment", uploadId: commentUploadId });
     }
     setSubmittingComment(false);
   }

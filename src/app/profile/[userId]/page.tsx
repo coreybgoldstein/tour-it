@@ -20,6 +20,7 @@ import { getVideoSrc } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { CommentSwipe } from "@/components/clip/CommentSwipe";
 import { showToast } from "@/lib/toast";
+import { reportError } from "@/lib/reportError";
 import ProgressionTracker from "@/components/ProgressionTracker";
 import ProfileStats from "@/components/ProfileStats";
 import { SheetPortal } from "@/components/SheetPortal";
@@ -849,7 +850,12 @@ export default function ProfilePage() {
       id: newId, userId: currentUserId, uploadId: commentUploadId,
       body: commentText.trim(), createdAt: now, updatedAt: now,
     });
-    if (error) { setSubmittingComment(false); return; }
+    if (error) {
+      showToast("Couldn't post comment — check your connection");
+      reportError(error, { where: "profile/[userId] submitComment", uploadId: commentUploadId });
+      setSubmittingComment(false);
+      return;
+    }
     // Upload has no holeNumber column — join Hole to get the number.
     const { data: uploadData } = await supabase
       .from("Upload")
