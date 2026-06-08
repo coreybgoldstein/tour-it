@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { awardBadge } from "@/lib/awardBadge";
 import { PointAction, type PointActionKey } from "@/config/points-system";
 
@@ -11,7 +11,7 @@ export async function checkBadgesForAction(
   action: PointActionKey,
   referenceId?: string
 ): Promise<void> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   switch (action) {
     case PointAction.UPLOAD_CLIP: {

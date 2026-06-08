@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   POINT_VALUES,
   RANK_UP_BONUSES,
@@ -84,7 +84,7 @@ export async function awardPoints({
   // for @tourit regardless of which API route or trigger called us.
   if (userId === TOURIT_USER_ID) return null;
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const points = customAmount ?? POINT_VALUES[action];
 
   // Skip no-op awards (e.g. INTEL_BONUS with zero filled fields)

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Awards a badge to a user by badge slug.
@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
  * Returns true if the badge was newly awarded.
  */
 export async function awardBadge(userId: string, badgeSlug: string): Promise<boolean> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data: badge } = await supabase
     .from("Badge")
