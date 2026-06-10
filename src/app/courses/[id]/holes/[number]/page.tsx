@@ -535,45 +535,9 @@ export default function HolePage() {
         next.add(commentUploadId);
         return next;
       });
-      // Upload has no holeNumber column — join Hole to get the number.
-      const { data: uploadData } = await supabase
-        .from("Upload")
-        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
-        .eq("id", commentUploadId)
-        .single();
-      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
-        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
-        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
-      const newCommentCount = (uploadData?.commentCount || 0) + 1;
-      const { computeRankScore } = await import("@/lib/rankScore");
-      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-      await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
-      if (uploadData?.userId && uploadData.userId !== user.id) {
-        // Insert the in-app Notification row + push + points. The
-        // hole-page comment handler used to only award points which
-        // meant the clip owner never saw the comment in the bell
-        // (caught 2026-05-24 from user feedback).
-        const { data: commenterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
-        const commenterName = commenterProfile?.displayName || commenterProfile?.username || "Someone";
-        const notifNow = new Date().toISOString();
-        const clipLink = holeNumber
-          ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
-          : `/courses/${uploadData.courseId}`;
-        supabase.from("Notification").insert({
-          id: crypto.randomUUID(),
-          userId: uploadData.userId,
-          type: "comment",
-          title: "New comment",
-          body: `${commenterName} commented on your clip`,
-          linkUrl: clipLink,
-          referenceId: commentUploadId,
-          read: false,
-          createdAt: notifNow,
-          updatedAt: notifNow,
-        }).then(() => {});
-        fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-      }
+      // Cross-user writes (owner's Upload counter + notifications) run
+      // server-side via service_role so they survive owner-only RLS.
+      fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "posted", commentBody: commentText.trim() }) }).catch(() => {});
       setCommentItems(prev => [...prev, {
         id: newId, body: commentText.trim(), createdAt: new Date().toISOString(),
         userId: user.id,
@@ -593,15 +557,7 @@ export default function HolePage() {
     const supabase = createClient();
     const { error } = await supabase.from("Comment").delete().eq("id", c.id).eq("userId", user.id);
     if (error) return;
-    const { data: uploadData } = await supabase
-      .from("Upload")
-      .select("commentCount, likeCount, createdAt")
-      .eq("id", commentUploadId)
-      .single();
-    const newCommentCount = Math.max(0, (uploadData?.commentCount || 1) - 1);
-    const { computeRankScore } = await import("@/lib/rankScore");
-    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-    await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+    fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "deleted" }) }).catch(() => {});
     const remaining = commentItems.filter(ci => ci.id !== c.id);
     setCommentItems(remaining);
     setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: Math.max(0, (u.commentCount || 0) - 1) } : u));

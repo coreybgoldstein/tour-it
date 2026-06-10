@@ -143,52 +143,9 @@ export default function ClipViewer({
       body: commentText.trim(), createdAt: now, updatedAt: now,
     });
     if (!error) {
-      // Full engagement pipeline — mirrors src/app/page.tsx submitComment.
-      // CLAUDE.md "engagement aggregates to a single source of truth"
-      // requires: counter bump → Notification insert → push → points
-      // award. Upload has NO holeNumber column — join Hole via holeId
-      // so the deep link points at the exact clip instead of falling
-      // back to course root.
-      const { data: uploadData } = await supabase
-        .from("Upload")
-        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
-        .eq("id", clip.id)
-        .single();
-      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
-        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
-        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
-      const newCommentCount = (uploadData?.commentCount || 0) + 1;
-      const { computeRankScore } = await import("@/lib/rankScore");
-      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-      await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", clip.id);
-      if (uploadData?.userId && uploadData.userId !== currentUserId) {
-        // Look up commenter's displayName for the notif body —
-        // currentUserMeta only has username/avatar locally.
-        const { data: commenterRow } = await supabase
-          .from("User")
-          .select("displayName, username")
-          .eq("id", currentUserId)
-          .single();
-        const commenterName = (commenterRow?.displayName as string | null) || (commenterRow?.username as string | null) || currentUserMeta?.username || "Someone";
-        const notifNow = new Date().toISOString();
-        const clipLink = holeNumber
-          ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${clip.id}`
-          : `/courses/${uploadData.courseId}`;
-        supabase.from("Notification").insert({
-          id: crypto.randomUUID(),
-          userId: uploadData.userId,
-          type: "comment",
-          title: "New comment",
-          body: `${commenterName} commented on your clip`,
-          linkUrl: clipLink,
-          referenceId: clip.id,
-          read: false,
-          createdAt: notifNow,
-          updatedAt: notifNow,
-        }).then(() => {});
-        fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: clip.id }) }).catch(() => {});
-        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: clip.id }) }).catch(() => {});
-      }
+      // Cross-user writes (owner's Upload counter + notifications) run
+      // server-side via service_role so they survive owner-only RLS.
+      fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: clip.id, action: "posted", commentBody: commentText.trim() }) }).catch(() => {});
       setCommentItems(prev => [...prev, {
         id: newId, body: commentText.trim(), createdAt: now,
         username: currentUserMeta?.username || "you",

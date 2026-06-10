@@ -856,28 +856,8 @@ export default function ProfilePage() {
       setSubmittingComment(false);
       return;
     }
-    // Upload has no holeNumber column — join Hole to get the number.
-    const { data: uploadData } = await supabase
-      .from("Upload")
-      .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
-      .eq("id", commentUploadId)
-      .single();
-    const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
-      ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
-      : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
-    const newCommentCount = (uploadData?.commentCount || 0) + 1;
-    const { computeRankScore } = await import("@/lib/rankScore");
-    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-    await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
-    if (uploadData?.userId && uploadData.userId !== currentUserId) {
-      const commenterName = currentUserMeta?.username || "Someone";
-      const clipLink = holeNumber
-        ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
-        : `/courses/${uploadData.courseId}`;
-      supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, referenceId: commentUploadId, read: false, createdAt: now, updatedAt: now }).then(() => {});
-      fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-      fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-    }
+    const mentions = [...new Set((commentText.match(/@(\w+)/g) || []).map(m => m.slice(1).toLowerCase()))];
+    fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "posted", commentBody: commentText.trim(), mentions }) }).catch(() => {});
     setCommentItems(prev => [...prev, { id: newId, body: commentText.trim(), createdAt: now, userId: currentUserId, username: currentUserMeta?.username || "you", avatarUrl: currentUserMeta?.avatarUrl || null }]);
     setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: (u.commentCount || 0) + 1 } : u));
     setTaggedUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: (u.commentCount || 0) + 1 } : u));
@@ -896,15 +876,7 @@ export default function ProfilePage() {
     const supabase = createClient();
     const { error } = await supabase.from("Comment").delete().eq("id", c.id).eq("userId", currentUserId);
     if (error) return;
-    const { data: uploadData } = await supabase
-      .from("Upload")
-      .select("commentCount, likeCount, createdAt")
-      .eq("id", commentUploadId)
-      .single();
-    const newCommentCount = Math.max(0, (uploadData?.commentCount || 1) - 1);
-    const { computeRankScore } = await import("@/lib/rankScore");
-    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-    await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+    fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "deleted" }) }).catch(() => {});
     const remaining = commentItems.filter(ci => ci.id !== c.id);
     setCommentItems(remaining);
     setUploads(prev => prev.map(u => u.id === commentUploadId ? { ...u, commentCount: Math.max(0, (u.commentCount || 0) - 1) } : u));

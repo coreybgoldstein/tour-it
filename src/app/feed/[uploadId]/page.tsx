@@ -248,39 +248,9 @@ export default function FeedPage() {
       updatedAt: new Date().toISOString(),
     });
     if (!error) {
-      const { data: uploadData } = await sb
-        .from("Upload")
-        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
-        .eq("id", commentUploadId)
-        .single();
-      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
-        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
-        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
-      const newCommentCount = (uploadData?.commentCount || 0) + 1;
-      const { computeRankScore } = await import("@/lib/rankScore");
-      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-      await sb.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
-      if (uploadData?.userId && uploadData.userId !== me.id) {
-        const commenterName = me.displayName || me.username || "Someone";
-        const notifNow = new Date().toISOString();
-        const clipLink = holeNumber
-          ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
-          : `/courses/${uploadData.courseId}`;
-        sb.from("Notification").insert({
-          id: crypto.randomUUID(),
-          userId: uploadData.userId,
-          type: "comment",
-          title: "New comment",
-          body: `${commenterName} commented on your clip`,
-          linkUrl: clipLink,
-          referenceId: commentUploadId,
-          read: false,
-          createdAt: notifNow,
-          updatedAt: notifNow,
-        }).then(() => {});
-        fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-      }
+      // Cross-user writes (owner's Upload counter + notifications) run
+      // server-side via service_role so they survive owner-only RLS.
+      fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "posted", commentBody: commentText.trim() }) }).catch(() => {});
       setCommentItems(prev => [...prev, {
         id,
         body: commentText.trim(),
@@ -307,15 +277,7 @@ export default function FeedPage() {
     const sb = createClient();
     const { error } = await sb.from("Comment").delete().eq("id", c.id).eq("userId", me.id);
     if (error) return;
-    const { data: uploadData } = await sb
-      .from("Upload")
-      .select("commentCount, likeCount, createdAt")
-      .eq("id", commentUploadId)
-      .single();
-    const newCommentCount = Math.max(0, (uploadData?.commentCount || 1) - 1);
-    const { computeRankScore } = await import("@/lib/rankScore");
-    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-    await sb.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+    fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "deleted" }) }).catch(() => {});
     const remaining = commentItems.filter(ci => ci.id !== c.id);
     setCommentItems(remaining);
     setClips(prev => prev.map(cl => cl.id === commentUploadId ? { ...cl, commentCount: Math.max(0, cl.commentCount - 1) } : cl));

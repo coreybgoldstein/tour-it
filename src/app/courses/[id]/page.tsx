@@ -20,7 +20,6 @@ import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
 import { VideoScrubber } from "@/components/clip/VideoScrubber";
 import { CommentSwipe } from "@/components/clip/CommentSwipe";
-import { sendPushToUser } from "@/lib/sendPush";
 import { showToast } from "@/lib/toast";
 import { reportError } from "@/lib/reportError";
 import { formatClipDate } from "@/lib/formatClipDate";
@@ -740,67 +739,17 @@ const [editDescription, setEditDescription] = useState("");
         next.add(commentUploadId);
         return next;
       });
-      // Upload has no holeNumber column — join Hole to get the
-      // number (matches the home-feed pattern fixed 2026-05-25).
-      const { data: uploadData } = await supabase
-        .from("Upload")
-        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
-        .eq("id", commentUploadId)
-        .single();
-      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
-        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
-        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
-      const newCommentCount = (uploadData?.commentCount || 0) + 1;
-      const { computeRankScore } = await import("@/lib/rankScore");
-      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-      await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
-
-      // Notify clip owner (skip if commenting on own clip)
-      if (uploadData?.userId && uploadData.userId !== user.id) {
-        const { data: commenterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
-        const commenterName = commenterProfile?.displayName || commenterProfile?.username || "Someone";
-        const notifNow = new Date().toISOString();
-        const clipLink = holeNumber ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}` : `/courses/${uploadData.courseId}`;
-        await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: uploadData.userId, type: "comment", title: "New comment", body: `${commenterName} commented on your clip`, linkUrl: clipLink, referenceId: commentUploadId, read: false, createdAt: notifNow, updatedAt: notifNow });
-        sendPushToUser("comment_received", uploadData.userId, commentUploadId);
-        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-      }
+      // Cross-user writes (owner's Upload counter + owner/mention
+      // notifications + pushes) run server-side via service_role so they
+      // survive owner-only RLS. Mentions are parsed here and passed along.
+      const mentions = [...new Set((commentText.match(/@(\w+)/g) || []).map(m => m.slice(1).toLowerCase()))];
+      fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "posted", commentBody: commentText.trim(), mentions }) }).catch(() => {});
       setCommentItems(prev => [...prev, {
         id: newId, body: commentText.trim(), createdAt: new Date().toISOString(),
         userId: user.id,
         username: user.user_metadata?.username || "you", avatarUrl: null,
       }]);
       setCourseClips(prev => prev.map((c: Clip) => c.id === commentUploadId ? { ...c, commentCount: (c.commentCount || 0) + 1 } : c));
-
-      // Notify @mentioned users
-      const mentions = [...new Set((commentText.match(/@(\w+)/g) || []).map(m => m.slice(1).toLowerCase()))];
-      if (mentions.length > 0) {
-        const { data: mentionedUsers } = await supabase
-          .from("User")
-          .select("id, username")
-          .in("username", mentions);
-        const tagged = (mentionedUsers || []).filter(u => u.id !== user.id);
-        if (tagged.length > 0) {
-          const commenterName = user.user_metadata?.username || user.user_metadata?.display_name || "Someone";
-          const { data: commenterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
-          const senderName = commenterProfile?.displayName || commenterProfile?.username || commenterName;
-          const notifNow = new Date().toISOString();
-          await supabase.from("Notification").insert(
-            tagged.map(u => ({
-              id: crypto.randomUUID(),
-              userId: u.id,
-              type: "comment_mention",
-              title: "You were mentioned",
-              body: `${senderName} tagged you in a comment: "${commentText.trim().slice(0, 80)}${commentText.trim().length > 80 ? "…" : ""}"`,
-              linkUrl: `/courses/${id}`,
-              read: false,
-              createdAt: notifNow,
-              updatedAt: notifNow,
-            }))
-          );
-          tagged.forEach(u => sendPushToUser("comment_mention", u.id, id as string));
-        }
-      }
 
       setCommentText("");
     } else {
@@ -815,15 +764,7 @@ const [editDescription, setEditDescription] = useState("");
     const supabase = createClient();
     const { error } = await supabase.from("Comment").delete().eq("id", c.id).eq("userId", user.id);
     if (error) return;
-    const { data: uploadData } = await supabase
-      .from("Upload")
-      .select("commentCount, likeCount, createdAt")
-      .eq("id", commentUploadId)
-      .single();
-    const newCommentCount = Math.max(0, (uploadData?.commentCount || 1) - 1);
-    const { computeRankScore } = await import("@/lib/rankScore");
-    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-    await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+    fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "deleted" }) }).catch(() => {});
     const remaining = commentItems.filter(ci => ci.id !== c.id);
     setCommentItems(remaining);
     setCourseClips(prev => prev.map((cl: Clip) => cl.id === commentUploadId ? { ...cl, commentCount: Math.max(0, (cl.commentCount || 0) - 1) } : cl));

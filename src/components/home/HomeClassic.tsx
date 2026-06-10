@@ -1643,50 +1643,8 @@ export default function HomeClassic() {
       updatedAt: new Date().toISOString(),
     });
     if (!error) {
-      // Also pull holeNumber + courseId so we can build a deep link
-      // into the Notification row — without it the clip owner gets a
-      // push but no in-app notification card. Course-page and profile-
-      // page comment handlers already do this; the home-feed path was
-      // the outlier (caught 2026-05-24 from user feedback).
-      // Upload has NO holeNumber column — holeNumber lives on Hole and
-      // joins via Upload.holeId. Earlier code selected a phantom
-      // `holeNumber` field which silently returned undefined, so every
-      // comment notification deep-link fell back to course root.
-      // Fix: join Hole inline so the comment notif points at the
-      // exact clip.
-      const { data: uploadData } = await supabase
-        .from("Upload")
-        .select("commentCount, likeCount, createdAt, userId, courseId, hole:holeId(holeNumber)")
-        .eq("id", commentUploadId)
-        .single();
-      const holeNumber = ((uploadData?.hole as unknown as { holeNumber: number } | { holeNumber: number }[] | null) instanceof Array
-        ? (uploadData?.hole as unknown as { holeNumber: number }[])[0]?.holeNumber
-        : (uploadData?.hole as unknown as { holeNumber: number } | null)?.holeNumber) ?? null;
-      const newCommentCount = (uploadData?.commentCount || 0) + 1;
-      const { computeRankScore } = await import("@/lib/rankScore");
-      const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-      await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
-      if (uploadData?.userId && uploadData.userId !== user.id) {
-        const commenterName = userProfile?.displayName || userProfile?.username || "Someone";
-        const notifNow = new Date().toISOString();
-        const clipLink = holeNumber
-          ? `/courses/${uploadData.courseId}/holes/${holeNumber}?clip=${commentUploadId}`
-          : `/courses/${uploadData.courseId}`;
-        supabase.from("Notification").insert({
-          id: crypto.randomUUID(),
-          userId: uploadData.userId,
-          type: "comment",
-          title: "New comment",
-          body: `${commenterName} commented on your clip`,
-          linkUrl: clipLink,
-          referenceId: commentUploadId,
-          read: false,
-          createdAt: notifNow,
-          updatedAt: notifNow,
-        }).then(() => {});
-        fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-        fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "comment_received", recipientUserId: uploadData.userId, referenceId: commentUploadId }) }).catch(() => {});
-      }
+      const mentions = [...new Set((commentText.match(/@(\w+)/g) || []).map(m => m.slice(1).toLowerCase()))];
+      fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "posted", commentBody: commentText.trim(), mentions }) }).catch(() => {});
       setCommentItems(prev => [...prev, {
         id,
         body: commentText.trim(),
@@ -1732,15 +1690,7 @@ export default function HomeClassic() {
     const supabase = createClient();
     const { error } = await supabase.from("Comment").delete().eq("id", c.id).eq("userId", user.id);
     if (error) return;
-    const { data: uploadData } = await supabase
-      .from("Upload")
-      .select("commentCount, likeCount, createdAt")
-      .eq("id", commentUploadId)
-      .single();
-    const newCommentCount = Math.max(0, (uploadData?.commentCount || 1) - 1);
-    const { computeRankScore } = await import("@/lib/rankScore");
-    const newRank = uploadData ? computeRankScore(uploadData.likeCount || 0, newCommentCount, uploadData.createdAt) : undefined;
-    await supabase.from("Upload").update({ commentCount: newCommentCount, ...(newRank !== undefined && { rankScore: newRank }) }).eq("id", commentUploadId);
+    fetch("/api/comments/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uploadId: commentUploadId, action: "deleted" }) }).catch(() => {});
     const remaining = commentItems.filter(ci => ci.id !== c.id);
     setCommentItems(remaining);
     setFeedItems(prev => prev.map(item => {
