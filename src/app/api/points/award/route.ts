@@ -56,13 +56,30 @@ export async function POST(req: NextRequest) {
   }
   const actionKey = action as PointActionKey;
 
+  // The public HTTP endpoint only accepts SELF_ACTIONS. Cross-user awards
+  // (LIKE_RECEIVED, COMMENT_RECEIVED, FOLLOW_RECEIVED, CLIP_UPLOADED_FOR_OTHER,
+  // MILESTONE_*, etc.) MUST go through `@/lib/awardPointsToUser` invoked
+  // in-process after server-side verification that the triggering event
+  // (like/comment/follow/tag) actually exists. Previously this route accepted
+  // a client-supplied `recipientUserId` for non-self actions and trusted the
+  // session cookie to mean "this action legitimately happened" — a stolen or
+  // replayed cookie could award arbitrary points to any user.
   const isSelf = SELF_ACTIONS.has(actionKey);
-  const targetUserId = isSelf ? user.id : recipientUserId;
+  if (!isSelf) {
+    return NextResponse.json(
+      { error: "Cross-user awards must go through the internal helper" },
+      { status: 403 }
+    );
+  }
+  // Self-actions are always awarded to the authenticated caller. A client
+  // attempting to set `recipientUserId` to someone else is silently ignored.
+  const targetUserId = user.id;
 
   if (!targetUserId) return NextResponse.json({ error: "Missing recipientUserId" }, { status: 400 });
-  if (!isSelf && targetUserId === user.id) {
-    return NextResponse.json({ error: "Cannot award received action to yourself" }, { status: 400 });
-  }
+  // `recipientUserId` is accepted in the body shape but intentionally
+  // discarded above — keep it referenced so linters don't flag the
+  // destructure as unused.
+  void recipientUserId;
 
   // Only honor a client-supplied customAmount for actions whose value is
   // genuinely variable, and clamp it to the action's cap. Everything else

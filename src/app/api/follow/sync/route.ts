@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
+import { awardPointsToUser } from "@/lib/awardPointsToUser";
+import { PointAction } from "@/config/points-system";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
@@ -71,10 +73,10 @@ export async function POST(req: Request) {
     headers: { "Content-Type": "application/json", cookie },
     body: JSON.stringify({ type: "follow_received", recipientUserId: body.targetUserId }),
   }).catch(() => {});
-  fetch(`${origin}/api/points/award`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", cookie },
-    body: JSON.stringify({ action: "follow_received", recipientUserId: body.targetUserId }),
+  // Direct in-process award — cookie-relay path was IDOR-exploitable.
+  awardPointsToUser({
+    userId: body.targetUserId,
+    action: PointAction.FOLLOW_RECEIVED,
   }).catch(() => {});
 
   return NextResponse.json({ ok: true });

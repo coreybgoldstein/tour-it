@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import { computeRankScore } from "@/lib/rankScore";
+import { awardPointsToUser } from "@/lib/awardPointsToUser";
+import { PointAction } from "@/config/points-system";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
@@ -105,10 +107,11 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json", cookie },
         body: JSON.stringify({ type: "comment_received", recipientUserId: upload.userId, referenceId: body.uploadId }),
       }).catch(() => {});
-      fetch(`${origin}/api/points/award`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", cookie },
-        body: JSON.stringify({ action: "comment_received", recipientUserId: upload.userId, referenceId: body.uploadId }),
+      // Direct in-process award — cookie-relay path was IDOR-exploitable.
+      awardPointsToUser({
+        userId: upload.userId,
+        action: PointAction.COMMENT_RECEIVED,
+        referenceId: body.uploadId,
       }).catch(() => {});
     }
 

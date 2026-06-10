@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import { computeRankScore } from "@/lib/rankScore";
+import { awardPointsToUser } from "@/lib/awardPointsToUser";
+import { PointAction, type PointActionKey } from "@/config/points-system";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
@@ -109,16 +111,21 @@ export async function POST(req: Request) {
 
   // 5) Fire-and-forget side effects (points + milestone notifications). Errors
   // here MUST NOT block the like response — the like itself is durable.
+  // Direct in-process awards — the cookie-relay path was IDOR-exploitable.
   if (upload && upload.userId && upload.userId !== user.id) {
-    const action = nowLiked ? "like_received" : "unlike_received";
-    fetch(`${new URL(req.url).origin}/api/points/award`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", cookie: req.headers.get("cookie") ?? "" },
-      body: JSON.stringify({ action, recipientUserId: upload.userId, referenceId: body.uploadId }),
+    const action: PointActionKey = nowLiked ? PointAction.LIKE_RECEIVED : PointAction.UNLIKE_RECEIVED;
+    awardPointsToUser({
+      userId: upload.userId,
+      action,
+      referenceId: body.uploadId,
     }).catch(() => {});
 
     if (nowLiked) {
-      const milestones: Record<number, string> = { 10: "milestone_10_likes", 100: "milestone_100_likes", 1000: "milestone_1000_likes" };
+      const milestones: Record<number, PointActionKey> = {
+        10: PointAction.MILESTONE_10_LIKES,
+        100: PointAction.MILESTONE_100_LIKES,
+        1000: PointAction.MILESTONE_1000_LIKES,
+      };
       if (milestones[trueCount]) {
         const now = new Date().toISOString();
         const linkUrl = uploadHoleNumber
@@ -140,10 +147,10 @@ export async function POST(req: Request) {
           headers: { "Content-Type": "application/json", cookie: req.headers.get("cookie") ?? "" },
           body: JSON.stringify({ type: "like_milestone", recipientUserId: upload.userId, referenceId: body.uploadId, likeCount: trueCount }),
         }).catch(() => {});
-        fetch(`${new URL(req.url).origin}/api/points/award`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", cookie: req.headers.get("cookie") ?? "" },
-          body: JSON.stringify({ action: milestones[trueCount], recipientUserId: upload.userId, referenceId: body.uploadId }),
+        awardPointsToUser({
+          userId: upload.userId,
+          action: milestones[trueCount],
+          referenceId: body.uploadId,
         }).catch(() => {});
       }
     }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import { awardPointsToUser } from "@/lib/awardPointsToUser";
+import { PointAction } from "@/config/points-system";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
@@ -61,14 +63,13 @@ export async function POST(req: Request) {
     .update({ userId: user.id, uploadedByUserId: originalUploader, updatedAt: new Date().toISOString() })
     .eq("id", body.uploadId);
 
-  const origin = new URL(req.url).origin;
-  const cookie = req.headers.get("cookie") ?? "";
   // Reward the original uploader for filming for someone else (deduped
-  // per uploadId in awardPoints REFERENCE_DEDUPED_ACTIONS).
-  fetch(`${origin}/api/points/award`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", cookie },
-    body: JSON.stringify({ action: "clip_uploaded_for_other", recipientUserId: originalUploader, referenceId: body.uploadId }),
+  // per uploadId in awardPoints REFERENCE_DEDUPED_ACTIONS). Direct in-process
+  // call — the cookie-relay path was IDOR-exploitable.
+  awardPointsToUser({
+    userId: originalUploader,
+    action: PointAction.CLIP_UPLOADED_FOR_OTHER,
+    referenceId: body.uploadId,
   }).catch(() => {});
 
   return NextResponse.json({ ok: true, applied: true });
