@@ -134,7 +134,7 @@ export default function AdminPage() {
         { count: pendingClaims },
       ] = await Promise.all([
         supabase.from("Upload").select("*", { count: "exact", head: true }),
-        supabase.from("User").select("*", { count: "exact", head: true }),
+        supabase.from("User").select("id", { count: "exact", head: true }),
         supabase.from("Course").select("*", { count: "exact", head: true }),
         supabase.from("Upload").select("*", { count: "exact", head: true }).gte("createdAt", today.toISOString()),
         supabase.from("ModerationReport").select("*", { count: "exact", head: true }).eq("status", "PENDING"),

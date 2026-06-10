@@ -229,11 +229,11 @@ export default function DashboardPage() {
     const m = new Date(now); m.setDate(now.getDate() - 30);
 
     const results = await Promise.all([
-      supabase.from("User").select("*", { count: "exact", head: true }),
-      supabase.from("User").select("*", { count: "exact", head: true }).gte("createdAt", t.toISOString()),
-      supabase.from("User").select("*", { count: "exact", head: true }).gte("createdAt", w.toISOString()),
-      supabase.from("User").select("*", { count: "exact", head: true }).gte("createdAt", m.toISOString()),
-      supabase.from("User").select("*", { count: "exact", head: true }).gt("uploadCount", 0),
+      supabase.from("User").select("id", { count: "exact", head: true }),
+      supabase.from("User").select("id", { count: "exact", head: true }).gte("createdAt", t.toISOString()),
+      supabase.from("User").select("id", { count: "exact", head: true }).gte("createdAt", w.toISOString()),
+      supabase.from("User").select("id", { count: "exact", head: true }).gte("createdAt", m.toISOString()),
+      supabase.from("User").select("id", { count: "exact", head: true }).gt("uploadCount", 0),
       supabase.from("Upload").select("*", { count: "exact", head: true }),
       supabase.from("Upload").select("*", { count: "exact", head: true }).eq("moderationStatus", "APPROVED"),
       supabase.from("Upload").select("*", { count: "exact", head: true }).eq("moderationStatus", "PENDING"),
