@@ -907,13 +907,8 @@ export default function ProfilePage() {
     } else {
       await supabase.from("Follow").insert({ id: crypto.randomUUID(), followerId: currentUserId, followingId: userId as string, status: "ACTIVE", createdAt: new Date().toISOString() });
       setIsFollowing(true); setFollowerCount(prev => prev + 1);
-      // Notify the person being followed
-      const { data: follower } = await supabase.from("User").select("displayName, username").eq("id", currentUserId).single();
-      const followerName = follower?.displayName || follower?.username || "Someone";
-      const now = new Date().toISOString();
-      await supabase.from("Notification").insert({ id: crypto.randomUUID(), userId: userId as string, type: "follow", title: "New follower", body: `${followerName} started following you`, linkUrl: `/profile/${currentUserId}`, read: false, createdAt: now, updatedAt: now });
-      fetch("/api/push/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "follow_received", recipientUserId: userId }) }).catch(() => {});
-      fetch("/api/points/award", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "follow_received", recipientUserId: userId }) }).catch(() => {});
+      // Notify the person being followed (server-side, service_role).
+      fetch("/api/follow/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetUserId: userId }) }).catch(() => {});
     }
     setFollowLoading(false);
   }

@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getClipThumbnail } from "@/lib/getVideoSrc";
 import { NotifIcon, extractCourseIdFromLink } from "@/components/NotifIcon";
-import { sendPushToUser } from "@/lib/sendPush";
 
 export interface NotificationRow {
   id: string;
@@ -219,32 +218,13 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
     // and stamp the original uploader on uploadedByUserId so the
     // attribution chip renders everywhere the clip is shown.
     if (approve && isHero) {
-      const { data: upload } = await supabase
-        .from("Upload")
-        .select("userId, uploadedByUserId")
-        .eq("id", uploadId)
-        .maybeSingle();
-      if (upload && upload.userId !== userId) {
-        // Preserve the very first uploader if this clip has been transferred
-        // before — uploadedByUserId stays pointing at the original creator.
-        const originalUploader = upload.uploadedByUserId ?? upload.userId;
-        await supabase
-          .from("Upload")
-          .update({ userId, uploadedByUserId: originalUploader, updatedAt: new Date().toISOString() })
-          .eq("id", uploadId);
-        // Reward the original uploader for filming for someone else.
-        // Routes through /api/points/award so the leaderboard broadcast
-        // fires; REFERENCE_DEDUPED_ACTIONS keeps it once per uploadId.
-        fetch("/api/points/award", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "clip_uploaded_for_other",
-            recipientUserId: originalUploader,
-            referenceId: uploadId,
-          }),
-        }).catch(() => {});
-      }
+      // Ownership transfer is a cross-user write — done server-side
+      // (service_role) after re-verifying the approved hero tag.
+      fetch("/api/uploads/hero-approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uploadId }),
+      }).catch(() => {});
     }
 
     setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, tagStatus: approve ? "approved" : "denied" } : n));
@@ -261,26 +241,13 @@ export default function NotificationsPanel({ open, onClose }: { open: boolean; o
       await supabase.from("GolfTripMember").update({ status: "accepted" }).eq("userId", userId).eq("tripId", tripId);
       setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, inviteStatus: "accepted" } : n));
     } else {
-      const { data: trip } = await supabase.from("GolfTrip").select("name, createdBy").eq("id", tripId).maybeSingle();
-      await supabase.from("GolfTripMember").delete().eq("userId", userId).eq("tripId", tripId);
-      if (trip?.createdBy && trip.createdBy !== userId) {
-        const { data: me } = await supabase.from("User").select("displayName, username").eq("id", userId).single();
-        const myName = me?.displayName || me?.username || "Someone";
-        const now = new Date().toISOString();
-        await supabase.from("Notification").insert({
-          id: crypto.randomUUID(),
-          userId: trip.createdBy,
-          type: "invite_declined",
-          title: "Invite declined",
-          body: `${myName} can't make "${trip.name}"`,
-          linkUrl: `/trips/${tripId}`,
-          referenceId: tripId,
-          read: false,
-          createdAt: now,
-          updatedAt: now,
-        });
-        sendPushToUser("invite_declined", trip.createdBy, tripId);
-      }
+      // Decline removes the member row + notifies the creator server-side
+      // (service_role) so the cross-user Notification survives RLS.
+      await fetch("/api/trips/decline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tripId }),
+      }).catch(() => {});
       setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, inviteStatus: "declined" } : n));
     }
     setActing(null);
