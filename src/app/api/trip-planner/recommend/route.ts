@@ -25,9 +25,11 @@ const CACHE_TTL_DAYS = 7;
 //   { explanation, recommendations: [{ slug, name, heroImageUrl, matchScore, reasoning, caveat? }] }
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// service_role so the TripPlannerCache read/upsert bypasses RLS (the
+// table is locked default-deny; this route is server-only).
 const sb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 type PlannerInput = {
