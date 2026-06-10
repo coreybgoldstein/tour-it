@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { compressVideo } from "@/lib/compressVideo";
-import { sendPushToUser } from "@/lib/sendPush";
 import { calcIntelBonus } from "@/config/points-system";
 import { finalizeUpload } from "@/lib/uploadFinalize";
 import { cdnImage } from "@/lib/cdnImage";
@@ -279,9 +278,6 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setUploading(false); return; }
 
-    const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
-    const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
-
     let done = 0;
 
     for (const clip of assignedClips) {
@@ -379,27 +375,17 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
         // Upload.userId to them with the "uploaded by @uploader" chip.
         // Co-star tagging was retired in favor of just this one signal.
         if (clip.heroUser) {
-          const notifNow = new Date().toISOString();
-          await Promise.all([
-            supabase.from("UploadTag").insert([{
-              id: crypto.randomUUID(), uploadId, userId: clip.heroUser.id, isHero: true, createdAt: notifNow,
-            }]),
-            supabase.from("Notification").insert([{
-              id: crypto.randomUUID(),
-              userId: clip.heroUser.id,
-              type: "clip_tag",
-              title: `${taggerName} uploaded a clip of you`,
-              body: `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${clip.holeNumber}. Claim it on your profile?`,
-              linkUrl: clip.holeNumber
-                ? `/courses/${selectedCourse.id}/holes/${clip.holeNumber}?clip=${uploadId}`
-                : `/courses/${selectedCourse.id}`,
-              referenceId: uploadId,
-              read: false,
-              createdAt: notifNow,
-              updatedAt: notifNow,
-            }]),
-          ]);
-          sendPushToUser("tag", clip.heroUser.id, uploadId);
+          fetch("/api/uploads/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uploadId,
+              heroUserId: clip.heroUser.id,
+              courseId: selectedCourse.id,
+              courseName: selectedCourse.name,
+              holeNumber: clip.holeNumber ?? null,
+            }),
+          }).catch(() => {});
         }
 
         done++;
@@ -411,29 +397,17 @@ export default function BatchUpload({ initialFiles, onBack }: { initialFiles: Fi
     }
 
     // Notify followers once after all clips done (fire-and-forget)
-    ;(async () => {
-      const { data: followers } = await supabase.from("Follow").select("followerId").eq("followingId", user.id).eq("status", "ACTIVE");
-      if (!followers?.length) return;
-      const uploaderName = taggerName;
-      const clipCount = done;
-      const courseLink = `/courses/${selectedCourse.id}`;
-      const body = `${uploaderName} posted ${clipCount} clip${clipCount > 1 ? "s" : ""} at ${selectedCourse.name}`;
-      const now = new Date().toISOString();
-      await supabase.from("Notification").insert(
-        followers.map((f: { followerId: string }) => ({
-          id: crypto.randomUUID(),
-          userId: f.followerId,
-          type: "new_clip",
-          title: "New clips",
-          body,
-          linkUrl: courseLink,
-          read: false,
-          createdAt: now,
-          updatedAt: now,
-        }))
-      );
-      followers.forEach((f: { followerId: string }) => sendPushToUser("new_clips", f.followerId, selectedCourse.id));
-    })();
+    if (done > 0) {
+      fetch("/api/uploads/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: selectedCourse.id,
+          courseName: selectedCourse.name,
+          notifyFollowers: { clipCount: done, batch: true },
+        }),
+      }).catch(() => {});
+    }
 
     setUploading(false);
     setAllDone(true);

@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { compressVideo } from "@/lib/compressVideo";
 import BatchUpload from "./BatchUpload";
-import { sendPushToUser } from "@/lib/sendPush";
 import { useKeyboardOpen } from "@/hooks/useKeyboardOpen";
 import { calcIntelBonus } from "@/config/points-system";
 import { finalizeUpload } from "@/lib/uploadFinalize";
@@ -757,35 +756,17 @@ function UploadPageInner() {
       // attribution chip. Co-star tagging was retired in favor of just
       // this one signal.
       if (heroUser) {
-        const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
-        const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
-        const notifNow = new Date().toISOString();
-        await Promise.all([
-          supabase.from("UploadTag").insert([{
-            id: crypto.randomUUID(),
+        fetch("/api/uploads/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             uploadId,
-            userId: heroUser.id,
-            isHero: true,
-            createdAt: notifNow,
-          }]),
-          supabase.from("Notification").insert([{
-            id: crypto.randomUUID(),
-            userId: heroUser.id,
-            type: "clip_tag",
-            title: `${taggerName} uploaded a clip of you`,
-            body: `${taggerName} says this is your shot at ${selectedCourse.name} — Hole ${selectedHole}. Claim it on your profile?`,
-            // Deep link to the exact clip so tapping the notification's
-            // thumbnail / preview lands on the right hole + clip view.
-            linkUrl: selectedHole
-              ? `/courses/${selectedCourse.id}/holes/${selectedHole}?clip=${uploadId}`
-              : `/courses/${selectedCourse.id}`,
-            referenceId: uploadId,
-            read: false,
-            createdAt: notifNow,
-            updatedAt: notifNow,
-          }]),
-        ]);
-        sendPushToUser("tag", heroUser.id, uploadId);
+            heroUserId: heroUser.id,
+            courseId: selectedCourse.id,
+            courseName: selectedCourse.name,
+            holeNumber: selectedHole ?? null,
+          }),
+        }).catch(() => {});
       }
 
       // Auto-seed logo + cover for under-seeded courses (fire-and-forget).
@@ -794,29 +775,17 @@ function UploadPageInner() {
       fetch(`/api/courses/${selectedCourse.id}/auto-seed`, { method: "POST" }).catch(() => {});
 
       // Notify followers of new clip (fire-and-forget)
-      ;(async () => {
-        const { data: followers } = await supabase.from("Follow").select("followerId").eq("followingId", user.id).eq("status", "ACTIVE");
-        if (!followers?.length) return;
-        const { data: uploaderProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
-        const uploaderName = uploaderProfile?.displayName || uploaderProfile?.username || "Someone you follow";
-        const clipLink = selectedHole ? `/courses/${selectedCourse.id}/holes/${selectedHole}?clip=${uploadId}` : `/courses/${selectedCourse.id}`;
-        const holeLabel = selectedHole ? ` — Hole ${selectedHole}` : "";
-        const now = new Date().toISOString();
-        await supabase.from("Notification").insert(
-          followers.map((f: { followerId: string }) => ({
-            id: crypto.randomUUID(),
-            userId: f.followerId,
-            type: "new_clip",
-            title: "New clip",
-            body: `${uploaderName} posted a clip at ${selectedCourse.name}${holeLabel}`,
-            linkUrl: clipLink,
-            read: false,
-            createdAt: now,
-            updatedAt: now,
-          }))
-        );
-        followers.forEach((f: { followerId: string }) => sendPushToUser("new_clip", f.followerId, uploadId));
-      })();
+      fetch("/api/uploads/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId,
+          courseId: selectedCourse.id,
+          courseName: selectedCourse.name,
+          holeNumber: selectedHole ?? null,
+          notifyFollowers: { clipCount: 1, batch: false },
+        }),
+      }).catch(() => {});
 
       setSubmitted(true);
     } catch (err: any) {
