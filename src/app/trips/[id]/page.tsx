@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { sendPushToUser } from "@/lib/sendPush";
 import { HlsVideo } from "@/components/HlsVideo";
 import { getVideoSrc, getClipThumbnail } from "@/lib/getVideoSrc";
 import { DirectionsButton } from "@/components/DirectionsButton";
@@ -908,24 +907,26 @@ export default function TripPage() {
         setInviteResults(prev => prev.filter(u => u.id !== inviteeId));
       }
 
-      // Write notification to invitee
+      // Write notification to invitee (cross-user → server-side service_role)
       const { data: inviterProfile } = await supabase.from("User").select("displayName, username").eq("id", user.id).single();
       const inviterName = inviterProfile?.displayName || inviterProfile?.username || "Someone";
       const tripName = trip?.name || "a golf trip";
-      const now = new Date().toISOString();
-      await supabase.from("Notification").insert({
-        id: crypto.randomUUID(),
-        userId: inviteeId,
-        type: "trip_invite",
-        title: "You've been invited!",
-        body: `${inviterName} invited you to "${tripName}"`,
-        linkUrl: `/trips/${id}`,
-        referenceId: id as string,
-        read: false,
-        createdAt: now,
-        updatedAt: now,
-      });
-      sendPushToUser("trip_invite", inviteeId, id as string);
+      fetch("/api/trips/notify-members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tripId: id,
+          notifications: [{
+            userId: inviteeId,
+            type: "trip_invite",
+            title: "You've been invited!",
+            body: `${inviterName} invited you to "${tripName}"`,
+            linkUrl: `/trips/${id}`,
+            referenceId: id as string,
+            pushType: "trip_invite",
+          }],
+        }),
+      }).catch(() => {});
     }
     setInviting(null);
   };
@@ -1150,19 +1151,12 @@ export default function TripPage() {
       if (hasHandicaps) {
         setCoursesWithHandicaps(prev => new Set([...prev, selectedAddCourse.id]));
       } else {
-        const { data: admins } = await supabase.from("User").select("id").eq("isAdmin", true);
-        if (admins && admins.length > 0) {
-          const now = new Date().toISOString();
-          for (const admin of admins) {
-            await supabase.from("Notification").insert({
-              id: crypto.randomUUID(), userId: admin.id, type: "admin_alert",
-              title: "Course needs scorecard data",
-              body: `"${selectedAddCourse.name}" was added to a trip — hole handicap rankings may be missing`,
-              linkUrl: `/courses/${selectedAddCourse.id}`,
-              read: false, createdAt: now, updatedAt: now,
-            });
-          }
-        }
+        // Admin-alert notifications run server-side (service_role).
+        fetch("/api/admin/course-data-alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ courseId: selectedAddCourse.id, courseName: selectedAddCourse.name }),
+        }).catch(() => {});
       }
 
       setAddCourseStep("search");

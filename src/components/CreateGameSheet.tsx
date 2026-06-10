@@ -31,7 +31,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SwipeGrip } from "@/components/SwipeGrip";
 import { createClient } from "@/lib/supabase/client";
 import { cdnImage } from "@/lib/cdnImage";
-import { sendPushToUser } from "@/lib/sendPush";
 
 type CourseSearchRow = {
   id: string;
@@ -519,23 +518,25 @@ export default function CreateGameSheet({
         const { error: memErr } = await supabase.from("GolfTripMember").insert(memberRows);
         if (memErr) throw new Error(`Add members: ${memErr.message}`);
 
-        // Notify + push each invited player so they can accept.
+        // Notify + push each invited player so they can accept (cross-user
+        // Notification writes run server-side as service_role).
         if (invitees.length > 0) {
-          await supabase.from("Notification").insert(
-            invitees.map(p => ({
-              id: crypto.randomUUID(),
-              userId: p.userId,
-              type: "trip_invite",
-              title: "You've been invited!",
-              body: `${currentUserDisplayName} invited you to "${tripName}"`,
-              linkUrl: `/trips/${tripId}`,
-              referenceId: tripId,
-              read: false,
-              createdAt: nowIso,
-              updatedAt: nowIso,
-            }))
-          );
-          invitees.forEach(p => sendPushToUser("trip_invite", p.userId, tripId as string));
+          fetch("/api/trips/notify-members", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              tripId,
+              notifications: invitees.map(p => ({
+                userId: p.userId,
+                type: "trip_invite",
+                title: "You've been invited!",
+                body: `${currentUserDisplayName} invited you to "${tripName}"`,
+                linkUrl: `/trips/${tripId}`,
+                referenceId: tripId,
+                pushType: "trip_invite",
+              })),
+            }),
+          }).catch(() => {});
         }
       }
 
@@ -668,33 +669,31 @@ export default function CreateGameSheet({
 
           const notifRows = [
             ...newInvitees.map(p => ({
-              id: crypto.randomUUID(),
               userId: p.userId,
               type: "trip_invite",
               title: "You've been invited!",
               body: `${currentUserDisplayName} invited you to a ${formatName} at ${activeCourse.name}`,
               linkUrl: `/trips/${tripId}`,
               referenceId: tripId,
-              read: false,
-              createdAt: nowIso,
-              updatedAt: nowIso,
+              pushType: "trip_invite",
             })),
             ...knownMembers.map(p => ({
-              id: crypto.randomUUID(),
               userId: p.userId,
               type: "game_challenge",
               title: "New game!",
               body: `${currentUserDisplayName} set up a ${formatName} at ${activeCourse.name}`,
               linkUrl: `/trips/${tripId}?game=${createdGameId}`,
               referenceId: tripId,
-              read: false,
-              createdAt: nowIso,
-              updatedAt: nowIso,
+              pushType: "game_challenge",
             })),
           ];
-          if (notifRows.length > 0) await supabase.from("Notification").insert(notifRows);
-          newInvitees.forEach(p => sendPushToUser("trip_invite", p.userId, tripId as string));
-          knownMembers.forEach(p => sendPushToUser("game_challenge", p.userId, tripId as string));
+          if (notifRows.length > 0) {
+            fetch("/api/trips/notify-members", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ tripId, notifications: notifRows }),
+            }).catch(() => {});
+          }
         }
       }
 

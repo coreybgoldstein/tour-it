@@ -8,7 +8,6 @@ import { DirectionsButton } from "@/components/DirectionsButton";
 import CreateGameSheet from "@/components/CreateGameSheet";
 import PlannerCTA from "@/components/PlannerCTA";
 import Toast, { type ToastState } from "@/components/Toast";
-import { sendPushToUser } from "@/lib/sendPush";
 import { gameFormatLabel } from "@/lib/gameFormats";
 import { cdnImage } from "@/lib/cdnImage";
 import AirportField from "@/components/AirportField";
@@ -419,25 +418,23 @@ export default function TeeUpPage() {
       );
       const { data: inviterProfile } = await supabase.from("User").select("displayName, username").eq("id", userId).single();
       const inviterName = inviterProfile?.displayName || inviterProfile?.username || "Someone";
-      await supabase.from("Notification").insert(
-        invitedFriends.map(f => ({
-          id: crypto.randomUUID(),
-          userId: f.id,
-          type: "trip_invite",
-          title: "You've been invited!",
-          body: `${inviterName} invited you to "${tripName}"`,
-          linkUrl: `/trips/${tripId}`,
-          referenceId: tripId,
-          read: false,
-          createdAt: now,
-          updatedAt: now,
-        }))
-      );
-      // Fire a push to each invitee so they get the notification on their phone,
-      // not just in the bell. Mirrors the long-form trip-invite path.
-      for (const f of invitedFriends) {
-        sendPushToUser("trip_invite", f.id, tripId);
-      }
+      // Cross-user invite notifications run server-side as service_role.
+      fetch("/api/trips/notify-members", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tripId,
+          notifications: invitedFriends.map(f => ({
+            userId: f.id,
+            type: "trip_invite",
+            title: "You've been invited!",
+            body: `${inviterName} invited you to "${tripName}"`,
+            linkUrl: `/trips/${tripId}`,
+            referenceId: tripId,
+            pushType: "trip_invite",
+          })),
+        }),
+      }).catch(() => {});
     }
 
     // +50 pts award (same hook the long-form trip create uses)

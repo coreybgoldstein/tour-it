@@ -1122,26 +1122,23 @@ export default function ProfilePage() {
       if (editData.originalHeroUserId && editData.originalHeroUserId !== newHeroId) {
         await supabase.from("UploadTag").update({ isHero: false }).eq("uploadId", selectedClip.id).eq("userId", editData.originalHeroUserId);
       }
-      // Fire the hero notification + push.
-      const { data: taggerProfile } = await supabase.from("User").select("displayName, username").eq("id", currentUserId).single();
-      const taggerName = taggerProfile?.displayName || taggerProfile?.username || "Someone";
+      // Fire the hero notification + push server-side (cross-user write).
+      // The UploadTag rows above are owner-of-upload writes that stay
+      // client-side; heroTagWritten tells the route not to re-insert.
       const courseName = editData.courseName || coursesById.get(targetCourseId)?.name || "a course";
-      const holeText = (editData.holeNumber ?? selectedClip.holeNumber) ? ` — Hole ${editData.holeNumber ?? selectedClip.holeNumber}` : "";
       const heroHoleNumber = editData.holeNumber ?? selectedClip.holeNumber;
-      await supabase.from("Notification").insert({
-        id: crypto.randomUUID(),
-        userId: newHeroId,
-        type: "clip_tag",
-        title: `${taggerName} uploaded a clip of you`,
-        body: `${taggerName} says this is your shot at ${courseName}${holeText}. Claim it on your profile?`,
-        linkUrl: heroHoleNumber
-          ? `/courses/${targetCourseId}/holes/${heroHoleNumber}?clip=${selectedClip.id}`
-          : `/courses/${targetCourseId}`,
-        referenceId: selectedClip.id,
-        read: false,
-        createdAt: now,
-        updatedAt: now,
-      });
+      fetch("/api/uploads/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadId: selectedClip.id,
+          heroUserId: newHeroId,
+          heroTagWritten: true,
+          courseId: targetCourseId,
+          courseName,
+          holeNumber: heroHoleNumber ?? null,
+        }),
+      }).catch(() => {});
     }
 
     setUploads(prev => prev.map(u => u.id === selectedClip.id ? { ...u, courseId: targetCourseId, holeNumber: editData.holeNumber ?? u.holeNumber, holeId, datePlayedAt: newDatePlayedAt } : u));

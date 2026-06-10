@@ -303,18 +303,13 @@ export default function AdminPage() {
 
   async function approveRequest(req: CourseRequestRow) {
     setActioning(req.id);
-    const supabase = createClient();
-    await supabase.from("CourseRequest").update({ status: "APPROVED" }).eq("id", req.id);
-    await supabase.from("Notification").insert({
-      userId: req.userId,
-      type: "course_request",
-      title: "Course request approved",
-      body: `Your request to add ${req.name} has been approved. It will appear in search soon.`,
-      linkUrl: "/search",
-      read: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+    // Update + cross-user requester notification run server-side (admin-
+    // verified service_role) so they survive Notification/CourseRequest RLS.
+    await fetch("/api/admin/course-request/respond", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: req.id, action: "approve" }),
+    }).catch(() => {});
     setRequests(prev => prev.map(r => r.id === req.id ? { ...r, status: "APPROVED" } : r));
     setStats(prev => prev ? { ...prev, pendingRequests: Math.max(0, prev.pendingRequests - 1) } : prev);
     setActioning(null);
@@ -322,8 +317,11 @@ export default function AdminPage() {
 
   async function denyRequest(reqId: string) {
     setActioning(reqId);
-    const supabase = createClient();
-    await supabase.from("CourseRequest").update({ status: "DENIED" }).eq("id", reqId);
+    await fetch("/api/admin/course-request/respond", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: reqId, action: "deny" }),
+    }).catch(() => {});
     setRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: "DENIED" } : r));
     setStats(prev => prev ? { ...prev, pendingRequests: Math.max(0, prev.pendingRequests - 1) } : prev);
     setActioning(null);

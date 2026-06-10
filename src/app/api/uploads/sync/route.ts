@@ -20,6 +20,11 @@ export const maxDuration = 10;
 type Body = {
   uploadId?: string;
   heroUserId?: string;
+  // When the caller already wrote the UploadTag client-side (e.g. the
+  // retroactive hero re-tag on the profile edit sheet, which also demotes
+  // a previous hero), set this so the route only fans out the clip_tag
+  // notification instead of inserting a duplicate tag row.
+  heroTagWritten?: boolean;
   courseId: string;
   courseName: string;
   holeNumber?: number | null;
@@ -68,13 +73,15 @@ export async function POST(req: Request) {
       const clipLink = body.holeNumber
         ? `/courses/${body.courseId}/holes/${body.holeNumber}?clip=${body.uploadId}`
         : `/courses/${body.courseId}`;
-      await admin.from("UploadTag").insert({
-        id: randomUUID(),
-        uploadId: body.uploadId,
-        userId: body.heroUserId,
-        isHero: true,
-        createdAt: now,
-      });
+      if (!body.heroTagWritten) {
+        await admin.from("UploadTag").insert({
+          id: randomUUID(),
+          uploadId: body.uploadId,
+          userId: body.heroUserId,
+          isHero: true,
+          createdAt: now,
+        });
+      }
       await admin.from("Notification").insert({
         id: randomUUID(),
         userId: body.heroUserId,
