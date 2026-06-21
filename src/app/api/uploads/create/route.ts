@@ -8,6 +8,25 @@ import { PointAction } from "@/config/points-system";
 export const dynamic = "force-dynamic";
 export const maxDuration = 15;
 
+// Accept either a web cookie session OR a native Bearer token. The native
+// app sends `Authorization: Bearer <access_token>` with no cookies; web uses
+// the SSR cookie session. Try the token first, fall back to the cookie.
+async function getAuthedUser(req: Request): Promise<{ id: string } | null> {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (token) {
+    const svc = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    const { data: { user } } = await svc.auth.getUser(token);
+    if (user) return user;
+  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
 // Server-side, atomic Upload row creation.
 //
 // Why this exists: the previous client-side flow uploaded the file to
@@ -99,8 +118,7 @@ async function findCandidateTrips(
 }
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthedUser(req);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   let body: Body;
