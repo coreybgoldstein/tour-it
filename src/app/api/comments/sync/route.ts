@@ -9,6 +9,24 @@ import { PointAction } from "@/config/points-system";
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
 
+// Accept a web cookie session OR a native Bearer token (the Expo app sends
+// Authorization: Bearer <token> with no cookies). Token first, cookie fallback.
+async function getAuthedUser(req: Request): Promise<{ id: string } | null> {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (token) {
+    const svc = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    const { data: { user } } = await svc.auth.getUser(token);
+    if (user) return user;
+  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
 // Centralized comment side-effects so the cross-user writes (bumping the
 // clip owner's Upload.commentCount/rankScore + notifying the owner /
 // mentioned users) run as service_role and survive owner-only RLS on
@@ -27,8 +45,7 @@ type Body = {
 };
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthedUser(req);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   let body: Body;
