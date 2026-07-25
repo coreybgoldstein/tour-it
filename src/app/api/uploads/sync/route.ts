@@ -6,6 +6,26 @@ import { randomUUID } from "crypto";
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
 
+// Accept either a web cookie session OR a native Bearer token. The native app
+// sends `Authorization: Bearer <access_token>` with no cookies; web uses the SSR
+// cookie session. Try the token first, fall back to the cookie. Mirrors the
+// helper in ../create/route.ts — without it, native hero tags 401 silently.
+async function getAuthedUser(req: Request): Promise<{ id: string } | null> {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (token) {
+    const svc = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    const { data: { user } } = await svc.auth.getUser(token);
+    if (user) return user;
+  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
 // Centralized post-upload side-effects so the cross-user writes survive
 // owner-only RLS on UploadTag + Notification. The browser still inserts
 // its OWN Upload row (owner-write RLS); it then calls this route to:
@@ -32,8 +52,7 @@ type Body = {
 };
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthedUser(req);
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   let body: Body;
