@@ -12,6 +12,21 @@ function sb() {
   );
 }
 
+// Accept either a web cookie session OR a native Bearer token. The native app
+// sends `Authorization: Bearer <access_token>` with no cookies; web uses the SSR
+// cookie session. Try the token first, fall back to the cookie. Without this the
+// native CreateGameSheet (which sends a Bearer) 401s for non-hole-picked formats.
+async function getAuthedUser(req: NextRequest) {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (token) {
+    const { data: { user } } = await sb().auth.getUser(token);
+    if (user) return user;
+  }
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  return user;
+}
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
 // Course Handicap = HI × (Slope / 113) + (Rating − Par).
@@ -226,8 +241,7 @@ Do NOT list per-hole strokes or net shots — a precise pops breakdown is append
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const user = await getAuthedUser(req);
   if (!user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: games } = await sb()
@@ -241,8 +255,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const authClient = await createClient();
-  const { data: { user } } = await authClient.auth.getUser();
+  const user = await getAuthedUser(req);
   if (!user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: dbUser } = await sb().from("User").select("id").eq("email", user.email).single();
