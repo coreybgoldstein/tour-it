@@ -1,7 +1,7 @@
 import https from "https";
 
 const SUPABASE_URL = "awlbxzpevwidowxxvuef.supabase.co";
-const SERVICE_KEY = "***REMOVED_SERVICE_ROLE_KEY***";
+const SERVICE_KEY = "process.env.SUPABASE_SERVICE_ROLE_KEY";
 
 const STATE_MAP = {
   "Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA","Colorado":"CO",

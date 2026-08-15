@@ -7,7 +7,7 @@
 import { existsSync, readFileSync, writeFileSync, createWriteStream } from 'fs';
 
 const SUPABASE_URL = 'https://awlbxzpevwidowxxvuef.supabase.co';
-const SERVICE_KEY = '***REMOVED_SERVICE_ROLE_KEY***';
+const SERVICE_KEY = 'process.env.SUPABASE_SERVICE_ROLE_KEY';
 const GOLF_API_KEY = '6IRZMMWMW2T7G5UM7POZTKGSXQ';
 const GOLF_API_BASE = 'https://api.golfcourseapi.com/v1';
 const PROGRESS_FILE = 'golfapi-progress.json';

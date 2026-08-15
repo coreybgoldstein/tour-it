@@ -2,7 +2,7 @@ import https from 'https';
 import http from 'http';
 
 const SUPABASE_URL = 'https://awlbxzpevwidowxxvuef.supabase.co';
-const API_KEY = '***REMOVED_SERVICE_ROLE_KEY***';
+const API_KEY = 'process.env.SUPABASE_SERVICE_ROLE_KEY';
 
 const STATE_ABBREV = {
   'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR',

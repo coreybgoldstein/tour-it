@@ -6,7 +6,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 const SUPABASE_URL = 'https://awlbxzpevwidowxxvuef.supabase.co';
-const SERVICE_KEY = '***REMOVED_SERVICE_ROLE_KEY***';
+const SERVICE_KEY = 'process.env.SUPABASE_SERVICE_ROLE_KEY';
 
 const client = new Anthropic();
 

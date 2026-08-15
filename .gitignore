@@ -54,3 +54,6 @@ screenshots/
 # Temporary course-ID lists for bulk seeder runs
 /columbia-radius-ids.txt
 /columbia-chunk-*.txt
+
+# secrets / local settings
+.claude/settings.local.json
