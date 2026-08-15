@@ -3,7 +3,7 @@
 // Focuses on courses that have actual uploads (most visible content)
 
 const SUPABASE_URL = 'https://awlbxzpevwidowxxvuef.supabase.co';
-const SERVICE_KEY = 'process.env.SUPABASE_SERVICE_ROLE_KEY';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OVERPASS = 'https://overpass-api.de/api/interpreter';
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }

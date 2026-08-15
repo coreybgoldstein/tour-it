@@ -13,7 +13,7 @@ import https from 'https';
 import http from 'http';
 
 const SUPABASE_URL = 'https://awlbxzpevwidowxxvuef.supabase.co';
-const API_KEY = 'process.env.SUPABASE_SERVICE_ROLE_KEY';
+const API_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
 const filterName = process.argv[2] || null;

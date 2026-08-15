@@ -9,7 +9,7 @@
 import { createWriteStream, existsSync, readFileSync, writeFileSync } from 'fs';
 
 const SUPABASE_URL = 'https://awlbxzpevwidowxxvuef.supabase.co';
-const SERVICE_KEY = 'process.env.SUPABASE_SERVICE_ROLE_KEY';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OVERPASS_MIRRORS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
